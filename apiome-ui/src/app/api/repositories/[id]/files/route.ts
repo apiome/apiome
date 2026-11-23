@@ -22,6 +22,8 @@ const FORWARD_PARAMS = [
   'include_hidden',
   'path_prefix',
   'limit',
+  'cursor',
+  'include_total',
   'offset',
 ] as const;
 

@@ -60,7 +60,8 @@ export interface DependenciesPanelProps {
 interface Loaded {
   edges: GraphEdge[];
   truncated: boolean;
-  total: number;
+  /** Both directions' counts, or null when either was not counted. */
+  total: number | null;
 }
 
 async function loadBoth(kind: GraphNodeKind, id: string): Promise<Loaded> {
@@ -68,7 +69,10 @@ async function loadBoth(kind: GraphNodeKind, id: string): Promise<Loaded> {
   return {
     edges: mergeEdges(outgoing.edges, incoming.edges),
     truncated: incoming.truncated || outgoing.truncated,
-    total: incoming.total + outgoing.total,
+    total:
+      typeof incoming.total === 'number' && typeof outgoing.total === 'number'
+        ? incoming.total + outgoing.total
+        : null,
   };
 }
 

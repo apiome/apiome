@@ -5,6 +5,14 @@
 
 import { getPlanBlockMessageForNewProject, getPlanBlockMessageForNewVersion } from './plan-entitlements';
 import { bulkInsert } from './import-bulk';
+import {
+  CLASS_COLUMNS,
+  CLASS_PROPERTY_COLUMNS,
+  PROJECT_COLUMNS,
+  PROPERTY_COLUMNS,
+  VERSION_COLUMNS,
+  columnList,
+} from './row-columns';
 
 const connectionPool = require('./db');
 
@@ -83,7 +91,8 @@ export async function createProjectTx(
 
     const result = await client.query(
       `INSERT INTO apiome.projects (tenant_id, creator_id, name, description, slug, metadata, deleted_at)
-       VALUES ($1, $2, $3, $4, $5, $6, CASE WHEN $7::boolean THEN CURRENT_TIMESTAMP END) RETURNING *`,
+       VALUES ($1, $2, $3, $4, $5, $6, CASE WHEN $7::boolean THEN CURRENT_TIMESTAMP END)
+       RETURNING ${columnList(PROJECT_COLUMNS)}`,
       [
         tenantId,
         creatorId,
@@ -208,7 +217,7 @@ export async function createVersionTx(
        VALUES ($1, $2, $3, $4, $5, $6,
                CASE WHEN $7::boolean THEN CURRENT_TIMESTAMP END,
                CASE WHEN $7::boolean THEN CURRENT_TIMESTAMP END)
-       RETURNING *`,
+       RETURNING ${columnList(VERSION_COLUMNS)}`,
       [
         projectId,
         creatorId,
@@ -357,7 +366,7 @@ export async function createPropertyTx(
     const result = await client.query(
       `INSERT INTO apiome.properties (project_id, name, description, data)
        VALUES ($1, $2, $3, $4)
-       RETURNING *`,
+       RETURNING ${PROPERTY_COLUMNS}`,
       [projectId, name.trim(), description, JSON.stringify(data)]
     );
 
@@ -443,7 +452,7 @@ export async function createClassTx(
     const result = await client.query(
       `INSERT INTO apiome.classes (version_id, name, description, schema)
        VALUES ($1, $2, $3, $4)
-       RETURNING *`,
+       RETURNING ${CLASS_COLUMNS}`,
       [versionId, name.trim(), description, JSON.stringify(schema)]
     );
 
@@ -483,7 +492,7 @@ export async function addPropertyToClassTx(
     const result = await client.query(
       `INSERT INTO apiome.class_properties (class_id, property_id, name, description, data, parent_id)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
+       RETURNING ${CLASS_PROPERTY_COLUMNS}`,
       [classId, propertyId, name.trim(), description, JSON.stringify(data), parentId]
     );
 

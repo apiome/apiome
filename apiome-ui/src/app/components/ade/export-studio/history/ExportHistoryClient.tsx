@@ -27,11 +27,9 @@ import {
   DataTableCellPrimary,
   DataTableCellSub,
   DataTableClearFilters,
+  DataTableCursorPager,
   DataTableFoot,
-  DataTablePager,
   DataTableToolbar,
-  dataTablePageCount,
-  dataTableRangeLabel,
   type DataTableColumn,
 } from '@/app/components/ui/DataTable';
 import { Drawer, DrawerBody, DrawerContent, DrawerHeader, DrawerTitle } from '@/app/components/ui/Drawer';
@@ -44,6 +42,8 @@ import { FidelityReportRow } from '../../dashboard/export/FidelityWarningPanel';
 import type { DeliveryGateReport } from '../../dashboard/export/exportJob';
 import type { EmittedValidationReport } from '../../dashboard/export/exportVerify';
 import type { LossItem } from '../../dashboard/export/exportFidelityPreview';
+import { EMPTY_PAGE_INFO, cursorRangeLabel, hasMoreAfter, type PageInfo } from '@lib/cursor-pages';
+import { useCursorTrail } from '@/app/hooks/useCursorPages';
 import { fetchExportRun, fetchExportRunActors, fetchExportRuns } from './exportHistoryApi';
 import {
   EMPTY_FILTERS,
@@ -125,9 +125,13 @@ function FilterSelect({
 
 export default function ExportHistoryClient({ tabs }: ExportHistoryClientProps = {}) {
   const [filters, setFilters] = useState<HistoryFilters>(EMPTY_FILTERS);
-  const [page, setPage] = useState(0);
+  // The history pages by cursor (#7196): Previous / Next, with the count asked for once, on the
+  // first page of each filter set.
+  const trail = useCursorTrail(JSON.stringify(filters), HISTORY_PAGE_SIZE);
+  const { cursor, offset, first } = trail;
   const [runs, setRuns] = useState<ExportRunSummary[]>([]);
-  const [total, setTotal] = useState(0);
+  const [pageInfo, setPageInfo] = useState<PageInfo>(EMPTY_PAGE_INFO);
+  const [total, setTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -143,10 +147,11 @@ export default function ExportHistoryClient({ tabs }: ExportHistoryClientProps =
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchExportRuns(filters, page);
+        const result = await fetchExportRuns(filters, { cursor, offset, includeTotal: first });
         if (cancelled) return;
         setRuns(result.runs);
-        setTotal(result.total);
+        setPageInfo(result.page);
+        if (first) setTotal(result.page.total);
         setSeenSources((current) => {
           const next = new Map(current);
           for (const run of result.runs) next.set(run.artifact_id, run.artifact_name || run.artifact_id);
@@ -167,7 +172,7 @@ export default function ExportHistoryClient({ tabs }: ExportHistoryClientProps =
     return () => {
       cancelled = true;
     };
-  }, [filters, page, attempt]);
+  }, [filters, cursor, offset, first, attempt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -181,14 +186,13 @@ export default function ExportHistoryClient({ tabs }: ExportHistoryClientProps =
     };
   }, []);
 
-  /** Change one filter, back to the first page. */
+  /** Change one filter. The trail is keyed by the filters, so this is back to the first page. */
   const setFilter = useCallback((key: keyof HistoryFilters, value: string) => {
     setFilters((current) => ({ ...current, [key]: value }));
-    setPage(0);
   }, []);
 
   const narrowed = hasFilters(filters);
-  const pageCount = dataTablePageCount(total, HISTORY_PAGE_SIZE);
+  const hasNext = hasMoreAfter(pageInfo, offset + runs.length);
 
   const columns = useMemo<DataTableColumn<ExportRunSummary>[]>(
     () => [
@@ -345,10 +349,7 @@ export default function ExportHistoryClient({ tabs }: ExportHistoryClientProps =
               <DataTableClearFilters
                 count={activeFilterCount(filters)}
                 data-testid="export-history-clear"
-                onClick={() => {
-                  setFilters(EMPTY_FILTERS);
-                  setPage(0);
-                }}
+                onClick={() => setFilters(EMPTY_FILTERS)}
               />
             </DataTableToolbar>
           }
@@ -367,12 +368,14 @@ export default function ExportHistoryClient({ tabs }: ExportHistoryClientProps =
           footer={
             <DataTableFoot>
               <span data-testid="export-history-range">
-                {dataTableRangeLabel(page + 1, HISTORY_PAGE_SIZE, total, 'run')}
+                {cursorRangeLabel(offset, runs.length, total, 'run')}
               </span>
-              <DataTablePager
-                page={page + 1}
-                pageCount={pageCount}
-                onPageChange={(next) => setPage(next - 1)}
+              <DataTableCursorPager
+                hasPrevious={!first}
+                hasNext={hasNext}
+                busy={loading}
+                onPrevious={trail.previous}
+                onNext={() => trail.next(pageInfo.nextCursor)}
                 label="Export history pages"
               />
             </DataTableFoot>

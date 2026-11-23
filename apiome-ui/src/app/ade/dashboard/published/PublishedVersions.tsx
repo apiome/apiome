@@ -62,6 +62,7 @@ import {
   updateVersionVisibility,
 } from '@lib/db/helper-actions';
 import { buildMockBaseUrl } from '@lib/mock/mockUrl';
+import { DEFAULT_LIST_ROWS } from '@lib/db/list-bounds';
 
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -92,6 +93,7 @@ import {
   PREVIEW_KEY_CLEARED,
   PUBLISHED_EMPTY,
   PUBLISHED_NO_MATCHES,
+  PUBLISHED_NO_MATCHES_LOADED,
   PUBLISHED_NO_TENANT,
   PublishedApiKeyDialog,
   PublishedTable,
@@ -114,6 +116,20 @@ import {
   type PublishedVersion,
   type PublishedViewKind,
 } from '@/app/components/ade/published';
+
+/** How many revisions one read asks for; "Load more" asks for the next that many. */
+const PUBLISHED_PAGE_SIZE = DEFAULT_LIST_ROWS;
+
+/** What `getPublishedVersionsForTenant` answers, parsed. */
+interface PublishedVersionsPayload {
+  success?: boolean;
+  versions?: PublishedVersion[];
+  /** Whether the workspace has revisions after this page. */
+  hasMore?: boolean;
+  /** Where the next page starts; `null` on the last page. */
+  nextCursor?: string | null;
+  error?: string;
+}
 
 export interface PublishedVersionsProps {
   /** The REST base URL, resolved on the server per request (see `page.tsx`). */
@@ -142,6 +158,14 @@ export default function PublishedVersions({
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
+  // The list is read a page at a time (DBP-1.13, #7196): `nextCursor` is where "Load more"
+  // continues from, and `null` once every revision is loaded.
+  const [nextCursor, setNextCursor] = React.useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [loadMoreError, setLoadMoreError] = React.useState<string | null>(null);
+  /** Bumps on every first-page read, so a "Load more" answered after it is dropped. */
+  const listGeneration = React.useRef(0);
+  const hasMore = nextCursor !== null;
 
   // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied in the read's SQL.
   const router = useRouter();
@@ -166,6 +190,9 @@ export default function PublishedVersions({
   const copyResetRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadPublishedVersions = React.useCallback(async () => {
+    listGeneration.current += 1;
+    setNextCursor(null);
+    setLoadMoreError(null);
     if (!currentTenantId) {
       setVersions([]);
       setLoadError(null);
@@ -174,17 +201,18 @@ export default function PublishedVersions({
     }
     setLoading(true);
     try {
-      const payload = JSON.parse(await getPublishedVersionsForTenant(currentTenantId, teamFilter)) as {
-        success?: boolean;
-        versions?: PublishedVersion[];
-        error?: string;
-      };
+      const payload = JSON.parse(
+        await getPublishedVersionsForTenant(currentTenantId, teamFilter, {
+          limit: PUBLISHED_PAGE_SIZE,
+        })
+      ) as PublishedVersionsPayload;
       if (payload?.success === false) {
         setVersions([]);
         setLoadError(payload.error || 'The published versions could not be read.');
         return;
       }
       setVersions(Array.isArray(payload?.versions) ? payload.versions : []);
+      setNextCursor(payload?.hasMore && payload.nextCursor ? payload.nextCursor : null);
       setLoadError(null);
     } catch (error) {
       console.error('Failed to load published versions:', error);
@@ -194,6 +222,41 @@ export default function PublishedVersions({
       setLoading(false);
     }
   }, [currentTenantId, teamFilter]);
+
+  /** Read the page after the last loaded revision and append it. */
+  const loadMorePublishedVersions = React.useCallback(async () => {
+    if (!currentTenantId || !nextCursor) return;
+    const generation = listGeneration.current;
+    setLoadingMore(true);
+    setLoadMoreError(null);
+    try {
+      const payload = JSON.parse(
+        await getPublishedVersionsForTenant(currentTenantId, teamFilter, {
+          limit: PUBLISHED_PAGE_SIZE,
+          cursor: nextCursor,
+        })
+      ) as PublishedVersionsPayload;
+      if (generation !== listGeneration.current) return;
+      if (payload?.success === false) {
+        setLoadMoreError(payload.error || 'More published versions could not be read.');
+        return;
+      }
+      const more = Array.isArray(payload?.versions) ? payload.versions : [];
+      setVersions((current) => {
+        const seen = new Set(current.map((version) => version.id));
+        return [...current, ...more.filter((version) => !seen.has(version.id))];
+      });
+      setNextCursor(payload?.hasMore && payload.nextCursor ? payload.nextCursor : null);
+    } catch (error) {
+      if (generation !== listGeneration.current) return;
+      console.error('Failed to load more published versions:', error);
+      setLoadMoreError(
+        error instanceof Error ? error.message : 'More published versions could not be read.'
+      );
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentTenantId, teamFilter, nextCursor]);
 
   /** A suggestion confirmed from the list: every version of that project updates in place. */
   const updateOwner = React.useCallback((projectId: string, owner: EntityOwner | null) => {
@@ -489,11 +552,23 @@ export default function PublishedVersions({
     versions.length > 0 ? (
       <DataTableFoot data-testid="published-foot">
         <span>
-          {publishedFootLabel(visible.length, versions.length)}
+          {publishedFootLabel(visible.length, versions.length, hasMore)}
           {isPublishedListFiltered(query, visible.length, versions.length) ? (
             <span className="pub-foot__filtered"> (filtered)</span>
           ) : null}
         </span>
+        {hasMore ? (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loadingMore}
+            title={loadingMore ? 'Loading the next page of published versions' : undefined}
+            onClick={() => void loadMorePublishedVersions()}
+            data-testid="published-load-more"
+          >
+            {loadingMore ? 'Loading…' : 'Load more'}
+          </Button>
+        ) : null}
         <span className="pub-foot__hint">
           Visibility is the only change made here — publish and unpublish live on Versions.
         </span>
@@ -518,8 +593,8 @@ export default function PublishedVersions({
         variant="compact"
         surface={false}
         tone="neutral"
-        title={PUBLISHED_NO_MATCHES.title}
-        description={PUBLISHED_NO_MATCHES.description}
+        title={(hasMore ? PUBLISHED_NO_MATCHES_LOADED : PUBLISHED_NO_MATCHES).title}
+        description={(hasMore ? PUBLISHED_NO_MATCHES_LOADED : PUBLISHED_NO_MATCHES).description}
         action={
           <Button variant="outline" onClick={() => setQuery('')} data-testid="published-clear-search">
             Clear search
@@ -533,7 +608,7 @@ export default function PublishedVersions({
       <PageHeader
         breadcrumb={[{ label: 'Home', href: HOME_HREF }, { label: 'Ship' }, { label: 'Published' }]}
         title="Published versions"
-        description={publishedSummaryLine(versions)}
+        description={publishedSummaryLine(versions, hasMore)}
         actions={
           <Button variant="outline" asChild data-testid="published-api-keys">
             <Link href={API_KEYS_HREF}>
@@ -563,6 +638,20 @@ export default function PublishedVersions({
                 }
               >
                 <AlertDescription>{visibilityError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {loadMoreError ? (
+              <Alert
+                variant="danger"
+                data-testid="published-load-more-error"
+                actions={
+                  <Button variant="ghost" size="sm" onClick={() => void loadMorePublishedVersions()}>
+                    Retry
+                  </Button>
+                }
+              >
+                <AlertDescription>{loadMoreError}</AlertDescription>
               </Alert>
             ) : null}
 

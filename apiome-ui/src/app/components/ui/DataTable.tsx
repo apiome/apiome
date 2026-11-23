@@ -1202,6 +1202,71 @@ const DataTablePager = React.forwardRef<HTMLElement, DataTablePagerProps>(
 );
 DataTablePager.displayName = 'DataTablePager';
 
+export interface DataTableCursorPagerProps extends React.HTMLAttributes<HTMLElement> {
+  /** Whether a page precedes this one. */
+  hasPrevious: boolean;
+  /** Whether a page follows this one — the list's own `has_more`, never a count. */
+  hasNext: boolean;
+  /** Called when the reader steps back. */
+  onPrevious: () => void;
+  /** Called when the reader steps forward. */
+  onNext: () => void;
+  /** Disable both steps while a page is being read. */
+  busy?: boolean;
+  /** The navigation landmark's name, when a screen has more than one pager. */
+  label?: string;
+}
+
+/**
+ * Previous / Next, for a list that pages by cursor (DBP-1.13, #7196).
+ *
+ * A keyset list knows whether another page follows, not how many there are, so this is
+ * `DataTablePager` without the page numbers. A list that fits on one page renders nothing.
+ */
+const DataTableCursorPager = React.forwardRef<HTMLElement, DataTableCursorPagerProps>(
+  (
+    { className, hasPrevious, hasNext, onPrevious, onNext, busy = false, label = 'Pagination', ...props },
+    ref
+  ) => {
+    if (!hasPrevious && !hasNext) return null;
+
+    return (
+      <nav
+        ref={ref}
+        aria-label={label}
+        className={cn('inline-flex items-center gap-0.5', className)}
+        {...props}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-label="Previous page"
+          disabled={!hasPrevious || busy}
+          title={busy ? 'Loading this page' : hasPrevious ? undefined : 'This is the first page'}
+          onClick={onPrevious}
+          className="px-1.5"
+        >
+          <ChevronLeft className="size-[var(--icon-button)]" aria-hidden />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-label="Next page"
+          disabled={!hasNext || busy}
+          title={busy ? 'Loading this page' : hasNext ? undefined : 'This is the last page'}
+          onClick={onNext}
+          className="px-1.5"
+        >
+          <ChevronRight className="size-[var(--icon-button)]" aria-hidden />
+        </Button>
+      </nav>
+    );
+  }
+);
+DataTableCursorPager.displayName = 'DataTableCursorPager';
+
 // ---------------------------------------------------------------------------------------
 // Bulk bar
 // ---------------------------------------------------------------------------------------
@@ -1288,6 +1353,7 @@ export {
   DataTableFilterChip,
   DataTableFoot,
   DataTablePager,
+  DataTableCursorPager,
   DataTableSearch,
   DataTableToolbar,
   DataTableToolbarSpacer,

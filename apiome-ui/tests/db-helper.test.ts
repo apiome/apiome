@@ -96,8 +96,9 @@ describe('Database Helper - User Functions', () => {
     // Mixed-case, padded input must canonicalize to the stored form (OLO-1.1).
     const result = await getUserByEmail('  Test@Example.COM ');
 
+    // Columns by name, and never the password hash (DBP-1.13, #7196).
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM apiome.users WHERE lower(email) = $1 AND deleted_at IS NULL',
+      'SELECT id, name, email, verified, enabled, created_at, updated_at, last_login_at FROM apiome.users WHERE lower(email) = $1 AND deleted_at IS NULL',
       ['test@example.com']
     );
     expect(result.rows).toHaveLength(1);
@@ -114,9 +115,10 @@ describe('Database Helper - User Functions', () => {
     const result = await getUserById('user-1');
 
     expect(mockQuery).toHaveBeenCalledWith(
-      'SELECT * FROM apiome.users WHERE id = $1 AND deleted_at IS NULL',
+      'SELECT id, name, email, verified, enabled, created_at, updated_at, last_login_at FROM apiome.users WHERE id = $1 AND deleted_at IS NULL',
       ['user-1']
     );
+    expect(mockQuery.mock.calls[0][0]).not.toMatch(/password/);
     expect(result.rows[0].id).toBe('user-1');
   });
 
@@ -1137,7 +1139,9 @@ describe('Database Helper - API Key Functions', () => {
     const [sql, params] = mockQuery.mock.calls[0];
     expect(sql).toContain("kind = 'workspace'");
     expect(sql).toContain('deleted_at IS NULL');
-    expect(params).toEqual(['tenant-1']);
+    // Never the stored hash, and never more than the safety cap (DBP-1.13, #7196).
+    expect(sql).not.toMatch(/key_hash|SELECT \*/);
+    expect(params).toEqual(['tenant-1', 1000]);
   });
 
   test('createApiKey should create new API key', async () => {
@@ -1305,9 +1309,10 @@ describe('Database Helper - Advanced Tenant Functions', () => {
     const result = await getTenantsAdministratedByUser('user-1');
     const admins = JSON.parse(result);
 
+    // The second parameter is the safety cap, MAX_UNPAGED_ROWS (DBP-1.13, #7196).
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('WHERE ta.user_id = $1'),
-      ['user-1']
+      ['user-1', 1000]
     );
     expect(admins).toEqual([
       { id: 'admin-1', tenant_id: 'tenant-1', user_id: 'user-1', name: 'Admin User', email: 'admin@example.com' }

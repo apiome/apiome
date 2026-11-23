@@ -505,7 +505,7 @@ describe('the refresh ledger (CDG-1.7)', () => {
     expect(within(connector).getByTestId('refresh-run-source')).toHaveTextContent('Connector');
     expect(within(git).getByTestId('refresh-run-source')).toHaveTextContent('Git');
     const ledgerCall = fetchMock.mock.calls.map(([url]) => String(url)).find((url) => url.startsWith('/api/refresh-runs'));
-    expect(ledgerCall).toBe('/api/refresh-runs?limit=10');
+    expect(ledgerCall).toBe('/api/refresh-runs?limit=10&include_total=true');
   });
 });
 

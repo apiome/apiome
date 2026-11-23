@@ -182,7 +182,7 @@ export const PRIMARY_READS: readonly PrimaryRead[] = [
     id: 'A15',
     surface: 'Import to catalog → recent imports',
     source: 'src/app/components/ade/dashboard/asyncJobs/RecentAsyncJobsPanel.tsx',
-    needle: 'recentAsyncJobsUrl(kind, pageLimit, nextOffset)',
+    needle: 'recentAsyncJobsUrl(kind, pageLimit, {',
     pending: { file: 'RecentAsyncJobsPanel.test.tsx', title: 'skeletons the table while the first page is pending' },
     failed: { file: 'RecentAsyncJobsPanel.test.tsx', title: 'says a failed read failed, with a retry that reads again' },
   },

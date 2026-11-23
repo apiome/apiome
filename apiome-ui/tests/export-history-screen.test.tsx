@@ -119,7 +119,9 @@ const DETAIL: ExportRunDetail = {
 
 let calls: string[] = [];
 
-function mockFetch(options: { runs?: ExportRunSummary[]; total?: number; fail?: boolean } = {}) {
+function mockFetch(
+  options: { runs?: ExportRunSummary[]; total?: number; fail?: boolean; pages?: number } = {},
+) {
   global.fetch = jest.fn(async (url: string) => {
     const path = String(url);
     calls.push(path);
@@ -134,7 +136,21 @@ function mockFetch(options: { runs?: ExportRunSummary[]; total?: number; fail?: 
     if (path.startsWith('/api/export/runs?')) {
       if (options.fail) return json({ success: false, error: 'projects:view is required' }, 403);
       const runs = options.runs ?? [LOSSY, FAILED];
-      return json({ success: true, data: { runs, total: options.total ?? runs.length, limit: 25, offset: 0 } });
+      // The #7196 contract: an opaque cursor per page, `has_more`, and a total only when asked.
+      const query = new URLSearchParams(path.split('?')[1]);
+      const index = Number((query.get('cursor') ?? 'page-0').replace('page-', ''));
+      const hasMore = index + 1 < (options.pages ?? 1);
+      return json({
+        success: true,
+        data: {
+          runs,
+          total: query.get('include_total') === 'true' ? (options.total ?? runs.length) : null,
+          limit: 25,
+          offset: 0,
+          has_more: hasMore,
+          next_cursor: hasMore ? `page-${index + 1}` : null,
+        },
+      });
     }
     return json({ success: false, error: `unmocked ${path}` }, 500);
   }) as unknown as typeof fetch;
@@ -180,10 +196,10 @@ describe('History tab', () => {
   it('asks the server again for every filter, from the first page', async () => {
     mockFetch();
     await renderHistory();
-    expect(runQueries()[0]).toEqual({ limit: '25', offset: '0' });
+    expect(runQueries()[0]).toEqual({ limit: '25', include_total: 'true' });
 
     fireEvent.change(screen.getByTestId('export-history-filter-target'), { target: { value: 'protobuf' } });
-    await waitFor(() => expect(runQueries().at(-1)).toMatchObject({ target: 'protobuf', offset: '0' }));
+    await waitFor(() => expect(runQueries().at(-1)).toMatchObject({ target: 'protobuf', include_total: 'true' }));
     fireEvent.change(screen.getByTestId('export-history-filter-actor'), { target: { value: 'u1' } });
     fireEvent.change(screen.getByTestId('export-history-filter-channel'), { target: { value: 'none' } });
     fireEvent.change(screen.getByTestId('export-history-filter-validation'), { target: { value: 'invalid' } });
@@ -202,12 +218,12 @@ describe('History tab', () => {
         artifact: 'cat-9',
         finished_after: '2026-11-01T00:00:00Z',
         limit: '25',
-        offset: '0',
+        include_total: 'true',
       }),
     );
 
     fireEvent.click(screen.getByTestId('export-history-clear'));
-    await waitFor(() => expect(runQueries().at(-1)).toEqual({ limit: '25', offset: '0' }));
+    await waitFor(() => expect(runQueries().at(-1)).toEqual({ limit: '25', include_total: 'true' }));
   });
 
   it('offers the people in the history, and the sources and targets it has seen', async () => {
@@ -223,10 +239,39 @@ describe('History tab', () => {
   });
 
   it('pages through a long history', async () => {
-    mockFetch({ total: 60 });
+    mockFetch({ total: 60, pages: 3 });
     await renderHistory();
-    fireEvent.click(screen.getByRole('button', { name: /next/i }));
-    await waitFor(() => expect(runQueries().at(-1)).toMatchObject({ offset: '25' }));
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+
+    // Next continues from the cursor the page issued: no offset, and the count is not asked again.
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    await waitFor(() => expect(runQueries().at(-1)).toEqual({ limit: '25', cursor: 'page-1' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('export-history-range')).toHaveTextContent('Showing 26–27 of 60 runs'),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+    await waitFor(() => expect(runQueries().at(-1)).toEqual({ limit: '25', cursor: 'page-2' }));
+    // The last page says there is no more, whatever the total.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled());
+
+    // Previous goes back to the cursor the earlier page started at.
+    fireEvent.click(screen.getByRole('button', { name: 'Previous page' }));
+    await waitFor(() => expect(runQueries().at(-1)).toEqual({ limit: '25', cursor: 'page-1' }));
+
+    // A filter starts again from the first page.
+    fireEvent.change(screen.getByTestId('export-history-filter-target'), { target: { value: 'protobuf' } });
+    await waitFor(() =>
+      expect(runQueries().at(-1)).toEqual({ target: 'protobuf', limit: '25', include_total: 'true' }),
+    );
+  });
+
+  it('shows no count it was not given, and 10,000+ at the counting cap', async () => {
+    mockFetch({ total: 10000, pages: 2 });
+    const { unmount } = render(<ExportHistoryClient />);
+    await waitFor(() =>
+      expect(screen.getByTestId('export-history-range')).toHaveTextContent('Showing 1–2 of 10,000+ runs'),
+    );
+    unmount();
   });
 
   it('says so when nothing matches, and when the history cannot load', async () => {

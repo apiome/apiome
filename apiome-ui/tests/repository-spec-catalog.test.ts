@@ -129,6 +129,22 @@ describe('building the API request', () => {
     expect(qs.get('offset')).toBe('50');
   });
 
+  test('a known cursor replaces the offset, and the counts are asked for only when wanted (#7196)', () => {
+    const first = new URLSearchParams(
+      specCatalogApiQuery(DEFAULT_SPEC_CATALOG_FILTERS, { includeTotal: true })
+    );
+    expect(first.get('include_total')).toBe('true');
+    expect(first.has('offset')).toBe(false);
+    expect(first.has('cursor')).toBe(false);
+
+    const later = new URLSearchParams(
+      specCatalogApiQuery({ ...DEFAULT_SPEC_CATALOG_FILTERS, offset: 50 }, { cursor: 'abc' })
+    );
+    expect(later.get('cursor')).toBe('abc');
+    expect(later.has('offset')).toBe(false);
+    expect(later.has('include_total')).toBe(false);
+  });
+
   test('the search term is trimmed before it is sent', () => {
     const qs = new URLSearchParams(
       specCatalogApiQuery({ ...DEFAULT_SPEC_CATALOG_FILTERS, q: '  orders  ' })
@@ -255,6 +271,10 @@ describe('copy and formatting (HIVE-7.6, #5323)', () => {
 
   test('an empty page says so rather than printing “Showing 1–0 of 0”', () => {
     expect(specCatalogRangeLabel(0, 0, 0)).toBe('No specs');
+    // #7196: an uncounted view states only its window; a capped count is "at least".
+    expect(specCatalogRangeLabel(50, 50, null)).toBe('Showing 51–100');
+    expect(specCatalogRangeLabel(0, 50, 10000)).toBe('Showing 1–50 of 10,000+');
+    expect(specCatalogSummaryLine(10000)).toContain('10,000+ indexed.');
   });
 
   test('the unresolved-$ref note pluralises, and says nothing when there is nothing', () => {

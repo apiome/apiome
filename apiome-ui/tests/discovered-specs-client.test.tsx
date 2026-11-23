@@ -405,11 +405,70 @@ describe('server-side pagination', () => {
       ok: true,
       status: 200,
       statusText: 'OK',
-      json: async () => page({ match_count: 10234, offset: 50 }),
+      json: async () => page({ match_count: 9234, offset: 50 }),
     }));
+    searchParams = new URLSearchParams({ offset: '50' });
     render(<DiscoveredSpecsClient />);
 
-    expect(await screen.findByText(/Showing 51–52 of 10,234/)).toBeInTheDocument();
+    expect(await screen.findByText(/Showing 51–52 of 9,234/)).toBeInTheDocument();
+  });
+
+  test('pages by cursor: Next sends next_cursor, and the counts are read once per view (#7196)', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockImplementation(async (url: string) => {
+      const query = new URLSearchParams(String(url).split('?')[1] ?? '');
+      const counted = query.get('include_total') === 'true';
+      const later = query.get('cursor') === 'after-50';
+      return {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () =>
+          page({
+            catalog_total: counted ? 10000 : null,
+            match_count: counted ? 120 : null,
+            // A page read by cursor reports offset 0, whatever its place in the list.
+            offset: 0,
+            has_more: !later,
+            next_cursor: later ? null : 'after-50',
+          }),
+      };
+    });
+    render(<DiscoveredSpecsClient />);
+    await findRows();
+    // The first read of a view counts, and sends neither a cursor nor an offset.
+    expect(requestedQueries()[0].get('include_total')).toBe('true');
+    expect(requestedQueries()[0].has('cursor')).toBe(false);
+    expect(requestedQueries()[0].has('offset')).toBe(false);
+    // A count at the cap is "at least this many".
+    expect(screen.getByText(/10,000\+ indexed\./)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(lastQuery().get('cursor')).toBe('after-50'));
+    expect(lastQuery().has('offset')).toBe(false);
+    expect(lastQuery().has('include_total')).toBe(false);
+    // The range follows the page's place; the count is the first read's.
+    expect(await screen.findByText(/Showing 51–52 of 120/)).toBeInTheDocument();
+    // `has_more` is false on this page, so Next is off — whatever the count says.
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Prev' }));
+    await waitFor(() => expect(lastQuery().has('cursor')).toBe(false));
+    expect(await screen.findByText(/Showing 1–2 of 120/)).toBeInTheDocument();
+  });
+
+  test('shows a range without a count when the server gives none', async () => {
+    fetchMock.mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => page({ catalog_total: null, match_count: null, has_more: true, next_cursor: 'after-50' }),
+    }));
+    render(<DiscoveredSpecsClient />);
+    await findRows();
+    expect(screen.getByTestId('spec-catalog-range')).toHaveTextContent(/^Showing 1–2$/);
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled();
+    expect(screen.queryByText(/indexed\./)).not.toBeInTheDocument();
   });
 
   test('changing a filter drops back to the first page', async () => {
@@ -428,7 +487,9 @@ describe('server-side pagination', () => {
     await user.type(screen.getByLabelText('Search discovered specs'), 'orders');
 
     await waitFor(() => expect(lastQuery().get('q')).toBe('orders'));
-    expect(lastQuery().get('offset')).toBe('0');
+    // The first page: no offset and no cursor.
+    expect(lastQuery().has('offset')).toBe(false);
+    expect(lastQuery().has('cursor')).toBe(false);
   });
 });
 

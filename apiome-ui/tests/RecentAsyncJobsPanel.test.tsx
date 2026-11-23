@@ -25,6 +25,8 @@ describe('RecentAsyncJobsPanel', () => {
         total: 1,
         limit: 10,
         offset: 0,
+        has_more: false,
+        next_cursor: null,
       }),
     }) as unknown as typeof fetch;
 
@@ -37,15 +39,18 @@ describe('RecentAsyncJobsPanel', () => {
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      '/api/export/jobs?limit=10&offset=0',
+      '/api/export/jobs?limit=10&include_total=true',
       expect.objectContaining({ cache: 'no-store' }),
     );
     expect(screen.getByTestId('export-recent-jobs-pagination-summary')).toHaveTextContent(
       '1–1 of 1',
     );
+    // One page: nowhere to go.
+    expect(screen.getByTestId('export-recent-jobs-next-page')).toBeDisabled();
+    expect(screen.getByTestId('export-recent-jobs-prev-page')).toBeDisabled();
   });
 
-  it('pages via Next using offset/limit', async () => {
+  it('pages via Next and Previous by cursor, counting only on the first page (#7196)', async () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValueOnce({
@@ -56,6 +61,8 @@ describe('RecentAsyncJobsPanel', () => {
           total: 12,
           limit: 10,
           offset: 0,
+          has_more: true,
+          next_cursor: 'after-j10',
         }),
       })
       .mockResolvedValueOnce({
@@ -63,9 +70,23 @@ describe('RecentAsyncJobsPanel', () => {
         json: async () => ({
           success: true,
           jobs: [{ job_id: 'j11', state: 'failed', percent: 40 }],
+          total: null,
+          limit: 10,
+          offset: 0,
+          has_more: false,
+          next_cursor: null,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          jobs: [{ job_id: 'j1', state: 'completed', percent: 100 }],
           total: 12,
           limit: 10,
-          offset: 10,
+          offset: 0,
+          has_more: true,
+          next_cursor: 'after-j10',
         }),
       });
     global.fetch = fetchMock as unknown as typeof fetch;
@@ -76,8 +97,55 @@ describe('RecentAsyncJobsPanel', () => {
     fireEvent.click(screen.getByTestId('import-recent-jobs-next-page'));
     await waitFor(() => expect(screen.getByText('j11')).toBeInTheDocument());
     expect(fetchMock).toHaveBeenLastCalledWith(
-      '/api/catalog/import?limit=10&offset=10',
+      '/api/catalog/import?limit=10&cursor=after-j10',
       expect.anything(),
+    );
+    // The count came with the first page and is kept; the last page offers no Next.
+    expect(screen.getByTestId('import-recent-jobs-pagination-summary')).toHaveTextContent(
+      'Showing 11–11 of 12 jobs',
+    );
+    expect(screen.getByTestId('import-recent-jobs-next-page')).toBeDisabled();
+
+    fireEvent.click(screen.getByTestId('import-recent-jobs-prev-page'));
+    await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/catalog/import?limit=10&include_total=true',
+      expect.anything(),
+    );
+  });
+
+  it('pages on has_more alone and shows no count when the server gives none', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        jobs: [{ job_id: 'j1', state: 'completed', percent: 100 }],
+        total: null,
+        has_more: true,
+        next_cursor: 'after-j1',
+      }),
+    }) as unknown as typeof fetch;
+    render(<RecentAsyncJobsPanel kind="export" limit={10} />);
+    await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument());
+    expect(screen.getByTestId('export-recent-jobs-pagination-summary')).toHaveTextContent(/^Showing 1–1$/);
+    expect(screen.getByTestId('export-recent-jobs-next-page')).not.toBeDisabled();
+  });
+
+  it('falls back to offset paging for an answer with a total and no has_more', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        jobs: [{ job_id: 'j1', state: 'completed', percent: 100 }],
+        total: 12,
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(<RecentAsyncJobsPanel kind="export" limit={10} />);
+    await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('export-recent-jobs-next-page'));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenLastCalledWith('/api/export/jobs?limit=10&offset=10', expect.anything()),
     );
   });
 

@@ -21,8 +21,8 @@ export const dynamic = 'force-dynamic';
 /**
  * Read a page of the inbox.
  *
- * @param request - The incoming request; `unread`, `type`, `limit` and `offset` are
- *   forwarded, everything else is dropped.
+ * @param request - The incoming request; `unread`, `type`, `limit`, `cursor`, `include_total`
+ *   and the deprecated `offset` are forwarded, everything else is dropped.
  * @returns `{success: true, ...page}`, or `{success: false, error}` with the upstream
  *   status.
  */

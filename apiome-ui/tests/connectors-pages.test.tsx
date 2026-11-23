@@ -517,6 +517,41 @@ describe('Connector detail', () => {
     writeA11yFixture('connector-detail', document.body.innerHTML);
   });
 
+  it('loads more of the inventory by cursor, counting only on the first page (#7196)', async () => {
+    const item = (id: string) => ({
+      id,
+      remoteId: `svc-${id}`,
+      remoteName: id,
+      environment: 'default',
+      hosts: [],
+      basePath: null,
+      remoteRevision: null,
+      status: 'discovered',
+      catalogItemId: null,
+      lastSeenAt: null,
+    });
+    routes.push((url) => {
+      if (!url.startsWith('/api/connectors/c1/items')) return undefined;
+      return url.includes('cursor=after-a')
+        ? { body: { items: [item('b')], total: null, hasMore: false, nextCursor: null } }
+        : { body: { items: [item('a')], total: 240, hasMore: true, nextCursor: 'after-a' } };
+    });
+    const user = userEvent.setup();
+    render(<ConnectorDetailClient connectorId="c1" />);
+    await screen.findByTestId('connector-item-a');
+    expect(calls.find((call) => call.url.startsWith('/api/connectors/c1/items'))?.url).toBe(
+      '/api/connectors/c1/items?limit=100&include_total=true'
+    );
+    expect(screen.getByTestId('connector-items-shown')).toHaveTextContent('Showing 1 of 240 APIs.');
+
+    await user.click(screen.getByTestId('connector-items-load-more'));
+    expect(await screen.findByTestId('connector-item-b')).toBeInTheDocument();
+    expect(calls.at(-1)?.url).toBe('/api/connectors/c1/items?limit=100&cursor=after-a');
+    expect(screen.getByTestId('connector-item-a')).toBeInTheDocument();
+    // The last page said there is no more — the count is not what decides it.
+    expect(screen.queryByTestId('connector-items-load-more')).not.toBeInTheDocument();
+  });
+
   it('shows this connector runs on the Runs tab', async () => {
     const user = userEvent.setup();
     render(<ConnectorDetailClient connectorId="c1" />);
@@ -566,7 +601,44 @@ describe('Refresh runs ledger', () => {
     expect(within(conn).getByRole('link', { name: 'Prod Kong' })).toHaveAttribute('href', '/ade/dashboard/connectors/c1');
     expect(within(git).getByText(/acme\/apis/)).toBeInTheDocument();
     expect(within(conn).getByText('Imported 2 of 3')).toBeInTheDocument();
-    expect(calls.find((call) => call.url.startsWith('/api/refresh-runs'))?.url).toBe('/api/refresh-runs?limit=25');
+    expect(calls.find((call) => call.url.startsWith('/api/refresh-runs'))?.url).toBe(
+      '/api/refresh-runs?limit=25&include_total=true'
+    );
+    // Two runs, and the answer names no further page: nothing more is offered.
+    expect(screen.queryByTestId('refresh-runs-load-more')).not.toBeInTheDocument();
+  });
+
+  it('loads older runs by cursor, counting only on the first page (#7196)', async () => {
+    const older = { ...RUNS[0], id: 'r-older' };
+    routes.push((url) => {
+      if (!url.startsWith('/api/refresh-runs')) return undefined;
+      return url.includes('cursor=after-2')
+        ? { body: { runs: [older], total: null, hasMore: false, nextCursor: null } }
+        : { body: { runs: RUNS, total: 10000, hasMore: true, nextCursor: 'after-2' } };
+    });
+    const user = userEvent.setup();
+    render(<RefreshRunsLedger />);
+    await screen.findByTestId('refresh-run-r-conn');
+    // A count at the cap is "at least this many".
+    expect(screen.getByTestId('refresh-runs-shown')).toHaveTextContent('Showing the newest 2 of 10,000+ runs.');
+
+    await user.click(screen.getByTestId('refresh-runs-load-more'));
+    expect(await screen.findByTestId('refresh-run-r-older')).toBeInTheDocument();
+    expect(calls.at(-1)?.url).toBe('/api/refresh-runs?limit=25&cursor=after-2');
+    // Appended, not swapped — and the last page offers no more.
+    expect(screen.getByTestId('refresh-run-r-conn')).toBeInTheDocument();
+    expect(screen.queryByTestId('refresh-runs-load-more')).not.toBeInTheDocument();
+  });
+
+  it('offers more on hasMore alone and shows no count it was not given', async () => {
+    routes.push((url) =>
+      url.startsWith('/api/refresh-runs')
+        ? { body: { runs: RUNS, total: null, hasMore: true, nextCursor: 'after-2' } }
+        : undefined
+    );
+    render(<RefreshRunsLedger />);
+    await screen.findByTestId('refresh-run-r-conn');
+    expect(screen.getByTestId('refresh-runs-shown')).toHaveTextContent(/^Showing the newest 2 runs\.$/);
   });
 
   it('says when there are no runs', async () => {

@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { getAuthSession } from '@lib/auth/server-session';
 import { getTenantById } from '@lib/db/helper';
 import { createRestAuthHeaders, REST_API_BASE_URL, type SessionUserForRest } from '@lib/rest-auth';
+import { hasMoreAfter, readPage, setPageParams } from '@lib/cursor-pages';
 import {
   REST_THREAD_PAGE_LIMIT,
   UNRESOLVED_COUNT_THREAD_CAP,
@@ -123,11 +124,12 @@ export function restErrorMessage(payload: unknown, fallback: string): string {
  * Whether a parsed reply is a thread page.
  *
  * @param value - The parsed reply.
- * @returns True when it has a `threads` array and a numeric `total`.
+ * @returns True when it has a `threads` array. The `total` is not required: apiome-rest counts
+ *   only when the request set `include_total` (#7196), and answers `null` otherwise.
  */
 function isThreadPage(value: unknown): value is DiscussionThreadPage {
   const page = value as Partial<DiscussionThreadPage> | null;
-  return Boolean(page) && Array.isArray(page?.threads) && typeof page?.total === 'number';
+  return Boolean(page) && Array.isArray(page?.threads);
 }
 
 /**
@@ -135,7 +137,8 @@ function isThreadPage(value: unknown): value is DiscussionThreadPage {
  *
  * @param auth - The caller.
  * @param projectRef - The project id or slug.
- * @param params - The sanitized query (`status`, `anchor_type`, `mentions_me`, `limit`, `offset`).
+ * @param params - The sanitized query (`status`, `anchor_type`, `mentions_me`, `limit`, `cursor`,
+ *   `include_total`, or the deprecated `offset`).
  * @returns The page.
  * @throws RestCommentThreadsError when apiome-rest refuses or answers with something unreadable.
  */
@@ -173,30 +176,41 @@ export async function fetchCommentThreadPage(
  * @param auth - The caller.
  * @param projectRef - The project id or slug.
  * @param versionId - Only one version's threads, by (already sanitized) revision id (COL-2.2).
- * @returns The open threads read and apiome-rest's total of open threads (which can exceed the
- *   threads read when the cap is reached).
+ * Pages by cursor; only the first page asks apiome-rest to count.
+ *
+ * @returns The open threads read, apiome-rest's total of open threads (which can exceed the
+ *   threads read when the cap is reached), and whether threads remain unread.
  * @throws RestCommentThreadsError when any page fails.
  */
 export async function collectOpenCommentThreads(
   auth: CommentThreadsAuth,
   projectRef: string,
   versionId?: string | null
-): Promise<{ threads: DiscussionThread[]; total: number }> {
+): Promise<{ threads: DiscussionThread[]; total: number; truncated: boolean }> {
   const threads: DiscussionThread[] = [];
-  let total = 0;
-  while (threads.length < UNRESOLVED_COUNT_THREAD_CAP) {
-    const params = new URLSearchParams({
-      status: 'open',
-      limit: String(REST_THREAD_PAGE_LIMIT),
-      offset: String(threads.length),
-    });
+  let total: number | null = null;
+  let cursor: string | null = null;
+  let more = true;
+  while (more && threads.length < UNRESOLVED_COUNT_THREAD_CAP) {
+    const first = threads.length === 0;
+    const params = new URLSearchParams({ status: 'open', limit: String(REST_THREAD_PAGE_LIMIT) });
     if (versionId) params.set('version', versionId);
-    const page = await fetchCommentThreadPage(auth, projectRef, params);
-    total = page.total;
-    threads.push(...page.threads);
-    if (page.threads.length === 0 || threads.length >= total) break;
+    setPageParams(params, { cursor, offset: threads.length, includeTotal: first });
+    const body = await fetchCommentThreadPage(auth, projectRef, params);
+    const page = readPage(body);
+    if (first) total = page.total;
+    threads.push(...body.threads);
+    cursor = page.nextCursor;
+    // A page that reports `has_more` is believed; one that does not (offset paging) is compared
+    // with its total. An empty page ends the read either way.
+    more = body.threads.length > 0 && hasMoreAfter({ ...page, total }, threads.length);
   }
-  return { threads: threads.slice(0, UNRESOLVED_COUNT_THREAD_CAP), total };
+  const read = threads.slice(0, UNRESOLVED_COUNT_THREAD_CAP);
+  return {
+    threads: read,
+    total: Math.max(total ?? 0, read.length),
+    truncated: more || threads.length > read.length || (total ?? 0) > read.length,
+  };
 }
 
 /**

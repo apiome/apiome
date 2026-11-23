@@ -155,9 +155,11 @@ function installFetch() {
         success: true,
         notifications: inbox,
         count: inbox.length,
-        total: inbox.length,
+        total: null,
         limit: 20,
         offset: 0,
+        has_more: false,
+        next_cursor: null,
       });
     }
 

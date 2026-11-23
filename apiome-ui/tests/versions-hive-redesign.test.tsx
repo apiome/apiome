@@ -855,7 +855,7 @@ describe('the header', () => {
     try {
       installFetch([
         {
-          test: /^\/api\/graph\/edges\/project\/[^/]+\?direction=(in|out)&limit=500$/,
+          test: /^\/api\/graph\/edges\/project\/[^/]+\?direction=(in|out)&limit=500&include_total=true$/,
           reply: () => ({ edges: [], total: 0, truncated: false, limit: 500, offset: 0 }),
         },
       ]);
@@ -874,11 +874,11 @@ describe('the header', () => {
   it('counts unresolved threads on the Discussion tab and opens the project discussion (COL-1.3)', async () => {
     installFetch([
       {
-        test: /\/comment-threads\?status=open&limit=1&offset=0$/,
+        test: /\/comment-threads\?status=open&limit=1&include_total=true$/,
         reply: () => ({ success: true, threads: [], count: 0, total: 3, limit: 1, offset: 0 }),
       },
       {
-        test: /\/comment-threads\?status=open&limit=50&offset=0$/,
+        test: /\/comment-threads\?status=open&limit=50&include_total=true$/,
         reply: () => ({ success: true, threads: [], count: 0, total: 0, limit: 50, offset: 0 }),
       },
       {

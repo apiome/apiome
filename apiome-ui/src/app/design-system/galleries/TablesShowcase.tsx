@@ -26,6 +26,7 @@ import {
   DataTableCellSub,
   DataTableClearFilters,
   DataTableFilterChip,
+  DataTableCursorPager,
   DataTableFoot,
   DataTablePager,
   DataTableSearch,
@@ -126,6 +127,8 @@ export function TablesShowcase() {
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [selected, setSelected] = React.useState<string[]>([]);
   const [page, setPage] = React.useState(1);
+  // A list paged by cursor knows whether a page follows, not how many there are.
+  const [cursorPage, setCursorPage] = React.useState(0);
   const [sort, setSort] = React.useState<DataTableSortState | null>({
     column: 'name',
     direction: 'asc',
@@ -397,7 +400,7 @@ export function TablesShowcase() {
       <div className="flex flex-col gap-2">
         <p className="text-xs text-fg-muted">
           Seven columns: the table scrolls sideways inside its own card, and the page never
-          does.
+          does. Its foot pages by cursor — Previous and Next, with no page numbers.
         </p>
         <DataTable
           caption="Catalog"
@@ -410,6 +413,13 @@ export function TablesShowcase() {
           footer={
             <DataTableFoot>
               <span>{dataTableRangeLabel(1, PAGE_SIZE, CATALOG.length, 'item')}</span>
+              <DataTableCursorPager
+                hasPrevious={cursorPage > 0}
+                hasNext={cursorPage < 2}
+                onPrevious={() => setCursorPage((current) => current - 1)}
+                onNext={() => setCursorPage((current) => current + 1)}
+                label="Catalog pages"
+              />
             </DataTableFoot>
           }
         />

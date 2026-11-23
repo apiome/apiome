@@ -24,6 +24,8 @@
  * panel all import it.
  */
 
+import { forwardPageParams, setPageParams, type PageRequest } from './cursor-pages';
+
 /* -------------------------------------------------------------------------- */
 /* Wire vocabulary                                                            */
 /* -------------------------------------------------------------------------- */
@@ -150,12 +152,16 @@ export interface DiscussionThreadPage {
   threads: DiscussionThread[];
   /** How many threads this page holds. */
   count: number;
-  /** How many threads match the filters in all. */
-  total: number;
+  /** How many threads match the filters, counted only when the request set `include_total`. */
+  total: number | null;
   /** The page size asked for. */
   limit: number;
-  /** How many threads were skipped. */
+  /** How many threads were skipped (deprecated offset paging; 0 on a cursor page). */
   offset: number;
+  /** Whether another page follows. */
+  has_more?: boolean;
+  /** The cursor of the next page; null on the last page. */
+  next_cursor?: string | null;
 }
 
 /** The counts the panel draws beside its filters and on each row. */
@@ -315,18 +321,20 @@ export const ANCHOR_TYPE_LABELS: Readonly<Record<CommentAnchorType, string>> = {
 /**
  * The query string the panel sends to its BFF list route.
  *
- * The names are apiome-rest's own (`status`, `mentions_me`, `anchor_type`, `origin`, `limit`, `offset`), so
- * the BFF forwards them after {@link sanitizeThreadListParams} rather than translating.
+ * The names are apiome-rest's own (`status`, `mentions_me`, `anchor_type`, `origin`, `limit`,
+ * `cursor`, `include_total`), so the BFF forwards them after {@link sanitizeThreadListParams}
+ * rather than translating.
  *
  * @param filters - The panel's filters.
- * @param paging - The page to read.
+ * @param paging - The page to read: the previous page's `cursor` (none for the first page),
+ *   whether to count the matches, and — only for a page that issued no cursor — the `offset`.
  * @param versionId - Narrow to one version's threads, by revision id (the review page, COL-2.2);
  *   every version of the project when omitted.
  * @returns The query string, including its leading `?`.
  */
 export function discussionListParams(
   filters: Readonly<DiscussionFilters>,
-  paging: { limit?: number; offset?: number } = {},
+  paging: { limit?: number } & PageRequest = {},
   versionId?: string | null
 ): string {
   const params = new URLSearchParams();
@@ -336,7 +344,7 @@ export function discussionListParams(
   if (filters.origin !== 'all') params.set('origin', filters.origin);
   if (versionId) params.set('version', versionId);
   params.set('limit', String(paging.limit ?? DISCUSSION_PAGE_SIZE));
-  params.set('offset', String(paging.offset ?? 0));
+  setPageParams(params, paging);
   return `?${params.toString()}`;
 }
 
@@ -407,8 +415,11 @@ export function sanitizeThreadListParams(input: ParamReader): URLSearchParams {
     'limit',
     String(Math.min(REST_THREAD_PAGE_LIMIT, Math.max(1, limit ?? DISCUSSION_PAGE_SIZE)))
   );
-  const offset = parseCount(input.get('offset'));
-  out.set('offset', String(offset ?? 0));
+  forwardPageParams(input, out);
+  if (!out.has('cursor')) {
+    const offset = parseCount(input.get('offset'));
+    out.set('offset', String(offset ?? 0));
+  }
   return out;
 }
 

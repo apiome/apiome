@@ -49,6 +49,7 @@ import {
   type Connector,
   type ConnectorItem,
 } from '@lib/connectors-api';
+import { EMPTY_PAGE_INFO, formatTotal, hasMoreAfter, type PageInfo } from '@lib/cursor-pages';
 
 /**
  * One connector — `/ade/dashboard/connectors/[id]` (CDG-1.7, #5958).
@@ -73,7 +74,10 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
   const { confirm } = useDialog();
   const [connector, setConnector] = React.useState<Connector | null>(null);
   const [items, setItems] = React.useState<ConnectorItem[] | null>(null);
-  const [itemTotal, setItemTotal] = React.useState(0);
+  // The inventory pages by cursor (#7196): the first page with its count, more on "Load more".
+  const [itemTotal, setItemTotal] = React.useState<number | null>(null);
+  const [itemPage, setItemPage] = React.useState<PageInfo>(EMPTY_PAGE_INFO);
+  const [loadingMoreItems, setLoadingMoreItems] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [syncing, setSyncing] = React.useState(false);
   const [runsKey, setRunsKey] = React.useState(0);
@@ -82,15 +86,42 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
 
   const load = React.useCallback(async () => {
     try {
-      const [found, page] = await Promise.all([getConnector(connectorId), listConnectorItems(connectorId)]);
+      const [found, page] = await Promise.all([
+        getConnector(connectorId),
+        listConnectorItems(connectorId, { includeTotal: true }),
+      ]);
       setConnector(found);
       setItems(page.items);
       setItemTotal(page.total);
+      setItemPage(page.page);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The connector could not be read. Try again.');
     }
   }, [connectorId]);
+
+  /** Append the next page of the inventory, continuing from the last page's cursor. */
+  const loadMoreItems = async () => {
+    if (!items) return;
+    setLoadingMoreItems(true);
+    try {
+      const page = await listConnectorItems(connectorId, {
+        cursor: itemPage.nextCursor,
+        offset: items.length,
+      });
+      setItems((current) => {
+        const seen = new Set((current ?? []).map((item) => item.id));
+        return [...(current ?? []), ...page.items.filter((item) => !seen.has(item.id))];
+      });
+      setItemPage(page.page);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'The next page could not be read. Try again.');
+    } finally {
+      setLoadingMoreItems(false);
+    }
+  };
+  const moreItems = items ? hasMoreAfter({ ...itemPage, total: itemTotal }, items.length) : false;
+  const shownItemTotal = formatTotal(itemTotal);
 
   React.useEffect(() => {
     void load();
@@ -259,10 +290,23 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                     ))}
                   </tbody>
                 </table>
-                {itemTotal > items.length ? (
-                  <p className="cnx-note">
-                    Showing {items.length} of {itemTotal} {mcpInventory ? 'servers' : 'APIs'}.
-                  </p>
+                {moreItems ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="cnx-note" data-testid="connector-items-shown">
+                      Showing {items.length.toLocaleString('en-US')}
+                      {shownItemTotal ? ` of ${shownItemTotal}` : ''} {mcpInventory ? 'servers' : 'APIs'}.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void loadMoreItems()}
+                      disabled={loadingMoreItems}
+                      title={loadingMoreItems ? 'Loading the next page' : undefined}
+                      data-testid="connector-items-load-more"
+                    >
+                      {loadingMoreItems ? 'Loading…' : 'Load more'}
+                    </Button>
+                  </div>
                 ) : null}
               </div>
             ) : null}

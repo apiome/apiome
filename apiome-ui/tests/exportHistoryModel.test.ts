@@ -61,7 +61,18 @@ const params = (query: string) => Object.fromEntries(new URLSearchParams(query))
 
 describe('historyQuery', () => {
   it('asks for the first page with no filter', () => {
-    expect(params(historyQuery(EMPTY_FILTERS))).toEqual({ limit: String(HISTORY_PAGE_SIZE), offset: '0' });
+    expect(params(historyQuery(EMPTY_FILTERS))).toEqual({ limit: String(HISTORY_PAGE_SIZE) });
+  });
+
+  it('pages by cursor, counts only when asked, and never sends an offset beside a cursor', () => {
+    expect(params(historyQuery(EMPTY_FILTERS, { includeTotal: true }))).toEqual({
+      limit: String(HISTORY_PAGE_SIZE),
+      include_total: 'true',
+    });
+    expect(params(historyQuery(EMPTY_FILTERS, { cursor: 'abc', offset: 25 }))).toEqual({
+      limit: String(HISTORY_PAGE_SIZE),
+      cursor: 'abc',
+    });
   });
 
   it('carries every filter, dates as whole UTC days, and the page offset', () => {
@@ -77,7 +88,7 @@ describe('historyQuery', () => {
         from: '2026-11-01',
         to: '2026-11-05',
       },
-      2,
+      { offset: 20 },
       10,
     );
     expect(params(query)).toEqual({
@@ -99,7 +110,7 @@ describe('historyQuery', () => {
     const query = params(
       historyQuery({ ...EMPTY_FILTERS, state: 'exploded', channel: 'ftp', decision: 'maybe', from: '11/01/2026' }),
     );
-    expect(query).toEqual({ limit: String(HISTORY_PAGE_SIZE), offset: '0' });
+    expect(query).toEqual({ limit: String(HISTORY_PAGE_SIZE) });
   });
 
   it('counts the filters set', () => {
@@ -210,6 +221,10 @@ describe('exportRunQuery', () => {
       offset: '0',
       finished_after: '2026-11-01T00:00:00Z',
     });
+    // The paging parameters of the cursor contract pass through (#7196).
+    expect(
+      params(exportRunQuery(new URLSearchParams('limit=25&cursor=abc&include_total=true')).slice(1)),
+    ).toEqual({ limit: '25', cursor: 'abc', include_total: 'true' });
     expect(exportRunQuery(new URLSearchParams(''))).toBe('');
   });
 });

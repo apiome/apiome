@@ -25,10 +25,17 @@ async function readJson<T>(response: Response): Promise<T> {
  *
  * @param kind - The entity's kind.
  * @param id - The entity's id.
+ * The panel draws one page (the endpoint's maximum) and says when it was cut short, so the read
+ * asks for the count (`include_total`, #7196) — without it `total` is null.
+ *
  * @param direction - `in` or `out`.
  */
 export async function fetchEdges(kind: GraphNodeKind, id: string, direction: 'in' | 'out'): Promise<GraphEdgePage> {
-  const query = new URLSearchParams({ direction, limit: String(EDGE_PAGE_LIMIT) });
+  const query = new URLSearchParams({
+    direction,
+    limit: String(EDGE_PAGE_LIMIT),
+    include_total: 'true',
+  });
   const response = await fetch(`/api/graph/edges/${kind}/${encodeURIComponent(id)}?${query.toString()}`, {
     cache: 'no-store',
   });

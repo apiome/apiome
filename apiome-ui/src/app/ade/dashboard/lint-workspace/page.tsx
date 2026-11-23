@@ -60,6 +60,7 @@ import {
 import { applyLintFixes, fetchLintFixPlan, revisionHref } from '@/app/utils/lint-fix';
 import { fetchVersionLintReport } from '@/app/utils/version-lint-report';
 import LintFixApplyDialog from '@/app/components/ade/lintFix/LintFixApplyDialog';
+import { formatTotal, hasMoreAfter } from '@lib/cursor-pages';
 import {
   applyPostureFixes,
   groupFindingsByRevision,
@@ -214,6 +215,7 @@ function LintWorkspacePageInner() {
         sort,
         limit: LINT_QUEUE_PAGE_SIZE,
         offset,
+        includeTotal: true,
       });
       setPage(
         lintWorkspaceFindingsFromPayload(
@@ -570,8 +572,8 @@ function LintWorkspacePageInner() {
               >
                 <entry.icon aria-hidden className="lw-tab-glyph" />
                 {entry.label}
-                {entry.id === 'queue' && page ? (
-                  <span className={TAB_COUNT_CLASS}>{page.total}</span>
+                {entry.id === 'queue' && page && page.total !== null ? (
+                  <span className={TAB_COUNT_CLASS}>{formatTotal(page.total)}</span>
                 ) : null}
               </button>
             ))}
@@ -612,7 +614,8 @@ function LintWorkspacePageInner() {
           >
             <LintQueueTable
               findings={page?.findings ?? []}
-              total={page?.total ?? 0}
+              total={page ? page.total : 0}
+              hasMore={page ? hasMoreAfter(page.paging, offset + page.findings.length) : false}
               offset={offset}
               facets={page?.facets ?? {}}
               filters={filters}

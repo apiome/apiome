@@ -52,6 +52,8 @@ import Link from 'next/link';
 import { Layers, MessageSquareText, Plus, RefreshCw, ShieldCheck, Wrench } from 'lucide-react';
 
 import { useAuthSession } from '@lib/auth/session-client';
+import { EMPTY_PAGE_INFO, formatTotal, hasMoreAfter, type PageInfo } from '@lib/cursor-pages';
+import { useCursorTrail } from '@/app/hooks/useCursorPages';
 
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -61,8 +63,8 @@ import {
   DataTable,
   DataTableCellPrimary,
   DataTableCellSub,
+  DataTableCursorPager,
   DataTableFoot,
-  DataTablePager,
   DataTableToolbar,
   type DataTableColumn,
   type DataTableSortState,
@@ -131,8 +133,8 @@ export default function McpCapabilityDirectoryClient() {
   const currentTenantId = sessionUser?.current_tenant_id;
 
   const [items, setItems] = React.useState<McpCapabilityDirectoryEntry[]>([]);
-  const [total, setTotal] = React.useState(0);
-  const [offset, setOffset] = React.useState(0);
+  const [total, setTotal] = React.useState<number | null>(null);
+  const [pageInfo, setPageInfo] = React.useState<PageInfo>(EMPTY_PAGE_INFO);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [filters, setFilters] = React.useState<McpCapabilityDirectoryFilters>(
@@ -143,13 +145,20 @@ export default function McpCapabilityDirectoryClient() {
   const [nameDraft, setNameDraft] = React.useState('');
   const [presetCounts, setPresetCounts] = React.useState<Record<string, number>>({});
 
-  const pageCount = Math.max(1, Math.ceil(total / MCP_CAPABILITY_DIRECTORY_PAGE_SIZE));
-  const page = Math.floor(offset / MCP_CAPABILITY_DIRECTORY_PAGE_SIZE) + 1;
+  // The directory pages by cursor (#7196): Previous / Next. A cursor belongs to one filter set,
+  // sort and direction, so the trail is keyed by all of them and any change starts again from the
+  // first page — the one request that asks for the count.
+  const trail = useCursorTrail(
+    JSON.stringify([currentTenantId ?? '', filters, sort, direction]),
+    MCP_CAPABILITY_DIRECTORY_PAGE_SIZE,
+  );
+  const { cursor, offset, first } = trail;
 
   const load = React.useCallback(async () => {
     if (!currentTenantId) {
       setItems([]);
-      setTotal(0);
+      setTotal(null);
+      setPageInfo(EMPTY_PAGE_INFO);
       setLoading(false);
       return;
     }
@@ -160,7 +169,7 @@ export default function McpCapabilityDirectoryClient() {
         filters,
         sort,
         direction,
-        offset,
+        { cursor, offset, includeTotal: first },
         MCP_CAPABILITY_DIRECTORY_PAGE_SIZE,
       );
       const res = await fetch(`/api/mcp/capabilities?${params.toString()}`, {
@@ -173,15 +182,18 @@ export default function McpCapabilityDirectoryClient() {
       }
       const result = mcpCapabilityDirectoryFromPayload(data);
       setItems(result.items);
-      setTotal(result.total);
+      setPageInfo(result.page);
+      // Only the first page is counted; the later ones keep its answer.
+      if (first) setTotal(result.total);
     } catch (e) {
       setItems([]);
-      setTotal(0);
+      setTotal(null);
+      setPageInfo(EMPTY_PAGE_INFO);
       setError(e instanceof Error ? e.message : MCP_CAPABILITY_DIRECTORY_ERROR_FALLBACK);
     } finally {
       setLoading(false);
     }
-  }, [currentTenantId, filters, offset, sort, direction]);
+  }, [currentTenantId, filters, cursor, offset, first, sort, direction]);
 
   React.useEffect(() => {
     void load();
@@ -190,8 +202,9 @@ export default function McpCapabilityDirectoryClient() {
   /**
    * Count each preset's rows.
    *
-   * Four `limit=1` reads whose only interesting field is `total`, run in parallel and refreshed by
-   * Refresh. A count that fails is *dropped* rather than shown as zero — "none" and "not counted"
+   * Four `limit=1` reads that set `include_total` and whose only interesting field is `total`, run
+   * in parallel and refreshed by Refresh. A count that fails — or that apiome-rest did not give —
+   * is *dropped* rather than shown as zero — "none" and "not counted"
    * are different facts, and the tile draws no chip for the second, which is the rule
    * `McpSectionTabs` set for its own counts.
    */
@@ -210,7 +223,8 @@ export default function McpCapabilityDirectoryClient() {
           });
           if (!res.ok) return null;
           const data = await res.json().catch(() => ({}));
-          return [preset.id, mcpCapabilityDirectoryFromPayload(data).total] as const;
+          const counted = mcpCapabilityDirectoryFromPayload(data).total;
+          return counted === null ? null : ([preset.id, counted] as const);
         } catch {
           return null;
         }
@@ -228,10 +242,9 @@ export default function McpCapabilityDirectoryClient() {
     void loadPresetCounts();
   }, [load, loadPresetCounts]);
 
-  /** Any filter change starts the reader at the first page of the new result set. */
+  /** Any filter change starts the reader at the first page of the new result set (the trail's key). */
   const changeFilters = React.useCallback(
     (next: McpCapabilityDirectoryFilters) => {
-      setOffset(0);
       setFilters(next);
       setNameDraft(next.name);
     },
@@ -253,7 +266,6 @@ export default function McpCapabilityDirectoryClient() {
 
   const handleSortChange = React.useCallback((next: DataTableSortState | null) => {
     const resolved = mcpCapabilityDirectorySortFromTable(next);
-    setOffset(0);
     setSort(resolved.sort);
     setDirection(resolved.direction);
   }, []);
@@ -344,7 +356,7 @@ export default function McpCapabilityDirectoryClient() {
             </Button>
           </>
         }
-        tabs={<McpSectionTabs counts={total > 0 ? { capabilities: total } : undefined} />}
+        tabs={<McpSectionTabs counts={total !== null && total > 0 ? { capabilities: total } : undefined} />}
       />
 
       <PageBody>
@@ -378,7 +390,7 @@ export default function McpCapabilityDirectoryClient() {
                         <span className="mcpc-preset__label">{preset.label}</span>
                         <span className="mcpc-preset__desc">
                           {preset.description}
-                          {typeof count === 'number' ? ` · ${count.toLocaleString()}` : ''}
+                          {typeof count === 'number' ? ` · ${formatTotal(count)}` : ''}
                         </span>
                       </span>
                     </button>
@@ -525,12 +537,13 @@ export default function McpCapabilityDirectoryClient() {
                   <span data-testid="mcp-capabilities-foot">
                     {mcpCapabilityDirectoryFootLine(total, filters, sort, direction)}
                   </span>
-                  <DataTablePager
-                    page={page}
-                    pageCount={pageCount}
-                    onPageChange={(next) =>
-                      setOffset((next - 1) * MCP_CAPABILITY_DIRECTORY_PAGE_SIZE)
-                    }
+                  <DataTableCursorPager
+                    hasPrevious={!first}
+                    hasNext={hasMoreAfter(pageInfo, offset + items.length)}
+                    busy={loading}
+                    onPrevious={trail.previous}
+                    onNext={() => trail.next(pageInfo.nextCursor)}
+                    label="Capability pages"
                   />
                 </DataTableFoot>
               }

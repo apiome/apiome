@@ -7,6 +7,8 @@
  * reason (a failing dry run) rather than a generic error.
  */
 
+import { readPage, setPageParams, type PageInfo, type PageRequest } from './cursor-pages';
+
 /** A connector, as `GET /connectors` describes it (never a credential). */
 export interface Connector {
   id: string;
@@ -195,28 +197,43 @@ export function syncConnector(id: string): Promise<ConnectorRun> {
   return call<ConnectorRun>(`/api/connectors/${encodeURIComponent(id)}/sync`, { method: 'POST' });
 }
 
-/** A page of a connector's inventory. */
-export function listConnectorItems(
+/**
+ * A page of a connector's inventory.
+ *
+ * Pages by cursor (#7196): pass the previous page's `page.nextCursor` for the next one. `total`
+ * is null unless `includeTotal` is set, and is counted only up to 10,000.
+ */
+export async function listConnectorItems(
   id: string,
-  options: { status?: string | null; limit?: number; offset?: number } = {}
-): Promise<{ items: ConnectorItem[]; total: number }> {
+  options: { status?: string | null; limit?: number } & PageRequest = {}
+): Promise<{ items: ConnectorItem[]; total: number | null; page: PageInfo }> {
   const query = new URLSearchParams();
   if (options.status) query.set('status', options.status);
   query.set('limit', String(options.limit ?? 100));
-  if (options.offset) query.set('offset', String(options.offset));
-  return call(`/api/connectors/${encodeURIComponent(id)}/items?${query.toString()}`);
+  setPageParams(query, options);
+  const body = await call<{ items?: ConnectorItem[] }>(
+    `/api/connectors/${encodeURIComponent(id)}/items?${query.toString()}`
+  );
+  const page = readPage(body);
+  return { items: Array.isArray(body.items) ? body.items : [], total: page.total, page };
 }
 
-/** A page of the refresh ledger, optionally one connector's. */
-export function listRefreshRuns(
-  options: { connector?: string | null; source?: string | null; limit?: number; offset?: number } = {}
-): Promise<{ runs: RefreshRun[]; total: number }> {
+/**
+ * A page of the refresh ledger, optionally one connector's.
+ *
+ * Pages by cursor (#7196), as {@link listConnectorItems} does.
+ */
+export async function listRefreshRuns(
+  options: { connector?: string | null; source?: string | null; limit?: number } & PageRequest = {}
+): Promise<{ runs: RefreshRun[]; total: number | null; page: PageInfo }> {
   const query = new URLSearchParams();
   if (options.connector) query.set('connector', options.connector);
   if (options.source) query.set('source', options.source);
   query.set('limit', String(options.limit ?? 25));
-  if (options.offset) query.set('offset', String(options.offset));
-  return call(`/api/refresh-runs?${query.toString()}`);
+  setPageParams(query, options);
+  const body = await call<{ runs?: RefreshRun[] }>(`/api/refresh-runs?${query.toString()}`);
+  const page = readPage(body);
+  return { runs: Array.isArray(body.runs) ? body.runs : [], total: page.total, page };
 }
 
 /**

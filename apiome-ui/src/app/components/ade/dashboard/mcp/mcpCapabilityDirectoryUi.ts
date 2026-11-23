@@ -5,6 +5,13 @@
  * owning-server links. This module holds wire types and adapters kept free of React for unit tests.
  */
 
+import {
+  formatTotal,
+  readPage,
+  setPageParams,
+  type PageInfo,
+  type PageRequest,
+} from '@lib/cursor-pages';
 import type { McpBadgeVariant } from './mcpBrowseUi';
 
 export type McpCapabilityDirectoryKind = 'tool' | 'resource' | 'resource_template' | 'prompt';
@@ -41,9 +48,12 @@ export interface McpCapabilityDirectoryFilters {
 
 export interface McpCapabilityDirectoryPage {
   items: McpCapabilityDirectoryEntry[];
-  total: number;
+  /** The matches, or null when the request did not ask apiome-rest to count them (#7196). */
+  total: number | null;
   limit: number;
   offset: number;
+  /** Whether another page follows, and the cursor it starts at. */
+  page: PageInfo;
 }
 
 export const MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS: McpCapabilityDirectoryFilters = {
@@ -130,9 +140,10 @@ export function mcpCapabilityDirectoryEntryFromPayload(
 export function mcpCapabilityDirectoryFromPayload(payload: unknown): McpCapabilityDirectoryPage {
   const empty: McpCapabilityDirectoryPage = {
     items: [],
-    total: 0,
+    total: null,
     limit: MCP_CAPABILITY_DIRECTORY_PAGE_SIZE,
     offset: 0,
+    page: readPage(null),
   };
   if (!payload || typeof payload !== 'object') return empty;
   const p = payload as Record<string, unknown>;
@@ -142,9 +153,10 @@ export function mcpCapabilityDirectoryFromPayload(payload: unknown): McpCapabili
     .filter((row): row is McpCapabilityDirectoryEntry => row !== null);
   return {
     items,
-    total: asNumber(p.total) ?? items.length,
+    total: readPage(p).total,
     limit: asNumber(p.limit) ?? MCP_CAPABILITY_DIRECTORY_PAGE_SIZE,
     offset: asNumber(p.offset) ?? 0,
+    page: readPage(p),
   };
 }
 
@@ -152,14 +164,16 @@ export function mcpCapabilityDirectoryQueryParams(
   filters: McpCapabilityDirectoryFilters,
   sort: McpCapabilityDirectorySort,
   direction: McpCapabilityDirectorySortDirection,
-  offset: number,
+  page: PageRequest = {},
   limit = MCP_CAPABILITY_DIRECTORY_PAGE_SIZE,
 ): URLSearchParams {
   const params = new URLSearchParams();
   params.set('sort', sort);
   params.set('direction', direction);
   params.set('limit', String(limit));
-  params.set('offset', String(offset));
+  // The directory pages by cursor (#7196). A cursor belongs to one sort and direction, so the
+  // caller starts again from the first page whenever either changes.
+  setPageParams(params, page);
   const name = filters.name.trim();
   if (name) params.set('name', name);
   if (filters.type) params.set('type', filters.type);
@@ -365,7 +379,7 @@ export function mcpCapabilityDirectoryPresetCountParams(
     { ...MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS, ...preset.filters },
     'server',
     'asc',
-    0,
+    { includeTotal: true },
     1,
   );
 }
@@ -377,18 +391,22 @@ export function mcpCapabilityDirectoryPresetCountParams(
  *
  * @param offset How many rows were skipped.
  * @param count How many rows this page holds.
- * @param total How many matched in all.
+ * @param total How many matched in all; null when not counted, and then only the range is given.
+ *   A count at the 10,000 cap reads `10,000+`.
  * @returns The sentence.
  */
 export function mcpCapabilityDirectoryRange(
   offset: number,
   count: number,
-  total: number,
+  total: number | null,
 ): string {
-  if (total === 0) return `No ${MCP_CAPABILITY_DIRECTORY_NOUN_PLURAL}`;
+  if (total === 0 || (total === null && count === 0)) {
+    return `No ${MCP_CAPABILITY_DIRECTORY_NOUN_PLURAL}`;
+  }
   const start = offset + 1;
-  const end = Math.min(offset + count, total);
-  return `${start}–${end} of ${total}`;
+  const end = total === null ? offset + count : Math.min(offset + count, total);
+  const shown = formatTotal(total);
+  return shown === null ? `${start}–${end}` : `${start}–${end} of ${shown}`;
 }
 
 /** The label a sort key reads as in the foot line. */
@@ -405,23 +423,27 @@ const SORT_LABEL: Readonly<Record<McpCapabilityDirectorySort, string>> = {
  * arrow is `aria-hidden` in the markup; this string carries the direction in words as well so the
  * sentence still says which way it points when the glyph is not announced.
  *
- * @param total How many rows matched.
+ * @param total How many rows matched; null when not counted, and then no number is printed.
  * @param filters The filters in force — the name term is quoted back when there is one.
  * @param sort The sorted column.
  * @param direction Which way it points.
  * @returns The sentence.
  */
 export function mcpCapabilityDirectoryFootLine(
-  total: number,
+  total: number | null,
   filters: McpCapabilityDirectoryFilters,
   sort: McpCapabilityDirectorySort,
   direction: McpCapabilityDirectorySortDirection,
 ): string {
   const noun = total === 1 ? MCP_CAPABILITY_DIRECTORY_NOUN : MCP_CAPABILITY_DIRECTORY_NOUN_PLURAL;
   const name = filters.name.trim();
-  const matching = name ? `${total} ${noun} match “${name}”` : `${total} ${noun}`;
+  const shown = formatTotal(total);
   const order = `sorted by ${SORT_LABEL[sort]} ${direction === 'asc' ? 'ascending' : 'descending'}`;
-  return `${matching} · page size ${MCP_CAPABILITY_DIRECTORY_PAGE_SIZE} · ${order}`;
+  const rest = `page size ${MCP_CAPABILITY_DIRECTORY_PAGE_SIZE} · ${order}`;
+  // Not counted: say what the filter is, never a number nobody gave.
+  if (shown === null) return name ? `Matching “${name}” · ${rest}` : rest;
+  const matching = name ? `${shown} ${noun} match “${name}”` : `${shown} ${noun}`;
+  return `${matching} · ${rest}`;
 }
 
 /**

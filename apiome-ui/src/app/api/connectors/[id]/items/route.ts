@@ -1,6 +1,6 @@
 /**
  * A connector's inventory (CDG-1.7, #5958). Proxies `GET /v1/tenants/{slug}/connectors/{id}/items`
- * with its `status`, `limit` and `offset` query.
+ * with its `status`, `limit`, `cursor`, `include_total` and (deprecated) `offset` query.
  */
 
 import { NextRequest } from 'next/server';
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const resolved = await resolveConnectorTenant();
   if ('error' in resolved) return resolved.error;
   const query = new URLSearchParams();
-  for (const key of ['status', 'limit', 'offset']) {
+  for (const key of ['status', 'limit', 'offset', 'cursor', 'include_total']) {
     const value = request.nextUrl.searchParams.get(key);
     if (value) query.set(key, value);
   }

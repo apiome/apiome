@@ -45,6 +45,7 @@ import { useDialog } from '@/app/components/providers/DialogProvider';
 import { ModalFrame, ModalFrameTitle } from '@/app/components/ui/ModalFrame';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
 import { Button } from '@/app/components/ui/Button';
+import { AdminLoadMore, useAdminPagedList, useSettledChange } from '../components/adminPagedList';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { SkeletonCardGrid, SkeletonText } from '@/app/components/ui/Skeleton';
@@ -891,7 +892,6 @@ export default function LicenseManagementClient({
   const [licenses, setLicenses] = useState<License[]>([]);
   const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([]);
   const [flagGroups, setFlagGroups] = useState<FeatureFlagGroup[]>([]);
-  const [usersWithLicenses, setUsersWithLicenses] = useState<UserWithLicense[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -909,6 +909,15 @@ export default function LicenseManagementClient({
   // Assign dropdown
   const [assigningUser, setAssigningUser] = useState<UserWithLicense | null>(null);
   const [assignSearch, setAssignSearch] = useState('');
+  // The assignments list is paged and searched by the server (DBP-1.13, #7196).
+  const userList = useAdminPagedList<UserWithLicense, { totals?: { assigned_count?: number } | null }>(
+    ({ cursor }) => getAllUsersWithLicenses({ cursor, search: assignSearch, includeTotals: cursor === null }),
+    'users',
+  );
+  const usersWithLicenses = userList.items;
+  useSettledChange(assignSearch, () => {
+    void userList.reload().catch(() => showMessage('error', 'Failed to load data'));
+  });
 
   // Flag override modal
   const [overrideUser, setOverrideUser] = useState<UserWithLicense | null>(null);
@@ -921,15 +930,14 @@ export default function LicenseManagementClient({
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [lr, ffr, ur, gr] = await Promise.all([
+      const [lr, ffr, , gr] = await Promise.all([
         getAllLicenses(),
         getAllFeatureFlags(),
-        getAllUsersWithLicenses(),
+        userList.reload(),
         getAllFeatureFlagGroups(),
       ]);
       const ld = JSON.parse(lr); if (ld.success) setLicenses(ld.licenses);
       const fd = JSON.parse(ffr); if (fd.success) setFeatureFlags(fd.featureFlags);
-      const ud = JSON.parse(ur); if (ud.success) setUsersWithLicenses(ud.users);
       const gd = JSON.parse(gr);
       setFlagGroups(gd.success ? (gd.groups ?? []) : []);
     } catch {
@@ -1026,10 +1034,13 @@ export default function LicenseManagementClient({
     else showMessage('error', res.error);
   };
 
-  const filteredUsers = usersWithLicenses.filter(u =>
-    !assignSearch || u.name.toLowerCase().includes(assignSearch.toLowerCase()) ||
-    u.email.toLowerCase().includes(assignSearch.toLowerCase())
-  );
+  // The search is applied in SQL, so the rows in hand are already the matches.
+  const filteredUsers = usersWithLicenses;
+  // Every licensed user, counted by the server; the loaded page is the fallback.
+  const assignedCount =
+    typeof userList.extra?.totals?.assigned_count === 'number'
+      ? userList.extra.totals.assigned_count
+      : usersWithLicenses.filter(u => u.license_id).length;
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -1037,7 +1048,7 @@ export default function LicenseManagementClient({
     { id: 'licenses',      label: 'Licenses',        icon: <Award className="w-4 h-4" />,    count: licenses.length },
     { id: 'featureFlags',  label: 'Feature Flags',   icon: <Flag className="w-4 h-4" />,     count: featureFlags.length },
     { id: 'flagPackages',  label: 'Flag packages',   icon: <Package className="w-4 h-4" />, count: flagGroups.length },
-    { id: 'assignments',   label: 'Assignments',     icon: <Users className="w-4 h-4" />,   count: usersWithLicenses.filter(u => u.license_id).length },
+    { id: 'assignments',   label: 'Assignments',     icon: <Users className="w-4 h-4" />,   count: assignedCount },
   ];
 
   return (
@@ -1400,7 +1411,7 @@ export default function LicenseManagementClient({
                 onChange={e => setAssignSearch(e.target.value)}
                 className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg px-3 py-2 text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500 placeholder-slate-400 dark:placeholder-slate-500"
               />
-              <span className="text-xs text-gray-500 shrink-0">{filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-gray-500 shrink-0">{filteredUsers.length}{userList.hasMore ? '+' : ''} user{filteredUsers.length !== 1 ? 's' : ''}</span>
             </div>
 
             {loading ? (
@@ -1461,6 +1472,7 @@ export default function LicenseManagementClient({
                     ))}
                   </tbody>
                 </table>
+                <AdminLoadMore list={userList} noun="users" testId="admin-assignments-load-more" />
               </div>
             )}
           </div>

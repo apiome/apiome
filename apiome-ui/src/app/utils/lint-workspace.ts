@@ -7,6 +7,7 @@
  * (the server re-enforces every rule; the client copy only drives which actions render enabled).
  */
 
+import { readPage, type PageInfo } from '@lib/cursor-pages';
 import { LINT_DECISION_STATES, type LintDecisionState } from './lint-decision-vocabulary';
 
 // --- Vocabularies --------------------------------------------------------------------------------
@@ -80,10 +81,13 @@ export interface LintWorkspaceFinding {
 export interface LintWorkspaceFindingsPage {
   findings: LintWorkspaceFinding[];
   count: number;
-  total: number;
+  /** How many findings matched (counted up to 10,000), or null when the server did not count. */
+  total: number | null;
   limit: number;
   offset: number;
   facets: Record<string, Record<string, number>>;
+  /** Whether another page follows and its cursor, when the server says (#7196). */
+  paging: PageInfo;
 }
 
 export interface LintWorkspaceAxisSummary {
@@ -268,10 +272,12 @@ export function lintWorkspaceFindingsFromPayload(v: unknown): LintWorkspaceFindi
   return {
     findings: (Array.isArray(p.findings) ? p.findings : []).map(lintWorkspaceFindingFromPayload),
     count: num(p.count),
-    total: num(p.total),
+    // A total the server did not count is unknown, not zero: only a missing field reads as 0.
+    total: p.total === null ? null : num(p.total),
     limit: num(p.limit, 50),
     offset: num(p.offset),
     facets,
+    paging: readPage(p),
   };
 }
 
@@ -485,7 +491,7 @@ const TEXT_KEYS = ['subjectType', 'projectId', 'ownerUserId', 'ruleId', 'categor
 /** Serialize filter state into the query params the findings endpoint (and proxy) accept. */
 export function filtersToSearchParams(
   filters: WorkspaceFilters,
-  extra?: { sort?: string; limit?: number; offset?: number },
+  extra?: { sort?: string; limit?: number; offset?: number; includeTotal?: boolean },
 ): URLSearchParams {
   const params = new URLSearchParams();
   for (const key of CSV_KEYS) {
@@ -501,6 +507,8 @@ export function filtersToSearchParams(
   if (extra?.sort) params.set('sort', extra.sort);
   if (extra?.limit !== undefined) params.set('limit', String(extra.limit));
   if (extra?.offset !== undefined) params.set('offset', String(extra.offset));
+  // The queue shows a count and numbered pages, so its read asks for the total (#7196).
+  if (extra?.includeTotal) params.set('include_total', 'true');
   return params;
 }
 

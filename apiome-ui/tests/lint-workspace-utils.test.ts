@@ -169,6 +169,30 @@ describe('isWaiverExpiringSoon', () => {
   });
 });
 
+describe('the queue under the cursor contract (#7196)', () => {
+  it('asks for the count only when told to', () => {
+    expect(filtersToSearchParams(EMPTY_WORKSPACE_FILTERS, { limit: 50 }).has('include_total')).toBe(false);
+    expect(
+      filtersToSearchParams(EMPTY_WORKSPACE_FILTERS, { limit: 50, includeTotal: true }).get('include_total'),
+    ).toBe('true');
+  });
+
+  it('reads an uncounted total as unknown, and has_more when the server gives it', () => {
+    const counted = lintWorkspaceFindingsFromPayload({ findings: [], total: 9 });
+    expect(counted.total).toBe(9);
+    expect(counted.paging.reported).toBe(false);
+
+    const uncounted = lintWorkspaceFindingsFromPayload({
+      findings: [],
+      total: null,
+      has_more: true,
+      next_cursor: 'abc',
+    });
+    expect(uncounted.total).toBeNull();
+    expect(uncounted.paging).toMatchObject({ hasMore: true, nextCursor: 'abc', reported: true });
+  });
+});
+
 describe('defensive payload parsers', () => {
   it('coerces a malformed findings payload without throwing', () => {
     const page = lintWorkspaceFindingsFromPayload({

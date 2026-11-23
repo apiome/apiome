@@ -31,6 +31,7 @@ import {
   removeUserLicense,
 } from '../../../../../lib/db/admin-actions';
 import { FeatureFlagUserOverridesPanel } from '../components/FeatureFlagUserOverridesPanel';
+import { AdminLoadMore, useAdminPagedList, useSettledChange } from '../components/adminPagedList';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
 import { EmptyState } from '@/app/components/ui/EmptyState';
@@ -89,7 +90,13 @@ const adminTwoFactorResetEndpoint = (userId: string) =>
 
 export default function UserManagementClient() {
   const { confirm } = useDialog();
-  const [users, setUsers] = useState<User[]>([]);
+  // The list is paged and searched by the server (DBP-1.13, #7196).
+  const [userSearch, setUserSearch] = useState('');
+  const userList = useAdminPagedList<User>(
+    ({ cursor }) => getAllUsersWithLicenses({ cursor, search: userSearch }),
+    'users',
+  );
+  const users = userList.items;
   const [licenses, setLicenses] = useState<License[]>([]);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -117,17 +124,15 @@ export default function UserManagementClient() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [usersRes, userStatsRes, licensesRes] = await Promise.all([
-        getAllUsersWithLicenses(),
+      const [, userStatsRes, licensesRes] = await Promise.all([
+        userList.reload(),
         getUserStats(),
         getAllLicenses(),
       ]);
 
-      const usersData = JSON.parse(usersRes);
       const userStatsData = JSON.parse(userStatsRes);
       const licensesData = JSON.parse(licensesRes);
 
-      if (usersData.success) setUsers(usersData.users);
       if (userStatsData.success) setUserStats(userStatsData.stats);
       if (licensesData.success) setLicenses(licensesData.licenses.filter((l: License) => l.enabled));
     } catch (error) {
@@ -137,6 +142,10 @@ export default function UserManagementClient() {
       setLoading(false);
     }
   };
+
+  useSettledChange(userSearch, () => {
+    void userList.reload().catch((error) => console.error('Error searching users:', error));
+  });
 
   const handleAssignLicense = async (userId: string, licenseId: string) => {
     try {
@@ -416,8 +425,17 @@ export default function UserManagementClient() {
         </div>
       </div>
 
-      {/* Refresh Button */}
-      <div className="flex justify-end">
+      {/* Search and Refresh */}
+      <div className="flex items-center justify-end gap-3">
+        <input
+          type="search"
+          value={userSearch}
+          onChange={(e) => setUserSearch(e.target.value)}
+          placeholder="Search users by name or email…"
+          aria-label="Search users"
+          data-testid="admin-users-search"
+          className="flex-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
+        />
         <button
           onClick={loadData}
           disabled={loading}
@@ -440,8 +458,12 @@ export default function UserManagementClient() {
             <EmptyState
               surface={false}
               icon={<Users />}
-              title="No users yet"
-              description="People appear here once they sign up or an administrator creates their account."
+              title={userSearch.trim() ? 'No matching users' : 'No users yet'}
+              description={
+                userSearch.trim()
+                  ? 'No user has a name or email matching the search.'
+                  : 'People appear here once they sign up or an administrator creates their account.'
+              }
             />
           ) : (
             <div className="overflow-x-auto">
@@ -716,6 +738,7 @@ export default function UserManagementClient() {
               </table>
             </div>
           )}
+          <AdminLoadMore list={userList} noun="users" testId="admin-users-load-more" />
         </div>
       )}
         </div>

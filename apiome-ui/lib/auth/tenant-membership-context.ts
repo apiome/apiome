@@ -19,6 +19,7 @@
 // Imported via the alias so the jest `auth/server-session` mock mapping applies.
 import { getAuthSession } from '@lib/auth/server-session';
 import { REST_API_BASE_URL, createRestAuthHeaders } from '../rest-auth';
+import { hasMoreAfter, readPage, setPageParams } from '../cursor-pages';
 import { getMaxTenantsForUser } from '../db/plan-entitlements';
 import {
   DEFAULT_FREE_MAX_TENANTS,
@@ -55,19 +56,26 @@ async function fetchAllMemberships(
   headers: Record<string, string>
 ): Promise<RestTenantMembership[]> {
   const items: RestTenantMembership[] = [];
+  // Pages by cursor (#7196): the first request sends none, each later one the previous page's
+  // `next_cursor`. An answer without `has_more` is paged by offset against its `total`.
+  let cursor: string | null = null;
   for (let page = 0; page < MEMBERSHIPS_MAX_PAGES; page += 1) {
-    const offset = page * MEMBERSHIPS_PAGE_LIMIT;
-    const response = await fetch(
-      `${REST_API_BASE_URL}/tenants/me?limit=${MEMBERSHIPS_PAGE_LIMIT}&offset=${offset}`,
-      { headers, cache: 'no-store' }
-    );
+    const query = setPageParams(new URLSearchParams({ limit: String(MEMBERSHIPS_PAGE_LIMIT) }), {
+      cursor,
+      offset: items.length,
+    });
+    const response = await fetch(`${REST_API_BASE_URL}/tenants/me?${query.toString()}`, {
+      headers,
+      cache: 'no-store',
+    });
     if (!response.ok) {
       throw new Error(`GET /v1/tenants/me failed with status ${response.status}`);
     }
-    const body = (await response.json()) as { items?: RestTenantMembership[]; total?: number };
+    const body = (await response.json()) as { items?: RestTenantMembership[] };
     items.push(...(body.items ?? []));
-    const total = typeof body.total === 'number' ? body.total : items.length;
-    if (items.length >= total || (body.items ?? []).length === 0) {
+    const paging = readPage(body);
+    cursor = paging.nextCursor;
+    if ((body.items ?? []).length === 0 || !hasMoreAfter(paging, items.length)) {
       break;
     }
   }

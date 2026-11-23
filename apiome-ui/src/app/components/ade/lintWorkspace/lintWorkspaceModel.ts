@@ -17,6 +17,7 @@
  * is everything that turns those facts into words and tones on a screen.
  */
 
+import { TOTAL_CAP, formatTotal } from '@lib/cursor-pages';
 import {
   LINT_DECISION_STATES,
   LINT_DECISION_STATE_LABEL,
@@ -739,14 +740,25 @@ export function findingWaiverExpiringSoon(
  *
  * @param offset The current offset.
  * @param limit The page size.
- * @param total How many findings matched.
- * @returns `"1–50 of 213 findings · page size 50"`, or `"No findings"` when nothing matched.
+ * @param total How many findings matched; null when the server did not count them.
+ * @param shown How many findings this page holds — what the window ends at without a total.
+ * @returns `"1–50 of 213 findings · page size 50"` (`of 10,000+ findings` at the counting cap,
+ *   and `"51–100 · page size 50"` without a count), or `"No findings"` when nothing matched.
  */
-export function queueRangeLabel(offset: number, limit: number, total: number): string {
+export function queueRangeLabel(
+  offset: number,
+  limit: number,
+  total: number | null,
+  shown: number = limit
+): string {
+  if (total === null) {
+    if (shown <= 0) return 'No findings';
+    return `${offset + 1}–${offset + shown} · page size ${limit}`;
+  }
   if (total <= 0) return 'No findings';
   const first = Math.min(offset + 1, total);
   const last = Math.min(offset + limit, total);
-  return `${first}–${last} of ${total} finding${total === 1 ? '' : 's'} · page size ${limit}`;
+  return `${first}–${last} of ${formatTotal(total)} finding${total === 1 ? '' : 's'} · page size ${limit}`;
 }
 
 /**
@@ -764,13 +776,16 @@ export function queuePageNumber(offset: number, limit: number): number {
 /**
  * How many pages a total covers.
  *
+ * The total is counted up to 10,000 and an offset may reach no further (#7196), so the pages
+ * stop there too: a pager must not offer a page the server would refuse.
+ *
  * @param total How many findings matched.
  * @param limit The page size.
  * @returns The page count, never below 1 — a list with nothing in it is still one page.
  */
 export function queuePageCount(total: number, limit: number): number {
   if (limit <= 0) return 1;
-  return Math.max(1, Math.ceil(total / limit));
+  return Math.max(1, Math.ceil(Math.min(total, TOTAL_CAP) / limit));
 }
 
 /**

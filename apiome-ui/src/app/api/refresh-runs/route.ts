@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const resolved = await resolveConnectorTenant();
   if ('error' in resolved) return resolved.error;
   const query = new URLSearchParams();
-  for (const key of ['connector', 'source', 'limit', 'offset']) {
+  for (const key of ['connector', 'source', 'limit', 'offset', 'cursor', 'include_total']) {
     const value = request.nextUrl.searchParams.get(key);
     if (value) query.set(key, value);
   }

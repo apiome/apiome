@@ -15,6 +15,7 @@ import {
   type VersionLineageRow,
 } from '@lib/version-lineage';
 import { getJwtSigningSecret } from '@lib/rest-auth';
+import { fetchAllPages } from '@/lib/rest-paged-list';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 
@@ -210,7 +211,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Forward request to REST API
-    const response = await fetch(url, {
+    // The REST list is paged (#7196); this route still answers with the whole list.
+    const response = await fetchAllPages(url, {
       method: 'GET',
       headers,
     });

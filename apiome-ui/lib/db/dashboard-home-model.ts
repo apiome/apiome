@@ -628,6 +628,41 @@ export function bucketPublishesByWeek(
   return buckets;
 }
 
+/** One row of the pulse query: a UTC week and how many versions were published in it. */
+export interface PulseWeekCount {
+  /** ISO date (`YYYY-MM-DD`) of the week's Monday, in UTC. */
+  weekStart: string;
+  /** Versions published in that week. */
+  count: number;
+}
+
+/**
+ * Lay per-week publish counts onto the last `weeks` weekly bars, oldest first.
+ *
+ * The counting is the database's (`GROUP BY` the UTC week — DBP-1.13, #7196); this keeps what
+ * {@link bucketPublishesByWeek} guarantees about the shape: every bucket is present, and a week
+ * outside the window — or a count that is not a number — is dropped rather than clamped into an
+ * edge bucket.
+ *
+ * @param counts Weeks with their publish counts, in any order.
+ * @param now The instant the window ends at.
+ * @param weeks How many buckets. Defaults to {@link PULSE_WEEKS}.
+ * @returns Exactly `weeks` buckets, oldest first, the last containing `now`'s week.
+ */
+export function pulseWeeksFromCounts(
+  counts: readonly PulseWeekCount[],
+  now: Date,
+  weeks: number = PULSE_WEEKS,
+): PulseWeek[] {
+  const buckets = bucketPublishesByWeek([], now, weeks);
+  const index = new Map(buckets.map((bucket) => [bucket.weekStart, bucket]));
+  for (const { weekStart, count } of counts) {
+    const bucket = index.get(weekStart);
+    if (bucket && Number.isFinite(count) && count > 0) bucket.count += Math.trunc(count);
+  }
+  return buckets;
+}
+
 /* -------------------------------------------------------------------------
    The assembled payload
    ------------------------------------------------------------------------- */
