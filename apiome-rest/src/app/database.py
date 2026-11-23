@@ -31,6 +31,7 @@ from .db_bulk import bulk_insert_arrays as _bulk_insert_arrays
 from .db_bulk import bulk_upsert as _bulk_upsert
 from .db_bulk import new_ids as _new_ids
 from .db_cursor import rollback_quietly
+from .keyset_pagination import capped_count_sql, keyset_before
 from .db_timeouts import StatementTimeout  # noqa: F401 - re-exported for callers
 from .db_timeouts import apply_statement_timeout, typed_timeout
 from .draft_bindings import (
@@ -43402,6 +43403,7 @@ class Database:
         type_filter: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """A page of one user's inbox, newest first (COL-3.1, #4521).
 
@@ -43410,8 +43412,10 @@ class Database:
             user_id: The caller.
             unread_only: Only unread notifications.
             type_filter: Only this type.
-            limit: Page size.
-            offset: Notifications to skip.
+            limit: Rows to read.
+            offset: Notifications to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(created_at, id)`` of the last row already seen; the page continues after
+                it on ``idx_notifications_user_created`` (#7196).
 
         Returns:
             The rows, newest first; empty when an id is not a UUID.
@@ -43422,15 +43426,16 @@ class Database:
         if built is None:
             return []
         where, params = built
+        after_sql, after_params = keyset_before("n.created_at", "n.id", cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._NOTIFICATION_COLUMNS}
             FROM apiome.notifications n
-            WHERE {where}
+            WHERE {where}{after_sql}
             ORDER BY n.created_at DESC, n.id DESC
             LIMIT %s OFFSET %s
             """,
-            tuple([*params, int(limit), int(offset)]),
+            tuple([*params, *after_params, int(limit), 0 if cursor else int(offset)]),
         )
         return [dict(row) for row in rows]
 
@@ -43451,7 +43456,7 @@ class Database:
             type_filter: Only this type.
 
         Returns:
-            The total; ``0`` when an id is not a UUID.
+            The total, counted up to ``TOTAL_CAP`` (#7196); ``0`` when an id is not a UUID.
         """
         built = self._notification_filters(
             tenant_id=tenant_id, user_id=user_id, unread_only=unread_only, type_filter=type_filter
@@ -43460,7 +43465,7 @@ class Database:
             return 0
         where, params = built
         rows = self.execute_query(
-            f"SELECT count(*)::int AS total FROM apiome.notifications n WHERE {where}",
+            capped_count_sql(f"FROM apiome.notifications n WHERE {where}"),
             tuple(params),
         )
         return int(rows[0]["total"]) if rows else 0

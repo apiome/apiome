@@ -20,6 +20,7 @@ The SQL text itself was exercised against a scratch database built from the real
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 
 import psycopg2
 import pytest
@@ -419,3 +420,25 @@ def test_the_inbox_list_filters_and_pages_in_sql(monkeypatch):
     assert "n.type = %s" in sql
     assert "ORDER BY n.created_at DESC, n.id DESC" in sql
     assert params == (TENANT, ALICE, TYPE_MENTION, 10, 20)
+
+
+def test_the_inbox_list_continues_after_a_cursor_without_an_offset(monkeypatch):
+    conn = ScriptedConnection([[]])
+    database = database_with(monkeypatch, conn)
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+
+    database.list_notifications(
+        tenant_id=TENANT, user_id=ALICE, limit=10, offset=20, cursor=(stamp, NOTIFICATION)
+    )
+    sql, params = conn.statements[0]
+    assert "(n.created_at, n.id) < (%s, %s::uuid)" in sql
+    assert params == (TENANT, ALICE, stamp, NOTIFICATION, 10, 0)
+
+
+def test_the_inbox_count_stops_at_the_cap(monkeypatch):
+    conn = ScriptedConnection([[{"total": 3}]])
+    database = database_with(monkeypatch, conn)
+
+    assert database.count_notifications(tenant_id=TENANT, user_id=ALICE) == 3
+    sql, _ = conn.statements[0]
+    assert "LIMIT 10000" in sql

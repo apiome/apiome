@@ -209,9 +209,19 @@ class NotificationListResponse(BaseModel):
         default_factory=list, description="Notifications, newest first."
     )
     count: int = Field(description="How many notifications this page holds.")
-    total: int = Field(description="How many match the filters in all.")
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many match the filters, counted up to 10,000. Present only when the request "
+            "set `include_total`."
+        ),
+    )
     limit: int = Field(description="The page size used.")
-    offset: int = Field(description="The offset used.")
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class UnreadCount(BaseModel):
