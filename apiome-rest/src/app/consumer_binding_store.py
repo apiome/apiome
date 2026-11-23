@@ -302,35 +302,44 @@ def live_bindings(db: Any, tenant_id: str, project_id: str) -> List[LiveBinding]
 def stamp_matches(cursor: Any, matches: Mapping[str, datetime], consumers: Mapping[str, str]) -> None:
     """Advance ``last_matched_at`` and the consumers' ``runtime_last_seen_at``.
 
-    Both only move forward, so a late batch for an older hour never turns them back.
+    Both only move forward, so a late batch for an older hour never turns them back. Each table
+    is written with one statement whatever the number of bindings (DBP-1.8, #7191), and the rows
+    are sent in id order so concurrent writers lock them in the same order.
 
     Args:
         cursor: A cursor in the ingest transaction.
         matches: Binding id → newest observed time this batch attributed to it.
         consumers: Binding id → its consumer id.
     """
+    if not matches:
+        return
+    bindings = sorted(matches.items())
+    cursor.execute(
+        """
+        UPDATE apiome.usage_consumer_binding b
+        SET last_matched_at = GREATEST(COALESCE(b.last_matched_at, m.seen), m.seen)
+        FROM unnest(%s::uuid[], %s::timestamptz[]) AS m(id, seen)
+        WHERE b.id = m.id
+        """,
+        ([binding_id for binding_id, _ in bindings], [seen for _, seen in bindings]),
+    )
     newest: Dict[str, datetime] = {}
-    for binding_id, seen in matches.items():
-        cursor.execute(
-            """
-            UPDATE apiome.usage_consumer_binding
-            SET last_matched_at = GREATEST(COALESCE(last_matched_at, %s), %s)
-            WHERE id = %s::uuid
-            """,
-            (seen, seen, binding_id),
-        )
+    for binding_id, seen in bindings:
         consumer_id = consumers.get(binding_id)
         if consumer_id and (consumer_id not in newest or seen > newest[consumer_id]):
             newest[consumer_id] = seen
-    for consumer_id, seen in newest.items():
-        cursor.execute(
-            """
-            UPDATE apiome.consumer
-            SET runtime_last_seen_at = GREATEST(COALESCE(runtime_last_seen_at, %s), %s)
-            WHERE id = %s::uuid
-            """,
-            (seen, seen, consumer_id),
-        )
+    if not newest:
+        return
+    seen_by_consumer = sorted(newest.items())
+    cursor.execute(
+        """
+        UPDATE apiome.consumer c
+        SET runtime_last_seen_at = GREATEST(COALESCE(c.runtime_last_seen_at, m.seen), m.seen)
+        FROM unnest(%s::uuid[], %s::timestamptz[]) AS m(id, seen)
+        WHERE c.id = m.id
+        """,
+        ([consumer_id for consumer_id, _ in seen_by_consumer], [seen for _, seen in seen_by_consumer]),
+    )
 
 
 def usage_by_consumer(

@@ -159,6 +159,10 @@ jobs:
           DBP_SOURCE_EDIT_CLASSES: "20000"
         run: uv run pytest tests/test_set_based_writes_db.py -v -p no:cacheprovider
 
+      - name: Usage ingest runs a fixed number of statements and plans outside the tenant lock
+        working-directory: apiome-rest
+        run: uv run pytest tests/test_usage_ingest_batching_db.py -v -p no:cacheprovider
+
       - name: Slowest statements (pg_stat_statements)
         if: always()
         run: |

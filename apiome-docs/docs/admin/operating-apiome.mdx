@@ -508,6 +508,45 @@ To link a class property to the project property with the same definition, a sou
 definition up by `properties.data_digest`. PostgreSQL keeps that column itself (migration `V409`),
 so no backfill is needed. The lookup is in the plan check as `rest.property_by_digest`.
 
+#### Usage ingest
+
+A batch sent to `POST /v1/tenants/{tenant}/usage/ingest` runs a fixed number of statements, however
+many operations, hours and status codes it covers. Each table it adds counts to is written with one
+statement, and the field counts with two:
+
+| Step | Statements |
+| --- | --- |
+| Read the source, the published revisions, the finalized days and the consumer bindings | 4 |
+| Take the workspace's ingest lock, then check the daily cap and the finalized days, and read the bindings again | 3 |
+| Add the counts: hourly calls, unmatched paths, unattributed clients, field presence (2), body samples, binding stamps (2) | Up to 8, one for each kind of count the batch has |
+| Record the batch in the ledger and add it to the day's count | 1 |
+
+A batch of 5,000 hourly rows runs 12 statements, the same as a batch of 10. Before, it ran one
+statement for each row.
+
+Batches from the same workspace still write one at a time, so that two batches can't both get under
+the daily cap. Only the writes wait for each other now. A batch is parsed, sampled, scrubbed and
+matched to operations before it waits. If a day was finalized, or a consumer binding was added or
+deleted, while the batch waited, it is matched again before it writes. An event on a finalized day
+is rejected with `day-finalized`, as before.
+
+The daily cap (`usage_events_per_day`) is checked against a counter, `usage_tenant_day`, which holds
+each workspace's admitted events for today and yesterday. Migration `V410` adds it and fills it from
+the ledger. The same statement that records a batch in the ledger adds the batch to the counter, so
+the two always match. Deleting a usage source no longer gives the day's quota back. During a rolling
+upgrade, batches written by servers still running the old version aren't counted until those servers
+are replaced.
+
+On the scale database, with one workspace sending batches of 1,001 events, each batch holds the
+workspace's lock for about 38 ms, down from about 430 ms. One sender ingests about 14,400 events a
+second, up from about 2,250. Four senders for the same workspace ingest about 20,800 a second, up from
+about 1,450. The check under the lock is in the plan check as `usage.ingest_admission`.
+
+The usage tables aren't partitioned. Retention removes old rows in batches of 10,000 per table during
+the usage sweep, which takes 85 to 140 ms a pass on 1.2 million hourly rows. Each workspace keeps its
+data for its own retention period. Dropping a whole day's partition would only work for days past the
+longest retention of any workspace, so the per-workspace deletes would still be needed.
+
 ### Turn on pg_stat_statements and auto_explain
 
 `pg_stat_statements` keeps running totals for every distinct statement. `auto_explain` writes the

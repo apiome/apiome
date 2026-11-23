@@ -6,36 +6,41 @@ decided. One batch is:
 1. **outside the transaction** — read the ``usage_source`` row and build the
    :class:`~app.usage_ingest.RevisionMatcher` over the project's published revisions (rendering a
    revision commits on the shared connection, so it can never run inside the write transaction);
-2. **inside one transaction** (:meth:`app.database.Database._guarded_tx`) —
+2. **still outside the transaction** (DBP-1.8, #7191) — read the finalized days and the project's
+   live consumer bindings, and run :func:`~app.usage_ingest.plan_batch` (steps 2–4). Planning is
+   the CPU-heavy part of a batch, so it never runs under the tenant lock;
+3. **inside one transaction** (:meth:`app.database.Database._guarded_tx`) —
 
    * take a transaction advisory lock per tenant, so two concurrent batches cannot both slip
      under the daily cap;
-   * **step 1, the tier cap**: sum the day's ledgered events (``received - rejected``) against
-     ``licenses.seats.usage_events_per_day`` (Free 100,000 when unlicensed or unset; zero or
-     negative = unlimited). Over it, the batch is ledgered as wholly rejected and the caller answers
-     ``429``;
-   * otherwise run :func:`~app.usage_ingest.plan_batch` (steps 2–4) and write its counters with
-     additive upserts — ``usage_hourly``, ``usage_unmatched_daily``, ``usage_field_daily`` and any
-     clean ``usage_sample`` rows;
-   * **step 5**: insert the ``usage_ingest_batch`` ledger row and stamp the source's
-     ``last_received_at``.
+   * **step 1, the tier cap**: today's ``usage_tenant_day`` counter (V410: the events the ledger
+     admitted, ``received - rejected``) against ``licenses.seats.usage_events_per_day`` (Free
+     100,000 when unlicensed or unset; zero or negative = unlimited). Over it, the batch is ledgered
+     as wholly rejected and the caller answers ``429``;
+   * if a day the plan writes to was finalized since planning, or the live bindings changed, plan
+     again under the lock (rare);
+   * write the plan's counters with additive upserts, **one statement per table** whatever the
+     batch's size — ``usage_hourly``, the binding stamps, ``usage_unattributed_client_daily``,
+     ``usage_unmatched_daily``, ``usage_field_daily`` (two) and any clean ``usage_sample`` rows.
+     Rows are sent sorted by key, so writers lock them in a stable order;
+   * **step 5**: one statement inserts the ``usage_ingest_batch`` ledger row, adds it to the
+     tenant's day counter and stamps the source's ``last_received_at``.
 
-Everything commits together or not at all, so the ledger always says exactly what reached the
-index.
+Everything commits together or not at all, so the ledger (and the day counter) always says
+exactly what reached the index.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from collections import OrderedDict
 from dataclasses import dataclass
-from datetime import date, datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from datetime import date, datetime, timezone
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Sequence, Tuple
 
-from psycopg2.extras import Json
-
-from .consumer_binding import ConsumerMatcher
-from .consumer_binding_store import load_live_bindings, stamp_matches
+from .consumer_binding import ConsumerMatcher, LiveBinding
+from .consumer_binding_store import live_bindings, load_live_bindings, stamp_matches
 from .consumer_surface import SpecIndex
 from .revision_deprecation import is_uuid_string
 from .usage_ingest import (
@@ -194,6 +199,37 @@ def build_matcher(db: Any, tenant_id: str, project_id: str) -> RevisionMatcher:
     return RevisionMatcher(revisions)
 
 
+# ---------------------------------------------------------------------------------------------
+# Step 1 — the tier cap, and what planning needs (DBP-1.8, #7191)
+# ---------------------------------------------------------------------------------------------
+
+#: The tenant's ``usage_events_per_day`` as a scalar subquery. Parameters: the Free default, then
+#: the tenant id. ``NULL`` when the tenant does not exist.
+_CAP_SQL = """
+    SELECT CASE WHEN jsonb_typeof(l.seats -> 'usage_events_per_day') = 'number'
+                THEN (l.seats ->> 'usage_events_per_day')::numeric::bigint
+                ELSE %s END
+    FROM apiome.tenants t
+    LEFT JOIN apiome.tenant_licenses tl ON tl.tenant_id = t.id
+    LEFT JOIN apiome.licenses l ON l.id = tl.license_id
+    WHERE t.id = %s::uuid
+    LIMIT 1
+"""
+
+#: Everything the write phase checks before it writes, in one statement: the cap, the events
+#: already admitted today (``usage_tenant_day``, V410) and which of the plan's days were finalized
+#: since it was planned.
+_ADMISSION_SQL = f"""
+    SELECT ({_CAP_SQL}) AS cap,
+           COALESCE((SELECT d.events_used FROM apiome.usage_tenant_day d
+                     WHERE d.tenant_id = %s::uuid AND d.day = %s), 0) AS used,
+           ARRAY(SELECT r.day FROM apiome.usage_rollup_days r
+                 WHERE r.day = ANY (%s::date[]) AND r.finalized_at IS NOT NULL ORDER BY r.day) AS finalized
+"""
+
+_FINALIZED_DAYS_SQL = "SELECT day FROM apiome.usage_rollup_days WHERE finalized_at IS NOT NULL"
+
+
 def events_per_day_cap(cursor: Any, tenant_id: str) -> int:
     """The tenant's ``usage_events_per_day`` (Free when unlicensed or unset; <= 0 = unlimited).
 
@@ -204,85 +240,84 @@ def events_per_day_cap(cursor: Any, tenant_id: str) -> int:
     Returns:
         The cap.
     """
-    cursor.execute(
-        """
-        SELECT CASE WHEN jsonb_typeof(l.seats -> 'usage_events_per_day') = 'number'
-                    THEN (l.seats ->> 'usage_events_per_day')::numeric::bigint
-                    ELSE %s END AS cap
-        FROM apiome.tenants t
-        LEFT JOIN apiome.tenant_licenses tl ON tl.tenant_id = t.id
-        LEFT JOIN apiome.licenses l ON l.id = tl.license_id
-        WHERE t.id = %s::uuid
-        """,
-        (DEFAULT_EVENTS_PER_DAY, tenant_id),
-    )
+    cursor.execute(f"SELECT ({_CAP_SQL}) AS cap", (DEFAULT_EVENTS_PER_DAY, tenant_id))
     row = cursor.fetchone()
     return int(row["cap"]) if row and row["cap"] is not None else DEFAULT_EVENTS_PER_DAY
 
 
-def _events_used_today(cursor: Any, tenant_id: str, day: date) -> int:
-    """Events the tenant's ledger admitted on UTC ``day`` (``received - rejected``)."""
-    cursor.execute(
-        """
-        SELECT COALESCE(sum(received - rejected), 0) AS used
-        FROM apiome.usage_ingest_batch
-        WHERE tenant_id = %s::uuid AND received_day = %s
-        """,
-        (tenant_id, day),
-    )
-    return int(cursor.fetchone()["used"])
+@dataclass(frozen=True)
+class _Admission:
+    """What the write phase read under the tenant lock.
+
+    Attributes:
+        cap: The tenant's daily cap (``<= 0`` = unlimited).
+        used: Events the ledger admitted today, from ``usage_tenant_day``.
+        finalized: Days the plan writes to that are finalized now.
+    """
+
+    cap: int
+    used: int
+    finalized: FrozenSet[date]
+
+    def admits(self, events: int) -> bool:
+        """Whether ``events`` more fit under the cap today."""
+        return self.cap <= 0 or self.used + events <= self.cap
 
 
-def _finalized_lookup(cursor: Any) -> Callable[[date], bool]:
-    """A memoized "is this UTC day finalized?" over ``usage_rollup_days``."""
-    known: Dict[date, bool] = {}
+def _admission(cursor: Any, tenant_id: str, today: date, plan_days: Sequence[date]) -> _Admission:
+    """Read the cap, today's count and the plan's newly finalized days (one statement)."""
+    cursor.execute(_ADMISSION_SQL, (DEFAULT_EVENTS_PER_DAY, tenant_id, tenant_id, today, list(plan_days)))
+    row = cursor.fetchone()
+    cap = int(row["cap"]) if row["cap"] is not None else DEFAULT_EVENTS_PER_DAY
+    return _Admission(cap=cap, used=int(row["used"]), finalized=frozenset(row["finalized"] or ()))
 
-    def is_finalized(day: date) -> bool:
-        if day not in known:
-            cursor.execute(
-                "SELECT 1 FROM apiome.usage_rollup_days WHERE day = %s AND finalized_at IS NOT NULL",
-                (day,),
-            )
-            known[day] = cursor.fetchone() is not None
-        return known[day]
 
-    return is_finalized
+def _finalized_days(rows: Optional[Sequence[Mapping[str, Any]]]) -> FrozenSet[date]:
+    """The ``day`` column of :data:`_FINALIZED_DAYS_SQL` rows as a set."""
+    return frozenset(row["day"] for row in rows or ())
+
+
+def _sorted_bindings(bindings: Sequence[LiveBinding]) -> Tuple[LiveBinding, ...]:
+    """Bindings in id order, so two reads of the same set compare equal."""
+    return tuple(sorted(bindings, key=lambda binding: binding.id))
+
+
+def _plan_days(plan: BatchPlan) -> List[date]:
+    """Every UTC day the plan writes counters to (what a finalization would refuse)."""
+    days = {hour.astimezone(timezone.utc).date() for (_env, hour, *_rest) in plan.hourly}
+    days.update(day for (_env, day, *_rest) in plan.unmatched_rows)
+    days.update(day for (_env, day, *_rest) in plan.field_groups)
+    days.update(day for (day, *_rest) in plan.unattributed_clients)
+    return sorted(days)
+
+
+# ---------------------------------------------------------------------------------------------
+# The writes — one statement per table, whatever the batch's size (DBP-1.8, #7191)
+# ---------------------------------------------------------------------------------------------
+
+
+def _key_order(key: Tuple[Any, ...]) -> Tuple[Any, ...]:
+    """A sort key for a grain tuple that may hold ``None`` (``None`` sorts first)."""
+    return tuple((value is not None, value) for value in key)
+
+
+def _columns(rows: Sequence[Sequence[Any]]) -> List[List[Any]]:
+    """Transpose rows into one list per column (the ``unnest`` array parameters)."""
+    return [list(column) for column in zip(*rows)]
 
 
 def _write_hourly(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
-    """Add the plan's hourly grains into ``usage_hourly`` (scaled)."""
-    for (environment, hour, version_id, operation_key, status, binding_id), counter in plan.hourly.items():
+    """Add the plan's hourly grains into ``usage_hourly`` (scaled), in one statement.
+
+    A histogram cannot travel as one element of an array parameter (``unnest`` would flatten a
+    two-dimensional array), so each one is sent as its array literal and cast back.
+    """
+    rows = []
+    for key, counter in sorted(plan.hourly.items(), key=lambda item: _key_order(item[0])):
+        environment, hour, version_id, operation_key, status, binding_id = key
         row = counter.scaled(plan.sampling_rate)
-        cursor.execute(
-            """
-            INSERT INTO apiome.usage_hourly AS h (
-                tenant_id, project_id, source_id, environment, hour, version_record_id,
-                operation_key, status_code, consumer_binding_id, calls, latency_buckets,
-                latency_sum_ms, latency_max_ms, auth_present_calls, auth_unknown_calls,
-                versioned_calls, version_unknown_calls, https_calls, request_bytes, response_bytes)
-            VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s::uuid, %s, %s, %s::uuid, %s, %s::bigint[],
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT ON CONSTRAINT usage_hourly_grain_uq DO UPDATE SET
-                calls = h.calls + EXCLUDED.calls,
-                latency_buckets = (
-                    SELECT array_agg(a + b ORDER BY i)
-                    FROM unnest(h.latency_buckets, EXCLUDED.latency_buckets) WITH ORDINALITY AS t(a, b, i)
-                ),
-                latency_sum_ms = h.latency_sum_ms + EXCLUDED.latency_sum_ms,
-                latency_max_ms = GREATEST(h.latency_max_ms, EXCLUDED.latency_max_ms),
-                auth_present_calls = h.auth_present_calls + EXCLUDED.auth_present_calls,
-                auth_unknown_calls = h.auth_unknown_calls + EXCLUDED.auth_unknown_calls,
-                versioned_calls = h.versioned_calls + EXCLUDED.versioned_calls,
-                version_unknown_calls = h.version_unknown_calls + EXCLUDED.version_unknown_calls,
-                https_calls = h.https_calls + EXCLUDED.https_calls,
-                request_bytes = h.request_bytes + EXCLUDED.request_bytes,
-                response_bytes = h.response_bytes + EXCLUDED.response_bytes,
-                updated_at = CURRENT_TIMESTAMP
-            """,
+        rows.append(
             (
-                source.tenant_id,
-                source.project_id,
-                source.id,
                 environment,
                 hour,
                 version_id,
@@ -290,7 +325,7 @@ def _write_hourly(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
                 status,
                 binding_id,
                 row["calls"],
-                row["latency_buckets"],
+                "{" + ",".join(str(int(count)) for count in row["latency_buckets"]) + "}",
                 row["latency_sum_ms"],
                 row["latency_max_ms"],
                 row["auth_present_calls"],
@@ -300,36 +335,54 @@ def _write_hourly(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
                 row["https_calls"],
                 row["request_bytes"],
                 row["response_bytes"],
-            ),
+            )
         )
+    if not rows:
+        return
+    cursor.execute(
+        """
+        INSERT INTO apiome.usage_hourly AS h (
+            tenant_id, project_id, source_id, environment, hour, version_record_id,
+            operation_key, status_code, consumer_binding_id, calls, latency_buckets,
+            latency_sum_ms, latency_max_ms, auth_present_calls, auth_unknown_calls,
+            versioned_calls, version_unknown_calls, https_calls, request_bytes, response_bytes)
+        SELECT %s::uuid, %s::uuid, %s::uuid, g.environment, g.hour, g.version_record_id,
+               g.operation_key, g.status_code, g.consumer_binding_id, g.calls, g.latency_buckets::bigint[],
+               g.latency_sum_ms, g.latency_max_ms, g.auth_present_calls, g.auth_unknown_calls,
+               g.versioned_calls, g.version_unknown_calls, g.https_calls, g.request_bytes, g.response_bytes
+        FROM unnest(%s::text[], %s::timestamptz[], %s::uuid[], %s::text[], %s::smallint[], %s::uuid[],
+                    %s::bigint[], %s::text[], %s::bigint[], %s::integer[], %s::bigint[], %s::bigint[],
+                    %s::bigint[], %s::bigint[], %s::bigint[], %s::bigint[], %s::bigint[])
+             AS g(environment, hour, version_record_id, operation_key, status_code, consumer_binding_id,
+                  calls, latency_buckets, latency_sum_ms, latency_max_ms, auth_present_calls,
+                  auth_unknown_calls, versioned_calls, version_unknown_calls, https_calls,
+                  request_bytes, response_bytes)
+        ON CONFLICT ON CONSTRAINT usage_hourly_grain_uq DO UPDATE SET
+            calls = h.calls + EXCLUDED.calls,
+            latency_buckets = apiome.usage_buckets_add(h.latency_buckets, EXCLUDED.latency_buckets),
+            latency_sum_ms = h.latency_sum_ms + EXCLUDED.latency_sum_ms,
+            latency_max_ms = GREATEST(h.latency_max_ms, EXCLUDED.latency_max_ms),
+            auth_present_calls = h.auth_present_calls + EXCLUDED.auth_present_calls,
+            auth_unknown_calls = h.auth_unknown_calls + EXCLUDED.auth_unknown_calls,
+            versioned_calls = h.versioned_calls + EXCLUDED.versioned_calls,
+            version_unknown_calls = h.version_unknown_calls + EXCLUDED.version_unknown_calls,
+            https_calls = h.https_calls + EXCLUDED.https_calls,
+            request_bytes = h.request_bytes + EXCLUDED.request_bytes,
+            response_bytes = h.response_bytes + EXCLUDED.response_bytes,
+            updated_at = CURRENT_TIMESTAMP
+        """,
+        (source.tenant_id, source.project_id, source.id, *_columns(rows)),
+    )
 
 
 def _write_unmatched(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
-    """Add the plan's unmatched grains into ``usage_unmatched_daily`` (scaled)."""
-    for (environment, day, method, template), counter in plan.unmatched_rows.items():
+    """Add the plan's unmatched grains into ``usage_unmatched_daily`` (scaled), in one statement."""
+    rows = []
+    for key, counter in sorted(plan.unmatched_rows.items(), key=lambda item: _key_order(item[0])):
+        environment, day, method, template = key
         row = counter.scaled(plan.sampling_rate)
-        cursor.execute(
-            """
-            INSERT INTO apiome.usage_unmatched_daily AS u (
-                tenant_id, project_id, source_id, environment, day, method, path_template, calls,
-                first_seen_at, last_seen_at, calls_1xx, calls_2xx, calls_3xx, calls_4xx, calls_5xx)
-            VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (tenant_id, project_id, source_id, environment, day, method, path_template)
-            DO UPDATE SET
-                calls = u.calls + EXCLUDED.calls,
-                first_seen_at = LEAST(u.first_seen_at, EXCLUDED.first_seen_at),
-                last_seen_at = GREATEST(u.last_seen_at, EXCLUDED.last_seen_at),
-                calls_1xx = u.calls_1xx + EXCLUDED.calls_1xx,
-                calls_2xx = u.calls_2xx + EXCLUDED.calls_2xx,
-                calls_3xx = u.calls_3xx + EXCLUDED.calls_3xx,
-                calls_4xx = u.calls_4xx + EXCLUDED.calls_4xx,
-                calls_5xx = u.calls_5xx + EXCLUDED.calls_5xx,
-                updated_at = CURRENT_TIMESTAMP
-            """,
+        rows.append(
             (
-                source.tenant_id,
-                source.project_id,
-                source.id,
                 environment,
                 day,
                 method,
@@ -342,113 +395,165 @@ def _write_unmatched(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None
                 row["calls_3xx"],
                 row["calls_4xx"],
                 row["calls_5xx"],
-            ),
+            )
         )
+    if not rows:
+        return
+    cursor.execute(
+        """
+        INSERT INTO apiome.usage_unmatched_daily AS u (
+            tenant_id, project_id, source_id, environment, day, method, path_template, calls,
+            first_seen_at, last_seen_at, calls_1xx, calls_2xx, calls_3xx, calls_4xx, calls_5xx)
+        SELECT %s::uuid, %s::uuid, %s::uuid, g.*
+        FROM unnest(%s::text[], %s::date[], %s::text[], %s::text[], %s::bigint[], %s::timestamptz[],
+                    %s::timestamptz[], %s::bigint[], %s::bigint[], %s::bigint[], %s::bigint[], %s::bigint[]) AS g
+        ON CONFLICT (tenant_id, project_id, source_id, environment, day, method, path_template)
+        DO UPDATE SET
+            calls = u.calls + EXCLUDED.calls,
+            first_seen_at = LEAST(u.first_seen_at, EXCLUDED.first_seen_at),
+            last_seen_at = GREATEST(u.last_seen_at, EXCLUDED.last_seen_at),
+            calls_1xx = u.calls_1xx + EXCLUDED.calls_1xx,
+            calls_2xx = u.calls_2xx + EXCLUDED.calls_2xx,
+            calls_3xx = u.calls_3xx + EXCLUDED.calls_3xx,
+            calls_4xx = u.calls_4xx + EXCLUDED.calls_4xx,
+            calls_5xx = u.calls_5xx + EXCLUDED.calls_5xx,
+            updated_at = CURRENT_TIMESTAMP
+        """,
+        (source.tenant_id, source.project_id, source.id, *_columns(rows)),
+    )
 
 
 def _write_unattributed(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
-    """Add the plan's unattributed client counts into ``usage_unattributed_client_daily`` (CDG-3.5)."""
-    for (day, client_kind, client_key), counter in plan.unattributed_clients.items():
+    """Add the unattributed client counts into ``usage_unattributed_client_daily`` (CDG-3.5)."""
+    rows = []
+    for key, counter in sorted(plan.unattributed_clients.items(), key=lambda item: _key_order(item[0])):
         calls = scale(counter.events, plan.sampling_rate)
-        if calls <= 0:
-            continue
-        cursor.execute(
-            """
-            INSERT INTO apiome.usage_unattributed_client_daily AS u (
-                tenant_id, project_id, day, client_kind, client_key, calls, first_seen_at, last_seen_at)
-            VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT ON CONSTRAINT usage_unattributed_client_daily_pk DO UPDATE SET
-                calls = u.calls + EXCLUDED.calls,
-                first_seen_at = LEAST(u.first_seen_at, EXCLUDED.first_seen_at),
-                last_seen_at = GREATEST(u.last_seen_at, EXCLUDED.last_seen_at),
-                updated_at = CURRENT_TIMESTAMP
-            """,
-            (
-                source.tenant_id,
-                source.project_id,
-                day,
-                client_kind,
-                client_key,
-                calls,
-                counter.first_seen,
-                counter.last_seen,
-            ),
-        )
+        if calls > 0:
+            rows.append((*key, calls, counter.first_seen, counter.last_seen))
+    if not rows:
+        return
+    cursor.execute(
+        """
+        INSERT INTO apiome.usage_unattributed_client_daily AS u (
+            tenant_id, project_id, day, client_kind, client_key, calls, first_seen_at, last_seen_at)
+        SELECT %s::uuid, %s::uuid, g.*
+        FROM unnest(%s::date[], %s::text[], %s::text[], %s::bigint[], %s::timestamptz[], %s::timestamptz[]) AS g
+        ON CONFLICT ON CONSTRAINT usage_unattributed_client_daily_pk DO UPDATE SET
+            calls = u.calls + EXCLUDED.calls,
+            first_seen_at = LEAST(u.first_seen_at, EXCLUDED.first_seen_at),
+            last_seen_at = GREATEST(u.last_seen_at, EXCLUDED.last_seen_at),
+            updated_at = CURRENT_TIMESTAMP
+        """,
+        (source.tenant_id, source.project_id, *_columns(rows)),
+    )
 
 
 def _write_fields(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
-    """Add the plan's field presence into ``usage_field_daily`` (scaled).
+    """Add the plan's field presence into ``usage_field_daily`` (scaled), in two statements.
 
     ``calls_sampled`` is the number of inspected calls since the row first appeared that day, so
-    a group's inspected calls are added to **every** pointer row of the group — the ones this batch
-    saw (with their ``calls_with_field``) and the ones it did not (as calls without the field).
+    a group's inspected calls are added to **every** pointer row of the group: first to the ones
+    this batch did not see (as calls without the field, one ``UPDATE`` for every group), then to the
+    ones it saw, with their ``calls_with_field`` (one upsert for every pointer). The two touch
+    different rows, so the order between them does not change the result.
     """
-    for (environment, day, operation_key, direction, status), group in plan.field_groups.items():
+    groups = []
+    pointers = []
+    for key, group in sorted(plan.field_groups.items(), key=lambda item: _key_order(item[0])):
         inspected = scale(group.inspected, plan.sampling_rate)
-        grain = (source.tenant_id, source.project_id, source.id, environment, day, operation_key, direction, status)
-        cursor.execute(
-            """
-            UPDATE apiome.usage_field_daily
-            SET calls_sampled = calls_sampled + %s, updated_at = CURRENT_TIMESTAMP
-            WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND source_id = %s::uuid
-              AND environment = %s AND day = %s AND operation_key = %s AND direction = %s
-              AND status_code = %s AND NOT (pointer = ANY (%s::text[]))
-            """,
-            (inspected, *grain, list(group.pointers)),
-        )
-        for pointer, count in group.pointers.items():
-            cursor.execute(
-                """
-                INSERT INTO apiome.usage_field_daily AS f (
-                    tenant_id, project_id, source_id, environment, day, operation_key, direction,
-                    status_code, pointer, calls_with_field, calls_sampled)
-                VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (tenant_id, project_id, source_id, environment, day, operation_key,
-                             direction, status_code, pointer)
-                DO UPDATE SET
-                    calls_with_field = f.calls_with_field + EXCLUDED.calls_with_field,
-                    calls_sampled = f.calls_sampled + EXCLUDED.calls_sampled,
-                    updated_at = CURRENT_TIMESTAMP
-                """,
-                (*grain, pointer, scale(count, plan.sampling_rate), inspected),
-            )
+        groups.append((*key, inspected, json.dumps(sorted(group.pointers))))
+        for pointer, count in sorted(group.pointers.items()):
+            pointers.append((*key, pointer, scale(count, plan.sampling_rate), inspected))
+    if not groups:
+        return
+    cursor.execute(
+        """
+        UPDATE apiome.usage_field_daily f
+        SET calls_sampled = f.calls_sampled + g.inspected, updated_at = CURRENT_TIMESTAMP
+        FROM unnest(%s::text[], %s::date[], %s::text[], %s::text[], %s::smallint[], %s::bigint[], %s::jsonb[])
+             AS g(environment, day, operation_key, direction, status_code, inspected, pointers)
+        WHERE f.tenant_id = %s::uuid AND f.project_id = %s::uuid AND f.source_id = %s::uuid
+          AND f.environment = g.environment AND f.day = g.day AND f.operation_key = g.operation_key
+          AND f.direction = g.direction AND f.status_code = g.status_code
+          AND NOT (g.pointers ? f.pointer)
+        """,
+        (*_columns(groups), source.tenant_id, source.project_id, source.id),
+    )
+    if not pointers:
+        return
+    cursor.execute(
+        """
+        INSERT INTO apiome.usage_field_daily AS f (
+            tenant_id, project_id, source_id, environment, day, operation_key, direction,
+            status_code, pointer, calls_with_field, calls_sampled)
+        SELECT %s::uuid, %s::uuid, %s::uuid, g.*
+        FROM unnest(%s::text[], %s::date[], %s::text[], %s::text[], %s::smallint[], %s::text[],
+                    %s::bigint[], %s::bigint[]) AS g
+        ON CONFLICT (tenant_id, project_id, source_id, environment, day, operation_key,
+                     direction, status_code, pointer)
+        DO UPDATE SET
+            calls_with_field = f.calls_with_field + EXCLUDED.calls_with_field,
+            calls_sampled = f.calls_sampled + EXCLUDED.calls_sampled,
+            updated_at = CURRENT_TIMESTAMP
+        """,
+        (source.tenant_id, source.project_id, source.id, *_columns(pointers)),
+    )
 
 
 def _write_samples(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
-    """Insert the plan's clean, reduced samples into ``usage_sample``."""
-    for environment, captured_at, operation_key, status, exchange in plan.samples:
-        cursor.execute(
-            """
-            INSERT INTO apiome.usage_sample (
-                tenant_id, project_id, source_id, environment, captured_at, operation_key,
-                status_code, exchange)
-            VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s)
-            """,
-            (
-                source.tenant_id,
-                source.project_id,
-                source.id,
-                environment,
-                captured_at,
-                operation_key,
-                status,
-                Json(exchange),
-            ),
-        )
+    """Insert the plan's clean, reduced samples into ``usage_sample``, in one statement."""
+    rows = [
+        (environment, captured_at, operation_key, status, json.dumps(exchange))
+        for environment, captured_at, operation_key, status, exchange in plan.samples
+    ]
+    if not rows:
+        return
+    cursor.execute(
+        """
+        INSERT INTO apiome.usage_sample (
+            tenant_id, project_id, source_id, environment, captured_at, operation_key,
+            status_code, exchange)
+        SELECT %s::uuid, %s::uuid, %s::uuid, g.*
+        FROM unnest(%s::text[], %s::timestamptz[], %s::text[], %s::smallint[], %s::jsonb[]) AS g
+        """,
+        (source.tenant_id, source.project_id, source.id, *_columns(rows)),
+    )
 
 
 def _ledger(
     cursor: Any, source: SourceConfig, plan: BatchPlan, *, api_key_id: Optional[str], digest: str, now: datetime
 ) -> str:
-    """Insert the batch's ledger row, stamp the source, and return the row id."""
+    """Ledger the batch, count it against the tenant's day, stamp the source; return the row id.
+
+    One statement: the ledger row, the ``usage_tenant_day`` counter it adds to (the tenant's
+    rows older than yesterday are pruned in passing) and the source's ``last_received_at``, so the
+    counter can never disagree with the ledger.
+    """
     counts = plan.ledger_counts()
     cursor.execute(
         """
-        INSERT INTO apiome.usage_ingest_batch (
-            tenant_id, source_id, api_key_id, received_at, received, accepted, sampled_out,
-            unmatched, rejected, scrub_findings, batch_digest)
-        VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
-        RETURNING id::text AS id
+        WITH batch AS (
+            INSERT INTO apiome.usage_ingest_batch (
+                tenant_id, source_id, api_key_id, received_at, received, accepted, sampled_out,
+                unmatched, rejected, scrub_findings, batch_digest)
+            VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, tenant_id, received_day, received - rejected AS admitted
+        ), counted AS (
+            INSERT INTO apiome.usage_tenant_day AS d (tenant_id, day, events_used)
+            SELECT tenant_id, received_day, admitted FROM batch
+            ON CONFLICT (tenant_id, day) DO UPDATE SET
+                events_used = d.events_used + EXCLUDED.events_used,
+                updated_at = CURRENT_TIMESTAMP
+        ), pruned AS (
+            DELETE FROM apiome.usage_tenant_day o
+            USING batch
+            WHERE o.tenant_id = batch.tenant_id AND o.day < batch.received_day - 1
+        ), stamped AS (
+            UPDATE apiome.usage_source
+            SET last_received_at = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid
+        )
+        SELECT id::text AS id FROM batch
         """,
         (
             source.tenant_id,
@@ -462,14 +567,21 @@ def _ledger(
             counts["rejected"],
             counts["scrub_findings"],
             digest,
+            now,
+            source.id,
         ),
     )
-    batch_id = cursor.fetchone()["id"]
-    cursor.execute(
-        "UPDATE apiome.usage_source SET last_received_at = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s::uuid",
-        (now, source.id),
-    )
-    return batch_id
+    return cursor.fetchone()["id"]
+
+
+def _write_plan(cursor: Any, source: SourceConfig, plan: BatchPlan) -> None:
+    """Write every counter table the plan fills (at most one statement per table)."""
+    _write_hourly(cursor, source, plan)
+    stamp_matches(cursor, plan.binding_matches, plan.binding_consumers)
+    _write_unattributed(cursor, source, plan)
+    _write_unmatched(cursor, source, plan)
+    _write_fields(cursor, source, plan)
+    _write_samples(cursor, source, plan)
 
 
 def ingest_batch(
@@ -483,6 +595,13 @@ def ingest_batch(
     now: datetime,
 ) -> IngestOutcome:
     """Run the whole pipeline for one batch and persist it.
+
+    The batch is planned **before** the tenant's advisory lock is taken (DBP-1.8, #7191), from the
+    finalized days and the live consumer bindings as they stood when it arrived, so two batches of
+    one tenant only wait for each other while they write. Under the lock the write phase checks
+    the cap (``usage_tenant_day``), whether any day the plan writes to was finalized meanwhile and
+    whether the bindings changed; if either changed it plans again, there, as before DBP-1.8.
+    Then each table is written with one statement, and the ledger row with the day's counter.
 
     Args:
         db: The database.
@@ -506,24 +625,39 @@ def ingest_batch(
     matcher = build_matcher(db, tenant_id, source.project_id)
     today = now.date()
 
+    # Planning, outside the lock: the CPU-heavy part of a batch.
+    finalized = _finalized_days(db.execute_query(_FINALIZED_DAYS_SQL))
+    bindings = _sorted_bindings(live_bindings(db, tenant_id, source.project_id))
+    planned = plan_batch(
+        raw_events,
+        source,
+        matcher,
+        now=now,
+        is_day_finalized=finalized.__contains__,
+        consumers=ConsumerMatcher(list(bindings)),
+    )
+
     def work(cursor: Any) -> Tuple[str, Optional[str], BatchPlan]:
         cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"apiome.usage_ingest:{tenant_id}",))
-        cap = events_per_day_cap(cursor, tenant_id)
-        if cap > 0 and _events_used_today(cursor, tenant_id, today) + len(raw_events) > cap:
+        admission = _admission(cursor, tenant_id, today, _plan_days(planned))
+        if not admission.admits(len(raw_events)):
             plan = rejected_plan(raw_events, REASON_QUOTA_EXCEEDED)
             return "quota", _ledger(cursor, source, plan, api_key_id=api_key_id, digest=digest, now=now), plan
-        # RDG-1.8: bindings are read inside the transaction, so one deleted before the batch began
-        # attributes nothing in it.
-        consumers = ConsumerMatcher(load_live_bindings(cursor, tenant_id, source.project_id))
-        plan = plan_batch(
-            raw_events, source, matcher, now=now, is_day_finalized=_finalized_lookup(cursor), consumers=consumers
-        )
-        _write_hourly(cursor, source, plan)
-        stamp_matches(cursor, plan.binding_matches, plan.binding_consumers)
-        _write_unattributed(cursor, source, plan)
-        _write_unmatched(cursor, source, plan)
-        _write_fields(cursor, source, plan)
-        _write_samples(cursor, source, plan)
+        plan = planned
+        # RDG-1.8: a binding deleted (or added) before the write phase began changes attribution,
+        # and a day finalized since planning takes no counts; either one means planning again.
+        current = _sorted_bindings(load_live_bindings(cursor, tenant_id, source.project_id))
+        if admission.finalized or current != bindings:
+            cursor.execute(_FINALIZED_DAYS_SQL)
+            plan = plan_batch(
+                raw_events,
+                source,
+                matcher,
+                now=now,
+                is_day_finalized=_finalized_days(cursor.fetchall()).__contains__,
+                consumers=ConsumerMatcher(list(current)),
+            )
+        _write_plan(cursor, source, plan)
         return "ok", _ledger(cursor, source, plan, api_key_id=api_key_id, digest=digest, now=now), plan
 
     status, batch_id, plan = db._guarded_tx(work)
