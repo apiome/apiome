@@ -37,8 +37,8 @@ export const REVIEW_PROJECT_SQL = `
   FROM apiome.reviews r
   JOIN apiome.projects p ON p.id = r.project_id
   WHERE r.id = $1::uuid
-    AND r.tenant_id::text = $2
-    AND p.tenant_id::text = $2
+    AND r.tenant_id = $2::uuid
+    AND p.tenant_id = $2::uuid
     AND p.deleted_at IS NULL`;
 
 /**

@@ -572,7 +572,7 @@ def _route_regressions_to_owner(gate: GateEvaluation, *, tenant_id: str) -> None
     try:
         if gate.subject_type == SUBJECT_MCP_ENDPOINT_VERSION:
             rows = db.execute_query(
-                "SELECT endpoint_id::text AS endpoint_id FROM apiome.mcp_endpoint_versions WHERE id::text = %s",
+                "SELECT endpoint_id::text AS endpoint_id FROM apiome.mcp_endpoint_versions WHERE id = %s::uuid",
                 (str(gate.subject_id),),
             )
             kind, entity_id = "mcp_endpoint", (rows[0]["endpoint_id"] if rows else None)

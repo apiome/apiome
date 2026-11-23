@@ -421,6 +421,14 @@ token under the newest version. Remove the old version once the command reports
 | Backup and disaster recovery (`docs/runbooks/BACKUP_AND_DR.md`) | Take, verify and restore backups, and run DR drills |
 | Private beta triage (`docs/runbooks/BETA_TRIAGE.md`) | Triage feedback and incidents from beta and dogfood users |
 
+## Keep queries able to use their indexes
+
+Compare a uuid column to a uuid parameter (`id = $1::uuid`, `id = ANY($1::uuid[])`); never cast the column to
+text (`id::text = …`), because that hides the index and scans the table. Order version history by
+`created_at DESC NULLS LAST, id DESC` to match `idx_versions_project_created`. The REST test suite
+(`tests/test_sargable_uuid_lint.py`) fails on a new `::text` cast of an id column; a lookup that must accept a slug
+or an id is the only reason to add an allowlist entry there.
+
 ## Upgrade a large database without blocking writes
 
 Each `apiome-db` migration runs in one transaction, so an index it creates blocks writes to that

@@ -41,8 +41,8 @@ export const MERGE_REQUEST_PROJECT_SQL = `
   FROM apiome.merge_requests mr
   JOIN apiome.projects p ON p.id = mr.project_id
   WHERE mr.id = $1::uuid
-    AND mr.tenant_id::text = $2
-    AND p.tenant_id::text = $2
+    AND mr.tenant_id = $2::uuid
+    AND p.tenant_id = $2::uuid
     AND p.deleted_at IS NULL`;
 
 /** The tenant's reviewable members (`$1` tenant id), by name. */
@@ -50,7 +50,7 @@ export const REVIEWER_CANDIDATES_SQL = `
   SELECT u.id::text AS user_id, u.name, u.email
   FROM apiome.tenant_users tu
   JOIN apiome.users u ON u.id = tu.user_id
-  WHERE tu.tenant_id::text = $1
+  WHERE tu.tenant_id = $1::uuid
     AND tu.status IN ('active', 'pending')
   ORDER BY lower(coalesce(u.name, u.email, '')), u.id`;
 
