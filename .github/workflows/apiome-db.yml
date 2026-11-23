@@ -44,6 +44,83 @@ jobs:
       - name: Run apiome-db tests
         run: yarn workspace apiome-db test
 
+  schema:
+    # DBP-1.12 (#7195): migrate an empty database and run the schema tests that need one — every
+    # foreign key must have an index the referential check can use, or a reviewed entry in
+    # apiome-db/test/foreign-key-index-allowlist.json.
+    name: Schema checks on a migrated database
+    runs-on: self-hosted
+    timeout-minutes: 20
+    env:
+      POSTGRES_DB: apiome_schema
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PG_CONTAINER: apiome-db-schema-pg-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Start PostgreSQL
+        run: |
+          set -euo pipefail
+          pick_free_port() {
+            python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
+          }
+          started=""
+          for attempt in $(seq 1 10); do
+            port="$(pick_free_port)"
+            echo "Attempt ${attempt}: starting postgres on host port ${port}"
+            # Same image as docker-compose.yml; memory capped for the shared runner.
+            if docker run -d \
+                --name "$PG_CONTAINER" \
+                --memory 1g \
+                -e POSTGRES_DB="$POSTGRES_DB" \
+                -e POSTGRES_USER="$POSTGRES_USER" \
+                -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+                -p "${port}:5432" \
+                --health-cmd "pg_isready -U postgres -d $POSTGRES_DB" \
+                --health-interval 5s --health-timeout 5s --health-retries 20 \
+                pgvector/pgvector:pg16-bookworm >/dev/null 2>docker-run.err; then
+              echo "APIOME_DB_SCHEMA_TEST_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${port}/${POSTGRES_DB}" >> "$GITHUB_ENV"
+              started="yes"
+              break
+            fi
+            cat docker-run.err || true
+            docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true
+            sleep 1
+          done
+          [ -n "$started" ] || { echo "Failed to start PostgreSQL" >&2; exit 1; }
+          for i in $(seq 1 60); do
+            status="$(docker inspect --format '{{.State.Health.Status}}' "$PG_CONTAINER" 2>/dev/null || echo unknown)"
+            [ "$status" = "healthy" ] && exit 0
+            sleep 2
+          done
+          docker logs "$PG_CONTAINER" || true
+          exit 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: npm install -g corepack@0.36.0 && corepack enable && corepack prepare yarn@4.12.0 --activate
+
+      - name: Install dependencies and build apiome-db
+        run: |
+          yarn install --immutable
+          yarn workspace apiome-db build
+
+      - name: Migrate
+        run: node apiome-db/dist/cli.js migrate --database-url "$APIOME_DB_SCHEMA_TEST_URL"
+
+      - name: Foreign-key index coverage
+        run: yarn workspace apiome-db vitest run test/foreign-key-index-coverage.test.ts
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker rm -f "$PG_CONTAINER" >/dev/null 2>&1 || true
+
   build-and-push:
     name: Build and push apiome-db image
     # Image build/push only on direct pushes to main (never on PRs).

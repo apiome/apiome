@@ -429,6 +429,16 @@ text (`id::text = …`), because that hides the index and scans the table. Order
 (`tests/test_sargable_uuid_lint.py`) fails on a new `::text` cast of an id column; a lookup that must accept a slug
 or an id is the only reason to add an allowlist entry there.
 
+Give every new foreign key an index led by its columns. Deleting the referenced row checks the
+referencing table by that column, and without such an index the check scans the whole table, once for
+each deleted row. An index that is partial on `deleted_at IS NULL` does not count, because the check
+cannot use it. For a nullable column that is usually empty, use a partial index `WHERE <column> IS NOT NULL`:
+the check can use it, and rows that leave the column empty cost nothing. The `apiome-db` schema test
+(`test/foreign-key-index-coverage.test.ts`, run in CI on a migrated database) fails on a foreign key with
+no usable index. The only exceptions are the references to `users` listed in
+`apiome-db/test/foreign-key-index-allowlist.json`. Users are hard-deleted only by `apiome-db users delete`,
+which accepts the scan.
+
 ## Upgrade a large database without blocking writes
 
 Each `apiome-db` migration runs in one transaction, so an index it creates blocks writes to that
@@ -458,6 +468,17 @@ A migration that adds a stored generated column cannot be prepared this way. `V4
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of
 project properties while it runs: about a second for each million properties. Apply it in a quiet
 period on a large database.
+
+`V418` to `V421` (DBP-1.12) index foreign keys and remove indexes that only cost writes. Together they
+took 7 seconds on the scale database (1,000,000 classes, 500,000 `usage_daily` rows).
+
+- `V418` adds 166 foreign-key indexes. Build them concurrently as above, and the migration then only
+  drops the 31 partial indexes they replace. The largest is `idx_classes_version_id_fk` on `classes`.
+- `V419` only drops indexes. Each drop takes a brief lock and does not wait for a build.
+- `V420` adds the stored column `tenant_repository_files.is_importable`. Like `V409`, it rewrites the
+  table and blocks repository scans and file browsing while it runs.
+- `V421` adds an `id` primary key to `usage_hourly` and `usage_daily`. It rewrites both tables, so usage
+  ingest and the adoption views wait for it. Apply it outside peak ingest.
 
 ## Find slow queries
 

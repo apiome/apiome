@@ -332,6 +332,7 @@ EXPECTED_COLUMNS: Dict[str, Dict[str, str]] = {
             "request_bytes": "bigint",
             "response_bytes": "bigint",
             ("updated_at" if table == "usage_hourly" else "computed_at"): "timestamp with time zone",
+            "id": "bigint",  # surrogate primary key (apiome-db V421, DBP-1.12)
         }
         for table in ("usage_hourly", "usage_daily")
     },

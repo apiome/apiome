@@ -379,14 +379,18 @@ class _RecordingDatabase:
 
 
 def test_the_claim_selects_only_classified_specs_with_a_stale_score() -> None:
-    """The ``unknown_spec`` exclusion lives in SQL, so it has to be asserted in SQL."""
-    from app.database import REPOSITORY_FILE_IMPORTABLE_SQL
+    """The ``unknown_spec`` exclusion lives in SQL, so it has to be asserted in SQL.
 
+    It reads the stored ``is_importable`` column (apiome-db V420, DBP-1.12) rather than
+    repeating the predicate, so the partial ``idx_tenant_repository_files_quality_due`` index
+    matches and the claim skips never-scored non-spec files.
+    """
     db = _RecordingDatabase.build()
     db.claim_repository_files_for_quality_scoring(10)
 
     query, params = db.queries[0]
-    assert REPOSITORY_FILE_IMPORTABLE_SQL in query
+    assert "AND f.is_importable " in query
+    assert "ILIKE" not in query
     assert "f.quality_scored_blob_sha IS DISTINCT FROM f.blob_sha" in query
     assert "f.blob_sha IS NOT NULL" in query
     assert "r.deleted_at IS NULL" in query

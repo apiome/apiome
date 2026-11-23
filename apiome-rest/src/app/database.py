@@ -113,7 +113,8 @@ from .review_lifecycle import (
 
 _logger = logging.getLogger(__name__)
 
-#: SQL mirror of ``repository_file_scan._importable_hint`` — keep the two in lockstep.
+#: SQL mirror of ``repository_file_scan._importable_hint`` — keep the two in lockstep, and the
+#: stored ``tenant_repository_files.is_importable`` generated column (apiome-db V420) too.
 #:
 #: The ``json%%`` arm resolves JSON Schema by *filename shape* rather than by kind: the
 #: scanner labels every ``.json`` blob ``json-candidate``, so admitting the kind wholesale
@@ -22800,9 +22801,11 @@ class Database:
         (:meth:`set_repository_file_quality`), each ``(file, blob)`` pair is claimed at most
         once and an unscorable file is not re-fetched on every sweep tick.
 
-        Only classified specs are selected (the shared
-        :data:`REPOSITORY_FILE_IMPORTABLE_SQL` predicate), so ``unknown_spec`` files never
-        enter the queue at all. Rows are joined to their repository because the scorer needs
+        Only classified specs are selected, so ``unknown_spec`` files never enter the queue at
+        all. The filter is the stored ``is_importable`` column (apiome-db V420, DBP-1.12) — the
+        :data:`REPOSITORY_FILE_IMPORTABLE_SQL` predicate as a generated column — because the
+        partial index ``idx_tenant_repository_files_quality_due`` carries it: the claim then
+        reads only due rows instead of every never-scored non-spec file on each tick. Rows are joined to their repository because the scorer needs
         the provider, clone URL and linked-account columns to download the blob.
 
         This claim does not lock: the sweep is single-flight per process and re-scoring a row
@@ -22825,7 +22828,7 @@ class Database:
             "WHERE r.deleted_at IS NULL "
             "  AND f.blob_sha IS NOT NULL "
             "  AND f.quality_scored_blob_sha IS DISTINCT FROM f.blob_sha "
-            "  AND " + REPOSITORY_FILE_IMPORTABLE_SQL + " "
+            "  AND f.is_importable "
             "ORDER BY f.repository_id, f.path ASC "
             "LIMIT %s"
         )
