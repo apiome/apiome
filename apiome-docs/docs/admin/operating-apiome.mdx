@@ -606,6 +606,14 @@ columns are nullable, so no table is rewritten. The migration fills them in one 
 while it runs. Its nine indexes can be built ahead as above. The largest,
 `idx_mcp_discovery_jobs_terminal_endpoint`, took 0.5 seconds for 1,000,000 discovery jobs.
 
+`V427` (DBP-1.19) replaces the row-level content-stamp triggers on 35 tables with statement-level
+triggers; it changes no table and builds no index, so it applies in well under a second. Each
+`DROP TRIGGER` and `CREATE TRIGGER` waits for a brief lock on its table, so apply it while no long
+import runs. Bulk writes to a revision's classes, paths and operations now cost the same whether
+they touch one revision or hundreds: 50,000 inserted classes spread over 500 revisions took the
+same time with the trigger as without (the row-level triggers made it 3.1 times as slow). To go
+back, follow the rollback notes at the top of the migration file.
+
 A migration that adds a stored generated column cannot be prepared this way. `V409` adds
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of
 project properties while it runs: about a second for each million properties. Apply it in a quiet
