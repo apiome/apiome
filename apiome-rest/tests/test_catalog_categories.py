@@ -375,9 +375,9 @@ def test_categories_write_replaces_domain_and_tags_in_one_transaction() -> None:
     assert "- 'domain'" in update[0] and "publishable = false" in update[0]
     assert update[1] == ("finance", "p-1", "t-1")
     assert delete[0].startswith("DELETE FROM apiome.artifact_tags")
+    # Every tag travels in one statement, one array per column (DBP-1.7, #7190).
     assert [params for _, params in inserts] == [
-        ("t-1", "p-1", "beta", "u-1"),
-        ("t-1", "p-1", "public", "u-1"),
+        [["t-1", "t-1"], ["p-1", "p-1"], ["beta", "public"], ["u-1", "u-1"]],
     ]
 
 

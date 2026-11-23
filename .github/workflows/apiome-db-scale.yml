@@ -153,6 +153,12 @@ jobs:
           uv sync
           uv run pytest tests/test_query_budgets_db.py -v -p no:cacheprovider
 
+      - name: One-line source edit of a 20,000-class version writes only the affected rows
+        working-directory: apiome-rest
+        env:
+          DBP_SOURCE_EDIT_CLASSES: "20000"
+        run: uv run pytest tests/test_set_based_writes_db.py -v -p no:cacheprovider
+
       - name: Slowest statements (pg_stat_statements)
         if: always()
         run: |

@@ -3,11 +3,21 @@
   "budgets": {
     "Database._cursor_current_merged_document (1,000 operations)": 11,
     "Database._cursor_current_merged_document (10 operations)": 11,
+    "Database._cursor_write_canonical_rows (10 classes)": 18,
+    "Database._cursor_write_canonical_rows (2,000 classes)": 18,
+    "Database.apply_source_change_set (10 classes)": 24,
+    "Database.apply_source_change_set (2,000 classes)": 24,
+    "Database.copy_classes_from_version_for_merge (10 classes)": 3,
+    "Database.copy_classes_from_version_for_merge (2,000 classes)": 3,
+    "Database.create_forked_version (10 classes)": 7,
+    "Database.create_forked_version (2,000 classes)": 7,
     "Database.delete_class": 1,
     "Database.delete_operation": 1,
     "Database.delete_path": 1,
     "Database.load_paths_for_version (1,000 operations)": 6,
     "Database.load_paths_for_version (10 operations)": 6,
+    "Database.publish_version (10 classes)": 6,
+    "Database.publish_version (2,000 classes)": 6,
     "Database.update_class": 1,
     "Database.update_operation": 1,
     "Database.update_path": 1,
@@ -22,6 +32,8 @@
     "GET /v1/versions/{tenant}/{project}/{version}/document (cold, 10 operations)": 19,
     "GET /v1/versions/{tenant}/{project}/{version}/document (warm)": 5,
     "load_canonical_api (1,000 operations)": 8,
-    "load_canonical_api (10 operations)": 8
+    "load_canonical_api (10 operations)": 8,
+    "persist_canonical_api (10 classes)": 7,
+    "persist_canonical_api (2,000 classes)": 7
   }
 }

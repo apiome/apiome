@@ -202,6 +202,15 @@
       "params": [
         "scale:tenant:0"
       ]
+    },
+    {
+      "name": "rest.property_by_digest",
+      "source": "apiome-rest/src/app/source_apply_writer.py _resolve_library_properties (source apply: the project property with a given definition, DBP-1.7 #7190)",
+      "sql": "SELECT p.id FROM apiome.properties p WHERE p.project_id = $1::uuid AND p.data_digest = md5($2::jsonb::text) AND p.data = $2::jsonb ORDER BY p.created_at, p.id LIMIT 1",
+      "params": [
+        "scale:project:0",
+        "{\"type\": \"string\"}"
+      ]
     }
   ]
 }

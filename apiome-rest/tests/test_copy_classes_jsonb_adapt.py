@@ -1,99 +1,71 @@
-"""Regression: copying class properties must JSON-wrap the JSONB ``data`` column.
+"""Copying classes for a merge keeps property ``data`` inside the database.
 
 ``copy_classes_from_version_for_merge`` (used when cutting/pushing a new version with
-``source_version_id``) reads each property's ``data`` JSONB back as a Python ``dict`` and
-re-inserts it. Passing the bare ``dict`` as a bind parameter makes psycopg2 raise
-``can't adapt type 'dict'`` and the whole version-cut transaction 500s. The copy must wrap
-the value with ``psycopg2.extras.Json`` (and preserve SQL NULL for properties with no data).
+``source_version_id``) once read each property's ``data`` JSONB back as a Python ``dict`` and
+re-inserted it; a bare ``dict`` bind parameter made psycopg2 raise ``can't adapt type 'dict'`` and
+the whole version-cut transaction answered 500 (golden-path smoke test, #3608).
 
-Surfaced by the end-to-end golden-path smoke test (scripts/golden_path/, #3608).
+Since DBP-1.7 (#7190) the copy is ``INSERT … SELECT`` statements: the rows never travel through
+Python, so there is nothing to adapt and SQL NULL stays SQL NULL. These tests pin that shape —
+only ids are bound — and that the number of statements does not grow with the number of classes.
+The copied rows themselves are checked against PostgreSQL in ``test_set_based_writes_db.py``.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
-
-from psycopg2.extras import Json
+from typing import Any, Dict, List
 
 from app.database import db
 
 
 class _FakeCursor:
-    """Cursor stub that replays queued results and records every executed statement."""
+    """Cursor stub that replays queued ``fetchall`` results and records every statement."""
 
-    def __init__(self, fetchall_queue: List[List[Dict[str, Any]]], fetchone_queue: List[Optional[Dict[str, Any]]]):
+    def __init__(self, fetchall_queue: List[List[Dict[str, Any]]]):
         self._fetchall = list(fetchall_queue)
-        self._fetchone = list(fetchone_queue)
         self.executed: List[tuple[str, Any]] = []
 
     def execute(self, query: str, params: Any = None) -> None:
-        self.executed.append((query, params))
+        self.executed.append((" ".join(query.split()), params))
 
     def fetchall(self) -> List[Dict[str, Any]]:
-        return self._fetchall.pop(0)
-
-    def fetchone(self) -> Optional[Dict[str, Any]]:
-        return self._fetchone.pop(0)
+        return self._fetchall.pop(0) if self._fetchall else []
 
 
-def test_copy_classes_wraps_jsonb_data_with_json_adapter() -> None:
-    # One class ("Pet") with one property whose ``data`` is a JSONB object (a dict).
-    fetchall_queue = [
-        [{"id": "new-class-1", "name": "Pet"}],  # INSERT ... classes ... RETURNING id, name
-        [  # SELECT properties for the source class
-            {
-                "id": "src-prop-1",
-                "property_id": "prop-def-1",
-                "name": "id",
-                "description": "Unique id.",
-                "data": {"type": "string"},  # JSONB read back as a dict
-                "parent_id": None,
-                "primitive_id": None,
-                "primitive_ref": None,
-            }
-        ],
-    ]
-    fetchone_queue = [
-        {"id": "src-class-1"},  # SELECT id FROM classes WHERE name = 'Pet'
-        {"id": "new-prop-1"},   # INSERT ... class_properties ... RETURNING id
-    ]
-    cursor = _FakeCursor(fetchall_queue, fetchone_queue)
-
-    copied = db.copy_classes_from_version_for_merge(cursor, "src-version", "tgt-version")
-
-    assert copied == 1
-    property_inserts = [
-        params for query, params in cursor.executed if "INSERT INTO apiome.class_properties" in query
-    ]
-    assert property_inserts, "expected a class_properties INSERT during the copy"
-    data_param = property_inserts[0][4]  # 5th positional bind = the JSONB ``data`` column
-    assert isinstance(data_param, Json), "JSONB data must be wrapped with psycopg2 Json(), not a bare dict"
-    assert not isinstance(data_param, dict)
-
-
-def test_copy_classes_preserves_sql_null_for_missing_data() -> None:
-    # A property with ``data`` = None must copy across as SQL NULL, not JSON ``null``.
-    fetchall_queue = [
-        [{"id": "new-class-1", "name": "Error"}],
+def _copy(class_count: int, levels: int) -> _FakeCursor:
+    """Copy ``class_count`` classes whose properties nest ``levels`` deep."""
+    classes = [{"source_id": f"src-class-{i}", "target_id": f"new-class-{i}"} for i in range(class_count)]
+    level_rows = [
         [
-            {
-                "id": "src-prop-1",
-                "property_id": "prop-def-1",
-                "name": "code",
-                "description": None,
-                "data": None,
-                "parent_id": None,
-                "primitive_id": None,
-                "primitive_ref": None,
-            }
-        ],
+            {"old_id": f"old-{depth}-{i}", "new_id": f"new-{depth}-{i}", "target_class_id": f"new-class-{i}"}
+            for i in range(class_count)
+        ]
+        for depth in range(levels)
     ]
-    fetchone_queue = [{"id": "src-class-1"}, {"id": "new-prop-1"}]
-    cursor = _FakeCursor(fetchall_queue, fetchone_queue)
+    cursor = _FakeCursor([classes, *level_rows, []])
+    assert db.copy_classes_from_version_for_merge(cursor, "src-version", "tgt-version") == class_count
+    return cursor
 
-    db.copy_classes_from_version_for_merge(cursor, "src-version", "tgt-version")
 
-    property_inserts = [
-        params for query, params in cursor.executed if "INSERT INTO apiome.class_properties" in query
-    ]
-    assert property_inserts[0][4] is None
+def test_the_copy_binds_ids_only_never_property_data() -> None:
+    cursor = _copy(class_count=1, levels=1)
+    property_inserts = [params for query, params in cursor.executed if "INSERT INTO apiome.class_properties" in query]
+    assert property_inserts, "expected a class_properties INSERT during the copy"
+    for params in property_inserts:
+        for bound in params:
+            assert isinstance(bound, list) and all(isinstance(value, str) for value in bound)
+    # The top-level copy pairs each source class with its copy.
+    assert property_inserts[0] == (["src-class-0"], ["new-class-0"])
+    # The next level is addressed by the old id -> new id map of the level above.
+    assert property_inserts[1] == (["old-0-0"], ["new-0-0"], ["new-class-0"])
+
+
+def test_the_statement_count_follows_nesting_depth_not_class_count() -> None:
+    assert len(_copy(class_count=2, levels=1).executed) == len(_copy(class_count=300, levels=1).executed) == 3
+    assert len(_copy(class_count=2, levels=3).executed) == len(_copy(class_count=300, levels=3).executed) == 5
+
+
+def test_a_version_with_no_classes_copies_nothing() -> None:
+    cursor = _FakeCursor([[]])
+    assert db.copy_classes_from_version_for_merge(cursor, "src-version", "tgt-version") == 0
+    assert len(cursor.executed) == 1

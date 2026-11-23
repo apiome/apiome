@@ -167,7 +167,9 @@ def test_a_refresh_is_one_transaction() -> None:
         ],
     )
     assert conn.commits == 1
-    assert len(cursor.executed) == 3  # one delete, two upserts
+    # One delete and one upsert carrying both ranges (DBP-1.7, #7190).
+    assert len(cursor.executed) == 2
+    assert cursor.executed[1][1][1] == ["192.30.252.0/22", "2a0a:a440::/29"]
 
 
 def test_a_surviving_range_is_upserted_not_recreated() -> None:

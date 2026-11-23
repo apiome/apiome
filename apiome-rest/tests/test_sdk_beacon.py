@@ -113,14 +113,14 @@ class FakeDb:
     def _guarded_tx(self, work: Any) -> Any:
         return work(self)
 
-    # cursor.execute for the upsert
-    def execute(self, query: str, params: tuple) -> None:
-        assert "INSERT INTO apiome.usage_sdk_beacon_daily" in query
-        (tenant, project, source, day, revision, api_version, sdk_name, sdk_version, operation, outcome, calls, first, last) = params
-        key = (tenant, project, source, day, revision, api_version, sdk_name, sdk_version, operation, outcome)
-        row = self.rows.setdefault(key, {"calls": 0, "first_seen_at": first, "last_seen_at": last})
-        row["calls"] += calls
-        row["last_seen_at"] = max(row["last_seen_at"], last)
+    # cursor.execute for the upsert: one statement, one array per column (DBP-1.7, #7190)
+    def execute(self, query: str, params: Any) -> None:
+        assert "INSERT INTO apiome.usage_sdk_beacon_daily" in query.replace('"', "")
+        for values in zip(*params):
+            key, (calls, first, last) = tuple(values[:10]), values[10:]
+            row = self.rows.setdefault(key, {"calls": 0, "first_seen_at": first, "last_seen_at": last})
+            row["calls"] += calls
+            row["last_seen_at"] = max(row["last_seen_at"], last)
 
     def get_project_by_slug(self, slug: str, tenant_id: str):
         return {"id": PROJECT} if slug == "pets" and tenant_id == TENANT else None

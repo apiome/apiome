@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
+from .db_bulk import bulk_insert_arrays
 from .revision_deprecation import is_uuid_string
 from .sdk_beacon import SdkBeaconBatch
 from .usage_ingest import UsageIngestError
@@ -146,34 +147,36 @@ def ingest_beacons(
         day: date = now.date()
 
         def work(cursor: Any) -> None:
-            for (revision, api_version, sdk_name, sdk_version, operation_id, outcome), calls in totals.items():
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.usage_sdk_beacon_daily (
-                        tenant_id, project_id, source_id, day, spec_revision_id, api_version,
-                        sdk_name, sdk_version, operation_id, outcome, calls, first_seen_at, last_seen_at
-                    )
-                    VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
+            # One statement for every counter (DBP-1.7, #7190). ``totals`` is keyed by the rest of
+            # the primary key, so no row is named twice.
+            bulk_insert_arrays(
+                cursor,
+                "apiome.usage_sdk_beacon_daily",
+                [
+                    ("tenant_id", "uuid"),
+                    ("project_id", "uuid"),
+                    ("source_id", "uuid"),
+                    ("day", "date"),
+                    ("spec_revision_id", "uuid"),
+                    ("api_version", "text"),
+                    ("sdk_name", "text"),
+                    ("sdk_version", "text"),
+                    ("operation_id", "text"),
+                    ("outcome", "text"),
+                    ("calls", "bigint"),
+                    ("first_seen_at", "timestamptz"),
+                    ("last_seen_at", "timestamptz"),
+                ],
+                [
+                    (source.tenant_id, source.project_id, source.id, day, *key, calls, now, now)
+                    for key, calls in totals.items()
+                ],
+                on_conflict="""
                     ON CONFLICT ON CONSTRAINT usage_sdk_beacon_daily_pk DO UPDATE
                     SET calls = apiome.usage_sdk_beacon_daily.calls + EXCLUDED.calls,
                         last_seen_at = GREATEST(apiome.usage_sdk_beacon_daily.last_seen_at, EXCLUDED.last_seen_at)
-                    """,
-                    (
-                        source.tenant_id,
-                        source.project_id,
-                        source.id,
-                        day,
-                        revision,
-                        api_version,
-                        sdk_name,
-                        sdk_version,
-                        operation_id,
-                        outcome,
-                        calls,
-                        now,
-                        now,
-                    ),
-                )
+                """,
+            )
 
         db._guarded_tx(work)
 

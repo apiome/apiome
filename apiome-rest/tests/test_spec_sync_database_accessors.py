@@ -143,7 +143,7 @@ def test_an_unattributable_merge_is_still_recorded(monkeypatch):
 
 
 def test_a_plan_its_conflicts_and_its_audit_row_commit_together(monkeypatch):
-    conn = ScriptedConnection([[{"id": PLAN}], [], [], []])
+    conn = ScriptedConnection([[{"id": PLAN}], [], []])
     database = database_with(monkeypatch, conn)
 
     produced = database.record_draft_sync_plan(
@@ -156,8 +156,11 @@ def test_a_plan_its_conflicts_and_its_audit_row_commit_together(monkeypatch):
     assert produced == {"plan_id": PLAN, "created": True}
     statements = _sql(conn)
     assert "INSERT INTO apiome.draft_sync_plans" in statements[0]
-    assert len(_matching(conn, "INSERT INTO apiome.draft_sync_conflicts")) == 2
-    assert "INSERT INTO apiome.workflow_audit" in statements[3]
+    # Every conflict travels in one statement, one array per column (DBP-1.7, #7190); it quotes
+    # its identifiers, so the table is matched with the quotes taken out.
+    assert "INSERT INTO apiome.draft_sync_conflicts" in statements[1].replace('"', "")
+    assert conn.statements[1][1][2] == ["/info/version", "/info/title"]
+    assert "INSERT INTO apiome.workflow_audit" in statements[2]
     assert (conn.commits, conn.rollbacks) == (1, 0)
     assert conn.autocommit is True
 
