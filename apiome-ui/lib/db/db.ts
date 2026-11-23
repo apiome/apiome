@@ -18,10 +18,13 @@ function envInt(name: string, fallback: number): number {
 }
 
 // Session limits, so one stuck statement cannot hold a pooled client forever: a statement waiting
-// on a lock fails after `lock_timeout`, and a session left inside an open transaction is ended by
-// PostgreSQL (releasing its locks) after `idle_in_transaction_session_timeout`. `0` turns one off.
+// on a lock fails after `lock_timeout`, a statement still running after `statement_timeout` is
+// cancelled by PostgreSQL (DBP-1.15, #7198 — the same 30 s ceiling apiome-rest applies), and a
+// session left inside an open transaction is ended (releasing its locks) after
+// `idle_in_transaction_session_timeout`. `0` turns one off.
 const lockTimeoutMs = envInt('DB_LOCK_TIMEOUT_MS', 30000);
 const idleInTransactionTimeoutMs = envInt('DB_IDLE_IN_TRANSACTION_TIMEOUT_MS', 60000);
+const statementTimeoutMs = envInt('DB_STATEMENT_TIMEOUT_MS', 30000);
 
 const connectionPool = new Pool({
   connectionString: process.env.DATABASE_URL || '',
@@ -46,6 +49,7 @@ const connectionPool = new Pool({
   options:
     '-c search_path=apiome,public' +
     (lockTimeoutMs > 0 ? ` -c lock_timeout=${lockTimeoutMs}` : '') +
+    (statementTimeoutMs > 0 ? ` -c statement_timeout=${statementTimeoutMs}` : '') +
     (idleInTransactionTimeoutMs > 0
       ? ` -c idle_in_transaction_session_timeout=${idleInTransactionTimeoutMs}`
       : ''),

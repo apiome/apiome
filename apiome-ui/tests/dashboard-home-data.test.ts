@@ -58,8 +58,8 @@ const SECTION = {
   recentlyViewed: 'FROM apiome.project_views pv',
   pinned: 'FROM apiome.project_pins pp',
   timeSpent: 'FROM apiome.project_time pt',
-  sunset: "v.metadata->>'sunsetAt'",
-  lint: "quality_report->'severity_counts'",
+  sunset: 'v.sunset_at IS NOT NULL',
+  lint: 'v.lint_error_count',
   keys: 'FROM apiome.api_keys ak',
   pulse: "date_trunc('week', v.published_at AT TIME ZONE 'UTC')",
 } as const;
@@ -503,12 +503,12 @@ describe('the needs-attention sections', () => {
     ]);
   });
 
-  it('reads all three sunset key spellings the app has written', async () => {
+  it('reads the stored sunset column, not the metadata document (DBP-1.15)', async () => {
+    // V422's generated `sunset_at` covers the three spellings (apiome-db home-dashboard-columns test).
     await getDashboardHomeForSession();
     const entry = queries.find((candidate) => candidate.sql.includes(SECTION.sunset));
-    for (const key of ['sunsetAt', 'sunsetDate', 'sunset_date']) {
-      expect(entry?.sql).toContain(`'${key}'`);
-    }
+    expect(entry?.sql).toContain('ORDER BY v.sunset_at ASC');
+    expect(entry?.sql).not.toContain('metadata');
   });
 
   it('asks the lint gate only about revisions the gate can still stop', async () => {
@@ -517,10 +517,12 @@ describe('the needs-attention sections', () => {
     expect(entry?.sql).toContain('v.published = false');
   });
 
-  it('guards the severity cast, so a malformed report cannot abort the statement', async () => {
+  it('filters on the stored lint count, which is NULL for a malformed report (DBP-1.15)', async () => {
+    // V422's generated `lint_error_count` guards the cast (apiome-db home-dashboard-columns test).
     await getDashboardHomeForSession();
     const entry = queries.find((candidate) => candidate.sql.includes(SECTION.lint));
-    expect(entry?.sql).toContain("jsonb_typeof(v.quality_report->'severity_counts'->'error') = 'number'");
+    expect(entry?.sql).toContain('v.lint_error_count > 0');
+    expect(entry?.sql).not.toContain('quality_report');
   });
 
   it('asks about enabled keys only, since a disabled key cannot break a pipeline', async () => {

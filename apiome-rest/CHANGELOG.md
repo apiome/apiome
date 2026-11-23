@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.825.0] - 2026-11-23
+
+### Performance
+- **The sunset timeline reads the stored sunset column (DBP-1.15, #7198).** OpenAPI 1.649.0 (version
+  only; no schema change). `list_sunset_timeline_entries` tests `versions.sunset_at` instead of
+  extracting `metadata->>'sunsetDate'` / `'sunset_date'` from every revision of the tenant. Migration
+  `V422` adds that column (with `versions.lint_error_count`) as a stored generated column — the first
+  non-empty of `sunsetAt`, `sunsetDate` and `sunset_date`, the order `revision_deprecation` reads them
+  in. Writes mirror `sunsetAt` into `sunsetDate`, so the rows matched are the same. `V422` also
+  re-creates the V403 content-stamp trigger with the two generated columns in its non-content list:
+  in a BEFORE trigger NEW does not carry recomputed generated values, so without it every bookkeeping
+  UPDATE of such a revision would bump `content_stamp` and mark its rendered documents stale
+  (`tests/test_content_stamp_db.py` covers it). `V423` adds `version_content_counts`, the web app's
+  Home count rollup; it is exempt from the content stamp (derived, keyed by the stamp).
+
 ## [1.824.0] - 2026-11-22
 
 ### Performance

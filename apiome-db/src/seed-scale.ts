@@ -26,6 +26,7 @@
  * | mcp_endpoints / versions / capability items | 2,000 / 10,000 / 200,000 |                    |
  * | usage_source / usage_daily  | 5,000 / 500,000 | the large tenant's projects             |
  * | workflow_audit / access_audit | 500,000 / 200,000 |                                       |
+ * | version_content_counts      | 200,000   | Home's count rollup (V423), one row per version |
  *
  * Every tenant slug starts with `scale-`, every email ends in `@scale.apiome.test`, and users get a
  * password value that is not a bcrypt hash, so no seeded account can sign in.
@@ -153,6 +154,8 @@ export type ScaleStep = {
   rows: number;
   /** Id of the step's last row: when it exists the step is complete and skipped. */
   lastId: string;
+  /** The column {@link lastId} is looked up in — `id` unless the table is keyed otherwise. */
+  keyColumn?: string;
   /** The `INSERT … SELECT` statement. */
   sql: string;
   /**
@@ -374,6 +377,30 @@ export function buildScaleSteps(params: ScaleParams): ScaleStep[] {
              timestamptz '2026-01-01' + n * interval '30 seconds'
         FROM ${series(params.accessAuditRows)}
       ON CONFLICT DO NOTHING`),
+    // Home's per-revision count rollup (V423, DBP-1.15 #7198), filled the way a busy deployment
+    // has it: every revision counted at its current content stamp. Without it the first plan-check
+    // run of the dashboard refresh would recount the whole large tenant.
+    {
+      ...step("version_content_counts", "apiome.version_content_counts", versions, `version:${versions - 1}`, `
+      INSERT INTO apiome.version_content_counts (version_id, content_stamp, class_count,
+                                                 class_property_count, max_class_created_at, counted_at)
+      SELECT v.id, v.content_stamp, COALESCE(k.class_count, 0), COALESCE(k.class_property_count, 0),
+             k.max_class_created_at, timestamptz '2026-01-01'
+        FROM ${series(versions)}
+        JOIN apiome.versions v ON v.id = ${id("version", "n")}
+        LEFT JOIN (
+          SELECT c.version_id, COUNT(*)::int AS class_count,
+                 COALESCE(SUM(cp.properties), 0)::int AS class_property_count,
+                 MAX(c.created_at) AS max_class_created_at
+            FROM apiome.classes c
+            LEFT JOIN (SELECT class_id, COUNT(*) AS properties FROM apiome.class_properties GROUP BY class_id) cp
+              ON cp.class_id = c.id
+           WHERE c.deleted_at IS NULL
+           GROUP BY c.version_id
+        ) k ON k.version_id = v.id
+      ON CONFLICT DO NOTHING`),
+      keyColumn: "version_id",
+    },
   ];
 }
 
@@ -504,7 +531,7 @@ async function stepComplete(client: pg.Client, s: ScaleStep): Promise<boolean> {
   const sep = s.lastId.lastIndexOf(":");
   const kind = s.lastId.slice(0, sep);
   const index = Number(s.lastId.slice(sep + 1));
-  const res = await client.query(`SELECT EXISTS (SELECT 1 FROM ${s.table} WHERE id = $1::uuid) AS done`, [
+  const res = await client.query(`SELECT EXISTS (SELECT 1 FROM ${s.table} WHERE ${s.keyColumn ?? "id"} = $1::uuid) AS done`, [
     scaleId(kind, index),
   ]);
   return Boolean(res.rows[0]?.done);

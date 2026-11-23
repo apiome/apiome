@@ -64,7 +64,8 @@ command refuses under `NODE_ENV=production` without `--force`.
 database (migrate it first): 200 tenants, 20,000 projects (5,000 in the skewed tenant
 `scale-large`), 200,000 versions, 1,000,000 classes (20,000 in one version), 3,100,000 class
 properties, 600,000 paths, 1,200,000 operations, MCP endpoints, versions and capability items,
-usage rows and audit rows. `--scale-factor <n>` multiplies every count. Each table is filled by one
+usage rows and audit rows, then fills Home's per-revision count rollup (`version_content_counts`,
+V423) the way a busy deployment has it. `--scale-factor <n>` multiplies every count. Each table is filled by one
 `INSERT … SELECT generate_series(…)` statement ([`src/seed-scale.ts`](./src/seed-scale.ts)); ids are
 `md5('apiome-scale:<kind>:<n>')::uuid`, so a run is reproducible, and a re-run skips every step whose
 last row exists. The bulk revision-content steps insert with `session_replication_role = replica`

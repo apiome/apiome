@@ -97,16 +97,33 @@ export async function deriveCurrentTenantId(userId: string): Promise<string | un
   }
 }
 
+/** Options for {@link toAppSessionUser} / {@link toAppSession}. */
+export interface AppSessionOptions {
+  /**
+   * The active tenant already derived and validated for this read (by the `customSession` plugin),
+   * or `null` when it derived none. When given, the membership query is not run again (DBP-1.15,
+   * #7198); when omitted, the tenant is derived here.
+   */
+  currentTenantId?: string | null;
+}
+
 /**
  * Build the app-contract user for a Better Auth user, deriving the validated active tenant.
  *
  * Used by the engine-aware server reader (`server-session.ts`), which needs the clean contract shape.
  *
  * @param user The Better Auth session user.
+ * @param options An already-derived tenant, to skip deriving it again.
  * @returns The {@link AppSessionUser} the app expects, with `current_tenant_id` when one resolves.
  */
-export async function toAppSessionUser(user: BetterAuthUserLike): Promise<AppSessionUser> {
-  const current_tenant_id = await deriveCurrentTenantId(user.id);
+export async function toAppSessionUser(
+  user: BetterAuthUserLike,
+  options: AppSessionOptions = {}
+): Promise<AppSessionUser> {
+  const current_tenant_id =
+    options.currentTenantId !== undefined
+      ? options.currentTenantId ?? undefined
+      : await deriveCurrentTenantId(user.id);
   return {
     user_id: user.id,
     email: user.email,
@@ -122,13 +139,15 @@ export async function toAppSessionUser(user: BetterAuthUserLike): Promise<AppSes
  *
  * @param user The Better Auth session user (may include `twoFactorEnabled`).
  * @param expiresAt Session expiry from Better Auth (`session.expiresAt`).
+ * @param options An already-derived tenant, to skip deriving it again.
  * @returns The {@link AppSession} the app and suite consumers expect.
  */
 export async function toAppSession(
   user: BetterAuthUserLike,
-  expiresAt: string | Date
+  expiresAt: string | Date,
+  options: AppSessionOptions = {}
 ): Promise<AppSession> {
-  const appUser = await toAppSessionUser(user);
+  const appUser = await toAppSessionUser(user, options);
   return {
     user: appUser,
     expires: new Date(expiresAt).toISOString(),

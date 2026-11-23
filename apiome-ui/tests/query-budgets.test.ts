@@ -12,6 +12,12 @@
  *   whole pipeline's budget is in `tests/import-pipeline-budget.test.ts`.
  * - `loadPathsForOpenAPIExport` — a version's paths for export and repository merges: six
  *   statements at 10 and at 1,000 operations (DBP-1.6, #7189).
+ * - `getDashboardStats` — Home's counters: the rollup refresh and the read, two statements
+ *   (DBP-1.15, #7198; it was one statement that counted every class property).
+ * - `getDashboardHomeForSession` — Home's other panels: one statement per section, ten in all
+ *   (DBP-1.15, #7198), run at most three at a time.
+ * - `getPropertiesForClassesBatch` — the relationship graph's properties for a 500-class version:
+ *   the classes' workspace, the caller's membership and one batch read (DBP-1.15, #7198).
  */
 
 import fs from 'fs';
@@ -65,13 +71,23 @@ function exportAnswer(text: string): Record<string, unknown>[] | null {
   return key ? exportFixture[key] : null;
 }
 
+/** The class ids the relationship-graph budget asks about (DBP-1.15, #7198). */
+const GRAPH_CLASS_IDS = Array.from(
+  { length: 500 },
+  (_, i) => `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+);
+
 /** Answers every statement: no classes, one generated id per insert. */
 function answer(sql: unknown): { rows: Record<string, unknown>[]; rowCount: number } {
   const text = String(sql);
+  // `tenantOfClasses`: every asked-for class found in one workspace.
+  if (text.includes('COUNT(DISTINCT c.id) OVER ()'))
+    return { rows: [{ tenant_id: 'tenant-1', found: GRAPH_CLASS_IDS.length }], rowCount: 1 };
   const exported = exportAnswer(text);
   if (exported) return { rows: exported, rowCount: exported.length };
   if (text.includes('UNION ALL')) return { rows: [{ '?column?': 1 }], rowCount: 1 };
   if (text.includes('FROM apiome.classes')) return { rows: [], rowCount: 0 };
+  if (text.includes('FROM apiome.class_properties')) return { rows: [], rowCount: 0 };
   if (text.includes('tenant_id'))
     return { rows: [{ tenant_id: 'tenant-1', project_id: 'proj-1', found: 1 }], rowCount: 1 };
   return { rows: [{ id: `id-${Math.random().toString(36).slice(2)}` }], rowCount: 1 };
@@ -98,7 +114,13 @@ jest.mock('next/headers', () => ({ cookies: jest.fn() }));
 jest.mock('../lib/auth/admin-session', () => ({ verifyAdminSessionToken: jest.fn() }));
 
 import * as sessionModule from '../lib/auth/server-session';
-import { getClassesForVersion } from '../lib/db/helper-actions';
+import {
+  getClassesForVersion,
+  getDashboardStats,
+  getPropertiesForClassesBatch,
+} from '../lib/db/helper-actions';
+import { clearDashboardStatsCache } from '../lib/db/helper';
+import { getDashboardHomeForSession } from '../lib/db/dashboard-home';
 import { loadPathsForOpenAPIExport, PATHS_EXPORT_QUERIES } from '../lib/db/helper-paths-export';
 import { importOpenAPIPathsAndSecurity } from '../lib/db/import-openapi-paths-security';
 import {
@@ -121,6 +143,7 @@ const SPEC = YAML.parse(
 const VERSION_ID = '00000000-0000-4000-8000-000000000123';
 
 beforeEach(() => {
+  clearDashboardStatsCache();
   session.getAuthSession.mockResolvedValue({
     user: { user_id: 'user-1', current_tenant_id: 'tenant-1' },
   } as never);
@@ -166,6 +189,23 @@ describe('server action statement budgets', () => {
     },
   );
 
+  test('Home counters stay within their budget, and a repeat load within the cache age runs none', async () => {
+    const label = 'getDashboardStats server action';
+    await assertMaxQueries(BUDGETS[label], label, () => getDashboardStats('user-1'));
+    await assertMaxQueries(0, `${label} (cached)`, () => getDashboardStats('user-1'));
+  });
+
+  test('the relationship graph reads a 500-class version in a constant number of statements', async () => {
+    const label = 'getPropertiesForClassesBatch server action (500 classes)';
+    const result = await assertMaxQueries(BUDGETS[label], label, () => getPropertiesForClassesBatch(GRAPH_CLASS_IDS));
+    expect(JSON.parse(String(result))).toEqual({});
+  });
+
+  test('Home panels stay within their budget', async () => {
+    const label = 'getDashboardHomeForSession';
+    await assertMaxQueries(BUDGETS[label], label, () => getDashboardHomeForSession());
+  });
+
   test('exceeding a recorded budget fails and names the statements', async () => {
     const label = 'getClassesForVersion server action';
     const run = assertMaxQueries(BUDGETS[label] - 1, label, () => getClassesForVersion(VERSION_ID));
@@ -187,8 +227,15 @@ describe('server action statement budgets', () => {
         exportFixture = null;
       }
     }
+    clearDashboardStatsCache();
+    const stats = await captureStatements(() => getDashboardStats('user-1'));
+    const home = await captureStatements(() => getDashboardHomeForSession());
+    const graph = await captureStatements(() => getPropertiesForClassesBatch(GRAPH_CLASS_IDS));
     expect({
       'getClassesForVersion server action': classes.stats.count,
+      'getDashboardStats server action': stats.stats.count,
+      getDashboardHomeForSession: home.stats.count,
+      'getPropertiesForClassesBatch server action (500 classes)': graph.stats.count,
       'importOpenAPIPathsAndSecurity (query-and-additional.yaml)': imported.stats.count,
       ...exported,
     }).toEqual(BUDGETS);

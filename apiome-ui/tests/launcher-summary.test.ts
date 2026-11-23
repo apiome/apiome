@@ -171,7 +171,7 @@ describe('launcher summary', () => {
     const [sql, params] = mockQuery.mock.calls[0];
     // Home's Needs attention definition: unpublished, blocking, in the reader's workspaces.
     expect(sql).toContain('v.published = false');
-    expect(sql).toContain("'severity_counts'->>'error')::int > 0");
+    expect(sql).toContain('v.lint_error_count > 0');
     expect(sql).toContain('apiome.tenant_users WHERE user_id = $1');
     expect(params).toEqual(['user-1']);
   });

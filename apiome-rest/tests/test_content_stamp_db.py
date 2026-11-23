@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from pathlib import Path
 from typing import Any, Dict, Iterator, List
 
 import psycopg2
@@ -32,6 +33,9 @@ from psycopg2.extras import RealDictCursor
 
 from app.config import settings
 from app.database import Database
+
+#: The Flyway migrations (apiome-db/scripts), read for statements whose effect a later migration hides.
+REPO_SCRIPTS = Path(__file__).resolve().parents[2] / "apiome-db" / "scripts"
 
 #: Tables that reference a revision (or one of its covered rows) but are not part of its rendered
 #: content, so writes to them must not bump the stamp. Each needs a reason; a table that renders
@@ -42,6 +46,7 @@ NOT_RENDERED: Dict[str, str] = {
     "version_spec_snapshots": "frozen snapshot of a rendered document",
     "version_import_snapshots": "captured import source, not the normalized model",
     "version_overlay_renders": "render cache of an overlay",
+    "version_content_counts": "Home's count rollup (DBP-1.15) — derived from the content, keyed by its stamp",
     "version_overlays": "applied on top of the rendered document, not part of the revision's model",
     "version_entity_sources": "per-entity source provenance",
     "version_source_edits": "source workspace edit log",
@@ -312,6 +317,33 @@ def test_bookkeeping_columns_on_the_revision_do_not_bump(env) -> None:
     assert _stamp(env) == 0
 
 
+def test_bookkeeping_on_a_revision_with_generated_values_does_not_bump(env) -> None:
+    """V422's generated lint count and sunset date are not content (DBP-1.15, #7198).
+
+    In a BEFORE trigger NEW does not yet carry recomputed generated values, so unless the trigger
+    ignores them a revision that has a lint count or a sunset date bumps on every bookkeeping write.
+    """
+    _one(
+        env,
+        "UPDATE apiome.versions SET quality_report = '{\"severity_counts\": {\"error\": 3}}'::jsonb "
+        "WHERE id = %s",
+        (env["version"],),
+    )
+    row = _one(env, "SELECT lint_error_count FROM apiome.versions WHERE id = %s", (env["version"],))
+    assert row["lint_error_count"] == 3
+    assert _stamp(env) == 0
+    _one(env, "UPDATE apiome.versions SET metadata = metadata || '{\"sunsetAt\": \"2027-01-01\"}'::jsonb WHERE id = %s",
+         (env["version"],))
+    after_metadata = _stamp(env)
+    assert after_metadata == 1  # metadata is content
+    _one(
+        env,
+        "UPDATE apiome.versions SET quality_score = 70, updated_at = now() WHERE id = %s",
+        (env["version"],),
+    )
+    assert _stamp(env) == after_metadata
+
+
 def test_writes_to_unrendered_tables_do_not_bump(env) -> None:
     _one(
         env,
@@ -467,14 +499,20 @@ def test_every_resolver_query_is_valid(env) -> None:
 
 
 def test_the_stamp_column_was_added_without_a_rewrite(env) -> None:
+    """V403 added the stamp online: a constant default, so PostgreSQL stored it in the catalog.
+
+    The catalog flag that showed it (``pg_attribute.atthasmissing``) is cleared by any later table
+    rewrite, and V422 (DBP-1.15, #7198) rewrites ``versions`` on purpose to store its generated
+    columns, so the statement itself is checked; the column's type and nullability still are.
+    """
     row = _rows(
         env,
-        "SELECT a.atthasmissing AS fast, format_type(a.atttypid, a.atttypmod) AS type, a.attnotnull AS nn "
+        "SELECT format_type(a.atttypid, a.atttypmod) AS type, a.attnotnull AS nn "
         "FROM pg_attribute a WHERE a.attrelid = 'apiome.versions'::regclass AND a.attname = 'content_stamp'",
     )[0]
     assert row["type"] == "bigint" and row["nn"] is True
-    # A fast (catalog-only) default leaves the value in pg_attribute instead of rewriting rows.
-    assert row["fast"] is True
+    v403 = (REPO_SCRIPTS / "V403__document_objects_content_stamp_7078.sql").read_text(encoding="utf-8")
+    assert "ADD COLUMN IF NOT EXISTS content_stamp bigint NOT NULL DEFAULT 0;" in v403
 
 
 def _object(ctx: Dict[str, Any], sha: str = "a" * 64) -> str:
