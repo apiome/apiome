@@ -11,7 +11,7 @@ criteria:
 * editing a project library property bumps every revision whose schema uses it;
 * a rolled-back savepoint undoes its bump; deleting a revision with all its rows still works;
 * **coverage guard:** every table that references ``versions`` or a covered table either carries
-  the ``trg_content_stamp`` trigger or is listed in :data:`NOT_RENDERED` with the reason — adding a
+  the ``trg_content_stamp_*`` triggers or is listed in :data:`NOT_RENDERED` with the reason — adding a
   new normalized table without the trigger fails here;
 * the column was added without rewriting ``versions``;
 * the document metadata tables enforce their roles, provenance and identity.
@@ -544,6 +544,83 @@ def test_deleting_a_revision_with_its_rows_still_works(env) -> None:
     assert db.get_version_content_stamp(version) is None
 
 
+def _three_revisions(ctx: Dict[str, Any]) -> List[str]:
+    db = ctx["db"]
+    extra = [str(db.create_version(ctx["project"], ctx["user"], v)["id"]) for v in ("2.0.0", "3.0.0")]
+    return [ctx["version"], *extra]
+
+
+def test_one_multi_row_statement_over_many_revisions_bumps_each_once(env) -> None:
+    """DBP-1.19 (#7202): INSERT, UPDATE and DELETE statements touching rows of three revisions."""
+    versions = _three_revisions(env)
+    before = [_stamp(env, v) for v in versions]
+    _one(
+        env,
+        "INSERT INTO apiome.classes (version_id, name, schema) "
+        "SELECT v, n, '{\"type\": \"object\"}'::jsonb FROM unnest(%s::uuid[]) v, "
+        "unnest(ARRAY['A', 'B']) n",
+        (versions,),
+    )
+    after_insert = [_stamp(env, v) for v in versions]
+    assert after_insert == [b + 1 for b in before]
+
+    _one(env, "UPDATE apiome.classes SET description = 'x' WHERE version_id = ANY(%s::uuid[])", (versions,))
+    after_update = [_stamp(env, v) for v in versions]
+    assert after_update == [b + 1 for b in after_insert]
+
+    _one(env, "DELETE FROM apiome.classes WHERE version_id = ANY(%s::uuid[])", (versions,))
+    assert [_stamp(env, v) for v in versions] == [b + 1 for b in after_update]
+
+
+def test_a_statement_bumps_only_the_revisions_whose_rows_really_changed(env) -> None:
+    versions = _three_revisions(env)
+    for v in versions:
+        env["db"].create_class(v, "Order", {"type": "object"})
+    before = [_stamp(env, v) for v in versions]
+    # Every row gets a new updated_at, but only the middle revision's description changes.
+    _one(
+        env,
+        "UPDATE apiome.classes SET updated_at = now() + interval '1 minute', "
+        "description = CASE WHEN version_id = %s THEN 'changed' ELSE description END "
+        "WHERE version_id = ANY(%s::uuid[])",
+        (versions[1], versions),
+    )
+    assert [_stamp(env, v) for v in versions] == [before[0], before[1] + 1, before[2]]
+
+
+def test_an_updated_at_only_statement_over_many_rows_does_not_bump(env) -> None:
+    versions = _three_revisions(env)
+    for v in versions:
+        env["db"].create_class(v, "Order", {"type": "object"})
+    before = [_stamp(env, v) for v in versions]
+    _one(env, "UPDATE apiome.classes SET updated_at = now() + interval '1 hour' WHERE version_id = ANY(%s::uuid[])", (versions,))
+    assert [_stamp(env, v) for v in versions] == before
+
+
+def test_a_statement_that_matches_no_rows_does_not_bump(env) -> None:
+    before = _stamp(env)
+    _one(env, "UPDATE apiome.classes SET description = 'x' WHERE false")
+    _one(env, "DELETE FROM apiome.classes WHERE false")
+    assert _stamp(env) == before
+
+
+def test_the_marks_hold_across_statements_in_one_transaction(env) -> None:
+    versions = _three_revisions(env)
+    before = [_stamp(env, v) for v in versions]
+    with env["conn"].cursor() as cur:
+        for _ in range(2):
+            cur.execute(
+                "INSERT INTO apiome.classes (version_id, name, schema) "
+                "SELECT v, gen_random_uuid()::text, '{}'::jsonb FROM unnest(%s::uuid[]) v",
+                (versions,),
+            )
+        cur.execute("SELECT current_setting('apiome.content_stamp_bumped') AS marks")
+        marks = cur.fetchone()["marks"]
+    env["conn"].commit()
+    assert all(v in marks for v in versions)
+    assert [_stamp(env, v) for v in versions] == [b + 1 for b in before]
+
+
 # ───────────────────────────── coverage guard ─────────────────────────────
 
 
@@ -562,7 +639,7 @@ def test_every_table_referencing_revision_content_is_covered_or_exempt(env) -> N
             env,
             "SELECT c.relname AS t FROM pg_trigger g JOIN pg_class c ON c.oid = g.tgrelid "
             "JOIN pg_namespace n ON n.oid = c.relnamespace "
-            "WHERE n.nspname = 'apiome' AND g.tgname = 'trg_content_stamp'",
+            "WHERE n.nspname = 'apiome' AND g.tgname IN ('trg_content_stamp', 'trg_content_stamp_insert')",
         )
     }
     references = _rows(
@@ -584,23 +661,40 @@ def test_every_table_referencing_revision_content_is_covered_or_exempt(env) -> N
 
 
 def test_every_content_stamp_trigger_uses_the_one_function(env) -> None:
+    """The revision row keeps its row trigger; every other table has one statement-level trigger
+    per event with the matching transition table (DBP-1.19, #7202)."""
     rows = _rows(
         env,
-        "SELECT c.relname AS t, p.proname AS fn, g.tgnargs AS nargs, g.tgtype AS tgtype "
+        "SELECT c.relname AS t, g.tgname AS name, p.proname AS fn, g.tgnargs AS nargs, "
+        "g.tgtype AS tgtype, g.tgoldtable AS old_table, g.tgnewtable AS new_table "
         "FROM pg_trigger g JOIN pg_class c ON c.oid = g.tgrelid JOIN pg_proc p ON p.oid = g.tgfoid "
         "JOIN pg_namespace n ON n.oid = c.relnamespace "
-        "WHERE n.nspname = 'apiome' AND g.tgname = 'trg_content_stamp'",
+        "WHERE n.nspname = 'apiome' AND g.tgname LIKE 'trg\\_content\\_stamp%'",
     )
     assert {r["fn"] for r in rows} == {"bump_version_content_stamp"}
     row_level, before, ins, dele, upd = 1, 2, 4, 8, 16
-    by_table = {r["t"]: r for r in rows}
-    assert by_table["versions"]["nargs"] == 0
-    assert by_table["versions"]["tgtype"] == row_level | before | upd
-    for table, r in by_table.items():
-        if table == "versions":
-            continue
-        assert r["nargs"] == 1, table
-        assert r["tgtype"] == row_level | ins | dele | upd, table
+    by_table: Dict[str, Dict[str, Any]] = {}
+    for r in rows:
+        by_table.setdefault(r["t"], {})[r["name"]] = r
+    versions = by_table.pop("versions")
+    assert set(versions) == {"trg_content_stamp"}
+    assert versions["trg_content_stamp"]["nargs"] == 0
+    assert versions["trg_content_stamp"]["tgtype"] == row_level | before | upd
+    for table, triggers in by_table.items():
+        assert set(triggers) == {
+            "trg_content_stamp_insert",
+            "trg_content_stamp_update",
+            "trg_content_stamp_delete",
+        }, table
+        for name, event, old_table, new_table in (
+            ("trg_content_stamp_insert", ins, None, "new_rows"),
+            ("trg_content_stamp_update", upd, "old_rows", "new_rows"),
+            ("trg_content_stamp_delete", dele, "old_rows", None),
+        ):
+            r = triggers[name]
+            assert r["nargs"] == 1, (table, name)
+            assert r["tgtype"] == event, (table, name)  # statement-level: no row bit, AFTER
+            assert (r["old_table"], r["new_table"]) == (old_table, new_table), (table, name)
     for table in (
         "classes",
         "class_properties",
@@ -617,17 +711,41 @@ def test_every_content_stamp_trigger_uses_the_one_function(env) -> None:
 def test_every_resolver_query_is_valid(env) -> None:
     rows = _rows(
         env,
-        "SELECT c.relname AS t, encode(g.tgargs, 'escape') AS arg FROM pg_trigger g "
-        "JOIN pg_class c ON c.oid = g.tgrelid WHERE g.tgname = 'trg_content_stamp' AND g.tgnargs = 1",
+        "SELECT DISTINCT c.relname AS t, encode(g.tgargs, 'escape') AS arg FROM pg_trigger g "
+        "JOIN pg_class c ON c.oid = g.tgrelid WHERE g.tgname = 'trg_content_stamp_insert'",
     )
+    assert rows
     for r in rows:
         resolver = r["arg"].split("\\000")[0]
         if resolver.isidentifier():
-            continue
+            template = f"SELECT r.{resolver} FROM {{rows}} r"
+        else:
+            template = resolver
+        empty = f"(SELECT * FROM apiome.{r['t']} WHERE false)"
         with env["conn"].cursor() as cur:
-            cur.execute(resolver.replace("$1", "%(row)s::jsonb"), {"row": json.dumps({})})
+            cur.execute(template.replace("{rows}", empty))
             assert cur.fetchall() == [], r["t"]
         env["conn"].rollback()
+
+
+def test_every_update_filter_is_valid(env) -> None:
+    """The primary-key / changed-column predicates build and plan for every stamped table."""
+    rows = _rows(
+        env,
+        "SELECT DISTINCT c.oid::regclass::text AS rel, c.relname AS t FROM pg_trigger g "
+        "JOIN pg_class c ON c.oid = g.tgrelid WHERE g.tgname = 'trg_content_stamp_update'",
+    )
+    assert rows
+    for r in rows:
+        with env["conn"].cursor() as cur:
+            cur.execute("SELECT key_match, any_diff FROM apiome.content_stamp_row_filters(%s::regclass)", (r["rel"],))
+            f = cur.fetchone()
+            cur.execute(
+                f"SELECT count(*) AS n FROM {r['rel']} n JOIN {r['rel']} o ON {f['key_match']} "
+                f"WHERE {f['any_diff']} AND false"
+            )
+        env["conn"].rollback()
+        assert "updated_at" not in f["any_diff"], r["t"]
 
 
 # ───────────────────────────── online migration and document tables ─────────────────────────────

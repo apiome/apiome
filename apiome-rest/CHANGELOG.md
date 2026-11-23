@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.829.0] - 2026-11-23
+
+### Performance
+- **Content-stamp trigger: statement-level with transition tables (DBP-1.19, #7202).** OpenAPI
+  1.653.0 (version only; no route or schema change). Migration `V427` replaces the 35 row-level
+  `trg_content_stamp` triggers (the revision's classes, paths, operations, servers, security
+  schemes, component pins, canonical model and their children) with statement-level triggers over
+  transition tables: one query resolves every affected revision and one `UPDATE apiome.versions`
+  bumps them, instead of a `to_jsonb(NEW)` / `to_jsonb(OLD)` and a dynamic query per row. The
+  rules are unchanged: one bump per revision per transaction, no bump for `updated_at` /
+  `canvas_metadata`-only updates, both revisions bumped when a row moves, the publish counts
+  cleared on a class, path or operation write. Measured inserting 50,000 `classes` rows in one
+  statement (local PostgreSQL 16, median of 7 interleaved runs, trigger on vs. disabled):
+  one revision 1,026 ms → 1,062 ms with the trigger (+3.5 %; was +32 %), spread over 500
+  revisions 1,154 ms → 1,150 ms (within noise; was 3.1×). The statement trigger itself ran for
+  about 29 ms. The migration is reversible (see its header).
+
 ## [1.828.0] - 2026-11-23
 
 ### Performance
