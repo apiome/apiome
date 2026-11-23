@@ -352,9 +352,11 @@ class TestSourceEditProvenance:
             for sql, params in conn.writes
             if sql.startswith("INSERT INTO apiome.version_source_edits")
         ]
-        assert edits, "an applied change set records its changed pointers"
-        for _sql, params in edits:
-            tenant_id, version_id, pointer, change_kind, audit_id, _actor = params
+        # One statement for every changed pointer (DBP-1.7, #7190): each column is one array.
+        assert len(edits) == 1, "an applied change set records its changed pointers in one statement"
+        _tenants, _versions, pointers, change_kinds, audit_ids, _actors = edits[0][1]
+        assert pointers, "an applied change set records its changed pointers"
+        for pointer, change_kind, audit_id in zip(pointers, change_kinds, audit_ids):
             assert pointer == "" or pointer.startswith("/")
             assert change_kind in {"addition", "update", "deletion", "unsupported-preserved"}
             assert audit_id == result["auditId"]

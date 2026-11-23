@@ -281,7 +281,9 @@ class _RecordingDb:
     """A fake DB that stores inserted rows per table and serves them back to SELECTs.
 
     It understands exactly the statement shapes :mod:`app.canonical_persistence` issues —
-    ``INSERT INTO apiome.<table> (cols) … RETURNING id``, ``UPDATE … SET deleted_at``, and
+    ``INSERT INTO apiome.<table> (cols) … RETURNING id`` for the artifact, one
+    ``INSERT INTO apiome.<table> (cols) SELECT * FROM unnest(…)`` per child table,
+    ``UPDATE … SET deleted_at``, and
     ``SELECT <columns> FROM apiome.<table> WHERE <column> = %s::uuid [AND …]`` (the per-revision
     child reads group on ``loader_parent_id``) — which is enough to prove the agent
     rows are written and read back through the real SQL code path.
@@ -317,16 +319,22 @@ class _RecordingDb:
         self._result: List[Dict[str, Any]] = []
         insert = re.match(r"INSERT INTO apiome\.(\w+) \(([^)]*)\)", q)
         if insert:
-            table, cols = insert.group(1), [c.strip() for c in insert.group(2).split(",")]
-            row: Dict[str, Any] = {}
-            for col, value in zip(cols, params):
-                is_json = col in self._JSON_COLUMNS and isinstance(value, str)
-                row[col] = json.loads(value) if is_json else value
-            self._next += 1
-            row["id"] = f"00000000-0000-0000-0000-{self._next:012d}"
-            row["deleted_at"] = None
-            self.tables.setdefault(table, []).append(row)
-            self._result = [{"id": row["id"]}]
+            table = insert.group(1)
+            cols = [c.strip().strip('"') for c in insert.group(2).split(",")]
+            # One row per statement (the artifact) binds one value per column; a child table is
+            # one statement for all its rows, each column bound as an array (DBP-1.7, #7190).
+            many = "FROM unnest(" in q
+            for values in zip(*params) if many else [tuple(params)]:
+                row: Dict[str, Any] = {}
+                for col, value in zip(cols, values):
+                    is_json = col in self._JSON_COLUMNS and isinstance(value, str)
+                    row[col] = json.loads(value) if is_json else value
+                if "id" not in row:
+                    self._next += 1
+                    row["id"] = f"00000000-0000-0000-0000-{self._next:012d}"
+                row["deleted_at"] = None
+                self.tables.setdefault(table, []).append(row)
+                self._result = [{"id": row["id"]}]
             return
         select = re.match(r"SELECT (.+?) FROM apiome\.(\w+) WHERE (.+?)(?: ORDER BY .*| LIMIT .*)?$", q)
         if select and select.group(1) != "id":

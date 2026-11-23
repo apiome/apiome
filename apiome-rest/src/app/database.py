@@ -10143,36 +10143,11 @@ class Database:
                     conn.rollback()
                     return {"success": False, "error": "Failed to create forked version"}
 
-                # Copy classes within the same transaction so insert + copy are atomic
-                cursor.execute("""
-                    INSERT INTO apiome.classes (version_id, name, description, schema, enabled, canvas_metadata)
-                    SELECT %s, name, description, schema, enabled, canvas_metadata
-                    FROM apiome.classes
-                    WHERE version_id = %s AND deleted_at IS NULL
-                    RETURNING id, name
-                """, (new_id, source_revision_id))
-
-                copied_classes = cursor.fetchall()
-                copied_count = len(copied_classes)
-
-                for copied_class in copied_classes:
-                    new_class_id = copied_class["id"]
-                    class_name = copied_class["name"]
-
-                    cursor.execute("""
-                        SELECT id FROM apiome.classes
-                        WHERE version_id = %s AND name = %s AND deleted_at IS NULL
-                    """, (source_revision_id, class_name))
-
-                    original = cursor.fetchone()
-                    if original:
-                        original_class_id = original["id"]
-                        cursor.execute("""
-                            INSERT INTO apiome.class_properties (class_id, property_id, name, description, data, primitive_id, primitive_ref)
-                            SELECT %s, property_id, name, description, data, primitive_id, primitive_ref
-                            FROM apiome.class_properties
-                            WHERE class_id = %s AND parent_id IS NULL
-                        """, (new_class_id, original_class_id))
+                # Copy classes within the same transaction so insert + copy are atomic.
+                # Top-level properties only, as before.
+                pairs = self._cursor_copy_classes(cursor, source_revision_id, str(new_id))
+                copied_count = len(pairs)
+                self._cursor_copy_class_properties(cursor, pairs, nested=False)
 
                 conn.commit()
         except Exception as e:
@@ -10275,6 +10250,50 @@ class Database:
             conn.rollback()
             raise e
 
+    def _cursor_capture_class_schemas(
+        self, cursor: Any, version_record_id: str, slug_row: Dict[str, Any]
+    ) -> int:
+        """Freeze every class of a version into ``apiome.class_schema`` with one upsert.
+
+        The JSON Schema 2020-12 document of each class is generated in Python; all of them are
+        written by a single ``INSERT … SELECT FROM unnest(…) ON CONFLICT`` (DBP-1.7, #7190), so a
+        publish costs the same number of statements for 10 classes as for 2,000.
+
+        Args:
+            cursor: The open transaction's cursor.
+            version_record_id: The version being published or frozen.
+            slug_row: ``tenant_slug``, ``project_slug`` and ``version_id`` (the version label),
+                which the schema ``$id`` is built from.
+
+        Returns:
+            The number of class schemas written.
+        """
+        classes = self.get_classes_with_properties_and_tags_for_version(version_record_id)
+        # Keyed by class id: one statement cannot upsert the same row twice.
+        schemas: Dict[str, str] = {}
+        for class_data in classes:
+            schema_dict = generate_class_jsonschema_spec(
+                slug_row["tenant_slug"],
+                slug_row["project_slug"],
+                slug_row["version_id"],
+                class_data,
+                class_data.get("properties", []),
+            )
+            schemas[str(class_data["id"])] = json.dumps(schema_dict)
+        if not schemas:
+            return 0
+        cursor.execute(
+            """
+            INSERT INTO apiome.class_schema (version_id, class_id, schema, updated_at)
+            SELECT %s::uuid, v.class_id, v.schema, CURRENT_TIMESTAMP
+            FROM unnest(%s::uuid[], %s::jsonb[]) AS v(class_id, schema)
+            ON CONFLICT (version_id, class_id)
+            DO UPDATE SET schema = EXCLUDED.schema, updated_at = CURRENT_TIMESTAMP
+            """,
+            (version_record_id, list(schemas.keys()), list(schemas.values())),
+        )
+        return len(schemas)
+
     def publish_version(
         self,
         version_record_id: str,
@@ -10357,22 +10376,7 @@ class Database:
                     """, (version_record_id,))
                     slug_row = cursor.fetchone()
                     if slug_row:
-                        classes = self.get_classes_with_properties_and_tags_for_version(version_record_id)
-                        for class_data in classes:
-                            schema_dict = generate_class_jsonschema_spec(
-                                slug_row['tenant_slug'],
-                                slug_row['project_slug'],
-                                slug_row['version_id'],
-                                class_data,
-                                class_data.get('properties', []),
-                            )
-                            schema_json = json.dumps(schema_dict)
-                            cursor.execute("""
-                                INSERT INTO apiome.class_schema (version_id, class_id, schema, updated_at)
-                                VALUES (%s, %s, %s::jsonb, CURRENT_TIMESTAMP)
-                                ON CONFLICT (version_id, class_id)
-                                DO UPDATE SET schema = EXCLUDED.schema, updated_at = CURRENT_TIMESTAMP
-                            """, (version_record_id, class_data['id'], schema_json))
+                        self._cursor_capture_class_schemas(cursor, version_record_id, slug_row)
                     self._insert_notifications(
                         cursor,
                         tenant_id=tenant_id,
@@ -10997,25 +11001,7 @@ class Database:
                 slug_row = cursor.fetchone()
                 if not slug_row:
                     return None
-                classes = self.get_classes_with_properties_and_tags_for_version(version_record_id)
-                for class_data in classes:
-                    schema_dict = generate_class_jsonschema_spec(
-                        slug_row["tenant_slug"],
-                        slug_row["project_slug"],
-                        slug_row["version_id"],
-                        class_data,
-                        class_data.get("properties", []),
-                    )
-                    schema_json = json.dumps(schema_dict)
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.class_schema (version_id, class_id, schema, updated_at)
-                        VALUES (%s, %s, %s::jsonb, CURRENT_TIMESTAMP)
-                        ON CONFLICT (version_id, class_id)
-                        DO UPDATE SET schema = EXCLUDED.schema, updated_at = CURRENT_TIMESTAMP
-                        """,
-                        (version_record_id, class_data["id"], schema_json),
-                    )
+                self._cursor_capture_class_schemas(cursor, version_record_id, slug_row)
                 conn.commit()
                 return self.get_version_by_id(version_record_id, tenant_id)
         except Exception as e:
@@ -13470,40 +13456,10 @@ class Database:
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
-                # Copy classes
-                cursor.execute("""
-                    INSERT INTO apiome.classes (version_id, name, description, schema, enabled, canvas_metadata)
-                    SELECT %s, name, description, schema, enabled, canvas_metadata
-                    FROM apiome.classes
-                    WHERE version_id = %s AND deleted_at IS NULL
-                    RETURNING id, name
-                """, (target_version_id, source_version_id))
-
-                copied_classes = cursor.fetchall()
-                copied_count = len(copied_classes)
-
-                # For each copied class, copy its properties
-                for copied_class in copied_classes:
-                    new_class_id = copied_class['id']
-                    class_name = copied_class['name']
-
-                    # Find original class ID
-                    cursor.execute("""
-                        SELECT id FROM apiome.classes
-                        WHERE version_id = %s AND name = %s AND deleted_at IS NULL
-                    """, (source_version_id, class_name))
-
-                    original = cursor.fetchone()
-                    if original:
-                        original_class_id = original['id']
-
-                        # Copy class properties (simple copy without nested property mapping for now)
-                        cursor.execute("""
-                            INSERT INTO apiome.class_properties (class_id, property_id, name, description, data, primitive_id, primitive_ref)
-                            SELECT %s, property_id, name, description, data, primitive_id, primitive_ref
-                            FROM apiome.class_properties
-                            WHERE class_id = %s AND parent_id IS NULL
-                        """, (new_class_id, original_class_id))
+                # Top-level properties only (nested properties are not mapped by this copy).
+                pairs = self._cursor_copy_classes(cursor, source_version_id, target_version_id)
+                copied_count = len(pairs)
+                self._cursor_copy_class_properties(cursor, pairs, nested=False)
 
                 conn.commit()
                 return {"success": True, "copied_count": copied_count}
@@ -15445,124 +15401,166 @@ class Database:
             conn.rollback()
             raise e
 
+    def _cursor_copy_classes(
+        self,
+        cursor: Any,
+        source_version_id: str,
+        target_version_id: str,
+        class_name: Optional[str] = None,
+    ) -> List[Tuple[str, str]]:
+        """Copy a version's live classes into another version with one statement (DBP-1.7, #7190).
+
+        The new ids are assigned in the statement itself and returned next to the ids they were
+        copied from, so the properties can be copied by id. (Pairing the copies with their
+        sources by name afterwards asks the planner to join two sets of rows it has no statistics
+        for yet; on a 20,000-class version it picked a plan that compared every pair.)
+
+        Args:
+            cursor: The open transaction's cursor.
+            source_version_id: The version to copy from.
+            target_version_id: The version to copy into.
+            class_name: Copy only the class with this name.
+
+        Returns:
+            ``(source_class_id, target_class_id)`` for every class copied.
+        """
+        cursor.execute(
+            """
+            WITH source AS MATERIALIZED (
+                SELECT id AS source_id, apiome.uuid_generate_v4() AS target_id,
+                       name, description, schema, enabled, canvas_metadata
+                FROM apiome.classes
+                WHERE version_id = %s AND deleted_at IS NULL
+                  AND (%s::text IS NULL OR name = %s::text)
+            ), copied AS (
+                INSERT INTO apiome.classes
+                    (id, version_id, name, description, schema, enabled, canvas_metadata)
+                SELECT target_id, %s, name, description, schema, enabled, canvas_metadata
+                FROM source
+            )
+            SELECT source_id, target_id FROM source
+            """,
+            (source_version_id, class_name, class_name, target_version_id),
+        )
+        return [(str(row["source_id"]), str(row["target_id"])) for row in cursor.fetchall()]
+
+    #: Nested class properties deeper than this are not copied (guards a malformed parent cycle).
+    _CLASS_PROPERTY_COPY_MAX_DEPTH = 64
+
+    def _cursor_copy_class_properties(
+        self, cursor: Any, class_pairs: Sequence[Tuple[str, str]], nested: bool = True
+    ) -> int:
+        """Copy class properties, nested ones included, for many classes at once.
+
+        The property tree is copied one level per statement (DBP-1.7, #7190): the top level
+        first, then each level of children, every statement carrying an old-id → new-id map so a
+        child finds its copied parent. The statement count depends on how deeply properties
+        nest (two for a flat class, because the level after the last finds nothing), never on
+        how many classes or properties there are.
+
+        Args:
+            cursor: The open transaction's cursor.
+            class_pairs: ``(source_class_id, target_class_id)`` pairs. Target classes must have
+                no properties yet.
+            nested: ``False`` copies the top level only (one statement) — what a fork and a
+                plain version copy have always done.
+
+        Returns:
+            The number of properties copied.
+        """
+        if not class_pairs:
+            return 0
+        source_ids = [str(source) for source, _ in class_pairs]
+        target_ids = [str(target) for _, target in class_pairs]
+        cursor.execute(
+            """
+            WITH pairs AS (
+                SELECT * FROM unnest(%s::uuid[], %s::uuid[]) AS p(source_class_id, target_class_id)
+            ), todo AS (
+                SELECT cp.id AS old_id, apiome.uuid_generate_v4() AS new_id, pairs.target_class_id,
+                       cp.property_id, cp.name, cp.description, cp.data,
+                       cp.primitive_id, cp.primitive_ref
+                FROM apiome.class_properties cp
+                JOIN pairs ON pairs.source_class_id = cp.class_id
+                WHERE cp.parent_id IS NULL
+            ), inserted AS (
+                INSERT INTO apiome.class_properties
+                    (id, class_id, property_id, name, description, data, parent_id,
+                     primitive_id, primitive_ref)
+                SELECT new_id, target_class_id, property_id, name, description, data, NULL,
+                       primitive_id, primitive_ref
+                FROM todo
+            )
+            SELECT old_id, new_id, target_class_id FROM todo
+            """,
+            (source_ids, target_ids),
+        )
+        level = cursor.fetchall()
+        copied = len(level)
+        depth = 1
+        while nested and level and depth < self._CLASS_PROPERTY_COPY_MAX_DEPTH:
+            cursor.execute(
+                """
+                WITH parents AS (
+                    SELECT * FROM unnest(%s::uuid[], %s::uuid[], %s::uuid[])
+                        AS p(old_id, new_id, target_class_id)
+                ), todo AS (
+                    SELECT cp.id AS old_id, apiome.uuid_generate_v4() AS new_id,
+                           parents.target_class_id, parents.new_id AS new_parent_id,
+                           cp.property_id, cp.name, cp.description, cp.data,
+                           cp.primitive_id, cp.primitive_ref
+                    FROM apiome.class_properties cp
+                    JOIN parents ON parents.old_id = cp.parent_id
+                ), inserted AS (
+                    INSERT INTO apiome.class_properties
+                        (id, class_id, property_id, name, description, data, parent_id,
+                         primitive_id, primitive_ref)
+                    SELECT new_id, target_class_id, property_id, name, description, data,
+                           new_parent_id, primitive_id, primitive_ref
+                    FROM todo
+                )
+                SELECT old_id, new_id, target_class_id FROM todo
+                """,
+                (
+                    [str(row["old_id"]) for row in level],
+                    [str(row["new_id"]) for row in level],
+                    [str(row["target_class_id"]) for row in level],
+                ),
+            )
+            level = cursor.fetchall()
+            copied += len(level)
+            depth += 1
+        return copied
+
     def _copy_class_properties_recursive(
         self, cursor: Any, source_class_id: str, target_class_id: str
     ) -> None:
-        cursor.execute(
-            """
-            SELECT id, property_id, name, description, data, parent_id, primitive_id, primitive_ref
-            FROM apiome.class_properties
-            WHERE class_id = %s
-            """,
-            (source_class_id,),
-        )
-        rows = cursor.fetchall()
-        old_to_new: Dict[str, str] = {}
-        processed: Set[str] = set()
-
-        def copy_level(parent_id: Optional[str]) -> None:
-            props: List[Dict[str, Any]] = []
-            for r in rows:
-                if str(r["id"]) in processed:
-                    continue
-                pid = r.get("parent_id")
-                if parent_id is None:
-                    if pid is not None:
-                        continue
-                else:
-                    if pid is None or str(pid) != str(parent_id):
-                        continue
-                props.append(r)
-            for prop in props:
-                new_parent = None
-                if prop["parent_id"]:
-                    new_parent = old_to_new.get(str(prop["parent_id"]))
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.class_properties
-                        (class_id, property_id, name, description, data, parent_id, primitive_id, primitive_ref)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    RETURNING id
-                    """,
-                    (
-                        target_class_id,
-                        prop["property_id"],
-                        prop["name"],
-                        prop["description"],
-                        # ``data`` is a JSONB column read back as a Python dict; it must be
-                        # re-wrapped with Json() before re-insertion or psycopg2 raises
-                        # "can't adapt type 'dict'". Preserve SQL NULL (vs JSON null) for
-                        # properties that have no data payload.
-                        Json(prop["data"]) if prop["data"] is not None else None,
-                        new_parent,
-                        prop.get("primitive_id"),
-                        prop.get("primitive_ref"),
-                    ),
-                )
-                new_id = cursor.fetchone()["id"]
-                old_to_new[str(prop["id"])] = str(new_id)
-                processed.add(str(prop["id"]))
-                copy_level(str(prop["id"]))
-
-        copy_level(None)
+        """Copy one class's properties, nested ones included, to another class."""
+        self._cursor_copy_class_properties(cursor, [(source_class_id, target_class_id)])
 
     def copy_classes_from_version_for_merge(
         self, cursor: Any, source_version_id: str, target_version_id: str
     ) -> int:
-        """Copy all classes and nested properties (used inside an open transaction)."""
-        cursor.execute(
-            """
-            INSERT INTO apiome.classes (version_id, name, description, schema, enabled, canvas_metadata)
-            SELECT %s, name, description, schema, enabled, canvas_metadata
-            FROM apiome.classes
-            WHERE version_id = %s AND deleted_at IS NULL
-            RETURNING id, name
-            """,
-            (target_version_id, source_version_id),
-        )
-        copied = cursor.fetchall()
-        for row in copied:
-            cursor.execute(
-                """
-                SELECT id FROM apiome.classes
-                WHERE version_id = %s AND name = %s AND deleted_at IS NULL
-                """,
-                (source_version_id, row["name"]),
-            )
-            orig = cursor.fetchone()
-            if not orig:
-                continue
-            self._copy_class_properties_recursive(cursor, str(orig["id"]), str(row["id"]))
-        return len(copied)
+        """Copy all classes and nested properties (used inside an open transaction).
+
+        Classes are one ``INSERT … SELECT``; their properties one statement per nesting level
+        (DBP-1.7, #7190).
+
+        Returns:
+            The number of classes copied.
+        """
+        pairs = self._cursor_copy_classes(cursor, source_version_id, target_version_id)
+        self._cursor_copy_class_properties(cursor, pairs)
+        return len(pairs)
 
     def copy_single_class_between_versions_for_merge(
         self, cursor: Any, source_version_id: str, target_version_id: str, class_name: str
     ) -> Dict[str, Any]:
         """Copy one class by name from source version to target (open transaction)."""
-        cursor.execute(
-            """
-            INSERT INTO apiome.classes (version_id, name, description, schema, enabled, canvas_metadata)
-            SELECT %s, name, description, schema, enabled, canvas_metadata
-            FROM apiome.classes
-            WHERE version_id = %s AND name = %s AND deleted_at IS NULL
-            RETURNING id, name
-            """,
-            (target_version_id, source_version_id, class_name),
-        )
-        ins = cursor.fetchone()
-        if not ins:
+        pairs = self._cursor_copy_classes(cursor, source_version_id, target_version_id, class_name)
+        if not pairs:
             return {"success": False, "error": f"Class {class_name} not found on source version"}
-        cursor.execute(
-            """
-            SELECT id FROM apiome.classes
-            WHERE version_id = %s AND name = %s AND deleted_at IS NULL
-            """,
-            (source_version_id, class_name),
-        )
-        orig = cursor.fetchone()
-        if not orig:
-            return {"success": False, "error": "Original class missing"}
-        self._copy_class_properties_recursive(cursor, str(orig["id"]), str(ins["id"]))
+        self._cursor_copy_class_properties(cursor, pairs)
         return {"success": True}
 
     def list_version_branches_for_project(
@@ -33053,11 +33051,19 @@ class Database:
         tenant_slug: str,
         version_row: Dict[str, Any],
         dialect: str,
+        with_canonical: bool = False,
     ):
         """The revision's current canonical + envelope, loaded on the tx cursor.
 
+        Args:
+            with_canonical: Also return the server-generated document before the preservation
+                envelope is merged in — what the revision's rows render to on their own. Source
+                apply compares it with the candidate's rendering to write only what differs
+                (DBP-1.7, #7190).
+
         Returns:
-            ``(merged_document, current_fingerprint, live_claim_rows)``.
+            ``(merged_document, current_fingerprint, live_claim_rows)``, plus ``canonical`` as a
+            fourth item with ``with_canonical``.
         """
         from .preservation_envelope import (
             PreservationClaim,
@@ -33156,309 +33162,32 @@ class Database:
             ],
         )
         merged, _merge_errors = apply_envelope(canonical, envelope)
-        return merged, semantic_fingerprint(merged).fingerprint, claim_rows
+        fingerprint = semantic_fingerprint(merged).fingerprint
+        if with_canonical:
+            return merged, fingerprint, claim_rows, canonical
+        return merged, fingerprint, claim_rows
 
     def _cursor_write_canonical_rows(
-        self, cursor, project_id: str, version_id: str, writes
+        self, cursor, project_id: str, version_id: str, writes, plan=None
     ) -> None:
-        """Rewrite the revision's canonical rows from a candidate write plan.
+        """Write a candidate's canonical rows for one revision (DBP-1.7, #7190).
 
-        Runs entirely on the transaction cursor: soft-deletes live classes,
-        recreates classes/properties, and delete-and-recreates paths, security
-        schemes, and servers. Committing or rolling back is the caller's job.
+        Runs entirely on the transaction cursor; committing or rolling back is the caller's job.
+        Each table is written with one statement, whatever the number of rows.
+
+        Args:
+            cursor: The transaction cursor.
+            project_id: The revision's project.
+            version_id: The revision's record id.
+            writes: The write plan from :func:`app.source_change_apply.build_canonical_writes`.
+            plan: A :class:`app.source_apply_writer.SourceApplyPlan` naming the classes, paths,
+                security schemes and servers that already match the candidate and stay as they
+                are. ``None`` rewrites everything: live classes are soft-deleted and recreated,
+                paths, security schemes and servers are deleted and recreated.
         """
-        from .source_change_apply import parameter_key, path_shared_parameters
+        from .source_apply_writer import write_canonical_rows
 
-        def _stable_json(value: Any) -> str:
-            return json.dumps(value, sort_keys=True, separators=(",", ":"))
-
-        # Classes: soft-delete live rows (retention parity with delete_class),
-        # then insert the candidate's schemas fresh.
-        cursor.execute(
-            """
-            UPDATE apiome.classes
-            SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-            WHERE version_id = %s AND deleted_at IS NULL
-            """,
-            (version_id,),
-        )
-        cursor.execute(
-            "SELECT id, data FROM apiome.properties WHERE project_id = %s",
-            (project_id,),
-        )
-        library: Dict[str, str] = {}
-        for row in cursor.fetchall():
-            data = row.get("data")
-            if isinstance(data, str):
-                try:
-                    data = json.loads(data)
-                except json.JSONDecodeError:
-                    continue
-            library.setdefault(_stable_json(data), str(row["id"]))
-        class_ids: Dict[str, str] = {}
-        for class_write in writes.classes:
-            cursor.execute(
-                """
-                INSERT INTO apiome.classes (version_id, name, description, schema, enabled)
-                VALUES (%s, %s, %s, %s, TRUE)
-                RETURNING id
-                """,
-                (
-                    version_id,
-                    class_write.name,
-                    class_write.description,
-                    json.dumps(class_write.schema_fields),
-                ),
-            )
-            class_id = str(cursor.fetchone()["id"])
-            class_ids[class_write.name] = class_id
-            for prop in class_write.properties:
-                property_id: Optional[str] = None
-                if not prop.is_reference:
-                    signature = _stable_json(prop.data)
-                    property_id = library.get(signature)
-                    if property_id is None:
-                        cursor.execute(
-                            """
-                            INSERT INTO apiome.properties (project_id, name, description, data)
-                            VALUES (%s, %s, %s, %s)
-                            RETURNING id
-                            """,
-                            (project_id, prop.name, prop.description, json.dumps(prop.data)),
-                        )
-                        property_id = str(cursor.fetchone()["id"])
-                        library[signature] = property_id
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.class_properties
-                        (class_id, property_id, name, description, data)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (class_id, property_id, prop.name, prop.description, json.dumps(prop.data)),
-                )
-
-        # Paths: hard delete-and-recreate; children cascade from version_path.
-        cursor.execute(
-            "DELETE FROM apiome.version_path WHERE version_id = %s", (version_id,)
-        )
-        for path in writes.paths:
-            path_metadata: Dict[str, Any] = {}
-            if path.summary is not None:
-                path_metadata["summary"] = path.summary
-            if path.description is not None:
-                path_metadata["description"] = path.description
-            cursor.execute(
-                """
-                INSERT INTO apiome.version_path (version_id, pathname, metadata)
-                VALUES (%s, %s, %s)
-                RETURNING id
-                """,
-                (version_id, path.pathname, json.dumps(path_metadata) if path_metadata else None),
-            )
-            version_path_id = str(cursor.fetchone()["id"])
-            shared_params = path_shared_parameters(path)
-            parameter_ids: Dict[Any, str] = {}
-            for key, parameter in shared_params.items():
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.shared_path_parameter
-                        (version_path_id, name, in_location, summary, description, data)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    RETURNING id
-                    """,
-                    (
-                        version_path_id,
-                        parameter.name,
-                        parameter.in_location,
-                        parameter.summary,
-                        parameter.description,
-                        json.dumps(parameter.data),
-                    ),
-                )
-                parameter_ids[key] = str(cursor.fetchone()["id"])
-            response_ids: Dict[str, str] = {}
-            for response in path.responses:
-                if response.data:
-                    data_value: Optional[str] = json.dumps(response.data)
-                elif not response.contents:
-                    data_value = json.dumps({})
-                else:
-                    data_value = None
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.shared_path_response
-                        (version_path_id, status_code, description, data,
-                         class_id, inline_schema, schema_mode)
-                    VALUES (%s, %s, %s, %s, NULL, NULL, 'object')
-                    RETURNING id
-                    """,
-                    (version_path_id, response.status_code, response.description, data_value),
-                )
-                response_id = str(cursor.fetchone()["id"])
-                response_ids[response.status_code] = response_id
-                for content in response.contents:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.shared_path_response_content
-                            (shared_path_response_id, media_type, class_id, inline_schema, examples)
-                        VALUES (%s, %s, %s, %s, %s)
-                        """,
-                        (
-                            response_id,
-                            content.media_type,
-                            class_ids.get(content.ref_class_name)
-                            if content.ref_class_name
-                            else None,
-                            json.dumps(content.inline_schema)
-                            if content.inline_schema is not None
-                            else None,
-                            json.dumps(content.examples)
-                            if content.examples is not None
-                            else None,
-                        ),
-                    )
-            for op in path.operations:
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.path_operation (version_path_id, operation, metadata)
-                    VALUES (%s, %s, '{}')
-                    RETURNING id
-                    """,
-                    (version_path_id, op.method.upper()),
-                )
-                path_operation_id = str(cursor.fetchone()["id"])
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.path_operation_description
-                        (path_operation_id, summary, description, operation_id, metadata)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (
-                        path_operation_id,
-                        op.summary,
-                        op.description,
-                        op.operation_id,
-                        json.dumps(op.description_metadata)
-                        if op.description_metadata
-                        else None,
-                    ),
-                )
-                for parameter in op.parameters:
-                    shared_id = parameter_ids.get(parameter_key(parameter))
-                    if shared_id:
-                        cursor.execute(
-                            """
-                            INSERT INTO apiome.path_operation_parameter_link
-                                (path_operation_id, shared_path_parameter_id)
-                            VALUES (%s, %s)
-                            ON CONFLICT (path_operation_id, shared_path_parameter_id) DO NOTHING
-                            """,
-                            (path_operation_id, shared_id),
-                        )
-                if op.request_body is not None:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.shared_path_request_body
-                            (version_path_id, name, description, required)
-                        VALUES (%s, %s, %s, %s)
-                        RETURNING id
-                        """,
-                        (
-                            version_path_id,
-                            op.request_body.name,
-                            op.request_body.description,
-                            op.request_body.required,
-                        ),
-                    )
-                    request_body_id = str(cursor.fetchone()["id"])
-                    for content in op.request_body.contents:
-                        cursor.execute(
-                            """
-                            INSERT INTO apiome.shared_path_request_body_content
-                                (shared_path_request_body_id, media_type, class_id,
-                                 inline_schema, encoding, examples)
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                            """,
-                            (
-                                request_body_id,
-                                content.media_type,
-                                class_ids.get(content.ref_class_name)
-                                if content.ref_class_name
-                                else None,
-                                json.dumps(content.inline_schema)
-                                if content.inline_schema is not None
-                                else None,
-                                json.dumps(content.encoding)
-                                if content.encoding is not None
-                                else None,
-                                json.dumps(content.examples)
-                                if content.examples is not None
-                                else None,
-                            ),
-                        )
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.path_operation_request_body_link
-                            (path_operation_id, shared_path_request_body_id, metadata)
-                        VALUES (%s, %s, NULL)
-                        ON CONFLICT (path_operation_id) DO UPDATE SET
-                            shared_path_request_body_id = EXCLUDED.shared_path_request_body_id
-                        """,
-                        (path_operation_id, request_body_id),
-                    )
-                for status in op.response_status_codes:
-                    response_id = response_ids.get(status)
-                    if response_id:
-                        cursor.execute(
-                            """
-                            INSERT INTO apiome.path_operation_response_link
-                                (path_operation_id, shared_path_response_id, metadata)
-                            VALUES (%s, %s, NULL)
-                            ON CONFLICT (path_operation_id, shared_path_response_id) DO NOTHING
-                            """,
-                            (path_operation_id, response_id),
-                        )
-
-        # Security schemes and servers: delete-and-recreate.
-        cursor.execute(
-            "DELETE FROM apiome.version_security_scheme WHERE version_id = %s",
-            (version_id,),
-        )
-        for scheme in writes.security_schemes:
-            cursor.execute(
-                """
-                INSERT INTO apiome.version_security_scheme
-                    (version_id, scheme_name, scheme_type, in_location,
-                     param_name, http_scheme, description, data)
-                VALUES (%s, %s, %s, %s, %s, NULL, %s, '{}')
-                """,
-                (
-                    version_id,
-                    scheme.scheme_name,
-                    scheme.scheme_type,
-                    scheme.in_location,
-                    scheme.param_name,
-                    scheme.description,
-                ),
-            )
-        cursor.execute(
-            "DELETE FROM apiome.version_server WHERE version_id = %s", (version_id,)
-        )
-        for server in writes.servers:
-            cursor.execute(
-                """
-                INSERT INTO apiome.version_server
-                    (version_id, name, url, description, sort_order, variables)
-                VALUES (%s, NULL, %s, %s, %s, %s)
-                """,
-                (
-                    version_id,
-                    server.url,
-                    server.description,
-                    server.sort_order,
-                    json.dumps(server.variables) if server.variables is not None else None,
-                ),
-            )
+        write_canonical_rows(cursor, project_id, version_id, writes, plan)
 
     # ─── DCW-2.4 source provenance (private-suite#2365) ─────────────────────────────────────────
 
@@ -33640,6 +33369,7 @@ class Database:
             compare_candidate_to_merged,
             regenerate_document,
         )
+        from .source_apply_writer import plan_source_apply
         from .source_change_review import build_source_change_set, change_set_digest
 
         conn = self.connect()
@@ -33665,8 +33395,10 @@ class Database:
                     conn.rollback()
                     raise SourceApplyConflictError("permission_denied")
 
-                merged_current, current_fp, _claims = self._cursor_current_merged_document(
-                    cursor, tenant_id, tenant_slug, vrow, dialect
+                merged_current, current_fp, _claims, canonical_current = (
+                    self._cursor_current_merged_document(
+                        cursor, tenant_id, tenant_slug, vrow, dialect, with_canonical=True
+                    )
                 )
 
                 cursor.execute(
@@ -33767,8 +33499,14 @@ class Database:
                         },
                     )
 
+                # Only what the candidate changes is written (DBP-1.7, #7190): a class or path
+                # whose rows already render to the candidate's text keeps its rows and ids.
                 self._cursor_write_canonical_rows(
-                    cursor, str(vrow["project_id"]), str(vrow["id"]), writes
+                    cursor,
+                    str(vrow["project_id"]),
+                    str(vrow["id"]),
+                    writes,
+                    plan_source_apply(canonical_current, regenerated),
                 )
 
                 cursor.execute(
@@ -33779,24 +33517,31 @@ class Database:
                     """,
                     (tenant_id, str(vrow["id"])),
                 )
-                for claim in envelope.claims:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.version_preservation_claims
-                          (tenant_id, version_id, pointer, payload,
-                           source_file, source_digest, created_by)
-                        VALUES (%s, %s::uuid, %s, %s, %s, %s, %s)
-                        """,
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.version_preservation_claims",
+                    [
+                        ("tenant_id", "uuid"),
+                        ("version_id", "uuid"),
+                        ("pointer", "text"),
+                        ("payload", "jsonb"),
+                        ("source_file", "text"),
+                        ("source_digest", "text"),
+                        ("created_by", "uuid"),
+                    ],
+                    [
                         (
                             tenant_id,
                             str(vrow["id"]),
                             claim.pointer,
-                            Json(claim.value),
+                            json.dumps(claim.value),
                             claim.source_file,
                             claim.source_digest,
                             actor_id,
-                        ),
-                    )
+                        )
+                        for claim in envelope.claims
+                    ],
+                )
 
                 result_fp = semantic_fingerprint(merged_next).fingerprint
                 counts = change_set.counts.model_dump(by_alias=True)
@@ -33830,15 +33575,22 @@ class Database:
                 # DCW-2.4 (private-suite#2365): which pointers this apply changed, so provenance
                 # can tell a source edit from an edit in Apiome's editors. Same transaction as the
                 # apply and its audit row — all three commit or roll back together.
-                for change in change_set.changes:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.version_source_edits
-                          (tenant_id, version_id, pointer, change_kind, audit_id, actor_id)
-                        VALUES (%s, %s::uuid, %s, %s, %s::uuid, %s)
-                        """,
-                        (tenant_id, str(vrow["id"]), change.pointer, change.kind, audit_id, actor_id),
-                    )
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.version_source_edits",
+                    [
+                        ("tenant_id", "uuid"),
+                        ("version_id", "uuid"),
+                        ("pointer", "text"),
+                        ("change_kind", "text"),
+                        ("audit_id", "uuid"),
+                        ("actor_id", "uuid"),
+                    ],
+                    [
+                        (tenant_id, str(vrow["id"]), change.pointer, change.kind, audit_id, actor_id)
+                        for change in change_set.changes
+                    ],
+                )
                 conn.commit()
                 return {
                     "applied": True,

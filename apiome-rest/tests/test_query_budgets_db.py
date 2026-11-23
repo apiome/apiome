@@ -359,6 +359,113 @@ def test_revision_loads_run_the_same_statements_at_10_and_1000_operations(ctx) -
     assert budgets[cold % "10"] == budgets[cold % "1,000"]
 
 
+# ─────── set-based writes: the same count at 10 and at 2,000 classes (DBP-1.7, #7190) ───────
+
+_CLASS_SIZES = (10, 2000)
+
+#: The write paths whose statement count must not grow with the specification.
+_WRITE_FAMILIES = (
+    "persist_canonical_api",
+    "Database._cursor_write_canonical_rows",
+    "Database.apply_source_change_set",
+    "Database.create_forked_version",
+    "Database.copy_classes_from_version_for_merge",
+    "Database.publish_version",
+)
+
+
+def test_writes_run_the_same_statements_at_10_and_2000_classes(ctx) -> None:
+    """Import persist, source apply, fork, merge copy and publish (#7190)."""
+    from app.canonical_persistence import persist_canonical_api
+    from app.openapi_normalizer import OpenApiNormalizer
+    from app.source_change_apply import build_canonical_writes
+    from tests.set_based_fixtures import (
+        apply_candidate,
+        class_spec,
+        drop_project,
+        drop_revision_rows,
+        edited,
+        fork_target_project,
+        merged_document,
+        new_revision,
+    )
+
+    db = database_module.db
+    conn = ctx["conn"]
+    fork_project = fork_target_project(ctx)
+    # The project's property library is filled once, so both sizes find their properties there
+    # (creating a missing library property is one more statement, whatever the size).
+    new_revision(ctx, db, "library", class_spec(1))
+    try:
+        for size in _CLASS_SIZES:
+            spec = class_spec(size)
+            classes = f"({size:,} classes)"
+
+            # Import persistence: the canonical model of the document.
+            imported = new_revision(ctx, db, f"import-{size}")
+            model = OpenApiNormalizer().normalize(spec)
+            assert _guarded_call(
+                f"persist_canonical_api {classes}",
+                lambda: persist_canonical_api(
+                    db, tenant_id=ctx["tenant"], creator_id=ctx["user"], version_id=imported, model=model
+                ),
+            )
+
+            # Source apply: every row of a new revision, then a one-line edit of it.
+            version = new_revision(ctx, db, f"rows-{size}")
+            writes = build_canonical_writes(spec)
+            with conn.cursor() as cur:
+                _guarded_call(
+                    f"Database._cursor_write_canonical_rows {classes}",
+                    lambda: db._cursor_write_canonical_rows(cur, ctx["project"], version, writes),
+                )
+            conn.commit()
+            document, fingerprint = merged_document(ctx, db, version)
+            assert len(document["components"]["schemas"]) == size
+            result = _guarded_call(
+                f"Database.apply_source_change_set {classes}",
+                lambda: apply_candidate(ctx, db, version, fingerprint, edited(document, size // 2, "Edited.")),
+            )
+            assert result["applied"] is True
+
+            # Fork into another project.
+            fork = _guarded_call(
+                f"Database.create_forked_version {classes}",
+                lambda: db.create_forked_version(
+                    fork_project, ctx["tenant"], ctx["user"], f"fork-{size}", None, None, version, None
+                ),
+            )
+            assert fork["success"] is True and fork["copied_count"] == size
+
+            # Merge commit: the copy of the target tip into the new revision.
+            merged_into = new_revision(ctx, db, f"merge-{size}")
+            with conn.cursor() as cur:
+                copied = _guarded_call(
+                    f"Database.copy_classes_from_version_for_merge {classes}",
+                    lambda: db.copy_classes_from_version_for_merge(cur, version, merged_into),
+                )
+            conn.commit()
+            assert copied == size
+
+            # Publish: one frozen JSON Schema per class.
+            published = _guarded_call(
+                f"Database.publish_version {classes}",
+                lambda: db.publish_version(version, ctx["tenant"], ctx["user"]),
+            )
+            assert published and published["published"] is True
+            with conn.cursor() as cur:
+                cur.execute("SELECT count(*) AS n FROM apiome.class_schema WHERE version_id = %s::uuid", (version,))
+                assert cur.fetchone()["n"] == size
+            conn.commit()
+    finally:
+        drop_revision_rows(conn, [ctx["project"]])
+        drop_project(conn, fork_project)
+
+    budgets = _load_budgets()
+    for family in _WRITE_FAMILIES:
+        assert budgets[f"{family} (10 classes)"] == budgets[f"{family} (2,000 classes)"], family
+
+
 # ───────────────────────────── the guard itself ─────────────────────────────
 
 

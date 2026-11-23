@@ -23,7 +23,7 @@ from app import database as database_module
 from app import db_timeouts
 from app.database import ConnectionPoolExhausted, Database, connections_in_use
 from app.db_advisory_lock import SessionAdvisoryLock
-from app.db_bulk import bulk_insert, bulk_upsert
+from app.db_bulk import bulk_insert, bulk_insert_arrays, bulk_upsert, new_ids
 from app.db_timeouts import StatementTimeout, is_statement_timeout, long_statements, typed_timeout
 from app.sweep_runtime import async_sweep_tick, close_sweep_databases, sweep_database, sweep_tick
 from tests.advisory_lock_fakes import LockingDbMixin
@@ -310,6 +310,78 @@ def test_bulk_insert_refuses_bad_identifiers_and_ragged_rows() -> None:
 
 def test_bulk_insert_of_no_rows_sends_nothing() -> None:
     assert bulk_insert(object(), "t", ["a"], []) == []
+
+
+class _RecordingCursor:
+    """Records ``execute`` calls; ``fetchall`` answers with the queued rows."""
+
+    def __init__(self, rows=()):
+        self.calls = []
+        self._rows = list(rows)
+
+    def execute(self, statement, params=None):
+        self.calls.append((statement, params))
+
+    def fetchall(self):
+        return list(self._rows)
+
+
+def test_bulk_insert_arrays_is_one_statement_whatever_the_row_count() -> None:
+    """DBP-1.7 (#7190): each column travels as one array, so the statement text never changes."""
+    columns = [("id", "uuid"), ("name", "text"), ("data", "jsonb")]
+    small, large = _RecordingCursor(), _RecordingCursor()
+    bulk_insert_arrays(small, "apiome.things", columns, [(i, "a", "{}") for i in new_ids(2)])
+    bulk_insert_arrays(large, "apiome.things", columns, [(i, "a", "{}") for i in new_ids(5000)])
+    assert len(small.calls) == len(large.calls) == 1
+    assert small.calls[0][0] == large.calls[0][0] == (
+        'INSERT INTO apiome.things ("id", "name", "data") '
+        "SELECT * FROM unnest(%s::uuid[], %s::text[], %s::jsonb[])"
+    )
+    ids, names, data = large.calls[0][1]
+    assert len(ids) == len(names) == len(data) == 5000 and len(set(ids)) == 5000
+
+
+def test_bulk_insert_arrays_appends_the_conflict_clause_and_returning() -> None:
+    cursor = _RecordingCursor(rows=[{"id": 1}])
+    found = bulk_insert_arrays(
+        cursor, "t", [("a", "integer")], [(1,)], on_conflict="ON CONFLICT (a) DO NOTHING", returning=["id"]
+    )
+    assert found == [{"id": 1}]
+    assert cursor.calls[0][0].endswith('FROM unnest(%s::integer[]) ON CONFLICT (a) DO NOTHING RETURNING "id"')
+
+
+def test_bulk_insert_arrays_of_no_rows_sends_nothing() -> None:
+    cursor = _RecordingCursor()
+    assert bulk_insert_arrays(cursor, "t", [("a", "integer")], []) == []
+    assert cursor.calls == []
+
+
+def test_bulk_insert_arrays_refuses_bad_identifiers_types_and_list_values() -> None:
+    cursor = _RecordingCursor()
+    with pytest.raises(ValueError):
+        bulk_insert_arrays(cursor, "apiome.t; DROP TABLE x", [("a", "integer")], [(1,)])
+    with pytest.raises(ValueError):
+        bulk_insert_arrays(cursor, "t", [('a"b', "integer")], [(1,)])
+    with pytest.raises(ValueError):
+        bulk_insert_arrays(cursor, "t", [("a", "integer); DROP TABLE x; --")], [(1,)])
+    with pytest.raises(ValueError):
+        bulk_insert_arrays(cursor, "t", [("a", "integer"), ("a", "integer")], [(1, 2)])
+    with pytest.raises(ValueError):
+        bulk_insert_arrays(cursor, "t", [("a", "integer"), ("b", "text")], [(1,)])
+    with pytest.raises(ValueError):
+        bulk_insert_arrays(cursor, "t", [], [()])
+    # A Python list would become a nested array, which unnest flattens into extra rows.
+    with pytest.raises(ValueError, match="is a list"):
+        bulk_insert_arrays(cursor, "t", [("a", "jsonb")], [(["x"],)])
+    assert cursor.calls == []
+
+
+def test_new_ids_are_distinct_version_4_uuids() -> None:
+    import uuid
+
+    ids = new_ids(50)
+    assert len(set(ids)) == 50 and all(uuid.UUID(value).version == 4 for value in ids)
+    assert new_ids(0) == [] and new_ids(-3) == []
 
 
 def test_bulk_upsert_refuses_bad_types_keys_and_repeated_keys() -> None:

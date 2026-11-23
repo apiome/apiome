@@ -21,8 +21,9 @@ Message fields that are not first-class columns (today: ``required``) ride in
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional, Protocol, Sequence
+from typing import Any, Dict, List, Optional, Protocol, Sequence, Tuple
 
+from .db_bulk import bulk_insert_arrays, new_ids
 from .canonical_model import (
     AgentDescriptor,
     AgentProvider,
@@ -546,6 +547,11 @@ def _soft_delete_live_artifact(cursor: Any, *, tenant_id: str, version_id: str) 
     )
 
 
+def _json_or_null(value: Any) -> Optional[str]:
+    """JSON text for a value, ``None`` (SQL NULL) when the value is ``None``."""
+    return json.dumps(value) if value is not None else None
+
+
 def _insert_tree(
     cursor: Any,
     *,
@@ -554,7 +560,12 @@ def _insert_tree(
     version_id: str,
     tree: Dict[str, Any],
 ) -> str:
-    """Insert a dumped tree; return the new artifact id."""
+    """Insert a dumped tree; return the new artifact id.
+
+    The artifact row is one statement and every child table one more (services, operations,
+    messages, channels, types, fields, agents, skills), so a 2,000-type schema costs the same
+    number of statements as a 10-type one. A table with no rows sends nothing.
+    """
     art = tree["artifact"]
     cursor.execute(
         """
@@ -591,45 +602,32 @@ def _insert_tree(
     artifact_row = cursor.fetchone()
     artifact_id = str(artifact_row["id"] if isinstance(artifact_row, dict) else artifact_row[0])
 
+    # Every table below is one statement, whatever the size of the model (DBP-1.7, #7190). Ids
+    # are assigned here, so a child row knows its parent without a ``RETURNING id`` round trip.
+    scope = (tenant_id, version_id)
+    service_rows: List[Tuple[Any, ...]] = []
+    operation_rows: List[Tuple[Any, ...]] = []
+    message_rows: List[Tuple[Any, ...]] = []
     for svc in tree.get("services") or []:
-        cursor.execute(
-            """
-            INSERT INTO apiome.api_services (
-                tenant_id, version_id, artifact_id, key, name, description, ordinal, extras
-            ) VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s::jsonb)
-            RETURNING id
-            """,
+        service_id = new_ids(1)[0]
+        service_rows.append(
             (
-                tenant_id,
-                version_id,
+                service_id,
+                *scope,
                 artifact_id,
                 svc["key"],
                 svc["name"],
                 svc.get("description"),
                 svc.get("ordinal") or 0,
                 json.dumps(svc.get("extras") or {}),
-            ),
+            )
         )
-        service_row = cursor.fetchone()
-        service_id = str(service_row["id"] if isinstance(service_row, dict) else service_row[0])
-
         for op in svc.get("operations") or []:
-            cursor.execute(
-                """
-                INSERT INTO apiome.api_operations (
-                    tenant_id, version_id, service_id, key, name, kind, streaming,
-                    http_method, http_path, channel_ref, description, deprecated,
-                    parameters, tags, ordinal, extras
-                ) VALUES (
-                    %s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s,
-                    %s::jsonb, %s::jsonb, %s, %s::jsonb
-                )
-                RETURNING id
-                """,
+            operation_id = new_ids(1)[0]
+            operation_rows.append(
                 (
-                    tenant_id,
-                    version_id,
+                    operation_id,
+                    *scope,
                     service_id,
                     op["key"],
                     op["name"],
@@ -644,58 +642,108 @@ def _insert_tree(
                     json.dumps(op.get("tags") or []),
                     op.get("ordinal") or 0,
                     json.dumps(op.get("extras") or {}),
-                ),
+                )
             )
-            op_row = cursor.fetchone()
-            operation_id = str(op_row["id"] if isinstance(op_row, dict) else op_row[0])
-
             for msg in op.get("messages") or []:
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.api_messages (
-                        tenant_id, version_id, operation_id, key, role, name,
-                        payload, payload_schema, headers, content_types,
-                        status_code, description, ordinal, extras
-                    ) VALUES (
-                        %s::uuid, %s::uuid, %s::uuid, %s, %s, %s,
-                        %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
-                        %s, %s, %s, %s::jsonb
-                    )
-                    """,
+                message_rows.append(
                     (
-                        tenant_id,
-                        version_id,
+                        *scope,
                         operation_id,
                         msg["key"],
                         msg["role"],
                         msg.get("name"),
-                        json.dumps(msg["payload"]) if msg.get("payload") is not None else None,
-                        json.dumps(msg["payload_schema"])
-                        if msg.get("payload_schema") is not None
-                        else None,
+                        _json_or_null(msg.get("payload")),
+                        _json_or_null(msg.get("payload_schema")),
                         json.dumps(msg.get("headers") or []),
                         json.dumps(msg.get("content_types") or []),
                         msg.get("status_code"),
                         msg.get("description"),
                         msg.get("ordinal") or 0,
                         json.dumps(msg.get("extras") or {}),
-                    ),
+                    )
                 )
+    bulk_insert_arrays(
+        cursor,
+        "apiome.api_services",
+        [
+            ("id", "uuid"),
+            ("tenant_id", "uuid"),
+            ("version_id", "uuid"),
+            ("artifact_id", "uuid"),
+            ("key", "text"),
+            ("name", "text"),
+            ("description", "text"),
+            ("ordinal", "integer"),
+            ("extras", "jsonb"),
+        ],
+        service_rows,
+    )
+    bulk_insert_arrays(
+        cursor,
+        "apiome.api_operations",
+        [
+            ("id", "uuid"),
+            ("tenant_id", "uuid"),
+            ("version_id", "uuid"),
+            ("service_id", "uuid"),
+            ("key", "text"),
+            ("name", "text"),
+            ("kind", "text"),
+            ("streaming", "text"),
+            ("http_method", "text"),
+            ("http_path", "text"),
+            ("channel_ref", "text"),
+            ("description", "text"),
+            ("deprecated", "boolean"),
+            ("parameters", "jsonb"),
+            ("tags", "jsonb"),
+            ("ordinal", "integer"),
+            ("extras", "jsonb"),
+        ],
+        operation_rows,
+    )
+    bulk_insert_arrays(
+        cursor,
+        "apiome.api_messages",
+        [
+            ("tenant_id", "uuid"),
+            ("version_id", "uuid"),
+            ("operation_id", "uuid"),
+            ("key", "text"),
+            ("role", "text"),
+            ("name", "text"),
+            ("payload", "jsonb"),
+            ("payload_schema", "jsonb"),
+            ("headers", "jsonb"),
+            ("content_types", "jsonb"),
+            ("status_code", "text"),
+            ("description", "text"),
+            ("ordinal", "integer"),
+            ("extras", "jsonb"),
+        ],
+        message_rows,
+    )
 
-    for ch in tree.get("channels") or []:
-        cursor.execute(
-            """
-            INSERT INTO apiome.api_channels (
-                tenant_id, version_id, artifact_id, key, address, name, description,
-                protocol, parameters, bindings, ordinal, extras
-            ) VALUES (
-                %s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s,
-                %s, %s::jsonb, %s::jsonb, %s, %s::jsonb
-            )
-            """,
+    bulk_insert_arrays(
+        cursor,
+        "apiome.api_channels",
+        [
+            ("tenant_id", "uuid"),
+            ("version_id", "uuid"),
+            ("artifact_id", "uuid"),
+            ("key", "text"),
+            ("address", "text"),
+            ("name", "text"),
+            ("description", "text"),
+            ("protocol", "text"),
+            ("parameters", "jsonb"),
+            ("bindings", "jsonb"),
+            ("ordinal", "integer"),
+            ("extras", "jsonb"),
+        ],
+        [
             (
-                tenant_id,
-                version_id,
+                *scope,
                 artifact_id,
                 ch["key"],
                 ch["address"],
@@ -706,26 +754,19 @@ def _insert_tree(
                 json.dumps(ch.get("bindings") or {}),
                 ch.get("ordinal") or 0,
                 json.dumps(ch.get("extras") or {}),
-            ),
-        )
-
-    for ty in tree.get("types") or []:
-        cursor.execute(
-            """
-            INSERT INTO apiome.api_types (
-                tenant_id, version_id, artifact_id, key, name, kind, namespace,
-                description, deprecated, enum_values, union_members, aliased,
-                key_type, value_type, constraints, ordinal, extras
-            ) VALUES (
-                %s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s,
-                %s, %s, %s::jsonb, %s::jsonb, %s::jsonb,
-                %s::jsonb, %s::jsonb, %s::jsonb, %s, %s::jsonb
             )
-            RETURNING id
-            """,
+            for ch in tree.get("channels") or []
+        ],
+    )
+
+    type_rows: List[Tuple[Any, ...]] = []
+    field_rows: List[Tuple[Any, ...]] = []
+    for ty in tree.get("types") or []:
+        type_id = new_ids(1)[0]
+        type_rows.append(
             (
-                tenant_id,
-                version_id,
+                type_id,
+                *scope,
                 artifact_id,
                 ty["key"],
                 ty["name"],
@@ -735,65 +776,85 @@ def _insert_tree(
                 bool(ty.get("deprecated")),
                 json.dumps(ty.get("enum_values") or []),
                 json.dumps(ty.get("union_members") or []),
-                json.dumps(ty["aliased"]) if ty.get("aliased") is not None else None,
-                json.dumps(ty["key_type"]) if ty.get("key_type") is not None else None,
-                json.dumps(ty["value_type"]) if ty.get("value_type") is not None else None,
-                json.dumps(ty["constraints"]) if ty.get("constraints") is not None else None,
+                _json_or_null(ty.get("aliased")),
+                _json_or_null(ty.get("key_type")),
+                _json_or_null(ty.get("value_type")),
+                _json_or_null(ty.get("constraints")),
                 ty.get("ordinal") or 0,
                 json.dumps(ty.get("extras") or {}),
-            ),
+            )
         )
-        type_row = cursor.fetchone()
-        type_id = str(type_row["id"] if isinstance(type_row, dict) else type_row[0])
         for field in ty.get("fields") or []:
-            cursor.execute(
-                """
-                INSERT INTO apiome.api_fields (
-                    tenant_id, version_id, type_id, key, name, type_ref, field_number,
-                    default_value, constraints, description, deprecated, ordinal, extras
-                ) VALUES (
-                    %s::uuid, %s::uuid, %s::uuid, %s, %s, %s::jsonb, %s,
-                    %s::jsonb, %s::jsonb, %s, %s, %s, %s::jsonb
-                )
-                """,
+            field_rows.append(
                 (
-                    tenant_id,
-                    version_id,
+                    *scope,
                     type_id,
                     field["key"],
                     field["name"],
                     json.dumps(field["type_ref"]),
                     field.get("field_number"),
-                    json.dumps(field["default_value"])
-                    if field.get("default_value") is not None
-                    else None,
-                    json.dumps(field["constraints"])
-                    if field.get("constraints") is not None
-                    else None,
+                    _json_or_null(field.get("default_value")),
+                    _json_or_null(field.get("constraints")),
                     field.get("description"),
                     bool(field.get("deprecated")),
                     field.get("ordinal") or 0,
                     json.dumps(field.get("extras") or {}),
-                ),
+                )
             )
+    bulk_insert_arrays(
+        cursor,
+        "apiome.api_types",
+        [
+            ("id", "uuid"),
+            ("tenant_id", "uuid"),
+            ("version_id", "uuid"),
+            ("artifact_id", "uuid"),
+            ("key", "text"),
+            ("name", "text"),
+            ("kind", "text"),
+            ("namespace", "text"),
+            ("description", "text"),
+            ("deprecated", "boolean"),
+            ("enum_values", "jsonb"),
+            ("union_members", "jsonb"),
+            ("aliased", "jsonb"),
+            ("key_type", "jsonb"),
+            ("value_type", "jsonb"),
+            ("constraints", "jsonb"),
+            ("ordinal", "integer"),
+            ("extras", "jsonb"),
+        ],
+        type_rows,
+    )
+    bulk_insert_arrays(
+        cursor,
+        "apiome.api_fields",
+        [
+            ("tenant_id", "uuid"),
+            ("version_id", "uuid"),
+            ("type_id", "uuid"),
+            ("key", "text"),
+            ("name", "text"),
+            ("type_ref", "jsonb"),
+            ("field_number", "integer"),
+            ("default_value", "jsonb"),
+            ("constraints", "jsonb"),
+            ("description", "text"),
+            ("deprecated", "boolean"),
+            ("ordinal", "integer"),
+            ("extras", "jsonb"),
+        ],
+        field_rows,
+    )
 
+    agent_rows: List[Tuple[Any, ...]] = []
+    skill_rows: List[Tuple[Any, ...]] = []
     for agent in tree.get("agents") or []:
-        cursor.execute(
-            """
-            INSERT INTO apiome.api_agent_descriptors (
-                tenant_id, version_id, artifact_id, key, name, description, agent_version, url,
-                protocol, protocol_version, provider, capabilities, default_input_modes,
-                default_output_modes, security_schemes, security, service_ref, ordinal, extras
-            ) VALUES (
-                %s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s,
-                %s, %s, %s::jsonb, %s::jsonb, %s::jsonb,
-                %s::jsonb, %s::jsonb, %s::jsonb, %s, %s, %s::jsonb
-            )
-            RETURNING id
-            """,
+        agent_id = new_ids(1)[0]
+        agent_rows.append(
             (
-                tenant_id,
-                version_id,
+                agent_id,
+                *scope,
                 artifact_id,
                 agent["key"],
                 agent["name"],
@@ -802,7 +863,7 @@ def _insert_tree(
                 agent.get("url"),
                 agent["protocol"],
                 agent.get("protocol_version"),
-                json.dumps(agent["provider"]) if agent.get("provider") is not None else None,
+                _json_or_null(agent.get("provider")),
                 json.dumps(agent.get("capabilities") or {}),
                 json.dumps(agent.get("default_input_modes") or []),
                 json.dumps(agent.get("default_output_modes") or []),
@@ -811,26 +872,12 @@ def _insert_tree(
                 agent.get("service_ref"),
                 agent.get("ordinal") or 0,
                 json.dumps(agent.get("extras") or {}),
-            ),
+            )
         )
-        agent_row = cursor.fetchone()
-        agent_id = str(agent_row["id"] if isinstance(agent_row, dict) else agent_row[0])
         for skill in agent.get("skills") or []:
-            cursor.execute(
-                """
-                INSERT INTO apiome.api_agent_skills (
-                    tenant_id, version_id, artifact_id, agent_id, key, skill_id, name,
-                    description, tags, examples, input_modes, output_modes, security,
-                    operation_ref, ordinal, extras
-                ) VALUES (
-                    %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s, %s,
-                    %s, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb,
-                    %s, %s, %s::jsonb
-                )
-                """,
+            skill_rows.append(
                 (
-                    tenant_id,
-                    version_id,
+                    *scope,
                     artifact_id,
                     agent_id,
                     skill["key"],
@@ -841,12 +888,62 @@ def _insert_tree(
                     json.dumps(skill.get("examples") or []),
                     json.dumps(skill.get("input_modes") or []),
                     json.dumps(skill.get("output_modes") or []),
-                    json.dumps(skill["security"]) if skill.get("security") is not None else None,
+                    _json_or_null(skill.get("security")),
                     skill.get("operation_ref"),
                     skill.get("ordinal") or 0,
                     json.dumps(skill.get("extras") or {}),
-                ),
+                )
             )
+    bulk_insert_arrays(
+        cursor,
+        "apiome.api_agent_descriptors",
+        [
+            ("id", "uuid"),
+            ("tenant_id", "uuid"),
+            ("version_id", "uuid"),
+            ("artifact_id", "uuid"),
+            ("key", "text"),
+            ("name", "text"),
+            ("description", "text"),
+            ("agent_version", "text"),
+            ("url", "text"),
+            ("protocol", "text"),
+            ("protocol_version", "text"),
+            ("provider", "jsonb"),
+            ("capabilities", "jsonb"),
+            ("default_input_modes", "jsonb"),
+            ("default_output_modes", "jsonb"),
+            ("security_schemes", "jsonb"),
+            ("security", "jsonb"),
+            ("service_ref", "text"),
+            ("ordinal", "integer"),
+            ("extras", "jsonb"),
+        ],
+        agent_rows,
+    )
+    bulk_insert_arrays(
+        cursor,
+        "apiome.api_agent_skills",
+        [
+            ("tenant_id", "uuid"),
+            ("version_id", "uuid"),
+            ("artifact_id", "uuid"),
+            ("agent_id", "uuid"),
+            ("key", "text"),
+            ("skill_id", "text"),
+            ("name", "text"),
+            ("description", "text"),
+            ("tags", "jsonb"),
+            ("examples", "jsonb"),
+            ("input_modes", "jsonb"),
+            ("output_modes", "jsonb"),
+            ("security", "jsonb"),
+            ("operation_ref", "text"),
+            ("ordinal", "integer"),
+            ("extras", "jsonb"),
+        ],
+        skill_rows,
+    )
 
     return artifact_id
 

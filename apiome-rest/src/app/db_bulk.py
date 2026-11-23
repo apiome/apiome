@@ -103,7 +103,7 @@ def _quoted(name: str) -> str:
 
 
 def _plain_table(table: str) -> str:
-    """``"schema"."table"`` as text.
+    """``schema.table`` as text, unquoted so the statement reads like hand-written SQL.
 
     Raises:
         ValueError: ``table`` has more than two parts or a part is not a plain identifier.
@@ -111,7 +111,7 @@ def _plain_table(table: str) -> str:
     parts = str(table).split(".")
     if len(parts) > 2:
         raise ValueError(f"table {table!r} must be 'table' or 'schema.table'")
-    return ".".join(_quoted(_identifier(part, "table name part")) for part in parts)
+    return ".".join(_identifier(part, "table name part") for part in parts)
 
 
 def _typed_columns(columns: Sequence[Tuple[str, str]]) -> Tuple[List[str], List[str]]:
