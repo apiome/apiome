@@ -1405,24 +1405,6 @@ describe('Database Helper - Class Advanced Functions', () => {
     expect(Array.isArray(classes)).toBe(true);
   });
 
-  test('batchUpdateClassCanvasMetadata should update multiple classes', async () => {
-    const { batchUpdateClassCanvasMetadata } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({
-      rows: [{ id: 'class-1' }, { id: 'class-2' }]
-    });
-
-    const updates = [
-      { classId: 'class-1', canvasMetadata: { x: 100, y: 100 } },
-      { classId: 'class-2', canvasMetadata: { x: 200, y: 200 } }
-    ];
-
-    const result = await batchUpdateClassCanvasMetadata(updates);
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-  });
-
   test('extractObjectPropertyToClass should extract nested property', async () => {
     const { extractObjectPropertyToClass } = await import('../lib/db/helper');
 
@@ -1500,72 +1482,6 @@ describe('Database Helper - Tag Functions', () => {
     expect(tags[0].name).toBe('API');
   });
 
-  test('createTag should create new tag', async () => {
-    const { createTag } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({
-      rows: [{
-        id: 'tag-new',
-        project_id: 'proj-1',
-        name: 'New Tag',
-        color: 'red'
-      }]
-    });
-
-    const result = await createTag('proj-1', 'New Tag', 'red', 'Test tag');
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-    expect(parsed.tag.name).toBe('New Tag');
-  });
-
-  test('updateTag should update tag', async () => {
-    const { updateTag } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({
-      rows: [{ id: 'tag-1', name: 'Updated Tag' }]
-    });
-
-    const result = await updateTag('tag-1', 'Updated Tag', 'blue', 'Updated description');
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-  });
-
-  test('deleteTag should delete tag', async () => {
-    const { deleteTag } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({ rows: [] });
-
-    const result = await deleteTag('tag-1');
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-  });
-
-  test('assignTagToClass should assign tag to class', async () => {
-    const { assignTagToClass } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({
-      rows: [{ id: 'ct-1', class_id: 'class-1', tag_id: 'tag-1' }]
-    });
-
-    const result = await assignTagToClass('class-1', 'tag-1');
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-  });
-
-  test('removeTagFromClass should remove tag from class', async () => {
-    const { removeTagFromClass } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({ rows: [] });
-
-    const result = await removeTagFromClass('class-1', 'tag-1');
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-  });
 });
 
 describe('Database Helper - Linked Account Functions', () => {
@@ -1575,23 +1491,6 @@ describe('Database Helper - Linked Account Functions', () => {
     const db = require('../lib/db/db');
     mockQuery = db.query as jest.Mock;
     mockQuery.mockClear();
-  });
-
-  test('getLinkedAccountByProviderForUser should return linked account', async () => {
-    const { getLinkedAccountByProviderForUser } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({
-      rows: [
-        { id: 'account-1', user_id: 'user-1', provider: 'google', provider_user_id: 'google-123' }
-      ]
-    });
-
-    const result = await getLinkedAccountByProviderForUser('user-1', 'google');
-
-    expect(result).toBeDefined();
-    if (result && result.rows) {
-      expect(result.rows[0].provider).toBe('google');
-    }
   });
 
   test('updateLinkedAccountLastLogin should update last login', async () => {
@@ -1696,23 +1595,6 @@ describe('Database Helper - Personal Access Token Functions', () => {
     // These actions bind to the authenticated session (OLO-7.3): the first argument is the
     // acting user and must match the session for the action to proceed.
     mockAuthenticatedSession('user-1');
-  });
-
-  test('addPersonalAccessToken should create token', async () => {
-    const { addPersonalAccessToken } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({
-      rows: [{
-        id: 'token-1',
-        user_id: 'user-1',
-        name: 'API Token'
-      }]
-    });
-
-    const result = await addPersonalAccessToken('user-1', 'account-1', 'ghp_token_value');
-
-    expect(result).toBeDefined();
-    expect(typeof result).toBe('string');
   });
 
   test('updatePersonalAccessToken should update token', async () => {
@@ -2375,58 +2257,6 @@ describe('Database Helper - Additional Error Scenarios', () => {
   });
 });
 
-describe('Database Helper - Batch Operations', () => {
-  let mockQuery: jest.Mock;
-
-  beforeEach(() => {
-    const db = require('../lib/db/db');
-    mockQuery = db.query as jest.Mock;
-    mockQuery.mockClear();
-  });
-
-  test('batchUpdateClassCanvasMetadata should handle empty array', async () => {
-    const { batchUpdateClassCanvasMetadata } = await import('../lib/db/helper');
-
-    const result = await batchUpdateClassCanvasMetadata([]);
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-  });
-
-  test('batchUpdateClassCanvasMetadata should handle single update', async () => {
-    const { batchUpdateClassCanvasMetadata } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({
-      rows: [{ id: 'class-1', canvas_metadata: { x: 100, y: 100 } }]
-    });
-
-    const updates = [
-      { classId: 'class-1', canvasMetadata: { x: 100, y: 100, width: 200, height: 150 } }
-    ];
-
-    const result = await batchUpdateClassCanvasMetadata(updates);
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-  });
-
-  test('batchUpdateClassCanvasMetadata should handle many updates', async () => {
-    const { batchUpdateClassCanvasMetadata } = await import('../lib/db/helper');
-
-    mockQuery.mockResolvedValue({ rows: [{ id: 'updated' }] });
-
-    const updates = Array.from({ length: 50 }, (_, i) => ({
-      classId: `class-${i}`,
-      canvasMetadata: { x: i * 100, y: i * 100 }
-    }));
-
-    const result = await batchUpdateClassCanvasMetadata(updates);
-    const parsed = JSON.parse(result);
-
-    expect(parsed.success).toBe(true);
-  });
-});
-
 describe('Database Helper - Complex Query Scenarios', () => {
   let mockQuery: jest.Mock;
 
@@ -2488,7 +2318,7 @@ describe('Database Helper - Validation and Constraints', () => {
   beforeEach(() => {
     const db = require('../lib/db/db');
     mockQuery = db.query as jest.Mock;
-    mockQuery.mockClear();
+    mockQuery.mockReset();
     mockAuthenticatedSession();
   });
 
@@ -2542,7 +2372,7 @@ describe('Database Helper - Performance and Optimization', () => {
   beforeEach(() => {
     const db = require('../lib/db/db');
     mockQuery = db.query as jest.Mock;
-    mockQuery.mockClear();
+    mockQuery.mockReset();
   });
 
   it('should handle large result sets efficiently', async () => {

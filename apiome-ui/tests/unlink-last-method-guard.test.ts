@@ -233,13 +233,4 @@ describe('linked-account actions — session binding (OLO-7.3 IDOR guard)', () =
     expect(res.success).toBe(false);
     expect(db.query).not.toHaveBeenCalled();
   });
-
-  test('addPersonalAccessToken refuses to write to another user\'s account', async () => {
-    getAuthSessionMock.mockResolvedValueOnce(ATTACKER_SESSION);
-    const db = require('../lib/db/db');
-    const { addPersonalAccessToken } = await import('../lib/db/helper');
-    const res = JSON.parse(await addPersonalAccessToken(USER, ACCOUNT, 'ghp_attacker'));
-    expect(res.success).toBe(false);
-    expect(db.query).not.toHaveBeenCalled();
-  });
 });

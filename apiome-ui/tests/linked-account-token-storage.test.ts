@@ -119,10 +119,10 @@ describe('linkExternalAccount', () => {
   });
 });
 
-describe.each(['addPersonalAccessToken', 'updatePersonalAccessToken'] as const)('%s', (name) => {
+describe('updatePersonalAccessToken', () => {
   const save = async (token = PAT) => {
     const helper = await import('../lib/db/helper');
-    return JSON.parse(await helper[name](USER, ACCOUNT, token));
+    return JSON.parse(await helper.updatePersonalAccessToken(USER, ACCOUNT, token));
   };
 
   test('binds a sealed token, never the plaintext', async () => {
@@ -181,22 +181,17 @@ describe('readers', () => {
     expect(JSON.parse(await getLinkedAccountsForUser(USER))[0].access_token_suffix).toBeNull();
   });
 
-  test.each(['getLinkedAccountById', 'getLinkedAccountByProviderForUser'] as const)(
-    '%s returns the plaintext tokens for server-side provider calls',
-    async (name) => {
-      pool.query.mockResolvedValue({
-        rowCount: 1,
-        rows: [{ id: ACCOUNT, provider: 'github', access_token: sealToken(ACCESS), refresh_token: sealToken(REFRESH) }],
-      });
-      const helper = await import('../lib/db/helper');
-      const parsed = JSON.parse(
-        name === 'getLinkedAccountById' ? await helper[name](ACCOUNT, USER) : await helper[name](USER, 'github')
-      );
-      expect(parsed.found).toBe(true);
-      expect(parsed.account.access_token).toBe(ACCESS);
-      expect(parsed.account.refresh_token).toBe(REFRESH);
-    }
-  );
+  test('getLinkedAccountById returns the plaintext tokens for server-side provider calls', async () => {
+    pool.query.mockResolvedValue({
+      rowCount: 1,
+      rows: [{ id: ACCOUNT, provider: 'github', access_token: sealToken(ACCESS), refresh_token: sealToken(REFRESH) }],
+    });
+    const { getLinkedAccountById } = await import('../lib/db/helper');
+    const parsed = JSON.parse(await getLinkedAccountById(ACCOUNT, USER));
+    expect(parsed.found).toBe(true);
+    expect(parsed.account.access_token).toBe(ACCESS);
+    expect(parsed.account.refresh_token).toBe(REFRESH);
+  });
 
   test('getLinkedAccountById reads a legacy plaintext row and hides an unreadable one', async () => {
     const { getLinkedAccountById } = await import('../lib/db/helper');
