@@ -221,7 +221,7 @@ def test_de_registering_a_repository_releases_its_bindings_in_the_same_transacti
         [
             [{"id": REPOSITORY}],
             [{"id": BINDING, "project_id": PROJECT, "version_id": VERSION, "ref": "main", "commit_sha": COMMIT_ONE}],
-            [{}],
+            [{"binding_id": BINDING}],
             [],
         ]
     )
@@ -232,10 +232,12 @@ def test_de_registering_a_repository_releases_its_bindings_in_the_same_transacti
     assert "UPDATE apiome.tenant_repositories" in statements[0]
     assert "UPDATE apiome.draft_repository_bindings" in statements[1]
     assert "status = 'superseded'" in statements[2]
+    # One audit statement for every released binding, one array per column (DBP-1.7, #7190).
     _audit_sql, audit_params = conn.statements[3]
-    assert audit_params[3] == "binding.released"
-    assert audit_params[4] is None, "nobody released these personally; the registration went away"
-    assert '"reason": "repository_removed"' in audit_params[5]
+    assert audit_params[3] == ["binding.released"]
+    assert audit_params[5] == [None], "nobody released these personally; the registration went away"
+    assert '"reason": "repository_removed"' in audit_params[6][0]
+    assert '"candidates_superseded": 1' in audit_params[6][0]
     assert (conn.commits, conn.rollbacks) == (1, 0)
 
 

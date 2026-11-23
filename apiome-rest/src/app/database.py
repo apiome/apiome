@@ -6628,14 +6628,22 @@ class Database:
         cursor, suite_id: str, tenant_id: str, payloads: List[Dict[str, Any]]
     ) -> None:
         """Insert payload rows for a suite inside the caller's open transaction."""
-        for index, payload in enumerate(payloads):
-            cursor.execute(
-                """
-                INSERT INTO apiome.schema_test_suite_payloads (
-                    suite_id, tenant_id, name, payload_text, media_type,
-                    validity_class, synthetic, notes, position
-                ) VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s)
-                """,
+        # One statement for every payload (DBP-1.7, #7190).
+        _bulk_insert_arrays(
+            cursor,
+            "apiome.schema_test_suite_payloads",
+            [
+                ("suite_id", "uuid"),
+                ("tenant_id", "uuid"),
+                ("name", "text"),
+                ("payload_text", "text"),
+                ("media_type", "text"),
+                ("validity_class", "text"),
+                ("synthetic", "boolean"),
+                ("notes", "text"),
+                ("position", "integer"),
+            ],
+            [
                 (
                     suite_id,
                     tenant_id,
@@ -6646,8 +6654,10 @@ class Database:
                     bool(payload.get("synthetic")),
                     payload.get("notes"),
                     int(payload.get("position", index)),
-                ),
-            )
+                )
+                for index, payload in enumerate(payloads)
+            ],
+        )
 
     def list_schema_test_suites(
         self,
@@ -6951,21 +6961,30 @@ class Database:
                     ),
                 )
                 run = dict(cursor.fetchone())
-                for index, result in enumerate(results):
-                    payload_id = result.get("payload_id")
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.schema_test_suite_run_results (
-                            run_id, payload_id, payload_name, expected_valid, valid,
-                            validated, status, previous_status, regression, findings,
-                            message, position
-                        ) VALUES (
-                            %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                        )
-                        """,
+                # One statement for every result (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.schema_test_suite_run_results",
+                    [
+                        ("run_id", "uuid"),
+                        ("payload_id", "uuid"),
+                        ("payload_name", "text"),
+                        ("expected_valid", "boolean"),
+                        ("valid", "boolean"),
+                        ("validated", "boolean"),
+                        ("status", "text"),
+                        ("previous_status", "text"),
+                        ("regression", "boolean"),
+                        ("findings", "jsonb"),
+                        ("message", "text"),
+                        ("position", "integer"),
+                    ],
+                    [
                         (
                             str(run["id"]),
-                            payload_id if payload_id and is_uuid_string(str(payload_id)) else None,
+                            result.get("payload_id")
+                            if result.get("payload_id") and is_uuid_string(str(result.get("payload_id")))
+                            else None,
                             result["payload_name"],
                             bool(result["expected_valid"]),
                             result.get("valid"),
@@ -6973,11 +6992,13 @@ class Database:
                             result["status"],
                             result.get("previous_status"),
                             bool(result.get("regression")),
-                            Json(result.get("findings") or []),
+                            json.dumps(result.get("findings") or []),
                             result.get("message"),
                             int(result.get("position", index)),
-                        ),
-                    )
+                        )
+                        for index, result in enumerate(results)
+                    ],
+                )
             conn.commit()
             return run
         except Exception:
@@ -8123,14 +8144,13 @@ class Database:
                     "DELETE FROM apiome.style_guide_rules WHERE guide_id = %s AND custom_def IS NULL",
                     (guide_id,),
                 )
-                for rule in rules:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.style_guide_rules (guide_id, rule_id, enabled, severity)
-                        VALUES (%s, %s, %s, %s)
-                        """,
-                        (guide_id, rule["rule_id"], bool(rule["enabled"]), rule["severity"]),
-                    )
+                # One statement for every rule (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.style_guide_rules",
+                    [("guide_id", "uuid"), ("rule_id", "text"), ("enabled", "boolean"), ("severity", "text")],
+                    [(guide_id, rule["rule_id"], bool(rule["enabled"]), rule["severity"]) for rule in rules],
+                )
             conn.commit()
             return True
         except Exception:
@@ -8184,21 +8204,28 @@ class Database:
                     "DELETE FROM apiome.style_guide_rules WHERE guide_id = %s AND custom_def IS NOT NULL",
                     (guide_id,),
                 )
-                for rule in rules:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.style_guide_rules
-                            (guide_id, rule_id, enabled, severity, custom_def)
-                        VALUES (%s, %s, %s, %s, %s::jsonb)
-                        """,
+                # One statement for every rule (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.style_guide_rules",
+                    [
+                        ("guide_id", "uuid"),
+                        ("rule_id", "text"),
+                        ("enabled", "boolean"),
+                        ("severity", "text"),
+                        ("custom_def", "jsonb"),
+                    ],
+                    [
                         (
                             guide_id,
                             rule["rule_id"],
                             bool(rule.get("enabled", True)),
                             rule["severity"],
                             json.dumps(rule["custom_def"]),
-                        ),
-                    )
+                        )
+                        for rule in rules
+                    ],
+                )
             conn.commit()
             return True
         except Exception:
@@ -11201,19 +11228,32 @@ class Database:
             if not row:
                 return None
             moved: List[str] = []
-            for move in tag_moves:
+            if tag_moves:
+                # One statement for every move (DBP-1.7, #7190). ``ord`` keeps the plan's order for the
+                # result; a tag named twice moves once, to its first target, as one UPDATE per move
+                # did (after the first, the tag no longer points at this version).
                 cursor.execute(
                     """
-                    UPDATE apiome.version_tags
-                    SET version_id = %s, updated_at = CURRENT_TIMESTAMP
-                    WHERE id = %s AND version_id = %s AND project_id = %s AND immutable = false
-                    RETURNING id
+                    UPDATE apiome.version_tags t
+                    SET version_id = m.to_version_id, updated_at = CURRENT_TIMESTAMP
+                    FROM (
+                        SELECT DISTINCT ON (u.id) u.id, u.to_version_id, u.ord
+                        FROM unnest(%s::uuid[], %s::uuid[]) WITH ORDINALITY AS u(id, to_version_id, ord)
+                        ORDER BY u.id, u.ord
+                    ) m
+                    WHERE t.id = m.id AND t.version_id = %s AND t.project_id = %s
+                      AND t.immutable = false
+                    RETURNING t.id, m.ord
                     """,
-                    (move["toVersionId"], move["id"], version_record_id, row["project_id"]),
+                    (
+                        [move["id"] for move in tag_moves],
+                        [move["toVersionId"] for move in tag_moves],
+                        version_record_id,
+                        row["project_id"],
+                    ),
                 )
-                hit = cursor.fetchone()
-                if hit:
-                    moved.append(str(hit["id"]))
+                hits = sorted(cursor.fetchall() or [], key=lambda hit: hit["ord"])
+                moved.extend(str(hit["id"]) for hit in hits)
             return {"version": dict(row), "moved_tag_ids": moved}
 
         return self._guarded_tx(work)
@@ -12045,15 +12085,14 @@ class Database:
                 cursor.execute(
                     "DELETE FROM apiome.role_permissions WHERE role_id = %s::uuid", (role_id,)
                 )
-                for resource, action in pairs:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.role_permissions (role_id, resource, action)
-                        VALUES (%s::uuid, %s, %s)
-                        ON CONFLICT (role_id, resource, action) DO NOTHING
-                        """,
-                        (role_id, resource, action),
-                    )
+                # One statement for the whole grid (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.role_permissions",
+                    [("role_id", "uuid"), ("resource", "text"), ("action", "text")],
+                    [(role_id, resource, action) for resource, action in pairs],
+                    on_conflict="ON CONFLICT (role_id, resource, action) DO NOTHING",
+                )
             conn.commit()
         except Exception:
             conn.rollback()
@@ -16243,14 +16282,13 @@ class Database:
                 "DELETE FROM apiome.artifact_tags WHERE tenant_id = %s::uuid AND project_id = %s::uuid",
                 (tenant_id, project_id),
             )
-            for tag in tags:
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.artifact_tags (tenant_id, project_id, tag, created_by)
-                    VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
-                    """,
-                    (tenant_id, project_id, tag, user_id),
-                )
+            # One statement for every tag (DBP-1.7, #7190).
+            _bulk_insert_arrays(
+                cursor,
+                "apiome.artifact_tags",
+                [("tenant_id", "uuid"), ("project_id", "uuid"), ("tag", "text"), ("created_by", "uuid")],
+                [(tenant_id, project_id, tag, user_id) for tag in tags],
+            )
             return True
 
         return bool(self._guarded_tx(work))
@@ -17382,18 +17420,23 @@ class Database:
                 session_row = dict(cursor.fetchone() or {})
                 sid = str(session_row["id"])
 
-                for i, rec in enumerate(conflict_records):
-                    path = (rec.get("path") or "").strip()
-                    kinds = rec.get("kinds") or []
-                    if not path:
-                        continue
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.merge_session_conflicts (merge_session_id, path, kinds, sort_order)
-                        VALUES (%s, %s, %s::jsonb, %s)
-                        """,
-                        (sid, path, Json(kinds), i),
-                    )
+                # One statement for every conflict (DBP-1.7, #7190); records without a path are skipped
+                # and keep no ``sort_order`` slot, as before.
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.merge_session_conflicts",
+                    [
+                        ("merge_session_id", "uuid"),
+                        ("path", "text"),
+                        ("kinds", "jsonb"),
+                        ("sort_order", "integer"),
+                    ],
+                    [
+                        (sid, (rec.get("path") or "").strip(), json.dumps(rec.get("kinds") or []), i)
+                        for i, rec in enumerate(conflict_records)
+                        if (rec.get("path") or "").strip()
+                    ],
+                )
 
                 cursor.execute(
                     """
@@ -19607,20 +19650,22 @@ class Database:
                     """,
                     (repository_id, patterns),
                 )
-                for rule in rules:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.repository_branch_refresh_rule (
-                            tenant_id, repository_id, branch_pattern, refresh_enabled,
-                            refresh_interval_seconds, target_version_line, created_by
-                        )
-                        VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s::uuid)
-                        ON CONFLICT (repository_id, branch_pattern) DO UPDATE
-                        SET refresh_enabled = EXCLUDED.refresh_enabled,
-                            refresh_interval_seconds = EXCLUDED.refresh_interval_seconds,
-                            target_version_line = EXCLUDED.target_version_line,
-                            updated_at = CURRENT_TIMESTAMP
-                        """,
+                # One statement for every rule (DBP-1.7, #7190). A multi-row upsert cannot touch a row
+                # twice, so a pattern named twice keeps its last rule — what one upsert per rule left.
+                latest_rules = {rule["branch_pattern"]: rule for rule in rules}
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.repository_branch_refresh_rule",
+                    [
+                        ("tenant_id", "uuid"),
+                        ("repository_id", "uuid"),
+                        ("branch_pattern", "text"),
+                        ("refresh_enabled", "boolean"),
+                        ("refresh_interval_seconds", "integer"),
+                        ("target_version_line", "text"),
+                        ("created_by", "uuid"),
+                    ],
+                    [
                         (
                             tenant_id,
                             repository_id,
@@ -19629,8 +19674,17 @@ class Database:
                             rule.get("refresh_interval_seconds"),
                             rule.get("target_version_line"),
                             created_by,
-                        ),
-                    )
+                        )
+                        for rule in latest_rules.values()
+                    ],
+                    on_conflict="""
+                        ON CONFLICT (repository_id, branch_pattern) DO UPDATE
+                        SET refresh_enabled = EXCLUDED.refresh_enabled,
+                            refresh_interval_seconds = EXCLUDED.refresh_interval_seconds,
+                            target_version_line = EXCLUDED.target_version_line,
+                            updated_at = CURRENT_TIMESTAMP
+                    """,
+                )
                 conn.commit()
                 return True
         except Exception as e:
@@ -22034,24 +22088,25 @@ class Database:
                     (provider, keep),
                 )
                 removed = cursor.rowcount or 0
-                for entry in ranges:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.webhook_provider_ip_range
-                          (provider, cidr, family, source, refreshed_at)
-                        VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                # One statement for every range (DBP-1.7, #7190); ``refreshed_at`` takes its
+                # CURRENT_TIMESTAMP default on insert. A multi-row upsert cannot touch a row twice, so
+                # a CIDR named twice keeps its last entry — what one upsert per entry left.
+                latest_ranges = {str(entry["cidr"]): entry for entry in ranges}
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.webhook_provider_ip_range",
+                    [("provider", "text"), ("cidr", "text"), ("family", "smallint"), ("source", "text")],
+                    [
+                        (provider, cidr, int(entry["family"]), str(entry.get("source") or "provider"))
+                        for cidr, entry in latest_ranges.items()
+                    ],
+                    on_conflict="""
                         ON CONFLICT (provider, cidr) DO UPDATE
                           SET family = EXCLUDED.family,
                               source = EXCLUDED.source,
                               refreshed_at = CURRENT_TIMESTAMP
-                        """,
-                        (
-                            provider,
-                            str(entry["cidr"]),
-                            int(entry["family"]),
-                            str(entry.get("source") or "provider"),
-                        ),
-                    )
+                    """,
+                )
             conn.commit()
             return int(removed)
         except Exception as e:
@@ -22650,16 +22705,30 @@ class Database:
         changed = 0
         try:
             with conn.cursor() as cursor:
-                for path, owners in updates:
-                    cursor.execute(
-                        """
-                        UPDATE apiome.tenant_repository_files SET codeowners = %s::text[]
-                        WHERE repository_id = %s::uuid AND branch = %s AND path = %s
-                          AND codeowners IS DISTINCT FROM %s::text[]
-                        """,
-                        (list(owners), repository_id, branch, path, list(owners)),
-                    )
-                    changed += cursor.rowcount or 0
+                # One statement for every file (DBP-1.7, #7190). ``codeowners`` is a text[] column, and
+                # unnest would flatten an array of arrays, so each file's owners travel as one jsonb
+                # array and are turned back into text[] in SQL. A path named twice keeps its last
+                # owners.
+                latest_owners = {path: list(owners) for path, owners in updates}
+                cursor.execute(
+                    """
+                    UPDATE apiome.tenant_repository_files f
+                    SET codeowners = v.owners
+                    FROM (
+                        SELECT u.path, ARRAY(SELECT jsonb_array_elements_text(u.owners)) AS owners
+                        FROM unnest(%s::text[], %s::jsonb[]) AS u(path, owners)
+                    ) v
+                    WHERE f.repository_id = %s::uuid AND f.branch = %s AND f.path = v.path
+                      AND f.codeowners IS DISTINCT FROM v.owners
+                    """,
+                    (
+                        list(latest_owners),
+                        [json.dumps(owners) for owners in latest_owners.values()],
+                        repository_id,
+                        branch,
+                    ),
+                )
+                changed = cursor.rowcount or 0
             conn.commit()
         except Exception:
             conn.rollback()
@@ -24439,13 +24508,14 @@ class Database:
                 "WHERE endpoint_id = %s::uuid AND NOT (tag = ANY(%s))",
                 (endpoint_id, list(tags)),
             )
-            for tag in tags:
-                cursor.execute(
-                    "INSERT INTO apiome.mcp_endpoint_tags (endpoint_id, tenant_id, tag, created_by) "
-                    "VALUES (%s::uuid, %s::uuid, %s, %s::uuid) "
-                    "ON CONFLICT (endpoint_id, tag) DO NOTHING",
-                    (endpoint_id, tenant_id, tag, user_id),
-                )
+            # One statement for every tag (DBP-1.7, #7190).
+            _bulk_insert_arrays(
+                cursor,
+                "apiome.mcp_endpoint_tags",
+                [("endpoint_id", "uuid"), ("tenant_id", "uuid"), ("tag", "text"), ("created_by", "uuid")],
+                [(endpoint_id, tenant_id, tag, user_id) for tag in tags],
+                on_conflict="ON CONFLICT (endpoint_id, tag) DO NOTHING",
+            )
             return True
 
         self._guarded_tx(work)
@@ -24815,15 +24885,21 @@ class Database:
                 )
                 row = dict(cur.fetchone())
                 collection_id = str(row["id"])
-                for position, endpoint_id in enumerate(endpoint_ids):
-                    cur.execute(
-                        """
-                        INSERT INTO apiome.mcp_collection_members
-                            (collection_id, tenant_id, endpoint_id, position)
-                        VALUES (%s::uuid, %s::uuid, %s::uuid, %s)
-                        """,
-                        (collection_id, tenant_id, endpoint_id, position),
-                    )
+                # One statement for every member (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cur,
+                    "apiome.mcp_collection_members",
+                    [
+                        ("collection_id", "uuid"),
+                        ("tenant_id", "uuid"),
+                        ("endpoint_id", "uuid"),
+                        ("position", "integer"),
+                    ],
+                    [
+                        (collection_id, tenant_id, endpoint_id, position)
+                        for position, endpoint_id in enumerate(endpoint_ids)
+                    ],
+                )
             conn.commit()
         except Exception:
             conn.rollback()
@@ -24914,15 +24990,21 @@ class Database:
                     """,
                     (collection_id,),
                 )
-                for position, endpoint_id in enumerate(endpoint_ids):
-                    cur.execute(
-                        """
-                        INSERT INTO apiome.mcp_collection_members
-                            (collection_id, tenant_id, endpoint_id, position)
-                        VALUES (%s::uuid, %s::uuid, %s::uuid, %s)
-                        """,
-                        (collection_id, tenant_id, endpoint_id, position),
-                    )
+                # One statement for every member (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cur,
+                    "apiome.mcp_collection_members",
+                    [
+                        ("collection_id", "uuid"),
+                        ("tenant_id", "uuid"),
+                        ("endpoint_id", "uuid"),
+                        ("position", "integer"),
+                    ],
+                    [
+                        (collection_id, tenant_id, endpoint_id, position)
+                        for position, endpoint_id in enumerate(endpoint_ids)
+                    ],
+                )
                 cur.execute(
                     """
                     UPDATE apiome.mcp_collections
@@ -24970,16 +25052,22 @@ class Database:
                     (collection_id,),
                 )
                 start = int(dict(cur.fetchone())["max_pos"]) + 1
-                for offset, endpoint_id in enumerate(endpoint_ids):
-                    cur.execute(
-                        """
-                        INSERT INTO apiome.mcp_collection_members
-                            (collection_id, tenant_id, endpoint_id, position)
-                        VALUES (%s::uuid, %s::uuid, %s::uuid, %s)
-                        ON CONFLICT (collection_id, endpoint_id) DO NOTHING
-                        """,
-                        (collection_id, tenant_id, endpoint_id, start + offset),
-                    )
+                # One statement for every member (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cur,
+                    "apiome.mcp_collection_members",
+                    [
+                        ("collection_id", "uuid"),
+                        ("tenant_id", "uuid"),
+                        ("endpoint_id", "uuid"),
+                        ("position", "integer"),
+                    ],
+                    [
+                        (collection_id, tenant_id, endpoint_id, start + offset)
+                        for offset, endpoint_id in enumerate(endpoint_ids)
+                    ],
+                    on_conflict="ON CONFLICT (collection_id, endpoint_id) DO NOTHING",
+                )
                 cur.execute(
                     """
                     UPDATE apiome.mcp_collections
@@ -26877,56 +26965,71 @@ class Database:
                 )
                 version_id = str(cursor.fetchone()["id"])
 
-                for item in capability_rows:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.mcp_capability_items (
-                            version_id, item_type, name, title, description,
-                            input_schema, output_schema, annotations, uri,
-                            uri_template, raw, ordinal
-                        ) VALUES (
-                            %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                        )
-                        """,
+                # One statement for every capability item (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.mcp_capability_items",
+                    [
+                        ("version_id", "uuid"),
+                        ("item_type", "text"),
+                        ("name", "text"),
+                        ("title", "text"),
+                        ("description", "text"),
+                        ("input_schema", "jsonb"),
+                        ("output_schema", "jsonb"),
+                        ("annotations", "jsonb"),
+                        ("uri", "text"),
+                        ("uri_template", "text"),
+                        ("raw", "jsonb"),
+                        ("ordinal", "integer"),
+                    ],
+                    [
                         (
                             version_id,
                             item.get("item_type"),
                             item.get("name"),
                             item.get("title"),
                             item.get("description"),
-                            Json(item["input_schema"])
+                            json.dumps(item["input_schema"])
                             if item.get("input_schema") is not None
                             else None,
-                            Json(item["output_schema"])
+                            json.dumps(item["output_schema"])
                             if item.get("output_schema") is not None
                             else None,
-                            Json(item["annotations"])
+                            json.dumps(item["annotations"])
                             if item.get("annotations") is not None
                             else None,
                             item.get("uri"),
                             item.get("uri_template"),
-                            Json(item.get("raw") if item.get("raw") is not None else {}),
+                            json.dumps(item.get("raw") if item.get("raw") is not None else {}),
                             item.get("ordinal"),
-                        ),
-                    )
-
-                for change in change_rows:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.mcp_version_changes (
-                            version_id, change_type, item_type, item_name, detail
-                        ) VALUES (
-                            %s::uuid, %s, %s, %s, %s
                         )
-                        """,
+                        for item in capability_rows
+                    ],
+                )
+
+                # One statement for every change row (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.mcp_version_changes",
+                    [
+                        ("version_id", "uuid"),
+                        ("change_type", "text"),
+                        ("item_type", "text"),
+                        ("item_name", "text"),
+                        ("detail", "jsonb"),
+                    ],
+                    [
                         (
                             version_id,
                             change.get("change_type"),
                             change.get("item_type"),
                             change.get("item_name"),
-                            Json(change.get("detail") if change.get("detail") is not None else {}),
-                        ),
-                    )
+                            json.dumps(change.get("detail") if change.get("detail") is not None else {}),
+                        )
+                        for change in change_rows
+                    ],
+                )
 
                 # A successful discovery clears any failure backoff/quarantine state (MCAT-5.3):
                 # the endpoint is healthy again, so it rejoins the sweep at its normal cadence.
@@ -29035,24 +29138,30 @@ class Database:
                     (tenant_id,),
                 )
                 stored_tools: List[Dict[str, Any]] = []
-                for tool in tools:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.tenant_mcp_policy_tools (
-                            tenant_id, tool_id, in_ceiling, default_enabled, anonymous_enabled
-                        )
-                        VALUES (%s::uuid, %s, %s, %s, %s)
-                        RETURNING tool_id, in_ceiling, default_enabled, anonymous_enabled
-                        """,
+                # One statement for every tool (DBP-1.7, #7190); the rows are sorted below, so the
+                # order they come back in does not matter.
+                for row in _bulk_insert_arrays(
+                    cursor,
+                    "apiome.tenant_mcp_policy_tools",
+                    [
+                        ("tenant_id", "uuid"),
+                        ("tool_id", "text"),
+                        ("in_ceiling", "boolean"),
+                        ("default_enabled", "boolean"),
+                        ("anonymous_enabled", "boolean"),
+                    ],
+                    [
                         (
                             tenant_id,
                             tool["tool_id"],
                             bool(tool["in_ceiling"]),
                             bool(tool["default_enabled"]),
                             bool(tool.get("anonymous_enabled", True)),
-                        ),
-                    )
-                    row = cursor.fetchone()
+                        )
+                        for tool in tools
+                    ],
+                    returning=["tool_id", "in_ceiling", "default_enabled", "anonymous_enabled"],
+                ):
                     stored_tools.append(
                         {
                             "tool_id": str(row["tool_id"]),
@@ -31846,16 +31955,35 @@ class Database:
                 if not claimed:
                     conn.commit()
                     return []
-                for row in claimed:
-                    summary = self._async_job_history_summary(
-                        row.get("status"), row.get("extra")
-                    )
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.async_job_history
-                            (job_id, kind, tenant_slug, state, created_at, finished_at,
-                             summary, recorded_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, now())
+                # One statement for every claimed job (DBP-1.7, #7190); ``recorded_at`` takes its
+                # now() default on insert. Job ids are the claimed rows' primary keys, so none repeats.
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.async_job_history",
+                    [
+                        ("job_id", "text"),
+                        ("kind", "text"),
+                        ("tenant_slug", "text"),
+                        ("state", "text"),
+                        ("created_at", "timestamptz"),
+                        ("finished_at", "timestamptz"),
+                        ("summary", "jsonb"),
+                    ],
+                    [
+                        (
+                            row["job_id"],
+                            row["kind"],
+                            row["tenant_slug"],
+                            row["state"],
+                            row["created_at"],
+                            row["updated_at"],
+                            json.dumps(
+                                self._async_job_history_summary(row.get("status"), row.get("extra"))
+                            ),
+                        )
+                        for row in claimed
+                    ],
+                    on_conflict="""
                         ON CONFLICT (job_id) DO UPDATE SET
                             kind = EXCLUDED.kind,
                             tenant_slug = EXCLUDED.tenant_slug,
@@ -31864,17 +31992,8 @@ class Database:
                             finished_at = EXCLUDED.finished_at,
                             summary = EXCLUDED.summary,
                             recorded_at = now()
-                        """,
-                        (
-                            row["job_id"],
-                            row["kind"],
-                            row["tenant_slug"],
-                            row["state"],
-                            row["created_at"],
-                            row["updated_at"],
-                            Json(summary),
-                        ),
-                    )
+                    """,
+                )
                 job_ids = [row["job_id"] for row in claimed]
                 cursor.execute(
                     """
@@ -32546,19 +32665,38 @@ class Database:
             )
             if cursor.rowcount != 1:
                 return None
-            for part_path, object_id in parts:
+            if parts:
+                # One statement for every part (DBP-1.7, #7190). ``matched`` counts the parts whose
+                # object is the tenant's: one short of ``len(parts)`` is the row the per-part insert
+                # would have missed, and the whole write is rolled back as it was then. A path named
+                # twice keeps its last object, as one upsert per part left it.
                 cursor.execute(
                     """
-                    INSERT INTO apiome.version_documents (version_id, role, object_id, part_path)
-                    SELECT %s::uuid, 'original_part', o.id, %s
-                    FROM apiome.document_objects o
-                    WHERE o.id = %s::uuid AND o.tenant_id = %s
-                    ON CONFLICT ON CONSTRAINT version_documents_slot_key
-                        DO UPDATE SET object_id = EXCLUDED.object_id
+                    WITH wanted AS (
+                        SELECT u.part_path, u.ord, o.id AS object_id
+                        FROM unnest(%s::text[], %s::uuid[]) WITH ORDINALITY
+                             AS u(part_path, object_id, ord)
+                        JOIN apiome.document_objects o ON o.id = u.object_id AND o.tenant_id = %s
+                    ), written AS (
+                        INSERT INTO apiome.version_documents (version_id, role, object_id, part_path)
+                        SELECT DISTINCT ON (w.part_path)
+                               %s::uuid, 'original_part', w.object_id, w.part_path
+                        FROM wanted w
+                        ORDER BY w.part_path, w.ord DESC
+                        ON CONFLICT ON CONSTRAINT version_documents_slot_key
+                            DO UPDATE SET object_id = EXCLUDED.object_id
+                        RETURNING 1
+                    )
+                    SELECT (SELECT COUNT(*) FROM wanted) AS matched
                     """,
-                    (version_id, part_path, object_id, tenant_id),
+                    (
+                        [part_path for part_path, _ in parts],
+                        [object_id for _, object_id in parts],
+                        tenant_id,
+                        version_id,
+                    ),
                 )
-                if cursor.rowcount != 1:
+                if int(cursor.fetchone()["matched"]) != len(parts):
                     return None
             return True
 
@@ -32893,24 +33031,32 @@ class Database:
                     """,
                     (tenant_id, vid),
                 )
-                for claim in claims:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.version_preservation_claims
-                          (tenant_id, version_id, pointer, payload,
-                           source_file, source_digest, created_by)
-                        VALUES (%s, %s::uuid, %s, %s, %s, %s, %s)
-                        """,
+                # One statement for every claim (DBP-1.7, #7190).
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.version_preservation_claims",
+                    [
+                        ("tenant_id", "uuid"),
+                        ("version_id", "uuid"),
+                        ("pointer", "text"),
+                        ("payload", "jsonb"),
+                        ("source_file", "text"),
+                        ("source_digest", "text"),
+                        ("created_by", "uuid"),
+                    ],
+                    [
                         (
                             tenant_id,
                             vid,
                             claim["pointer"],
-                            Json(claim.get("value")),
+                            json.dumps(claim.get("value")),
                             claim.get("source_file"),
                             claim.get("source_digest"),
                             actor_id,
-                        ),
-                    )
+                        )
+                        for claim in claims
+                    ],
+                )
                 action = "envelope.replace" if claims else "envelope.clear"
                 audit_detail = {"claimCount": len(claims)}
                 if detail:
@@ -34214,22 +34360,37 @@ class Database:
                 run_row = cursor.fetchone()
                 run_id = str(run_row["id"])
 
-                for operation in operations or []:
-                    cursor.execute(
-                        """
-                        INSERT INTO apiome.verification_run_operation (
-                            tenant_id, run_id, sequence, case_id, operation_key, operation_name,
-                            case_source, http_method, http_path, outcome, failure_code,
-                            failure_message, expected_status, actual_status, started_at,
-                            finished_at, duration_ms, attempts
-                        )
-                        VALUES (
-                            %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                            %s, %s, %s, %s
-                        )
-                        RETURNING id::text AS id
-                        """,
+                # Three statements for the whole run's cases, assertions and artifacts (DBP-1.7,
+                # #7190). Case ids are assigned here, so the children need no RETURNING per case.
+                cases = list(operations or [])
+                case_ids = _new_ids(len(cases))
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.verification_run_operation",
+                    [
+                        ("id", "uuid"),
+                        ("tenant_id", "uuid"),
+                        ("run_id", "uuid"),
+                        ("sequence", "integer"),
+                        ("case_id", "text"),
+                        ("operation_key", "text"),
+                        ("operation_name", "text"),
+                        ("case_source", "text"),
+                        ("http_method", "text"),
+                        ("http_path", "text"),
+                        ("outcome", "text"),
+                        ("failure_code", "text"),
+                        ("failure_message", "text"),
+                        ("expected_status", "text"),
+                        ("actual_status", "integer"),
+                        ("started_at", "timestamptz"),
+                        ("finished_at", "timestamptz"),
+                        ("duration_ms", "bigint"),
+                        ("attempts", "integer"),
+                    ],
+                    [
                         (
+                            operation_id,
                             tenant_id,
                             run_id,
                             int(operation.get("sequence") or 0),
@@ -34248,45 +34409,54 @@ class Database:
                             operation.get("finished_at"),
                             int(operation.get("duration_ms") or 0),
                             int(operation.get("attempts") or 1),
-                        ),
-                    )
-                    operation_id = str(cursor.fetchone()["id"])
-
-                    for assertion in operation.get("assertions") or []:
-                        cursor.execute(
-                            """
-                            INSERT INTO apiome.verification_run_assertion (
-                                tenant_id, run_id, operation_id, sequence, kind, outcome,
-                                subject, expected, actual, code, message
-                            )
-                            VALUES (
-                                %s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
-                            )
-                            """,
-                            (
-                                tenant_id,
-                                run_id,
-                                operation_id,
-                                int(assertion.get("sequence") or 0),
-                                assertion.get("kind"),
-                                assertion.get("outcome"),
-                                assertion.get("subject"),
-                                assertion.get("expected"),
-                                assertion.get("actual"),
-                                assertion.get("code"),
-                                assertion.get("message"),
-                            ),
                         )
-
-                    for artifact in operation.get("artifacts") or []:
-                        self._insert_verification_run_artifact(
-                            cursor, tenant_id, run_id, operation_id, artifact
+                        for operation_id, operation in zip(case_ids, cases)
+                    ],
+                )
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.verification_run_assertion",
+                    [
+                        ("tenant_id", "uuid"),
+                        ("run_id", "uuid"),
+                        ("operation_id", "uuid"),
+                        ("sequence", "integer"),
+                        ("kind", "text"),
+                        ("outcome", "text"),
+                        ("subject", "text"),
+                        ("expected", "text"),
+                        ("actual", "text"),
+                        ("code", "text"),
+                        ("message", "text"),
+                    ],
+                    [
+                        (
+                            tenant_id,
+                            run_id,
+                            operation_id,
+                            int(assertion.get("sequence") or 0),
+                            assertion.get("kind"),
+                            assertion.get("outcome"),
+                            assertion.get("subject"),
+                            assertion.get("expected"),
+                            assertion.get("actual"),
+                            assertion.get("code"),
+                            assertion.get("message"),
                         )
-
-                for artifact in artifacts or []:
-                    self._insert_verification_run_artifact(
-                        cursor, tenant_id, run_id, None, artifact
-                    )
+                        for operation_id, operation in zip(case_ids, cases)
+                        for assertion in operation.get("assertions") or []
+                    ],
+                )
+                # Per-case artifacts first, in case order, then the run-level ones: the order one
+                # insert per artifact wrote them in.
+                owned_artifacts: List[Tuple[Optional[str], Dict[str, Any]]] = [
+                    (operation_id, artifact)
+                    for operation_id, operation in zip(case_ids, cases)
+                    for artifact in operation.get("artifacts") or []
+                ]
+                self._insert_verification_run_artifacts(
+                    cursor, tenant_id, run_id, owned_artifacts + [(None, a) for a in artifacts or []]
+                )
 
                 if mock is not None:
                     self._insert_verification_run_mock(cursor, tenant_id, run_id, mock)
@@ -34298,16 +34468,15 @@ class Database:
             raise
 
     @staticmethod
-    def _insert_verification_run_artifact(
+    def _insert_verification_run_artifacts(
         cursor: Any,
         tenant_id: str,
         run_id: str,
-        operation_id: Optional[str],
-        artifact: Dict[str, Any],
+        owned: Sequence[Tuple[Optional[str], Dict[str, Any]]],
     ) -> None:
-        """Insert one artifact reference on an open cursor (ECA-1.3, #4731).
+        """Insert a run's artifact references with one statement (ECA-1.3, #4731; DBP-1.7, #7190).
 
-        Shared by the per-case and run-level loops so the column list exists once. ``redacted`` is
+        Per-case and run-level artifacts share it so the column list exists once. ``redacted`` is
         always written ``TRUE`` — V212's CHECK admits nothing else, and the contract layer has
         already refused a submission that claimed otherwise.
 
@@ -34315,29 +34484,42 @@ class Database:
             cursor: The open cursor inside the run's transaction.
             tenant_id: The run's tenant, stamped on every child row.
             run_id: The owning run.
-            operation_id: The owning case, or ``None`` for a run-level artifact.
-            artifact: The artifact row map.
+            owned: ``(operation_id, artifact)`` pairs in the order to store them;
+                ``operation_id`` is the owning case, or ``None`` for a run-level artifact, and
+                ``artifact`` is the artifact row map. Empty writes nothing.
         """
-        cursor.execute(
-            """
-            INSERT INTO apiome.verification_run_artifact (
-                tenant_id, run_id, operation_id, kind, label, media_type, uri, size_bytes,
-                content_sha256, redacted, redaction
-            )
-            VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, TRUE, %s::jsonb)
-            """,
-            (
-                tenant_id,
-                run_id,
-                operation_id,
-                artifact.get("kind"),
-                artifact.get("label"),
-                artifact.get("media_type"),
-                artifact.get("uri"),
-                artifact.get("size_bytes"),
-                artifact.get("content_sha256"),
-                json.dumps(artifact.get("redaction") or {}, sort_keys=True, default=str),
-            ),
+        _bulk_insert_arrays(
+            cursor,
+            "apiome.verification_run_artifact",
+            [
+                ("tenant_id", "uuid"),
+                ("run_id", "uuid"),
+                ("operation_id", "uuid"),
+                ("kind", "text"),
+                ("label", "text"),
+                ("media_type", "text"),
+                ("uri", "text"),
+                ("size_bytes", "bigint"),
+                ("content_sha256", "text"),
+                ("redacted", "boolean"),
+                ("redaction", "jsonb"),
+            ],
+            [
+                (
+                    tenant_id,
+                    run_id,
+                    operation_id,
+                    artifact.get("kind"),
+                    artifact.get("label"),
+                    artifact.get("media_type"),
+                    artifact.get("uri"),
+                    artifact.get("size_bytes"),
+                    artifact.get("content_sha256"),
+                    True,
+                    json.dumps(artifact.get("redaction") or {}, sort_keys=True, default=str),
+                )
+                for operation_id, artifact in owned
+            ],
         )
 
     @staticmethod
@@ -37832,13 +38014,19 @@ class Database:
             if created is None:
                 return None
             toolset_id = created["id"]
-            for tool in tools:
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.agent_toolset_tools
-                        (toolset_id, operation_key, tool_name, write_op, enabled, updated_by)
-                    VALUES (%s::uuid, %s, %s, %s, %s, %s::uuid)
-                    """,
+            # One statement for every tool (DBP-1.7, #7190).
+            _bulk_insert_arrays(
+                cursor,
+                "apiome.agent_toolset_tools",
+                [
+                    ("toolset_id", "uuid"),
+                    ("operation_key", "text"),
+                    ("tool_name", "text"),
+                    ("write_op", "boolean"),
+                    ("enabled", "boolean"),
+                    ("updated_by", "uuid"),
+                ],
+                [
                     (
                         toolset_id,
                         tool["operation_key"],
@@ -37846,8 +38034,10 @@ class Database:
                         bool(tool["write_op"]),
                         bool(tool["enabled"]),
                         actor,
-                    ),
-                )
+                    )
+                    for tool in tools
+                ],
+            )
             cursor.execute(
                 f"""
                 SELECT {self._AGENT_TOOLSET_COLUMNS}
@@ -38150,28 +38340,40 @@ class Database:
             )
             if cursor.fetchone() is None:
                 return 0
-            inserted = 0
-            for proposal in proposals:
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.agent_toolset_enrichments
-                        (toolset_id, operation_key, target_kind, target_key, parameter_name,
-                         original_description, proposed_description, model)
-                    VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (toolset_id, target_key) DO NOTHING
-                    """,
-                    (
-                        toolset_id,
-                        proposal["operation_key"],
-                        proposal["target_kind"],
-                        proposal["target_key"],
-                        proposal.get("parameter_name"),
-                        proposal.get("original_description"),
-                        proposal["proposed_description"],
-                        proposal["model"],
-                    ),
+            # One statement for every proposal (DBP-1.7, #7190). RETURNING names only the rows
+            # that were inserted, so the count leaves out every skipped target — one already
+            # stored, or one this batch names a second time.
+            inserted = len(
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.agent_toolset_enrichments",
+                    [
+                        ("toolset_id", "uuid"),
+                        ("operation_key", "text"),
+                        ("target_kind", "text"),
+                        ("target_key", "text"),
+                        ("parameter_name", "text"),
+                        ("original_description", "text"),
+                        ("proposed_description", "text"),
+                        ("model", "text"),
+                    ],
+                    [
+                        (
+                            toolset_id,
+                            proposal["operation_key"],
+                            proposal["target_kind"],
+                            proposal["target_key"],
+                            proposal.get("parameter_name"),
+                            proposal.get("original_description"),
+                            proposal["proposed_description"],
+                            proposal["model"],
+                        )
+                        for proposal in proposals
+                    ],
+                    on_conflict="ON CONFLICT (toolset_id, target_key) DO NOTHING",
+                    returning=["id"],
                 )
-                inserted += max(cursor.rowcount or 0, 0)
+            )
             return inserted
 
         return int(self._guarded_tx(work) or 0)
@@ -43714,31 +43916,54 @@ class Database:
             (RELEASE_REASON_REPOSITORY_REMOVED, repository_id, tenant_id),
         )
         released = [dict(row) for row in (cursor.fetchall() or [])]
-        for binding in released:
+        if released:
+            # Two statements for every released binding (DBP-1.7, #7190): one supersedes all their
+            # pending candidates and says which binding each belonged to, one writes the audit rows.
             cursor.execute(
                 """
                 UPDATE apiome.draft_binding_sync_candidates
                 SET status = 'superseded', resolved_at = CURRENT_TIMESTAMP
-                WHERE binding_id = %s::uuid AND status = 'pending'
+                WHERE binding_id = ANY(%s::uuid[]) AND status = 'pending'
+                RETURNING binding_id::text AS binding_id
                 """,
-                (binding["id"],),
+                ([binding["id"] for binding in released],),
             )
-            superseded = int(cursor.rowcount or 0)
-            self._insert_workflow_audit_tx(
+            superseded: Dict[str, int] = {}
+            for row in cursor.fetchall() or []:
+                superseded[str(row["binding_id"])] = superseded.get(str(row["binding_id"]), 0) + 1
+            _bulk_insert_arrays(
                 cursor,
-                tenant_id=tenant_id,
-                project_id=str(binding["project_id"]),
-                version_id=str(binding["version_id"]),
-                action=AUDIT_BINDING_RELEASED,
-                actor_id=None,
-                detail={
-                    "binding_id": str(binding["id"]),
-                    "reason": RELEASE_REASON_REPOSITORY_REMOVED,
-                    "repository_id": repository_id,
-                    "ref": str(binding["ref"]),
-                    "commit_sha": str(binding["commit_sha"]),
-                    "candidates_superseded": superseded,
-                },
+                "apiome.workflow_audit",
+                [
+                    ("tenant_id", "uuid"),
+                    ("project_id", "uuid"),
+                    ("version_id", "uuid"),
+                    ("action", "text"),
+                    ("outcome", "text"),
+                    ("actor_id", "uuid"),
+                    ("detail", "jsonb"),
+                ],
+                [
+                    (
+                        tenant_id,
+                        str(binding["project_id"]),
+                        str(binding["version_id"]),
+                        AUDIT_BINDING_RELEASED,
+                        "success",
+                        None,
+                        json.dumps(
+                            {
+                                "binding_id": str(binding["id"]),
+                                "reason": RELEASE_REASON_REPOSITORY_REMOVED,
+                                "repository_id": repository_id,
+                                "ref": str(binding["ref"]),
+                                "commit_sha": str(binding["commit_sha"]),
+                                "candidates_superseded": superseded.get(str(binding["id"]), 0),
+                            }
+                        ),
+                    )
+                    for binding in released
+                ],
             )
         return len(released)
 
@@ -44959,18 +45184,27 @@ class Database:
                 return {"plan_id": str(existing["id"]), "created": False}
 
             plan_id = str(row["id"])
-            for conflict in conflicts:
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.draft_sync_conflicts
-                      (plan_id, tenant_id, pointer, scope, group_key, label,
-                       git_kind, draft_kind, base_value, git_value, draft_value,
-                       source_file, source_line, source_url)
-                    VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s,
-                            %s, %s, %s::jsonb, %s::jsonb, %s::jsonb,
-                            %s, %s, %s)
-                    ON CONFLICT (plan_id, pointer) DO NOTHING
-                    """,
+            # One statement for every conflict (DBP-1.7, #7190).
+            _bulk_insert_arrays(
+                cursor,
+                "apiome.draft_sync_conflicts",
+                [
+                    ("plan_id", "uuid"),
+                    ("tenant_id", "uuid"),
+                    ("pointer", "text"),
+                    ("scope", "text"),
+                    ("group_key", "text"),
+                    ("label", "text"),
+                    ("git_kind", "text"),
+                    ("draft_kind", "text"),
+                    ("base_value", "jsonb"),
+                    ("git_value", "jsonb"),
+                    ("draft_value", "jsonb"),
+                    ("source_file", "text"),
+                    ("source_line", "integer"),
+                    ("source_url", "text"),
+                ],
+                [
                     (
                         plan_id,
                         tenant_id,
@@ -44986,8 +45220,11 @@ class Database:
                         conflict.get("source_file", ""),
                         conflict.get("source_line"),
                         conflict.get("source_url", ""),
-                    ),
-                )
+                    )
+                    for conflict in conflicts
+                ],
+                on_conflict="ON CONFLICT (plan_id, pointer) DO NOTHING",
+            )
             self._insert_workflow_audit_tx(
                 cursor,
                 tenant_id=tenant_id,
@@ -47432,61 +47669,98 @@ class Database:
                     "upgrade_pin_ineligible", {"pinIds": ineligible}
                 )
             upgraded: List[Dict[str, Any]] = []
-            for entry in selected:
-                assert entry is not None  # narrowed by the ineligible check above
-                # Lock the version too: a publish racing the upgrade must not see its
-                # pins rewritten after it froze the version.
+            entries = [entry for entry in selected if entry is not None]
+            if entries:
+                # Four statements for every selected pin (DBP-1.7, #7190). Lock the versions too, all
+                # at once and in id order: a publish racing the upgrade must not see its pins
+                # rewritten after it froze the version.
+                version_ids = sorted({str(entry["version_id"]).lower() for entry in entries})
                 cursor.execute(
-                    "SELECT published FROM apiome.versions WHERE id = %s::uuid FOR UPDATE",
-                    (entry["version_id"],),
+                    """
+                    SELECT id::text AS id, published FROM apiome.versions
+                    WHERE id = ANY(%s::uuid[])
+                    ORDER BY id
+                    FOR UPDATE
+                    """,
+                    (version_ids,),
                 )
-                locked = cursor.fetchone()
-                if not locked or locked.get("published"):
+                locked = {str(found["id"]): found for found in cursor.fetchall() or []}
+                if any(
+                    version_id not in locked or locked[version_id].get("published")
+                    for version_id in version_ids
+                ):
                     raise ComponentLibraryConflictError("upgrade_plan_stale")
                 cursor.execute(
                     """
                     UPDATE apiome.version_component_pins
                     SET deleted_at = CURRENT_TIMESTAMP
-                    WHERE id = %s::uuid
+                    WHERE id = ANY(%s::uuid[])
                     """,
-                    (entry["pin_id"],),
+                    ([str(entry["pin_id"]) for entry in entries],),
                 )
-                cursor.execute(
-                    """
-                    INSERT INTO apiome.version_component_pins
-                      (tenant_id, version_id, component_revision_id, local_name, created_by)
-                    VALUES (%s, %s::uuid, %s::uuid, %s, %s)
-                    RETURNING id
-                    """,
-                    (
-                        tenant_id,
-                        entry["version_id"],
-                        target_revision_id,
-                        entry.get("local_name"),
-                        actor_id,
-                    ),
-                )
-                new_pin_id = str(cursor.fetchone()["id"])
-                project = self._affected_projects([entry])
-                self._component_audit(
+                # Pin ids are assigned here, so the audit rows need no RETURNING per pin.
+                new_pin_ids = _new_ids(len(entries))
+                _bulk_insert_arrays(
                     cursor,
-                    tenant_id,
-                    action="pin.upgrade",
-                    component_id=component_id,
-                    revision_id=target_revision_id,
-                    version_id=str(entry["version_id"]),
-                    actor_id=actor_id,
-                    detail={
-                        "pinId": str(entry["pin_id"]),
-                        "newPinId": new_pin_id,
-                        "componentName": target.get("component_name"),
-                        "policy": policy,
-                        "oldRevision": entry.get("revision"),
-                        "newRevision": target.get("revision"),
-                        "affectedProjects": project,
-                    },
+                    "apiome.version_component_pins",
+                    [
+                        ("id", "uuid"),
+                        ("tenant_id", "uuid"),
+                        ("version_id", "uuid"),
+                        ("component_revision_id", "uuid"),
+                        ("local_name", "text"),
+                        ("created_by", "uuid"),
+                    ],
+                    [
+                        (
+                            new_pin_id,
+                            tenant_id,
+                            str(entry["version_id"]),
+                            target_revision_id,
+                            entry.get("local_name"),
+                            actor_id,
+                        )
+                        for new_pin_id, entry in zip(new_pin_ids, entries)
+                    ],
                 )
-                upgraded.append(
+                _bulk_insert_arrays(
+                    cursor,
+                    "apiome.component_library_audit",
+                    [
+                        ("tenant_id", "uuid"),
+                        ("component_id", "uuid"),
+                        ("revision_id", "uuid"),
+                        ("version_id", "uuid"),
+                        ("actor_id", "uuid"),
+                        ("action", "text"),
+                        ("outcome", "text"),
+                        ("detail", "jsonb"),
+                    ],
+                    [
+                        (
+                            tenant_id,
+                            component_id,
+                            target_revision_id,
+                            str(entry["version_id"]),
+                            actor_id,
+                            "pin.upgrade",
+                            "success",
+                            json.dumps(
+                                {
+                                    "pinId": str(entry["pin_id"]),
+                                    "newPinId": new_pin_id,
+                                    "componentName": target.get("component_name"),
+                                    "policy": policy,
+                                    "oldRevision": entry.get("revision"),
+                                    "newRevision": target.get("revision"),
+                                    "affectedProjects": self._affected_projects([entry]),
+                                }
+                            ),
+                        )
+                        for new_pin_id, entry in zip(new_pin_ids, entries)
+                    ],
+                )
+                upgraded = [
                     {
                         "pinId": str(entry["pin_id"]),
                         "newPinId": new_pin_id,
@@ -47494,7 +47768,8 @@ class Database:
                         "projectId": str(entry["project_id"]),
                         "oldRevision": entry.get("revision"),
                     }
-                )
+                    for new_pin_id, entry in zip(new_pin_ids, entries)
+                ]
             affected = self._affected_projects([e for e in selected if e is not None])
             self._component_audit(
                 cursor,

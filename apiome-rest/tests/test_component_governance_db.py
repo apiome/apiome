@@ -6,6 +6,7 @@ commits; a success writes its rows and the audit entry on one connection and com
 published revisions are never updated; tenant scoping is on every statement.
 """
 
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -83,7 +84,8 @@ class RevisionRoutedConn(FakeConn):
             return original(sql)
 
         def execute(sql, params=None):
-            normalized = " ".join(sql.split())
+            # Set-based inserts quote their identifiers; the tests match on the plain names.
+            normalized = " ".join(sql.split()).replace('"', "")
             conn.statements.append((normalized, params))
             if "WHERE r.id = %s::uuid AND r.component_id = %s::uuid" in normalized:
                 row = conn.revisions.get(params[0])
@@ -315,7 +317,9 @@ class TestBulkUpgrade:
         return [
             ("FROM apiome.version_component_pins p JOIN apiome.operational_component_revisions r "
              "ON p.component_revision_id = r.id JOIN apiome.versions v", consumers),
-            ("SELECT published FROM apiome.versions", [{"published": version_published}]),
+            # One lock for every selected version (DBP-1.7, #7190).
+            ("SELECT id::text AS id, published FROM apiome.versions",
+             [{"id": "v1", "published": version_published}]),
         ]
 
     def _run(self, pin_ids, token):
@@ -333,10 +337,13 @@ class TestBulkUpgrade:
         soft_deletes = [sql for sql, _ in conn.writes if "SET deleted_at" in sql]
         inserts = [p for sql, p in conn.writes if sql.startswith("INSERT INTO apiome.version_component_pins")]
         assert len(soft_deletes) == 1 and len(inserts) == 1
-        assert inserts[0][2] == TARGET_ID
-        actions = [row[5] for row in _audit_rows(conn)]
-        assert actions == ["pin.upgrade", "upgrade.bulk"]
-        bulk = _audit_rows(conn)[1][6].adapted
+        # The new pins travel as one array per column (DBP-1.7, #7190).
+        assert inserts[0][1:4] == [[TENANT], ["v1"], [TARGET_ID]]
+        per_pin, summary = _audit_rows(conn)
+        assert per_pin[5] == ["pin.upgrade"] and summary[5] == "upgrade.bulk"
+        new_pin_id = result["upgraded"][0]["newPinId"]
+        assert inserts[0][0] == [new_pin_id] and json.loads(per_pin[7][0])["newPinId"] == new_pin_id
+        bulk = summary[6].adapted
         assert bulk["oldRevision"] == ["1.0.0"] and bulk["newRevision"] == "2.0.0"
         assert bulk["affectedProjects"][0]["projectName"] == "Orders"
         assert _no_revision_updates(conn)

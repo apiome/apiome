@@ -946,7 +946,8 @@ def test_record_version_assigns_next_seq_and_updates_endpoint(monkeypatch):
 
     # The snapshot is tagged with the minute-precision UTC discovery time (#3671).
     assert out == {"version_id": "ver-1", "version_seq": 1, "version_tag": "2026-06-26T12:00Z"}
-    sqls = " ".join(sql for sql, _ in cur.executed)
+    # The child rows go in set-based inserts, which quote their identifiers (DBP-1.7, #7190).
+    sqls = " ".join(sql for sql, _ in cur.executed).replace('"', "")
     assert "INSERT INTO apiome.mcp_endpoint_versions" in sqls
     assert "INSERT INTO apiome.mcp_capability_items" in sqls
     assert "INSERT INTO apiome.mcp_version_changes" in sqls

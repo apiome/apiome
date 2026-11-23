@@ -46,7 +46,8 @@ def _db(rowcount=1, fetchone=_UNSET):
 
 
 def _sql(cursor, index=0):
-    return cursor.execute.call_args_list[index][0][0]
+    """Statement ``index``, without the double quotes a set-based insert puts on identifiers."""
+    return cursor.execute.call_args_list[index][0][0].replace('"', "")
 
 
 # --- static guard ------------------------------------------------------------------------------
@@ -157,7 +158,11 @@ def test_create_mcp_collection_inserts_collection_and_members():
     db.get_mcp_collection.assert_not_called()
     assert "INSERT INTO apiome.mcp_collections AS c" in _sql(cursor, 0)
     assert "INSERT INTO apiome.mcp_collection_members" in _sql(cursor, 1)
-    assert cursor.execute.call_count == 3  # collection + one row per endpoint
+    # The collection, then every member in one statement (DBP-1.7, #7190).
+    assert cursor.execute.call_count == 2
+    assert cursor.execute.call_args_list[1][0][1] == [
+        [_COLL, _COLL], [_TENANT, _TENANT], [_EP, _NOTE], [0, 1]
+    ]
     conn.commit.assert_called_once()
     # The transaction ran in manual-commit mode and restored the previous setting.
     assert conn.autocommit is False
@@ -197,7 +202,7 @@ def test_replace_mcp_collection_members_rewrites_the_list():
     out = db.replace_mcp_collection_members(_TENANT, _COLL, [_EP])
 
     assert out == [{"endpoint_id": _EP}]
-    executed = [c[0][0] for c in cursor.execute.call_args_list]
+    executed = [_sql(cursor, i) for i in range(cursor.execute.call_count)]
     assert any("DELETE FROM apiome.mcp_collection_members" in s for s in executed)
     assert any("INSERT INTO apiome.mcp_collection_members" in s for s in executed)
     assert any("UPDATE apiome.mcp_collections" in s for s in executed)
@@ -220,11 +225,11 @@ def test_add_mcp_collection_members_appends_after_the_last_position():
     db.add_mcp_collection_members(_TENANT, _COLL, [_EP])
 
     inserts = [
-        c[0] for c in cursor.execute.call_args_list
-        if "INSERT INTO apiome.mcp_collection_members" in c[0][0]
+        c[0] for i, c in enumerate(cursor.execute.call_args_list)
+        if "INSERT INTO apiome.mcp_collection_members" in _sql(cursor, i)
     ]
     assert len(inserts) == 1
-    assert inserts[0][1][-1] == 3  # max_pos 2 -> next position is 3
+    assert inserts[0][1][-1] == [3]  # max_pos 2 -> next position is 3
     conn.commit.assert_called_once()
 
 

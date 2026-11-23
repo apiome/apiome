@@ -28,6 +28,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, Mapping, Sequence, Tuple
 
+from .db_bulk import bulk_insert_arrays
+
 #: The temporary id map. ``ON COMMIT DROP`` cleans it up; a rollback discards it with the rest.
 MAP_TABLE = "_version_path_copy_map"
 
@@ -267,11 +269,16 @@ def _copy_canvases(cursor: Any) -> None:
         return
     cursor.execute(f"SELECT old_id::text AS old_id, new_id::text AS new_id FROM {MAP_TABLE}")
     id_map = {str(r["old_id"]).lower(): str(r["new_id"]) for r in cursor.fetchall()}
+    rows = []
     for row in canvases:
         canvas = remap_canvas_ids(str(row["canvas"]), id_map)
         # Validate before writing: a canvas is JSON, and the rewrite only swaps UUID strings.
         json.loads(canvas)
-        cursor.execute(
-            "INSERT INTO apiome.version_path_canvas (version_path_id, canvas) VALUES (%s, %s::jsonb)",
-            (row["new_path_id"], canvas),
-        )
+        rows.append((row["new_path_id"], canvas))
+    # One statement for every canvas (DBP-1.7, #7190).
+    bulk_insert_arrays(
+        cursor,
+        "apiome.version_path_canvas",
+        [("version_path_id", "uuid"), ("canvas", "jsonb")],
+        rows,
+    )
