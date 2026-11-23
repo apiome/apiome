@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.824.0] - 2026-11-22
+
+### Performance
+- **Revision graph queries: closure, divergence, lineage and baselines in SQL (DBP-1.14, #7197).** OpenAPI
+  1.648.0 (version only; no schema change). No migration. The queries live in the new
+  `app/revision_graph_sql.py`.
+  - **One statement each.** `get_prior_published_baseline_revision_id` and
+    `list_prior_revisions_for_transitive_check` walk the ancestor closure, filter, order and limit in one
+    recursive query (no ancestor list sent back as an `IN (…)` of N placeholders; the transitive check's
+    created-before fallback is in the same statement). `resolve_successor_revision_chain` reads the whole chain
+    (successor pointer, project, protected-ref flag) in one recursive query and applies the per-hop checks in
+    memory: 129 statements → 1 for 32 hops. `get_import_snapshot_lineage` is one recursive query with a depth
+    guard that reads `canonical_document` once, for the snapshot it stops at.
+  - **Index-driven recursion.** `fetch_revision_closure` and the three walks of `compute_branch_divergence` keep
+    ids as `uuid` inside the recursion and follow each parent link as its own primary-key probe
+    (`CROSS JOIN LATERAL (VALUES …)`), not a text join or an `OR` join filter.
+  - **`list_source_edits` returns one row per pointer** (`DISTINCT ON (pointer)`, the newest edit), newest first —
+    what the provenance endpoint reads; the response is unchanged.
+  - **Fixed:** `GET /v1/versions/{tenant}/{project}/{version}/provenance` returned 500 for a revision without its
+    own import snapshot (such as a draft created from an imported version): the parent hop filtered on a
+    `versions.tenant_id` column that does not exist. The walk is now tenant-scoped through the owning project.
+  - **Measured** on the DBP-1.1 scale database (200k versions, plus a 500-revision linear history and a
+    400-revision criss-cross history; median of 15 calls, Python included): branch divergence 10.8 → 3.1 ms,
+    previous published baseline 5.7 → 1.7 ms (2 → 1 statements), transitive-check candidates 5.3 → 1.7 ms,
+    successor chain (32 hops) 33.2 → 0.7 ms, snapshot lineage (50 levels) failed → 0.6 ms (99 statements → 1
+    against `main` with the tenant filter patched), source edits (5,000 edits of 40 pointers) 6.9 → 4.7 ms and
+    5,000 → 40 rows. Closure and merge base are unchanged (about 3 ms; the uuid fix was DBP-1.10).
+  - **Tests:** `tests/test_revision_graph_queries_db.py` checks every read against the previous implementation on
+    linear, diamond and criss-cross histories (`tests/revision_graph_fixtures.py`); `tests/query_budgets.json`
+    records one statement for each on a 500-revision linear and a criss-cross history. Plan check:
+    `rest.revision_closure` (its `known` entry removed), `rest.prior_published_baseline`,
+    `rest.transitive_check_candidates`, `rest.branch_divergence`.
+
+
 ## [1.823.0] - 2026-11-22
 
 ### Performance

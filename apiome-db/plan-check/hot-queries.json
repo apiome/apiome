@@ -142,17 +142,63 @@
     },
     {
       "name": "rest.revision_closure",
-      "source": "apiome-rest/src/app/database.py Database.fetch_revision_closure (merge preview, revision graph)",
-      "sql": "WITH RECURSIVE closure AS ( SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE v.id::text = ANY($1) AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL UNION SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id FROM apiome.versions v JOIN closure c ON v.id = c.parent_version_id OR v.id = c.merge_parent_version_id JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id = $3 AND v.deleted_at IS NULL AND p.deleted_at IS NULL ) SELECT id::text AS id, parent_version_id::text AS parent_version_id, merge_parent_version_id::text AS merge_parent_version_id, created_at, version_id FROM closure",
+      "source": "apiome-rest/src/app/revision_graph_sql.py REVISION_CLOSURE_SQL (Database.fetch_revision_closure: merge preview, revision graph, merge base)",
+      "sql": "WITH RECURSIVE closure AS ( SELECT v.id, v.project_id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id, v.published, v.published_at FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE v.id = ANY($1::uuid[]) AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL UNION SELECT v.id, v.project_id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id, v.published, v.published_at FROM closure c CROSS JOIN LATERAL (VALUES (c.parent_version_id), (c.merge_parent_version_id)) AS edge(parent_id) JOIN apiome.versions v ON v.id = edge.parent_id JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id = $3 AND v.deleted_at IS NULL AND p.deleted_at IS NULL ) SELECT id::text AS id, parent_version_id::text AS parent_version_id, merge_parent_version_id::text AS merge_parent_version_id, created_at, version_id FROM closure",
       "params": [
         "scale-ids:version:9-9",
         "scale:tenant:0",
         "scale:tenant:0"
-      ],
-      "known": {
-        "issue": "#7193",
-        "reason": "v.id::text = ANY(...) cannot use the versions primary key (DBP-1.10; graph walk in DBP-1.14, #7197)"
-      }
+      ]
+    },
+    {
+      "name": "rest.prior_published_baseline",
+      "source": "apiome-rest/src/app/revision_graph_sql.py PRIOR_PUBLISHED_BASELINE_SQL (Database.get_prior_published_baseline_revision_id: publish guardrail, change report, changelog; DBP-1.14 #7197)",
+      "sql": "WITH RECURSIVE closure AS ( SELECT v.id, v.project_id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id, v.published, v.published_at FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE v.id = ANY($1::uuid[]) AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL UNION SELECT v.id, v.project_id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id, v.published, v.published_at FROM closure c CROSS JOIN LATERAL (VALUES (c.parent_version_id), (c.merge_parent_version_id)) AS edge(parent_id) JOIN apiome.versions v ON v.id = edge.parent_id JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id = $3 AND v.deleted_at IS NULL AND p.deleted_at IS NULL ) SELECT c.id::text AS id FROM closure c WHERE c.id <> $4::uuid AND c.project_id = $5 AND c.published = true ORDER BY c.published_at DESC NULLS LAST, c.created_at DESC LIMIT 1",
+      "params": [
+        "scale-ids:version:9-9",
+        "scale:tenant:0",
+        "scale:tenant:0",
+        "scale:version:9",
+        "scale:project:0"
+      ]
+    },
+    {
+      "name": "rest.transitive_check_candidates",
+      "source": "apiome-rest/src/app/revision_graph_sql.py PRIOR_REVISIONS_FOR_TRANSITIVE_CHECK_SQL (Database.list_prior_revisions_for_transitive_check; DBP-1.14 #7197)",
+      "sql": "WITH RECURSIVE closure AS ( SELECT v.id, v.project_id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id, v.published, v.published_at FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE v.id = ANY($1::uuid[]) AND p.tenant_id = $2 AND v.deleted_at IS NULL AND p.deleted_at IS NULL UNION SELECT v.id, v.project_id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id, v.published, v.published_at FROM closure c CROSS JOIN LATERAL (VALUES (c.parent_version_id), (c.merge_parent_version_id)) AS edge(parent_id) JOIN apiome.versions v ON v.id = edge.parent_id JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id = $3 AND v.deleted_at IS NULL AND p.deleted_at IS NULL ) , published_ancestors AS ( SELECT c.id, c.version_id, row_number() OVER (ORDER BY c.published_at DESC NULLS LAST, c.created_at DESC) AS rn FROM closure c WHERE c.id <> $4::uuid AND c.project_id = $5 AND c.published = true ORDER BY rn LIMIT $6 ), created_before AS ( SELECT v.id, v.version_id, row_number() OVER (ORDER BY v.created_at DESC, v.id DESC) AS rn FROM apiome.versions v INNER JOIN apiome.projects p ON v.project_id = p.id AND p.deleted_at IS NULL INNER JOIN apiome.versions anchor ON anchor.id = $7::uuid WHERE NOT EXISTS (SELECT 1 FROM published_ancestors) AND v.project_id = $8 AND p.tenant_id = $9 AND v.deleted_at IS NULL AND v.id <> anchor.id AND (v.created_at, v.id) < (anchor.created_at, anchor.id) ORDER BY v.created_at DESC, v.id DESC LIMIT $10 ) SELECT id::text AS id, version_id FROM ( SELECT 0 AS part, rn, id, version_id FROM published_ancestors UNION ALL SELECT 1 AS part, rn, id, version_id FROM created_before ) picked ORDER BY part, rn",
+      "params": [
+        "scale-ids:version:9-9",
+        "scale:tenant:0",
+        "scale:tenant:0",
+        "scale:version:9",
+        "scale:project:0",
+        50,
+        "scale:version:9",
+        "scale:project:0",
+        "scale:tenant:0",
+        50
+      ]
+    },
+    {
+      "name": "rest.branch_divergence",
+      "source": "apiome-rest/src/app/revision_graph_sql.py BRANCH_DIVERGENCE_SQL (Database.compute_branch_divergence; DBP-1.14 #7197)",
+      "sql": "WITH RECURSIVE branch_ancestors AS ( SELECT v.id, v.parent_version_id, v.merge_parent_version_id FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE v.id = $1::uuid AND v.project_id = $2 AND p.tenant_id = $3 AND v.deleted_at IS NULL UNION SELECT v.id, v.parent_version_id, v.merge_parent_version_id FROM branch_ancestors a CROSS JOIN LATERAL (VALUES (a.parent_version_id), (a.merge_parent_version_id)) AS edge(parent_id) JOIN apiome.versions v ON v.id = edge.parent_id WHERE v.project_id = $4 AND v.deleted_at IS NULL ) , against_ancestors AS ( SELECT v.id, v.parent_version_id, v.merge_parent_version_id FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE v.id = $5::uuid AND v.project_id = $6 AND p.tenant_id = $7 AND v.deleted_at IS NULL UNION SELECT v.id, v.parent_version_id, v.merge_parent_version_id FROM against_ancestors a CROSS JOIN LATERAL (VALUES (a.parent_version_id), (a.merge_parent_version_id)) AS edge(parent_id) JOIN apiome.versions v ON v.id = edge.parent_id WHERE v.project_id = $8 AND v.deleted_at IS NULL ) , merge_base AS ( SELECT v.id, v.created_at FROM branch_ancestors ba JOIN against_ancestors aa ON aa.id = ba.id JOIN apiome.versions v ON v.id = ba.id WHERE v.project_id = $9 AND v.deleted_at IS NULL ORDER BY v.created_at DESC, v.id DESC LIMIT 1 ), merge_base_ancestors AS ( SELECT v.id, v.parent_version_id, v.merge_parent_version_id FROM apiome.versions v JOIN merge_base mb ON v.id = mb.id UNION SELECT v.id, v.parent_version_id, v.merge_parent_version_id FROM merge_base_ancestors a CROSS JOIN LATERAL (VALUES (a.parent_version_id), (a.merge_parent_version_id)) AS edge(parent_id) JOIN apiome.versions v ON v.id = edge.parent_id WHERE v.project_id = $10 AND v.deleted_at IS NULL ) , ahead_set AS ( SELECT ba.id FROM branch_ancestors ba WHERE NOT EXISTS (SELECT 1 FROM merge_base_ancestors m WHERE m.id = ba.id) ), behind_set AS ( SELECT aa.id FROM against_ancestors aa WHERE NOT EXISTS (SELECT 1 FROM merge_base_ancestors m WHERE m.id = aa.id) ), ahead_sample AS ( SELECT v.id, COALESCE(v.description, '') AS short_message, v.created_at FROM ahead_set a JOIN apiome.versions v ON v.id = a.id WHERE v.project_id = $11 AND v.deleted_at IS NULL ORDER BY v.created_at DESC, v.id DESC LIMIT $12 ), behind_sample AS ( SELECT v.id, COALESCE(v.description, '') AS short_message, v.created_at FROM behind_set b JOIN apiome.versions v ON v.id = b.id WHERE v.project_id = $13 AND v.deleted_at IS NULL ORDER BY v.created_at DESC, v.id DESC LIMIT $14 ) SELECT (SELECT mb.id::text FROM merge_base mb) AS merge_base_revision_id, (SELECT mb.created_at FROM merge_base mb) AS merge_base_created_at, (SELECT COUNT(*)::int FROM ahead_set) AS ahead_count, (SELECT COUNT(*)::int FROM behind_set) AS behind_count, COALESCE( ( SELECT json_agg( json_build_object('revisionId', s.id::text, 'shortMessage', s.short_message) ORDER BY s.created_at DESC, s.id DESC ) FROM ahead_sample s ), '[]'::json ) AS ahead_sample, COALESCE( ( SELECT json_agg( json_build_object('revisionId', s.id::text, 'shortMessage', s.short_message) ORDER BY s.created_at DESC, s.id DESC ) FROM behind_sample s ), '[]'::json ) AS behind_sample",
+      "params": [
+        "scale:version:9",
+        "scale:project:0",
+        "scale:tenant:0",
+        "scale:project:0",
+        "scale:version:5",
+        "scale:project:0",
+        "scale:tenant:0",
+        "scale:project:0",
+        "scale:project:0",
+        "scale:project:0",
+        "scale:project:0",
+        5,
+        "scale:project:0",
+        5
+      ]
     },
     {
       "name": "ui.dashboard_stats",
