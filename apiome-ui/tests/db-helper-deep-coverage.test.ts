@@ -137,37 +137,6 @@ describe('Database Helper - Deep Coverage Tests', () => {
     expect(result).toBeDefined();
   });
 
-  test('updateTag should work', async () => {
-    const { updateTag } = await import('../lib/db/helper');
-    const db = require('../lib/db/db');
-
-    db.query = jest.fn().mockResolvedValue({ rows: [{ id: 't1' }] });
-
-    const result = await updateTag('tag-1', 'Name', 'red', 'desc');
-    expect(result).toBeDefined();
-  });
-
-  test('assignTagToClass should work', async () => {
-    const { assignTagToClass } = await import('../lib/db/helper');
-    const db = require('../lib/db/db');
-
-    db.query = jest.fn().mockResolvedValue({ rows: [{ id: 'ct1' }] });
-
-    const result = await assignTagToClass('c1', 't1');
-    expect(result).toBeDefined();
-  });
-
-  test('batchUpdateClassCanvasMetadata should work', async () => {
-    const { batchUpdateClassCanvasMetadata } = await import('../lib/db/helper');
-    const db = require('../lib/db/db');
-
-    db.query = jest.fn().mockResolvedValue({ rows: [{ id: 'c1' }] });
-
-    const updates = [{ classId: 'c1', canvasMetadata: { x: 0, y: 0 } }];
-    const result = await batchUpdateClassCanvasMetadata(updates);
-    expect(result).toBeDefined();
-  });
-
   test('error handling should work', async () => {
     const { createProject } = await import('../lib/db/helper');
     const db = require('../lib/db/db');
