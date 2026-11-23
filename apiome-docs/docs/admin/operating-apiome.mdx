@@ -89,7 +89,8 @@ which is more than PostgreSQL's default of `100`. Raise `max_connections` or low
 `DB_POOL_MAX_IN_USE`.
 
 The web app keeps its own pool of up to `DB_POOL_MAX` connections (default `10`), and the public
-browse site keeps 10 more. Add those to the total.
+browse site keeps 10 more. Add those to the total. The web app's **Home** page uses at most three
+of its connections at once, so other people's pages keep loading while it does.
 
 #### Request threads
 
@@ -116,8 +117,8 @@ request thread pool: 40 worker threads (DB_POOL_MAX_IN_USE=80)
 #### Limits on a stuck session
 
 A statement waiting on a lock that never clears, or a transaction left open, would otherwise hold
-its connection for good and stall everything behind it. Both the REST API and the web app set
-limits on every connection they open, so a stuck session ends with an error instead:
+its connection for good and stall everything behind it. The REST API, the web app and the browse
+site set limits on every connection they open, so a stuck session ends with an error instead:
 
 | Setting | Service | Default | What it limits |
 | --- | --- | --- | --- |
@@ -126,6 +127,7 @@ limits on every connection they open, so a stuck session ends with an error inst
 | `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` | Web app | `60000` | The same, for the web app's connections. |
 | `DB_CONNECT_TIMEOUT_SECONDS` | REST API | `10` | How long to wait for a new connection to PostgreSQL. |
 | `DB_STATEMENT_TIMEOUT_MS` | REST API | `30000` | How long one statement may run on a request. A statement that runs longer fails, and the request answers `503` with error type `statement_timeout`. |
+| `DB_STATEMENT_TIMEOUT_MS` | Web app, browse site | `30000` | The same limit for the web app's and the browse site's statements. A statement that runs longer fails, and the page section or action that ran it shows an error. |
 | `DB_LONG_STATEMENT_TIMEOUT_MS` | REST API | `1800000` | How long one statement may run in an import, an export, a document migration or a background job. |
 | `DB_POOL_CONNECTION_TIMEOUT_MS` | Web app | `10000` | How long a request waits for a free connection when all of the pool's are in use. |
 
@@ -175,6 +177,24 @@ whose workspace is disabled, is refused on its next request, wherever that chang
 
 Lower `AUTH_CACHE_TTL_SECONDS` if role changes made in the web app must apply sooner. Each cached
 answer saves several statements on every request, so `0` costs the most.
+
+### What the web app reuses within a request and on Home
+
+The web app reads your session, your workspace membership, the workspace's slug and your
+permissions once per page load or action, and reuses them for every check in that request. A
+sign-in, sign-out or workspace switch during the request is read afresh. Nothing is kept between
+requests, so a change to a member or a role applies on the next page load.
+
+The counts in **Home**'s stat strip and the `/ade` launcher (projects, revisions, classes and
+properties across your workspaces) are cached for **60 seconds** per person in each web app
+process. A change can take up to a minute to show there. Every other Home panel is read on each
+load.
+
+Behind those counts, the table `apiome.version_content_counts` stores each revision's class and
+property counts, taken at the revision's content stamp. Only revisions changed since they were
+last counted are counted again. The table is a cache: you can empty it with
+`TRUNCATE apiome.version_content_counts;`, and the next Home load fills it again. That first load
+counts every revision, which takes about half a second for a workspace of 50,000 revisions.
 
 ### Domains, sign-in redirects and the session cookie
 
@@ -468,6 +488,12 @@ database of 200,000 versions with 200,000 to 1,000,000 rows in each table they i
 tables are `versions`, `workflow_audit`, `slate_insight_logs`, `document_objects`,
 `version_documents` and `tenant_repository_refresh_jobs`. Plan for the `slate_insight_logs` trigram
 index, which is the slowest to build.
+
+`V422` adds two stored columns to `versions` (`lint_error_count` and `sunset_at`, which Home and
+the sunset timeline filter on). Adding a stored column rewrites the table, and reads and writes of
+`versions` wait while it does. That took about a second for 200,000 versions on the scale
+database. Schedule the upgrade for a quiet time. Its two indexes are on the new columns, so they
+cannot be built ahead of the upgrade.
 
 A migration that adds a stored generated column cannot be prepared this way. `V409` adds
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of

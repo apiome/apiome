@@ -17,13 +17,14 @@
  * 3. **The caller must hold `projects:<action>`** in that tenant. The grant comes from apiome-rest's
  *    `GET /v1/access/{tenant}/permissions/me` — the same evaluation every REST route enforces
  *    (tenant administrators pass; otherwise the member's role grid) — so the role rules live in one
- *    place. If REST cannot answer, the write is refused (fail closed).
+ *    place. If REST cannot answer, the write is refused (fail closed). The slug and grant lookups are
+ *    the action guard's ({@link fetchTenantGrants}), so they run once per request.
  *
  * Deliberately **not** a `'use server'` module: these functions are not callable from the client.
  */
 
 import { getAuthSession } from '../auth/server-session';
-import { createRestAuthHeaders, REST_API_BASE_URL } from '../rest-auth';
+import { fetchTenantGrants, grantsAllow, tenantSlug as lookupTenantSlug } from '../auth/action-guard';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const connectionPool = require('./db');
@@ -60,35 +61,6 @@ export function projectForbidden(action: ProjectAction): string {
   return `You do not have permission to ${action} projects in this workspace (projects:${action}).`;
 }
 
-/** apiome-rest's answer to `GET /v1/access/{tenant}/permissions/me`. */
-interface MyPermissions {
-  is_admin?: boolean;
-  permissions?: string[];
-}
-
-/**
- * Read the caller's grants in the tenant from apiome-rest.
- *
- * @param user The session user, scoped to the tenant.
- * @param tenantSlug The tenant's slug.
- * @returns The grants, or `null` when REST could not answer.
- */
-async function fetchMyPermissions(
-  user: { user_id: string; email?: string | null; name?: string | null; current_tenant_id: string },
-  tenantSlug: string
-): Promise<MyPermissions | null> {
-  try {
-    const response = await fetch(
-      `${REST_API_BASE_URL}/access/${encodeURIComponent(tenantSlug)}/permissions/me`,
-      { headers: createRestAuthHeaders(user), cache: 'no-store' }
-    );
-    if (!response.ok) return null;
-    return (await response.json()) as MyPermissions;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Decide whether the signed-in caller may perform `action` on projects — on one project when
  * `projectId` is given, in their current tenant otherwise.
@@ -117,21 +89,16 @@ export async function authorizeProjectAction(
     }
   }
 
-  const tenant = await connectionPool.query(
-    'SELECT slug FROM apiome.tenants WHERE id = $1 AND deleted_at IS NULL',
-    [tenantId]
-  );
-  const tenantSlug = tenant.rows[0]?.slug;
+  // The slug and the grants are the action guard's, memoized for the request (DBP-1.15, #7198).
+  const tenantSlug = await lookupTenantSlug(String(tenantId));
   if (!tenantSlug) return { ok: false, error: PROJECT_UNAUTHORIZED };
 
-  const grants = await fetchMyPermissions(
-    { user_id: userId, email: user?.email, name: user?.name, current_tenant_id: tenantId },
+  const grants = await fetchTenantGrants(
+    { userId, email: user?.email, name: user?.name },
+    String(tenantId),
     tenantSlug
   );
-  const allowed =
-    grants !== null &&
-    (grants.is_admin === true || (grants.permissions ?? []).includes(`projects:${action}`));
-  if (!allowed) return { ok: false, error: projectForbidden(action) };
+  if (!grantsAllow(grants, `projects:${action}`)) return { ok: false, error: projectForbidden(action) };
 
   return { ok: true, userId, tenantId };
 }

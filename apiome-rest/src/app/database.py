@@ -10103,6 +10103,12 @@ class Database:
             project_id: Narrow to one project.
             limit: Read at most this many rows (#7196); ``None`` reads every match.
 
+        The sunset test reads ``versions.sunset_at`` (V422, DBP-1.15 #7198): a stored generated
+        column holding the first non-empty of ``sunsetAt``, ``sunsetDate`` and ``sunset_date`` — the
+        order :func:`app.revision_deprecation` reads them in — so the sunset branch no longer
+        detoasts ``metadata`` for every revision. It used to test only the two legacy spellings;
+        writes mirror ``sunsetAt`` into ``sunsetDate``, so the rows matched are the same.
+
         Returns:
             The revision rows by project name, then version label.
         """
@@ -10124,7 +10130,7 @@ class Database:
               AND (
                 COALESCE(v.metadata->>'deprecated', '') IN ('true', '1', 'True', 'yes')
                 OR (v.metadata @> '{{"deprecated": true}}'::jsonb)
-                OR NULLIF(trim(COALESCE(v.metadata->>'sunsetDate', v.metadata->>'sunset_date', '')), '') IS NOT NULL
+                OR v.sunset_at IS NOT NULL
               )
             ORDER BY p.name ASC, v.version_id ASC, v.id ASC
         """

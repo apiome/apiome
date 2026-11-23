@@ -201,16 +201,63 @@
       ]
     },
     {
-      "name": "ui.dashboard_stats",
-      "source": "apiome-ui/lib/db/helper.ts getDashboardStats (Home)",
-      "sql": "SELECT (SELECT COUNT(DISTINCT tenant_id) FROM apiome.tenant_users WHERE user_id = $1) as total_tenants, (SELECT COUNT(DISTINCT tenant_id) FROM apiome.tenant_administrators WHERE user_id = $1) as admin_tenants, (SELECT COUNT(DISTINCT p.id) FROM apiome.projects p WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND p.deleted_at IS NULL) as total_projects, (SELECT COUNT(*) FROM apiome.projects WHERE creator_id = $1 AND deleted_at IS NULL) as created_projects, (SELECT COUNT(DISTINCT v.id) FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND v.deleted_at IS NULL) as total_versions, (SELECT COUNT(*) FROM apiome.versions WHERE creator_id = $1 AND deleted_at IS NULL) as created_versions, (SELECT COUNT(DISTINCT v.id) FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND v.published = true AND v.deleted_at IS NULL) as published_versions, (SELECT COUNT(DISTINCT c.id) FROM apiome.classes c JOIN apiome.versions v ON c.version_id = v.id JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND c.deleted_at IS NULL AND v.deleted_at IS NULL) as total_classes, (SELECT COUNT(DISTINCT pr.id) FROM apiome.properties pr JOIN apiome.projects p ON pr.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND pr.deleted_at IS NULL) as total_properties, (SELECT COUNT(DISTINCT cp.id) FROM apiome.class_properties cp JOIN apiome.classes c ON cp.class_id = c.id JOIN apiome.versions v ON c.version_id = v.id JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND c.deleted_at IS NULL AND v.deleted_at IS NULL) as total_class_properties, (SELECT MAX(created_at) FROM (SELECT created_at FROM apiome.projects WHERE creator_id = $1 UNION ALL SELECT created_at FROM apiome.versions WHERE creator_id = $1 UNION ALL SELECT c.created_at FROM apiome.classes c JOIN apiome.versions v ON c.version_id = v.id WHERE v.creator_id = $1 AND c.deleted_at IS NULL) activities) as last_activity",
+      "name": "ui.dashboard_stats_refresh",
+      "source": "apiome-ui/lib/db/dashboard-stats-query.ts DASHBOARD_COUNTS_REFRESH_SQL (Home counters: recount stale revisions)",
+      "sql": "INSERT INTO apiome.version_content_counts AS r (version_id, content_stamp, class_count, class_property_count, max_class_created_at, counted_at) SELECT s.id, s.content_stamp, cc.class_count, cc.class_property_count, cc.max_class_created_at, now() FROM ( SELECT t.id, t.content_stamp FROM ( SELECT v.id, v.content_stamp FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) UNION SELECT v.id, v.content_stamp FROM apiome.versions v WHERE v.creator_id = $1 ) t LEFT JOIN apiome.version_content_counts k ON k.version_id = t.id WHERE k.version_id IS NULL OR k.content_stamp <> t.content_stamp ORDER BY t.id OFFSET 0 ) s CROSS JOIN LATERAL ( SELECT COUNT(*)::int AS class_count, COALESCE(SUM((SELECT COUNT(*) FROM apiome.class_properties cp WHERE cp.class_id = c.id)), 0)::int AS class_property_count, MAX(c.created_at) AS max_class_created_at FROM apiome.classes c WHERE c.version_id = s.id AND c.deleted_at IS NULL ) cc ON CONFLICT (version_id) DO UPDATE SET content_stamp = EXCLUDED.content_stamp, class_count = EXCLUDED.class_count, class_property_count = EXCLUDED.class_property_count, max_class_created_at = EXCLUDED.max_class_created_at, counted_at = EXCLUDED.counted_at",
       "params": [
         "scale:user:0"
       ],
       "known": {
         "issue": "#7198",
-        "reason": "eleven counting subqueries over the whole tenant on every Home render (DBP-1.15)"
+        "reason": "Home counters read through the per-revision count rollup (V423): ~280 ms refresh + ~150 ms read on the large tenant (was ~1,600 ms), both touching each of its 50,000 revisions once and hash-joining the rollup. Home serves them from a 60 s cache, so repeat loads run neither; a per-tenant rollup would remove the scan."
       }
+    },
+    {
+      "name": "ui.dashboard_stats",
+      "source": "apiome-ui/lib/db/dashboard-stats-query.ts DASHBOARD_STATS_SQL (Home counters)",
+      "sql": "SELECT (SELECT COUNT(*) FROM apiome.tenant_users WHERE user_id = $1) AS total_tenants, (SELECT COUNT(*) FROM apiome.tenant_administrators WHERE user_id = $1) AS admin_tenants, (SELECT COUNT(*) FROM apiome.projects p WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND p.deleted_at IS NULL) AS total_projects, (SELECT COUNT(*) FROM apiome.projects WHERE creator_id = $1 AND deleted_at IS NULL) AS created_projects, m.total_versions, (SELECT COUNT(*) FROM apiome.versions WHERE creator_id = $1 AND deleted_at IS NULL) AS created_versions, m.published_versions, m.total_classes, (SELECT COUNT(*) FROM apiome.properties pr JOIN apiome.projects p ON pr.project_id = p.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND pr.deleted_at IS NULL) AS total_properties, m.total_class_properties, GREATEST( (SELECT MAX(created_at) FROM apiome.projects WHERE creator_id = $1), (SELECT MAX(created_at) FROM apiome.versions WHERE creator_id = $1), (SELECT MAX(k.max_class_created_at) FROM apiome.versions v JOIN apiome.version_content_counts k ON k.version_id = v.id WHERE v.creator_id = $1) ) AS last_activity FROM ( SELECT COUNT(*) AS total_versions, COUNT(*) FILTER (WHERE v.published) AS published_versions, COALESCE(SUM(k.class_count), 0) AS total_classes, COALESCE(SUM(k.class_property_count), 0) AS total_class_properties FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id LEFT JOIN apiome.version_content_counts k ON k.version_id = v.id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND v.deleted_at IS NULL ) m",
+      "params": [
+        "scale:user:0"
+      ],
+      "known": {
+        "issue": "#7198",
+        "reason": "Home counters read through the per-revision count rollup (V423): ~280 ms refresh + ~150 ms read on the large tenant (was ~1,600 ms), both touching each of its 50,000 revisions once and hash-joining the rollup. Home serves them from a 60 s cache, so repeat loads run neither; a per-tenant rollup would remove the scan."
+      }
+    },
+    {
+      "name": "ui.home_continue_projects",
+      "source": "apiome-ui/lib/db/dashboard-home.ts loadContinueProjects (Home)",
+      "sql": "WITH latest AS ( SELECT p.id AS project_id, p.name AS project_name, p.tenant_id, lv.version_row_id, lv.version_id, lv.published, lv.published_at, lv.updated_at, lv.created_at, GREATEST( COALESCE(lv.published_at, lv.created_at), COALESCE(lv.updated_at, lv.created_at) ) AS touched_at FROM apiome.projects p CROSS JOIN LATERAL ( SELECT v.id AS version_row_id, v.version_id, v.published, v.published_at, v.updated_at, v.created_at FROM apiome.versions v WHERE v.project_id = p.id AND v.deleted_at IS NULL ORDER BY v.created_at DESC NULLS LAST, v.id DESC LIMIT 1 ) lv WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND p.deleted_at IS NULL ORDER BY touched_at DESC LIMIT $2 ) SELECT l.project_id, l.project_name, t.name AS tenant_name, l.version_id, l.published, l.published_at, l.updated_at, l.created_at, v.metadata, v.quality_score, v.quality_grade, (SELECT COUNT(*) FROM apiome.classes c WHERE c.version_id = l.version_row_id AND c.deleted_at IS NULL) AS class_count, (SELECT COUNT(*) FROM apiome.class_properties cp JOIN apiome.classes c2 ON c2.id = cp.class_id WHERE c2.version_id = l.version_row_id AND c2.deleted_at IS NULL) AS property_count FROM latest l JOIN apiome.versions v ON v.id = l.version_row_id JOIN apiome.tenants t ON t.id = l.tenant_id ORDER BY l.touched_at DESC",
+      "params": [
+        "scale:user:0",
+        3
+      ]
+    },
+    {
+      "name": "ui.home_sunset_rows",
+      "source": "apiome-ui/lib/db/dashboard-home.ts loadSunsetRows (Home; versions.sunset_at, V422)",
+      "sql": "SELECT v.id AS version_row_id, v.version_id, v.published, p.name AS project_name, v.sunset_at FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND p.deleted_at IS NULL AND v.deleted_at IS NULL AND v.sunset_at IS NOT NULL ORDER BY v.sunset_at ASC LIMIT $2",
+      "params": [
+        "scale:user:0",
+        20
+      ]
+    },
+    {
+      "name": "ui.home_lint_rows",
+      "source": "apiome-ui/lib/db/dashboard-home.ts loadLintRows (Home; versions.lint_error_count, V422)",
+      "sql": "SELECT v.id AS version_row_id, v.version_id, p.name AS project_name, v.lint_error_count AS error_count FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND p.deleted_at IS NULL AND v.deleted_at IS NULL AND v.published = false AND v.lint_error_count > 0 ORDER BY error_count DESC, v.created_at DESC LIMIT $2",
+      "params": [
+        "scale:user:0",
+        20
+      ]
+    },
+    {
+      "name": "ui.launcher_lint_attention_count",
+      "source": "apiome-ui/lib/db/lint-attention-query.ts LINT_ATTENTION_COUNT_SQL (/ade launcher chip)",
+      "sql": "SELECT count(*)::int AS attention_count FROM apiome.versions v JOIN apiome.projects p ON p.id = v.project_id WHERE p.tenant_id IN (SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1) AND p.deleted_at IS NULL AND v.deleted_at IS NULL AND v.published = false AND v.lint_error_count > 0",
+      "params": [
+        "scale:user:0"
+      ]
     },
     {
       "name": "ui.import_class_lookup",

@@ -12,6 +12,8 @@ import { AUTH_ERROR_CODES } from '../auth/account-resolution';
 import { upsertCredentialAccountPassword } from './credential-account';
 import { withTransaction } from './with-transaction';
 import { bulkInsert } from './import-bulk';
+import { loadDashboardStats } from './dashboard-stats-query';
+import { TtlCache } from './ttl-cache';
 import { PROJECT_COLUMNS, VERSION_COLUMNS, columnList } from './row-columns';
 import {
   InvalidCursorError,
@@ -170,25 +172,46 @@ const emptyStats = {
   total_properties: 0, total_class_properties: 0, last_activity: null
 };
 
+/**
+ * How long Home's counters are served from memory before they are read again (DBP-1.15, #7198).
+ * Documented on the Home page of the docs: a change can take up to this long to show in the counts.
+ */
+export const DASHBOARD_STATS_CACHE_MS = 60_000;
+
+/** Readers whose counters are kept at once; the oldest is dropped beyond it. */
+const DASHBOARD_STATS_CACHE_ENTRIES = 5_000;
+
+/** The counters last read per user, as the JSON string the action returns. */
+const dashboardStatsCache = new TtlCache<string>(DASHBOARD_STATS_CACHE_MS, DASHBOARD_STATS_CACHE_ENTRIES);
+
+/**
+ * Forget the cached counters — every reader's, or one reader's.
+ *
+ * @param userId The reader whose entry to drop; omitted drops every entry.
+ */
+export function clearDashboardStatsCache(userId?: string): void {
+  if (userId === undefined) dashboardStatsCache.clear();
+  else dashboardStatsCache.delete(userId);
+}
+
+/**
+ * Home's and the launcher's counters for a user, across every workspace they belong to.
+ *
+ * Read through the per-revision count rollup (`./dashboard-stats-query.ts`) and then served from
+ * memory for {@link DASHBOARD_STATS_CACHE_MS} (DBP-1.15, #7198): the counts do not depend on the
+ * selected workspace, so the entry is per user. A failed read is not cached.
+ *
+ * @param userId The user, already checked against the session by the action wrapper.
+ * @returns The counters as a JSON string; the zero counters when the read fails.
+ */
 export async function getDashboardStats(userId: string) {
+  const cached = dashboardStatsCache.get(userId);
+  if (cached !== undefined) return cached;
   try {
-    const userTenants = '(SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1)';
-    const result = await connectionPool.query(
-      `SELECT 
-        (SELECT COUNT(DISTINCT tenant_id) FROM apiome.tenant_users WHERE user_id = $1) as total_tenants,
-        (SELECT COUNT(DISTINCT tenant_id) FROM apiome.tenant_administrators WHERE user_id = $1) as admin_tenants,
-        (SELECT COUNT(DISTINCT p.id) FROM apiome.projects p WHERE p.tenant_id IN ${userTenants} AND p.deleted_at IS NULL) as total_projects,
-        (SELECT COUNT(*) FROM apiome.projects WHERE creator_id = $1 AND deleted_at IS NULL) as created_projects,
-        (SELECT COUNT(DISTINCT v.id) FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN ${userTenants} AND v.deleted_at IS NULL) as total_versions,
-        (SELECT COUNT(*) FROM apiome.versions WHERE creator_id = $1 AND deleted_at IS NULL) as created_versions,
-        (SELECT COUNT(DISTINCT v.id) FROM apiome.versions v JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN ${userTenants} AND v.published = true AND v.deleted_at IS NULL) as published_versions,
-        (SELECT COUNT(DISTINCT c.id) FROM apiome.classes c JOIN apiome.versions v ON c.version_id = v.id JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN ${userTenants} AND c.deleted_at IS NULL AND v.deleted_at IS NULL) as total_classes,
-        (SELECT COUNT(DISTINCT pr.id) FROM apiome.properties pr JOIN apiome.projects p ON pr.project_id = p.id WHERE p.tenant_id IN ${userTenants} AND pr.deleted_at IS NULL) as total_properties,
-        (SELECT COUNT(DISTINCT cp.id) FROM apiome.class_properties cp JOIN apiome.classes c ON cp.class_id = c.id JOIN apiome.versions v ON c.version_id = v.id JOIN apiome.projects p ON v.project_id = p.id WHERE p.tenant_id IN ${userTenants} AND c.deleted_at IS NULL AND v.deleted_at IS NULL) as total_class_properties,
-        (SELECT MAX(created_at) FROM (SELECT created_at FROM apiome.projects WHERE creator_id = $1 UNION ALL SELECT created_at FROM apiome.versions WHERE creator_id = $1 UNION ALL SELECT c.created_at FROM apiome.classes c JOIN apiome.versions v ON c.version_id = v.id WHERE v.creator_id = $1 AND c.deleted_at IS NULL) activities) as last_activity`,
-      [userId]
-    );
-    return JSON.stringify(result.rows[0]);
+    const row = await loadDashboardStats((sql, params) => connectionPool.query(sql, params), userId);
+    const payload = JSON.stringify(row ?? emptyStats);
+    dashboardStatsCache.set(userId, payload);
+    return payload;
   } catch (error: any) {
     console.error('Error fetching dashboard stats:', error);
     return JSON.stringify(emptyStats);

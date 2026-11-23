@@ -1,0 +1,35 @@
+---
+slug: ui-session-home-pool
+title: "UI: session memoization, Home dashboard queries and pool safety"
+description: "Faster Home on large workspaces, one session read per request, statement time limits."
+authors: [apiome]
+---
+
+**Home** loads faster on large workspaces. Each page load or action now reads your session and
+permissions once, and one Home load can no longer take over the web app's database connections.
+
+{/* truncate */}
+
+Measured on the scale benchmark database, in a workspace of 5,000 projects and 50,000 versions:
+
+- **Counts in the stat strip:** they used to take about 1.6 seconds of database time on every
+  load. Counting only the revisions changed since the last count brings that to about 0.4 seconds,
+  and a repeat load within a minute is served from memory. The counts can therefore be up to a
+  minute old. See [Home](/getting-started/launcher-and-home).
+- **Needs attention:** the lint and sunset panels, and the launcher's **need attention** chip, read
+  two new stored columns on each version instead of opening every version's lint report and
+  metadata: from about 15 ms to under 1 ms each.
+- **Pick up where you left off:** from 51 ms to 10 ms. It looks up only each project's newest
+  version, and reads its metadata only for the cards shown.
+- **One session read per request:** your session, workspace membership, workspace slug and
+  permissions are read once per page load or action, however many checks it runs. Before, each
+  session read looked up your workspace memberships twice, and an action could make several such
+  reads plus a call to the REST API.
+- **Pool safety:** Home uses at most three database connections at once. The web app and the
+  browse site now stop any statement that runs longer than `DB_STATEMENT_TIMEOUT_MS` (30 seconds
+  by default), as the REST API already did. See
+  [Limits on a stuck session](/admin/operating-apiome#limits-on-a-stuck-session).
+
+Upgrading adds two stored columns to `versions`, which rewrites that table once. It took about a
+second for 200,000 versions. See
+[Upgrade a large database without blocking writes](/admin/operating-apiome#upgrade-a-large-database-without-blocking-writes).

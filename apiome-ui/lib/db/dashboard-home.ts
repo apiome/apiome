@@ -56,6 +56,7 @@ import { getAuthSession } from '../auth/server-session';
 import { queryPinnedProjects } from './pinned-projects-query';
 // The one definition of "needs attention for lint", shared with the launcher's hero chip.
 import { LINT_ATTENTION_FROM_WHERE } from './lint-attention-query';
+import { createConcurrencyLimit } from './limit-concurrency';
 import {
   ATTENTION_LIMIT,
   CONTINUE_PROJECT_LIMIT,
@@ -101,6 +102,13 @@ const MEMBER_TENANTS = '(SELECT tenant_id FROM apiome.tenant_users WHERE user_id
  * workspace so the cost is fixed either way.
  */
 const ATTENTION_CANDIDATES = ATTENTION_LIMIT * 4;
+
+/**
+ * How many Home sections may run a query at once — and so how many pooled clients one Home render
+ * may hold (DBP-1.15, #7198). The UI pool has 10 by default; ten sections started together used to
+ * take all of them.
+ */
+const HOME_MAX_CONNECTIONS = 3;
 
 /* -------------------------------------------------------------------------
    Row coercion
@@ -184,10 +192,15 @@ async function section<T>(section: string, load: () => Promise<T>, fallback: T):
 /**
  * The projects the reader most recently touched, with their newest revision.
  *
- * `DISTINCT ON (v.project_id)` picks that newest revision inside the database, so the query
- * returns one row per card rather than every revision of every project for the server to
- * reduce. The two counts are correlated subqueries against that one revision, which is why
- * they stay cheap: they are bounded by the three rows the outer `LIMIT` keeps.
+ * Two steps, both inside the database (DBP-1.15, #7198):
+ *
+ * 1. `latest` walks the reader's live projects and, per project, takes its newest live revision
+ *    with a `LATERAL … LIMIT 1` — one probe of `idx_versions_project_created` each, reading only
+ *    the dates — then keeps the `limit` most recently touched.
+ * 2. Only for those few rows does it read the revision's `metadata`, scores and the two counts.
+ *
+ * It used to run `DISTINCT ON (project_id)` over every live revision of every project, `metadata`
+ * included, to keep three rows.
  *
  * @param userId The reader, from the session.
  * @param limit How many cards to fill.
@@ -196,41 +209,48 @@ async function section<T>(section: string, load: () => Promise<T>, fallback: T):
 async function loadContinueProjects(userId: string, limit: number): Promise<ContinueProject[]> {
   const result = await connectionPool.query(
     `WITH latest AS (
-       SELECT DISTINCT ON (v.project_id)
-         v.project_id, v.id AS version_row_id, v.version_id, v.published, v.published_at,
-         v.updated_at, v.created_at, v.metadata, v.quality_score, v.quality_grade
-       FROM apiome.versions v
-       JOIN apiome.projects p ON p.id = v.project_id
+       SELECT
+         p.id AS project_id, p.name AS project_name, p.tenant_id,
+         lv.version_row_id, lv.version_id, lv.published, lv.published_at, lv.updated_at, lv.created_at,
+         GREATEST(
+           COALESCE(lv.published_at, lv.created_at),
+           COALESCE(lv.updated_at, lv.created_at)
+         ) AS touched_at
+       FROM apiome.projects p
+       CROSS JOIN LATERAL (
+         SELECT v.id AS version_row_id, v.version_id, v.published, v.published_at, v.updated_at, v.created_at
+         FROM apiome.versions v
+         WHERE v.project_id = p.id
+           AND v.deleted_at IS NULL
+         ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+         LIMIT 1
+       ) lv
        WHERE p.tenant_id IN ${MEMBER_TENANTS}
          AND p.deleted_at IS NULL
-         AND v.deleted_at IS NULL
-       ORDER BY v.project_id, v.created_at DESC, v.id DESC
+       ORDER BY touched_at DESC
+       LIMIT $2
      )
      SELECT
-       p.id AS project_id,
-       p.name AS project_name,
+       l.project_id,
+       l.project_name,
        t.name AS tenant_name,
        l.version_id,
        l.published,
        l.published_at,
        l.updated_at,
        l.created_at,
-       l.metadata,
-       l.quality_score,
-       l.quality_grade,
+       v.metadata,
+       v.quality_score,
+       v.quality_grade,
        (SELECT COUNT(*) FROM apiome.classes c
          WHERE c.version_id = l.version_row_id AND c.deleted_at IS NULL) AS class_count,
        (SELECT COUNT(*) FROM apiome.class_properties cp
          JOIN apiome.classes c2 ON c2.id = cp.class_id
          WHERE c2.version_id = l.version_row_id AND c2.deleted_at IS NULL) AS property_count
      FROM latest l
-     JOIN apiome.projects p ON p.id = l.project_id
-     JOIN apiome.tenants t ON t.id = p.tenant_id
-     ORDER BY GREATEST(
-       COALESCE(l.published_at, l.created_at),
-       COALESCE(l.updated_at, l.created_at)
-     ) DESC
-     LIMIT $2`,
+     JOIN apiome.versions v ON v.id = l.version_row_id
+     JOIN apiome.tenants t ON t.id = l.tenant_id
+     ORDER BY l.touched_at DESC`,
     [userId, limit],
   );
 
@@ -401,8 +421,10 @@ async function loadRecentlyViewed(
 /**
  * Revisions with a sunset already reached or coming up.
  *
- * The `metadata->>` chain is the one `list_sunset_timeline_entries` uses in REST, so Home and
- * the sunset timeline read the same three key spellings. The window is applied in SQL as well
+ * The date is `versions.sunset_at` (V422, DBP-1.15 #7198): a stored generated column holding the
+ * first non-empty of `metadata.sunsetAt`, `sunsetDate` and `sunset_date`. REST's
+ * `list_sunset_timeline_entries` reads the same column, so Home and the sunset timeline agree, and
+ * the filter no longer detoasts `metadata` for every live revision. The window is applied in SQL as well
  * as in {@link sunsetAttention} — SQL to bound the rows fetched, the model to make the
  * threshold a tested number rather than an interval buried in a string.
  *
@@ -416,24 +438,14 @@ async function loadSunsetRows(userId: string): Promise<SunsetRow[]> {
        v.version_id,
        v.published,
        p.name AS project_name,
-       NULLIF(TRIM(COALESCE(
-         v.metadata->>'sunsetAt',
-         v.metadata->>'sunsetDate',
-         v.metadata->>'sunset_date',
-         ''
-       )), '') AS sunset_at
+       v.sunset_at
      FROM apiome.versions v
      JOIN apiome.projects p ON p.id = v.project_id
      WHERE p.tenant_id IN ${MEMBER_TENANTS}
        AND p.deleted_at IS NULL
        AND v.deleted_at IS NULL
-       AND NULLIF(TRIM(COALESCE(
-         v.metadata->>'sunsetAt',
-         v.metadata->>'sunsetDate',
-         v.metadata->>'sunset_date',
-         ''
-       )), '') IS NOT NULL
-     ORDER BY sunset_at ASC
+       AND v.sunset_at IS NOT NULL
+     ORDER BY v.sunset_at ASC
      LIMIT $2`,
     [userId, ATTENTION_CANDIDATES],
   );
@@ -474,7 +486,7 @@ async function loadLintRows(userId: string): Promise<LintRow[]> {
        v.id AS version_row_id,
        v.version_id,
        p.name AS project_name,
-       (v.quality_report->'severity_counts'->>'error')::int AS error_count
+       v.lint_error_count AS error_count
      ${LINT_ATTENTION_FROM_WHERE}
      ORDER BY error_count DESC, v.created_at DESC
      LIMIT $2`,
@@ -670,8 +682,9 @@ async function loadReviewRows(userId: string): Promise<ReviewAttentionRow[]> {
  * Everything Home shows beyond the stats, the activity list and the checklist.
  *
  * The reader is the signed-in session; a signed-out call resolves to the empty payload without
- * touching the database. The sections load concurrently and independently — one failing costs its
- * own panel and nothing else.
+ * touching the database. The sections load independently — one failing costs its own panel and
+ * nothing else — and concurrently, but at most {@link HOME_MAX_CONNECTIONS} at a time, so one Home
+ * render never holds more than that many of the pool's clients (DBP-1.15, #7198).
  *
  * @returns The assembled payload, or {@link emptyDashboardHome} when there is no session.
  */
@@ -681,6 +694,9 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
   const userId = user?.user_id;
   if (!userId) return emptyDashboardHome();
   const tenantId = user?.current_tenant_id;
+  // At most HOME_MAX_CONNECTIONS sections hold a pooled client at once (DBP-1.15, #7198).
+  const limit = createConcurrencyLimit(HOME_MAX_CONNECTIONS);
+  const run = <T>(name: string, load: () => Promise<T>, fallback: T) => section<T>(name, () => limit(load), fallback);
 
   const [
     workspaceName,
@@ -695,31 +711,31 @@ export async function getDashboardHomeForSession(): Promise<DashboardHome> {
     pulse,
   ] = await Promise.all([
       tenantId
-        ? section<string | null>('workspace name', () => loadWorkspaceName(userId, tenantId), null)
+        ? run<string | null>('workspace name', () => loadWorkspaceName(userId, tenantId), null)
         : Promise.resolve(null),
-      section<ContinueProject[]>(
+      run<ContinueProject[]>(
         'continue projects',
         () => loadContinueProjects(userId, CONTINUE_PROJECT_LIMIT),
         [],
       ),
       tenantId
-        ? section<PinnedProject[]>('pinned projects', () => loadPinnedProjects(userId, tenantId), [])
+        ? run<PinnedProject[]>('pinned projects', () => loadPinnedProjects(userId, tenantId), [])
         : Promise.resolve([]),
       tenantId
-        ? section<RecentlyViewedProject[]>(
+        ? run<RecentlyViewedProject[]>(
             'recently viewed',
             () => loadRecentlyViewed(userId, tenantId, RECENTLY_VIEWED_LIMIT),
             [],
           )
         : Promise.resolve([]),
       tenantId
-        ? section<TimeSpent>('time spent', () => loadTimeSpent(userId, tenantId), NO_TIME)
+        ? run<TimeSpent>('time spent', () => loadTimeSpent(userId, tenantId), NO_TIME)
         : Promise.resolve(NO_TIME),
-      section<SunsetRow[]>('sunset schedule', () => loadSunsetRows(userId), []),
-      section<LintRow[]>('lint gate', () => loadLintRows(userId), []),
-      section<KeyRow[]>('key expiry', () => loadKeyRows(userId), []),
-      section<ReviewAttentionRow[]>('reviews', () => loadReviewRows(userId), []),
-      section<PulseWeek[]>('publishing pulse', () => loadPulse(userId), []),
+      run<SunsetRow[]>('sunset schedule', () => loadSunsetRows(userId), []),
+      run<LintRow[]>('lint gate', () => loadLintRows(userId), []),
+      run<KeyRow[]>('key expiry', () => loadKeyRows(userId), []),
+      run<ReviewAttentionRow[]>('reviews', () => loadReviewRows(userId), []),
+      run<PulseWeek[]>('publishing pulse', () => loadPulse(userId), []),
     ]);
 
   const now = new Date();

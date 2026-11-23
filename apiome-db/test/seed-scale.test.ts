@@ -97,6 +97,7 @@ describe("buildScaleSteps", () => {
       "usage_daily",
       "workflow_audit",
       "access_audit",
+      "version_content_counts",
     ]);
   });
 
@@ -120,6 +121,9 @@ describe("buildScaleSteps", () => {
     expect(byName.class_properties?.rows).toBe(3_100_000);
     // usage_daily has no id column; it is checked by row count.
     expect(byName.usage_daily?.lastId).toBe("");
+    // Home's count rollup (DBP-1.15) is keyed by version id.
+    expect(byName.version_content_counts?.lastId).toBe("version:199999");
+    expect(byName.version_content_counts?.keyColumn).toBe("version_id");
   });
 
   it("puts the skewed rows where the ticket asks", () => {

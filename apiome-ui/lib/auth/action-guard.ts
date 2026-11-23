@@ -18,6 +18,10 @@
  *   evaluation every REST route enforces, and a check fails closed when REST cannot answer
  *   ({@link requireTenantPermission}).
  * - **The admin console needs the super-admin cookie** ({@link requireSuperAdmin}).
+ * - **Each lookup runs once per request** (DBP-1.15, #7198): the session, the membership and
+ *   administrator checks, the tenant slug and the REST grants are memoized for the request by
+ *   {@link requestMemo}, so an action that runs several checks — or a page that calls several guarded
+ *   actions' helpers — pays for each lookup once.
  *
  * Deliberately **not** a `'use server'` module: these functions are not callable from the client.
  */
@@ -28,6 +32,7 @@ import { verifyAdminSessionToken } from './admin-session';
 // Spelled `../auth/server-session` (not `./`) so the jest `auth/server-session` mock mapping applies.
 import { getAuthSession } from '../auth/server-session';
 import { createRestAuthHeaders, REST_API_BASE_URL } from '../rest-auth';
+import { requestMemo } from './request-memo';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const connectionPool = require('../db/db');
@@ -117,14 +122,61 @@ export async function requireTenantMember(tenantId: string | null | undefined): 
   const caller = await getActionCaller();
   if (!caller) return UNAUTHORIZED;
   if (!tenantId) return NOT_FOUND;
-  const result = await connectionPool.query(
-    `SELECT 1 FROM apiome.tenant_users WHERE tenant_id = $1 AND user_id = $2
-     UNION ALL
-     SELECT 1 FROM apiome.tenant_administrators WHERE tenant_id = $1 AND user_id = $2
-     LIMIT 1`,
-    [tenantId, caller.userId]
-  );
-  return result.rows.length > 0 ? null : NOT_FOUND;
+  return (await isTenantMember(tenantId, caller.userId)) ? null : NOT_FOUND;
+}
+
+/**
+ * Whether the user is a member or an administrator of the workspace — once per request.
+ *
+ * @param tenantId The workspace.
+ * @param userId The user.
+ * @returns `true` for a member or administrator.
+ */
+export function isTenantMember(tenantId: string, userId: string): Promise<boolean> {
+  return requestMemo('tenant-member', `${tenantId}:${userId}`, async () => {
+    const result = await connectionPool.query(
+      `SELECT 1 FROM apiome.tenant_users WHERE tenant_id = $1 AND user_id = $2
+       UNION ALL
+       SELECT 1 FROM apiome.tenant_administrators WHERE tenant_id = $1 AND user_id = $2
+       LIMIT 1`,
+      [tenantId, userId]
+    );
+    return result.rows.length > 0;
+  });
+}
+
+/**
+ * Whether the user is an administrator of the workspace — once per request.
+ *
+ * @param tenantId The workspace.
+ * @param userId The user.
+ * @returns `true` for a tenant administrator.
+ */
+function isTenantAdministrator(tenantId: string, userId: string): Promise<boolean> {
+  return requestMemo('tenant-admin', `${tenantId}:${userId}`, async () => {
+    const result = await connectionPool.query(
+      'SELECT 1 FROM apiome.tenant_administrators WHERE tenant_id = $1 AND user_id = $2 LIMIT 1',
+      [tenantId, userId]
+    );
+    return result.rows.length > 0;
+  });
+}
+
+/**
+ * The slug of a live workspace — once per request.
+ *
+ * @param tenantId The workspace.
+ * @returns The slug, or `null` for a missing or deleted workspace.
+ */
+export function tenantSlug(tenantId: string): Promise<string | null> {
+  return requestMemo('tenant-slug', tenantId, async () => {
+    const tenant = await connectionPool.query(
+      'SELECT slug FROM apiome.tenants WHERE id = $1 AND deleted_at IS NULL',
+      [tenantId]
+    );
+    const slug = tenant.rows[0]?.slug;
+    return slug ? String(slug) : null;
+  });
 }
 
 /**
@@ -139,11 +191,7 @@ export async function requireTenantAdmin(tenantId: string | null | undefined): P
   const membership = await requireTenantMember(tenantId);
   if (membership) return membership;
   const caller = (await getActionCaller()) as ActionCaller;
-  const result = await connectionPool.query(
-    'SELECT 1 FROM apiome.tenant_administrators WHERE tenant_id = $1 AND user_id = $2 LIMIT 1',
-    [tenantId, caller.userId]
-  );
-  return result.rows.length > 0 ? null : forbidden('tenant:admin');
+  return (await isTenantAdministrator(tenantId as string, caller.userId)) ? null : forbidden('tenant:admin');
 }
 
 /** apiome-rest's answer to `GET /v1/access/{tenant}/permissions/me`. */
@@ -155,19 +203,40 @@ export interface TenantGrants {
 /**
  * Read the caller's grants in a workspace from apiome-rest. REST checks membership itself.
  *
+ * Memoized for the request (DBP-1.15, #7198). A refusal or failure (`null`) is kept for the request
+ * too, so a request does not hammer an unavailable REST service; the next request asks again.
+ *
  * @param caller The signed-in caller.
  * @param tenantId The workspace.
- * @param tenantSlug The workspace's slug.
+ * @param slug The workspace's slug.
  * @returns The grants, or `null` when REST refused or could not answer.
  */
-export async function fetchTenantGrants(
+export function fetchTenantGrants(
   caller: Pick<ActionCaller, 'userId' | 'email' | 'name'>,
   tenantId: string,
-  tenantSlug: string
+  slug: string
+): Promise<TenantGrants | null> {
+  return requestMemo('tenant-grants', `${tenantId}:${slug}:${caller.userId}`, () =>
+    readTenantGrants(caller, tenantId, slug)
+  );
+}
+
+/**
+ * The un-memoized REST read behind {@link fetchTenantGrants}.
+ *
+ * @param caller The signed-in caller.
+ * @param tenantId The workspace.
+ * @param slug The workspace's slug.
+ * @returns The grants, or `null` when REST refused or could not answer.
+ */
+async function readTenantGrants(
+  caller: Pick<ActionCaller, 'userId' | 'email' | 'name'>,
+  tenantId: string,
+  slug: string
 ): Promise<TenantGrants | null> {
   try {
     const response = await fetch(
-      `${REST_API_BASE_URL}/access/${encodeURIComponent(tenantSlug)}/permissions/me`,
+      `${REST_API_BASE_URL}/access/${encodeURIComponent(slug)}/permissions/me`,
       {
         headers: createRestAuthHeaders({
           user_id: caller.userId,
@@ -211,11 +280,7 @@ export async function requireTenantPermission(
   const membership = await requireTenantMember(tenantId);
   if (membership) return membership;
   const caller = (await getActionCaller()) as ActionCaller;
-  const tenant = await connectionPool.query(
-    'SELECT slug FROM apiome.tenants WHERE id = $1 AND deleted_at IS NULL',
-    [tenantId]
-  );
-  const slug = tenant.rows[0]?.slug;
+  const slug = await tenantSlug(tenantId as string);
   if (!slug) return NOT_FOUND;
   const grants = await fetchTenantGrants(caller, tenantId as string, slug);
   return grantsAllow(grants, permission) ? null : forbidden(permission);

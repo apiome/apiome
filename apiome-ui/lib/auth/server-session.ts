@@ -19,6 +19,7 @@
  */
 
 import type { AppSession } from './better-auth-session-shape';
+import { requestMemo } from './request-memo';
 
 /**
  * The session shape returned to callers — the app contract. Every consumer reads
@@ -30,9 +31,24 @@ export type AuthSession = AppSession;
  * Returns the current server session in the app-contract shape, or `null` when called outside an
  * authenticated request context (e.g. in unit tests with no mock, or when there is no active session).
  *
+ * **Once per request (DBP-1.15, #7198).** The read is memoized for the request by
+ * {@link requestMemo}, so the ~180 call sites a render or server action passes through share one
+ * Better Auth lookup. The active tenant is not derived twice either: the `customSession` plugin
+ * (`auth.ts`) has already derived and validated it on `result.user`, so it is handed to
+ * `toAppSession` instead of running the membership query again.
+ *
  * @returns The current session, or `null` when unauthenticated.
  */
 export async function getAuthSession(): Promise<AuthSession | null> {
+  return requestMemo('auth-session', '', readAuthSession);
+}
+
+/**
+ * The un-memoized read behind {@link getAuthSession}.
+ *
+ * @returns The current session, or `null` when unauthenticated.
+ */
+async function readAuthSession(): Promise<AuthSession | null> {
   const { headers } = await import('next/headers');
   const { auth } = await import('./auth');
   const { toAppSession } = await import('./better-auth-session-shape');
@@ -40,6 +56,12 @@ export async function getAuthSession(): Promise<AuthSession | null> {
   const result = await auth.api.getSession({ headers: await headers() });
   if (!result?.user) {
     return null;
+  }
+  const user = result.user as typeof result.user & { user_id?: string; current_tenant_id?: string };
+  // `user_id` is only present when `customSession` ran `augmentBetterAuthUser`, which also derived
+  // the tenant (absent when the user has none). Without that marker, let `toAppSession` derive it.
+  if (typeof user.user_id === 'string') {
+    return toAppSession(result.user, result.session.expiresAt, { currentTenantId: user.current_tenant_id ?? null });
   }
   return toAppSession(result.user, result.session.expiresAt);
 }

@@ -8,9 +8,11 @@
  * - **unpublished** revisions only — a blocking finding matters because it is what the publish
  *   gate will reject, and a published revision is already past that gate;
  * - in a live project of a workspace the reader **belongs to** (`tenant_users`);
- * - whose **stored** lint report counts at least one `error` — nothing is linted here, and
- *   `jsonb_typeof(…) = 'number'` guards the cast so one malformed report cannot abort the
- *   statement for the whole workspace.
+ * - whose **stored** lint report counts at least one `error` — nothing is linted here. The count
+ *   is read from `versions.lint_error_count` (V422, DBP-1.15 #7198), a stored generated column
+ *   over `quality_report->'severity_counts'->>'error'` that is NULL for a malformed report, so the
+ *   filter is served by the partial index `idx_versions_lint_attention` instead of detoasting
+ *   every report.
  *
  * Not a `'use server'` module, like `./pinned-projects-query.ts` beside it: exporting a
  * function that takes a user id from a server-actions module would let any browser call it
@@ -32,8 +34,7 @@ export const LINT_ATTENTION_FROM_WHERE = `FROM apiome.versions v
        AND p.deleted_at IS NULL
        AND v.deleted_at IS NULL
        AND v.published = false
-       AND jsonb_typeof(v.quality_report->'severity_counts'->'error') = 'number'
-       AND (v.quality_report->'severity_counts'->>'error')::int > 0`;
+       AND v.lint_error_count > 0`;
 
 /** The count, for the launcher chip. Parameter `$1` is the reader's user id. */
 export const LINT_ATTENTION_COUNT_SQL = `SELECT count(*)::int AS attention_count

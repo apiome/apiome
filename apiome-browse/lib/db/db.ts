@@ -1,5 +1,17 @@
 import { Pool } from 'pg';
 
+/**
+ * The `statement_timeout` session option for the pool.
+ *
+ * @returns ` -c statement_timeout=<ms>` from `DB_STATEMENT_TIMEOUT_MS` (default 30000), or `''`
+ *   when it is `0`.
+ */
+export function statementTimeoutOption(): string {
+  const parsed = parseInt(process.env.DB_STATEMENT_TIMEOUT_MS || '', 10);
+  const ms = Number.isFinite(parsed) && parsed >= 0 ? parsed : 30000;
+  return ms > 0 ? ` -c statement_timeout=${ms}` : '';
+}
+
 const connectionPool = new Pool({
   connectionString: process.env.DATABASE_URL || '',
   user: process.env.POSTGRES_USER,
@@ -13,8 +25,10 @@ const connectionPool = new Pool({
   // default is to wait forever, which turns a busy or stuck pool into a hung site.
   connectionTimeoutMillis: 10000,
   keepAlive: true,
-  // Browse only reads: a statement blocked on a lock fails after 30 s instead of holding a client.
-  options: '-c lock_timeout=30000 -c idle_in_transaction_session_timeout=60000',
+  // Browse only reads: a statement blocked on a lock fails after 30 s, and one still running after
+  // `DB_STATEMENT_TIMEOUT_MS` (default 30 s, `0` turns it off) is cancelled, instead of holding a
+  // client (DBP-1.15, #7198).
+  options: `-c lock_timeout=30000 -c idle_in_transaction_session_timeout=60000${statementTimeoutOption()}`,
 });
 
 // An idle client whose connection drops emits `error` on the pool; unhandled, that event would
