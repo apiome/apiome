@@ -211,6 +211,14 @@
         "scale:project:0",
         "{\"type\": \"string\"}"
       ]
+    },
+    {
+      "name": "usage.ingest_admission",
+      "source": "apiome-rest/src/app/usage_ingest_store.py _admission (every usage ingest batch, under the tenant lock: cap, today's usage_tenant_day counter, newly finalized days; DBP-1.8 #7191)",
+      "sql": "SELECT (SELECT CASE WHEN jsonb_typeof(l.seats -> 'usage_events_per_day') = 'number' THEN (l.seats ->> 'usage_events_per_day')::numeric::bigint ELSE 100000 END FROM apiome.tenants t LEFT JOIN apiome.tenant_licenses tl ON tl.tenant_id = t.id LEFT JOIN apiome.licenses l ON l.id = tl.license_id WHERE t.id = $1::uuid LIMIT 1) AS cap, COALESCE((SELECT d.events_used FROM apiome.usage_tenant_day d WHERE d.tenant_id = $1::uuid AND d.day = date '2026-06-15'), 0) AS used, ARRAY(SELECT r.day FROM apiome.usage_rollup_days r WHERE r.day = ANY (ARRAY[date '2026-06-15']) AND r.finalized_at IS NOT NULL ORDER BY r.day) AS finalized",
+      "params": [
+        "scale:tenant:0"
+      ]
     }
   ]
 }

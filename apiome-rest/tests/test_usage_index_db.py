@@ -212,6 +212,13 @@ def _count(cursor: Any, table: str, tenant: str, where: str = "true", params: Tu
 #: Every column of every usage_* table, with its type. A new column must be reviewed against the
 #: privacy model (no header value, body, query value or address), so the list is pinned.
 EXPECTED_COLUMNS: Dict[str, Dict[str, str]] = {
+    # DBP-1.8 (V410): the events each tenant's ledger admitted per UTC day — one counter, no traffic.
+    "usage_tenant_day": {
+        "tenant_id": "uuid",
+        "day": "date",
+        "events_used": "bigint",
+        "updated_at": "timestamp with time zone",
+    },
     # RDG-5.4 (V384): a workspace's own, shorter, retention — two day counts and who set them.
     "usage_retention_setting": {
         "tenant_id": "uuid",

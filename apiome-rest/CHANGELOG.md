@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.818.0] - 2026-11-22
+
+### Performance
+- **Usage ingest: batched upserts and a shorter tenant lock (DBP-1.8, #7191).** OpenAPI 1.642.0 (version only; no
+  schema change). `POST /v1/tenants/{tenant}/usage/ingest` answers exactly as before; only how a batch is written
+  changes. Needs `apiome-db` V410.
+  - **One statement per table:** `usage_hourly`, `usage_unmatched_daily`, `usage_unattributed_client_daily`,
+    `usage_sample`, the binding and consumer stamps are each one `INSERT … SELECT FROM unnest(…) ON CONFLICT DO
+    UPDATE` (or `UPDATE … FROM unnest(…)`), and `usage_field_daily` is two (the denominator update for every group,
+    then the upsert for every pointer). Rows are sent sorted by key, so writers lock them in a stable order. A
+    5,000-grain batch runs 12 statements, the same as a 10-grain one (was about 5,000 plus one per field pointer).
+  - **Planning outside the lock:** `plan_batch` (parsing, sampling, scrubbing, template matching) now runs before
+    the per-tenant advisory lock is taken, from the finalized days and live consumer bindings read when the batch
+    arrives. Under the lock one statement reads the cap, today's count and whether any day the plan writes to was
+    finalized meanwhile; the live bindings are read again. If a day was finalized or the bindings changed, the
+    batch is planned again under the lock, so a binding deleted before the write phase still attributes nothing
+    (RDG-1.8) and a newly finalized day is a `day-finalized` rejection, never an error.
+  - **A day counter instead of a ledger sum:** V410 adds `apiome.usage_tenant_day (tenant_id, day, events_used)`.
+    The ledger insert, the counter upsert and the source's `last_received_at` stamp are one statement, so the
+    counter always equals the day's ledger; the cap check is a primary-key probe instead of
+    `sum(received - rejected)` over every batch of the day. The same statement prunes the tenant's rows older than
+    yesterday. V410 backfills today and yesterday from the ledger.
+  - **Measured** on the DBP-1.1 scale database (local PostgreSQL 18, one tenant, 1,001-event batches over 50
+    operations with field capture, 20,000 ledger rows already that day), `main` → this change: the tenant lock is
+    held 432 → 38 ms per batch (planning, 28 ms, no longer inside it); serial ingest 2,248 → 14,357 events/s;
+    four concurrent writers for the tenant 1,446 → 20,772 events/s (median batch 3.1 s → 0.18 s).
+  - **Partitioning `usage_hourly`, `usage_sample` and `usage_field_daily`: not now.** Measured on the same database
+    with 1.2 M hourly and 1.2 M field rows for one tenant: one `purge_usage` pass of 10,000 rows per table takes
+    85–140 ms, and 100,000 per table (one day of hourly rows) 1.46 s; dropping a 100,000-row table takes 11 ms.
+    Retention is per tenant (the license tier and the workspace's own retention setting), so a dropped day
+    partition could only remove days past the longest retention of any tenant; the per-tenant deletes stay either
+    way. The purge runs in the usage sweep, in bounded batches, off the request path, and ingest no longer waits on
+    anything it holds. Revisit when a day's hourly volume passes about 10 M rows (about a minute of deletes a day at
+    the measured rate).
+  - **Behaviour to know:** deleting a usage source no longer gives the day's quota back (its ledger rows still
+    cascade away; the day counter does not). During a rolling deploy, batches written by replicas still on the old
+    code are not counted against the day until those replicas are replaced.
+  - **Tests:** `tests/test_usage_ingest_batching_db.py` (the same statement count at 10 and 5,000 grains, upserts
+    into existing rows, the counter, replanning after a finalization or a binding deletion, and two concurrent
+    batches for one tenant: the second plans while the first holds the lock, and the totals equal serial
+    ingestion); `tests/test_usage_ingest_store.py` (the statements' shape, no database).
+
 ## [1.817.0] - 2026-11-22
 
 ### Performance
