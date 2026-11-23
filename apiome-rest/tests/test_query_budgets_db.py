@@ -503,3 +503,82 @@ def test_a_failed_statement_is_still_counted(ctx) -> None:
                 cur.execute("SELECT * FROM apiome.no_such_table")
     conn.rollback()
     assert stats.count == 1
+
+
+# ───── revision-graph reads: one statement on long and branching histories (DBP-1.14, #7197) ─────
+
+#: The graph reads that must stay one statement, whatever the history's length or shape.
+_GRAPH_FAMILIES = (
+    "Database.fetch_revision_closure",
+    "Database.compute_merge_base_revision_id",
+    "Database.get_prior_published_baseline_revision_id",
+    "Database.list_prior_revisions_for_transitive_check",
+    "Database.compute_branch_divergence",
+    "Database.resolve_successor_revision_chain",
+    "Database.get_import_snapshot_lineage",
+    "Database.list_source_edits",
+)
+
+
+def test_revision_graph_reads_are_one_statement_on_linear_and_branching_histories(ctx) -> None:
+    """A 500-revision linear history and a criss-cross history (#7197)."""
+    from tests.revision_graph_fixtures import GraphBuilder
+
+    db = database_module.db
+    tenant, project, conn = ctx["tenant"], ctx["project"], ctx["conn"]
+    g = GraphBuilder(ctx)
+    linear = g.linear("l", 500, published_every=10)
+    x = g.criss_cross()
+    with conn.cursor() as cur:
+        for here, there in zip(linear[400:432], linear[401:433]):
+            cur.execute(
+                "UPDATE apiome.versions SET metadata = jsonb_build_object('successorRevisionId', %s::text) "
+                "WHERE id = %s::uuid",
+                (there, here),
+            )
+        cur.execute(
+            "INSERT INTO apiome.version_import_snapshots "
+            "(tenant_id, version_id, source_format, source_digest, canonical_document) "
+            "VALUES (%s, %s, 'yaml', 'sha256:x', '{}'::jsonb), (%s, %s, 'yaml', 'sha256:y', '{}'::jsonb)",
+            (tenant, linear[0], tenant, x["a"]),
+        )
+        cur.execute(
+            "INSERT INTO apiome.version_source_edits (tenant_id, version_id, pointer, change_kind) "
+            "SELECT %s, (%s::uuid[])[1 + n %% 50], '/paths/~1p' || (n %% 40), 'modified' "
+            "FROM generate_series(1, 2000) n",
+            (tenant, linear[:50]),
+        )
+    conn.commit()
+    histories = {
+        "500-revision linear": (linear[-1], linear[250], linear[400], linear[49], linear[:50]),
+        "criss-cross": (x["l3"], x["r3"], x["l1"], x["r3"], [x["a"], x["r1"], x["r3"]]),
+    }
+    for shape, (tip, other, successor_start, lineage_start, chain) in histories.items():
+        calls = {
+            "Database.fetch_revision_closure": lambda: db.fetch_revision_closure([tip], tenant),
+            "Database.compute_merge_base_revision_id": lambda: db.compute_merge_base_revision_id(tip, other, tenant),
+            "Database.get_prior_published_baseline_revision_id": (
+                lambda: db.get_prior_published_baseline_revision_id(project, tenant, tip)
+            ),
+            "Database.list_prior_revisions_for_transitive_check": (
+                lambda: db.list_prior_revisions_for_transitive_check(project, tenant, tip)
+            ),
+            "Database.compute_branch_divergence": lambda: db.compute_branch_divergence(
+                project_id=project, tenant_id=tenant, branch_tip_revision_id=tip, against_tip_revision_id=other
+            ),
+            "Database.resolve_successor_revision_chain": (
+                lambda: db.resolve_successor_revision_chain(successor_start, tenant, project)
+            ),
+            "Database.get_import_snapshot_lineage": lambda: db.get_import_snapshot_lineage(lineage_start, tenant),
+            "Database.list_source_edits": lambda: db.list_source_edits(chain, tenant),
+        }
+        for family, call in calls.items():
+            _guarded_call(f"{family} ({shape})", call)
+    assert len(db.fetch_revision_closure([linear[-1]], tenant)) == 500
+    assert db.resolve_successor_revision_chain(linear[400], tenant, project)[1] == linear[401:433]
+    assert len(db.get_import_snapshot_lineage(linear[49], tenant)[1]) == 50
+
+    budgets = _load_budgets()
+    for family in _GRAPH_FAMILIES:
+        for shape in histories:
+            assert budgets[f"{family} ({shape})"] == 1, (family, shape)

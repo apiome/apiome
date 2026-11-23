@@ -19,19 +19,24 @@ _MIN_CM = {
 
 def test_get_prior_published_baseline_revision_id_orders_by_published_at():
     db = Database()
+    cc = "00000000-0000-4000-8000-0000000000cc"
     with patch.object(
-        Database,
-        "collect_revision_ancestors",
-        return_value={"aa", "bb", "cc"},
-    ), patch.object(
         Database,
         "execute_query",
         return_value=[{"id": "bb"}],
     ) as eq:
-        r = db.get_prior_published_baseline_revision_id("pid", "tid", "cc")
+        r = db.get_prior_published_baseline_revision_id("pid", "tid", cc)
         assert r == "bb"
+        assert eq.call_count == 1  # closure, filter, order and limit in one statement (#7197)
         q = eq.call_args[0][0]
-        assert "ORDER BY v.published_at DESC" in q
+        assert "WITH RECURSIVE" in q
+        assert "ORDER BY c.published_at DESC" in q
+
+
+def test_get_prior_published_baseline_revision_id_ignores_a_non_uuid():
+    with patch.object(Database, "execute_query") as eq:
+        assert Database().get_prior_published_baseline_revision_id("pid", "tid", "cc") is None
+    eq.assert_not_called()
 
 
 def test_generate_change_report_on_publish_skips_when_unpublished():

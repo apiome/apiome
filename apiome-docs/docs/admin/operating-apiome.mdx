@@ -429,6 +429,11 @@ text (`id::text = …`), because that hides the index and scans the table. Order
 (`tests/test_sargable_uuid_lint.py`) fails on a new `::text` cast of an id column; a lookup that must accept a slug
 or an id is the only reason to add an allowlist entry there.
 
+Walk version history with one recursive query, not a query for each step. Keep the ids as uuids
+inside the recursion, cast them to text only in the final `SELECT`, and follow the two parent links
+as two primary-key lookups (`CROSS JOIN LATERAL (VALUES (parent_version_id), (merge_parent_version_id))`)
+rather than one `OR` join. The shared queries are in `apiome-rest/src/app/revision_graph_sql.py`.
+
 Give every new foreign key an index led by its columns. Deleting the referenced row checks the
 referencing table by that column, and without such an index the check scans the whole table, once for
 each deleted row. An index that is partial on `deleted_at IS NULL` does not count, because the check
@@ -651,6 +656,46 @@ The usage tables aren't partitioned. Retention removes old rows in batches of 10
 the usage sweep, which takes 85 to 140 ms a pass on 1.2 million hourly rows. Each workspace keeps its
 data for its own retention period. Dropping a whole day's partition would only work for days past the
 longest retention of any workspace, so the per-workspace deletes would still be needed.
+
+#### Reading a version's history
+
+Merge previews, branch divergence, publish checks, change reports, changelogs, compatibility checks,
+successor redirects and source provenance all follow a version's parents back through its history.
+Each of these reads is now **one statement**, however long the history is:
+
+| Read | Used by | Statements before | Now |
+| --- | --- | --- | --- |
+| Ancestors and merge base | Merge preview, revision graph | 1 | 1 |
+| Branch divergence (ahead, behind, merge base) | `GET /v1/versions/{tenant}/{project}/version-branches/{branch}/divergence` | 1 | 1 |
+| Previous published version | Publish checks, change report, changelog | 2 | 1 |
+| Earlier versions for a transitive compatibility check | Compatibility policy | 2 | 1 |
+| Successor redirect | A version request that follows `successorRevisionId` | 2 to 4 for each hop | 1 |
+| The import a draft started from | `GET /v1/versions/{tenant}/{project}/{version}/provenance` | 2 for each ancestor | 1 |
+| Source edits since that import | The same provenance request | 1 | 1, one row for each edited location |
+
+Each step back to a parent reads one row by its primary key. Merges are followed too, and a version
+reached by two paths is read once. If damaged data ever made a version its own ancestor, the read
+still stops. Successor redirects stop after 32 hops, and the walk back to an import stops after 50
+versions, as before.
+
+Times on the scale database (200,000 versions, plus a 500-version history and a 400-version history
+with branches that merge each other):
+
+| Read | Before | Now |
+| --- | --- | --- |
+| Branch divergence | 10.8 ms | 3.1 ms |
+| Previous published version (500 versions) | 5.7 ms | 1.7 ms |
+| Earlier versions for a compatibility check (500 versions) | 5.3 ms | 1.7 ms |
+| Successor redirect (32 hops) | 33.2 ms, 129 statements | 0.7 ms |
+| The import a draft started from (50 versions) | failed | 0.6 ms |
+| Source edits (5,000 edits of 40 locations) | 6.9 ms, 5,000 rows | 4.7 ms, 40 rows |
+
+Ancestors and merge base were already fast after the uuid fix in
+[Keep queries able to use their indexes](#keep-queries-able-to-use-their-indexes) and are unchanged
+(about 3 ms for 500 versions). Before this change, the provenance request failed with a server error for a
+version that had no import of its own, such as a draft created from an imported version. It now walks
+back to that import. The plan check covers these reads as `rest.revision_closure`,
+`rest.prior_published_baseline`, `rest.transitive_check_candidates` and `rest.branch_divergence`.
 
 ### Turn on pg_stat_statements and auto_explain
 

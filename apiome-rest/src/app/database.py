@@ -124,10 +124,22 @@ from .revision_deprecation import (
     coerce_metadata,
     effective_sunset_string,
     is_uuid_string,
-    successor_revision_id_from_metadata,
 )
 from .revision_dag import RevisionNode
 from .revision_source import source_captured_sql, sourceless_format_metadata_sql
+from .revision_graph_sql import (
+    BRANCH_DIVERGENCE_SQL,
+    IMPORT_SNAPSHOT_LINEAGE_SQL,
+    PRIOR_PUBLISHED_BASELINE_SQL,
+    PRIOR_REVISIONS_FOR_TRANSITIVE_CHECK_SQL,
+    REVISION_CLOSURE_SQL,
+    SOURCE_EDITS_SQL,
+    SUCCESSOR_CHAIN_SQL,
+    import_snapshot_lineage_params,
+    lineage_from_rows,
+    replay_successor_chain,
+    successor_chain_params,
+)
 from .revision_dag import ancestors as revision_ancestors
 from .revision_dag import merge_base as revision_merge_base
 from .revision_lifecycle import prepare_version_metadata_update, sql_effective_lifecycle_expr
@@ -10406,40 +10418,25 @@ class Database:
         Returns ``(final_id, hop_targets, status, missing_successor_id)`` where ``hop_targets`` lists
         each successor revision id visited in order. ``missing_successor_id`` is set when ``status``
         is ``missing_target`` (pointer to a deleted or unknown revision).
+
+        One recursive statement reads the whole chain — each revision's successor pointer, project
+        and protected-ref flag — and :func:`app.revision_graph_sql.replay_successor_chain` applies
+        the per-hop checks in memory (DBP-1.14, #7197; before, each hop cost 2–4 lookups).
+
+        Args:
+            start_version_id: The revision to start from; a non-UUID is ``missing_target``.
+            tenant_id: The tenant every revision must belong to.
+            project_id: The project the chain must stay in.
+            max_hops: The most successor hops followed before ``max_hops_exceeded``.
         """
-        current = start_version_id
-        visited: Set[str] = {start_version_id}
-        hops: List[str] = []
-
-        for _ in range(max_hops + 1):
-            row = self.get_version_by_id(current, tenant_id)
-            if not row:
-                return current, hops, "missing_target", None
-            if str(row.get("project_id")) != project_id:
-                return current, hops, "project_mismatch", None
-
-            succ = successor_revision_id_from_metadata(row.get("metadata"))
-            if not succ:
-                st = "none" if not hops else "resolved"
-                return current, hops, st, None
-
-            if self.revision_has_protected_named_ref(current, project_id, tenant_id):
-                return current, hops, "blocked_protected_ref", None
-
-            if succ in visited:
-                return current, hops, "cycle", None
-
-            nxt = self.get_version_core(succ, tenant_id)
-            if not nxt:
-                return current, hops, "missing_target", succ
-            if str(nxt.get("project_id")) != project_id:
-                return current, hops, "project_mismatch", None
-
-            hops.append(succ)
-            visited.add(succ)
-            current = succ
-
-        return current, hops, "max_hops_exceeded", None
+        if not start_version_id or not is_uuid_string(str(start_version_id)):
+            return start_version_id, [], "missing_target", None
+        hops_allowed = int(max_hops)
+        rows = self.execute_query(
+            SUCCESSOR_CHAIN_SQL,
+            successor_chain_params(start_version_id, tenant_id, str(project_id), max(1, hops_allowed + 2)),
+        )
+        return replay_successor_chain(start_version_id, str(project_id), rows or [], hops_allowed)
 
     def get_latest_version_for_project(self, project_id: str, tenant_id: str) -> Optional[str]:
         """Get the latest version_id string for a project."""
@@ -15582,32 +15579,7 @@ class Database:
         ids = sorted({str(r) for r in revision_ids if r and is_uuid_string(str(r))})
         if not ids:
             return []
-        query = """
-            WITH RECURSIVE closure AS (
-                SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id
-                FROM apiome.versions v
-                JOIN apiome.projects p ON p.id = v.project_id
-                WHERE v.id = ANY(%s::uuid[])
-                  AND p.tenant_id = %s
-                  AND v.deleted_at IS NULL
-                  AND p.deleted_at IS NULL
-                UNION
-                SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id
-                FROM apiome.versions v
-                JOIN closure c ON v.id = c.parent_version_id OR v.id = c.merge_parent_version_id
-                JOIN apiome.projects p ON p.id = v.project_id
-                WHERE p.tenant_id = %s
-                  AND v.deleted_at IS NULL
-                  AND p.deleted_at IS NULL
-            )
-            SELECT id::text AS id,
-                   parent_version_id::text AS parent_version_id,
-                   merge_parent_version_id::text AS merge_parent_version_id,
-                   created_at,
-                   version_id
-            FROM closure
-        """
-        rows = self.execute_query(query, (ids, tenant_id, tenant_id)) or []
+        rows = self.execute_query(REVISION_CLOSURE_SQL, (ids, tenant_id, tenant_id)) or []
         return [
             RevisionNode(
                 revision_id=str(row["id"]),
@@ -15650,31 +15622,24 @@ class Database:
 
         Used as the default baseline for publication change reports (#2702). Revisions outside the
         ancestor closure of ``parent_version_id`` / ``merge_parent_version_id`` are not considered
-        (named-branch isolation is a possible follow-up).
+        (named-branch isolation is a possible follow-up). One statement: the closure walk, the
+        filter, the order and the limit all run in SQL (DBP-1.14, #7197).
+
+        Args:
+            project_id: The project the baseline must belong to.
+            tenant_id: The owning tenant.
+            published_revision_id: The revision being published (excluded); a non-UUID is ``None``.
+
+        Returns:
+            The baseline revision id, or ``None`` when no published ancestor exists.
         """
-        ancestors = self.collect_revision_ancestors(published_revision_id, tenant_id)
-        cand_ids = [str(a) for a in ancestors if str(a) != str(published_revision_id)]
-        if not cand_ids:
+        if not published_revision_id or not is_uuid_string(str(published_revision_id)):
             return None
-        placeholders = ",".join(["%s"] * len(cand_ids))
-        query = f"""
-            SELECT v.id
-            FROM apiome.versions v
-            INNER JOIN apiome.projects p ON v.project_id = p.id AND p.deleted_at IS NULL
-            WHERE v.project_id = %s
-              AND p.tenant_id = %s
-              AND v.deleted_at IS NULL
-              AND v.published = true
-              AND v.id IN ({placeholders})
-            ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
-            LIMIT 1
-        """
-        params = tuple([project_id, tenant_id, *cand_ids])
-        rows = self.execute_query(query, params)
-        if not rows:
-            return None
-        rid = rows[0].get("id")
-        return str(rid) if rid is not None else None
+        rid = str(published_revision_id)
+        rows = self.execute_query(
+            PRIOR_PUBLISHED_BASELINE_SQL, ([rid], tenant_id, tenant_id, rid, project_id)
+        )
+        return str(rows[0]["id"]) if rows and rows[0].get("id") is not None else None
 
     def get_revision_source_row(self, version_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         """A revision's source format and captured source, for rebuilding its canonical model.
@@ -15717,7 +15682,7 @@ class Database:
         ``merge_parent_version_id``, newest first by ``published_at`` then ``created_at``. A
         catalog item never publishes and its imports record no parent, so when that yields
         nothing the project's live revisions created before ``revision_id`` are used instead,
-        newest first.
+        newest first. Both lists and the choice between them are one statement (DBP-1.14, #7197).
 
         Args:
             project_id: The project both sides belong to.
@@ -15733,42 +15698,10 @@ class Database:
         if not revision_id or not is_uuid_string(str(revision_id)):
             return []
         bound = max(0, int(limit))
-        ancestors = self.collect_revision_ancestors(revision_id, tenant_id)
-        cand_ids = [str(a) for a in ancestors if str(a) != str(revision_id)]
-        if cand_ids:
-            placeholders = ",".join(["%s"] * len(cand_ids))
-            rows = self.execute_query(
-                f"""
-                SELECT v.id::text AS id, v.version_id
-                FROM apiome.versions v
-                INNER JOIN apiome.projects p ON v.project_id = p.id AND p.deleted_at IS NULL
-                WHERE v.project_id = %s
-                  AND p.tenant_id = %s
-                  AND v.deleted_at IS NULL
-                  AND v.published = true
-                  AND v.id IN ({placeholders})
-                ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
-                LIMIT %s
-                """,
-                tuple([project_id, tenant_id, *cand_ids, bound]),
-            )
-            if rows:
-                return [dict(r) for r in rows]
+        rid = str(revision_id)
         rows = self.execute_query(
-            """
-            SELECT v.id::text AS id, v.version_id
-            FROM apiome.versions v
-            INNER JOIN apiome.projects p ON v.project_id = p.id AND p.deleted_at IS NULL
-            INNER JOIN apiome.versions anchor ON anchor.id = %s
-            WHERE v.project_id = %s
-              AND p.tenant_id = %s
-              AND v.deleted_at IS NULL
-              AND v.id <> anchor.id
-              AND (v.created_at, v.id) < (anchor.created_at, anchor.id)
-            ORDER BY v.created_at DESC, v.id DESC
-            LIMIT %s
-            """,
-            (revision_id, project_id, tenant_id, bound),
+            PRIOR_REVISIONS_FOR_TRANSITIVE_CHECK_SQL,
+            ([rid], tenant_id, tenant_id, rid, project_id, bound, rid, project_id, tenant_id, bound),
         )
         return [dict(r) for r in rows or []]
 
@@ -16314,156 +16247,14 @@ class Database:
         """
         Compute git-like branch divergence from branch tips using recursive CTEs.
 
+        One statement (:data:`app.revision_graph_sql.BRANCH_DIVERGENCE_SQL`); each recursion step
+        is a primary-key probe per parent link with the ids kept as ``uuid`` (DBP-1.14, #7197).
+
         Returns merge base revision metadata, ahead/behind counts, and sampled revisions on each side.
         """
         limit = max(1, min(int(sample_limit), 25))
-        q = """
-            WITH RECURSIVE
-            branch_ancestors AS (
-                SELECT
-                    v.id::text AS revision_id,
-                    v.parent_version_id::text AS parent_revision_id,
-                    v.merge_parent_version_id::text AS merge_parent_revision_id
-                FROM apiome.versions v
-                JOIN apiome.projects p ON v.project_id = p.id
-                WHERE v.id = %s
-                  AND v.project_id = %s
-                  AND p.tenant_id = %s
-                  AND v.deleted_at IS NULL
-                UNION
-                SELECT
-                    v.id::text AS revision_id,
-                    v.parent_version_id::text AS parent_revision_id,
-                    v.merge_parent_version_id::text AS merge_parent_revision_id
-                FROM apiome.versions v
-                JOIN branch_ancestors a
-                  ON v.id = a.parent_revision_id::uuid
-                  OR v.id = a.merge_parent_revision_id::uuid
-                WHERE v.project_id = %s
-                  AND v.deleted_at IS NULL
-            ),
-            against_ancestors AS (
-                SELECT
-                    v.id::text AS revision_id,
-                    v.parent_version_id::text AS parent_revision_id,
-                    v.merge_parent_version_id::text AS merge_parent_revision_id
-                FROM apiome.versions v
-                JOIN apiome.projects p ON v.project_id = p.id
-                WHERE v.id = %s
-                  AND v.project_id = %s
-                  AND p.tenant_id = %s
-                  AND v.deleted_at IS NULL
-                UNION
-                SELECT
-                    v.id::text AS revision_id,
-                    v.parent_version_id::text AS parent_revision_id,
-                    v.merge_parent_version_id::text AS merge_parent_revision_id
-                FROM apiome.versions v
-                JOIN against_ancestors a
-                  ON v.id = a.parent_revision_id::uuid
-                  OR v.id = a.merge_parent_revision_id::uuid
-                WHERE v.project_id = %s
-                  AND v.deleted_at IS NULL
-            ),
-            merge_base AS (
-                SELECT v.id::text AS revision_id, v.created_at
-                FROM apiome.versions v
-                JOIN branch_ancestors ba ON v.id = ba.revision_id::uuid
-                JOIN against_ancestors aa ON v.id = aa.revision_id::uuid
-                WHERE v.project_id = %s
-                  AND v.deleted_at IS NULL
-                ORDER BY v.created_at DESC, v.id DESC
-                LIMIT 1
-            ),
-            merge_base_ancestors AS (
-                SELECT
-                    v.id::text AS revision_id,
-                    v.parent_version_id::text AS parent_revision_id,
-                    v.merge_parent_version_id::text AS merge_parent_revision_id
-                FROM apiome.versions v
-                JOIN merge_base mb ON v.id = mb.revision_id::uuid
-                UNION
-                SELECT
-                    v.id::text AS revision_id,
-                    v.parent_version_id::text AS parent_revision_id,
-                    v.merge_parent_version_id::text AS merge_parent_revision_id
-                FROM apiome.versions v
-                JOIN merge_base_ancestors mba
-                  ON v.id = mba.parent_revision_id::uuid
-                  OR v.id = mba.merge_parent_revision_id::uuid
-                WHERE v.project_id = %s
-                  AND v.deleted_at IS NULL
-            ),
-            ahead_set AS (
-                SELECT ba.revision_id
-                FROM branch_ancestors ba
-                LEFT JOIN merge_base_ancestors mba ON mba.revision_id = ba.revision_id
-                WHERE mba.revision_id IS NULL
-            ),
-            behind_set AS (
-                SELECT aa.revision_id
-                FROM against_ancestors aa
-                LEFT JOIN merge_base_ancestors mba ON mba.revision_id = aa.revision_id
-                WHERE mba.revision_id IS NULL
-            ),
-            ahead_sample AS (
-                SELECT
-                    v.id::text AS revision_id,
-                    COALESCE(v.description, '') AS short_message,
-                    v.created_at
-                FROM apiome.versions v
-                JOIN ahead_set a ON a.revision_id = v.id::text
-                WHERE v.project_id = %s
-                  AND v.deleted_at IS NULL
-                ORDER BY v.created_at DESC, v.id DESC
-                LIMIT %s
-            ),
-            behind_sample AS (
-                SELECT
-                    v.id::text AS revision_id,
-                    COALESCE(v.description, '') AS short_message,
-                    v.created_at
-                FROM apiome.versions v
-                JOIN behind_set b ON b.revision_id = v.id::text
-                WHERE v.project_id = %s
-                  AND v.deleted_at IS NULL
-                ORDER BY v.created_at DESC, v.id DESC
-                LIMIT %s
-            )
-            SELECT
-                (SELECT mb.revision_id FROM merge_base mb) AS merge_base_revision_id,
-                (SELECT mb.created_at FROM merge_base mb) AS merge_base_created_at,
-                (SELECT COUNT(*)::int FROM ahead_set) AS ahead_count,
-                (SELECT COUNT(*)::int FROM behind_set) AS behind_count,
-                COALESCE(
-                    (
-                        SELECT json_agg(
-                            json_build_object(
-                                'revisionId', a.revision_id,
-                                'shortMessage', a.short_message
-                            )
-                            ORDER BY a.created_at DESC, a.revision_id DESC
-                        )
-                        FROM ahead_sample a
-                    ),
-                    '[]'::json
-                ) AS ahead_sample,
-                COALESCE(
-                    (
-                        SELECT json_agg(
-                            json_build_object(
-                                'revisionId', b.revision_id,
-                                'shortMessage', b.short_message
-                            )
-                            ORDER BY b.created_at DESC, b.revision_id DESC
-                        )
-                        FROM behind_sample b
-                    ),
-                    '[]'::json
-                ) AS behind_sample
-        """
         rows = self.execute_query(
-            q,
+            BRANCH_DIVERGENCE_SQL,
             (
                 branch_tip_revision_id,
                 project_id,
@@ -34665,50 +34456,37 @@ class Database:
             source edits on any of them postdate the import.
             The row does not carry the imported text: read it for ``snapshot["version_id"]`` with
             :func:`app.revision_source.revision_source` (COA-5.4).
+
+        One recursive statement walks the chain (tenant-scoped through the owning project) and
+        reads ``canonical_document`` once, for the snapshot it stops at (DBP-1.14, #7197).
         """
-        chain: List[str] = []
-        current: Optional[str] = version_id
-        while current and current not in chain and len(chain) < max_depth:
-            chain.append(current)
-            rows = self.execute_query(
-                """
-                SELECT s.version_id, s.source_file, s.source_format, s.source_digest,
-                       s.canonical_document, s.created_at
-                FROM apiome.version_import_snapshots s
-                WHERE s.version_id = %s::uuid AND s.tenant_id = %s
-                """,
-                (current, tenant_id),
-            )
-            if rows:
-                return rows[0], chain
-            parent = self.execute_query(
-                "SELECT parent_version_id FROM apiome.versions WHERE id = %s::uuid AND tenant_id = %s",
-                (current, tenant_id),
-            )
-            current = str(parent[0]["parent_version_id"]) if parent and parent[0].get("parent_version_id") else None
-        return None, chain
+        if not version_id or max_depth < 1:
+            return None, []
+        if not is_uuid_string(str(version_id)):
+            return None, [version_id]
+        rows = self.execute_query(
+            IMPORT_SNAPSHOT_LINEAGE_SQL,
+            import_snapshot_lineage_params(str(version_id), tenant_id, int(max_depth)),
+        )
+        return lineage_from_rows(version_id, rows or [])
 
     def list_source_edits(self, version_ids: List[str], tenant_id: str) -> List[Dict[str, Any]]:
         """List the pointers source applies changed on the given revisions, newest first.
+
+        Only the newest edit of each pointer is returned (``DISTINCT ON (pointer)``, DBP-1.14,
+        #7197): callers read the set of edited pointers and each one's latest edit time, and a
+        long lineage can hold thousands of edits of the same few pointers.
 
         Args:
             version_ids: Revision ids (a lineage chain).
             tenant_id: The tenant.
 
         Returns:
-            Rows of ``pointer``, ``change_kind``, ``version_id`` and ``created_at``.
+            Rows of ``pointer``, ``change_kind``, ``version_id`` and ``created_at``, one per pointer.
         """
         if not version_ids:
             return []
-        return self.execute_query(
-            """
-            SELECT pointer, change_kind, version_id, created_at
-            FROM apiome.version_source_edits
-            WHERE tenant_id = %s AND version_id = ANY(%s::uuid[])
-            ORDER BY created_at DESC
-            """,
-            (tenant_id, version_ids),
-        )
+        return self.execute_query(SOURCE_EDITS_SQL, (tenant_id, list(version_ids)))
 
     def apply_source_change_set(
         self,

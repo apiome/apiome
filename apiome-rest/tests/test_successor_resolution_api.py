@@ -113,51 +113,50 @@ def test_get_version_redirect_307():
     assert "successorResolution=none" in loc
 
 
-def test_resolve_successor_chain_unit():
+#: uuid-shaped revision ids for the unit tests (the start must look like a revision id).
+_A = "00000000-0000-4000-8000-00000000000a"
+_B = "00000000-0000-4000-8000-00000000000b"
+
+
+def _chain_row(rid: str, successor=None, protected=False, project="proj-1"):
+    """A row of ``SUCCESSOR_CHAIN_SQL`` (DBP-1.14, #7197)."""
+    return {"id": rid, "project_id": project, "successor": successor, "protected": protected}
+
+
+def _resolve(rows, start=_A):
+    """Run ``resolve_successor_revision_chain`` on prefetched chain rows; return result and calls."""
     from app.database import Database
 
     db = Database()
-    with patch.object(db, "get_version_by_id") as gv, patch.object(db, "get_version_core") as gc, patch.object(
-        db, "revision_has_protected_named_ref", return_value=False
-    ):
-        a = _min_version("a", "1.0.0", {"successorRevisionId": "b"})
-        b = _min_version("b", "1.0.1", {})
-        gv.side_effect = lambda vid, tid: a if vid == "a" else b if vid == "b" else None
-        gc.side_effect = gv.side_effect  # successors are guarded through the core lookup (#7188)
-        final, hops, status, miss = db.resolve_successor_revision_chain("a", "test-tenant-id", "proj-1")
-    assert final == "b"
-    assert hops == ["b"]
+    with patch.object(db, "execute_query", return_value=rows) as eq:
+        out = db.resolve_successor_revision_chain(start, "test-tenant-id", "proj-1")
+    return out, eq
+
+
+def test_resolve_successor_chain_unit():
+    (final, hops, status, miss), eq = _resolve([_chain_row(_A, _B), _chain_row(_B)])
+    assert final == _B
+    assert hops == [_B]
     assert status == "resolved"
     assert miss is None
+    assert eq.call_count == 1  # the whole chain is one recursive statement
 
 
 def test_resolve_successor_chain_cycle():
-    from app.database import Database
-
-    db = Database()
-    with patch.object(db, "get_version_by_id") as gv, patch.object(db, "get_version_core") as gc, patch.object(
-        db, "revision_has_protected_named_ref", return_value=False
-    ):
-        a = _min_version("a", "1.0.0", {"successorRevisionId": "b"})
-        b = _min_version("b", "1.0.1", {"successorRevisionId": "a"})
-        gv.side_effect = lambda vid, tid: a if vid == "a" else b if vid == "b" else None
-        gc.side_effect = gv.side_effect  # successors are guarded through the core lookup (#7188)
-        final, hops, status, miss = db.resolve_successor_revision_chain("a", "test-tenant-id", "proj-1")
+    (_final, _hops, status, miss), _ = _resolve([_chain_row(_A, _B), _chain_row(_B, _A)])
     assert status == "cycle"
     assert miss is None
 
 
 def test_resolve_successor_blocked_when_protected_ref():
-    from app.database import Database
-
-    db = Database()
-    with patch.object(db, "get_version_by_id") as gv, patch.object(
-        db, "revision_has_protected_named_ref", return_value=True
-    ):
-        a = _min_version("a", "1.0.0", {"successorRevisionId": "b"})
-        gv.return_value = a
-        final, hops, status, miss = db.resolve_successor_revision_chain("a", "test-tenant-id", "proj-1")
-    assert final == "a"
+    (final, hops, status, miss), _ = _resolve([_chain_row(_A, _B, protected=True)])
+    assert final == _A
     assert hops == []
     assert status == "blocked_protected_ref"
     assert miss is None
+
+
+def test_resolve_successor_non_uuid_start_runs_no_query():
+    (final, hops, status, miss), eq = _resolve([], start="rev-a")
+    assert (final, hops, status, miss) == ("rev-a", [], "missing_target", None)
+    eq.assert_not_called()
