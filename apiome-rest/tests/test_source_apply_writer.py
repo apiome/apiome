@@ -120,9 +120,9 @@ def test_a_full_write_sends_the_same_statements_for_2_and_300_classes() -> None:
     small, large = _full_write(2), _full_write(300)
     assert [sql for sql, _ in small.statements] == [sql for sql, _ in large.statements]
     # One statement carries every class; one carries every class property.
-    (_sql, class_params), = large.writes_to("classes")[1:]
+    ((_sql, class_params),) = large.writes_to("classes")[1:]
     assert len(class_params[0]) == 300
-    (_sql, property_params), = large.writes_to("class_properties")
+    ((_sql, property_params),) = large.writes_to("class_properties")
     assert len(property_params[0]) == 900
 
 
@@ -130,19 +130,19 @@ def test_a_full_write_soft_deletes_first_and_assigns_ids_on_the_client() -> None
     cursor = _full_write(3)
     assert cursor.statements[0][0].startswith("UPDATE apiome.classes SET deleted_at")
     assert not any("RETURNING" in sql for sql, _ in cursor.statements)
-    (_sql, class_params), = cursor.writes_to("classes")[1:]
+    ((_sql, class_params),) = cursor.writes_to("classes")[1:]
     class_ids = class_params[0]
     assert len(set(class_ids)) == 3
-    (_sql, property_params), = cursor.writes_to("class_properties")
+    ((_sql, property_params),) = cursor.writes_to("class_properties")
     assert set(property_params[0]) == set(class_ids)
     # Response content refers to the classes by the ids just assigned.
-    (_sql, content_params), = cursor.writes_to("shared_path_response_content")
+    ((_sql, content_params),) = cursor.writes_to("shared_path_response_content")
     assert {value for value in content_params[2] if value} <= set(class_ids)
 
 
 def test_reference_properties_have_no_library_link_and_others_share_one() -> None:
     cursor = _full_write(3)
-    (_sql, params), = cursor.writes_to("class_properties")
+    ((_sql, params),) = cursor.writes_to("class_properties")
     _class_ids, property_ids, names, _descriptions, _data = params
     by_name: Dict[str, set] = {}
     for name, property_id in zip(names, property_ids):
@@ -151,7 +151,7 @@ def test_reference_properties_have_no_library_link_and_others_share_one() -> Non
     assert len(by_name["id"]) == 1 and None not in by_name["id"]
     # ``id`` and ``name`` have the same definition, so they are one library property.
     assert by_name["id"] == by_name["name"]
-    (_sql, library_params), = cursor.writes_to("properties")
+    ((_sql, library_params),) = cursor.writes_to("properties")
     assert len(library_params[0]) == 1
 
 
@@ -159,7 +159,7 @@ def test_a_library_match_inserts_no_property() -> None:
     cursor = FakeCursor(library={'{"type": "string"}': "33333333-3333-4333-8333-333333333333"})
     write_canonical_rows(cursor, PROJECT, VERSION, build_canonical_writes(class_spec(2)))
     assert cursor.writes_to("properties") == []
-    (_sql, params), = cursor.writes_to("class_properties")
+    ((_sql, params),) = cursor.writes_to("class_properties")
     assert {pid for pid in params[1] if pid} == {"33333333-3333-4333-8333-333333333333"}
 
 
@@ -189,7 +189,7 @@ def test_a_changed_class_is_updated_in_place_and_its_properties_replaced() -> No
     assert class_writes[0][1][0] == [live[class_name(2)]]
     deletes = [params for sql, params in cursor.writes_to("class_properties") if sql.startswith("DELETE")]
     assert deletes == [([live[class_name(2)]],)]
-    (_sql, inserted), = [w for w in cursor.writes_to("class_properties") if w[0].startswith("INSERT")]
+    ((_sql, inserted),) = [w for w in cursor.writes_to("class_properties") if w[0].startswith("INSERT")]
     assert set(inserted[0]) == {live[class_name(2)]} and len(inserted[0]) == 3
     assert not any(sql.startswith("INSERT INTO apiome.version_path") for sql, _ in cursor.statements)
 
@@ -203,7 +203,9 @@ def test_a_dropped_class_is_soft_deleted_and_a_new_one_inserted() -> None:
     cursor = FakeCursor(live_classes=live)
     write_canonical_rows(cursor, PROJECT, VERSION, build_canonical_writes(planned), plan_source_apply(spec, planned))
     soft_delete, insert = cursor.writes_to("classes")
-    assert soft_delete[0].startswith("UPDATE apiome.classes SET deleted_at") and soft_delete[1] == ([live[class_name(2)]],)
+    assert soft_delete[0].startswith("UPDATE apiome.classes SET deleted_at") and soft_delete[1] == (
+        [live[class_name(2)]],
+    )
     assert insert[0].startswith("INSERT INTO apiome.classes") and insert[1][2] == ["Fresh"]
 
 
@@ -214,9 +216,9 @@ def test_a_rewritten_path_refers_to_kept_classes_by_their_existing_ids() -> None
     planned["paths"]["/things0001/{id}"]["get"]["summary"] = "Changed"
     cursor = FakeCursor(live_classes=live)
     write_canonical_rows(cursor, PROJECT, VERSION, build_canonical_writes(planned), plan_source_apply(spec, planned))
-    (_sql, path_params), = [w for w in cursor.writes_to("version_path") if w[0].startswith("INSERT")]
+    ((_sql, path_params),) = [w for w in cursor.writes_to("version_path") if w[0].startswith("INSERT")]
     assert path_params[2] == ["/things0001/{id}"]
-    (_sql, content_params), = cursor.writes_to("shared_path_response_content")
+    ((_sql, content_params),) = cursor.writes_to("shared_path_response_content")
     assert {value for value in content_params[2] if value} == {live[class_name(1)]}
     assert cursor.writes_to("classes") == []
 

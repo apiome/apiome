@@ -97,7 +97,8 @@ def _snapshot(ctx: Dict[str, Any], version: str) -> Dict[str, Any]:
     paths = _rows(
         ctx,
         "SELECT vp.id::text, vp.pathname, "
-        "(SELECT array_agg(po.id::text ORDER BY po.id) FROM apiome.path_operation po WHERE po.version_path_id = vp.id) AS operations "
+        "(SELECT array_agg(po.id::text ORDER BY po.id) FROM apiome.path_operation po "
+        "WHERE po.version_path_id = vp.id) AS operations "
         "FROM apiome.version_path vp WHERE vp.version_id = %s::uuid",
         (version,),
     )
@@ -126,7 +127,9 @@ def test_a_one_line_source_edit_writes_only_the_affected_rows(ctx) -> None:
     before = _snapshot(ctx, version)
     assert len(before["classes"]) == EDIT_CLASSES
     assert len(before["properties"]) == EDIT_CLASSES * 3
-    library_before = _rows(ctx, "SELECT count(*) AS n FROM apiome.properties WHERE project_id = %s::uuid", (ctx["project"],))
+    library_before = _rows(
+        ctx, "SELECT count(*) AS n FROM apiome.properties WHERE project_id = %s::uuid", (ctx["project"],)
+    )
 
     target = EDIT_CLASSES // 2
     document, fingerprint = merged_document(ctx, db, version)
@@ -139,7 +142,11 @@ def test_a_one_line_source_edit_writes_only_the_affected_rows(ctx) -> None:
     assert len(after["properties"]) == EDIT_CLASSES * 3
     assert all(row["deleted_at"] is None for row in after["classes"].values())
     assert set(after["classes"]) == set(before["classes"]), "every class keeps its row"
-    touched = [row["name"] for cid, row in after["classes"].items() if row["updated_at"] != before["classes"][cid]["updated_at"]]
+    touched = [
+        row["name"]
+        for cid, row in after["classes"].items()
+        if row["updated_at"] != before["classes"][cid]["updated_at"]
+    ]
     assert touched == [class_name(target)]
     edited_row = next(row for row in after["classes"].values() if row["name"] == class_name(target))
     assert edited_row["description"] == "Edited in source."
@@ -147,10 +154,15 @@ def test_a_one_line_source_edit_writes_only_the_affected_rows(ctx) -> None:
     replaced = set(before["properties"]) - set(after["properties"])
     assert {before["properties"][pid] for pid in replaced} == {class_name(target)}
     assert len(replaced) == 3
-    assert {after["properties"][pid] for pid in set(after["properties"]) - set(before["properties"])} == {class_name(target)}
+    assert {after["properties"][pid] for pid in set(after["properties"]) - set(before["properties"])} == {
+        class_name(target)
+    }
     # Paths (and their operations) were not touched, although one refers to a class.
     assert after["paths"] == before["paths"]
-    assert _rows(ctx, "SELECT count(*) AS n FROM apiome.properties WHERE project_id = %s::uuid", (ctx["project"],)) == library_before
+    assert (
+        _rows(ctx, "SELECT count(*) AS n FROM apiome.properties WHERE project_id = %s::uuid", (ctx["project"],))
+        == library_before
+    )
 
 
 def test_additions_deletions_and_path_changes_apply_as_a_difference(ctx) -> None:
@@ -255,7 +267,9 @@ def test_class_properties_link_to_the_library_property_with_the_same_definition(
     db = ctx["db"]
     # Written with another key order than the candidate will use.
     existing = str(
-        db.create_property(ctx["project"], "code", None, {"maxLength": 8, "type": "string", "pattern": "^[A-Z]+$"})["id"]
+        db.create_property(ctx["project"], "code", None, {"maxLength": 8, "type": "string", "pattern": "^[A-Z]+$"})[
+            "id"
+        ]
     )
     spec = {
         "openapi": "3.1.0",
@@ -322,7 +336,8 @@ def _property_tree(ctx: Dict[str, Any], version: str) -> List[tuple]:
         (version,),
     )
     return sorted(
-        (row["class_name"], row["parent_name"] or "", row["name"], row["property_id"] or "", row["data"]) for row in rows
+        (row["class_name"], row["parent_name"] or "", row["name"], row["property_id"] or "", row["data"])
+        for row in rows
     )
 
 
@@ -423,4 +438,6 @@ def test_freezing_a_version_with_no_classes_writes_nothing(ctx) -> None:
     db = ctx["db"]
     version = new_revision(ctx, db, "empty")
     assert db.freeze_version_schema(version, ctx["tenant"], ctx["user"]) is not None
-    assert _rows(ctx, "SELECT count(*) AS n FROM apiome.class_schema WHERE version_id = %s::uuid", (version,))[0]["n"] == 0
+    assert (
+        _rows(ctx, "SELECT count(*) AS n FROM apiome.class_schema WHERE version_id = %s::uuid", (version,))[0]["n"] == 0
+    )

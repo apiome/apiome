@@ -34,9 +34,7 @@ class _FakeCursor:
 
 def _copy(class_count: int, levels: int) -> _FakeCursor:
     """Copy ``class_count`` classes whose properties nest ``levels`` deep."""
-    classes = [
-        {"source_id": f"src-class-{i}", "target_id": f"new-class-{i}"} for i in range(class_count)
-    ]
+    classes = [{"source_id": f"src-class-{i}", "target_id": f"new-class-{i}"} for i in range(class_count)]
     level_rows = [
         [
             {"old_id": f"old-{depth}-{i}", "new_id": f"new-{depth}-{i}", "target_class_id": f"new-class-{i}"}
@@ -51,9 +49,7 @@ def _copy(class_count: int, levels: int) -> _FakeCursor:
 
 def test_the_copy_binds_ids_only_never_property_data() -> None:
     cursor = _copy(class_count=1, levels=1)
-    property_inserts = [
-        params for query, params in cursor.executed if "INSERT INTO apiome.class_properties" in query
-    ]
+    property_inserts = [params for query, params in cursor.executed if "INSERT INTO apiome.class_properties" in query]
     assert property_inserts, "expected a class_properties INSERT during the copy"
     for params in property_inserts:
         for bound in params:

@@ -46,7 +46,11 @@ def class_spec(classes: int, paths: int = 3) -> Dict[str, Any]:
         ref = {"schema": {"$ref": f"#/components/schemas/{class_name(i % classes)}"}}
         responses = {
             "200": {"description": "OK", "headers": header, "content": {"application/json": ref}},
-            "404": {"description": "Missing", "headers": header, "content": {"application/json": {"schema": {"type": "object"}}}},
+            "404": {
+                "description": "Missing",
+                "headers": header,
+                "content": {"application/json": {"schema": {"type": "object"}}},
+            },
         }
         parameters = [{"name": "id", "in": "path", "required": True, "schema": {"type": "string"}}]
         path_items[f"/things{i:04d}/{{id}}"] = {
@@ -92,7 +96,9 @@ def merged_document(ctx: Dict[str, Any], db: Any, version: str) -> Tuple[Dict[st
     return merged, fingerprint
 
 
-def apply_candidate(ctx: Dict[str, Any], db: Any, version: str, base_digest: str, candidate: Dict[str, Any]) -> Dict[str, Any]:
+def apply_candidate(
+    ctx: Dict[str, Any], db: Any, version: str, base_digest: str, candidate: Dict[str, Any]
+) -> Dict[str, Any]:
     """Apply ``candidate`` to ``version`` the way the review endpoint's caller would."""
     candidate_digest = semantic_fingerprint(candidate).fingerprint
     return db.apply_source_change_set(

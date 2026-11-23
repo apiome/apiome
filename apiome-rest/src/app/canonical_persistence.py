@@ -23,7 +23,6 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional, Protocol, Sequence, Tuple
 
-from .db_bulk import bulk_insert_arrays, new_ids
 from .canonical_model import (
     AgentDescriptor,
     AgentProvider,
@@ -47,6 +46,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .db_bulk import bulk_insert_arrays, new_ids
 
 __all__ = [
     "dump_canonical_tree",

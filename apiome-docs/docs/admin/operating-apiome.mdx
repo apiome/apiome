@@ -398,6 +398,11 @@ the indexes yourself before you deploy:
 If a concurrent build fails it leaves an invalid index behind: drop it and run the statement again
 before you deploy.
 
+A migration that adds a stored generated column cannot be prepared this way. `V409` adds
+`properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of
+project properties while it runs: about a second for each million properties. Apply it in a quiet
+period on a large database.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's
@@ -472,6 +477,36 @@ access log stays flat as a spec grows. If it climbs with the number of paths or 
 for a loop that reads one row at a time. The new reads are in the plan check as
 `rest.operations_for_version`, `rest.operation_responses_for_version` and
 `rest.canonical_operations_for_version`.
+
+#### Writes that grow with a spec
+
+Importing a spec, applying a source change, forking a version, committing a merge and publishing
+each send a fixed number of statements too. Every table is written with one statement that carries
+all its rows:
+
+| Write | Statements |
+| --- | --- |
+| Import: the canonical model of a spec | 7 |
+| Source apply: every row of a version | 18 |
+| Source apply: a one-line edit, with the read of the current document | 24 |
+| Fork a version into another project | 7 |
+| Merge commit: copy the target's classes into the new revision | 3, plus one for each level of nested properties |
+| Publish: freeze one JSON Schema per class | 6 |
+
+A source apply writes only what the edit changes. A class or a path that the edit does not touch
+keeps its rows, so its canvas position, comments and links stay where they are. A changed class is
+updated in place. A changed path is deleted and created again. A class the edit removes is
+soft-deleted, as before.
+
+On a local PostgreSQL 18 with a 20,000-class version, a one-line source edit takes about 1.2 s and
+writes 1 class and its 3 properties. Before, it took about 6 s and rewrote all 20,000 classes and
+60,000 properties. A fork takes about 2.1 s, down from 12.3 s. A merge copy takes about 2.3 s, down
+from 5.8 s. Importing the canonical model takes about 2.8 s, down from 4.9 s. A database reached
+over a network saves more, because each statement that is no longer sent is a round trip saved.
+
+To link a class property to the project property with the same definition, a source apply looks the
+definition up by `properties.data_digest`. PostgreSQL keeps that column itself (migration `V409`),
+so no backfill is needed. The lookup is in the plan check as `rest.property_by_digest`.
 
 ### Turn on pg_stat_statements and auto_explain
 

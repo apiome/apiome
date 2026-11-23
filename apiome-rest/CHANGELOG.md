@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.817.0] - 2026-11-22
+
+### Performance
+- **Set-based writes: import persistence, source apply, fork and merge copy, publish (DBP-1.7, #7190).** OpenAPI
+  1.641.0 (version only; no schema change). No endpoint's request, response or permissions change. Writes that
+  grew with the size of a specification now send a fixed number of statements. Needs `apiome-db` V409.
+  - **Helper:** `app.db_bulk.bulk_insert_arrays` writes any number of rows with one `INSERT … SELECT FROM unnest(…)`
+    (each column is one array parameter); `new_ids` assigns row ids on the client, so children are written without
+    a `RETURNING id` round trip per parent.
+  - **Import persistence:** `canonical_persistence._insert_tree` writes the artifact and then one statement per
+    child table (services, operations, messages, channels, types, fields, agents, skills). 7 statements for an
+    OpenAPI import, whatever its size (was one per row: about 8,000 for 2,000 types of 3 fields).
+  - **Source apply writes only the difference:** new `app.source_apply_writer`. `apply_source_change_set` compares
+    what the revision's rows render to now with what the candidate's rows will render to, per class and per path. A
+    class or path that does not change keeps its rows and ids (and so its canvas position, comments and links); a
+    changed class is updated in place and its properties replaced; a changed path is deleted and recreated; security
+    schemes and servers are rewritten only when they differ. Before, every apply soft-deleted and reinserted every
+    class and recreated every path. Claims and the source-edit log are one insert each.
+  - **Project properties by digest:** a class property is linked to the project property with the same definition
+    through `properties.data_digest` (V409: a stored generated `md5(data::text)` and an index on
+    `(project_id, data_digest)`) instead of loading the project's whole property library into the process.
+  - **Fork and merge copy:** `create_forked_version`, `copy_classes_from_version`,
+    `copy_classes_from_version_for_merge` and `copy_single_class_between_versions_for_merge` copy classes with one
+    `INSERT … SELECT` that assigns the new ids, and properties with one statement per nesting level (an old-id →
+    new-id map carries each child to its copied parent).
+  - **Publish:** `publish_version` and `freeze_version_schema` upsert every class's frozen JSON Schema into
+    `class_schema` with one statement.
+  - **Smaller loops, one statement each:** verification evidence (cases, assertions, artifacts), MCP discovery
+    capability and change rows, repository file code owners, preservation claims, path canvases on a version copy,
+    SDK beacons, schema test suite payloads and results, style guide built-in and custom rules, tag moves on
+    unpublish, role permissions, catalog categories, merge session conflicts, branch refresh rules, webhook provider
+    IP ranges, MCP endpoint tags, MCP collection members, tenant MCP policy tools, expired async jobs, original
+    document parts, agent toolset tools and enrichments, released draft bindings, draft sync conflicts and the
+    component bulk upgrade (which now locks its versions in id order with one statement, before any write).
+  - **Budgets:** `tests/query_budgets.json` records the same count at 10 and at 2,000 classes: import persist 7,
+    source apply (every row) 18, source apply (one-line edit, reads included) 24, fork 7, merge copy 3, publish 6.
+  - **Measured** on a local PostgreSQL 18 (unix socket, so a networked database saves more per statement), 20,000
+    classes of 3 properties, before → after: import persist 4.9 → 2.8 s; source apply of every row 4.6 → 2.2 s; a
+    one-line source edit 6.0 → 1.2 s, writing 1 class and 3 class properties instead of 20,000 and 60,000 (the
+    revision holds 20,000 class rows afterwards, not 40,000); fork 12.3 → 2.1 s; merge copy 5.8 → 2.3 s; publish
+    1.6 → 1.7 s (2,000 statements fewer; the time is schema generation). At 2,000 classes: 0.47 → 0.28 s, 0.45 →
+    0.21 s, 0.57 → 0.11 s, 0.46 → 0.18 s, 0.67 → 0.20 s, 0.21 → 0.11 s.
+  - **Behaviour to know:** a source apply no longer gives unchanged classes new ids, and a changed class keeps its
+    id, canvas position and folder. A dropped class is still soft-deleted.
+
 ## [1.816.0] - 2026-11-22
 
 ### Performance

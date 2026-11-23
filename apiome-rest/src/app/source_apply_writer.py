@@ -211,7 +211,9 @@ def _write_classes(
     return class_ids
 
 
-def _resolve_library_properties(cursor: Any, project_id: str, wanted: Dict[str, Tuple[str, Optional[str], str]]) -> Dict[str, str]:
+def _resolve_library_properties(
+    cursor: Any, project_id: str, wanted: Dict[str, Tuple[str, Optional[str], str]]
+) -> Dict[str, str]:
     """Find or create the project property for each distinct property definition.
 
     Args:
@@ -252,7 +254,10 @@ def _resolve_library_properties(cursor: Any, project_id: str, wanted: Dict[str, 
         cursor,
         "apiome.properties",
         [("id", "uuid"), ("project_id", "uuid"), ("name", "text"), ("description", "text"), ("data", "jsonb")],
-        [(found[signature], project_id, wanted[signature][0], wanted[signature][1], wanted[signature][2]) for signature in missing],
+        [
+            (found[signature], project_id, wanted[signature][0], wanted[signature][1], wanted[signature][2])
+            for signature in missing
+        ],
     )
     return found
 
@@ -546,7 +551,15 @@ def _write_security_schemes(cursor: Any, version_id: str, writes: CanonicalWrite
             ("data", "jsonb"),
         ],
         [
-            (version_id, scheme.scheme_name, scheme.scheme_type, scheme.in_location, scheme.param_name, scheme.description, "{}")
+            (
+                version_id,
+                scheme.scheme_name,
+                scheme.scheme_type,
+                scheme.in_location,
+                scheme.param_name,
+                scheme.description,
+                "{}",
+            )
             for scheme in writes.security_schemes
         ],
     )
