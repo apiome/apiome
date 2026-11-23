@@ -99,6 +99,7 @@ describe("buildScaleSteps", () => {
       "access_audit",
       "version_content_counts",
       "version_publish_counts",
+      "mcp_version_facts",
     ]);
   });
 
@@ -129,6 +130,17 @@ describe("buildScaleSteps", () => {
     expect(counts?.doneSql).toContain("operation_count IS NULL OR schema_count IS NULL");
     expect(counts?.bypassTriggers).toBe(true);
     expect(counts?.sql).not.toMatch(/random\(|now\(\)|clock_timestamp/);
+  });
+
+  it("derives the MCP endpoint version facts with the migration's backfill function (DBP-1.17)", () => {
+    const facts = steps.find((s) => s.name === "mcp_version_facts");
+    expect(facts?.table).toBe("apiome.mcp_endpoint_versions");
+    // 2,000 endpoints with 5 snapshots each.
+    expect(facts?.rows).toBe(10_000);
+    expect(facts?.sql).toBe("SELECT apiome.backfill_mcp_version_facts(10000)");
+    expect(facts?.doneSql).toContain("FROM apiome.mcp_endpoint_versions WHERE tool_count IS NULL");
+    // The write-once guard must fire: it is what allows this update and nothing else.
+    expect(facts?.bypassTriggers).toBe(false);
   });
 
   it("names each step's last row so a complete step can be skipped", () => {

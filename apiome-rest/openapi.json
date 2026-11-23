@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.650.0",
+    "version": "1.651.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -124118,7 +124118,7 @@
           "mcp-catalog"
         ],
         "summary": "Get Mcp Endpoint Similar",
-        "description": "Return \"servers like this one\" from capability overlap + optional semantic embeddings (MCAT-18.4).\n\nRanks the caller's other live endpoints against this one by two independent signals. **overlap** \u2014\nalways present \u2014 is the capability-name Jaccard overlap: peers sharing this server's tool / resource /\nprompt names, ranked by set-overlap, with the shared names surfaced (a server with nothing in common\nis not returned). **semantic** is a cosine nearest-neighbour over a per-snapshot capability embedding\nand is populated only when ``embeddings_enabled`` \u2014 the feature flag is on *and* both this endpoint\nand at least one peer carry a backfilled embedding. When embeddings are disabled or unbackfilled,\n``semantic`` is empty and the endpoint page falls back to overlap-only (the \"gracefully no-ops if\nembeddings are disabled\" acceptance criterion). A never-discovered endpoint has no capabilities, so\nboth lists are empty (a ``200``, never a ``500``). Scoping comes from the token's tenant, so neighbours\nnever span another tenant's catalog; returns ``404`` when the endpoint is not the caller's tenant's. A\nGET stays read-only, recomputed live as the catalog grows.",
+        "description": "Return \"servers like this one\" from capability overlap + optional semantic embeddings (MCAT-18.4).\n\nRanks the caller's other live endpoints against this one by two independent signals. **overlap** \u2014\nalways present \u2014 is the capability-name Jaccard overlap: peers sharing this server's tool / resource /\nprompt names, ranked by set-overlap, with the shared names surfaced (a server with nothing in common\nis not returned). Both rankings are computed in the database (DBP-1.17). **semantic** is a cosine\nnearest-neighbour over a per-snapshot capability embedding\nand is populated only when ``embeddings_enabled`` \u2014 the feature flag is on *and* both this endpoint\nand at least one peer carry a backfilled embedding. When embeddings are disabled or unbackfilled,\n``semantic`` is empty and the endpoint page falls back to overlap-only (the \"gracefully no-ops if\nembeddings are disabled\" acceptance criterion). A never-discovered endpoint has no capabilities, so\nboth lists are empty (a ``200``, never a ``500``). Scoping comes from the token's tenant, so neighbours\nnever span another tenant's catalog; returns ``404`` when the endpoint is not the caller's tenant's. A\nGET stays read-only, recomputed live as the catalog grows.",
         "operationId": "get_mcp_endpoint_similar_v1_mcp__tenant_slug__endpoints__endpoint_id__insight_similar_get",
         "parameters": [
           {
@@ -124528,7 +124528,7 @@
           "mcp-catalog"
         ],
         "summary": "Get Mcp Catalog Insight",
-        "description": "Return a tenant-wide roll-up of the caller's live MCP catalog (feeds 18.1).\n\nAggregates every live endpoint the caller's tenant owns: total / published / discovered counts,\nthe per-kind capability ``type_counts`` summed across each endpoint's current surface, the\naverage quality score, and the A-F ``grade_distribution``. Like every catalog route, scoping\ncomes from the token's ``tenant_id`` \u2014 never the URL slug \u2014 so the aggregate only ever spans the\ncaller's own catalog (an empty catalog returns zeroes, not a ``404``).",
+        "description": "Return a tenant-wide roll-up of the caller's live MCP catalog (feeds 18.1).\n\nAggregates every live endpoint the caller's tenant owns: total / published / discovered counts,\nthe per-kind capability ``type_counts`` summed across each endpoint's current surface, the\naverage quality score, and the A-F ``grade_distribution``. Like every catalog route, scoping\ncomes from the token's ``tenant_id`` \u2014 never the URL slug \u2014 so the aggregate only ever spans the\ncaller's own catalog (an empty catalog returns zeroes, not a ``404``).\n\nThe roll-up is kept per tenant for ``MCP_CATALOG_INSIGHT_CACHE_TTL_SECONDS`` (default 30 s)\non each API instance, so a discovery, publish or delete shows here within that interval\n(DBP-1.17, #7200).",
         "operationId": "get_mcp_catalog_insight_v1_mcp__tenant_slug__insight_catalog_get",
         "parameters": [
           {

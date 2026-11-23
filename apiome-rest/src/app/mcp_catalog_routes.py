@@ -32,7 +32,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from psycopg2 import errors as pg_errors
 
-from . import mcp_federated_search
+from . import mcp_catalog_insight_cache, mcp_federated_search
 from .auth import (
     get_authenticated_user_id,
     validate_authentication,
@@ -115,8 +115,6 @@ from .mcp_insight_aggregation import (
     TOOL_LATENCY_WINDOW_DAYS,
     build_capability_embedding_text,
     build_tool_examples,
-    capability_name_set,
-    compute_capability_overlap,
     discovery_reliability_from_aggregate,
     compute_discovery_timeline,
     compute_endpoint_percentile_axes,
@@ -127,7 +125,8 @@ from .mcp_insight_aggregation import (
     group_cross_server_capability_hits,
     mcp_auth_posture,
     merge_cross_server_capability_hits,
-    rank_embedding_neighbors,
+    embedding_neighbors_from_rows,
+    overlap_neighbors_from_rows,
 )
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_license_signals import detect_license_signals
@@ -4456,7 +4455,8 @@ def get_mcp_endpoint_similar(
     Ranks the caller's other live endpoints against this one by two independent signals. **overlap** —
     always present — is the capability-name Jaccard overlap: peers sharing this server's tool / resource /
     prompt names, ranked by set-overlap, with the shared names surfaced (a server with nothing in common
-    is not returned). **semantic** is a cosine nearest-neighbour over a per-snapshot capability embedding
+    is not returned). Both rankings are computed in the database (DBP-1.17). **semantic** is a cosine
+    nearest-neighbour over a per-snapshot capability embedding
     and is populated only when ``embeddings_enabled`` — the feature flag is on *and* both this endpoint
     and at least one peer carry a backfilled embedding. When embeddings are disabled or unbackfilled,
     ``semantic`` is empty and the endpoint page falls back to overlap-only (the "gracefully no-ops if
@@ -4469,27 +4469,28 @@ def get_mcp_endpoint_similar(
     _require_tenant_endpoint(auth_data, endpoint_id)
     tenant_id = str(auth_data["tenant_id"])
 
-    candidates = db.get_mcp_similar_candidates(tenant_id)
     target_id = str(endpoint_id)
-    target = next((c for c in candidates if c["endpoint_id"] == target_id), None)
-    peers = [c for c in candidates if c["endpoint_id"] != target_id]
 
-    target_names = (target or {}).get("capability_names") or []
-    target_embedding = (target or {}).get("embedding")
-    target_capability_count = len(capability_name_set(target_names))
-
-    overlap = compute_capability_overlap(target_names, peers, limit=limit)
+    # Both signals are ranked in the database (DBP-1.17): the embedding statement runs only when
+    # the feature flag is on.
+    similar = db.get_mcp_similar_servers(
+        tenant_id,
+        target_id,
+        limit=limit,
+        with_embeddings=bool(settings.mcp_similarity_embeddings_enabled),
+    )
+    target_capability_count = int(similar.get("target_capability_count") or 0)
+    overlap = overlap_neighbors_from_rows(
+        target_capability_count, similar.get("overlap_rows") or [], limit=limit
+    )
 
     # The semantic signal is active only when the flag is on and there are vectors on both sides to
-    # compare — otherwise it is an explicit no-op (empty, embeddings_enabled=False), never an error.
-    peer_has_embedding = any(c.get("embedding") for c in peers)
-    embeddings_enabled = bool(
-        settings.mcp_similarity_embeddings_enabled and target_embedding and peer_has_embedding
-    )
+    # compare — the embedding statement returns rows only then. Otherwise it is an explicit no-op
+    # (empty, embeddings_enabled=False), never an error.
+    embedding_rows = similar.get("embedding_rows") or []
+    embeddings_enabled = bool(settings.mcp_similarity_embeddings_enabled and embedding_rows)
     semantic = (
-        rank_embedding_neighbors(target_embedding, peers, limit=limit)
-        if embeddings_enabled
-        else []
+        embedding_neighbors_from_rows(embedding_rows, limit=limit) if embeddings_enabled else []
     )
 
     return McpSimilarServersResponse(
@@ -4786,8 +4787,14 @@ def get_mcp_catalog_insight(
     average quality score, and the A-F ``grade_distribution``. Like every catalog route, scoping
     comes from the token's ``tenant_id`` — never the URL slug — so the aggregate only ever spans the
     caller's own catalog (an empty catalog returns zeroes, not a ``404``).
+
+    The roll-up is kept per tenant for ``MCP_CATALOG_INSIGHT_CACHE_TTL_SECONDS`` (default 30 s)
+    on each API instance, so a discovery, publish or delete shows here within that interval
+    (DBP-1.17, #7200).
     """
     _ = tenant_slug  # scoping comes from the token, not the URL slug
     tenant_id = str(auth_data["tenant_id"])
-    row = db.get_mcp_catalog_insight(tenant_id)
+    row = mcp_catalog_insight_cache.cached_insight(
+        tenant_id, lambda: db.get_mcp_catalog_insight(tenant_id)
+    )
     return mcp_catalog_insight_from_row(row)

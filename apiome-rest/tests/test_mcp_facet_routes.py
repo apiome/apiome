@@ -158,8 +158,12 @@ def test_safety_values_or_the_posture_expressions():
         safety=["has_destructive", "read_only_only"]
     )
     assert len(clauses) == 1
-    assert "destructiveHint" in clauses[0]
-    assert "readOnlyHint" in clauses[0]
+    # Each posture reads the fact stored on the current snapshot (V425, DBP-1.17) and falls back
+    # to the recomputation only for a snapshot whose facts are not derived yet.
+    assert "cv.has_destructive" in clauses[0]
+    assert "apiome.mcp_version_has_destructive(cv.id)" in clauses[0]
+    assert "cv.read_only_only" in clauses[0]
+    assert "apiome.mcp_version_read_only_only(cv.id)" in clauses[0]
     assert " OR " in clauses[0]
     assert params == []
 

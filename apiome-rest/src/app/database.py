@@ -34,6 +34,7 @@ from .db_cursor import rollback_quietly
 from .keyset_pagination import capped_count_sql, keyset_after, keyset_before
 from .project_list_paging import project_keyset_sql
 from .mcp_insight_aggregation import discovery_aggregate_sql, invocation_aggregate_sql
+from .mcp_version_facts import VERSION_FACT_COLUMNS, derive_version_facts
 from .mock_routing import HTTP_METHODS as MOCK_HTTP_METHODS
 from .db_timeouts import StatementTimeout  # noqa: F401 - re-exported for callers
 from .db_timeouts import apply_statement_timeout, typed_timeout
@@ -682,6 +683,69 @@ def _connection_options(database_url: str) -> Dict[str, Any]:
 
 #: Connections the pgvector adapter is registered on (``Database.vector_ready``, DBP-1.2).
 _VECTOR_READY: "weakref.WeakKeyDictionary[Any, bool]" = weakref.WeakKeyDictionary()
+
+
+
+def _mcp_version_fact_sql(
+    column: str, recompute: str, *, version: str = "cv", absent: Optional[str] = None
+) -> str:
+    """SQL for one derived fact of an MCP endpoint version: the stored column, or the recomputation.
+
+    ``mcp_endpoint_versions`` stores each snapshot's derived facts (V425, DBP-1.17); a snapshot
+    whose facts have not been derived yet has ``tool_count IS NULL``. The expression reads the
+    stored column for a derived snapshot and evaluates ``recompute`` — the expression the catalog
+    used before the columns existed — for a snapshot that is not derived yet. So a stored fact
+    costs nothing, and a missing one is slower, never wrong.
+
+    Args:
+        column: The fact column (one of :data:`app.mcp_version_facts.VERSION_FACT_COLUMNS`).
+        recompute: The SQL expression that computes the fact from the snapshot's child rows.
+        version: The alias of the ``mcp_endpoint_versions`` row in the surrounding query.
+        absent: For a query that LEFT JOINs the snapshot (an endpoint may have none): the SQL
+            value of the fact when there is no snapshot row — what ``recompute`` would return for
+            it. Stating it keeps ``recompute`` from running for never-discovered endpoints, which
+            matters because PostgreSQL may hash an ``EXISTS`` sub-select over the whole item
+            table the first time it is evaluated. Leave ``None`` when the snapshot row always
+            exists.
+
+    Returns:
+        A parenthesized ``CASE`` expression.
+    """
+    no_snapshot = f"WHEN {version}.id IS NULL THEN {absent} " if absent is not None else ""
+    return (
+        f"(CASE WHEN {version}.tool_count IS NOT NULL THEN {version}.{column} "
+        f"{no_snapshot}ELSE {recompute} END)"
+    )
+
+
+#: Capability kind → the ``mcp_endpoint_versions`` column that stores its count (V425).
+_MCP_KIND_COUNT_COLUMNS = {
+    "tool": "tool_count",
+    "resource": "resource_count",
+    "resource_template": "resource_template_count",
+    "prompt": "prompt_count",
+}
+
+
+def _mcp_kind_count_sql(kind: str, *, version: str = "cv", absent: Optional[str] = None) -> str:
+    """SQL for the number of capability items of one kind in an MCP endpoint version.
+
+    The snapshot's stored count (V425), or ``apiome.mcp_version_kind_count`` for a snapshot whose
+    facts are not derived yet. Cast to ``bigint``, the type ``COUNT(*)`` gave these columns before
+    they were stored, so sums and comparisons keep their types.
+
+    Args:
+        kind: ``tool``, ``resource``, ``resource_template`` or ``prompt``.
+        version: The alias of the ``mcp_endpoint_versions`` row.
+        absent: The value when the snapshot row is missing (see :func:`_mcp_version_fact_sql`).
+
+    Returns:
+        A ``bigint`` SQL expression.
+    """
+    recompute = f"apiome.mcp_version_kind_count({version}.id, '{kind}')"
+    return _mcp_version_fact_sql(
+        _MCP_KIND_COUNT_COLUMNS[kind], recompute, version=version, absent=absent
+    ) + "::bigint"
 
 
 class Database:
@@ -23990,8 +24054,11 @@ class Database:
 
         Each row is a catalog endpoint joined to its *current* version snapshot's quality
         ``score`` / ``grade`` (from ``mcp_version_scores``, NULL until the snapshot is scored)
-        and its per-kind capability tallies (tools, resources, resource templates, prompts)
-        from ``mcp_capability_items`` — exactly what a browse card renders next to the host.
+        and its per-kind capability tallies (tools, resources, resource templates, prompts) —
+        exactly what a browse card renders next to the host. The tallies, the safety flags and
+        the complexity band are read from the facts stored on the snapshot (V425, DBP-1.17), so
+        the statement joins no capability item and groups nothing; a snapshot whose facts are
+        not derived yet is computed from its items in the same statement.
         An endpoint with no current version (never successfully discovered) still appears,
         with zero counts and a NULL score, so the catalog is shown in full. Ordered by name so
         the per-host grouping the route performs lists endpoints predictably.
@@ -24039,21 +24106,18 @@ class Database:
                    {self._MCP_COMPLEXITY_BAND_EXPR} AS complexity_band,
                    {self._MCP_VERSION_COUNT_EXPR} AS version_count,
                    {self._MCP_ENDPOINT_TAGS_EXPR} AS tags,
-                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'tool')              AS tool_count,
-                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource')          AS resource_count,
-                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource_template') AS resource_template_count,
-                   COUNT(ci.id) FILTER (WHERE ci.item_type = 'prompt')            AS prompt_count,
+                   {self._MCP_KIND_COUNT_EXPRS["tool"]}              AS tool_count,
+                   {self._MCP_KIND_COUNT_EXPRS["resource"]}          AS resource_count,
+                   {self._MCP_KIND_COUNT_EXPRS["resource_template"]} AS resource_template_count,
+                   {self._MCP_KIND_COUNT_EXPRS["prompt"]}            AS prompt_count,
                    own.entity_owner
             FROM apiome.mcp_endpoints e
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
             LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id
-            LEFT JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
             CROSS JOIN LATERAL (SELECT {self._MCP_MAX_TOOL_PROPS_EXPR} AS max_tool_props) mtp
             {owner_envelope_join(("mcp_endpoint",), "e.id", "e.tenant_id")}
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL {team_clause}{facet_clause}
             {after_sql}
-            GROUP BY e.id, s.score, s.grade, s.scored_at, cv.server_branding,
-                     cv.protocol_version, cv.discovered_at, mtp.max_tool_props, own.entity_owner
             ORDER BY {MCP_ENDPOINTS_BY_NAME.order_by}
             {limit_sql}
         """
@@ -24080,27 +24144,77 @@ class Database:
         """
         return self.execute_query(q, (tenant_id,))
 
-    def list_published_mcp_duplicate_hints(self, exclude_tenant_id: str) -> List[Dict[str, Any]]:
-        """Published endpoints in other tenants for cross-tenant duplicate hints (MCAT-22.1).
+    #: The key two endpoint URLs must share to normalize to the same string
+    #: (:func:`app.mcp_duplicate_detection.normalize_mcp_endpoint_url_for_dedup`): the lower-cased
+    #: host, or the trimmed URL itself for a target with no host (a stdio command). Coarser than
+    #: the normalization, so it never loses a match. Must stay identical to the expression of
+    #: ``idx_mcp_endpoints_published_dedup_key`` (V425), or that index is not used.
+    _MCP_ENDPOINT_DEDUP_KEY_EXPR = (
+        "COALESCE(lower(substring(e.endpoint_url from '://(?:[^@/]*@)?([^:/?#]+)')), "
+        "btrim(e.endpoint_url, E' \\t\\n\\r'))"
+    )
 
-        Returns only ``published = true`` live rows outside ``exclude_tenant_id``, with each
-        owning tenant's slug for display. Reads at most :data:`MCP_REPORT_SCAN_CAP` endpoints
-        (#7196).
+    def list_published_mcp_duplicate_hints(self, exclude_tenant_id: str) -> List[Dict[str, Any]]:
+        """Published endpoints in other tenants that may duplicate one of this tenant's (MCAT-22.1).
+
+        Returns ``published = true`` live rows outside ``exclude_tenant_id``, with each owning
+        tenant's slug for display — but only those that can produce a hint: an endpoint whose
+        current snapshot has the same ``surface_fingerprint`` as one of the tenant's, or whose URL
+        has the same dedup key (:data:`_MCP_ENDPOINT_DEDUP_KEY_EXPR`) as one of the tenant's. Both
+        are index lookups (V425, DBP-1.17), where the read used to return every published endpoint
+        of every other tenant for the caller to match. The caller's exact matching
+        (:func:`app.mcp_duplicate_detection.build_mcp_cross_tenant_hints`) is unchanged, so the
+        hints are the same.
+
+        The tenant's own endpoints are the ones :meth:`list_mcp_duplicate_candidates` reads (the
+        first :data:`MCP_REPORT_SCAN_CAP` by name), and at most :data:`MCP_REPORT_SCAN_CAP`
+        matching endpoints are returned (#7196).
+
+        Args:
+            exclude_tenant_id: The caller's tenant, whose endpoints the others are matched against.
+
+        Returns:
+            One dict per matching foreign endpoint (``id``, ``tenant_id``, ``name``, ``slug``,
+            ``endpoint_url``, ``transport``, ``tenant_slug``, ``surface_fingerprint``), ordered by
+            tenant slug, name and id.
         """
+        key = self._MCP_ENDPOINT_DEDUP_KEY_EXPR
         q = f"""
+            WITH local AS MATERIALIZED (
+                SELECT {key} AS dedup_key, v.surface_fingerprint
+                FROM apiome.mcp_endpoints e
+                LEFT JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
+                WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+                ORDER BY e.name ASC, e.id ASC
+                LIMIT {int(MCP_REPORT_SCAN_CAP)}
+            ),
+            matched AS (
+                SELECT e.id
+                FROM apiome.mcp_endpoints e
+                WHERE e.published = true AND e.deleted_at IS NULL
+                  AND e.tenant_id <> %s::uuid
+                  AND {key} = ANY(ARRAY(SELECT DISTINCT l.dedup_key FROM local l))
+                UNION
+                SELECT e.id
+                FROM apiome.mcp_endpoint_versions v
+                JOIN apiome.mcp_endpoints e ON e.current_version_id = v.id
+                WHERE v.surface_fingerprint = ANY(ARRAY(
+                          SELECT DISTINCT l.surface_fingerprint FROM local l
+                          WHERE l.surface_fingerprint IS NOT NULL))
+                  AND e.published = true AND e.deleted_at IS NULL
+                  AND e.tenant_id <> %s::uuid
+            )
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    t.slug AS tenant_slug,
                    v.surface_fingerprint
-            FROM apiome.mcp_endpoints e
+            FROM matched m
+            JOIN apiome.mcp_endpoints e ON e.id = m.id
             JOIN apiome.tenants t ON t.id = e.tenant_id
             LEFT JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
-            WHERE e.deleted_at IS NULL
-              AND e.published = true
-              AND e.tenant_id <> %s::uuid
             ORDER BY t.slug ASC, e.name ASC, e.id ASC
             LIMIT {int(MCP_REPORT_SCAN_CAP)}
         """
-        return self.execute_query(q, (exclude_tenant_id,))
+        return self.execute_query(q, (exclude_tenant_id, exclude_tenant_id, exclude_tenant_id))
 
     def list_mcp_freshness_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
         """Live endpoints with fields needed for staleness/freshness reporting (MCAT-22.2).
@@ -24232,33 +24346,36 @@ class Database:
     #: TRUE when the endpoint's current surface has at least one tool asserting
     #: ``destructiveHint: true`` as a JSON boolean (the strict-boolean reading the 28.1 surface
     #: metrics use — a string ``"true"`` does not count as asserted).
-    _MCP_HAS_DESTRUCTIVE_EXPR = (
-        "EXISTS (SELECT 1 FROM apiome.mcp_capability_items sd "
-        "WHERE sd.version_id = e.current_version_id AND sd.item_type = 'tool' "
-        "AND sd.annotations -> 'destructiveHint' = 'true'::jsonb)"
+    #:
+    #: Read from the snapshot's stored ``has_destructive`` (V425); recomputed by
+    #: ``apiome.mcp_version_has_destructive`` for a snapshot whose facts are not derived yet (see
+    #: :func:`_mcp_version_fact_sql`). Needs the ``cv`` alias.
+    _MCP_HAS_DESTRUCTIVE_EXPR = _mcp_version_fact_sql(
+        "has_destructive", "apiome.mcp_version_has_destructive(cv.id)", absent="false"
     )
 
     #: TRUE when the endpoint's current surface has at least one tool and *every* tool asserts
     #: ``readOnlyHint: true`` — the server declares the whole surface read-only. A tool with no
     #: annotations (or a non-boolean hint) breaks the claim, so unannotated surfaces never pass.
-    _MCP_READ_ONLY_ONLY_EXPR = (
-        "(EXISTS (SELECT 1 FROM apiome.mcp_capability_items sr "
-        "WHERE sr.version_id = e.current_version_id AND sr.item_type = 'tool') "
-        "AND NOT EXISTS (SELECT 1 FROM apiome.mcp_capability_items sr "
-        "WHERE sr.version_id = e.current_version_id AND sr.item_type = 'tool' "
-        "AND sr.annotations -> 'readOnlyHint' IS DISTINCT FROM 'true'::jsonb))"
+    #: Stored as ``read_only_only`` (V425), with the same fallback as the flag above.
+    _MCP_READ_ONLY_ONLY_EXPR = _mcp_version_fact_sql(
+        "read_only_only", "apiome.mcp_version_read_only_only(cv.id)", absent="false"
     )
 
     #: The maximum top-level ``input_schema`` property count across the endpoint's current tools
     #: (NULL when the endpoint has no tools / no surface). Spliced into a LATERAL alias
     #: (``mtp.max_tool_props``) so the banding CASE evaluates it once per endpoint.
-    _MCP_MAX_TOOL_PROPS_EXPR = (
-        "(SELECT MAX(CASE WHEN jsonb_typeof(tc.input_schema -> 'properties') = 'object' "
-        "THEN (SELECT COUNT(*) FROM jsonb_object_keys(tc.input_schema -> 'properties')) "
-        "ELSE 0 END) "
-        "FROM apiome.mcp_capability_items tc "
-        "WHERE tc.version_id = e.current_version_id AND tc.item_type = 'tool')"
+    #: Stored as ``max_tool_props`` (V425): reading it no longer detoasts every tool's schema.
+    _MCP_MAX_TOOL_PROPS_EXPR = _mcp_version_fact_sql(
+        "max_tool_props", "apiome.mcp_version_max_tool_props(cv.id)", absent="NULL::integer"
     )
+
+    #: Per-kind capability counts of the endpoint's current surface, keyed by item type
+    #: (:func:`_mcp_kind_count_sql`); ``0`` for an endpoint with no current version. Needs the
+    #: ``cv`` alias.
+    _MCP_KIND_COUNT_EXPRS = {
+        kind: _mcp_kind_count_sql(kind, absent="0") for kind in _MCP_KIND_COUNT_COLUMNS
+    }
 
     #: Band ``mtp.max_tool_props`` into the complexity facet value — the SQL mirror of
     #: :func:`app.mcp_facets.complexity_band`, sharing its thresholds so the two never drift.
@@ -24656,30 +24773,43 @@ class Database:
             )
             return []
 
+        # The nearest `limit` items are picked by distance alone (with the tie-breaks), and the
+        # similarity floor is applied to those afterwards (DBP-1.17, #7200). The floor only ever
+        # removes the farthest rows, so the result is the one "filter, then take the nearest"
+        # gave — but the inner query's WHERE no longer contains an expression on the distance,
+        # which the planner could not estimate and which kept it off the distance ordering.
         q = f"""
-            SELECT ci.item_type AS kind,
-                   ci.id AS item_id, ci.name AS item_name, ci.title AS item_title,
-                   ci.description AS description, ci.ordinal AS ordinal,
-                   e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
-                   e.endpoint_url, e.category, e.visibility, e.current_version_id,
-                   e.last_discovered_at, s.score, s.grade,
-                   (1 - (ci.embedding <=> %s))::double precision AS semantic_similarity
-            FROM apiome.mcp_capability_items ci
-            JOIN apiome.mcp_endpoints e ON e.current_version_id = ci.version_id
-            LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
-            WHERE e.tenant_id = %s::uuid
-              AND e.deleted_at IS NULL
-              AND (1 - (ci.embedding <=> %s)) >= %s{where_extra}
-            ORDER BY ci.embedding <=> %s ASC, s.score DESC NULLS LAST, e.name ASC, ci.ordinal ASC
-            LIMIT %s
+            SELECT nearest.*
+            FROM (
+                SELECT ci.item_type AS kind,
+                       ci.id AS item_id, ci.name AS item_name, ci.title AS item_title,
+                       ci.description AS description, ci.ordinal AS ordinal,
+                       e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
+                       e.endpoint_url, e.category, e.visibility, e.current_version_id,
+                       e.last_discovered_at, s.score, s.grade,
+                       (1 - (ci.embedding <=> %s))::double precision AS semantic_similarity,
+                       (ci.embedding <=> %s) AS semantic_distance
+                FROM apiome.mcp_capability_items ci
+                JOIN apiome.mcp_endpoints e ON e.current_version_id = ci.version_id
+                LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+                WHERE e.tenant_id = %s::uuid
+                  AND e.deleted_at IS NULL{where_extra}
+                ORDER BY ci.embedding <=> %s ASC, s.score DESC NULLS LAST, e.name ASC, ci.ordinal ASC
+                LIMIT %s
+            ) nearest
+            WHERE nearest.semantic_similarity >= %s
+            ORDER BY nearest.semantic_distance ASC, nearest.score DESC NULLS LAST,
+                     nearest.endpoint_name ASC, nearest.ordinal ASC
         """
-        params = (vector, tenant_id, vector, float(min_similarity), *fparams, vector, int(limit))
+        params = (vector, vector, tenant_id, *fparams, vector, int(limit), float(min_similarity))
         try:
             with conn.cursor() as cursor:
                 cursor.execute(q, params)
                 columns = [desc[0] for desc in cursor.description]
                 found = [dict(zip(columns, row)) for row in cursor.fetchall()]
             conn.commit()  # end the read transaction so the connection is not left idle in it
+            for row in found:
+                row.pop("semantic_distance", None)  # ordering key only; not part of the row
             return found
         except Exception as exc:
             conn.rollback()
@@ -24889,6 +25019,9 @@ class Database:
     ) -> Dict[str, Any]:
         """Faceted search over a tenant's live catalog: filtered endpoints + live facet counts (MCAT-21.1).
 
+        Two statements (DBP-1.17, #7200): the page of endpoints, and every count
+        (:meth:`_mcp_facet_counts_sql`).
+
         One bundle backing ``GET /v1/mcp/{tenant}/facets``: the page of endpoints matching every
         supplied facet filter (multi-facet AND, within-facet OR — see
         :meth:`_mcp_facet_filter_clauses`), the total match count, and per-dimension bucket counts
@@ -24937,12 +25070,6 @@ class Database:
         base = f"{self._MCP_FACETED_FROM} {where}"
         params = (tenant_id, *fparams)
 
-        def _kind_count(kind: str) -> str:
-            return (
-                "(SELECT COUNT(*) FROM apiome.mcp_capability_items i "
-                f"WHERE i.version_id = e.current_version_id AND i.item_type = '{kind}')"
-            )
-
         after_sql, after_params = keyset_after(["e.name", "e.id"], cursor, casts=["", "::uuid"])
         endpoints_q = f"""
             SELECT e.id, e.name, e.slug, e.endpoint_url, e.transport, e.description,
@@ -24959,64 +25086,139 @@ class Database:
                    {self._MCP_COMPLEXITY_BAND_EXPR} AS complexity_band,
                    {self._MCP_VERSION_COUNT_EXPR} AS version_count,
                    {self._MCP_ENDPOINT_TAGS_EXPR} AS tags,
-                   {_kind_count('tool')}              AS tool_count,
-                   {_kind_count('resource')}          AS resource_count,
-                   {_kind_count('resource_template')} AS resource_template_count,
-                   {_kind_count('prompt')}            AS prompt_count
+                   {self._MCP_KIND_COUNT_EXPRS["tool"]}              AS tool_count,
+                   {self._MCP_KIND_COUNT_EXPRS["resource"]}          AS resource_count,
+                   {self._MCP_KIND_COUNT_EXPRS["resource_template"]} AS resource_template_count,
+                   {self._MCP_KIND_COUNT_EXPRS["prompt"]}            AS prompt_count
             {base}{after_sql}
             ORDER BY e.name ASC, e.id ASC
             LIMIT %s OFFSET %s
         """
-        total_q = f"SELECT COUNT(*) AS total {base}"
+        endpoints = self.execute_query(
+            endpoints_q,
+            (*params, *after_params, int(limit), 0 if cursor is not None else int(offset)),
+        )
+        facet_rows = self.execute_query(self._mcp_facet_counts_sql(base), params)
+        return {"endpoints": endpoints, **self._mcp_facet_counts_from_rows(facet_rows)}
 
-        # Per-dimension bucket counts over the same filtered set (GROUP BY the facet expression,
-        # busiest bucket first, stable label tiebreak). NULL labels are preserved here and mapped
-        # to their sentinel bucket in the wire projection.
-        def _bucket_q(label_expr: str) -> str:
-            return (
-                f"SELECT {label_expr} AS label, COUNT(*) AS count {base} "
-                "GROUP BY 1 ORDER BY count DESC, label ASC NULLS LAST"
+    #: The single-valued facet dimensions of the faceted search, in the order their bucket lists
+    #: are returned: ``(dimension, bundle key, label expression)``. Each expression reads the
+    #: aliases of :data:`_MCP_FACETED_FROM`.
+    _MCP_FACET_DIMENSIONS = (
+        ("grade", "grade_rows", "upper(s.grade)"),
+        ("transport", "transport_rows", "e.transport"),
+        ("category", "category_rows", "e.category"),
+        ("complexity", "complexity_rows", _MCP_COMPLEXITY_BAND_EXPR),
+        ("protocol", "protocol_rows", "cv.protocol_version"),
+        ("health", "health_rows", _MCP_ENDPOINT_HEALTH_EXPR),
+    )
+
+    def _mcp_facet_counts_sql(self, base: str) -> str:
+        """The one statement that counts every facet of a filtered catalog (DBP-1.17, #7200).
+
+        The filtered endpoints are read once, into a materialized CTE that carries each endpoint's
+        facet labels; ``GROUPING SETS`` then counts every single-valued dimension over it in one
+        pass, the empty grouping set gives the total and the safety / untagged tallies, and the
+        tag buckets (many per endpoint) are counted from the tag rows of the same endpoints. It
+        replaces ten statements that each ran the filter — and the per-endpoint derivations —
+        again.
+
+        Rows come back as ``(dimension, label, count, has_destructive, read_only_only, untagged)``,
+        ordered by dimension and, within one, busiest bucket first with a stable label tiebreak
+        (``NULL`` labels last) — the order each bucket list is returned in. The ``total`` row
+        carries the three tallies; every other row has them ``NULL``.
+
+        Args:
+            base: The shared ``FROM … WHERE …`` block of the search (see
+                :meth:`search_mcp_catalog_faceted`); its parameters are the statement's parameters.
+
+        Returns:
+            The SQL text.
+        """
+        labels = ",\n                       ".join(
+            f"{expr} AS {dimension}" for dimension, _key, expr in self._MCP_FACET_DIMENSIONS
+        )
+        dimensions = [dimension for dimension, _key, _expr in self._MCP_FACET_DIMENSIONS]
+        # GROUPING(a, b, …) is a bit mask with one bit per argument, set when that column is *not*
+        # part of the row's grouping set. So each single-column set has exactly one bit clear.
+        all_bits = (1 << len(dimensions)) - 1
+        dimension_case = " ".join(
+            f"WHEN {all_bits & ~(1 << (len(dimensions) - 1 - index))} THEN '{dimension}'"
+            for index, dimension in enumerate(dimensions)
+        )
+        label_case = " ".join(
+            f"WHEN {all_bits & ~(1 << (len(dimensions) - 1 - index))} THEN f.{dimension}::text"
+            for index, dimension in enumerate(dimensions)
+        )
+        grouping = f"GROUPING({', '.join('f.' + d for d in dimensions)})"
+        return f"""
+            WITH f AS MATERIALIZED (
+                SELECT e.id,
+                       {labels},
+                       {self._MCP_HAS_DESTRUCTIVE_EXPR} AS has_destructive,
+                       {self._MCP_READ_ONLY_ONLY_EXPR} AS read_only_only,
+                       NOT EXISTS (
+                           SELECT 1 FROM apiome.mcp_endpoint_tags ut WHERE ut.endpoint_id = e.id
+                       ) AS untagged
+                {base}
+            ),
+            counted AS (
+                SELECT CASE {grouping} {dimension_case} ELSE 'total' END AS dimension,
+                       CASE {grouping} {label_case} END AS label,
+                       COUNT(*) AS count,
+                       COUNT(*) FILTER (WHERE f.has_destructive) AS has_destructive,
+                       COUNT(*) FILTER (WHERE f.read_only_only) AS read_only_only,
+                       COUNT(*) FILTER (WHERE f.untagged) AS untagged,
+                       {grouping} AS grouped
+                FROM f
+                GROUP BY GROUPING SETS ({', '.join('(f.' + d + ')' for d in dimensions)}, ())
             )
-
-        safety_q = f"""
-            SELECT COUNT(*) FILTER (WHERE {self._MCP_HAS_DESTRUCTIVE_EXPR}) AS has_destructive,
-                   COUNT(*) FILTER (WHERE {self._MCP_READ_ONLY_ONLY_EXPR})  AS read_only_only,
-                   COUNT(*) FILTER (WHERE NOT EXISTS (
-                       SELECT 1 FROM apiome.mcp_endpoint_tags ut WHERE ut.endpoint_id = e.id
-                   )) AS untagged
-            {base}
-        """
-        # Tags are many-per-endpoint, so their buckets count tag rows of the filtered endpoints.
-        tag_q = f"""
-            SELECT bt.tag AS label, COUNT(*) AS count
+            SELECT c.dimension, c.label, c.count,
+                   CASE WHEN c.grouped = {all_bits} THEN c.has_destructive END AS has_destructive,
+                   CASE WHEN c.grouped = {all_bits} THEN c.read_only_only END AS read_only_only,
+                   CASE WHEN c.grouped = {all_bits} THEN c.untagged END AS untagged
+            FROM counted c
+            UNION ALL
+            SELECT 'tag', bt.tag::text, COUNT(*), NULL::bigint, NULL::bigint, NULL::bigint
             FROM apiome.mcp_endpoint_tags bt
-            WHERE bt.endpoint_id IN (SELECT e.id {base})
-            GROUP BY 1 ORDER BY count DESC, label ASC
+            JOIN f ON f.id = bt.endpoint_id
+            GROUP BY bt.tag
+            ORDER BY dimension ASC, count DESC, label ASC NULLS LAST
         """
 
-        total_rows = self.execute_query(total_q, params)
-        safety_rows = self.execute_query(safety_q, params)
-        safety_counts = dict(safety_rows[0]) if safety_rows else {}
-        return {
-            "endpoints": self.execute_query(
-                endpoints_q,
-                (*params, *after_params, int(limit), 0 if cursor is not None else int(offset)),
-            ),
-            "total": int(total_rows[0]["total"]) if total_rows else 0,
-            "grade_rows": self.execute_query(_bucket_q("upper(s.grade)"), params),
-            "transport_rows": self.execute_query(_bucket_q("e.transport"), params),
-            "category_rows": self.execute_query(_bucket_q("e.category"), params),
-            "safety_counts": safety_counts,
-            "complexity_rows": self.execute_query(
-                _bucket_q(self._MCP_COMPLEXITY_BAND_EXPR), params
-            ),
-            "protocol_rows": self.execute_query(_bucket_q("cv.protocol_version"), params),
-            "health_rows": self.execute_query(
-                _bucket_q(self._MCP_ENDPOINT_HEALTH_EXPR), params
-            ),
-            "tag_rows": self.execute_query(tag_q, params),
-            "untagged_count": int(safety_counts.get("untagged") or 0),
-        }
+    def _mcp_facet_counts_from_rows(self, rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Fold the rows of :meth:`_mcp_facet_counts_sql` into the faceted-search bundle.
+
+        Args:
+            rows: The statement's rows, in the order it returned them.
+
+        Returns:
+            ``total``, one ``{label, count}`` list per dimension (``grade_rows`` …
+            ``health_rows``, ``tag_rows``), ``safety_counts`` and ``untagged_count``. A filter that
+            matches nothing gives a zero total and empty lists.
+        """
+        keys = {dimension: key for dimension, key, _expr in self._MCP_FACET_DIMENSIONS}
+        keys["tag"] = "tag_rows"
+        bundle: Dict[str, Any] = {key: [] for key in keys.values()}
+        bundle["total"] = 0
+        safety_counts: Dict[str, Any] = {}
+        for row in rows:
+            dimension = row["dimension"]
+            if dimension == "total":
+                bundle["total"] = int(row["count"])
+                safety_counts = {
+                    "has_destructive": row["has_destructive"],
+                    "read_only_only": row["read_only_only"],
+                    "untagged": row["untagged"],
+                }
+            elif int(row["count"]) > 0 or dimension == "tag":
+                bundle[keys[dimension]].append({"label": row["label"], "count": row["count"]})
+        if bundle["total"] == 0:
+            # GROUP BY () still returns one row for an empty set; the per-dimension sets do not.
+            safety_counts = {"has_destructive": 0, "read_only_only": 0, "untagged": 0}
+        bundle["safety_counts"] = safety_counts
+        bundle["untagged_count"] = int(safety_counts.get("untagged") or 0)
+        return bundle
 
     # -----------------------------------------------------------------------
     # MCP Catalog — categories & manual tags (V2-MCP-23.3 / MCAT-9.3, #3693)
@@ -27738,6 +27940,11 @@ class Database:
         ``mcp_version_changes`` diff rows, then updates the endpoint's ``current_version_id`` /
         ``last_discovered_at`` / ``last_discovery_status``.
 
+        The version row also carries the snapshot's derived facts — per-kind counts, the safety
+        flags, the widest tool's property count and the change count
+        (:func:`app.mcp_version_facts.derive_version_facts`, DBP-1.17) — so no catalog read has to
+        recompute them from the items.
+
         Args:
             endpoint_id: Owning endpoint.
             version_row: Surface columns from :meth:`DiscoverySurface.to_version_row`.
@@ -27780,15 +27987,20 @@ class Database:
                     cursor, endpoint_id, format_mcp_version_tag(discovered_at)
                 )
 
+                # The snapshot's derived facts (DBP-1.17, #7200): computed from the rows written
+                # below and stored here, in the row's only write — the table is write-once.
+                facts = derive_version_facts(capability_rows, change_rows)
                 cursor.execute(
-                    """
+                    f"""
                     INSERT INTO apiome.mcp_endpoint_versions (
                         endpoint_id, version_seq, version_tag, protocol_version, server_name,
                         server_title, server_version, instructions, capabilities,
                         surface_fingerprint, server_branding, discovery_trigger,
-                        discovery_job_id, discovered_at
+                        discovery_job_id, discovered_at,
+                        {", ".join(VERSION_FACT_COLUMNS)}
                     ) VALUES (
-                        %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s
+                        %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s,
+                        {", ".join(["%s"] * len(VERSION_FACT_COLUMNS))}
                     )
                     RETURNING id
                     """,
@@ -27811,6 +28023,7 @@ class Database:
                         discovery_trigger,
                         discovery_job_id,
                         discovered_at,
+                        *(facts[column] for column in VERSION_FACT_COLUMNS),
                     ),
                 )
                 version_id = str(cursor.fetchone()["id"])
@@ -29671,9 +29884,10 @@ class Database:
         snapshot introduced. Ordered by ``version_seq`` ascending so the series reads left-to-right
         in chronological order.
 
-        The two child tallies are computed with correlated subqueries rather than a join-and-group,
-        so a snapshot with many capability items and many change rows cannot fan the two counts into
-        each other (a GROUP BY over both children would multiply them).
+        One statement (DBP-1.17, #7200). The per-kind counts are the facts stored on each snapshot
+        (V425; counted from the items for a snapshot not derived yet), and the three churn tallies
+        come from one pass over the snapshot's change rows instead of three. Neither is a
+        join-and-group, so many items and many change rows cannot multiply each other.
 
         Args:
             endpoint_id: The owning endpoint (already tenant-validated by the caller).
@@ -29692,22 +29906,20 @@ class Database:
                 v.id, v.endpoint_id, v.version_seq, v.version_tag,
                 v.discovered_at, v.created_at, v.surface_fingerprint,
                 s.score, s.grade,
-                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
-                   WHERE i.version_id = v.id AND i.item_type = 'tool')              AS tool_count,
-                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
-                   WHERE i.version_id = v.id AND i.item_type = 'resource')          AS resource_count,
-                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
-                   WHERE i.version_id = v.id AND i.item_type = 'resource_template') AS resource_template_count,
-                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
-                   WHERE i.version_id = v.id AND i.item_type = 'prompt')            AS prompt_count,
-                (SELECT COUNT(*) FROM apiome.mcp_version_changes c
-                   WHERE c.version_id = v.id AND c.change_type = 'added')           AS added_count,
-                (SELECT COUNT(*) FROM apiome.mcp_version_changes c
-                   WHERE c.version_id = v.id AND c.change_type = 'removed')         AS removed_count,
-                (SELECT COUNT(*) FROM apiome.mcp_version_changes c
-                   WHERE c.version_id = v.id AND c.change_type = 'modified')        AS modified_count
+                {_mcp_kind_count_sql("tool", version="v")}              AS tool_count,
+                {_mcp_kind_count_sql("resource", version="v")}          AS resource_count,
+                {_mcp_kind_count_sql("resource_template", version="v")} AS resource_template_count,
+                {_mcp_kind_count_sql("prompt", version="v")}            AS prompt_count,
+                ch.added_count, ch.removed_count, ch.modified_count
             FROM apiome.mcp_endpoint_versions v
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = v.id
+            CROSS JOIN LATERAL (
+                SELECT COUNT(*) FILTER (WHERE c.change_type = 'added')    AS added_count,
+                       COUNT(*) FILTER (WHERE c.change_type = 'removed')  AS removed_count,
+                       COUNT(*) FILTER (WHERE c.change_type = 'modified') AS modified_count
+                FROM apiome.mcp_version_changes c
+                WHERE c.version_id = v.id
+            ) ch
             WHERE v.endpoint_id = %s::uuid{recent_clause}
             ORDER BY v.version_seq ASC
         """
@@ -30714,129 +30926,161 @@ class Database:
             ``change_leader_rows`` (``{endpoint_id, name, change_count}``), ``top_capability_rows``
             (``{item_type, item_name, endpoint_count}``), and ``tool_count_rows`` (one ``{tool_count}``
             per live endpoint, folded into a histogram by the wire projection).
-        """
-        # Count each endpoint's current-surface items by kind via a correlated subquery, so an
-        # endpoint with many items does not fan the tenant-level aggregate.
-        def _kind_total(kind: str) -> str:
-            return (
-                "COALESCE(SUM((SELECT COUNT(*) FROM apiome.mcp_capability_items i "
-                f"WHERE i.version_id = e.current_version_id AND i.item_type = '{kind}')), 0)"
-            )
 
-        summary_q = f"""
-            SELECT
-                COUNT(*)                                                 AS endpoint_count,
-                COUNT(*) FILTER (WHERE e.published)                      AS published_count,
-                COUNT(*) FILTER (WHERE e.visibility = 'public')          AS public_count,
-                COUNT(*) FILTER (WHERE e.visibility = 'private')         AS private_count,
-                COUNT(*) FILTER (WHERE e.current_version_id IS NOT NULL) AS discovered_count,
-                {_kind_total('tool')}              AS tool_count,
-                {_kind_total('resource')}          AS resource_count,
-                {_kind_total('resource_template')} AS resource_template_count,
-                {_kind_total('prompt')}            AS prompt_count,
-                AVG(s.score)                                             AS avg_score,
-                COUNT(s.score)                                           AS scored_count
+        Two statements (DBP-1.17, #7200) where there were nine: :data:`_MCP_INSIGHT_SCOPE_SQL`
+        (tallies and breakdowns in one pass over the tenant's endpoints) and
+        :data:`_MCP_INSIGHT_RANKED_SQL` (the two top-eight lists). Per-kind totals come from the
+        facts stored on each current snapshot. The route keeps the result for a short interval
+        per tenant (:mod:`app.mcp_catalog_insight_cache`).
+        """
+        scope_rows = self.execute_query(self._MCP_INSIGHT_SCOPE_SQL, (tenant_id,))
+        ranked_rows = self.execute_query(self._MCP_INSIGHT_RANKED_SQL, (tenant_id, tenant_id))
+
+        summary: Dict[str, Any] = {}
+        buckets: Dict[str, List[Dict[str, Any]]] = {
+            dimension: [] for dimension in ("grade", "category", "transport", "protocol", "discovery")
+        }
+        for row in scope_rows:
+            dimension = row["dimension"]
+            if dimension == "total":
+                summary = {key: row[key] for key in self._MCP_INSIGHT_SUMMARY_KEYS}
+                summary["tool_count_rows"] = [
+                    {"tool_count": int(count)} for count in (row["tool_counts"] or [])
+                ]
+            else:
+                buckets[dimension].append({"label": row["label"], "count": row["count"]})
+        if not summary:  # never the case: the empty grouping set always returns a row
+            summary = {key: 0 for key in self._MCP_INSIGHT_SUMMARY_KEYS}
+            summary.update(avg_score=None, tool_count_rows=[])
+
+        summary["grade_distribution"] = {
+            str(r["label"]): int(r["count"]) for r in buckets["grade"]
+        }
+        summary["category_rows"] = buckets["category"]
+        summary["transport_rows"] = buckets["transport"]
+        summary["protocol_rows"] = buckets["protocol"]
+        summary["discovery_rows"] = buckets["discovery"]
+        summary["change_leader_rows"] = [
+            {"endpoint_id": r["endpoint_id"], "name": r["name"], "change_count": r["n"]}
+            for r in ranked_rows
+            if r["kind"] == "change_leader"
+        ]
+        summary["top_capability_rows"] = [
+            {"item_type": r["item_type"], "item_name": r["name"], "endpoint_count": r["n"]}
+            for r in ranked_rows
+            if r["kind"] == "top_capability"
+        ]
+        return summary
+
+    #: The scalar tallies of :meth:`get_mcp_catalog_insight`, as the ``total`` row carries them.
+    _MCP_INSIGHT_SUMMARY_KEYS = (
+        "endpoint_count",
+        "published_count",
+        "public_count",
+        "private_count",
+        "discovered_count",
+        "tool_count",
+        "resource_count",
+        "resource_template_count",
+        "prompt_count",
+        "avg_score",
+        "scored_count",
+    )
+
+    #: Statement 1 of the catalog insight (DBP-1.17, #7200): the tenant's live endpoints are read
+    #: once into a materialized CTE; ``GROUPING SETS`` counts the five label breakdowns over it and
+    #: the empty grouping set gives the scalar tallies and each endpoint's tool count. Rows are
+    #: ``(dimension, label, count, <summary columns>, tool_counts)``; only the ``total`` row has
+    #: the summary. Breakdowns come ordered as before: grades by letter, the others busiest first
+    #: with a stable label tiebreak (NULL labels last).
+    #:
+    #: * ``grade`` counts endpoints whose current snapshot has a grade (a NULL grade is no bucket);
+    #: * ``protocol`` counts discovered endpoints only (a NULL label is "reported no version").
+    _MCP_INSIGHT_SCOPE_SQL = f"""
+        WITH scope AS MATERIALIZED (
+            SELECT e.published, e.visibility, e.current_version_id,
+                   e.category, e.transport, e.last_discovery_status AS discovery,
+                   s.score, s.grade, cv.protocol_version AS protocol, (cv.id IS NOT NULL) AS has_snapshot,
+                   {_MCP_KIND_COUNT_EXPRS["tool"]}              AS tool_count,
+                   {_MCP_KIND_COUNT_EXPRS["resource"]}          AS resource_count,
+                   {_MCP_KIND_COUNT_EXPRS["resource_template"]} AS resource_template_count,
+                   {_MCP_KIND_COUNT_EXPRS["prompt"]}            AS prompt_count
             FROM apiome.mcp_endpoints e
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
+            LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-        """
-        grade_q = """
-            SELECT s.grade AS grade, COUNT(*) AS count
-            FROM apiome.mcp_endpoints e
-            JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL AND s.grade IS NOT NULL
-            GROUP BY s.grade
-            ORDER BY s.grade ASC
-        """
-        # Composition breakdowns (18.1) — each is a simple GROUP BY over the same live-endpoint scope,
-        # ordered so the busiest bucket leads (with a stable label tiebreak for determinism). NULL
-        # labels are preserved here and mapped to a friendly bucket ("Uncategorized"/"Unknown"/"never")
-        # in the wire projection, not in SQL.
-        category_q = """
-            SELECT e.category AS label, COUNT(*) AS count
-            FROM apiome.mcp_endpoints e
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY e.category
-            ORDER BY count DESC, e.category ASC NULLS LAST
-        """
-        transport_q = """
-            SELECT e.transport AS label, COUNT(*) AS count
-            FROM apiome.mcp_endpoints e
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY e.transport
-            ORDER BY count DESC, e.transport ASC
-        """
-        # Protocol adoption hangs off each endpoint's current surface: only discovered endpoints
-        # (current_version_id set) have a reported protocol_version, so never-discovered servers do
-        # not appear here.
-        protocol_q = """
-            SELECT v.protocol_version AS label, COUNT(*) AS count
-            FROM apiome.mcp_endpoints e
-            JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY v.protocol_version
-            ORDER BY count DESC, v.protocol_version ASC NULLS LAST
-        """
-        # Discovery-health rollup — every live endpoint counts, including those never discovered
-        # (last_discovery_status IS NULL → mapped to "never" in the projection).
-        discovery_q = """
-            SELECT e.last_discovery_status AS label, COUNT(*) AS count
-            FROM apiome.mcp_endpoints e
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY e.last_discovery_status
-            ORDER BY count DESC, e.last_discovery_status ASC NULLS LAST
-        """
-        # Change-frequency leaders — the endpoints whose surface has churned the most, counted over
-        # every recorded change across all their versions (not just the current one).
-        change_leader_q = """
-            SELECT e.id AS endpoint_id, e.name AS name, COUNT(c.id) AS change_count
-            FROM apiome.mcp_endpoints e
-            JOIN apiome.mcp_endpoint_versions v ON v.endpoint_id = e.id
-            JOIN apiome.mcp_version_changes c ON c.version_id = v.id
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY e.id, e.name
-            ORDER BY change_count DESC, e.name ASC
-            LIMIT 8
-        """
-        # Top capabilities — the most widely exposed capability names across the tenant's current
-        # surfaces, ranked by how many distinct endpoints expose each (a real aggregate standing in
-        # for "most-searched", which has no backing search-query log). item_type is carried so the
-        # panel can badge tool vs resource vs prompt.
-        top_capability_q = """
-            SELECT i.item_type AS item_type, i.name AS item_name,
-                   COUNT(DISTINCT e.id) AS endpoint_count
-            FROM apiome.mcp_endpoints e
-            JOIN apiome.mcp_capability_items i ON i.version_id = e.current_version_id
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            GROUP BY i.item_type, i.name
-            ORDER BY endpoint_count DESC, i.name ASC
-            LIMIT 8
-        """
-        # Per-endpoint tool counts feed the pure tool-count histogram (compute_tool_count_histogram):
-        # one row per live endpoint, its count being the number of 'tool' items on its current surface
-        # (0 for a never-discovered or tool-less endpoint), so the distribution spans the whole catalog.
-        tool_count_q = """
-            SELECT COALESCE(
-                (SELECT COUNT(*) FROM apiome.mcp_capability_items i
-                 WHERE i.version_id = e.current_version_id AND i.item_type = 'tool'), 0
-            ) AS tool_count
-            FROM apiome.mcp_endpoints e
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-        """
-        summary_rows = self.execute_query(summary_q, (tenant_id,))
-        grade_rows = self.execute_query(grade_q, (tenant_id,))
-        summary = dict(summary_rows[0]) if summary_rows else {}
-        summary["grade_distribution"] = {
-            str(r["grade"]): int(r["count"]) for r in grade_rows
-        }
-        summary["category_rows"] = self.execute_query(category_q, (tenant_id,))
-        summary["transport_rows"] = self.execute_query(transport_q, (tenant_id,))
-        summary["protocol_rows"] = self.execute_query(protocol_q, (tenant_id,))
-        summary["discovery_rows"] = self.execute_query(discovery_q, (tenant_id,))
-        summary["change_leader_rows"] = self.execute_query(change_leader_q, (tenant_id,))
-        summary["top_capability_rows"] = self.execute_query(top_capability_q, (tenant_id,))
-        summary["tool_count_rows"] = self.execute_query(tool_count_q, (tenant_id,))
-        return summary
+        ),
+        counted AS (
+            SELECT CASE GROUPING(f.grade, f.category, f.transport, f.protocol, f.discovery)
+                       WHEN 15 THEN 'grade' WHEN 23 THEN 'category' WHEN 27 THEN 'transport'
+                       WHEN 29 THEN 'protocol' WHEN 30 THEN 'discovery' ELSE 'total' END AS dimension,
+                   CASE GROUPING(f.grade, f.category, f.transport, f.protocol, f.discovery)
+                       WHEN 15 THEN f.grade::text WHEN 23 THEN f.category::text
+                       WHEN 27 THEN f.transport::text WHEN 29 THEN f.protocol::text
+                       WHEN 30 THEN f.discovery::text END AS label,
+                   CASE GROUPING(f.grade, f.category, f.transport, f.protocol, f.discovery)
+                       WHEN 15 THEN COUNT(*) FILTER (WHERE f.grade IS NOT NULL)
+                       WHEN 29 THEN COUNT(*) FILTER (WHERE f.has_snapshot)
+                       ELSE COUNT(*) END AS count,
+                   COUNT(*)                                                 AS endpoint_count,
+                   COUNT(*) FILTER (WHERE f.published)                      AS published_count,
+                   COUNT(*) FILTER (WHERE f.visibility = 'public')          AS public_count,
+                   COUNT(*) FILTER (WHERE f.visibility = 'private')         AS private_count,
+                   COUNT(*) FILTER (WHERE f.current_version_id IS NOT NULL) AS discovered_count,
+                   COALESCE(SUM(f.tool_count), 0)                           AS tool_count,
+                   COALESCE(SUM(f.resource_count), 0)                       AS resource_count,
+                   COALESCE(SUM(f.resource_template_count), 0)              AS resource_template_count,
+                   COALESCE(SUM(f.prompt_count), 0)                         AS prompt_count,
+                   AVG(f.score)                                             AS avg_score,
+                   COUNT(f.score)                                           AS scored_count,
+                   array_agg(COALESCE(f.tool_count, 0))                     AS tool_counts
+            FROM scope f
+            GROUP BY GROUPING SETS ((f.grade), (f.category), (f.transport), (f.protocol), (f.discovery), ())
+        )
+        SELECT c.dimension, c.label, c.count,
+               c.endpoint_count, c.published_count, c.public_count, c.private_count,
+               c.discovered_count, c.tool_count, c.resource_count, c.resource_template_count,
+               c.prompt_count, c.avg_score, c.scored_count,
+               CASE WHEN c.dimension = 'total' THEN c.tool_counts END AS tool_counts
+        FROM counted c
+        WHERE c.dimension = 'total' OR c.count > 0
+        ORDER BY c.dimension ASC,
+                 (CASE WHEN c.dimension = 'grade' THEN 0 ELSE c.count END) DESC,
+                 c.label ASC NULLS LAST
+    """
+
+    #: Statement 2 of the catalog insight: the two ranked lists, eight rows each.
+    #:
+    #: * ``change_leader`` — endpoints by the changes recorded across all their snapshots, summed
+    #:   from each snapshot's stored ``change_count`` (V425; counted for a snapshot not derived yet);
+    #: * ``top_capability`` — capability names by how many endpoints expose them on their current
+    #:   surface.
+    _MCP_INSIGHT_RANKED_SQL = f"""
+        (SELECT 'change_leader' AS kind, e.id AS endpoint_id, e.name::text AS name,
+                NULL::text AS item_type,
+                SUM({_mcp_version_fact_sql(
+                    "change_count", "apiome.mcp_version_change_count(v.id)", version="v"
+                )})::bigint AS n
+           FROM apiome.mcp_endpoints e
+           JOIN apiome.mcp_endpoint_versions v ON v.endpoint_id = e.id
+          WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+          GROUP BY e.id, e.name
+         HAVING SUM({_mcp_version_fact_sql(
+                    "change_count", "apiome.mcp_version_change_count(v.id)", version="v"
+                )}) > 0
+          ORDER BY n DESC, e.name ASC
+          LIMIT 8)
+        UNION ALL
+        (SELECT 'top_capability', NULL::uuid, i.name::text, i.item_type::text,
+                COUNT(DISTINCT e.id)::bigint AS n
+           FROM apiome.mcp_endpoints e
+           JOIN apiome.mcp_capability_items i ON i.version_id = e.current_version_id
+          WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+          GROUP BY i.item_type, i.name
+          ORDER BY n DESC, i.name ASC
+          LIMIT 8)
+        ORDER BY kind ASC, n DESC, name ASC
+    """
 
     def get_mcp_category_cohort(
         self, tenant_id: str, category: Optional[str]
@@ -30966,106 +31210,140 @@ class Database:
             )
         return cohort
 
-    def get_mcp_similar_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """Return every live endpoint in the tenant with the materials to rank capability similarity (18.4).
+    #: The characters trimmed from a capability name before it is compared — what Python's
+    #: ``str.strip()`` removes from the ASCII range (see ``normalize_capability_name``).
+    _MCP_CAPABILITY_NAME_SQL = "lower(btrim(ci.name, E' \\t\\n\\r\\f\\x0b'))"
 
-        The candidate pool for the "similar servers" feature: all of the tenant's live (non-deleted)
-        endpoints, each carrying what both similarity signals need, fetched in a fixed handful of bulk
-        queries (independent of catalog size) so the route ranks in one pass with no per-endpoint
-        round-trips:
+    def get_mcp_similar_servers(
+        self,
+        tenant_id: str,
+        endpoint_id: str,
+        *,
+        limit: int = 10,
+        with_embeddings: bool = True,
+    ) -> Dict[str, Any]:
+        """Rank the tenant's other live endpoints by similarity to one endpoint, in SQL (18.4).
 
-        * ``capability_names`` — the current snapshot's ``mcp_capability_items`` names (every item type),
-          the set the Jaccard capability-overlap signal compares;
-        * ``embedding`` — the current snapshot's optional ``mcp_capability_embedding`` (V143), parsed to a
-          float list, for the semantic cosine nearest-neighbour signal; ``None`` when the snapshot has no
-          stored embedding, and empty across the board whenever pgvector embeddings are disabled or simply
-          not yet backfilled (the feature then falls back to overlap-only — a graceful no-op).
+        Replaces loading every endpoint's capability names and every embedding (as text) to rank
+        them in Python (DBP-1.17, #7200). Two statements, each returning at most ``limit`` peers:
 
-        The target endpoint itself is included in the returned list (a caller filters it out of its own
-        neighbour list); a never-discovered endpoint (no ``current_version_id``) carries an empty
-        ``capability_names`` and a ``None`` ``embedding``, so it simply never ranks as a neighbour rather
-        than being dropped. Scoping is by ``tenant_id`` directly, so the pool never leaks across tenants.
+        * **Overlap** — the Jaccard index of the two endpoints' capability-name sets (names
+          trimmed and lower-cased, as :func:`app.mcp_insight_aggregation.capability_name_set`
+          folds them), over each endpoint's *current* snapshot. Peers sharing no name are not
+          returned. Ordered by the exact ratio, then by shared names, then by endpoint name.
+        * **Embeddings** — ``ORDER BY embedding <=> target LIMIT k`` over the current snapshots of
+          the tenant's other endpoints that carry a capability embedding. Skipped when
+          ``with_embeddings`` is false; empty when the target has no embedding or pgvector is
+          unavailable.
+
+        The caller applies the similarity floor, the rounding and the final tie-breaks
+        (:func:`app.mcp_insight_aggregation.overlap_neighbors_from_rows` /
+        :func:`~app.mcp_insight_aggregation.embedding_neighbors_from_rows`).
 
         Args:
-            tenant_id: The owning tenant whose catalog the candidate pool is drawn from.
+            tenant_id: The owning tenant; the sole cross-tenant scoping predicate.
+            endpoint_id: The endpoint to find neighbours of. An endpoint of another tenant, a
+                deleted one or one never discovered has no names and no embedding: both lists
+                come back empty.
+            limit: Most peers per list.
+            with_embeddings: Whether to run the embedding statement at all.
 
         Returns:
-            One dict per live endpoint with keys ``endpoint_id``, ``name``, ``slug``, ``category``,
-            ``current_version_id``, ``capability_names``, and ``embedding``. Empty when the tenant has no
-            live endpoint.
+            ``target_capability_count`` (the endpoint's distinct names), ``overlap_rows`` (each
+            with ``endpoint_id``, ``name``, ``slug``, ``category``, ``shared_count``,
+            ``candidate_capability_count`` and ``shared_capabilities``, a sorted name list) and
+            ``embedding_rows`` (each with ``endpoint_id``, ``name``, ``slug``, ``category`` and
+            ``similarity``, the cosine similarity; nearest first).
         """
-        endpoints = self.execute_query(
-            """
-            SELECT e.id AS endpoint_id, e.name, e.slug, e.category, e.current_version_id
-            FROM apiome.mcp_endpoints e
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            """,
-            (tenant_id,),
+        name = self._MCP_CAPABILITY_NAME_SQL
+        overlap_q = f"""
+            WITH target AS MATERIALIZED (
+                SELECT DISTINCT {name} AS name
+                FROM apiome.mcp_endpoints e
+                JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
+                WHERE e.id = %s::uuid AND e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+                  AND {name} <> ''
+            ),
+            peer_names AS (
+                SELECT e.id, {name} AS name
+                FROM apiome.mcp_endpoints e
+                JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
+                WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL AND e.id <> %s::uuid
+                  AND {name} <> ''
+                  AND EXISTS (SELECT 1 FROM target)
+                GROUP BY e.id, 2
+            ),
+            scored AS (
+                SELECT pn.id,
+                       COUNT(*) AS candidate_capability_count,
+                       COUNT(t.name) AS shared_count,
+                       array_agg(t.name ORDER BY t.name COLLATE "C")
+                           FILTER (WHERE t.name IS NOT NULL) AS shared_capabilities
+                FROM peer_names pn
+                LEFT JOIN target t ON t.name = pn.name
+                GROUP BY pn.id
+                HAVING COUNT(t.name) > 0
+            ),
+            ranked AS (
+                SELECT e.id AS endpoint_id, e.name, e.slug, e.category,
+                       sc.shared_count, sc.candidate_capability_count, sc.shared_capabilities
+                FROM scored sc
+                JOIN apiome.mcp_endpoints e ON e.id = sc.id
+                ORDER BY sc.shared_count::numeric
+                             / ((SELECT COUNT(*) FROM target) + sc.candidate_capability_count - sc.shared_count) DESC,
+                         sc.shared_count DESC,
+                         lower(e.name) COLLATE "C" ASC
+                LIMIT %s
+            )
+            SELECT tc.target_capability_count, r.*
+            FROM (SELECT COUNT(*) AS target_capability_count FROM target) tc
+            LEFT JOIN ranked r ON TRUE
+        """
+        rows = self.execute_query(
+            overlap_q, (endpoint_id, tenant_id, tenant_id, endpoint_id, max(0, int(limit)))
         )
-        if not endpoints:
-            return []
+        result: Dict[str, Any] = {
+            "target_capability_count": int(rows[0]["target_capability_count"]) if rows else 0,
+            "overlap_rows": [
+                {key: value for key, value in row.items() if key != "target_capability_count"}
+                for row in rows
+                if row.get("endpoint_id") is not None
+            ],
+            "embedding_rows": [],
+        }
+        if not with_embeddings:
+            return result
 
-        version_ids = [
-            str(e["current_version_id"]) for e in endpoints if e.get("current_version_id")
-        ]
-
-        # Capability names for every current version (all item types), grouped by version id.
-        names_by_version: Dict[str, List[str]] = {}
-        if version_ids:
-            name_rows = self.execute_query(
-                """
-                SELECT version_id, name
-                FROM apiome.mcp_capability_items
-                WHERE version_id = ANY(%s::uuid[])
-                """,
-                (version_ids,),
+        embedding_q = """
+            WITH target AS (
+                SELECT v.mcp_capability_embedding AS embedding
+                FROM apiome.mcp_endpoints e
+                JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
+                WHERE e.id = %s::uuid AND e.tenant_id = %s::uuid AND e.deleted_at IS NULL
+                  AND v.mcp_capability_embedding IS NOT NULL
             )
-            for row in name_rows:
-                if row.get("name"):
-                    names_by_version.setdefault(str(row["version_id"]), []).append(row["name"])
-
-        # Capability embeddings for every current version — optional (pgvector, V143). Read as text and
-        # parsed so no register_vector adapter is needed. Wrapped defensively: if the pgvector type is
-        # unavailable (extension/column missing on an un-migrated database), degrade to overlap-only
-        # rather than failing the whole request — execute_query already rolled the failed read back.
-        embeddings_by_version: Dict[str, List[float]] = {}
-        if version_ids:
-            try:
-                embedding_rows = self.execute_query(
-                    """
-                    SELECT id, mcp_capability_embedding::text AS embedding
-                    FROM apiome.mcp_endpoint_versions
-                    WHERE id = ANY(%s::uuid[]) AND mcp_capability_embedding IS NOT NULL
-                    """,
-                    (version_ids,),
-                )
-                for row in embedding_rows:
-                    parsed = _parse_pgvector_text(row.get("embedding"))
-                    if parsed is not None:
-                        embeddings_by_version[str(row["id"])] = parsed
-            except Exception as exc:  # pragma: no cover - only on an un-migrated / no-pgvector database
-                _logger.warning(
-                    "[mcp-similar] capability-embedding read failed (%s); falling back to overlap-only",
-                    exc,
-                )
-
-        candidates: List[Dict[str, Any]] = []
-        for endpoint in endpoints:
-            version_id = (
-                str(endpoint["current_version_id"]) if endpoint.get("current_version_id") else None
+            SELECT e.id AS endpoint_id, e.name, e.slug, e.category,
+                   (1 - (v.mcp_capability_embedding <=> t.embedding))::double precision AS similarity
+            FROM target t
+            JOIN apiome.mcp_endpoints e
+              ON e.tenant_id = %s::uuid AND e.deleted_at IS NULL AND e.id <> %s::uuid
+            JOIN apiome.mcp_endpoint_versions v
+              ON v.id = e.current_version_id AND v.mcp_capability_embedding IS NOT NULL
+            ORDER BY v.mcp_capability_embedding <=> t.embedding ASC
+            LIMIT %s
+        """
+        # Optional (pgvector, V143). If the vector type is unavailable on this database, degrade
+        # to overlap-only rather than failing the request — execute_query rolled the read back.
+        try:
+            result["embedding_rows"] = self.execute_query(
+                embedding_q, (endpoint_id, tenant_id, tenant_id, endpoint_id, max(0, int(limit)))
             )
-            candidates.append(
-                {
-                    "endpoint_id": str(endpoint["endpoint_id"]),
-                    "name": endpoint.get("name"),
-                    "slug": endpoint.get("slug"),
-                    "category": endpoint.get("category"),
-                    "current_version_id": version_id,
-                    "capability_names": names_by_version.get(version_id, []) if version_id else [],
-                    "embedding": embeddings_by_version.get(version_id) if version_id else None,
-                }
+        except Exception as exc:  # pragma: no cover - only on an un-migrated / no-pgvector database
+            _logger.warning(
+                "[mcp-similar] capability-embedding read failed (%s); falling back to overlap-only",
+                exc,
             )
-        return candidates
+        return result
 
     def store_mcp_capability_embedding(
         self, version_id: str, embedding: List[float]

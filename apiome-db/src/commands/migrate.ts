@@ -8,6 +8,7 @@ import {
   getMigrationStatus,
   repairHistory,
 } from "../migrate.js";
+import { runPendingBackfills, type BackfillResult } from "../backfill.js";
 import { applySeeds, defaultSeedDir } from "../seed.js";
 import { applyScaleSeed, resolveScaleParams, type ScaleStepResult } from "../seed-scale.js";
 import type { OutputMode } from "../output.js";
@@ -55,9 +56,13 @@ export async function runMigrateApply(
 ): Promise<void> {
   const scriptsDir = opts.scriptsDir ?? defaultScriptsDir();
   const result = await applyPendingMigrations(client, { scriptsDir, dryRun: opts.dryRun });
+  // Resumable backfills run after the migrations, one batch per transaction (src/backfill.ts).
+  // They run on every migrate, not only when a migration was applied, so an interrupted backfill
+  // is finished by the next run; with nothing pending each costs one index probe.
+  const backfills: BackfillResult[] = result.dryRun ? [] : await runPendingBackfills(client);
 
   if (mode.json) {
-    printRecord(mode, { scriptsDir, ...result });
+    printRecord(mode, { scriptsDir, ...result, backfills });
     return;
   }
 
@@ -73,11 +78,15 @@ export async function runMigrateApply(
 
   if (result.applied.length === 0) {
     note("All scripts have been previously applied.");
-    return;
+  } else {
+    note(`Applied ${result.applied.length} migration(s):`);
+    for (const f of result.applied) note(`  ${f}`);
   }
-
-  note(`Applied ${result.applied.length} migration(s):`);
-  for (const f of result.applied) note(`  ${f}`);
+  for (const backfill of backfills) {
+    if (backfill.derived > 0) {
+      note(`Backfill ${backfill.name}: ${backfill.derived} row(s) in ${backfill.batches} batch(es).`);
+    }
+  }
 }
 
 export async function runRepair(

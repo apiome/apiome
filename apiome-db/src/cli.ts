@@ -14,6 +14,7 @@ import { Command, CommanderError } from "commander";
 
 import { runInteractiveRepl } from "./lib/interactive/repl.js";
 import * as apikeys from "./commands/apikeys.js";
+import * as backfill from "./commands/backfill.js";
 import * as backup from "./commands/backup.js";
 import * as migrate from "./commands/migrate.js";
 import * as planCheck from "./commands/plan-check.js";
@@ -221,6 +222,27 @@ program
           only: opts.only ? String(opts.only).split(",").map((s: string) => s.trim()).filter(Boolean) : undefined,
           markdown: opts.markdown,
         },
+        modeOf(g),
+      ),
+    );
+  });
+
+// ───────────────────────────── backfill ─────────────────────────────
+const backfillCmd = program
+  .command("backfill")
+  .description("Run a resumable data backfill (also run by `migrate`)");
+
+backfillCmd
+  .command("mcp-version-facts")
+  .description("Derive the stored facts of MCP endpoint versions that have none (V425); --verify checks them")
+  .option("--batch <n>", "Snapshots per batch (each batch is one transaction)", "500")
+  .option("--verify", "Compare stored facts with the recomputed ones instead of deriving; exit 1 on a mismatch", false)
+  .action(async (opts, cmd: Command) => {
+    const g = cmd.optsWithGlobals() as GlobalOpts;
+    await withClient(connectionOf(g), (client) =>
+      backfill.runMcpVersionFactsBackfill(
+        client,
+        { batch: Number(opts.batch), verify: Boolean(opts.verify) },
         modeOf(g),
       ),
     );

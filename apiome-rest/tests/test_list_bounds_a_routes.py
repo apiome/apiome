@@ -218,7 +218,11 @@ def test_version_lint_evidence_reads_at_most_two_hundred_runs():
 def test_similar_servers_cannot_be_asked_for_more_than_the_rail_shows():
     with patch("app.mcp_catalog_routes.db") as db:
         db.get_mcp_endpoint.return_value = {"id": EP, "tenant_id": "t1", "current_version_id": None}
-        db.get_mcp_similar_candidates.return_value = []
+        db.get_mcp_similar_servers.return_value = {
+            "target_capability_count": 0,
+            "overlap_rows": [],
+            "embedding_rows": [],
+        }
         url = f"/v1/mcp/acme/endpoints/{EP}/insight/similar"
         assert client.get(url).status_code == 200
         assert client.get(url, params={"limit": 11}).status_code == 422

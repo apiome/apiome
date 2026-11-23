@@ -508,6 +508,41 @@ Two more things keep the browse site's statements short:
   site runs is a short read, and PostgreSQL's compiler added about 200 ms to some of them. The
   setting applies to connections named `apiome-browse` only.
 
+### What the MCP catalog stores and caches
+
+Every discovery of an MCP server writes a snapshot, and a snapshot never changes. The catalog
+therefore stores what it used to work out on each page load, on the snapshot itself: how many
+tools, resources, resource templates and prompts it has, whether a tool is destructive, whether
+every tool is read-only, the largest number of parameters any tool takes, and how many changes the
+snapshot introduced. The **MCP Catalog** grid, its filters, **Analytics** and a server's
+**Evolution** chart read those stored facts.
+
+| Setting | Service | Default | What it sets |
+| --- | --- | --- | --- |
+| `MCP_CATALOG_INSIGHT_CACHE_TTL_SECONDS` | REST API | `30` | Seconds an API instance reuses one workspace's **Analytics** numbers (`GET /v1/mcp/{tenant}/insight/catalog`). `0` reads the catalog on every request. Values above `300` are treated as `300`. |
+| `MCP_CATALOG_INSIGHT_CACHE_MAX_ENTRIES` | REST API | `1000` | Most workspaces whose **Analytics** numbers one instance keeps at once. |
+
+**What a person sees:** after a discovery, a publish or a delete, **Analytics** can take up to 30
+seconds to show it. The grid, the filter counts and every server page are read on each load and
+show it at once. The cache is per workspace, so nobody sees another workspace's numbers.
+
+**Snapshots from before the upgrade** have no stored facts until the backfill reaches them. The
+catalog computes their facts from their tools as it did before, so the numbers are right at every
+moment; those servers are just slower to list until they are done.
+
+- **The backfill runs with the migration.** `apiome-db migrate` applies the migrations and then
+  fills the facts in batches of 500 snapshots, one transaction each. If it is interrupted, the
+  next `apiome-db migrate` continues from where it stopped. On the scale database it filled 15,880
+  snapshots (535,000 tools, resources and prompts) in 5.5 seconds.
+- **To run it yourself:** `apiome-db backfill mcp-version-facts`. Add `--batch <n>` to change the
+  batch size. Run it if you apply migrations with another tool.
+- **To check it:** `apiome-db backfill mcp-version-facts --verify` prints how many snapshots still
+  have no facts, and lists any snapshot whose stored facts differ from the ones recomputed from its
+  tools. It exits with status `1` if it finds one. On a healthy database both numbers are `0`.
+
+Snapshots stay write-once: the database refuses every update of a snapshot, except filling the
+facts of one that has none.
+
 ## Upgrade a large database without blocking writes
 
 Each `apiome-db` migration runs in one transaction, so an index it creates blocks writes to that
@@ -553,6 +588,13 @@ indexes that the browse site's search palette matches names with. The two column
   more. If imports matter more to you than property suggestions in the palette, drop
   `idx_class_properties_name_trgm`, the largest of the five on the import path; property
   suggestions then come only from the most recently published versions.
+
+`V425` (DBP-1.17) adds the stored facts to `mcp_endpoint_versions` (see
+[What the MCP catalog stores and caches](#what-the-mcp-catalog-stores-and-caches)) and three
+indexes. The columns are nullable, so the table is not rewritten, and the migration itself fills
+nothing: the backfill runs afterwards in small transactions. The indexes are small — on the scale
+database, with 15,880 snapshots and 4,000 endpoints, each is under 1 MB and builds in
+milliseconds — so there is nothing to build ahead of time.
 
 A migration that adds a stored generated column cannot be prepared this way. `V409` adds
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of
