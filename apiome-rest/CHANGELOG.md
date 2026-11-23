@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.820.0] - 2026-11-22
+
+### Performance
+- **Sargable predicates: casts on uuid keys, sort order, audit chain (DBP-1.10, #7193).** OpenAPI 1.644.0
+  (version only; no schema change). Query text only; results are unchanged.
+  - `fetch_revision_closure` and the three recursive CTEs of `compute_branch_divergence` compare `versions.id`
+    to the uuid-cast parameter instead of casting every row to text, so the primary key is used (0.44 ms
+    against 21.4 ms on 200k versions); the lint-gate endpoint-version lookup and two `tenant_id::text`
+    document lookups do likewise.
+  - `get_latest_revision_id_for_project` and three other version lookups order by
+    `created_at DESC NULLS LAST, id DESC` (`ASC NULLS FIRST, id ASC`) to match `idx_versions_project_created`,
+    so there is no extra sort.
+  - The access-audit chain head reads `tenant_id = …` or `tenant_id IS NULL` rather than
+    `IS NOT DISTINCT FROM`, so an audit write no longer scans `access_audit`.
+  - `apiome-ui`: the review, merge-request and comment-anchor queries compare `tenant_id` to the uuid-cast
+    parameter.
+  - New test `tests/test_sargable_uuid_lint.py` fails on a new `id::text =` predicate.
+  - Not in this change: the `primitives` tenant/system `OR`, the `jsonb_array_elements` filters, `NOT IN`
+    subqueries and the Python-built `IN (…)` lists stay open under #7193's remaining scope.
+
 ## [1.819.0] - 2026-11-22
 
 ### Performance

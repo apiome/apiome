@@ -50,7 +50,7 @@ export interface AnchorLabelScope {
 const PROJECT_SCOPE_SQL = `
   JOIN apiome.versions v ON v.id = {versionColumn}
   JOIN apiome.projects p ON p.id = v.project_id
-  WHERE p.tenant_id::text = $1
+  WHERE p.tenant_id = $1::uuid
     AND (p.id::text = $2 OR p.slug = $2)`;
 
 /**
@@ -81,7 +81,7 @@ export const LIBRARY_PROPERTY_LABEL_SQL = `
   SELECT pr.id::text AS id, pr.name AS property_name
   FROM apiome.properties pr
   JOIN apiome.projects p ON p.id = pr.project_id
-  WHERE p.tenant_id::text = $1
+  WHERE p.tenant_id = $1::uuid
     AND (p.id::text = $2 OR p.slug = $2)
     AND pr.id = ANY($3::uuid[])`;
 

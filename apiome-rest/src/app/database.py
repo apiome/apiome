@@ -9982,7 +9982,7 @@ class Database:
               AND p.tenant_id = %s
               AND v.deleted_at IS NULL
               AND p.deleted_at IS NULL
-            ORDER BY v.created_at DESC
+            ORDER BY v.created_at DESC NULLS LAST, v.id DESC
             LIMIT 1
         """
         results = self.execute_query(query, (project_id, tenant_id))
@@ -11696,13 +11696,15 @@ class Database:
             source: ``web`` or ``api_key``.
             detail: Structured JSON context.
         """
+        # Two sargable branches instead of ``IS NOT DISTINCT FROM`` (which no index can serve).
+        tenant_predicate = "tenant_id = %s::uuid" if tenant_id is not None else "tenant_id IS NULL"
         cursor.execute(
-            """
+            f"""
             SELECT entry_hash FROM apiome.access_audit
-            WHERE tenant_id IS NOT DISTINCT FROM %s::uuid
+            WHERE {tenant_predicate}
             ORDER BY created_at DESC, id DESC LIMIT 1
             """,
-            (tenant_id,),
+            (tenant_id,) if tenant_id is not None else (),
         )
         prev_row = cursor.fetchone()
         prev_hash = prev_row["entry_hash"] if prev_row else None
@@ -14961,7 +14963,7 @@ class Database:
                 SELECT v.id, v.parent_version_id, v.merge_parent_version_id, v.created_at, v.version_id
                 FROM apiome.versions v
                 JOIN apiome.projects p ON p.id = v.project_id
-                WHERE v.id::text = ANY(%s)
+                WHERE v.id = ANY(%s::uuid[])
                   AND p.tenant_id = %s
                   AND v.deleted_at IS NULL
                   AND p.deleted_at IS NULL
@@ -15693,8 +15695,8 @@ class Database:
                     v.merge_parent_version_id::text AS merge_parent_revision_id
                 FROM apiome.versions v
                 JOIN branch_ancestors a
-                  ON v.id::text = a.parent_revision_id
-                  OR v.id::text = a.merge_parent_revision_id
+                  ON v.id = a.parent_revision_id::uuid
+                  OR v.id = a.merge_parent_revision_id::uuid
                 WHERE v.project_id = %s
                   AND v.deleted_at IS NULL
             ),
@@ -15716,16 +15718,16 @@ class Database:
                     v.merge_parent_version_id::text AS merge_parent_revision_id
                 FROM apiome.versions v
                 JOIN against_ancestors a
-                  ON v.id::text = a.parent_revision_id
-                  OR v.id::text = a.merge_parent_revision_id
+                  ON v.id = a.parent_revision_id::uuid
+                  OR v.id = a.merge_parent_revision_id::uuid
                 WHERE v.project_id = %s
                   AND v.deleted_at IS NULL
             ),
             merge_base AS (
                 SELECT v.id::text AS revision_id, v.created_at
                 FROM apiome.versions v
-                JOIN branch_ancestors ba ON ba.revision_id = v.id::text
-                JOIN against_ancestors aa ON aa.revision_id = v.id::text
+                JOIN branch_ancestors ba ON v.id = ba.revision_id::uuid
+                JOIN against_ancestors aa ON v.id = aa.revision_id::uuid
                 WHERE v.project_id = %s
                   AND v.deleted_at IS NULL
                 ORDER BY v.created_at DESC, v.id DESC
@@ -15737,7 +15739,7 @@ class Database:
                     v.parent_version_id::text AS parent_revision_id,
                     v.merge_parent_version_id::text AS merge_parent_revision_id
                 FROM apiome.versions v
-                JOIN merge_base mb ON v.id::text = mb.revision_id
+                JOIN merge_base mb ON v.id = mb.revision_id::uuid
                 UNION
                 SELECT
                     v.id::text AS revision_id,
@@ -15745,8 +15747,8 @@ class Database:
                     v.merge_parent_version_id::text AS merge_parent_revision_id
                 FROM apiome.versions v
                 JOIN merge_base_ancestors mba
-                  ON v.id::text = mba.parent_revision_id
-                  OR v.id::text = mba.merge_parent_revision_id
+                  ON v.id = mba.parent_revision_id::uuid
+                  OR v.id = mba.merge_parent_revision_id::uuid
                 WHERE v.project_id = %s
                   AND v.deleted_at IS NULL
             ),
@@ -15880,7 +15882,7 @@ class Database:
             FROM apiome.versions v
             JOIN apiome.projects p ON v.project_id = p.id
             WHERE v.project_id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL
-            ORDER BY v.created_at ASC
+            ORDER BY v.created_at ASC NULLS FIRST, v.id ASC
         """
         rows = self.execute_query(q, (project_id, tenant_id))
         labels: List[str] = []
@@ -15899,7 +15901,7 @@ class Database:
             FROM apiome.versions v
             JOIN apiome.projects p ON v.project_id = p.id
             WHERE v.project_id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL
-            ORDER BY v.created_at DESC
+            ORDER BY v.created_at DESC NULLS LAST, v.id DESC
             LIMIT 1
         """
         rows = self.execute_query(q, (project_id, tenant_id))
@@ -17277,7 +17279,7 @@ class Database:
                         SELECT v.id::text AS id
                         FROM apiome.versions v
                         WHERE v.project_id = %s AND v.deleted_at IS NULL
-                        ORDER BY v.created_at DESC
+                        ORDER BY v.created_at DESC NULLS LAST, v.id DESC
                         LIMIT 1
                         """,
                         (project_id,),
@@ -32849,7 +32851,7 @@ class Database:
             FROM apiome.versions v
             JOIN apiome.projects p ON p.id = v.project_id
             JOIN apiome.tenants t ON t.id = p.tenant_id
-            WHERE v.id = %s::uuid AND p.tenant_id::text = %s AND v.deleted_at IS NULL
+            WHERE v.id = %s::uuid AND p.tenant_id = %s::uuid AND v.deleted_at IS NULL
             """,
             (str(version_id), str(tenant_id)),
         )
@@ -32932,7 +32934,7 @@ class Database:
             FROM apiome.versions v
             JOIN apiome.projects p ON p.id = v.project_id
             JOIN apiome.document_objects o ON o.id = %s::uuid AND o.tenant_id = p.tenant_id::text
-            WHERE v.id = %s::uuid AND p.tenant_id::text = %s
+            WHERE v.id = %s::uuid AND p.tenant_id = %s::uuid
             ON CONFLICT ON CONSTRAINT version_documents_slot_key
                 DO UPDATE SET object_id = EXCLUDED.object_id
             """,

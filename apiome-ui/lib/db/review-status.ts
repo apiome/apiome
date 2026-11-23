@@ -69,8 +69,8 @@ export const OPEN_REVIEWS_SQL = `
     JOIN apiome.projects p ON p.id = r.project_id
     JOIN apiome.versions v ON v.id = r.version_id
     LEFT JOIN apiome.review_reviewers rr ON rr.review_id = r.id AND rr.round = r.round
-   WHERE r.tenant_id::text = $1
-     AND p.tenant_id::text = $1
+   WHERE r.tenant_id = $1::uuid
+     AND p.tenant_id = $1::uuid
      AND p.deleted_at IS NULL
      AND v.deleted_at IS NULL
      AND r.closed_at IS NULL
