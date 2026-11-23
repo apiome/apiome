@@ -10,6 +10,8 @@ file browser filters with (the two must agree, or the header count and the list 
 """
 
 import inspect
+import re
+from pathlib import Path
 
 import pytest
 
@@ -96,3 +98,25 @@ def test_every_sql_consumer_uses_the_shared_predicate() -> None:
     ):
         src = inspect.getsource(method)
         assert "REPOSITORY_FILE_IMPORTABLE_SQL" in src
+
+
+def test_the_stored_importable_column_matches_the_sql_mirror() -> None:
+    """apiome-db V420 stores this predicate as ``tenant_repository_files.is_importable``.
+
+    The quality sweep filters on that column (DBP-1.12, #7195), so it must admit exactly the rows
+    the shared predicate admits: the generated expression is the constant with ``%%`` unescaped
+    and the ``f.`` alias dropped.
+    """
+    migration = (
+        Path(__file__).resolve().parents[2]
+        / "apiome-db"
+        / "scripts"
+        / "V420__repository_file_importable_column_7195.sql"
+    ).read_text()
+    match = re.search(r"GENERATED ALWAYS AS \(COALESCE\((.*?), false\)\) STORED", migration, re.S)
+    assert match, "V420 no longer defines is_importable as COALESCE(<predicate>, false)"
+
+    def normalize(sql: str) -> str:
+        return " ".join(sql.replace("%%", "%").replace("f.", "").split())
+
+    assert normalize(match.group(1)) == normalize(REPOSITORY_FILE_IMPORTABLE_SQL)

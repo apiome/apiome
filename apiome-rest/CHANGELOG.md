@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.822.0] - 2026-11-22
+
+### Performance
+- **Foreign-key index coverage and redundant-index cleanup (DBP-1.12, #7195).** OpenAPI 1.646.0 (version only; no
+  schema change). Needs `apiome-db` V418–V421. Measured on the DBP-1.1 scale database (1.0M classes):
+  - **Deleting a version or project:** 166 foreign keys gain an index the referential check can use (47 of them
+    partial on `<column> IS NOT NULL`, which costs nothing for rows that leave the column empty), replacing 31
+    partial indexes the check could not use. In the REST hard-delete sequence, `classes_version_id_fkey` drops from
+    26.9 to 0.07 ms for one version and from 224 to 2.2 ms for a ten-version project (the final project
+    DELETE 354 → 121 ms). With sequential scans disabled, no constraint trigger of either delete falls back to one.
+  - **Schema test:** `apiome-db` fails CI when a foreign key has no usable index and is not in
+    `test/foreign-key-index-allowlist.json`. The 222 references to `users` are listed there on purpose: users are
+    hard-deleted only by `apiome-db users delete`, which accepts the scan.
+  - **Cleanup:** 30 indexes dropped: 5 that a wider index with the same predicate already covers, 24 single-column
+    boolean / `deleted_at` indexes that nothing scanned in the plan check plus the REST database suites run on the
+    scale database, and the unused GIN index on `consumer_contract.surface_pointers`.
+  - **Repository quality sweep:** `claim_repository_files_for_quality_scoring` filters on the new stored column
+    `tenant_repository_files.is_importable` (the `REPOSITORY_FILE_IMPORTABLE_SQL` predicate), so its partial index
+    no longer holds every never-scored non-spec file. With 200,000 files of which every spec is scored, a sweep tick
+    went from 193 ms and 42,093 buffers to 0.01 ms and 1 buffer.
+  - **Usage tables:** `usage_hourly` and `usage_daily` gain an identity `id` primary key; the grain constraints the
+    ingest upsert targets are unchanged.
+  - **Insert throughput** (20,000 rows, median of 5, tables vacuumed between runs): `versions` 2,926 → 2,675 / 2,632 ms
+    (three fewer indexes), `classes` 3,784 → 3,726 / 3,807 ms (unchanged within noise), `projects` 532 → 506 /
+    435 ms (before, then the after set measured either side of it).
+  - **Upgrading a large database:** V420 and V421 rewrite their tables (see **Operating Apiome** → *Upgrade a large
+    database without blocking writes*).
+
 ## [1.821.0] - 2026-11-22
 
 ### Performance

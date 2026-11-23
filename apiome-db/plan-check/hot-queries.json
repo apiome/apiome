@@ -257,6 +257,14 @@
         "scale:tenant:0",
         "scale:project:0"
       ]
+    },
+    {
+      "name": "db.version_delete_classes_fk_check",
+      "source": "PostgreSQL's referential check for classes_version_id_fkey, run once per deleted version (Database.permanently_delete_project; DBP-1.12, #7195: a scan of classes until V418 indexed version_id without the deleted_at predicate)",
+      "sql": "SELECT 1 FROM ONLY apiome.classes x WHERE $1::uuid OPERATOR(pg_catalog.=) version_id FOR KEY SHARE OF x",
+      "params": [
+        "scale:version:0"
+      ]
     }
   ]
 }
