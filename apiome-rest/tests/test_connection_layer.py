@@ -172,8 +172,16 @@ def test_an_async_sweep_tick_releases_every_worker_threads_connection(opened) ->
     sweep_db = sweep_database()
 
     async def _tick() -> None:
+        # Three worker threads each hold a connection at once (the barrier makes the thread count
+        # the same on every tick instead of depending on how fast the executor reuses a thread).
+        barrier = threading.Barrier(3, timeout=10)
+
+        def _connect() -> None:
+            thread_db.connect()
+            barrier.wait()
+
         async with async_sweep_tick(sweep_db) as thread_db:
-            await asyncio.gather(*(asyncio.to_thread(thread_db.connect) for _ in range(3)))
+            await asyncio.gather(*(asyncio.to_thread(_connect) for _ in range(3)))
 
     asyncio.run(_tick())
     first = len(opened)

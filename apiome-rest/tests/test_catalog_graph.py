@@ -161,7 +161,7 @@ class _Cursor:
 
 def test_the_in_transaction_hook_runs_under_a_savepoint(monkeypatch) -> None:
     seen: List[tuple] = []
-    monkeypatch.setattr(graph, "materialize_on_cursor", lambda cursor, tenant, fams: seen.append((tenant, fams)))
+    monkeypatch.setattr(graph, "materialize_on_cursor", lambda cursor, tenant, fams, scope=None: seen.append((tenant, fams)))
     cursor = _Cursor()
     Database._materialize_graph(cursor, _TENANT, ("consumes",))
     assert seen == [(_TENANT, ("consumes",))]
@@ -190,7 +190,7 @@ def test_hooks_skip_a_tenant_that_is_not_an_id(monkeypatch, tenant) -> None:
 def test_a_post_write_refresh_swallows_faults(monkeypatch) -> None:
     calls: List[tuple] = []
 
-    def _materialize(db, tenant, trigger, families):
+    def _materialize(db, tenant, trigger, families=None, *, confirm_all=False):
         calls.append((tenant, trigger, families))
         raise RuntimeError("graph down")
 
@@ -275,7 +275,7 @@ def test_the_sweep_skips_when_another_replica_holds_the_lock(monkeypatch) -> Non
 def test_the_sweep_materializes_every_tenant_and_survives_one_failure(monkeypatch) -> None:
     done: List[tuple] = []
 
-    def _materialize(db, tenant, trigger, families=None):
+    def _materialize(db, tenant, trigger, families=None, *, confirm_all=False):
         if tenant == "b":
             raise RuntimeError("tenant b is broken")
         done.append((tenant, trigger, families))

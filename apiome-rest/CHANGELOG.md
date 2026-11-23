@@ -6,6 +6,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.828.0] - 2026-11-23
+
+### Performance
+- **Sweeps and queues: indexed due-selection, delivery throughput, scoped graph materialization
+  (DBP-1.18, #7201).** OpenAPI 1.652.0 (version only; no route or schema change). Measured with
+  `EXPLAIN ANALYZE` (best of 5, `jit = off`) on the scale database plus a hand-added sweep fixture
+  — the scale seed fills none of these tables: 52,000 MCP endpoints with 1,000,000 health checks
+  and 1,000,000 finished discovery jobs, 50,000 repositories with 10,000 branch rules, 500,000
+  delivered export webhook runs and 500,000 delivered push events, one tenant with 40,000 scored
+  snapshots, and one tenant with 5,000 consumers (20,000 `consumes` edges). Idle state: nothing due.
+  - **Indexed due-selection.** Migration `V426` stores when each row next falls due —
+    `mcp_endpoints.discovery_due_at`, `tenant_repositories.refresh_due_at` (with the shortest enabled
+    branch rule folded in), `mcp_catalog_digest_configs.digest_due_at` — kept by triggers, and
+    `mcp_endpoints.last_health_checked_at`, written with each probe. Each due query is now a range
+    scan of a partial index that stops after one batch: discovery 10.1 → 0.20 ms (2,558 → 18
+    buffers), health 120 → 0.04 ms (143,521 → 8 buffers; no `max(checked_at)` per endpoint),
+    repositories 58.5 → 0.006 ms (111,821 → 2 buffers). Endpoints and digests on the global default
+    cadence are a second ordered branch on `COALESCE(last_*, '-infinity')`.
+  - **Batches per tick.** `APIOME_MCP_DISCOVERY_MAX_PER_TICK` (500), `APIOME_MCP_DIGEST_MAX_PER_TICK`
+    (200) and `APIOME_REFRESH_MAX_PER_TICK` (200) bound each selection; what is still due runs on the
+    next tick, most overdue first.
+  - **Webhook delivery.** Both queues are claimed in batches
+    (`claim_due_push_webhook_deliveries`, `claim_due_export_webhook_deliveries`) and delivered on a
+    bounded worker pool (`app/sweep_worker_pool.py`) that drains the queue before the loop sleeps:
+    `APIOME_WEBHOOK_DELIVERY_WORKERS` (8), `APIOME_WEBHOOK_DELIVERY_PER_TENANT` (2),
+    `APIOME_WEBHOOK_DELIVERY_BATCH_SIZE` (50), `APIOME_WEBHOOK_DELIVERY_TICK_SECONDS` (60). Against a
+    local stub receiver: 400 deliveries in 5.2 s, about 4,600 a minute (was at most 40 a minute: 10
+    per 15-second tick, one POST at a time). A receiver that takes 1.5 s holds only its own tenant's
+    two workers; every other tenant's events were delivered before it answered once. The export
+    claim is two ordered statements (stale attempts, then due runs) on their own partial indexes
+    instead of one `OR` sorted by `COALESCE(next_attempt_at, updated_at)`.
+  - **Repository refresh.** Up to `APIOME_REFRESH_SWEEP_CONCURRENCY` (4) repositories refresh at once
+    on worker threads, one tenant's repositories one after another so its polling quota stays exact.
+  - **Scoped graph materialization.** An in-transaction re-derivation (consumer contract, consumer
+    delete, conversion, repository delete, draft binding, API product) covers only the node it changed
+    (`catalog_graph.GraphScope`), and the upsert skips edges whose evidence is unchanged
+    (`IS DISTINCT FROM`). One consumer-contract write in the 5,000-consumer tenant: 479 → 1.4 ms, and
+    20,001 → 4 edge rows written. Stale edges are found by comparing with the derived set; the nightly
+    sweep still re-derives every family and refreshes `last_seen_at` on every current edge. The result
+    of `materialize_on_cursor` gains a `written` count.
+  - **Whole-table prunes.** `prune_schema_suite_runs_by_age` reads only runs older than the cutoff and
+    checks each suite's newest with a bounded probe instead of ranking every run. Digest grade movements
+    rank only the window's snapshots (a backwards probe for each one's previous score) — 72.7 → 10.0 ms,
+    163,566 → 10,558 buffers — with a new `(endpoint_id, COALESCE(discovered_at, created_at))` index.
+  - **Retention.** New `app/operational_retention_sweep.py` on the 5-minute retention tick: finished
+    MCP discovery jobs older than `APIOME_MCP_DISCOVERY_JOB_RETENTION_DAYS` (30) are deleted, keeping
+    each endpoint's `APIOME_MCP_DISCOVERY_JOB_KEEP_PER_ENDPOINT` (20) newest, in bounded windows that
+    resume across ticks (one window: 1.5 ms with every expired job kept; the unbounded form took 7.8 s);
+    Slate logs, traces, live-tail sessions, synthetic results, security events and function invocations
+    past their `retain_until` are deleted in batches of `APIOME_SLATE_RETENTION_BATCH_SIZE` (5,000).
+  - Not measured: the quality-scoring claim (already index-driven since DBP-1.12, `V420`) and the
+    repository file-scan sweep (unchanged, one job per 5-second tick).
+
 ## [1.827.0] - 2026-11-23
 
 ### Performance

@@ -160,7 +160,11 @@ def process_mcp_catalog_digest_sweep(db: Any) -> int:
 
     default_cadence = int(settings.mcp_digest_default_cadence_seconds)
     delivered_total = 0
-    for due_row in db.list_due_mcp_catalog_digests(default_cadence_seconds=default_cadence):
+    due_rows = db.list_due_mcp_catalog_digests(
+        default_cadence_seconds=default_cadence,
+        limit=max(1, int(settings.mcp_digest_max_per_tick)),
+    )
+    for due_row in due_rows:
         tenant_id = str(due_row["tenant_id"])
 
         if not db.try_acquire_mcp_catalog_digest_lock(tenant_id):

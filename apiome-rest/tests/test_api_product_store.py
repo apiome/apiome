@@ -236,7 +236,7 @@ def tenant(monkeypatch) -> _Tenant:
     monkeypatch.setattr(store.db, "_guarded_tx", guarded_tx)
     monkeypatch.setattr(store.db, "_append_access_audit", lambda cursor, **kw: state.audit.append(kw))
     monkeypatch.setattr(
-        store.db, "_materialize_graph", lambda cursor, tenant_id, families: state.materialized.append(list(families))
+        store.db, "_materialize_graph", lambda cursor, tenant_id, families, scope=None: state.materialized.append(list(families))
     )
     return state
 

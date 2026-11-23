@@ -24,6 +24,7 @@ from .axis_score import (
     mcp_axis_evaluation,
 )
 from . import authz_cache
+from .catalog_graph import GraphScope
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS, settings
 from .db_bulk import DEFAULT_PAGE_SIZE as DEFAULT_BULK_PAGE_SIZE
 from .db_bulk import bulk_insert as _bulk_insert
@@ -1255,7 +1256,9 @@ class Database:
             conn.autocommit = prev_autocommit
 
     @staticmethod
-    def _materialize_graph(cursor: Any, tenant_id: Optional[str], families: Sequence[str]) -> None:
+    def _materialize_graph(
+        cursor: Any, tenant_id: Optional[str], families: Sequence[str], scope: Optional[Any] = None
+    ) -> None:
         """Re-derive catalog-graph edge families inside the caller's transaction (CDG-3.1, #5966).
 
         A producer that writes a graph source row (a consumer contract, a conversion, a repository
@@ -1263,18 +1266,25 @@ class Database:
         savepoint: a graph fault is logged and rolled back to the savepoint and never fails the
         producer's own write — the nightly sweep repairs what it missed.
 
+        Pass the node the write changed as ``scope`` (DBP-1.18, #7201): only the edges at that node
+        are re-derived, so the write's cost no longer grows with the tenant's whole edge family.
+
         Args:
             cursor: The open transaction's cursor.
             tenant_id: The tenant whose edges to re-derive.
             families: The edge families the write affects (``consumes``, ``served_by``, …).
+            scope: A :class:`app.catalog_graph.GraphScope`, or ``None`` for the whole tenant.
+                A scope whose node id is not a UUID skips the work (nothing can point at it).
         """
         if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return
+        if scope is not None and not is_uuid_string(str(scope.node_id or "")):
             return
         from .catalog_graph import materialize_on_cursor
 
         cursor.execute("SAVEPOINT catalog_graph")
         try:
-            materialize_on_cursor(cursor, str(tenant_id), families)
+            materialize_on_cursor(cursor, str(tenant_id), families, scope=scope)
             cursor.execute("RELEASE SAVEPOINT catalog_graph")
         except Exception:
             cursor.execute("ROLLBACK TO SAVEPOINT catalog_graph")
@@ -7531,25 +7541,34 @@ class Database:
             older_than: Exclusive cutoff — older runs beyond the immune set are removed.
             keep_min: Newest runs per suite kept regardless of age (clamped to >= 0).
 
+        Only runs older than the cutoff are read (``idx_schema_test_suite_runs_created_at``); each
+        is kept when fewer than ``keep_min`` newer runs of its suite exist, a probe of
+        ``(suite_id, created_at DESC)`` that stops at ``keep_min`` rows. The ranking over every run
+        of every suite it replaces read the whole table on each tick (DBP-1.18, #7201).
+
         Returns:
             The number of runs deleted.
         """
+        keep = max(0, int(keep_min))
+        if keep == 0:
+            return self._execute_write(
+                "DELETE FROM apiome.schema_test_suite_runs WHERE created_at < %s",
+                (older_than,),
+            )
         return self._execute_write(
             """
-            DELETE FROM apiome.schema_test_suite_runs
-            WHERE id IN (
-                SELECT id FROM (
-                    SELECT id, created_at,
-                           ROW_NUMBER() OVER (
-                               PARTITION BY suite_id
-                               ORDER BY created_at DESC, id DESC
-                           ) AS newest_rank
-                    FROM apiome.schema_test_suite_runs
-                ) ranked
-                WHERE ranked.newest_rank > %s AND ranked.created_at < %s
-            )
+            DELETE FROM apiome.schema_test_suite_runs r
+            WHERE r.created_at < %s
+              AND EXISTS (
+                  SELECT 1
+                  FROM apiome.schema_test_suite_runs n
+                  WHERE n.suite_id = r.suite_id
+                    AND (n.created_at > r.created_at OR (n.created_at = r.created_at AND n.id > r.id))
+                  ORDER BY n.created_at DESC
+                  OFFSET %s LIMIT 1
+              )
             """,
-            (max(0, int(keep_min)), older_than),
+            (older_than, keep - 1),
         )
 
     def get_effective_role_slug(self, tenant_id: str, user_id: str) -> Optional[str]:
@@ -16540,8 +16559,11 @@ class Database:
             with conn.cursor() as cursor:
                 cursor.execute(query, params)
                 result = cursor.fetchone()
-                # CDG-3.1: the converted project's `converted_from` edge.
-                self._materialize_graph(cursor, tenant_id, ("converted_from",))
+                # CDG-3.1: the converted project's `converted_from` edge (only that project's, #7201).
+                if target_project_id:
+                    self._materialize_graph(
+                        cursor, tenant_id, ("converted_from",), GraphScope.project(str(target_project_id))
+                    )
                 conn.commit()
                 return result
         except Exception as e:
@@ -18832,9 +18854,32 @@ class Database:
     def get_next_due_push_webhook_delivery(self) -> Optional[Dict[str, Any]]:
         """Atomically claim and return one due event joined with subscription URL and ciphertext, or None.
 
-        A direct-URL delivery (CDG-2.3 team chat, no subscription) comes back with ``target_url`` set,
-        ``subscription_url`` equal to it, ``subscription_active`` true and no signing secret.
+        A one-row :meth:`claim_due_push_webhook_deliveries`.
         """
+        rows = self.claim_due_push_webhook_deliveries(limit=1)
+        return rows[0] if rows else None
+
+    def claim_due_push_webhook_deliveries(
+        self, *, limit: int, exclude_tenant_ids: Sequence[str] = ()
+    ) -> List[Dict[str, Any]]:
+        """Atomically claim up to ``limit`` due events with their subscription URL and ciphertext.
+
+        Claimed events move to ``processing`` under ``FOR UPDATE SKIP LOCKED``, oldest
+        ``next_retry_at`` first, through ``idx_push_webhook_delivery_events_due``. A direct-URL
+        delivery (CDG-2.3 team chat, no subscription) comes back with ``target_url`` set,
+        ``subscription_url`` equal to it, ``subscription_active`` true and no signing secret.
+        Batch claims feed the delivery worker pool (DBP-1.18, #7201).
+
+        Args:
+            limit: The most events claimed; values below 1 count as 1.
+            exclude_tenant_ids: Tenants whose events are skipped this time (the pool's saturated
+                tenants); malformed ids are ignored.
+
+        Returns:
+            The claimed events, oldest first; empty when nothing is due.
+        """
+        batch = max(1, int(limit))
+        excluded = [str(t) for t in exclude_tenant_ids if is_uuid_string(str(t or ""))]
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
@@ -18851,9 +18896,10 @@ class Database:
                           AND e.next_retry_at IS NOT NULL
                           AND e.next_retry_at <= CURRENT_TIMESTAMP
                           AND e.attempt_count < %s
+                          AND NOT (e.tenant_id = ANY(%s::uuid[]))
                         ORDER BY e.next_retry_at ASC
                         FOR UPDATE OF e SKIP LOCKED
-                        LIMIT 1
+                        LIMIT %s
                     ),
                     claimed_event AS (
                         UPDATE apiome.push_webhook_delivery_events e
@@ -18889,15 +18935,16 @@ class Database:
                     LEFT JOIN apiome.push_webhook_subscriptions s
                       ON s.id = ce.subscription_id
                      AND s.deleted_at IS NULL
+                    ORDER BY ce.next_retry_at ASC
                     """,
-                    (WEBHOOK_MAX_DELIVERY_ATTEMPTS,),
+                    (WEBHOOK_MAX_DELIVERY_ATTEMPTS, excluded, batch),
                 )
-                row = cursor.fetchone()
-                if row:
+                rows = [dict(row) for row in cursor.fetchall() or []]
+                if rows:
                     conn.commit()
-                    return dict(row)
-                conn.rollback()
-                return None
+                else:
+                    conn.rollback()
+                return rows
         except Exception:
             conn.rollback()
             raise
@@ -20050,6 +20097,7 @@ class Database:
         self,
         *,
         floor_seconds: Optional[int] = None,
+        limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """Return repositories due for an auto-refresh sweep tick (RAR-3.1).
 
@@ -20079,14 +20127,22 @@ class Database:
         then refreshes only the branches whose own cadence has elapsed
         (:mod:`app.repository_branch_refresh_policy`).
 
+        Indexed selection (DBP-1.18, #7201): the repository's own and branch-rule cadences are
+        folded into the stored ``refresh_due_at`` (apiome-db V426, kept by triggers on the
+        repository and its rules), so the query is a range scan of
+        ``idx_tenant_repositories_refresh_due`` that stops after ``limit`` rows. The global floor
+        is still applied here, as a filter on the anchor.
+
         Args:
             floor_seconds: The global minimum interval; per-repo values below it
                 are treated as the floor. Defaults to
                 ``settings.refresh_min_interval_seconds`` when omitted.
+            limit: The most repositories returned (one tick's batch). Defaults to
+                ``settings.refresh_max_per_tick``; values below 1 are treated as 1.
 
         Returns:
-            Repository rows due for refresh, oldest ``last_refreshed_at`` first
-            (NULLs — never refreshed — first) for fair scheduling.
+            Repository rows due for refresh, most overdue first (never refreshed first)
+            for fair scheduling.
         """
         from .config import settings
         from .repository_refresh_cadence import DEFAULT_MIN_REFRESH_INTERVAL_SECONDS
@@ -20094,6 +20150,7 @@ class Database:
         floor = floor_seconds if floor_seconds is not None else settings.refresh_min_interval_seconds
         if floor < 1:
             floor = DEFAULT_MIN_REFRESH_INTERVAL_SECONDS
+        batch = max(1, int(limit if limit is not None else settings.refresh_max_per_tick))
 
         q = """
             SELECT id, tenant_id, source, provider, clone_url, repository_full_name,
@@ -20105,30 +20162,15 @@ class Database:
             FROM apiome.tenant_repositories
             WHERE deleted_at IS NULL
               AND status IN ('ready', 'error')
-              AND auto_refresh_enabled = TRUE
+              AND auto_refresh_enabled
               AND refresh_paused_at IS NULL
+              AND refresh_due_at <= now()
               AND (refresh_backoff_until IS NULL OR refresh_backoff_until <= now())
-              AND (
-                last_refreshed_at IS NULL
-                OR last_refreshed_at <= now() - make_interval(
-                     secs => GREATEST(
-                       LEAST(
-                         refresh_interval_seconds,
-                         COALESCE(
-                           (SELECT MIN(COALESCE(r.refresh_interval_seconds, tenant_repositories.refresh_interval_seconds))
-                              FROM apiome.repository_branch_refresh_rule r
-                             WHERE r.repository_id = tenant_repositories.id
-                               AND r.refresh_enabled),
-                           refresh_interval_seconds
-                         )
-                       ),
-                       %s
-                     )
-                   )
-              )
-            ORDER BY last_refreshed_at ASC NULLS FIRST, created_at ASC
+              AND (last_refreshed_at IS NULL OR last_refreshed_at <= now() - make_interval(secs => %s))
+            ORDER BY refresh_due_at ASC, created_at ASC
+            LIMIT %s
         """
-        return self.execute_query(q, (floor,))
+        return self.execute_query(q, (floor, batch))
 
     def mark_repository_refreshed(self, repository_id: str) -> bool:
         """Advance a repository's ``last_refreshed_at`` to now (RAR-3.1).
@@ -23991,7 +24033,7 @@ class Database:
                 cursor, tenant_id=tenant_id, repository_id=repository_id
             )
             # CDG-3.1: specs and bindings that pointed at this repository stop serving.
-            self._materialize_graph(cursor, tenant_id, ("served_by",))
+            self._materialize_graph(cursor, tenant_id, ("served_by",), GraphScope.repository(repository_id))
             return True
 
         return bool(self._guarded_tx(work))
@@ -26513,7 +26555,7 @@ class Database:
             raise e
 
     def list_due_mcp_catalog_digests(
-        self, *, default_cadence_seconds: int
+        self, *, default_cadence_seconds: int, limit: int = 200
     ) -> List[Dict[str, Any]]:
         """Return tenants due for a scheduled catalog digest, with their window bounds (MCAT-19.5).
 
@@ -26530,9 +26572,14 @@ class Database:
         these bounds to the window reads and marks ``last_digest_at = window_end`` after delivery, so
         successive windows abut with neither gap nor overlap.
 
+        Indexed selection (DBP-1.18, #7201): a tenant with its own cadence is read in
+        ``digest_due_at`` order (apiome-db V426, kept by a trigger), a tenant on the global default
+        through ``COALESCE(last_digest_at, '-infinity')``; each branch stops after ``limit`` rows.
+
         Args:
             default_cadence_seconds: Global fallback cadence (seconds) for tenants with no explicit
                 ``cadence_seconds``.
+            limit: The most tenants returned (one tick's batch); values below 1 are treated as 1.
 
         Returns:
             ``{tenant_id, tenant_slug, window_start, window_end, send_empty}`` rows, oldest anchor
@@ -26541,6 +26588,7 @@ class Database:
         cadence = int(default_cadence_seconds)
         if cadence < 1:
             cadence = 1
+        batch = max(1, int(limit))
         q = """
             SELECT c.tenant_id,
                    t.slug AS tenant_slug,
@@ -26550,19 +26598,27 @@ class Database:
                    ) AS window_start,
                    now() AS window_end,
                    c.send_empty
-            FROM apiome.mcp_catalog_digest_configs c
+            FROM (
+                (SELECT tenant_id, cadence_seconds, last_digest_at, send_empty, created_at
+                 FROM apiome.mcp_catalog_digest_configs
+                 WHERE enabled AND cadence_seconds IS NULL
+                   AND COALESCE(last_digest_at, '-infinity'::timestamptz)
+                       <= now() - make_interval(secs => %s)
+                 ORDER BY COALESCE(last_digest_at, '-infinity'::timestamptz)
+                 LIMIT %s)
+                UNION ALL
+                (SELECT tenant_id, cadence_seconds, last_digest_at, send_empty, created_at
+                 FROM apiome.mcp_catalog_digest_configs
+                 WHERE enabled AND cadence_seconds IS NOT NULL AND digest_due_at <= now()
+                 ORDER BY digest_due_at
+                 LIMIT %s)
+            ) c
             JOIN apiome.tenants t ON t.id = c.tenant_id
-            WHERE c.enabled = TRUE
-              AND t.deleted_at IS NULL
-              AND (
-                c.last_digest_at IS NULL
-                OR c.last_digest_at <= now() - make_interval(
-                     secs => COALESCE(c.cadence_seconds, %s)
-                   )
-              )
+            WHERE t.deleted_at IS NULL
             ORDER BY c.last_digest_at ASC NULLS FIRST, c.created_at ASC
+            LIMIT %s
         """
-        return self.execute_query(q, (cadence, cadence))
+        return self.execute_query(q, (cadence, cadence, batch, batch, batch))
 
     def mark_mcp_catalog_digest_sent(self, tenant_id: str, sent_at: Any) -> bool:
         """Advance a tenant's digest anchor to the window end after a digest is processed (MCAT-19.5).
@@ -26664,12 +26720,12 @@ class Database:
     ) -> List[Dict[str, Any]]:
         """Endpoints whose quality grade changed between consecutive snapshots in ``(since, until]`` (MCAT-19.5).
 
-        Uses a window function over every scored snapshot of each of the tenant's live endpoints to
-        pair each snapshot's grade with the previous scored snapshot's grade (``LAG`` over
-        ``version_seq``), then keeps only transitions whose *newer* snapshot was discovered within
-        the window and whose grade actually differs. Computing ``LAG`` over the full history (not just
-        the window) is what makes "the previous grade" correct even when the prior snapshot predates
-        the window. Feeds the digest's "grade movements" section.
+        Reads the scored snapshots of the tenant's live endpoints discovered within the window and
+        pairs each with the previous scored snapshot of its endpoint — found by a backwards probe of
+        ``(endpoint_id, version_seq)``, so it is correct even when that snapshot predates the window
+        — then keeps only transitions whose grade actually differs. Only the window's snapshots are
+        read; the ``LAG`` over every snapshot of every endpoint it replaces did not scale with the
+        window (DBP-1.18, #7201). Feeds the digest's "grade movements" section.
 
         Args:
             tenant_id: The owning tenant id (scopes the read for isolation).
@@ -26681,36 +26737,33 @@ class Database:
             prev_grade, new_grade}`` rows, newest movement first.
         """
         q = """
-            WITH graded AS (
-                SELECT v.endpoint_id,
-                       v.version_seq,
-                       v.version_tag,
-                       COALESCE(v.discovered_at, v.created_at) AS moved_at,
-                       s.grade AS grade,
-                       LAG(s.grade) OVER (
-                         PARTITION BY v.endpoint_id ORDER BY v.version_seq
-                       ) AS prev_grade
-                FROM apiome.mcp_endpoint_versions v
-                JOIN apiome.mcp_version_scores s ON s.version_id = v.id
-                JOIN apiome.mcp_endpoints e ON e.id = v.endpoint_id
-                WHERE e.tenant_id = %s::uuid
-                  AND e.deleted_at IS NULL
-            )
-            SELECT g.endpoint_id,
+            SELECT v.endpoint_id,
                    e.name AS endpoint_name,
                    e.slug AS endpoint_slug,
-                   g.version_seq,
-                   g.version_tag,
-                   g.moved_at,
-                   g.prev_grade,
-                   g.grade AS new_grade
-            FROM graded g
-            JOIN apiome.mcp_endpoints e ON e.id = g.endpoint_id
-            WHERE g.prev_grade IS NOT NULL
-              AND g.grade IS DISTINCT FROM g.prev_grade
-              AND g.moved_at > %s
-              AND g.moved_at <= %s
-            ORDER BY g.moved_at DESC, e.slug ASC
+                   v.version_seq,
+                   v.version_tag,
+                   COALESCE(v.discovered_at, v.created_at) AS moved_at,
+                   prev.grade AS prev_grade,
+                   s.grade AS new_grade
+            FROM apiome.mcp_endpoints e
+            JOIN apiome.mcp_endpoint_versions v ON v.endpoint_id = e.id
+            JOIN apiome.mcp_version_scores s ON s.version_id = v.id
+            CROSS JOIN LATERAL (
+                SELECT ps.grade
+                FROM apiome.mcp_endpoint_versions pv
+                JOIN apiome.mcp_version_scores ps ON ps.version_id = pv.id
+                WHERE pv.endpoint_id = v.endpoint_id
+                  AND pv.version_seq < v.version_seq
+                ORDER BY pv.version_seq DESC
+                LIMIT 1
+            ) prev
+            WHERE e.tenant_id = %s::uuid
+              AND e.deleted_at IS NULL
+              AND COALESCE(v.discovered_at, v.created_at) > %s
+              AND COALESCE(v.discovered_at, v.created_at) <= %s
+              AND prev.grade IS NOT NULL
+              AND s.grade IS DISTINCT FROM prev.grade
+            ORDER BY moved_at DESC, e.slug ASC
         """
         return self.execute_query(q, (tenant_id, since, until))
 
@@ -26795,6 +26848,7 @@ class Database:
         self,
         *,
         default_cadence_seconds: int,
+        limit: int = 500,
     ) -> List[Dict[str, Any]]:
         """Return endpoints due for a periodic re-discovery sweep tick (MCAT-5.1, #3673).
 
@@ -26826,9 +26880,20 @@ class Database:
         operator opts an endpoint out of the sweep by disabling it, not by clearing
         its cadence.
 
+        Indexed selection (DBP-1.18, #7201): an endpoint with its own cadence carries
+        ``discovery_due_at`` (apiome-db V426, kept by a trigger: last discovery + cadence, no
+        earlier than the backoff), read from ``idx_mcp_endpoints_discovery_due``. An endpoint on
+        the global default cadence — which only this process knows — is read from
+        ``idx_mcp_endpoints_discovery_due_default`` on ``COALESCE(last_discovered_at,
+        '-infinity')``. Each branch is a range scan that stops after ``limit`` rows, so an idle
+        catalog costs two empty index probes per tick; endpoints still due wait for the next
+        tick.
+
         Args:
             default_cadence_seconds: Global fallback cadence (seconds) applied to
                 endpoints with no explicit ``discovery_cadence_seconds``.
+            limit: The most endpoints returned (one tick's batch); values below 1 are
+                treated as 1.
 
         Returns:
             Endpoint rows due for re-discovery, oldest ``last_discovered_at`` first
@@ -26837,22 +26902,35 @@ class Database:
         cadence = int(default_cadence_seconds)
         if cadence < 1:
             cadence = 1
+        batch = max(1, int(limit))
+        live = "deleted_at IS NULL AND enabled AND quarantined_at IS NULL"
         q = f"""
-            SELECT {self._MCP_ENDPOINT_COLUMNS}
-            FROM apiome.mcp_endpoints
-            WHERE deleted_at IS NULL
-              AND enabled = TRUE
-              AND quarantined_at IS NULL
-              AND (next_discovery_after IS NULL OR next_discovery_after <= now())
-              AND (
-                last_discovered_at IS NULL
-                OR last_discovered_at <= now() - make_interval(
-                     secs => COALESCE(discovery_cadence_seconds, %s)
-                   )
-              )
-            ORDER BY last_discovered_at ASC NULLS FIRST, created_at ASC
+            SELECT * FROM (
+                (SELECT {self._MCP_ENDPOINT_COLUMNS},
+                        COALESCE(last_discovered_at, '-infinity'::timestamptz) AS due_anchor
+                 FROM apiome.mcp_endpoints
+                 WHERE {live}
+                   AND discovery_cadence_seconds IS NULL
+                   AND COALESCE(last_discovered_at, '-infinity'::timestamptz)
+                       <= now() - make_interval(secs => %s)
+                   AND (next_discovery_after IS NULL OR next_discovery_after <= now())
+                 ORDER BY COALESCE(last_discovered_at, '-infinity'::timestamptz)
+                 LIMIT %s)
+                UNION ALL
+                (SELECT {self._MCP_ENDPOINT_COLUMNS},
+                        COALESCE(last_discovered_at, '-infinity'::timestamptz) AS due_anchor
+                 FROM apiome.mcp_endpoints
+                 WHERE {live}
+                   AND discovery_cadence_seconds IS NOT NULL
+                   AND discovery_due_at <= now()
+                 ORDER BY discovery_due_at
+                 LIMIT %s)
+            ) due
+            ORDER BY due_anchor ASC, created_at ASC
+            LIMIT %s
         """
-        return self.execute_query(q, (cadence,))
+        rows = self.execute_query(q, (cadence, batch, batch, batch))
+        return [{k: v for k, v in dict(row).items() if k != "due_anchor"} for row in rows or []]
 
     def _next_available_mcp_slug(self, cursor, tenant_id: str, base_slug: str) -> str:
         """Pick a tenant-unique slug derived from ``base_slug``.
@@ -27227,6 +27305,135 @@ class Database:
         "r." + column.strip() for column in _MCP_SWEEP_RUN_COLUMNS.split(",")
     )
 
+    def prune_mcp_discovery_jobs(
+        self,
+        *,
+        retention_days: int,
+        keep_per_endpoint: int,
+        limit: int,
+        after: Optional[Tuple[Any, str]] = None,
+    ) -> Dict[str, Any]:
+        """Delete finished discovery jobs past the retention window, one bounded window at a time.
+
+        The sweep writes one job per due endpoint per tick, so without a prune the table grows
+        forever (DBP-1.18, #7201). A ``completed`` or ``failed`` job older than ``retention_days``
+        is deleted unless it is one of its endpoint's ``keep_per_endpoint`` newest finished jobs,
+        so a rarely discovered endpoint keeps its history. Queued and running jobs are never
+        touched. Snapshots that point at a pruned job keep their ``discovery_job_id`` (an audit
+        pointer, not a foreign key, V148).
+
+        Each call reads at most ``limit`` expired jobs, oldest first after ``after``
+        (``idx_mcp_discovery_jobs_terminal_created``), and checks each against its endpoint's
+        newest jobs with an index-only probe (``idx_mcp_discovery_jobs_terminal_endpoint``). The
+        cost of a call is bounded even when every expired job is kept; the caller resumes from
+        ``next`` and wraps around when it comes back ``None``.
+
+        Args:
+            retention_days: Age past which finished jobs go; ``<= 0`` deletes nothing.
+            keep_per_endpoint: Newest finished jobs per endpoint kept regardless of age (``>= 0``).
+            limit: The most expired jobs read (and so deleted) by this call.
+            after: ``(created_at, id)`` of the last job the previous call read; ``None`` starts
+                from the oldest.
+
+        Returns:
+            ``{"deleted": n, "scanned": n, "next": (created_at, id) | None}`` — ``next`` is
+            ``None`` once the window reached the newest expired job.
+        """
+        if int(retention_days) <= 0:
+            return {"deleted": 0, "scanned": 0, "next": None}
+        keep = max(0, int(keep_per_endpoint))
+        batch = max(1, int(limit))
+        params: Dict[str, Any] = {"days": int(retention_days), "limit": batch, "skip": max(0, keep - 1)}
+        after_sql = ""
+        if after is not None and is_uuid_string(str(after[1] or "")):
+            after_sql = " AND (j.created_at, j.id) > (%(after_at)s, %(after_id)s::uuid)"
+            params.update({"after_at": after[0], "after_id": str(after[1])})
+        keep_sql = ""
+        if keep > 0:
+            keep_sql = """
+                  AND EXISTS (
+                      SELECT 1
+                      FROM apiome.mcp_discovery_jobs n
+                      WHERE n.endpoint_id = w.endpoint_id
+                        AND n.state IN ('completed', 'failed')
+                        AND (n.created_at, n.id) > (w.created_at, w.id)
+                      ORDER BY n.created_at DESC, n.id DESC
+                      OFFSET %(skip)s LIMIT 1
+                  )"""
+        rows = self.execute_query(
+            f"""
+            WITH win AS (
+                SELECT j.id, j.endpoint_id, j.created_at
+                FROM apiome.mcp_discovery_jobs j
+                WHERE j.state IN ('completed', 'failed')
+                  AND j.created_at < CURRENT_TIMESTAMP - make_interval(days => %(days)s){after_sql}
+                ORDER BY j.created_at, j.id
+                LIMIT %(limit)s
+            ),
+            gone AS (
+                DELETE FROM apiome.mcp_discovery_jobs d
+                USING win w
+                WHERE d.id = w.id{keep_sql}
+                RETURNING 1
+            ),
+            last_seen AS (
+                SELECT created_at, id FROM win ORDER BY created_at DESC, id DESC LIMIT 1
+            )
+            SELECT (SELECT count(*) FROM win) AS scanned,
+                   (SELECT count(*) FROM gone) AS deleted,
+                   (SELECT created_at FROM last_seen) AS last_at,
+                   (SELECT id::text FROM last_seen) AS last_id
+            """,
+            params,
+        )
+        row = dict(rows[0]) if rows else {}
+        scanned = int(row.get("scanned") or 0)
+        resume = (row["last_at"], row["last_id"]) if scanned >= batch and row.get("last_id") else None
+        return {"deleted": int(row.get("deleted") or 0), "scanned": scanned, "next": resume}
+
+    #: Slate request-data tables whose rows carry their own ``retain_until`` (apiome-db V188–V190),
+    #: each with an index on it. :meth:`purge_expired_slate_rows` accepts only these names.
+    SLATE_RETAINED_TABLES: Tuple[str, ...] = (
+        "slate_insight_logs",
+        "slate_insight_traces",
+        "slate_insight_live_tail_sessions",
+        "slate_insight_synthetic_results",
+        "slate_security_events",
+        "slate_function_invocations",
+    )
+
+    def purge_expired_slate_rows(self, table: str, *, limit: int) -> int:
+        """Delete up to ``limit`` rows of one Slate table whose ``retain_until`` has passed (DBP-1.18).
+
+        The writers stamp ``retain_until`` from the lane's retention policy; this is the delete that
+        honours it, oldest expiry first through the table's ``retain_until`` index. Deleting a trace
+        cascades to its spans.
+
+        Args:
+            table: One of :data:`SLATE_RETAINED_TABLES`.
+            limit: The most rows deleted by this call (one batch).
+
+        Returns:
+            The number of rows deleted.
+
+        Raises:
+            ValueError: ``table`` is not a retained Slate table.
+        """
+        if table not in self.SLATE_RETAINED_TABLES:
+            raise ValueError(f"not a retained slate table: {table!r}")
+        return self._execute_write(
+            f"""
+            DELETE FROM apiome.{table}
+            WHERE id IN (
+                SELECT id FROM apiome.{table}
+                WHERE retain_until < CURRENT_TIMESTAMP
+                ORDER BY retain_until ASC
+                LIMIT %s
+            )
+            """,
+            (max(1, int(limit)),),
+        )
+
     def start_mcp_discovery_sweep_run(
         self,
         *,
@@ -27379,6 +27586,11 @@ class Database:
         discovery sweep, but an uptime monitor that stops looking once a server goes down could
         never record it coming back. The recency comparison runs in the database against ``now()``.
 
+        The latest probe time is the stored ``last_health_checked_at`` (apiome-db V426, written by
+        :meth:`record_mcp_health_check`), read through ``idx_mcp_endpoints_health_due`` on
+        ``COALESCE(last_health_checked_at, '-infinity')``: a range scan that stops after ``limit``
+        rows instead of a ``max(checked_at)`` over every endpoint's history (DBP-1.18, #7201).
+
         Args:
             cadence_seconds: How often each endpoint is probed; values below 1 are treated as 1.
             limit: The most endpoints returned (one tick's budget); values below 1 are treated as 1.
@@ -27390,19 +27602,12 @@ class Database:
         q = f"""
             SELECT {self._MCP_ENDPOINT_COLUMNS}
             FROM apiome.mcp_endpoints
-            LEFT JOIN LATERAL (
-                SELECT max(h.checked_at) AS last_checked_at
-                FROM apiome.mcp_endpoint_health_checks h
-                WHERE h.endpoint_id = mcp_endpoints.id
-            ) hc ON TRUE
             WHERE deleted_at IS NULL
-              AND enabled = TRUE
+              AND enabled
               AND transport <> 'stdio'
-              AND (
-                hc.last_checked_at IS NULL
-                OR hc.last_checked_at <= now() - make_interval(secs => %s)
-              )
-            ORDER BY hc.last_checked_at ASC NULLS FIRST, created_at ASC
+              AND COALESCE(last_health_checked_at, '-infinity'::timestamptz)
+                  <= now() - make_interval(secs => %s)
+            ORDER BY COALESCE(last_health_checked_at, '-infinity'::timestamptz) ASC, created_at ASC
             LIMIT %s
         """
         return self.execute_query(q, (cadence, max(1, int(limit))))
@@ -27418,7 +27623,9 @@ class Database:
         """Persist one reachability probe of an endpoint (#3713).
 
         ``checked_at`` is wall-clock (``clock_timestamp()``) so consecutive probes in one
-        transaction still order correctly.
+        transaction still order correctly. The same statement advances the endpoint's
+        ``last_health_checked_at`` (never backwards), which the health sweep's due-selection reads
+        (DBP-1.18, #7201).
 
         Args:
             endpoint_id: The probed endpoint.
@@ -27439,10 +27646,19 @@ class Database:
             raise ValueError("latency_ms must not be negative")
         rows = self.execute_query(
             f"""
-            INSERT INTO apiome.mcp_endpoint_health_checks
-                (endpoint_id, checked_at, status, latency_ms, error_code)
-            VALUES (%s::uuid, clock_timestamp(), %s, %s, %s)
-            RETURNING {self._MCP_HEALTH_CHECK_COLUMNS}
+            WITH probe AS (
+                INSERT INTO apiome.mcp_endpoint_health_checks
+                    (endpoint_id, checked_at, status, latency_ms, error_code)
+                VALUES (%s::uuid, clock_timestamp(), %s, %s, %s)
+                RETURNING {self._MCP_HEALTH_CHECK_COLUMNS}
+            ), stamped AS (
+                UPDATE apiome.mcp_endpoints e
+                   SET last_health_checked_at = probe.checked_at
+                  FROM probe
+                 WHERE e.id = probe.endpoint_id
+                   AND (e.last_health_checked_at IS NULL OR e.last_health_checked_at < probe.checked_at)
+            )
+            SELECT * FROM probe
             """,
             (endpoint_id, status, latency_ms, error_code if status == "down" else None),
         )
@@ -36666,7 +36882,7 @@ class Database:
             if not cursor.rowcount:
                 return None
             # CDG-3.1: a retired consumer's `consumes` edges go stale with it.
-            self._materialize_graph(cursor, tenant_id, ("consumes",))
+            self._materialize_graph(cursor, tenant_id, ("consumes",), GraphScope.consumer(consumer_id))
             return True
 
         return bool(self._guarded_tx(work))
@@ -36781,7 +36997,7 @@ class Database:
                 row = cursor.fetchone()
                 if row:
                     # CDG-3.1: the consumer's `consumes` edges follow its current contract.
-                    self._materialize_graph(cursor, tenant_id, ("consumes",))
+                    self._materialize_graph(cursor, tenant_id, ("consumes",), GraphScope.consumer(consumer_id))
             conn.commit()
             return row
         except Exception:
@@ -41063,9 +41279,7 @@ class Database:
     def claim_next_due_export_webhook_delivery(self, *, stale_after_seconds: int = 600) -> Optional[Dict[str, Any]]:
         """Atomically claim one export webhook delivery due for an attempt (MFX-38.2).
 
-        Due means ``pending`` / ``retrying`` with ``next_attempt_at`` passed — or ``delivering`` but
-        untouched for ``stale_after_seconds`` (the process making the attempt died). The claim moves it
-        to ``delivering`` under ``FOR UPDATE SKIP LOCKED``, so two instances never send one attempt.
+        A one-row :meth:`claim_due_export_webhook_deliveries`.
 
         Args:
             stale_after_seconds: How long an in-flight attempt may run before it is presumed lost.
@@ -41073,40 +41287,97 @@ class Database:
         Returns:
             The run with its ``payload`` (bytes) and ``signature``, or ``None`` when nothing is due.
         """
+        runs = self.claim_due_export_webhook_deliveries(limit=1, stale_after_seconds=stale_after_seconds)
+        return runs[0] if runs else None
+
+    def claim_due_export_webhook_deliveries(
+        self,
+        *,
+        limit: int,
+        exclude_tenant_ids: Sequence[str] = (),
+        stale_after_seconds: int = 600,
+    ) -> List[Dict[str, Any]]:
+        """Atomically claim up to ``limit`` export webhook deliveries due for an attempt (MFX-38.2).
+
+        Due means ``pending`` / ``retrying`` with ``next_attempt_at`` passed — or ``delivering`` but
+        untouched for ``stale_after_seconds`` (the process making the attempt died). The claim moves
+        them to ``delivering`` under ``FOR UPDATE SKIP LOCKED``, so two instances never send one
+        attempt.
+
+        The two kinds are claimed by two ordered statements in one transaction, stale attempts
+        first, each a range scan of its own partial index (``idx_export_webhook_delivery_runs_stale``
+        on ``updated_at``, ``idx_export_webhook_delivery_runs_due`` on ``next_attempt_at``) that stops
+        at the limit. The single ``OR`` claim it replaces sorted the whole backlog by
+        ``COALESCE(next_attempt_at, updated_at)`` on every claim (DBP-1.18, #7201).
+
+        Args:
+            limit: The most runs claimed; values below 1 count as 1.
+            exclude_tenant_ids: Tenants whose runs are skipped this time (the delivery pool's
+                saturated tenants); malformed ids are ignored.
+            stale_after_seconds: How long an in-flight attempt may run before it is presumed lost.
+
+        Returns:
+            The claimed runs, each with its ``payload`` (bytes) and ``signature``; empty when
+            nothing is due.
+        """
+        batch = max(1, int(limit))
+        excluded = [str(t) for t in exclude_tenant_ids if is_uuid_string(str(t or ""))]
+        returning = self._EXPORT_WEBHOOK_DELIVERY_RUN_COLUMNS.replace(" id::text AS id,", " r.id::text AS id,", 1)
+        stale_sql = f"""
+            WITH picked AS (
+                SELECT id
+                FROM apiome.export_webhook_delivery_runs
+                WHERE status = 'delivering'
+                  AND updated_at <= CURRENT_TIMESTAMP - make_interval(secs => %s)
+                  AND NOT (tenant_id = ANY(%s::uuid[]))
+                ORDER BY updated_at ASC
+                FOR UPDATE SKIP LOCKED
+                LIMIT %s
+            )
+            UPDATE apiome.export_webhook_delivery_runs r
+            SET status = 'delivering', updated_at = CURRENT_TIMESTAMP
+            FROM picked
+            WHERE r.id = picked.id
+            RETURNING {returning}, r.payload, r.signature
+        """
+        due_sql = f"""
+            WITH picked AS (
+                SELECT id
+                FROM apiome.export_webhook_delivery_runs
+                WHERE status IN ('pending', 'retrying')
+                  AND next_attempt_at <= CURRENT_TIMESTAMP
+                  AND NOT (tenant_id = ANY(%s::uuid[]))
+                ORDER BY next_attempt_at ASC
+                FOR UPDATE SKIP LOCKED
+                LIMIT %s
+            )
+            UPDATE apiome.export_webhook_delivery_runs r
+            SET status = 'delivering', updated_at = CURRENT_TIMESTAMP
+            FROM picked
+            WHERE r.id = picked.id
+            RETURNING {returning}, r.payload, r.signature
+        """
         conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    f"""
-                    WITH next_run AS (
-                        SELECT id
-                        FROM apiome.export_webhook_delivery_runs
-                        WHERE (status IN ('pending', 'retrying') AND next_attempt_at <= CURRENT_TIMESTAMP)
-                           OR (status = 'delivering'
-                               AND updated_at <= CURRENT_TIMESTAMP - make_interval(secs => %s))
-                        ORDER BY COALESCE(next_attempt_at, updated_at) ASC
-                        FOR UPDATE SKIP LOCKED
-                        LIMIT 1
-                    )
-                    UPDATE apiome.export_webhook_delivery_runs r
-                    SET status = 'delivering', updated_at = CURRENT_TIMESTAMP
-                    FROM next_run
-                    WHERE r.id = next_run.id
-                    RETURNING {self._EXPORT_WEBHOOK_DELIVERY_RUN_COLUMNS.replace(" id::text AS id,", " r.id::text AS id,", 1)},
-                              r.payload, r.signature
-                    """,
-                    (max(1, int(stale_after_seconds)),),
-                )
-                row = cursor.fetchone()
+                cursor.execute(stale_sql, (max(1, int(stale_after_seconds)), excluded, batch))
+                rows = list(cursor.fetchall() or [])
+                if len(rows) < batch:
+                    cursor.execute(due_sql, (excluded, batch - len(rows)))
+                    rows.extend(cursor.fetchall() or [])
             conn.commit()
-            if not row:
-                return None
-            out = dict(row)
-            out["payload"] = bytes(out["payload"]) if out.get("payload") is not None else b""
-            return out
-        except Exception as e:
+        except Exception:
             conn.rollback()
-            raise e
+            raise
+        finally:
+            conn.autocommit = prev_autocommit
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            run = dict(row)
+            run["payload"] = bytes(run["payload"]) if run.get("payload") is not None else b""
+            out.append(run)
+        return out
 
     def list_export_webhook_delivery_runs(
         self, tenant_id: str, job_id: str, *, limit: int = 50
@@ -45638,7 +45909,7 @@ class Database:
                 },
             )
             # CDG-3.1: the project's `served_by` repository edge.
-            self._materialize_graph(cursor, tenant_id, ("served_by",))
+            self._materialize_graph(cursor, tenant_id, ("served_by",), GraphScope.project(project_id))
             return {"binding_id": binding_id, "released_binding_id": released_id}
 
         return self._guarded_tx(work)
@@ -45710,7 +45981,7 @@ class Database:
                     "candidates_superseded": superseded,
                 },
             )
-            self._materialize_graph(cursor, tenant_id, ("served_by",))
+            self._materialize_graph(cursor, tenant_id, ("served_by",), GraphScope.project(project_id))
             return True
 
         return bool(self._guarded_tx(work))

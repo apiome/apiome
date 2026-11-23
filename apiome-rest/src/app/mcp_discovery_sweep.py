@@ -145,7 +145,9 @@ async def _run_tick(
     """
     default_cadence = int(settings.mcp_discovery_default_cadence_seconds)
     due = await asyncio.to_thread(
-        db.list_due_mcp_endpoints, default_cadence_seconds=default_cadence
+        db.list_due_mcp_endpoints,
+        default_cadence_seconds=default_cadence,
+        limit=max(1, int(settings.mcp_discovery_max_per_tick)),
     )
     tally.due = len(due)
 

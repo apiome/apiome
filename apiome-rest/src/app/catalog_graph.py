@@ -23,13 +23,16 @@ Family             Edge                                        Source rows
 
 A projects row is a ``project`` when it is publishable and a ``catalog_item`` otherwise.
 
-**Materializing is idempotent.** :func:`materialize_on_cursor` re-derives a family for one tenant in a
-single pass of three statements: upsert every edge the sources say exists (``last_seen_at`` now,
-``stale_since`` cleared), stamp ``stale_since`` on derived edges of the family the sources no longer
-produce, and purge edges stale for :data:`STALE_PURGE_DAYS` days. Running it twice leaves the same
-edges. Producers in apiome-rest call it inside their own write transaction for the family they
-touch (through ``Database._materialize_graph``); a nightly sweep re-derives every family for every
-tenant, which also covers the repository imports apiome-ui writes.
+**Materializing is idempotent.** :func:`materialize_on_cursor` re-derives a family for one tenant in
+two statements: one derives the edges the sources say exist, upserts the new and changed ones
+(``stale_since`` cleared) and stamps ``stale_since`` on derived edges of the family the sources no
+longer produce; the other purges edges stale for :data:`STALE_PURGE_DAYS` days. An unchanged edge is
+not rewritten (DBP-1.18, #7201). Running it twice leaves the same edges. Producers in apiome-rest
+call it inside their own write transaction for the family they touch, **scoped to the node they
+changed** (:class:`GraphScope`, through ``Database._materialize_graph``), so one consumer's contract
+write touches only that consumer's edges. A nightly sweep re-derives every family for every tenant —
+which also covers the repository imports apiome-ui writes — and refreshes ``last_seen_at`` on every
+current edge, so ``last_seen_at`` is "confirmed by the last sweep or changed since".
 
 **Stale before gone.** A revoked consumer's ``consumes`` edges keep their old ``last_seen_at`` and gain
 ``stale_since``; the read reports them as ``stale: true`` for 30 days before they are purged, so a
@@ -65,7 +68,9 @@ __all__ = [
     "decode_edge_cursor",
     "STALE_PURGE_DAYS",
     "EdgePage",
+    "GraphScope",
     "GraphValidationError",
+    "PROJECT_NODE_KINDS",
     "list_edges",
     "materialize",
     "materialize_on_cursor",
@@ -260,66 +265,176 @@ def _families(families: Optional[Iterable[str]]) -> List[str]:
     return wanted
 
 
+#: Node kinds a projects row can be (see :data:`_PROJECT_KIND`).
+PROJECT_NODE_KINDS: Tuple[str, ...] = ("project", "catalog_item")
+
+
+@dataclass(frozen=True)
+class GraphScope:
+    """One node whose edges a write can change: the scope of an in-transaction re-derivation.
+
+    A producer that changes one source row (one consumer's contract, one project's binding, one
+    repository) re-derives only the edges that start (``end="from"``) or end (``end="to"``) at
+    the node it touched, instead of the tenant's whole family (DBP-1.18, #7201).
+
+    Attributes:
+        end: ``from`` or ``to`` — which end of the edge the node is.
+        kinds: The node kinds it may have (a projects row is a ``project`` or a ``catalog_item``).
+        node_id: The node's id.
+    """
+
+    end: str
+    kinds: Tuple[str, ...]
+    node_id: str
+
+    def __post_init__(self) -> None:
+        if self.end not in ("from", "to"):
+            raise ValueError(f"unknown graph scope end: {self.end!r}")
+        unknown = [kind for kind in self.kinds if kind not in NODE_KINDS]
+        if not self.kinds or unknown:
+            raise ValueError(f"unknown graph scope kinds: {self.kinds!r}")
+
+    @classmethod
+    def consumer(cls, consumer_id: str) -> "GraphScope":
+        """Edges a consumer declares (``consumes``)."""
+        return cls("from", ("consumer",), str(consumer_id))
+
+    @classmethod
+    def project(cls, project_id: str) -> "GraphScope":
+        """Edges that start at a project or catalog item (``served_by``, ``converted_from`` …)."""
+        return cls("from", PROJECT_NODE_KINDS, str(project_id))
+
+    @classmethod
+    def api_product(cls, product_id: str) -> "GraphScope":
+        """Edges an API product's members produce (``includes``)."""
+        return cls("from", ("api_product",), str(product_id))
+
+    @classmethod
+    def repository(cls, repository_id: str) -> "GraphScope":
+        """Edges that point at a repository (``served_by``)."""
+        return cls("to", ("repository",), str(repository_id))
+
+
 def materialize_on_cursor(
-    cursor: Any, tenant_id: str, families: Optional[Iterable[str]] = None
+    cursor: Any,
+    tenant_id: str,
+    families: Optional[Iterable[str]] = None,
+    *,
+    scope: Optional[GraphScope] = None,
+    confirm_all: bool = False,
 ) -> Dict[str, Dict[str, int]]:
     """Re-derive edge families for one tenant on an open cursor (the caller's transaction).
 
-    For each family: upsert the edges its source rows produce, mark the family's derived edges that
-    were not produced as stale, and purge edges stale for :data:`STALE_PURGE_DAYS` days.
+    For each family one statement derives the edges its source rows produce, upserts them, and
+    marks the family's derived edges that were not produced as stale; a second purges edges stale
+    for :data:`STALE_PURGE_DAYS` days.
+
+    **Only changed edges are written** (DBP-1.18, #7201). An existing edge is updated only when it
+    was stale or its evidence changed (``IS DISTINCT FROM``), so re-deriving an unchanged family
+    writes nothing; ``confirm_all`` also refreshes ``last_seen_at`` on every current edge, which the
+    nightly sweep does. Stale edges are found by comparing with the derived set, not by
+    ``last_seen_at``.
+
+    **Scoped.** With ``scope`` only the edges at that node are derived, compared and staled, so a
+    producer's write touches only its own edges.
 
     Args:
         cursor: An open cursor; nothing is committed here.
         tenant_id: The tenant.
         families: The families to re-derive; ``None`` for all of them.
+        scope: Re-derive only the edges at this node; ``None`` for the whole tenant.
+        confirm_all: Refresh ``last_seen_at`` on every current edge (the nightly sweep).
 
     Returns:
-        ``{family: {"current": n, "staled": n, "purged": n}}``.
+        ``{family: {"current": n, "written": n, "staled": n, "purged": n}}`` — ``current`` counts
+        the edges the sources produce, ``written`` the rows inserted or updated.
     """
+    scope_sql = ""
+    edge_scope_sql = ""
+    params: Dict[str, Any] = {"tenant": tenant_id, "confirm": bool(confirm_all)}
+    if scope is not None:
+        scope_sql = f" WHERE d.{scope.end}_kind = ANY(%(scope_kinds)s) AND d.{scope.end}_id = %(scope_id)s::uuid"
+        edge_scope_sql = f" AND e.{scope.end}_kind = ANY(%(scope_kinds)s) AND e.{scope.end}_id = %(scope_id)s::uuid"
+        params.update({"scope_kinds": list(scope.kinds), "scope_id": scope.node_id})
     counts: Dict[str, Dict[str, int]] = {}
     for family in _families(families):
         cursor.execute(
             f"""
-            INSERT INTO apiome.catalog_edges
-                (tenant_id, from_kind, from_id, to_kind, to_id, edge_kind, pointer, provenance,
-                 source_ref, evidence)
-            SELECT %(tenant)s::uuid, d.from_kind, d.from_id, d.to_kind, d.to_id, %(family)s,
-                   d.pointer, 'derived', d.source_ref, d.evidence
-            FROM ({_FAMILY_SQL[family]}) AS d
-            ON CONFLICT ON CONSTRAINT catalog_edges_identity_key DO UPDATE
-               SET last_seen_at = CURRENT_TIMESTAMP,
-                   stale_since = NULL,
-                   evidence = EXCLUDED.evidence
+            WITH derived AS MATERIALIZED (
+                SELECT d.from_kind, d.from_id, d.to_kind, d.to_id, d.pointer, d.source_ref, d.evidence
+                FROM ({_FAMILY_SQL[family]}) AS d{scope_sql}
+            ),
+            written AS (
+                INSERT INTO apiome.catalog_edges AS e
+                    (tenant_id, from_kind, from_id, to_kind, to_id, edge_kind, pointer, provenance,
+                     source_ref, evidence)
+                SELECT %(tenant)s::uuid, d.from_kind, d.from_id, d.to_kind, d.to_id, %(family)s,
+                       d.pointer, 'derived', d.source_ref, d.evidence
+                FROM derived d
+                ON CONFLICT ON CONSTRAINT catalog_edges_identity_key DO UPDATE
+                   SET last_seen_at = CURRENT_TIMESTAMP,
+                       stale_since = NULL,
+                       evidence = EXCLUDED.evidence
+                 WHERE e.stale_since IS NOT NULL
+                    OR e.evidence IS DISTINCT FROM EXCLUDED.evidence
+                    OR %(confirm)s
+                RETURNING 1
+            ),
+            staled AS (
+                UPDATE apiome.catalog_edges e
+                   SET stale_since = CURRENT_TIMESTAMP
+                 WHERE e.tenant_id = %(tenant)s::uuid AND e.provenance = 'derived'
+                   AND e.edge_kind = %(family)s AND e.stale_since IS NULL{edge_scope_sql}
+                   AND NOT EXISTS (
+                       SELECT 1 FROM derived d
+                        WHERE d.from_kind = e.from_kind AND d.from_id = e.from_id
+                          AND d.to_kind = e.to_kind AND d.to_id = e.to_id
+                          AND d.pointer IS NOT DISTINCT FROM e.pointer
+                          AND d.source_ref = e.source_ref
+                   )
+                RETURNING 1
+            )
+            SELECT (SELECT count(*) FROM derived) AS current,
+                   (SELECT count(*) FROM written) AS written,
+                   (SELECT count(*) FROM staled) AS staled
             """,
-            {"tenant": tenant_id, "family": family},
+            {**params, "family": family},
         )
-        current = int(cursor.rowcount or 0)
-        # Anything of this family the sources did not just produce is stale from now on. Within one
-        # transaction CURRENT_TIMESTAMP is fixed, so "not touched above" is "last_seen_at older".
+        row = cursor.fetchone() or {}
         cursor.execute(
-            """
-            UPDATE apiome.catalog_edges
-               SET stale_since = CURRENT_TIMESTAMP
-             WHERE tenant_id = %(tenant)s::uuid AND provenance = 'derived' AND edge_kind = %(family)s
-               AND last_seen_at < CURRENT_TIMESTAMP AND stale_since IS NULL
+            f"""
+            DELETE FROM apiome.catalog_edges e
+             WHERE e.tenant_id = %(tenant)s::uuid AND e.provenance = 'derived' AND e.edge_kind = %(family)s
+               AND e.stale_since < CURRENT_TIMESTAMP - make_interval(days => %(days)s){edge_scope_sql}
             """,
-            {"tenant": tenant_id, "family": family},
+            {**params, "family": family, "days": STALE_PURGE_DAYS},
         )
-        staled = int(cursor.rowcount or 0)
-        cursor.execute(
-            """
-            DELETE FROM apiome.catalog_edges
-             WHERE tenant_id = %(tenant)s::uuid AND provenance = 'derived' AND edge_kind = %(family)s
-               AND stale_since < CURRENT_TIMESTAMP - make_interval(days => %(days)s)
-            """,
-            {"tenant": tenant_id, "family": family, "days": STALE_PURGE_DAYS},
-        )
-        counts[family] = {"current": current, "staled": staled, "purged": int(cursor.rowcount or 0)}
+        counts[family] = {
+            "current": int(_column(row, "current", 0)),
+            "written": int(_column(row, "written", 1)),
+            "staled": int(_column(row, "staled", 2)),
+            "purged": int(cursor.rowcount or 0),
+        }
     return counts
 
 
+def _column(row: Any, name: str, index: int) -> Any:
+    """Read one column of a dict-like or tuple row (cursor factories differ), ``0`` when absent."""
+    if isinstance(row, dict):
+        return row.get(name) or 0
+    try:
+        return row[index] or 0
+    except (IndexError, KeyError, TypeError):
+        return 0
+
+
 def materialize(
-    db: Any, tenant_id: str, trigger: str, families: Optional[Iterable[str]] = None
+    db: Any,
+    tenant_id: str,
+    trigger: str,
+    families: Optional[Iterable[str]] = None,
+    *,
+    confirm_all: bool = False,
 ) -> Dict[str, Dict[str, int]]:
     """Re-derive edge families for one tenant in a transaction of its own.
 
@@ -328,11 +443,14 @@ def materialize(
         tenant_id: The tenant.
         trigger: Why (``sweep``, ``connector_sync``, …), for the log line.
         families: The families; ``None`` for all.
+        confirm_all: Refresh ``last_seen_at`` on every current edge (the nightly sweep).
 
     Returns:
         The per-family counts (see :func:`materialize_on_cursor`).
     """
-    counts = db._guarded_tx(lambda cursor: materialize_on_cursor(cursor, tenant_id, families))
+    counts = db._guarded_tx(
+        lambda cursor: materialize_on_cursor(cursor, tenant_id, families, confirm_all=confirm_all)
+    )
     _logger.info("catalog graph materialized tenant_id=%s trigger=%s counts=%s", tenant_id, trigger, counts)
     return counts
 
@@ -359,7 +477,7 @@ def sweep(db: Any) -> Dict[str, int]:
         rows = db.execute_query("SELECT id::text AS id FROM apiome.tenants WHERE deleted_at IS NULL ORDER BY id")
         for row in rows or []:
             try:
-                materialize(db, str(row["id"]), "sweep")
+                materialize(db, str(row["id"]), "sweep", confirm_all=True)
                 swept += 1
             except Exception:
                 failed += 1
