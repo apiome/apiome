@@ -13,6 +13,9 @@ import {
   createClassTx,
   addPropertiesToClassBatchTx,
   ClassPropertyInsert,
+  ClassInsert,
+  createClassesWithPropertiesBulkTx,
+  verifyImportCountsTx,
   getClassesWithPropertiesAndTagsTx,
   getLatestVersionUuidForProjectTx,
   getProjectIdBySlugTx,
@@ -63,6 +66,13 @@ import {
   type ImportMergeStrategy,
 } from '../import-merge';
 import { dbClassToNormalized } from './db-class-normalize';
+import {
+  acceptStagedImportTx,
+  discardStagedImport,
+  listRepositorySourcesTx,
+  writeStagedManifestTx,
+  type TouchedRepositorySource,
+} from './import-staging';
 
 export type ImportJobState = 'queued' | 'running' | 'pending-approval' | 'committing' | 'completed' | 'failed' | 'canceled' | 'rolled-back';
 
@@ -270,9 +280,20 @@ interface JobState {
   percent: number;
   result?: { projectId?: string; versionId?: string };
   canceled?: boolean;
-  // Transaction state
-  transactionClient?: PoolClient;
+  /**
+   * True from the start of a transaction-mode import until it is accepted or rejected: while the
+   * import is being written and, once staged, while it awaits approval. The review dialog shows
+   * Accept and Reject on it. No database client is held while a staged import waits (DBP-1.9, #7192).
+   */
   transactionPending?: boolean;
+  /** The version a transaction-mode import staged (committed, hidden until accepted). */
+  stagedVersionId?: string;
+  /** Whether the import created its project (staged with the version) or added to an existing one. */
+  projectCreated?: boolean;
+  /** The existing project whose description and metadata the spec's info is merged into on Accept. */
+  projectInfoMergeTarget?: string;
+  /** Project properties this import added to the library; a rejected import removes them. */
+  createdPropertyIds?: string[];
   // Per-phase / per-DB-op timing accumulator (see finalizeBenchmark).
   bench?: Bench;
   /** The normalized classes, kept for a merge conflict's per-source diff (V2-REPO-8.2). */
@@ -730,8 +751,10 @@ async function applyRepositoryMergeForJob(
  *
  * @param job - The job.
  * @param versionId - The version to write into.
+ * @param client - The job's client, outside a transaction: the paths are written on it, so an
+ *   import uses one client from start to finish (DBP-1.9, #7192).
  */
-async function importJobPaths(job: JobState, versionId: string): Promise<void> {
+async function importJobPaths(job: JobState, versionId: string, client: PoolClient): Promise<void> {
   const input = job.input;
   const isOpenApi = input.sourceKind === 'openapi' && Boolean(input.document);
   const incoming = isOpenApi ? extractPaths(input.document) : [];
@@ -752,7 +775,7 @@ async function importJobPaths(job: JobState, versionId: string): Promise<void> {
     'IMPORTING_PATHS',
     `Importing ${paths.length} path(s)${carriedNote} and ${securitySchemes.length} security scheme(s)...`,
   );
-  const pathResult = await importOpenAPIPathsAndSecurity(versionId, paths, securitySchemes);
+  const pathResult = await importOpenAPIPathsAndSecurity(versionId, paths, securitySchemes, client);
   if (pathResult.success) {
     if (job.summary) job.summary.pathsImported = incoming.length;
     emit(job, 'info', 'PATHS_IMPORTED', 'Paths and security schemes imported.');
@@ -1000,7 +1023,10 @@ async function buildPropertyIdMapForImport(
       listProjectLibraryPropertiesTx(client, projectId)
     );
     for (const row of rows) {
+      // A soft-deleted property still holds its name (the unique constraint covers it), but it
+      // is not a definition to reuse.
       usedNames.add(row.name);
+      if (row.deleted) continue;
       const sig = stableStringify(row.data);
       if (!sigToLibraryId.has(sig)) sigToLibraryId.set(sig, row.id);
     }
@@ -1073,6 +1099,7 @@ async function buildPropertyIdMapForImport(
         if (job.summary) job.summary.propertiesCreated--;
       }
     }
+    job.createdPropertyIds = toCreate.filter((t) => !failedNames.has(t.row.name)).map((t) => t.row.id);
   }
 
   emit(job, 'info', 'PROPERTIES_READY', `Resolved ${propertyIdMap.size} property library id(s) for class linking`);
@@ -1202,7 +1229,56 @@ function verifyClass(
   return { propertiesVerified };
 }
 
-// Main verification function - verifies imported data matches the original schema
+/** How many properties a class has, at every depth. */
+function countProperties(props: NormalizedProperty[] | undefined): number {
+  let n = 0;
+  for (const p of props || []) n += 1 + countProperties(p.children);
+  return n;
+}
+
+/**
+ * Verify an import in the database (DBP-1.9, #7192): one statement compares each imported class's
+ * property count and discriminator with what the version holds and returns only the differences.
+ *
+ * @param client The import's client.
+ * @param versionId The version just written.
+ * @param normalizedClasses The classes the import wrote.
+ * @param job The job (for the log).
+ * @returns The verification result when nothing differs; `null` when something does, or the
+ *   comparison could not run — the caller then reads the rows back to explain it.
+ */
+async function verifyImportByCounts(
+  client: PoolClient,
+  versionId: string,
+  normalizedClasses: NormalizedClass[],
+  job: JobState,
+): Promise<{ passed: true; classesVerified: number; propertiesVerified: number; mismatches: Array<any> } | null> {
+  let differences: { mismatched: string[]; extra: string[] };
+  const expected = normalizedClasses.map((cls) => ({
+    name: cls.name,
+    properties: countProperties(cls.properties),
+    discriminator: Boolean(cls.schema?.discriminator),
+  }));
+  try {
+    differences = await verifyImportCountsTx(client, versionId, expected);
+  } catch {
+    return null;
+  }
+  if (differences.mismatched.length > 0) return null;
+  // A merge (#591, #592): classes kept from the latest version are expected extras.
+  const carriedNames = new Set(job.importMerge?.carriedClassNames ?? []);
+  for (const name of differences.extra) {
+    if (!carriedNames.has(name)) {
+      emit(job, 'warn', 'VERIFY_EXTRA_CLASS', `Database contains class "${name}" that was not in import`);
+    }
+  }
+  const propertiesVerified = expected.reduce((sum, cls) => sum + cls.properties, 0);
+  emit(job, 'info', 'VERIFY_PASS', `Verification passed: ${expected.length} classes, ${propertiesVerified} properties verified`);
+  return { passed: true, classesVerified: expected.length, propertiesVerified, mismatches: [] };
+}
+
+// Main verification function - verifies imported data matches the original schema.
+// The database compares counts first; the rows are read back only to explain a difference.
 async function verifyImport(
   client: PoolClient,
   versionId: string,
@@ -1219,6 +1295,9 @@ async function verifyImport(
   let totalPropertiesVerified = 0;
 
   emit(job, 'info', 'VERIFY_START', `Starting import verification for ${normalizedClasses.length} classes`);
+
+  const counted = await verifyImportByCounts(client, versionId, normalizedClasses, job);
+  if (counted) return counted;
 
   // Fetch all classes with properties from database using transaction client
   const dbClassesJson = await getClassesWithPropertiesAndTagsTx(client, versionId);
@@ -1296,6 +1375,75 @@ async function verifyImport(
   };
 }
 
+/** A warning raised while flattening a class's properties, emitted once the class is written. */
+type DeferredWarning = { code: string; message: string; context?: any };
+
+/**
+ * Flatten a class's property tree into insert rows. Each row's id is assigned here, so a nested
+ * property names its parent and the whole class — or the whole import — goes to the database in
+ * one statement. A parent is listed before its children.
+ *
+ * A property that is not a reference needs a project-library entry (the database requires
+ * `property_id` or a `$ref`); one without is left out with its subtree, and reported.
+ *
+ * @param cls The class.
+ * @param classId The class row's id.
+ * @param propertyIdMap Library property ids by definition signature.
+ * @returns The rows, and the warnings for properties left out.
+ */
+function collectClassPropertyRows(
+  cls: NormalizedClass,
+  classId: string,
+  propertyIdMap: Map<string, string>,
+): { rows: ClassPropertyInsert[]; warnings: DeferredWarning[] } {
+  const rows: ClassPropertyInsert[] = [];
+  const warnings: DeferredWarning[] = [];
+
+  const collect = (props: any[], parentId: string | null) => {
+    for (const p of props || []) {
+      let propertyId: string | null = null;
+      const isReference = p.data.$ref || (p.data.type === 'array' && p.data.items?.$ref);
+      if (!isReference) {
+        const sig = stableStringify(p.data);
+        propertyId = propertyIdMap.get(sig) || null;
+
+        // Database constraint requires: property_id IS NOT NULL OR data contains $ref
+        // If this is not a reference and we don't have a propertyId, skip with warning
+        if (propertyId === null) {
+          warnings.push({
+            code: 'SKIP_PROPERTY',
+            message: `Skipping property "${p.name}" in class "${cls.name}" - no library entry found`,
+            context: {
+              className: cls.name,
+              propertyName: p.name,
+              dataType: p.data.type,
+              signature: sig.substring(0, 200),
+            },
+          });
+          // A skipped parent drops its subtree (children can't reference a missing parent)
+          if (p.children && p.children.length) {
+            warnings.push({
+              code: 'SKIP_CHILDREN',
+              message: `Also skipping ${p.children.length} child properties of "${p.name}"`,
+            });
+          }
+          continue;
+        }
+      }
+      const id = randomUUID();
+      rows.push({ id, classId, propertyId, name: p.name, description: p.description || null, data: p.data, parentId });
+      if (p.children && p.children.length) collect(p.children, id);
+    }
+  };
+
+  collect(cls.properties || [], null);
+  return { rows, warnings };
+}
+
+/**
+ * Write one class and its properties: the class-by-class path, used when the whole import could
+ * not be written at once (see {@link writeClassesForJob}).
+ */
 async function writeClassWithProperties(
   client: PoolClient,
   projectId: string,
@@ -1310,43 +1458,8 @@ async function writeClassWithProperties(
   if (!resClass.success) throw new Error(resClass.error || 'Failed to create class');
   const classId = resClass.class.id as string;
 
-  // #perf: flatten the whole property tree into one insert batch instead of issuing
-  // a DB round-trip per property. Each row's UUID is assigned here so parent/child
-  // links resolve client-side; the entire class then writes in a single statement.
-  const rows: ClassPropertyInsert[] = [];
-
-  const collect = (props: any[], parentId: string | null) => {
-    for (const p of props || []) {
-      if (job.canceled) return;
-      let propertyId: string | null = null;
-      const isReference = p.data.$ref || (p.data.type === 'array' && p.data.items?.$ref);
-      if (!isReference) {
-        const sig = stableStringify(p.data);
-        propertyId = propertyIdMap.get(sig) || null;
-
-        // Database constraint requires: property_id IS NOT NULL OR data contains $ref
-        // If this is not a reference and we don't have a propertyId, skip with warning
-        if (propertyId === null) {
-          emit(job, 'warn', 'SKIP_PROPERTY', `Skipping property "${p.name}" in class "${cls.name}" - no library entry found`, {
-            className: cls.name,
-            propertyName: p.name,
-            dataType: p.data.type,
-            signature: sig.substring(0, 200)
-          });
-          // A skipped parent drops its subtree (children can't reference a missing parent)
-          if (p.children && p.children.length) {
-            emit(job, 'warn', 'SKIP_CHILDREN', `Also skipping ${p.children.length} child properties of "${p.name}"`);
-          }
-          continue;
-        }
-      }
-      const id = randomUUID();
-      rows.push({ id, classId, propertyId, name: p.name, description: p.description || null, data: p.data, parentId });
-      if (p.children && p.children.length) collect(p.children, id);
-    }
-  };
-
-  collect(cls.properties || [], null);
+  const { rows, warnings } = collectClassPropertyRows(cls, classId, propertyIdMap);
+  for (const w of warnings) emit(job, 'warn', w.code, w.message, w.context);
 
   if (job.canceled || rows.length === 0) return;
 
@@ -1367,6 +1480,128 @@ async function writeClassWithProperties(
       className: cls.name,
       propertyName: f.name,
     });
+  }
+}
+
+/**
+ * Write every class of an import (DBP-1.9, #7192).
+ *
+ * First all at once: one statement for the classes and one per 5,000 properties, whatever the
+ * specification's size. If the database rejects that (a duplicate class name, a duplicate nested
+ * property name), the attempt is undone and the classes are written one at a time, so a class that
+ * cannot be written is skipped and reported while the rest import (#733).
+ *
+ * @param client The import's client.
+ * @param projectId The project.
+ * @param versionId The version being written.
+ * @param classes The normalized classes.
+ * @param job The job; its log and summary record each class.
+ * @param propertyIdMap Library property ids by definition signature.
+ * @param isolation How an attempt is undone: `savepoint` inside the import's transaction, or
+ *   `transaction` when the client is not in one (incremental mode commits as it goes).
+ */
+async function writeClassesForJob(
+  client: PoolClient,
+  projectId: string,
+  versionId: string,
+  classes: NormalizedClass[],
+  job: JobState,
+  propertyIdMap: Map<string, string>,
+  isolation: 'savepoint' | 'transaction',
+): Promise<void> {
+  const total = 2 + classes.length;
+  setProgress(job, 'creating-classes', total, 2);
+  if (classes.length === 0) return;
+
+  const SP = 'imp_classes';
+  const begin = () =>
+    isolation === 'savepoint'
+      ? client.query(`SAVEPOINT ${SP}`)
+      : benchTime(job.bench, 'db:beginTransaction', () => beginTransaction(client));
+  const commit = () =>
+    isolation === 'savepoint'
+      ? client.query(`RELEASE SAVEPOINT ${SP}`)
+      : benchTime(job.bench, 'db:commitTransaction', () => commitTransaction(client));
+  const undo = async () => {
+    try {
+      if (isolation === 'savepoint') await client.query(`ROLLBACK TO SAVEPOINT ${SP}`);
+      else await rollbackTransaction(client);
+    } catch {
+      /* nothing to undo */
+    }
+  };
+  const created = (cls: NormalizedClass) => {
+    emit(job, 'info', 'CLASS_CREATED', `Imported class: ${cls.name}`);
+    if (job.summary) {
+      job.summary.classesCreated++;
+      job.summary.classes.push({ name: cls.name, status: 'success' });
+    }
+  };
+
+  // All classes at once.
+  const classRows: ClassInsert[] = [];
+  const propertyRows: ClassPropertyInsert[] = [];
+  const warningsByClass: DeferredWarning[][] = [];
+  for (const cls of classes) {
+    const id = randomUUID();
+    classRows.push({
+      id,
+      versionId,
+      name: cls.name,
+      description: cls.description || null,
+      schema: cls.schema || { type: 'object' },
+    });
+    const collected = collectClassPropertyRows(cls, id, propertyIdMap);
+    propertyRows.push(...collected.rows);
+    warningsByClass.push(collected.warnings);
+  }
+  if (job.canceled) throw new Error('Import canceled');
+  let bulkError: unknown = null;
+  try {
+    await begin();
+    await benchTime(job.bench, 'db:createClassesBulk', () =>
+      createClassesWithPropertiesBulkTx(client, classRows, propertyRows)
+    );
+    await commit();
+  } catch (error) {
+    bulkError = error ?? new Error('bulk class write failed');
+    await undo();
+  }
+  if (!bulkError) {
+    classes.forEach((cls, index) => {
+      setProgress(job, 'creating-classes', total, 2 + index, cls.name);
+      for (const w of warningsByClass[index]) emit(job, 'warn', w.code, w.message, w.context);
+      created(cls);
+    });
+    return;
+  }
+
+  // One class at a time, skipping the ones that fail.
+  emit(
+    job,
+    'info',
+    'CLASS_BULK_FALLBACK',
+    'The classes could not be written in one statement; writing them one at a time.',
+    { reason: bulkError instanceof Error ? bulkError.message : String(bulkError) }
+  );
+  let classCount = 0;
+  for (const cls of classes) {
+    if (job.canceled) throw new Error('Import canceled');
+    setProgress(job, 'creating-classes', total, 2 + classCount, cls.name);
+    try {
+      await begin();
+      await writeClassWithProperties(client, projectId, versionId, cls, job, propertyIdMap);
+      await commit();
+      created(cls);
+    } catch (classErr: any) {
+      await undo();
+      emit(job, 'error', 'CLASS_FAILED', `Failed to create class ${cls.name}: ${classErr?.message}`);
+      if (job.summary) {
+        job.summary.failed++;
+        job.summary.classes.push({ name: cls.name, status: 'failed' });
+      }
+    }
+    classCount++;
   }
 }
 
@@ -1408,6 +1643,8 @@ export async function startImport(input: ImportJobInput) {
   (async () => {
     const input = job.input;
     let client: PoolClient | null = null;
+    /** True while `client` is inside the transaction-mode import's transaction. */
+    let inTransaction = false;
     const isDryRun = input.options.dryRun === true;
 
     try {
@@ -1555,7 +1792,6 @@ export async function startImport(input: ImportJobInput) {
         initialDelayMs: 500,
         label: 'getTransactionClient'
       });
-      job.transactionClient = client;
 
       if (incrementalMode) {
         // Incremental mode: no single transaction; commit as we go and skip failures
@@ -1654,7 +1890,6 @@ export async function startImport(input: ImportJobInput) {
             }
             emit(job, 'info', 'IMPORT_SKIPPED_NOOP', 'Import finished without changes (duplicate catalog version line).', job.result);
             await releaseClient(client!);
-            job.transactionClient = undefined;
             return;
           }
           throw new Error(verErr);
@@ -1665,10 +1900,9 @@ export async function startImport(input: ImportJobInput) {
           parentVersionUuid: parentVersionUuidInc ?? undefined,
         });
 
-        // The property-library build uses SAVEPOINT-protected batch inserts, which require an
-        // open transaction. The incremental project/version steps above run in autocommit, so
-        // wrap the library build in its own short transaction (committed before the per-class
-        // loop) — consistent with the per-class begin/commit pattern below.
+        // The incremental project/version steps above run in autocommit. The library build is
+        // several statements (one per 5,000 new properties), so it gets its own short
+        // transaction, committed before the classes are written.
         let propertyIdMapInc: Map<string, string>;
         await benchTime(job.bench, 'db:beginTransaction', () => beginTransaction(client!));
         try {
@@ -1689,33 +1923,8 @@ export async function startImport(input: ImportJobInput) {
           throw libErr;
         }
 
-        setProgress(job, 'creating-classes', 2 + norm.classes.length, 2);
-        let classCountInc = 0;
         const _writeClassesStart = Date.now();
-        for (const cls of norm.classes) {
-          if (job.canceled) throw new Error('Import canceled');
-          setProgress(job, 'creating-classes', 2 + norm.classes.length, 2 + classCountInc, cls.name);
-          try {
-            await benchTime(job.bench, 'db:beginTransaction', () => beginTransaction(client!));
-            await writeClassWithProperties(client!, projectId, versionId, cls, job, propertyIdMapInc);
-            await benchTime(job.bench, 'db:commitTransaction', () => commitTransaction(client!));
-            emit(job, 'info', 'CLASS_CREATED', `Imported class: ${cls.name}`);
-            if (job.summary) {
-              job.summary.classesCreated++;
-              job.summary.classes.push({ name: cls.name, status: 'success' });
-            }
-          } catch (classErr: any) {
-            try {
-              await rollbackTransaction(client!);
-            } catch (_) { /* ignore */ }
-            emit(job, 'error', 'CLASS_FAILED', `Failed to create class ${cls.name}: ${classErr?.message}`);
-            if (job.summary) {
-              job.summary.failed++;
-              job.summary.classes.push({ name: cls.name, status: 'failed' });
-            }
-          }
-          classCountInc++;
-        }
+        await writeClassesForJob(client!, projectId, versionId, norm.classes, job, propertyIdMapInc, 'transaction');
         recordPhase(job, 'phase:writeClasses', Date.now() - _writeClassesStart);
 
         if (job.merge) {
@@ -1754,7 +1963,7 @@ export async function startImport(input: ImportJobInput) {
         if (job.summary) job.summary.verification = verificationResultInc;
         if (!verificationResultInc.passed && job.summary) job.summary.warnings++;
 
-        await benchPhase(job, 'phase:importPaths', () => importJobPaths(job, versionId));
+        await benchPhase(job, 'phase:importPaths', () => importJobPaths(job, versionId, client!));
 
         job.result = { projectId, versionId };
         await recordRepositoryImportMetricIfApplicable(job);
@@ -1768,16 +1977,18 @@ export async function startImport(input: ImportJobInput) {
         }
         emit(job, 'info', 'INCREMENTAL_COMPLETE', 'Incremental import complete. Successful classes were saved; failed classes were skipped.', job.result);
         await releaseClient(client!);
-        job.transactionClient = undefined;
         return;
       }
 
-      // Transaction mode: single transaction, pending-approval to commit or rollback
+      // Transaction mode (DBP-1.9, #7192): one transaction writes the import and commits it
+      // *staged* — the version, and the project when this import creates it, are hidden until
+      // the reviewer accepts. No client is held while the import awaits approval.
       await withRetry(() => beginTransaction(client!), {
         maxAttempts: 3,
         initialDelayMs: 300,
         label: 'beginTransaction'
       });
+      inTransaction = true;
       job.transactionPending = true;
       emit(job, 'info', 'TRANSACTION_STARTED', 'Database transaction started - changes will be committed only after approval');
 
@@ -1807,6 +2018,7 @@ export async function startImport(input: ImportJobInput) {
                 input.project.description || '',
                 input.project.slug,
                 input.projectMetadata ?? undefined,
+                { pending: true },
               ),
             { maxAttempts: 3, initialDelayMs: 500, label: 'createProject' }
           )
@@ -1832,7 +2044,10 @@ export async function startImport(input: ImportJobInput) {
         norm.classes.map((c) => c.name),
       );
       await prepareImportMerge(client!, job, parentVersionUuidTx, norm);
-      if (existingTx) await mergeOpenApiIntoExistingProjectIfNeeded(client!, job, input, existingTx);
+      // The spec's info is merged into an existing project when the import is accepted: until
+      // then nothing a reader can see has changed.
+      job.projectCreated = !existingTx;
+      job.projectInfoMergeTarget = existingTx ?? undefined;
       const resVer = JSON.parse(
         await withRetry(
           () =>
@@ -1845,7 +2060,11 @@ export async function startImport(input: ImportJobInput) {
               parentVersionUuidTx
                 ? 'Imported from specification (follow-on revision in same project)'
                 : 'Imported from specification',
-              { parentVersionUuid: parentVersionUuidTx ?? undefined, projectSlug: input.project.slug }
+              {
+                parentVersionUuid: parentVersionUuidTx ?? undefined,
+                projectSlug: input.project.slug,
+                pending: true,
+              }
             ),
           { maxAttempts: 3, initialDelayMs: 500, label: 'createVersion' }
         )
@@ -1861,6 +2080,7 @@ export async function startImport(input: ImportJobInput) {
           if (!existingUuid) throw new Error(verErr);
           if (job.transactionPending) {
             await rollbackTransaction(client!);
+            inTransaction = false;
             job.transactionPending = false;
             emit(job, 'info', 'TRANSACTION_ROLLED_BACK', 'Transaction rolled back after duplicate-version skip');
           }
@@ -1881,8 +2101,7 @@ export async function startImport(input: ImportJobInput) {
           }
           emit(job, 'info', 'IMPORT_SKIPPED_NOOP', 'Import finished without changes (duplicate catalog version line).', job.result);
           await releaseClient(client!);
-          job.transactionClient = undefined;
-          return;
+            return;
         }
         throw new Error(verErr);
       }
@@ -1892,35 +2111,28 @@ export async function startImport(input: ImportJobInput) {
         parentVersionUuid: parentVersionUuidTx ?? undefined,
       });
 
+      // Repository source rows as they are now, so a rejected import can put them back.
+      const tracksSources = Boolean(job.merge) && !job.projectCreated;
+      const sourcesBefore = tracksSources ? await listRepositorySourcesTx(client, projectId) : [];
+
       const propertyIdMap = await buildPropertyIdMapForImport(client, projectId, norm, job, reuseLibraryTx);
 
       // Create classes and link properties
-      setProgress(job, 'creating-classes', 2 + norm.classes.length, 2);
-      let classCount = 0;
-      for (const cls of norm.classes) {
-        if (job.canceled) throw new Error('Import canceled');
-        setProgress(job, 'creating-classes', 2 + norm.classes.length, 2 + classCount, cls.name);
-        try {
-          await writeClassWithProperties(client, projectId, versionId, cls, job, propertyIdMap);
-          emit(job, 'info', 'CLASS_CREATED', `Imported class: ${cls.name}`);
-          if (job.summary) {
-            job.summary.classesCreated++;
-            job.summary.classes.push({ name: cls.name, status: 'success' });
-          }
-        } catch (classErr: any) {
-          emit(job, 'error', 'CLASS_FAILED', `Failed to create class ${cls.name}: ${classErr?.message}`);
-          if (job.summary) {
-            job.summary.failed++;
-            job.summary.classes.push({ name: cls.name, status: 'failed' });
-          }
-        }
-        classCount++;
-      }
+      await writeClassesForJob(client, projectId, versionId, norm.classes, job, propertyIdMap, 'savepoint');
 
       // Multi-repository merge (REPO-5.7): carried classes and provenance, in the import's transaction.
       await applyRepositoryMergeForJob(client, job, projectId, versionId);
       // A merge (#591, #592): the kept classes and security schemes, in the import's transaction.
       await applyImportMergeForJob(client, job, versionId);
+
+      // What rejecting this import must undo outside its version.
+      const sourcesAfter = tracksSources ? await listRepositorySourcesTx(client, projectId) : [];
+      await writeStagedManifestTx(client, versionId, {
+        jobId,
+        projectCreated: job.projectCreated === true,
+        propertyIds: job.createdPropertyIds ?? [],
+        ...diffRepositorySources(sourcesBefore, sourcesAfter),
+      });
 
       // Verification phase - sanity check imported data matches schema
       if (job.canceled) throw new Error('Import canceled');
@@ -1941,38 +2153,63 @@ export async function startImport(input: ImportJobInput) {
         if (job.summary) job.summary.warnings++;
       }
 
+      if (job.canceled) throw new Error('Import canceled');
+      await commitTransaction(client);
+      inTransaction = false;
+      job.stagedVersionId = versionId;
+      job.result = { projectId, versionId };
+      emit(job, 'info', 'IMPORT_STAGED', 'Import written and staged; it stays hidden until it is accepted.', job.result);
+
+      // Paths and security schemes, on the same client. The version is still hidden.
+      await importJobPaths(job, versionId, client);
+      // Canceled while the paths were written: nobody is left to decide, so discard it now.
+      if (job.canceled) throw new Error('Import canceled');
+
+      const stagingClient = client;
+      client = null;
+      await releaseClient(stagingClient);
+
       setProgress(job, 'finalizing', 3 + norm.classes.length, 3 + norm.classes.length);
 
       // Set state to pending-approval - waiting for user to accept or reject
       job.state = 'pending-approval';
-      job.result = { projectId, versionId };
       if (job.summary) {
         job.summary.totalTime = Date.now() - startTime;
       }
       emit(job, 'info', 'PENDING_APPROVAL', 'Import ready for review. Accept to commit changes or reject to rollback.', job.result);
 
-      // Note: Transaction is NOT committed here - it stays open until user accepts or rejects
+      // Nothing is held here: the staged import is committed, and the client is back in the pool.
 
     } catch (err: any) {
       // Rollback transaction on any error
-      if (client && job.transactionPending) {
+      if (client && inTransaction) {
         try {
           await rollbackTransaction(client);
-          job.transactionPending = false;
           emit(job, 'info', 'TRANSACTION_ROLLED_BACK', 'Transaction rolled back due to error');
         } catch (rollbackErr) {
           emit(job, 'error', 'ROLLBACK_FAILED', `Failed to rollback transaction: ${rollbackErr}`);
         }
       }
+      job.transactionPending = false;
 
       // Release client on error
       if (client) {
         try {
           await releaseClient(client);
-          job.transactionClient = undefined;
         } catch (releaseErr) {
           emit(job, 'error', 'RELEASE_FAILED', `Failed to release client: ${releaseErr}`);
         }
+      }
+
+      // A failure after the import was staged: remove what was committed.
+      if (job.stagedVersionId) {
+        try {
+          await discardStagedImport(job.stagedVersionId);
+          emit(job, 'info', 'STAGED_IMPORT_DISCARDED', 'The staged import was removed.');
+        } catch (discardErr) {
+          emit(job, 'error', 'ROLLBACK_FAILED', `Failed to remove the staged import: ${discardErr}`);
+        }
+        job.stagedVersionId = undefined;
       }
 
       if (job.canceled) {
@@ -1996,8 +2233,35 @@ export async function startImport(input: ImportJobInput) {
   return { jobId };
 }
 
+/** The rows of `after` an import added, and the rows of `before` it changed, for the manifest. */
+function diffRepositorySources(
+  before: TouchedRepositorySource[],
+  after: TouchedRepositorySource[],
+): { sourcesCreated: string[]; sourcesTouched: TouchedRepositorySource[] } {
+  const previous = new Map(before.map((row) => [row.id, row]));
+  const sourcesCreated: string[] = [];
+  const sourcesTouched: TouchedRepositorySource[] = [];
+  for (const row of after) {
+    const was = previous.get(row.id);
+    if (!was) sourcesCreated.push(row.id);
+    else if (
+      was.last_version_id !== row.last_version_id ||
+      was.last_blob_sha !== row.last_blob_sha ||
+      was.updated_at !== row.updated_at
+    ) {
+      sourcesTouched.push(was);
+    }
+  }
+  return { sourcesCreated, sourcesTouched };
+}
+
 /**
- * Commit the import transaction - called when user accepts the import
+ * Accept a staged import - called when the user accepts the import.
+ *
+ * One short transaction makes the staged version (and the project the import created) visible
+ * and, for an existing project, merges the spec's info into it. If the import is no longer
+ * staged — it waited past `IMPORT_PENDING_TTL_MINUTES`, or the server restarted and the sweeper
+ * removed it — nothing is changed and the job fails with a message saying so.
  */
 export async function commitImport(jobId: string): Promise<{ success: boolean; error?: string }> {
   const job = jobs.get(jobId);
@@ -2009,31 +2273,42 @@ export async function commitImport(jobId: string): Promise<{ success: boolean; e
     return { success: false, error: `Cannot commit import in state: ${job.state}` };
   }
 
-  if (!job.transactionClient || !job.transactionPending) {
+  const versionId = job.stagedVersionId;
+  if (!versionId || !job.transactionPending) {
     return { success: false, error: 'No pending transaction to commit' };
   }
 
+  let client: PoolClient | null = null;
+  let inTransaction = false;
   try {
     job.state = 'committing';
     emit(job, 'info', 'COMMITTING', 'Committing import transaction...');
 
-    await withRetry(() => commitTransaction(job.transactionClient!), {
+    client = await withRetry(() => getTransactionClient(), {
       maxAttempts: 3,
       initialDelayMs: 500,
-      label: 'commitTransaction'
+      label: 'getTransactionClient'
     });
+    await beginTransaction(client);
+    inTransaction = true;
+
+    const accepted = await acceptStagedImportTx(client, versionId, job.input.userId);
+    if (!accepted.ok) throw new Error(accepted.error);
+    if (job.projectInfoMergeTarget) {
+      await mergeOpenApiIntoExistingProjectIfNeeded(client, job, job.input, job.projectInfoMergeTarget);
+    }
+
+    await commitTransaction(client);
+    inTransaction = false;
     job.transactionPending = false;
+    job.stagedVersionId = undefined;
 
     emit(job, 'info', 'COMMITTED', 'Import transaction committed successfully');
 
     // Release the client
-    await releaseClient(job.transactionClient);
-    job.transactionClient = undefined;
-
-    const versionId = job.result?.versionId as string | undefined;
-    if (versionId) {
-      await importJobPaths(job, versionId);
-    }
+    const acceptClient = client;
+    client = null;
+    await releaseClient(acceptClient);
 
     await recordRepositoryImportMetricIfApplicable(job);
     await reportCommittedFederationMerge(job);
@@ -2046,13 +2321,29 @@ export async function commitImport(jobId: string): Promise<{ success: boolean; e
     emit(job, 'error', 'COMMIT_FAILED', `Failed to commit transaction: ${err?.message}`);
     job.state = 'failed';
 
-    // Try to release the client
-    if (job.transactionClient) {
+    if (client) {
+      if (inTransaction) {
+        try {
+          await rollbackTransaction(client);
+        } catch {
+          // The connection is gone; PostgreSQL has rolled the transaction back.
+        }
+      }
       try {
-        await releaseClient(job.transactionClient);
-        job.transactionClient = undefined;
-      } catch (releaseErr) {
+        await releaseClient(client);
+      } catch {
         // Ignore release errors
+      }
+    }
+
+    // The import was not accepted: remove what it staged (the sweeper does so if this fails).
+    if (job.stagedVersionId) {
+      try {
+        await discardStagedImport(job.stagedVersionId);
+        job.stagedVersionId = undefined;
+        job.transactionPending = false;
+      } catch {
+        // Left for the sweeper.
       }
     }
 
@@ -2061,7 +2352,10 @@ export async function commitImport(jobId: string): Promise<{ success: boolean; e
 }
 
 /**
- * Rollback the import transaction - called when user rejects the import or closes dialog
+ * Reject an import - called when the user rejects the import or closes the dialog.
+ *
+ * A staged import is deleted, with what it changed outside its version. An import that is still
+ * being written is flagged canceled: it stops at its next step and rolls its own transaction back.
  */
 export async function rollbackImport(jobId: string): Promise<{ success: boolean; error?: string }> {
   const job = jobs.get(jobId);
@@ -2075,8 +2369,13 @@ export async function rollbackImport(jobId: string): Promise<{ success: boolean;
     return { success: true };
   }
 
-  if (!job.transactionClient || !job.transactionPending) {
-    // No pending transaction
+  if (job.state === 'running') {
+    job.canceled = true;
+    return { success: true };
+  }
+
+  if (!job.stagedVersionId || !job.transactionPending) {
+    // Nothing staged
     job.state = 'rolled-back';
     return { success: true };
   }
@@ -2084,14 +2383,11 @@ export async function rollbackImport(jobId: string): Promise<{ success: boolean;
   try {
     emit(job, 'info', 'ROLLING_BACK', 'Rolling back import transaction...');
 
-    await rollbackTransaction(job.transactionClient);
+    await discardStagedImport(job.stagedVersionId);
+    job.stagedVersionId = undefined;
     job.transactionPending = false;
 
     emit(job, 'info', 'ROLLED_BACK', 'Import transaction rolled back - no changes were saved');
-
-    // Release the client
-    await releaseClient(job.transactionClient);
-    job.transactionClient = undefined;
 
     job.state = 'rolled-back';
     job.canceled = true;
@@ -2099,17 +2395,6 @@ export async function rollbackImport(jobId: string): Promise<{ success: boolean;
     return { success: true };
   } catch (err: any) {
     emit(job, 'error', 'ROLLBACK_FAILED', `Failed to rollback transaction: ${err?.message}`);
-
-    // Try to release the client
-    if (job.transactionClient) {
-      try {
-        await releaseClient(job.transactionClient);
-        job.transactionClient = undefined;
-      } catch (releaseErr) {
-        // Ignore release errors
-      }
-    }
-
     return { success: false, error: err?.message || 'Failed to rollback transaction' };
   }
 }
@@ -2214,8 +2499,8 @@ export async function cancelImport(jobId: string) {
 
   job.canceled = true;
 
-  // If there's a pending transaction, roll it back
-  if (job.transactionClient && job.transactionPending) {
+  // A staged import awaiting approval is removed; a running one stops at its next step.
+  if (job.state === 'pending-approval') {
     return rollbackImport(jobId);
   }
 

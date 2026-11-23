@@ -33,6 +33,33 @@ gives an overview of the import system and links to the page with the steps for 
 If the import fails, nothing is saved. **“Undo import”** on the **Done** step of **Import specification** reverses an
 import that finished.
 
+## While an import waits for your decision
+
+**Import specification** writes the whole import first and then asks you to decide. The banner on
+the **Import** step reads *Transaction pending — changes will only be saved if you accept.*
+
+- **“Accept & commit”** saves the import. The new project or version appears in **Projects** at
+  once.
+- **“Reject & rollback”** discards it. So does closing the dialog.
+
+Until you accept, nobody sees the import: it is not in **Projects**, in the catalog, in search, in
+the REST API or on the public site. A new version of an existing project also leaves that project's
+name, description and details as they were until you accept.
+
+An import waits **60 minutes** for your decision. After that it is discarded and nothing is added.
+The same happens if the Apiome server restarts while the import is waiting. **Accept & commit**
+then answers *This import is no longer awaiting approval: it expired or was discarded, and nothing
+was added. Run the import again.* Run the import again from the **Source** step. Whoever runs your
+Apiome server can change the 60 minutes
+([Imports waiting for review](../admin/operating-apiome.mdx#imports-waiting-for-review)).
+
+An import that waits does not count toward the projects and versions of your plan. The plan is
+checked when you accept, so an import can be turned down at that point if the workspace filled up
+while it waited.
+
+With **Incremental mode** on, or a **Dry run**, there is nothing to decide: an incremental import
+saves each schema as it goes, and a dry run saves nothing.
+
 ## Where an import can come from
 
 | Source | Where | Steps |

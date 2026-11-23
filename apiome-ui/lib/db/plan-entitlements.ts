@@ -78,29 +78,42 @@ export async function getMaxTenantsForUser(userId: string): Promise<number> {
   return value === null || value === undefined ? DEFAULT_FREE_MAX_TENANTS : Number(value);
 }
 
-async function countProjectsForUser(userId: string, client?: Queryable): Promise<number> {
-  const db = client ?? connectionPool;
-  const result = await db.query(
-    `SELECT COUNT(DISTINCT p.id)::int AS c
+/**
+ * The live projects of the tenants a user belongs to, one row per project. `OFFSET $2 LIMIT 1`
+ * over it answers "does the user already have `$2` or more?" after reading at most `$2 + 1`
+ * rows, where the count it replaces read every one (DBP-1.9, #7192).
+ */
+export const PROJECTS_AT_LIMIT_SQL = `SELECT 1
      FROM apiome.projects p
      INNER JOIN apiome.tenant_users tu ON tu.tenant_id = p.tenant_id AND tu.user_id = $1
-     WHERE p.deleted_at IS NULL`,
-    [userId]
-  );
-  return result.rows[0]?.c ?? 0;
-}
+     WHERE p.deleted_at IS NULL
+     OFFSET $2 LIMIT 1`;
 
-async function countVersionsForUser(userId: string, client?: Queryable): Promise<number> {
-  const db = client ?? connectionPool;
-  const result = await db.query(
-    `SELECT COUNT(DISTINCT v.id)::int AS c
+/** As {@link PROJECTS_AT_LIMIT_SQL}, for live versions of live projects. */
+export const VERSIONS_AT_LIMIT_SQL = `SELECT 1
      FROM apiome.versions v
      INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
      INNER JOIN apiome.tenant_users tu ON tu.tenant_id = p.tenant_id AND tu.user_id = $1
-     WHERE v.deleted_at IS NULL`,
-    [userId]
-  );
-  return result.rows[0]?.c ?? 0;
+     WHERE v.deleted_at IS NULL
+     OFFSET $2 LIMIT 1`;
+
+/**
+ * Whether a user already has at least `max` rows of a kind (projects or versions).
+ *
+ * A user is a member of a tenant once, so each project or version is read once. A project or
+ * version staged by an import awaiting approval is not live and does not count until accepted.
+ *
+ * @param sql {@link PROJECTS_AT_LIMIT_SQL} or {@link VERSIONS_AT_LIMIT_SQL}.
+ * @param userId The user.
+ * @param max The plan's limit (0 or more).
+ * @param client The transaction client, or the pool when omitted.
+ * @returns True when another one would exceed the plan.
+ */
+async function atLimit(sql: string, userId: string, max: number, client?: Queryable): Promise<boolean> {
+  if (max <= 0) return true;
+  const db = client ?? connectionPool;
+  const result = await db.query(sql, [userId, max - 1]);
+  return (result.rows?.length ?? 0) > 0;
 }
 
 /** Returns an error message if another project would exceed the plan, otherwise null. */
@@ -108,8 +121,7 @@ export async function getPlanBlockMessageForNewProject(userId: string, client?: 
   const ent = await getEntitlements(userId, client);
   if (!ent) return null;
   if (ent.max_projects < 0) return null;
-  const n = await countProjectsForUser(userId, client);
-  if (n >= ent.max_projects) {
+  if (await atLimit(PROJECTS_AT_LIMIT_SQL, userId, ent.max_projects, client)) {
     return `Your ${ent.plan_code} plan allows up to ${ent.max_projects} project(s). Upgrade or remove a project to add another.`;
   }
   return null;
@@ -120,8 +132,7 @@ export async function getPlanBlockMessageForNewVersion(userId: string, client?: 
   const ent = await getEntitlements(userId, client);
   if (!ent) return null;
   if (ent.max_versions < 0) return null;
-  const n = await countVersionsForUser(userId, client);
-  if (n >= ent.max_versions) {
+  if (await atLimit(VERSIONS_AT_LIMIT_SQL, userId, ent.max_versions, client)) {
     return `Your ${ent.plan_code} plan allows up to ${ent.max_versions} version(s). Upgrade or remove a version to add another.`;
   }
   return null;

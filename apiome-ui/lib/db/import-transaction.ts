@@ -4,6 +4,7 @@
  */
 
 import { getPlanBlockMessageForNewProject, getPlanBlockMessageForNewVersion } from './plan-entitlements';
+import { bulkInsert } from './import-bulk';
 
 const connectionPool = require('./db');
 
@@ -55,7 +56,11 @@ function validateSlug(slug: string): string | null {
 }
 
 /**
- * Create a project within a transaction
+ * Create a project within a transaction.
+ *
+ * @param opts `pending` stages the project for an import awaiting approval (DBP-1.9, #7192): it is
+ *   written with `deleted_at` set, so no reader shows it until the import is accepted
+ *   (`lib/db/import-staging.ts`).
  */
 export async function createProjectTx(
   client: PoolClient,
@@ -64,7 +69,8 @@ export async function createProjectTx(
   name: string,
   description: string,
   slug: string,
-  metadata?: any
+  metadata?: any,
+  opts?: { pending?: boolean }
 ): Promise<string> {
   try {
     if (!name?.trim()) return errorResponse('Project name is required');
@@ -76,9 +82,17 @@ export async function createProjectTx(
     if (planErr) return errorResponse(planErr);
 
     const result = await client.query(
-      `INSERT INTO apiome.projects (tenant_id, creator_id, name, description, slug, metadata) 
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [tenantId, creatorId, name.trim(), description?.trim() || null, slug.trim().toLowerCase(), metadata ? JSON.stringify(metadata) : '{}']
+      `INSERT INTO apiome.projects (tenant_id, creator_id, name, description, slug, metadata, deleted_at)
+       VALUES ($1, $2, $3, $4, $5, $6, CASE WHEN $7::boolean THEN CURRENT_TIMESTAMP END) RETURNING *`,
+      [
+        tenantId,
+        creatorId,
+        name.trim(),
+        description?.trim() || null,
+        slug.trim().toLowerCase(),
+        metadata ? JSON.stringify(metadata) : '{}',
+        opts?.pending === true,
+      ]
     );
     return successResponse({ project: result.rows[0] });
   } catch (error: any) {
@@ -165,7 +179,12 @@ export async function mergeProjectImportOpenApiFieldsTx(
 }
 
 /**
- * Create a version within a transaction
+ * Create a version within a transaction.
+ *
+ * @param opts `parentVersionUuid` is the revision the new one follows; `projectSlug` names the
+ *   project in a duplicate-version error; `pending` stages the version for an import awaiting
+ *   approval (DBP-1.9, #7192) — `deleted_at` and `import_pending_at` are set, so no reader shows it
+ *   until the import is accepted (`lib/db/import-staging.ts`).
  */
 export async function createVersionTx(
   client: PoolClient,
@@ -174,7 +193,7 @@ export async function createVersionTx(
   versionId: string,
   description: string,
   changeLog: string,
-  opts?: { parentVersionUuid?: string | null; projectSlug?: string | null }
+  opts?: { parentVersionUuid?: string | null; projectSlug?: string | null; pending?: boolean }
 ): Promise<string> {
   try {
     if (!versionId?.trim()) return errorResponse('Version ID is required');
@@ -183,24 +202,23 @@ export async function createVersionTx(
     if (planErr) return errorResponse(planErr);
 
     const parentUuid = opts?.parentVersionUuid?.trim() || null;
-    const result = parentUuid
-      ? await client.query(
-          `INSERT INTO apiome.versions (project_id, creator_id, version_id, description, change_log, parent_version_id) 
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-          [
-            projectId,
-            creatorId,
-            versionId.trim(),
-            description?.trim() || null,
-            changeLog?.trim() || null,
-            parentUuid,
-          ]
-        )
-      : await client.query(
-          `INSERT INTO apiome.versions (project_id, creator_id, version_id, description, change_log) 
-           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-          [projectId, creatorId, versionId.trim(), description?.trim() || null, changeLog?.trim() || null]
-        );
+    const result = await client.query(
+      `INSERT INTO apiome.versions
+         (project_id, creator_id, version_id, description, change_log, parent_version_id, deleted_at, import_pending_at)
+       VALUES ($1, $2, $3, $4, $5, $6,
+               CASE WHEN $7::boolean THEN CURRENT_TIMESTAMP END,
+               CASE WHEN $7::boolean THEN CURRENT_TIMESTAMP END)
+       RETURNING *`,
+      [
+        projectId,
+        creatorId,
+        versionId.trim(),
+        description?.trim() || null,
+        changeLog?.trim() || null,
+        parentUuid,
+        opts?.pending === true,
+      ]
+    );
     return successResponse({ version: result.rows[0] });
   } catch (error: any) {
     if (error.code === '23505') {
@@ -289,18 +307,32 @@ export async function getVersionUuidForCatalogVersionLineTx(
   return row?.id ? (row.id as string) : null;
 }
 
-/** Property library rows for reuse when importing another revision into the same project. */
+/**
+ * Property library rows for reuse when importing another revision into the same project.
+ *
+ * Soft-deleted rows are listed too, flagged `deleted` and without their `data`: a deleted
+ * property cannot be reused, but `properties_project_name_unique` still holds its name, so the
+ * importer must not pick that name for a new property (DBP-1.9, #7192).
+ */
 export async function listProjectLibraryPropertiesTx(
   client: PoolClient,
   projectId: string
-): Promise<Array<{ id: string; name: string; description: string | null; data: any }>> {
+): Promise<Array<{ id: string; name: string; description: string | null; data: any; deleted?: boolean }>> {
   const result = await client.query(
-    `SELECT id, name, description, data
+    `SELECT id, name, description,
+            CASE WHEN deleted_at IS NULL THEN data END AS data,
+            (deleted_at IS NOT NULL) AS deleted
      FROM apiome.properties
-     WHERE project_id = $1 AND deleted_at IS NULL`,
+     WHERE project_id = $1`,
     [projectId]
   );
-  return result.rows as Array<{ id: string; name: string; description: string | null; data: any }>;
+  return result.rows as Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    data: any;
+    deleted?: boolean;
+  }>;
 }
 
 /**
@@ -352,20 +384,12 @@ export interface PropertyInsert {
   data: any;
 }
 
-const PROPERTIES_COLS = 5;
-const PROPERTIES_INSERT_HEAD =
-  'INSERT INTO apiome.properties (id, project_id, name, description, data) VALUES ';
-
-function propertyValues(r: PropertyInsert): any[] {
-  return [r.id, r.projectId, r.name.trim(), r.description, JSON.stringify(r.data)];
-}
-
 /**
- * Bulk-create project library properties in one (chunked) multi-row INSERT.
+ * Bulk-create project library properties: one statement per 5,000 rows (DBP-1.9, #7192).
  *
- * #perf: replaces the per-shape N+1 round-trips in buildPropertyIdMapForImport. Same
- * shape as addPropertiesToClassBatchTx — savepoint-protected with a per-row fallback so
- * a single name collision is reported (and skipped) without aborting the whole batch.
+ * A name the project already uses — live or soft-deleted, `properties_project_name_unique`
+ * covers both — is skipped by `ON CONFLICT DO NOTHING` and reported in `failed`, so one collision
+ * neither aborts the batch nor needs a savepoint and a per-row retry.
  * Returns { inserted, failed: [{ name, error }] }.
  */
 export async function createPropertiesBatchTx(
@@ -373,59 +397,27 @@ export async function createPropertiesBatchTx(
   rows: PropertyInsert[]
 ): Promise<string> {
   if (rows.length === 0) return successResponse({ inserted: 0, failed: [] });
-
-  const CHUNK = 1000; // 1000 * 5 = 5000 params, far below the 65535 limit
-  const SP = 'imp_props_lib_batch';
-
   try {
-    await client.query(`SAVEPOINT ${SP}`);
+    const result = await bulkInsert(
+      client,
+      'properties',
+      ['id', 'project_id', 'name', 'description', 'data'],
+      rows.map((r) => ({
+        id: r.id,
+        project_id: r.projectId,
+        name: r.name.trim(),
+        description: r.description,
+        data: r.data,
+      })),
+      { conflict: 'ON CONFLICT (project_id, name) DO NOTHING', returning: 'id' }
+    );
+    const insertedIds = new Set<string>(result.rows.map((row: { id: string }) => String(row.id)));
+    const failed = rows
+      .filter((r) => !insertedIds.has(r.id))
+      .map((r) => ({ name: r.name, error: 'A property with this name already exists in this project' }));
+    return successResponse({ inserted: rows.length - failed.length, failed });
   } catch (error: any) {
     return errorResponse(error.message);
-  }
-
-  try {
-    let inserted = 0;
-    for (let start = 0; start < rows.length; start += CHUNK) {
-      const chunk = rows.slice(start, start + CHUNK);
-      const params: any[] = [];
-      const valueGroups = chunk.map((r, i) => {
-        const b = i * PROPERTIES_COLS;
-        params.push(...propertyValues(r));
-        return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5})`;
-      });
-      const result = await client.query(PROPERTIES_INSERT_HEAD + valueGroups.join(', '), params);
-      inserted += result.rowCount ?? chunk.length;
-    }
-    await client.query(`RELEASE SAVEPOINT ${SP}`);
-    return successResponse({ inserted, failed: [] });
-  } catch (_batchError: any) {
-    try {
-      await client.query(`ROLLBACK TO SAVEPOINT ${SP}`);
-      const failed: Array<{ name: string; error: string }> = [];
-      let inserted = 0;
-      const ROW_SP = 'imp_prop_lib_row';
-      for (const r of rows) {
-        await client.query(`SAVEPOINT ${ROW_SP}`);
-        try {
-          await client.query(`${PROPERTIES_INSERT_HEAD}($1, $2, $3, $4, $5)`, propertyValues(r));
-          await client.query(`RELEASE SAVEPOINT ${ROW_SP}`);
-          inserted++;
-        } catch (rowError: any) {
-          await client.query(`ROLLBACK TO SAVEPOINT ${ROW_SP}`);
-          failed.push({
-            name: r.name,
-            error:
-              rowError?.code === '23505'
-                ? 'A property with this name already exists in this project'
-                : rowError?.message || 'insert failed',
-          });
-        }
-      }
-      await client.query(`RELEASE SAVEPOINT ${SP}`);
-      return successResponse({ inserted, failed });
-    } catch (recoverError: any) {
-      return errorResponse(recoverError.message);
-    }
   }
 }
 
@@ -613,6 +605,119 @@ export async function addPropertiesToClassBatchTx(
       return errorResponse(recoverError.message);
     }
   }
+}
+
+/** Row to insert into apiome.classes; the caller assigns `id` so its properties can name it. */
+export interface ClassInsert {
+  id: string;
+  versionId: string;
+  name: string;
+  description: string | null;
+  schema: any;
+}
+
+/**
+ * Write a whole import's classes and their properties: one statement for the classes and one per
+ * 5,000 properties, instead of about six statements per class (DBP-1.9, #7192).
+ *
+ * All or nothing: any row that cannot be written (a duplicate class name, a duplicate nested
+ * property name) fails the statement. The caller wraps the call in a savepoint or transaction
+ * and, on failure, writes class by class so one bad class is skipped and reported (#733).
+ * Property rows must list a parent before its children.
+ *
+ * @param client The import's transaction client.
+ * @param classes The classes.
+ * @param properties Every class's properties, flattened.
+ * @throws Error when a class has no name, or PostgreSQL rejects a row.
+ */
+export async function createClassesWithPropertiesBulkTx(
+  client: PoolClient,
+  classes: ClassInsert[],
+  properties: ClassPropertyInsert[]
+): Promise<void> {
+  for (const cls of classes) {
+    if (!cls.name || cls.name.trim().length === 0) throw new Error('Class name is required');
+  }
+  await bulkInsert(
+    client,
+    'classes',
+    ['id', 'version_id', 'name', 'description', 'schema'],
+    classes.map((c) => ({
+      id: c.id,
+      version_id: c.versionId,
+      name: c.name.trim(),
+      description: c.description,
+      schema: c.schema,
+    }))
+  );
+  await bulkInsert(
+    client,
+    'class_properties',
+    ['id', 'class_id', 'property_id', 'name', 'description', 'data', 'parent_id'],
+    properties.map((r) => ({
+      id: r.id,
+      class_id: r.classId,
+      property_id: r.propertyId,
+      name: r.name.trim(),
+      description: r.description,
+      data: r.data,
+      parent_id: r.parentId,
+    }))
+  );
+}
+
+/** What an import expects of one class, for {@link verifyImportCountsTx}. */
+export interface ExpectedClassCount {
+  name: string;
+  /** Properties at every depth. */
+  properties: number;
+  /** Whether the class schema carries a discriminator. */
+  discriminator: boolean;
+}
+
+/**
+ * Check an import in the database instead of reading it back (DBP-1.9, #7192): compare each
+ * expected class's property count and discriminator with what the version holds, and return only
+ * the names that differ. A clean import returns no rows, so nothing but the comparison's result
+ * crosses the wire; the importer fetches the rows themselves only to explain a difference.
+ *
+ * @param client The import's client.
+ * @param versionId The version just written.
+ * @param expected One entry per imported class.
+ * @returns `mismatched`: expected classes that are missing or differ; `extra`: live classes of
+ *   the version the import did not expect (carried by a merge, usually).
+ */
+export async function verifyImportCountsTx(
+  client: PoolClient,
+  versionId: string,
+  expected: ExpectedClassCount[]
+): Promise<{ mismatched: string[]; extra: string[] }> {
+  const result = await client.query(
+    `WITH expected AS (
+       SELECT name, properties, discriminator
+         FROM jsonb_to_recordset($2::jsonb) AS e(name text, properties int, discriminator boolean)
+     ), actual AS (
+       SELECT c.name,
+              (c.schema ? 'discriminator') AS discriminator,
+              (SELECT count(*) FROM apiome.class_properties cp WHERE cp.class_id = c.id)::int AS properties
+         FROM apiome.classes c
+        WHERE c.version_id = $1 AND c.deleted_at IS NULL
+     )
+     SELECT COALESCE(e.name, a.name) AS name, (e.name IS NULL) AS extra
+       FROM expected e
+       FULL JOIN actual a ON a.name = e.name
+      WHERE e.name IS NULL
+         OR a.name IS NULL
+         OR a.properties <> e.properties
+         OR a.discriminator IS DISTINCT FROM e.discriminator`,
+    [versionId, JSON.stringify(expected)]
+  );
+  const mismatched: string[] = [];
+  const extra: string[] = [];
+  for (const row of result.rows as Array<{ name: string; extra: boolean }>) {
+    (row.extra ? extra : mismatched).push(String(row.name));
+  }
+  return { mismatched, extra };
 }
 
 /**

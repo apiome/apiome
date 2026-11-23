@@ -8,6 +8,16 @@ const connectionPool = require('./db');
 import type { ParsedPath, ParsedOperation, ParsedParameter, ParsedSecurityScheme } from '../../src/app/utils/openapi-import';
 import type { PathParameterLocation } from '../utils/openapi-paths-generator';
 import { buildStoredInlineSchema } from '../utils/inline-schema-utils';
+import { randomUUID } from 'crypto';
+import { bulkInsert, type BulkQueryable } from './import-bulk';
+
+/**
+ * The version's live classes, for resolving `$ref`s. `deleted_at IS NULL` is what lets the
+ * partial `(version_id, name)` index answer it, and keeps a `$ref` from resolving to a
+ * soft-deleted class (DBP-1.9, #7192).
+ */
+export const CLASS_LOOKUP_SQL =
+  'SELECT id, name FROM apiome.classes WHERE version_id = $1 AND deleted_at IS NULL';
 
 function getRefSchemaName(ref: string | undefined): string | null {
   if (!ref || typeof ref !== 'string') return null;
@@ -49,21 +59,308 @@ export function buildParameterData(
   return base;
 }
 
+/** Columns of each table the import writes, in insert order (see {@link PathImportRows}). */
+const PATH_IMPORT_COLUMNS = {
+  version_path: ['id', 'version_id', 'pathname', 'metadata'],
+  shared_path_parameter: ['id', 'version_path_id', 'name', 'in_location', 'summary', 'description', 'data'],
+  path_operation: ['id', 'version_path_id', 'operation', 'metadata'],
+  path_operation_description: ['path_operation_id', 'summary', 'description', 'operation_id', 'metadata'],
+  path_operation_parameter_link: ['path_operation_id', 'shared_path_parameter_id', 'metadata'],
+  shared_path_request_body: ['id', 'version_path_id', 'name', 'description', 'required'],
+  shared_path_request_body_content: [
+    'shared_path_request_body_id',
+    'media_type',
+    'class_id',
+    'inline_schema',
+    'item_schema',
+  ],
+  path_operation_request_body_link: ['path_operation_id', 'shared_path_request_body_id', 'metadata'],
+  shared_path_response: [
+    'id',
+    'version_path_id',
+    'status_code',
+    'description',
+    'data',
+    'class_id',
+    'inline_schema',
+    'schema_mode',
+  ],
+  shared_path_response_content: ['shared_path_response_id', 'media_type', 'class_id', 'inline_schema', 'item_schema'],
+  path_operation_response_link: ['path_operation_id', 'shared_path_response_id', 'metadata'],
+} as const;
+
+/** A table the paths import writes. Parents come before their children. */
+type PathImportTable = keyof typeof PATH_IMPORT_COLUMNS;
+
+/** One row to insert, keyed by column name. */
+type Row = Record<string, unknown>;
+
+/** Every row a paths import writes, per table. */
+export type PathImportRows = Record<PathImportTable, Row[]>;
+
+/** The stored inline schema of a response media type that names no schema. */
+const EMPTY_OBJECT_SCHEMA = { type: 'object', properties: [] };
+
 /**
- * Import security schemes into version_security_scheme for the given version.
+ * Build every row a paths import writes, with ids assigned here so a child row names its parent
+ * without a round trip (DBP-1.9, #7192).
+ *
+ * What the per-row statements used to settle with `ON CONFLICT` is settled here instead:
+ *
+ * - a path-level parameter declared twice keeps the first row and takes the later description
+ *   and data;
+ * - an operation parameter that matches a path's parameter (same name and location) links to it
+ *   rather than adding a row;
+ * - operations of one path that answer the same status code share one response row: the later
+ *   description wins, and data, class and inline schema are kept when the later one has none;
+ * - a response media type is written once per response.
+ *
+ * @param versionId The version the paths belong to.
+ * @param paths The parsed paths.
+ * @param classNameToId The version's live classes, by name; a `$ref` to one becomes its id.
+ * @param newId Id source (defaults to `crypto.randomUUID`); tests pass a counter.
+ * @returns The rows, per table.
+ */
+export function buildPathImportRows(
+  versionId: string,
+  paths: ParsedPath[],
+  classNameToId: ReadonlyMap<string, string>,
+  newId: () => string = randomUUID,
+): PathImportRows {
+  const rows: PathImportRows = {
+    version_path: [],
+    shared_path_parameter: [],
+    path_operation: [],
+    path_operation_description: [],
+    path_operation_parameter_link: [],
+    shared_path_request_body: [],
+    shared_path_request_body_content: [],
+    path_operation_request_body_link: [],
+    shared_path_response: [],
+    shared_path_response_content: [],
+    path_operation_response_link: [],
+  };
+  const classIdFor = (ref: string | undefined): string | null => {
+    const refName = ref ? getRefSchemaName(ref) : null;
+    return refName ? classNameToId.get(refName) ?? null : null;
+  };
+
+  for (const pathItem of paths) {
+    const versionPathId = newId();
+    rows.version_path.push({
+      id: versionPathId,
+      version_id: versionId,
+      pathname: pathItem.path,
+      metadata:
+        pathItem.summary || pathItem.description
+          ? { summary: pathItem.summary, description: pathItem.description }
+          : null,
+    });
+
+    const parametersByKey = new Map<string, Row>();
+    for (const p of pathItem.parameters ?? []) {
+      const inLoc = (p.in || 'query') as PathParameterLocation;
+      const key = `${p.name}:${inLoc}`;
+      const existing = parametersByKey.get(key);
+      if (existing) {
+        existing.description = p.description || null;
+        existing.data = buildParameterData(p);
+        continue;
+      }
+      const row: Row = {
+        id: newId(),
+        version_path_id: versionPathId,
+        name: p.name,
+        in_location: inLoc,
+        summary: null,
+        description: p.description || null,
+        data: buildParameterData(p),
+      };
+      parametersByKey.set(key, row);
+      rows.shared_path_parameter.push(row);
+    }
+
+    const responsesByStatus = new Map<string, { row: Row; mediaTypes: Set<string> }>();
+    for (const op of pathItem.operations) {
+      const pathOperationId = newId();
+      rows.path_operation.push({
+        id: pathOperationId,
+        version_path_id: versionPathId,
+        operation: op.method,
+        metadata: buildPathOperationMetadata(op),
+      });
+
+      const descMetadata: Record<string, unknown> = {};
+      if (op.tags?.length) descMetadata.tags = op.tags;
+      if (op.deprecated === true) descMetadata.deprecated = true;
+      rows.path_operation_description.push({
+        path_operation_id: pathOperationId,
+        summary: op.summary ?? null,
+        description: op.description ?? null,
+        operation_id: op.operationId ?? null,
+        metadata: Object.keys(descMetadata).length > 0 ? descMetadata : null,
+      });
+
+      const linkedParameters = new Set<string>();
+      for (const p of op.parameters || []) {
+        const inLoc = (p.in || 'query') as PathParameterLocation;
+        const key = `${p.name}:${inLoc}`;
+        let parameter = parametersByKey.get(key);
+        if (!parameter) {
+          parameter = {
+            id: newId(),
+            version_path_id: versionPathId,
+            name: p.name,
+            in_location: inLoc,
+            summary: null,
+            description: p.description || null,
+            data: buildParameterData(p),
+          };
+          parametersByKey.set(key, parameter);
+          rows.shared_path_parameter.push(parameter);
+        }
+        if (linkedParameters.has(key)) continue;
+        linkedParameters.add(key);
+        rows.path_operation_parameter_link.push({
+          path_operation_id: pathOperationId,
+          shared_path_parameter_id: parameter.id,
+          metadata: null,
+        });
+      }
+
+      if (op.requestBody?.content && Object.keys(op.requestBody.content).length > 0) {
+        const requestBodyId = newId();
+        rows.shared_path_request_body.push({
+          id: requestBodyId,
+          version_path_id: versionPathId,
+          name: op.operationId
+            ? op.operationId
+            : `RequestBody_${op.method}_${pathItem.path.replace(/^\//, '').replace(/\//g, '_') || 'root'}`,
+          description: op.requestBody.description ?? null,
+          required: op.requestBody.required === true,
+        });
+        for (const [mediaType, content] of Object.entries(op.requestBody.content)) {
+          const classId = classIdFor(content.$ref);
+          const inlineSchema =
+            !content.$ref && content.schema
+              ? buildStoredInlineSchema(content.schema as Record<string, unknown>)
+              : null;
+          if (!classId && !inlineSchema) continue;
+          rows.shared_path_request_body_content.push({
+            shared_path_request_body_id: requestBodyId,
+            media_type: mediaType,
+            class_id: classId,
+            inline_schema: inlineSchema,
+            item_schema: Boolean(content.streamKind),
+          });
+        }
+        rows.path_operation_request_body_link.push({
+          path_operation_id: pathOperationId,
+          shared_path_request_body_id: requestBodyId,
+          metadata: null,
+        });
+      }
+
+      for (const [statusCode, res] of Object.entries(op.responses ?? {})) {
+        const hasContent = Boolean(res.content && typeof res.content === 'object' && Object.keys(res.content).length > 0);
+        const contentEntries = hasContent ? Object.entries(res.content!) : [];
+        const dataObj: Record<string, unknown> = {};
+        if (res.headers && Object.keys(res.headers || {}).length > 0) dataObj.headers = res.headers;
+        if (res.links && Object.keys(res.links || {}).length > 0) dataObj.links = res.links;
+        let classId: string | null = null;
+        let inlineSchema: Record<string, unknown> | null = null;
+        if (contentEntries.length > 0) {
+          const [, first] = contentEntries[0];
+          classId = classIdFor(first?.$ref);
+          inlineSchema =
+            !first?.$ref && first?.schema
+              ? buildStoredInlineSchema(first.schema as Record<string, unknown>)
+              : { ...EMPTY_OBJECT_SCHEMA };
+        }
+        const incoming = {
+          description: res.description ?? null,
+          data: Object.keys(dataObj).length > 0 ? dataObj : hasContent ? null : {},
+          class_id: classId,
+          inline_schema: classId ? null : inlineSchema,
+          schema_mode: classId ? 'class' : 'object',
+        };
+
+        let response = responsesByStatus.get(statusCode);
+        if (!response) {
+          response = {
+            row: { id: newId(), version_path_id: versionPathId, status_code: statusCode, ...incoming },
+            mediaTypes: new Set<string>(),
+          };
+          responsesByStatus.set(statusCode, response);
+          rows.shared_path_response.push(response.row);
+        } else {
+          response.row.description = incoming.description;
+          response.row.data = incoming.data ?? response.row.data;
+          response.row.class_id = incoming.class_id ?? response.row.class_id;
+          response.row.inline_schema = incoming.inline_schema ?? response.row.inline_schema;
+          response.row.schema_mode = incoming.schema_mode;
+        }
+
+        for (const [mediaType, mediaObj] of contentEntries) {
+          if (response.mediaTypes.has(mediaType)) continue;
+          response.mediaTypes.add(mediaType);
+          const contentClassId = classIdFor(mediaObj?.$ref);
+          rows.shared_path_response_content.push({
+            shared_path_response_id: response.row.id,
+            media_type: mediaType,
+            class_id: contentClassId,
+            inline_schema: contentClassId
+              ? null
+              : !mediaObj?.$ref && mediaObj?.schema
+                ? buildStoredInlineSchema(mediaObj.schema as Record<string, unknown>)
+                : { ...EMPTY_OBJECT_SCHEMA },
+            item_schema: Boolean(mediaObj?.streamKind),
+          });
+        }
+        rows.path_operation_response_link.push({
+          path_operation_id: pathOperationId,
+          shared_path_response_id: response.row.id,
+          metadata: null,
+        });
+      }
+    }
+  }
+  return rows;
+}
+
+/**
+ * Write a version's security schemes in one statement; a scheme the version already has is
+ * replaced. A name listed twice keeps its last definition.
+ *
+ * @param client The import's client.
+ * @param versionId The version.
+ * @param schemes The parsed schemes.
  */
 async function importSecuritySchemes(
-  client: any,
+  client: BulkQueryable,
   versionId: string,
-  schemes: ParsedSecurityScheme[]
+  schemes: ParsedSecurityScheme[],
 ): Promise<void> {
+  const byName = new Map<string, Row>();
   for (const s of schemes) {
-    const dataJson = s.data && Object.keys(s.data).length > 0 ? JSON.stringify(s.data) : null;
-    await client.query(
-      `INSERT INTO apiome.version_security_scheme 
-       (version_id, scheme_name, scheme_type, in_location, param_name, http_scheme, description, data)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
-       ON CONFLICT (version_id, scheme_name) DO UPDATE SET
+    byName.set(s.scheme_name, {
+      version_id: versionId,
+      scheme_name: s.scheme_name,
+      scheme_type: s.scheme_type,
+      in_location: s.in_location ?? null,
+      param_name: s.param_name ?? null,
+      http_scheme: s.http_scheme ?? null,
+      description: s.description ?? null,
+      data: s.data && Object.keys(s.data).length > 0 ? s.data : {},
+    });
+  }
+  await bulkInsert(
+    client,
+    'version_security_scheme',
+    ['version_id', 'scheme_name', 'scheme_type', 'in_location', 'param_name', 'http_scheme', 'description', 'data'],
+    [...byName.values()],
+    {
+      conflict: `ON CONFLICT (version_id, scheme_name) DO UPDATE SET
          scheme_type = EXCLUDED.scheme_type,
          in_location = EXCLUDED.in_location,
          param_name = EXCLUDED.param_name,
@@ -71,30 +368,35 @@ async function importSecuritySchemes(
          description = EXCLUDED.description,
          data = EXCLUDED.data,
          updated_at = CURRENT_TIMESTAMP`,
-      [
-        versionId,
-        s.scheme_name,
-        s.scheme_type,
-        s.in_location ?? null,
-        s.param_name ?? null,
-        s.http_scheme ?? null,
-        s.description ?? null,
-        dataJson ?? '{}',
-      ]
-    );
-  }
+    },
+  );
 }
+
+/** A pooled client: what {@link importOpenAPIPathsAndSecurity} checks out when it is given none. */
+type ImportClient = BulkQueryable & { release?: () => void };
 
 /**
  * Import paths, operations, parameters, request bodies, and responses.
  * Resolves $ref to class_id when the referenced class exists in the version.
+ *
+ * One transaction and one statement per table (DBP-1.9, #7192): about fifteen statements for
+ * any specification of up to 5,000 rows per table.
+ *
+ * @param versionId The version to write into.
+ * @param paths The parsed paths.
+ * @param securitySchemes The parsed security schemes.
+ * @param existingClient A client the caller already holds and is not using in a transaction; the
+ *   import runs on it (one client per import job) and leaves it checked out. Omitted, a client is
+ *   taken from the pool and released.
+ * @returns `success`, or the error that rolled the import back.
  */
 export async function importOpenAPIPathsAndSecurity(
   versionId: string,
   paths: ParsedPath[],
-  securitySchemes: ParsedSecurityScheme[]
+  securitySchemes: ParsedSecurityScheme[],
+  existingClient?: BulkQueryable,
 ): Promise<{ success: boolean; error?: string }> {
-  const client = await connectionPool.connect();
+  const client: ImportClient = existingClient ?? (await connectionPool.connect());
   try {
     await client.query('BEGIN');
 
@@ -102,228 +404,27 @@ export async function importOpenAPIPathsAndSecurity(
       await importSecuritySchemes(client, versionId, securitySchemes);
     }
 
-    const classRows = await client.query(
-      'SELECT id, name FROM apiome.classes WHERE version_id = $1',
-      [versionId]
-    );
-    const classNameToId = new Map<string, string>();
-    for (const r of classRows.rows) {
-      classNameToId.set(r.name, r.id);
-    }
-
-    for (const pathItem of paths) {
-      const pathRes = await client.query(
-        `INSERT INTO apiome.version_path (version_id, pathname, metadata)
-         VALUES ($1, $2, $3)
-         RETURNING id`,
-        [versionId, pathItem.path, pathItem.summary || pathItem.description ? JSON.stringify({ summary: pathItem.summary, description: pathItem.description }) : null]
-      );
-      const versionPathId = pathRes.rows[0].id;
-
-      const paramIdsByKey = new Map<string, string>();
-      const buildParamData = buildParameterData;
-      if (pathItem.parameters?.length) {
-        for (const p of pathItem.parameters) {
-          const inLoc = (p.in || 'query') as PathParameterLocation;
-          const key = `${p.name}:${inLoc}`;
-          const data = buildParamData(p);
-          const pr = await client.query(
-            `INSERT INTO apiome.shared_path_parameter (version_path_id, name, in_location, summary, description, data)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT (version_path_id, name, in_location) DO UPDATE SET description = EXCLUDED.description, data = EXCLUDED.data
-             RETURNING id`,
-            [versionPathId, p.name, inLoc, null, p.description || null, JSON.stringify(data)]
-          );
-          paramIdsByKey.set(key, pr.rows[0].id);
-        }
+    if (paths.length > 0) {
+      const classRows = await client.query(CLASS_LOOKUP_SQL, [versionId]);
+      const classNameToId = new Map<string, string>();
+      for (const r of classRows.rows) {
+        classNameToId.set(r.name, r.id);
       }
-
-      for (const op of pathItem.operations) {
-        const opMetadata = buildPathOperationMetadata(op);
-        const opRes = await client.query(
-          `INSERT INTO apiome.path_operation (version_path_id, operation, metadata)
-           VALUES ($1, $2, $3)
-           RETURNING id`,
-          [versionPathId, op.method, opMetadata ? JSON.stringify(opMetadata) : null]
-        );
-        const pathOperationId = opRes.rows[0].id;
-
-        const descMetadata: Record<string, unknown> = {};
-        if (op.tags?.length) descMetadata.tags = op.tags;
-        if (op.deprecated === true) descMetadata.deprecated = true;
-        await client.query(
-          `INSERT INTO apiome.path_operation_description (path_operation_id, summary, description, operation_id, metadata)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (path_operation_id) DO UPDATE SET summary = EXCLUDED.summary, description = EXCLUDED.description, operation_id = EXCLUDED.operation_id, metadata = EXCLUDED.metadata`,
-          [
-            pathOperationId,
-            op.summary ?? null,
-            op.description ?? null,
-            op.operationId ?? null,
-            Object.keys(descMetadata).length > 0 ? JSON.stringify(descMetadata) : null,
-          ]
-        );
-
-        const allParams = op.parameters || [];
-        for (const p of allParams) {
-          const inLoc = (p.in || 'query') as PathParameterLocation;
-          const key = `${p.name}:${inLoc}`;
-          let paramId = paramIdsByKey.get(key);
-          if (!paramId) {
-            const data = buildParamData(p);
-            const pr = await client.query(
-              `INSERT INTO apiome.shared_path_parameter (version_path_id, name, in_location, summary, description, data)
-               VALUES ($1, $2, $3, $4, $5, $6)
-               RETURNING id`,
-              [versionPathId, p.name, inLoc, null, p.description || null, JSON.stringify(data)]
-            );
-            const insertedId = pr.rows[0]?.id;
-            if (typeof insertedId !== 'string') throw new Error('Insert shared_path_parameter failed');
-            paramId = insertedId;
-            paramIdsByKey.set(key, paramId);
-          }
-          await client.query(
-            `INSERT INTO apiome.path_operation_parameter_link (path_operation_id, shared_path_parameter_id, metadata)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (path_operation_id, shared_path_parameter_id) DO NOTHING`,
-            [pathOperationId, paramId, null]
-          );
-        }
-
-        if (op.requestBody?.content && Object.keys(op.requestBody.content).length > 0) {
-          const rbName = op.operationId
-            ? op.operationId
-            : `RequestBody_${op.method}_${(pathItem.path.replace(/^\//, '').replace(/\//g, '_') || 'root')}`;
-          const rbRes = await client.query(
-            `INSERT INTO apiome.shared_path_request_body (version_path_id, name, description, required)
-             VALUES ($1, $2, $3, $4)
-             RETURNING id`,
-            [
-              versionPathId,
-              rbName,
-              op.requestBody.description ?? null,
-              op.requestBody.required === true,
-            ]
-          );
-          const requestBodyId = rbRes.rows[0].id;
-          for (const [mediaType, content] of Object.entries(op.requestBody!.content)) {
-            const refName = content.$ref ? getRefSchemaName(content.$ref) : null;
-            const classId = refName ? classNameToId.get(refName) ?? null : null;
-            const inlineSchema = !content.$ref && content.schema
-              ? buildStoredInlineSchema(content.schema as Record<string, unknown>)
-              : null;
-            if (classId || inlineSchema) {
-              await client.query(
-                `INSERT INTO apiome.shared_path_request_body_content 
-                 (shared_path_request_body_id, media_type, class_id, inline_schema, item_schema)
-                 VALUES ($1, $2, $3, $4, $5)`,
-                [
-                  requestBodyId,
-                  mediaType,
-                  classId,
-                  inlineSchema ? JSON.stringify(inlineSchema) : null,
-                  Boolean(content.streamKind),
-                ]
-              );
-            }
-          }
-          await client.query(
-            `INSERT INTO apiome.path_operation_request_body_link (path_operation_id, shared_path_request_body_id, metadata)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (path_operation_id) DO UPDATE SET shared_path_request_body_id = EXCLUDED.shared_path_request_body_id`,
-            [pathOperationId, requestBodyId, null]
-          );
-        }
-
-        if (op.responses && Object.keys(op.responses).length > 0) {
-          for (const [statusCode, res] of Object.entries(op.responses)) {
-            const hasContent = res.content && typeof res.content === 'object' && Object.keys(res.content).length > 0;
-            const contentEntries = hasContent ? Object.entries(res.content!) : [];
-            const dataObj: Record<string, unknown> = {};
-            if (res.headers && Object.keys(res.headers || {}).length > 0) dataObj.headers = res.headers;
-            if (res.links && Object.keys(res.links || {}).length > 0) dataObj.links = res.links;
-            let classId: string | null = null;
-            let inlineSchema: Record<string, unknown> | null = null;
-            let schemaMode: 'class' | 'object' = 'object';
-            if (contentEntries.length > 0) {
-              const [, firstMediaObj] = contentEntries[0];
-              const refName = firstMediaObj?.$ref ? getRefSchemaName(firstMediaObj.$ref) : null;
-              classId = refName ? classNameToId.get(refName) ?? null : null;
-              if (!firstMediaObj?.$ref && firstMediaObj?.schema) {
-                inlineSchema = buildStoredInlineSchema(firstMediaObj.schema as Record<string, unknown>);
-              } else {
-                inlineSchema = { type: 'object', properties: [] };
-              }
-              schemaMode = classId ? 'class' : 'object';
-            }
-            const responseData = Object.keys(dataObj).length > 0 ? JSON.stringify(dataObj) : (hasContent ? null : '{}');
-            const responseClassId = classId ?? null;
-            const responseInlineSchema = classId ? null : (inlineSchema ? JSON.stringify(inlineSchema) : null);
-            const respRes = await client.query(
-              `INSERT INTO apiome.shared_path_response (version_path_id, status_code, description, data, class_id, inline_schema, schema_mode)
-               VALUES ($1, $2, $3, $4, $5, $6, $7)
-               ON CONFLICT (version_path_id, status_code) DO UPDATE SET
-                 description = EXCLUDED.description,
-                 data = COALESCE(EXCLUDED.data, apiome.shared_path_response.data),
-                 class_id = COALESCE(EXCLUDED.class_id, apiome.shared_path_response.class_id),
-                 inline_schema = COALESCE(EXCLUDED.inline_schema, apiome.shared_path_response.inline_schema),
-                 schema_mode = COALESCE(EXCLUDED.schema_mode, apiome.shared_path_response.schema_mode)
-               RETURNING id`,
-              [
-                versionPathId,
-                statusCode,
-                res.description ?? null,
-                responseData,
-                responseClassId,
-                responseInlineSchema,
-                schemaMode,
-              ]
-            );
-            const responseId = respRes.rows[0].id;
-            for (const [mediaType, mediaObj] of contentEntries) {
-              const refName = mediaObj?.$ref ? getRefSchemaName(mediaObj.$ref) : null;
-              const ctClassId = refName ? classNameToId.get(refName) ?? null : null;
-              const ctInlineSchema = !mediaObj?.$ref && mediaObj?.schema
-                ? buildStoredInlineSchema(mediaObj.schema as Record<string, unknown>)
-                : { type: 'object', properties: [] };
-              const existingContent = await client.query(
-                'SELECT id FROM apiome.shared_path_response_content WHERE shared_path_response_id = $1 AND media_type = $2',
-                [responseId, mediaType]
-              );
-              if (existingContent.rows.length === 0) {
-                await client.query(
-                  `INSERT INTO apiome.shared_path_response_content (shared_path_response_id, media_type, class_id, inline_schema, item_schema)
-                   VALUES ($1, $2, $3, $4, $5)`,
-                  [
-                    responseId,
-                    mediaType,
-                    ctClassId,
-                    ctClassId ? null : JSON.stringify(ctInlineSchema),
-                    Boolean(mediaObj?.streamKind),
-                  ]
-                );
-              }
-            }
-            await client.query(
-              `INSERT INTO apiome.path_operation_response_link (path_operation_id, shared_path_response_id, metadata)
-               VALUES ($1, $2, $3)
-               ON CONFLICT (path_operation_id, shared_path_response_id) DO NOTHING`,
-              [pathOperationId, responseId, null]
-            );
-          }
-        }
+      const rows = buildPathImportRows(versionId, paths, classNameToId);
+      for (const table of Object.keys(PATH_IMPORT_COLUMNS) as PathImportTable[]) {
+        await bulkInsert(client, table, PATH_IMPORT_COLUMNS[table], rows[table]);
       }
     }
 
     await client.query('COMMIT');
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
     try {
       await client.query('ROLLBACK');
     } catch {}
-    return { success: false, error: err?.message || 'Import paths/security failed' };
+    return { success: false, error: (err as Error | undefined)?.message || 'Import paths/security failed' };
   } finally {
-    client.release();
+    if (!existingClient) client.release?.();
   }
 }
 

@@ -20,6 +20,10 @@
  * #5652; `lib/auth/legacy-signup-invitations.ts`). The sweep runs in the background — it never
  * delays or fails startup — and does nothing unless email sign-up is configured.
  *
+ * And it starts the staged-import sweeper (DBP-1.9, #7192; `lib/db/import-staging.ts`): an import
+ * awaiting approval is committed but hidden, and one nobody decided on — the dialog was closed, or
+ * the server restarted — is discarded once it is older than `IMPORT_PENDING_TTL_MINUTES`.
+ *
  * See `lib/auth/provider-registry.ts` (`validateProviderEnv`, `validateOidcDiscoveryEnv`),
  * `lib/auth/provider-config-resolver.ts` (`resolveProviderEnvWithSource`), and
  * `docs/AUTH_PROVIDER_SETUP.md`.
@@ -28,12 +32,14 @@ export async function register(): Promise<void> {
   // Only the Node.js server reads provider secrets; skip the edge runtime so each issue is
   // reported once and the auth modules stay out of the edge bundle.
   if (process.env.NEXT_RUNTIME !== 'nodejs') return;
-  const [registry, resolver, legacySignup] = await Promise.all([
+  const [registry, resolver, legacySignup, importStaging] = await Promise.all([
     import('../lib/auth/provider-registry'),
     import('../lib/auth/provider-config-resolver'),
     import('../lib/auth/legacy-signup-invitations'),
+    import('../lib/db/import-staging'),
   ]);
   void legacySignup.runLegacySignupInvitations();
+  importStaging.startImportStagingSweeper();
   const { PROVIDER_REGISTRY, validateProviderEnv, validateOidcDiscoveryEnv } = registry;
   const { resolveProviderEnvWithSource } = resolver;
   const { env, source } = await resolveProviderEnvWithSource();

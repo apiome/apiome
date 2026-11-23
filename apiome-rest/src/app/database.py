@@ -4523,6 +4523,31 @@ class Database:
     #: adds ``own.entity_owner`` without a second statement.
     _PROJECT_OWNER_LATERAL = owner_envelope_join(("project", "catalog_item"), "p.id", "p.tenant_id")
 
+    #: A project an import created and staged for review (DBP-1.9, #7192; apiome-ui
+    #: ``lib/db/import-staging.ts``): it is written with ``deleted_at`` set so nothing shows it
+    #: until the reviewer accepts, and it is not a deleted project a user may list, restore or
+    #: purge. Its one version carries ``import_pending_at``.
+    _PROJECT_NOT_STAGED_SQL = (
+        "NOT EXISTS (SELECT 1 FROM apiome.versions sv "
+        "WHERE sv.project_id = p.id AND sv.import_pending_at IS NOT NULL)"
+    )
+
+    @classmethod
+    def _project_deleted_filter(cls, include_deleted: bool) -> str:
+        """The soft-delete predicate of a ``projects p`` read.
+
+        Args:
+            include_deleted: Also match soft-deleted projects (trash and restore flows).
+
+        Returns:
+            ``AND p.deleted_at IS NULL`` by default. With ``include_deleted``, a predicate that
+            still leaves out a project staged by an import awaiting approval: such a row has
+            ``deleted_at`` set only to stay hidden (DBP-1.9, #7192).
+        """
+        if not include_deleted:
+            return "AND p.deleted_at IS NULL"
+        return f"AND (p.deleted_at IS NULL OR {cls._PROJECT_NOT_STAGED_SQL})"
+
     def get_projects_for_tenant(
         self, tenant_id: str, *, include_deleted: bool = False, team: Optional[str] = None
     ) -> List[Dict[str, Any]]:
@@ -4535,7 +4560,7 @@ class Database:
         captured ``quality_score`` / derived ``quality_grade`` across those revisions (NULL when
         no revision has been scored yet). Empty projects (``versions_count = 0``) have no scores.
         """
-        deleted_filter = "" if include_deleted else "AND p.deleted_at IS NULL"
+        deleted_filter = self._project_deleted_filter(include_deleted)
         team_clause, team_params = owner_team_filter(team)
         order_clause = (
             "ORDER BY (p.deleted_at IS NULL) DESC, p.created_at DESC"
@@ -4649,7 +4674,7 @@ class Database:
         When ``identity_group_id`` is set, only catalog items in that cross-format identity group
         are returned (MFI-6.4 browse facet: "show all representations").
         """
-        deleted_filter = "" if include_deleted else "AND p.deleted_at IS NULL"
+        deleted_filter = self._project_deleted_filter(include_deleted)
         identity_filter = (
             "AND aim.group_id = %s::uuid" if identity_group_id else ""
         )
@@ -4696,7 +4721,7 @@ class Database:
         project with that id exists for the tenant (a publishable Project is *not* a catalog item and
         is intentionally not returned here).
         """
-        deleted_clause = "" if include_deleted else "AND p.deleted_at IS NULL"
+        deleted_clause = self._project_deleted_filter(include_deleted)
         query = f"""
             SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug,
                    p.enabled, p.metadata, p.change_report_template_version_id, p.publishable,
@@ -8710,7 +8735,7 @@ class Database:
         Includes the same versions summary (``versions_count``, mean quality score/grade) as
         :meth:`get_projects_for_tenant` so single-project reads match the list shape.
         """
-        deleted_clause = "" if include_deleted else "AND p.deleted_at IS NULL"
+        deleted_clause = self._project_deleted_filter(include_deleted)
         query = f"""
             SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug,
                    p.enabled, p.metadata, p.change_report_template_version_id, p.publishable,
@@ -8756,7 +8781,7 @@ class Database:
         """
         if not project_id or not _UUID_SHAPE_RE.match(str(project_id).strip()):
             return None
-        deleted_clause = "" if include_deleted else "AND p.deleted_at IS NULL"
+        deleted_clause = self._project_deleted_filter(include_deleted)
         query = f"""
             SELECT {self._PROJECT_CORE_COLUMNS}
             FROM apiome.projects p

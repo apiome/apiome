@@ -363,7 +363,11 @@ def test_get_project_core_reads_projects_only() -> None:
 def test_get_project_core_can_include_a_deleted_project() -> None:
     db = _RecordingDb([[{"id": PID}]])
     db.get_project_core(PID, TID, include_deleted=True)
-    assert "deleted_at IS NULL" not in db.statements[0][0]
+    flat = _flat(db.statements[0][0])
+    # Deleted projects match too; a project staged by an import awaiting approval never does
+    # (DBP-1.9, #7192: tests/test_staged_import_projects.py).
+    assert "AND p.deleted_at IS NULL" not in flat
+    assert "(p.deleted_at IS NULL OR NOT EXISTS" in flat
 
 
 @pytest.mark.parametrize("bad", ["", None, "0.0.1", "my-project", "not-a-uuid"])

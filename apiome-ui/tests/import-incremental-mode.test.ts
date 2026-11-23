@@ -49,6 +49,11 @@ jest.mock('../lib/db/import-transaction', () => ({
   },
   addPropertyToClassTx: (...args: any[]) => mockAddPropertyToClassTx(...args),
   addPropertiesToClassBatchTx: (...args: any[]) => mockAddPropertiesToClassBatchTx(...args),
+  // All classes in one statement (DBP-1.9, #7192). It is all-or-nothing, so it fails whenever one
+  // class is set to fail — the importer then writes class by class.
+  createClassesWithPropertiesBulkTx: async () => {
+    if (createClassTxFailForClassName) throw new Error('duplicate key value violates unique constraint');
+  },
   getClassesWithPropertiesAndTagsTx: (...args: any[]) => mockGetClassesWithPropertiesAndTagsTx(...args),
   getLatestVersionUuidForProjectTx: (...args: any[]) => mockGetLatestVersionUuidForProjectTx(...args),
   getProjectIdBySlugTx: (...args: any[]) => mockGetProjectIdBySlugTx(...args),
@@ -245,18 +250,31 @@ describe('Import Incremental Mode (#730)', () => {
     expect(mockReleaseClient).toHaveBeenCalled();
   });
 
-  test('incremental mode uses per-class transaction (begin/commit per class)', async () => {
+  test('incremental mode writes every class in one transaction', async () => {
     const { startImport, getImportStatus } = await import('../lib/db/import-helper');
     const { jobId } = await startImport(incrementalInput);
 
     await waitForJobEnd(getImportStatus, jobId);
 
-    // No global begin at start in incremental path. One begin/commit wraps the SAVEPOINT-protected
-    // property-library build, then one begin/commit per class (2 classes) → 3 begins, 3 commits.
-    expect(mockBeginTransaction).toHaveBeenCalled();
-    expect(mockCommitTransaction).toHaveBeenCalled();
-    expect(mockBeginTransaction.mock.calls.length).toBe(3);
-    expect(mockCommitTransaction.mock.calls.length).toBe(3);
+    // No global begin at start in incremental path. One begin/commit wraps the property-library
+    // build, then one wraps all the classes (DBP-1.9, #7192) → 2 begins, 2 commits, however many
+    // classes the specification has.
+    expect(mockBeginTransaction.mock.calls.length).toBe(2);
+    expect(mockCommitTransaction.mock.calls.length).toBe(2);
+    expect(mockCreateClassTx).not.toHaveBeenCalled();
+  });
+
+  test('when the one-statement write fails, incremental mode commits class by class', async () => {
+    createClassTxFailForClassName = 'Product';
+    const { startImport, getImportStatus } = await import('../lib/db/import-helper');
+    const { jobId } = await startImport(incrementalInput);
+
+    const status = await waitForJobEnd(getImportStatus, jobId);
+
+    // Library build, the failed attempt at all classes, then one begin per class.
+    expect(mockBeginTransaction.mock.calls.length).toBe(4);
+    expect(mockCreateClassTx).toHaveBeenCalledTimes(2);
+    expect(status.events?.some((e: any) => e.code === 'CLASS_BULK_FALLBACK')).toBe(true);
   });
 
   test('incremental mode summary has classesCreated and totalTime', async () => {
@@ -297,8 +315,9 @@ describe('Import Incremental Mode (#730)', () => {
 
     await waitForJobEnd(getImportStatus, jobId);
 
-    // Property-library build: begin, commit. First class: begin, commit. Second class: begin,
-    // then createClassTx fails → rollback. So 2 commits (library + User), and a rollback.
+    // Property-library build: begin, commit. All classes at once: begin, fails → rollback. Then
+    // class by class — first class: begin, commit; second class: begin, createClassTx fails →
+    // rollback. So 2 commits (library + User), and a rollback.
     expect(mockRollbackTransaction).toHaveBeenCalled();
     expect(mockCommitTransaction.mock.calls.length).toBe(2); // library build + User
   });

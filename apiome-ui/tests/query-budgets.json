@@ -1,9 +1,15 @@
 {
-  "$comment": "SQL statement budgets for UI server actions (DBP-1.1, #7184), enforced by tests/query-budgets.test.ts. Lower a budget in the PR that cuts statements (DBP-1.9 for the import, DBP-1.15 for session and Home; DBP-1.6 set the paths export at six statements).",
+  "$comment": "SQL statement budgets for UI server actions (DBP-1.1, #7184), enforced by tests/query-budgets.test.ts. Lower a budget in the PR that cuts statements (DBP-1.15 for session and Home; DBP-1.6 set the paths export at six statements; DBP-1.9 made the paths import one statement per table). importBudgets are the import pipeline's (DBP-1.9, #7192), enforced by tests/import-pipeline-budget.test.ts: a table costs one statement per 5,000 rows, so the count barely moves with the specification's size.",
   "budgets": {
     "getClassesForVersion server action": 3,
-    "importOpenAPIPathsAndSecurity (query-and-additional.yaml)": 24,
+    "importOpenAPIPathsAndSecurity (query-and-additional.yaml)": 11,
     "loadPathsForOpenAPIExport (10 operations)": 6,
     "loadPathsForOpenAPIExport (1,000 operations)": 6
+  },
+  "importBudgets": {
+    "stage (1,000 operations, 2,000 classes)": 29,
+    "stage (10 operations, 20 classes)": 28,
+    "accept": 7,
+    "reject": 8
   }
 }
