@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog` · 12 operations
 
@@ -17,7 +17,12 @@ Tag: `catalog` · 12 operations
 
 **List Catalog Items**
 
-List all catalog items for a tenant.
+List a tenant's catalog items, newest first, one page at a time.
+
+The body is a JSON array. At most ``limit`` items (200 at most) are returned; the
+``X-Has-More`` response header says whether more exist and ``X-Next-Cursor`` carries the
+``cursor`` of the next page (#7196). Facet filters apply before paging, so a page is full
+whenever enough items match.
 
 Returns the same envelope as ``GET /v1/projects/{tenant_slug}`` (so the Catalog screen can be
 cloned from the Projects dashboard) restricted to the non-publishable slice, with each item
@@ -44,10 +49,15 @@ Args:
     tag: Tag facet values.
     convention: REST hypermedia convention facet values (MFI-19.6).
     team: Owner team slug; filtered in SQL, on the owner each item shows (CDG-2.4).
+    limit: Page size.
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
     auth_data: Authentication data (injected by dependency).
 
 Returns:
-    List of catalog items for the tenant (active first when include_deleted is set).
+    One page of the tenant's catalog items (active first when include_deleted is set).
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
 
 Operation id: `list_catalog_items_v1_catalog__tenant_slug__get`
 
@@ -64,6 +74,8 @@ Operation id: `list_catalog_items_v1_catalog__tenant_slug__get`
 | `tag` | query | array of string or null | no | Tag facet, repeatable ('uncategorized' = untagged items). |
 | `convention` | query | array of string or null | no | REST hypermedia convention facet, repeatable (jsonapi, hal, hal-forms, json-ld, hydra, or 'uncategorized' = items declaring none). |
 | `team` | query | string or null | no | Only items whose owner (confirmed, else suggested) is this team slug (CDG-2.4). |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -304,7 +316,10 @@ Request body for set catalog item categories.
 
 **List a catalog item's conversion provenance history**
 
-Return a catalog item's full conversion history, newest first (CPDO-3.3).
+Return a catalog item's conversion history, newest first, one page at a time (CPDO-3.3).
+
+At most 200 rows a page (#7196): pass the previous page's ``nextCursor`` as ``cursor`` until
+``hasMore`` is false; a malformed cursor is a 400.
 
 One entry per convert/re-convert from the append-only ``conversion_provenance`` ledger: the
 target Project + revision it produced, the fidelity outcome, the converter tool versions, the
@@ -334,6 +349,8 @@ Operation id: `get_catalog_conversion_history_v1_catalog__tenant_slug___item_id_
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `item_id` | path | string | yes | Catalog item identifier. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -573,7 +590,8 @@ Request body for page through a catalog item's conversion projection manifest.
 
 Serve a catalog item's original source material (MFI-23.9): viewable / downloadable.
 
-Resolves what the import captured onto the item's ``format_metadata``:
+Resolves what the import captured for the item's latest revision (read from the document
+store, or from the legacy column for a revision imported before it):
 
 * **inline content** — streamed back as a downloadable attachment (typed by source format);
 * **a source URL** (when no content was captured) — answered with a redirect to that URL;
@@ -676,6 +694,8 @@ when no source is captured or the digest could not be computed.
 | `itemId` | string | yes | The catalog item id. |
 | `currentSourceHash` | string or null | no | Digest of the item's currently captured source text, or null. |
 | `conversions` | array of `ConversionProvenanceEntry` | no | Provenance rows, newest first. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `CatalogFacetsResponse` {#schema-catalogfacetsresponse}
 

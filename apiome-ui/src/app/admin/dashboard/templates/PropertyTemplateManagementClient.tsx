@@ -22,6 +22,7 @@ import { SkeletonTableRows } from '@/app/components/ui/Skeleton';
 import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { AdminLoadMore, useAdminPagedList, useSettledChange } from '../components/adminPagedList';
 import {
   getAllPropertyTemplates,
   getPropertyTemplateStats,
@@ -109,7 +110,6 @@ const defaultSchema = {
 
 export default function PropertyTemplateManagementClient() {
   const { confirm } = useDialog();
-  const [templates, setTemplates] = useState<PropertyTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<PropertyTemplate[]>([]);
   const [stats, setStats] = useState<TemplateStats | null>(null);
   const [categories, setCategories] = useState<CategoryStats[]>([]);
@@ -121,6 +121,23 @@ export default function PropertyTemplateManagementClient() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSystemOnly, setShowSystemOnly] = useState(false);
   const [showTenantOnly, setShowTenantOnly] = useState(false);
+
+  // The list is paged, and the filters above are applied in SQL (DBP-1.13, #7196), so a
+  // template past the first page is still found by searching for it.
+  const templateList = useAdminPagedList<PropertyTemplate>(
+    ({ cursor }) =>
+      getAllPropertyTemplates({
+        cursor,
+        search: searchQuery,
+        category: selectedCategory,
+        scope: showSystemOnly ? 'system' : showTenantOnly ? 'tenant' : null,
+      }),
+    'templates',
+  );
+  const templates = templateList.items;
+  useSettledChange(`${searchQuery}\u0000${selectedCategory ?? ''}\u0000${showSystemOnly}\u0000${showTenantOnly}`, () => {
+    void templateList.reload().catch((error) => console.error('Error loading templates:', error));
+  });
 
   // Dialog state
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -153,19 +170,15 @@ export default function PropertyTemplateManagementClient() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [templatesResult, statsResult, categoriesResult] = await Promise.all([
-        getAllPropertyTemplates(),
+      const [, statsResult, categoriesResult] = await Promise.all([
+        templateList.reload(),
         getPropertyTemplateStats(),
         getPropertyTemplateCategoriesAdmin(),
       ]);
 
-      const templatesData = JSON.parse(templatesResult);
       const statsData = JSON.parse(statsResult);
       const categoriesData = JSON.parse(categoriesResult);
 
-      if (templatesData.success) {
-        setTemplates(templatesData.templates);
-      }
       if (statsData.success) {
         setStats(statsData.stats);
       }
@@ -710,6 +723,7 @@ export default function PropertyTemplateManagementClient() {
             )}
           </tbody>
         </table>
+        <AdminLoadMore list={templateList} noun="templates" testId="admin-templates-load-more" />
       </div>
 
       {/* Create/Edit Dialog */}

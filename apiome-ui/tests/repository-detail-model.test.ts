@@ -420,6 +420,21 @@ describe('the file filter query', () => {
     expect(qs.get('offset')).toBe(String(FILE_PAGE_SIZE));
   });
 
+  test('a later page is asked for by cursor, and the counts only when wanted (#7196)', () => {
+    const qs = repositoryFilesQuery(EMPTY_REPOSITORY_FILE_FILTERS, {
+      branch: 'main',
+      offset: FILE_PAGE_SIZE,
+      cursor: 'abc',
+      includeTotal: true,
+    });
+    expect(qs.get('cursor')).toBe('abc');
+    expect(qs.has('offset')).toBe(false);
+    expect(qs.get('include_total')).toBe('true');
+    expect(
+      repositoryFilesQuery(EMPTY_REPOSITORY_FILE_FILTERS, { branch: 'main', offset: 0 }).has('include_total')
+    ).toBe(false);
+  });
+
   test('the default toolbar is not narrowing anything', () => {
     expect(isRepositoryFileListNarrowed(EMPTY_REPOSITORY_FILE_FILTERS)).toBe(false);
     expect(
@@ -483,6 +498,11 @@ describe('the file table', () => {
       'Showing 51–56 of 56'
     );
     expect(repositoryFilesShowingLine({ offset: 0, rows: 0, matchCount: 0 })).toBe('—');
+    // #7196: an uncounted list states only its window; a capped count is "at least".
+    expect(repositoryFilesShowingLine({ offset: 50, rows: 50, matchCount: null })).toBe('Showing 51–100');
+    expect(repositoryFilesShowingLine({ offset: 0, rows: 50, matchCount: 10000 })).toBe(
+      'Showing 1–50 of 10,000+'
+    );
   });
 
   test('the empty state names both reasons a page can be blank', () => {

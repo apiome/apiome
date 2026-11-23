@@ -140,10 +140,15 @@ export interface GraphEdge {
 
 export interface GraphEdgePage {
   edges: GraphEdge[];
-  total: number;
+  /** The matching edges — counted (up to 10,000) only when the request set `include_total`. */
+  total: number | null;
   truncated: boolean;
   limit: number;
   offset: number;
+  /** Whether another page follows. */
+  has_more?: boolean;
+  /** The cursor of the next page; null on the last page. */
+  next_cursor?: string | null;
 }
 
 /** One entity of the tenant-wide search. */

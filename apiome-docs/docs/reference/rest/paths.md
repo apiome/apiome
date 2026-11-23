@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `paths` · 33 operations
 
@@ -17,15 +17,25 @@ Tag: `paths` · 33 operations
 
 **List Paths**
 
-List all paths for a version.
+List a version's paths, by pathname, one page at a time.
+
+The body is a JSON array of at most ``limit`` paths (1,000 at most). The ``X-Has-More``
+response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+next page (#7196).
 
 Args:
     tenant_slug: The tenant slug
     version_id: The version ID (UUID)
+    response: The outgoing response (paging headers are set on it).
+    limit: Page size.
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
     auth_data: Authentication data (injected by dependency)
 
 Returns:
-    List of paths for the version
+    One page of the version's paths
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 for an unknown version.
 
 Operation id: `list_paths_v1_paths__tenant_slug___version_id__get`
 
@@ -35,6 +45,8 @@ Operation id: `list_paths_v1_paths__tenant_slug___version_id__get`
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `version_id` | path | string | yes | Version identifier or semantic version label, depending on the route. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

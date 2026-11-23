@@ -40,6 +40,11 @@ export const MAX_CACHE_TTL_MS = 300_000;
 
 /** Postgres SQLSTATE for "relation does not exist" — V274 not applied yet. */
 const UNDEFINED_TABLE = '42P01';
+/** PostgreSQL's SQLSTATE for "column does not exist" (a database older than V317). */
+const UNDEFINED_COLUMN = '42703';
+
+/** The policy columns every schema version has (V274). */
+const SIGNUP_POLICY_COLUMNS = 'mode, allowed_email_domains';
 
 interface CacheEntry {
   /** The effective policy last read. */
@@ -86,9 +91,20 @@ const readStoredRow: SignupPolicyRowReader = async () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const connectionPool = require('../db/db');
   try {
-    // `SELECT *` rather than a column list: `blocked_email_domains` arrives with V317, and a
-    // database still on V274 must read as "no blocklist", not fail sign-up closed.
-    const result = await connectionPool.query('SELECT * FROM apiome.signup_policy WHERE singleton');
+    // Columns by name (DBP-1.13, #7196). `blocked_email_domains` arrives with V317, and a
+    // database still on V274 must read as "no blocklist", not fail sign-up closed: when the
+    // column does not exist yet, the read is repeated without it.
+    let result;
+    try {
+      result = await connectionPool.query(
+        `SELECT ${SIGNUP_POLICY_COLUMNS}, blocked_email_domains FROM apiome.signup_policy WHERE singleton`,
+      );
+    } catch (error) {
+      if ((error as { code?: string } | null)?.code !== UNDEFINED_COLUMN) throw error;
+      result = await connectionPool.query(
+        `SELECT ${SIGNUP_POLICY_COLUMNS} FROM apiome.signup_policy WHERE singleton`,
+      );
+    }
     return result.rowCount > 0 ? result.rows[0] : null;
   } catch (error) {
     if ((error as { code?: string } | null)?.code === UNDEFINED_TABLE) return null;

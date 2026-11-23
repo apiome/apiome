@@ -27,9 +27,17 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from .entity_owners import KINDS
+from .keyset_pagination import (
+    MAX_OFFSET,
+    MAX_PAGE_LIMIT,
+    capped_count_sql,
+    keyset_before,
+    page_of,
+    time_id_key,
+)
 from .notification_fanout import NotificationDraft, recipients
 from .notifications import (
     OWNER_NOTIFICATION_TYPES,
@@ -616,51 +624,76 @@ def route_mcp_endpoint_problem(
 
 
 def list_unowned_findings(
-    db: Any, tenant_id: str, *, finding_type: Optional[str] = None, limit: int = 50, offset: int = 0
+    db: Any,
+    tenant_id: str,
+    *,
+    finding_type: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    cursor: Optional[Tuple[Any, str]] = None,
+    include_total: bool = False,
 ) -> Dict[str, Any]:
-    """The Unowned findings report: newest first, paged.
+    """The Unowned findings report: newest first, paged by cursor (#7196).
+
+    Reads one row more than the page to learn whether another page exists, so nothing is counted
+    unless the caller asks for a total.
 
     Args:
         db: Database handle.
         tenant_id: The tenant.
         finding_type: Only this type, when given.
         limit: Page size (1..200).
-        offset: Rows to skip.
+        offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(last_seen_at, id)`` of the last row already seen; the page continues after it.
+        include_total: Also count the matches, up to ``TOTAL_CAP``.
 
     Returns:
-        ``{"items": [...], "total": n}``; each item has ``id``, ``entity_kind``, ``entity_id``,
-        ``finding_type``, ``payload``, ``occurrences``, ``first_seen_at`` and ``last_seen_at``.
+        ``{"items": [...], "total": n | None, "has_more": bool, "next_cursor": str | None}``; each
+        item has ``id``, ``entity_kind``, ``entity_id``, ``finding_type``, ``payload``,
+        ``occurrences``, ``first_seen_at`` and ``last_seen_at``.
     """
     if not is_uuid_string(tenant_id or ""):
-        return {"items": [], "total": 0}
-    limit = max(1, min(int(limit), 200))
-    offset = max(0, int(offset))
+        return {
+            "items": [],
+            "total": 0 if include_total else None,
+            "has_more": False,
+            "next_cursor": None,
+        }
+    limit = max(1, min(int(limit), MAX_PAGE_LIMIT))
+    offset = 0 if cursor else max(0, min(int(offset), MAX_OFFSET))
     type_clause = "AND finding_type = %s" if finding_type else ""
     params: List[Any] = [tenant_id] + ([finding_type] if finding_type else [])
+    after_sql, after_params = keyset_before("last_seen_at", "id", cursor)
     rows = db.execute_query(
         f"""
         SELECT id::text AS id, entity_kind, entity_id::text AS entity_id, finding_type, payload,
-               occurrences, first_seen_at, last_seen_at, count(*) OVER () AS total
+               occurrences, first_seen_at, last_seen_at
         FROM apiome.unowned_findings
-        WHERE tenant_id = %s::uuid {type_clause}
-        ORDER BY last_seen_at DESC, id
+        WHERE tenant_id = %s::uuid {type_clause}{after_sql}
+        ORDER BY last_seen_at DESC, id DESC
         LIMIT %s OFFSET %s
         """,
-        tuple(params + [limit, offset]),
+        tuple(params + after_params + [limit + 1, offset]),
     )
-    total = int(rows[0]["total"]) if rows else 0
-    if not rows and offset:
+    page = page_of([dict(row) for row in rows], limit, time_id_key("last_seen_at"))
+    total: Optional[int] = None
+    if include_total:
         counted = db.execute_query(
-            f"SELECT count(*)::int AS n FROM apiome.unowned_findings WHERE tenant_id = %s::uuid {type_clause}",
+            capped_count_sql(
+                f"FROM apiome.unowned_findings WHERE tenant_id = %s::uuid {type_clause}"
+            ),
             tuple(params),
         )
-        total = int(counted[0]["n"]) if counted else 0
+        total = int(counted[0]["total"]) if counted else 0
     items = []
-    for row in rows:
-        item = dict(row)
-        item.pop("total", None)
+    for item in page.items:
         for key in ("first_seen_at", "last_seen_at"):
             value = item.get(key)
             item[key] = value.isoformat() if hasattr(value, "isoformat") else value
         items.append(item)
-    return {"items": items, "total": total}
+    return {
+        "items": items,
+        "total": total,
+        "has_more": page.has_more,
+        "next_cursor": page.next_cursor,
+    }

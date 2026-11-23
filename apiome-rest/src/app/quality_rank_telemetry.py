@@ -72,10 +72,12 @@ __all__ = [
     "STAGE_COMMITTED",
     "STAGE_PREFLIGHT",
     "QualityRankObservation",
+    "QualityRankRollup",
     "attribute_rule_hits",
     "build_quality_rank_series",
     "declared_parser_limit_count",
     "load_quality_rank_observations",
+    "load_quality_rank_rollup",
     "observe_delivery",
     "observe_export_preflight",
     "observe_import_commit",
@@ -771,6 +773,53 @@ def load_quality_rank_observations(
         return []
 
 
+def load_quality_rank_rollup(
+    tenant_id: str,
+    *,
+    since: datetime,
+    project_id: Optional[str] = None,
+    scope: Optional[str] = None,
+    stage: Optional[str] = None,
+) -> "QualityRankRollup":
+    """Load one tenant's window already bucketed by the database (DBP-1.13, #7196).
+
+    What the series API reads: the response only buckets observations, so the bucketing runs
+    in SQL and the read is proportional to formats × days rather than to import/export traffic.
+
+    Args:
+        tenant_id: Tenant scope.
+        since: Window start.
+        project_id: Restrict to one artifact/project.
+        scope: Restrict to ``import`` or ``export``.
+        stage: Restrict to ``preflight`` or ``committed``.
+
+    Returns:
+        The rollup; empty when the read failed (the series then reports nothing rather than
+        failing the workspace).
+    """
+    try:
+        from .database import db
+
+        parts = db.aggregate_quality_rank_observations(
+            tenant_id,
+            since=since,
+            project_id=project_id,
+            scope=scope,
+            stage=stage,
+            bucket_limit=MAX_SERIES_ROWS,
+        )
+        return QualityRankRollup(
+            rows=parts.get("buckets") or [],
+            drift=parts.get("drift") or [],
+            attribution=parts.get("attribution") or [],
+        )
+    except Exception:  # noqa: BLE001 - a telemetry read must not break the lint workspace
+        logger.warning(
+            "Could not aggregate quality-rank observations for tenant %s", tenant_id, exc_info=True
+        )
+        return QualityRankRollup()
+
+
 # --- Aggregation ----------------------------------------------------------------------------
 
 
@@ -792,6 +841,30 @@ def _parse_dt(value: Any) -> Optional[datetime]:
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
 
+def _row_weight(row: Mapping[str, Any]) -> int:
+    """How many observations a row stands for: one, or a SQL bucket's ``observations``."""
+    if "observations" not in row:
+        return 1
+    return max(0, int(row.get("observations") or 0))
+
+
+@dataclass(frozen=True)
+class QualityRankRollup:
+    """One window of observations, bucketed by the database (DBP-1.13, #7196).
+
+    Attributes:
+        rows: Bucket rows — one per ``(scope, format, day, stage, outcome, grade, adapter,
+            style guide)`` with the counts and sums of its observations.
+        drift: Per ``(scope, format_key)``, the oldest and newest scored observation
+            (``first_at`` / ``first_score`` / ``last_at`` / ``last_score`` / ``last_grade``).
+        attribution: Per ``(scope, format_key, side, class)``, the summed finding ``total``.
+    """
+
+    rows: Sequence[Mapping[str, Any]] = ()
+    drift: Sequence[Mapping[str, Any]] = ()
+    attribution: Sequence[Mapping[str, Any]] = ()
+
+
 @dataclass
 class _Bucket:
     """Mutable accumulator for one (scope, format) group or one of its days."""
@@ -804,18 +877,28 @@ class _Bucket:
     grades: Dict[str, int] = field(default_factory=lambda: {g: 0 for g in (*GRADES, UNGRADED)})
 
     def add(self, row: Mapping[str, Any]) -> None:
-        """Fold one observation row into this bucket."""
-        self.observations += 1
-        score = row.get("score")
-        if score is not None:
-            self.score_sum += int(score)
+        """Fold one observation row — or one SQL bucket of them — into this bucket.
+
+        A bucket row (:meth:`Database.aggregate_quality_rank_observations`) carries its weight
+        in ``observations`` and its sums in ``score_sum`` / ``score_count`` /
+        ``readiness_sum`` / ``readiness_count``; a plain observation row weighs one.
+        """
+        weight = _row_weight(row)
+        self.observations += weight
+        if "score_count" in row:
+            self.score_sum += int(row.get("score_sum") or 0)
+            self.score_count += int(row.get("score_count") or 0)
+        elif row.get("score") is not None:
+            self.score_sum += int(row["score"])
             self.score_count += 1
-        readiness = row.get("readiness")
-        if readiness is not None:
-            self.readiness_sum += int(readiness)
+        if "readiness_count" in row:
+            self.readiness_sum += int(row.get("readiness_sum") or 0)
+            self.readiness_count += int(row.get("readiness_count") or 0)
+        elif row.get("readiness") is not None:
+            self.readiness_sum += int(row["readiness"])
             self.readiness_count += 1
         grade = _clean_grade(row.get("grade")) or UNGRADED
-        self.grades[grade] = self.grades.get(grade, 0) + 1
+        self.grades[grade] = self.grades.get(grade, 0) + weight
 
     @property
     def average_score(self) -> Optional[int]:
@@ -833,13 +916,18 @@ class _Bucket:
 
 
 def build_quality_rank_series(
-    rows: Sequence[Mapping[str, Any]],
+    rows: Any,
     *,
     days: int,
     now: Optional[datetime] = None,
     max_formats: int = MAX_SERIES_FORMATS,
 ) -> Dict[str, Any]:
     """Aggregate observation rows into the per-format grade series (pure).
+
+    ``rows`` is either plain observation rows or a :class:`QualityRankRollup` — the same
+    observations bucketed in SQL, which is what the API reads (#7196). Both yield the same
+    series: a bucket row is weighed by its ``observations``, and the rollup's ``drift`` and
+    ``attribution`` rows stand in for the per-observation score order and attribution maps.
 
     Grades are grouped by ``(scope, format_key)`` — the split acceptance criterion 2 asks for —
     and each group carries both a rollup and a daily point series over the window. A day with no
@@ -871,20 +959,23 @@ def build_quality_rank_series(
     outcomes: Dict[str, int] = {outcome: 0 for outcome in OUTCOMES}
     counted = 0
 
-    for row in rows:
+    rollup = rows if isinstance(rows, QualityRankRollup) else QualityRankRollup(rows=rows)
+
+    for row in rollup.rows:
         occurred = _parse_dt(row.get("occurred_at"))
         if occurred is None:
             continue
         day = occurred.date().isoformat()
         if day not in day_index:
             continue
-        counted += 1
+        weight = _row_weight(row)
+        counted += weight
         stage = str(row.get("stage") or "")
         if stage in stages:
-            stages[stage] += 1
+            stages[stage] += weight
         outcome = str(row.get("outcome") or "")
         if outcome in outcomes:
-            outcomes[outcome] += 1
+            outcomes[outcome] += weight
 
         scope = str(row.get("scope") or "")
         format_key = str(row.get("format_key") or "") or "unknown"
@@ -920,13 +1011,15 @@ def build_quality_rank_series(
         group["total"].add(row)
         group["days"].setdefault(day, _Bucket()).add(row)
         if outcome in group["outcomes"]:
-            group["outcomes"][outcome] += 1
+            group["outcomes"][outcome] += weight
         group["adapter_findings"] += max(0, int(row.get("adapter_finding_count") or 0))
         group["spec_findings"] += max(0, int(row.get("spec_finding_count") or 0))
         group["declared_parser_limits"] = max(
             group["declared_parser_limits"], int(row.get("declared_parser_limits") or 0)
         )
-        if row.get("blocking"):
+        if "blocked_count" in row:
+            group["blocked"] += max(0, int(row.get("blocked_count") or 0))
+        elif row.get("blocking"):
             group["blocked"] += 1
         rank = row.get("rank")
         if rank is not None:
@@ -943,6 +1036,24 @@ def build_quality_rank_series(
                 group["first"] = stamped
             if group["last"] is None or stamped[0] > group["last"][0]:
                 group["last"] = stamped
+
+    # A rollup's bucket rows carry no single score or attribution map; these rows do.
+    for row in rollup.drift:
+        group = groups.get(_group_key(row))
+        first_at, last_at = _parse_dt(row.get("first_at")), _parse_dt(row.get("last_at"))
+        if group is None or first_at is None or last_at is None:
+            continue
+        if row.get("first_score") is None or row.get("last_score") is None:
+            continue
+        group["first"] = (first_at, int(row["first_score"]), None)
+        group["last"] = (last_at, int(row["last_score"]), _clean_grade(row.get("last_grade")))
+    for row in rollup.attribution:
+        group = groups.get(_group_key(row))
+        if group is None:
+            continue
+        _merge_attribution(
+            group["attribution"], {str(row.get("side") or ""): {row.get("class"): row.get("total")}}
+        )
 
     ordered = sorted(
         groups.values(),
@@ -1000,6 +1111,11 @@ def build_quality_rank_series(
         "outcomes": outcomes,
         "formats": formats,
     }
+
+
+def _group_key(row: Mapping[str, Any]) -> Tuple[str, str]:
+    """The ``(scope, format)`` group a row belongs to (an unset format reads ``unknown``)."""
+    return str(row.get("scope") or ""), str(row.get("format_key") or "") or "unknown"
 
 
 def _point(day: str, bucket: Optional[_Bucket]) -> Dict[str, Any]:

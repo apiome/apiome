@@ -22,6 +22,8 @@
  *   somewhere that 404s.
  */
 
+import { forwardPageParams } from './cursor-pages';
+
 /* -------------------------------------------------------------------------
    The vocabulary
    ------------------------------------------------------------------------- */
@@ -226,12 +228,16 @@ export interface NotificationPage {
   notifications: NotificationRow[];
   /** How many are in this page. */
   count: number;
-  /** How many match the query in all. */
-  total: number;
+  /** How many match the query, counted only when the request set `include_total`; else null. */
+  total: number | null;
   /** The page size that was applied. */
   limit: number;
-  /** Where this page starts. */
+  /** Where this page starts (deprecated offset paging; 0 on a cursor page). */
   offset: number;
+  /** Whether another page follows. */
+  has_more?: boolean;
+  /** The cursor of the next page; null on the last page. */
+  next_cursor?: string | null;
 }
 
 /**
@@ -657,7 +663,8 @@ function sanitizeLimit(raw: string | null): number {
  * should be.
  *
  * @param input - The incoming query.
- * @returns The parameters to send upstream: `unread`, `type`, `limit`, `offset`.
+ * @returns The parameters to send upstream: `unread`, `type`, `limit`, and where the page starts —
+ *   `cursor` (with `include_total` when asked for), or the deprecated `offset` when there is none.
  */
 export function sanitizeNotificationListParams(
   input: NotificationParamReader
@@ -673,8 +680,11 @@ export function sanitizeNotificationListParams(
 
   params.set('limit', String(sanitizeLimit(input.get('limit'))));
 
-  const offset = Number.parseInt(input.get('offset') ?? '', 10);
-  params.set('offset', String(Number.isFinite(offset) && offset > 0 ? offset : 0));
+  forwardPageParams(input, params);
+  if (!params.has('cursor')) {
+    const offset = Number.parseInt(input.get('offset') ?? '', 10);
+    params.set('offset', String(Number.isFinite(offset) && offset > 0 ? offset : 0));
+  }
 
   return params;
 }

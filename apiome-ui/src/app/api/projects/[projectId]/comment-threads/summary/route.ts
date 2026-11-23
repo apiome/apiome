@@ -4,7 +4,8 @@
  * Two kinds of number, both from apiome-rest so they cannot disagree with the Studio:
  *
  * - **Status totals** for the Discussion panel's chips: one `limit=1` read per status, narrowed by
- *   the same `mentions_me` / `anchor_type` filters as the list, reading apiome-rest's `total`.
+ *   the same `mentions_me` / `anchor_type` filters as the list, reading apiome-rest's `total`
+ *   (asked for with `include_total`, and counted up to 10,000).
  * - **Unresolved per element** for each row, and the unfiltered unresolved total for the tab: the
  *   project's open threads read page by page and counted with `unresolvedCommentCounts` — the
  *   Studio badges' own rule.
@@ -54,7 +55,7 @@ export async function GET(
      * @returns The sanitized REST query.
      */
     const totalQuery = (status: CommentThreadStatus): URLSearchParams => {
-      const query = new URLSearchParams({ status, limit: '1', offset: '0' });
+      const query = new URLSearchParams({ status, limit: '1', include_total: 'true' });
       const anchorType = filters.get('anchor_type');
       if (anchorType) query.set('anchor_type', anchorType);
       if (filters.get('mentions_me') === 'true') query.set('mentions_me', 'true');
@@ -69,7 +70,7 @@ export async function GET(
       Promise.all(
         COMMENT_THREAD_STATUSES.map(async (status) => {
           const page = await fetchCommentThreadPage(auth, projectId, totalQuery(status));
-          return [status, page.total] as const;
+          return [status, page.total ?? 0] as const;
         })
       ),
       collectOpenCommentThreads(auth, projectId, filters.get('version')),
@@ -79,7 +80,7 @@ export async function GET(
       statusTotals: Object.fromEntries(totals) as Record<CommentThreadStatus, number>,
       unresolvedTotal: open.total,
       unresolvedByAnchor: unresolvedCommentCounts(open.threads),
-      truncated: open.total > open.threads.length,
+      truncated: open.truncated,
     };
     return NextResponse.json({ success: true, ...summary });
   } catch (error) {

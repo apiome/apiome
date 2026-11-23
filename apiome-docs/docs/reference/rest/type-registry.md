@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `type-registry` · 8 operations
 
@@ -23,13 +23,23 @@ Each namespace carries the ``root_status`` of its version root (#3482). Pass
 ``root_status=draft`` to list the draft roots apart from the stable ones, or
 ``root_status=stable`` for the reverse.
 
+The body is a JSON array of at most ``limit`` namespaces (1,000 at most). The ``X-Has-More``
+response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+next page (#7196).
+
 Args:
     tenant_slug: The tenant slug (caller scope comes from the authenticated token).
+    response: The outgoing response (paging headers are set on it).
     root_status: Optional filter — ``stable`` or ``draft``.
+    limit: Page size.
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
     auth_data: Authentication data (injected by dependency).
 
 Returns:
     Namespaces (system-core first, then alphabetical), each with its tenant-scoped type count.
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
 
 Operation id: `list_namespaces_v1_types__tenant_slug__namespaces_get`
 
@@ -39,6 +49,8 @@ Operation id: `list_namespaces_v1_types__tenant_slug__namespaces_get`
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `root_status` | query | enum `"stable"`, `"draft"` or null | no | Only namespaces whose version root has this status: stable or draft. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

@@ -207,7 +207,7 @@ def test_an_empty_registry_is_an_empty_list_not_an_error() -> None:
     with patch("app.consumer_contract_routes.list_consumer_summaries", return_value=[]):
         response = client.get(f"{_BASE}/consumers")
     assert response.status_code == 200
-    assert response.json() == {"consumers": [], "count": 0}
+    assert response.json() == {"consumers": [], "count": 0, "has_more": False, "next_cursor": None}
 
 
 def test_an_unknown_project_is_a_404_with_its_stable_code() -> None:

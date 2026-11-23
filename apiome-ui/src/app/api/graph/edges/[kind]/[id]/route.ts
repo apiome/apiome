@@ -1,7 +1,7 @@
 /**
  * One entity's graph edges, with labels (CDG-3.4, #5969).
  *
- * Proxies `GET /v1/graph/{slug}/entities/{kind}/{id}/edges?labels=true&direction=&kind=&provenance=&limit=&offset=`.
+ * Proxies `GET /v1/graph/{slug}/entities/{kind}/{id}/edges?labels=true&direction=&kind=&provenance=&limit=&cursor=&include_total=&offset=`.
  * The kind and id are validated so a crafted segment cannot reach another REST path.
  */
 
@@ -26,6 +26,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ kin
     kind: 'repeat',
     provenance: 'repeat',
     limit: 'single',
+    cursor: 'single',
+    include_total: 'single',
     offset: 'single',
   });
   return forwardGraphRequest(graphUrl(resolved.slug, `entities/${kind}/${id}/edges${query}`), {

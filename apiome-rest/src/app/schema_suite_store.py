@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import psycopg2
 import psycopg2.errors
@@ -111,11 +111,24 @@ def list_suites(
     *,
     ref_kind: Optional[str] = None,
     ref_artifact: Optional[str] = None,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
 ) -> List[Dict[str, Any]]:
-    """Suites for a tenant with their newest run summary; degrades to ``[]`` on a DB fault."""
+    """Suites for a tenant with their newest run summary; degrades to ``[]`` on a DB fault.
+
+    Args:
+        tenant_id: Tenant scope.
+        ref_kind: Restrict to one reference kind.
+        ref_artifact: Restrict to one artifact segment.
+        limit: Rows to read; ``None`` reads the whole list.
+        cursor: Where the page starts (``SCHEMA_SUITES_ORDER``, #7196).
+
+    Returns:
+        The suite rows, newest first.
+    """
     try:
         return db.list_schema_test_suites(
-            tenant_id, ref_kind=ref_kind, ref_artifact=ref_artifact
+            tenant_id, ref_kind=ref_kind, ref_artifact=ref_artifact, limit=limit, cursor=cursor
         )
     except psycopg2.Error:
         logger.exception("Listing schema test suites failed; returning none")
@@ -211,11 +224,29 @@ def prune_runs_over_cap(suite_id: str) -> int:
 
 
 def list_runs(
-    tenant_id: str, suite_id: str, *, limit: int = 20, offset: int = 0
+    tenant_id: str,
+    suite_id: str,
+    *,
+    limit: int = 20,
+    offset: int = 0,
+    cursor: Optional[Tuple[Any, str]] = None,
 ) -> List[Dict[str, Any]]:
-    """A suite's run history, newest first; degrades to ``[]`` on a DB fault."""
+    """A suite's run history, newest first; degrades to ``[]`` on a DB fault.
+
+    Args:
+        tenant_id: Tenant scope.
+        suite_id: The suite whose history is read.
+        limit: Rows to read.
+        offset: Runs to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(created_at, id)`` of the last run already seen (#7196).
+
+    Returns:
+        The run rows.
+    """
     try:
-        return db.list_schema_test_suite_runs(tenant_id, suite_id, limit=limit, offset=offset)
+        return db.list_schema_test_suite_runs(
+            tenant_id, suite_id, limit=limit, offset=offset, cursor=cursor
+        )
     except psycopg2.Error:
         logger.exception("Listing runs for suite %s failed", suite_id)
         return []

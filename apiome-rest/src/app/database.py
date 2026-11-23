@@ -31,6 +31,10 @@ from .db_bulk import bulk_insert_arrays as _bulk_insert_arrays
 from .db_bulk import bulk_upsert as _bulk_upsert
 from .db_bulk import new_ids as _new_ids
 from .db_cursor import rollback_quietly
+from .keyset_pagination import capped_count_sql, keyset_after, keyset_before
+from .project_list_paging import project_keyset_sql
+from .mcp_insight_aggregation import discovery_aggregate_sql, invocation_aggregate_sql
+from .mock_routing import HTTP_METHODS as MOCK_HTTP_METHODS
 from .db_timeouts import StatementTimeout  # noqa: F401 - re-exported for callers
 from .db_timeouts import apply_statement_timeout, typed_timeout
 from .draft_bindings import (
@@ -61,6 +65,36 @@ from .mcp_facets import (
     UNGRADED_VALUE,
     UNKNOWN_VALUE,
     UNTAGGED_VALUE,
+    capability_directory_sort_columns,
+)
+from .keyset_columns import keyset_after_columns, order_by_sql
+from .tenant_config_list_orders import (
+    AGENT_KEYS_ORDER,
+    CONSUMERS_ORDER,
+    CONVERSIONS_BY_SOURCE_ORDER,
+    EXPORT_AUTO_SUBSCRIPTIONS_ORDER,
+    EXPORT_DELIVERY_PROFILES_ORDER,
+    EXPORT_PRESETS_ORDER,
+    EXPORT_STORAGE_CREDENTIALS_ORDER,
+)
+from .keyset_lists import ListOrder, SortColumn, by_name, newest_first  # noqa: F401
+from .browse_list_paging import (
+    BROWSE_MEMBER_PROJECTS_ORDER,
+    BROWSE_PROJECTS_ORDER,
+    BROWSE_VERSIONS_CAP,
+)
+from .tenant_list_paging import (
+    AGENT_TOOLSETS_ORDER,
+    LINT_SAVED_VIEWS_ORDER,
+    SCHEMA_SUITES_ORDER,
+)
+from .mcp_list_paging import (
+    MCP_DISCOVERY_JOBS_ORDER,
+    MCP_ENDPOINT_SOURCES_ORDER,
+    MCP_ENDPOINT_VERSIONS_ORDER,
+    MCP_ENDPOINTS_BY_NAME,
+    MCP_ENDPOINTS_NEWEST,
+    MCP_REPORT_SCAN_CAP,
 )
 from .provider_checks import (
     AUDIT_CHECK_PUBLISHED,
@@ -84,6 +118,7 @@ from .repository_spec_catalog import (
     SPEC_STATUS_SQL,
     normalize_sort,
     search_term_to_like,
+    spec_keyset_after,
 )
 from .revision_deprecation import (
     coerce_metadata,
@@ -1331,22 +1366,38 @@ class Database:
             grouped[by_text[str(row["class_id"])]].append(row)
         return grouped
 
-    def get_classes_with_properties_and_tags_for_version(self, version_id: str) -> List[Dict[str, Any]]:
-        """Get all classes for a version with their properties and tags in bulk.
+    def get_classes_with_properties_and_tags_for_version(
+        self,
+        version_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get the classes of a version with their properties and tags in bulk.
 
-        Deprecated for canvas hydration (DUW-1.2, private-suite#2569): the three queries below
-        have no LIMIT, so cost tracks the catalog rather than what the caller needs. Use
-        :mod:`app.scoped_catalog_store` when the caller has a selection — an id set or a domain.
-        Left as it is for the surfaces that really do want the whole version.
+        Deprecated for canvas hydration (DUW-1.2, private-suite#2569): cost tracks the catalog
+        rather than what the caller needs. Use :mod:`app.scoped_catalog_store` when the caller has
+        a selection — an id set or a domain.
+
+        Args:
+            version_id: The version whose classes are read.
+            limit: Classes to read; ``None`` reads the whole version (internal callers).
+            cursor: ``[name, id]`` of the last class already seen (#7196), or ``None``.
+
+        Returns:
+            The classes by name, each with its ``properties`` and ``tags``.
         """
-        # Query 1: Get all classes for the version
-        classes_query = """
+        from .authoring_list_orders import CLASSES_WITH_PARTS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        # Query 1: Get the classes for the version
+        classes_query = f"""
             SELECT id, version_id, name, description, schema, enabled, canvas_metadata, created_at, updated_at
             FROM apiome.classes
-            WHERE version_id = %s AND deleted_at IS NULL
-            ORDER BY name ASC
+            WHERE version_id = %s AND deleted_at IS NULL{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        classes = self.execute_query(classes_query, (version_id,))
+        classes = self.execute_query(classes_query, (version_id, *after_params, *limit_params))
 
         if not classes:
             return []
@@ -1514,9 +1565,15 @@ class Database:
         return results[0] if results else None
 
     def get_classes_for_tenant_version(
-        self, tenant_id: str, version_id: str, *, with_summary: bool = False
+        self,
+        tenant_id: str,
+        version_id: str,
+        *,
+        with_summary: bool = False,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """Get all classes for a specific version, ensuring it belongs to the tenant.
+        """Get the classes of a specific version, by name, ensuring it belongs to the tenant.
 
         Args:
             tenant_id: The tenant the version must belong to.
@@ -1524,7 +1581,14 @@ class Database:
             with_summary: Also return ``property_count`` (top-level class properties) and ``tags``
                 (``{id, project_id, name, color, description}``, by name) for each class (#3229),
                 in the same query.
+            limit: Rows to read (#7196); ``None`` reads the whole version.
+            cursor: ``[name, id]`` of the last class already seen.
+
+        Returns:
+            The class rows, by name then id.
         """
+        after_sql, after_params = keyset_after(("c.name", "c.id"), cursor, casts=("", "::uuid"))
+        limit_sql, limit_params = ("LIMIT %s", [int(limit)]) if limit is not None else ("", [])
         summary = ""
         if with_summary:
             summary = """,
@@ -1545,13 +1609,20 @@ class Database:
             JOIN apiome.projects p ON v.project_id = p.id
             WHERE c.version_id = %s
               AND p.tenant_id = %s
-              AND c.deleted_at IS NULL
-            ORDER BY c.name ASC
+              AND c.deleted_at IS NULL{after_sql}
+            ORDER BY c.name ASC, c.id ASC
+            {limit_sql}
         """
-        return self.execute_query(query, (version_id, tenant_id))
+        return self.execute_query(query, (version_id, tenant_id, *after_params, *limit_params))
 
-    def get_classes_for_tenant(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """Every live class of every live version of the tenant, in one query (DBP-1.6, #7189).
+    def get_classes_for_tenant(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Live classes of every live version of the tenant, in one query (DBP-1.6, #7189).
 
         The rows and order of :meth:`get_versions_for_tenant` followed by
         :meth:`get_classes_for_tenant_version` for each version: versions by project name then
@@ -1559,24 +1630,36 @@ class Database:
 
         Args:
             tenant_id: The tenant.
+            limit: Rows to read (#7196); ``None`` reads every class.
+            cursor: ``[project name, version label, version id, class name, class id]`` of the
+                last class already seen.
 
         Returns:
             Class rows (``id``, ``version_id``, ``name``, ``description``, ``schema``,
-            ``enabled``, ``created_at``, ``updated_at``).
+            ``enabled``, ``created_at``, ``updated_at``), plus the ``project_name`` and
+            ``version_label`` the order (and so the cursor) is built from.
         """
-        query = """
+        after_sql, after_params = keyset_after(
+            ("p.name", "v.version_id", "v.id", "c.name", "c.id"),
+            cursor,
+            casts=("", "", "::uuid", "", "::uuid"),
+        )
+        limit_sql, limit_params = ("LIMIT %s", [int(limit)]) if limit is not None else ("", [])
+        query = f"""
             SELECT c.id, c.version_id, c.name, c.description, c.schema, c.enabled,
-                   c.created_at, c.updated_at
+                   c.created_at, c.updated_at,
+                   p.name AS project_name, v.version_id AS version_label
             FROM apiome.classes c
             JOIN apiome.versions v ON c.version_id = v.id
             JOIN apiome.projects p ON v.project_id = p.id
             WHERE p.tenant_id = %s
               AND v.deleted_at IS NULL
               AND p.deleted_at IS NULL
-              AND c.deleted_at IS NULL
-            ORDER BY p.name, v.version_id, v.id, c.name ASC
+              AND c.deleted_at IS NULL{after_sql}
+            ORDER BY p.name, v.version_id, v.id, c.name, c.id
+            {limit_sql}
         """
-        return self.execute_query(query, (tenant_id,))
+        return self.execute_query(query, (tenant_id, *after_params, *limit_params))
 
     def create_class(
         self,
@@ -2154,7 +2237,11 @@ class Database:
         return int(c) if c is not None else 0
 
     def list_tenants_for_user_page(
-        self, user_id: str, limit: int, offset: int
+        self,
+        user_id: str,
+        limit: int,
+        offset: int,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         List a user's tenant memberships enriched for the tenant switcher (OLO-6.2, #4219).
@@ -2173,15 +2260,18 @@ class Database:
           has no license row (callers treat that as the Free fallback, mirroring
           ``license_capacity.member_seat_limit``).
 
-        Ordered by slug ascending.
+        Ordered by slug ascending, then id, so the order is total and a cursor can continue it.
 
         :param user_id: Canonical UUID string of the user.
-        :param limit: Page size.
-        :param offset: Page start.
+        :param limit: Rows to read.
+        :param offset: Page start (deprecated; ignored when ``cursor`` is given).
+        :param cursor: ``[slug, id]`` of the last tenant already seen; the page continues after
+            it (#7196).
         :returns: Rows with ``id``, ``slug``, ``name``, ``role``, ``status``,
             ``license_name``, ``license_type``.
         """
-        query = """
+        after_sql, after_params = keyset_after(["t.slug", "t.id"], cursor, casts=["", "::uuid"])
+        query = f"""
             SELECT t.id::text AS id, t.slug, t.name,
                    CASE WHEN ta.user_id IS NOT NULL THEN 'owner'
                         ELSE COALESCE(r.slug, 'editor') END AS role,
@@ -2203,11 +2293,14 @@ class Database:
             LEFT JOIN apiome.roles r ON r.id = tur.role_id
             LEFT JOIN apiome.tenant_licenses tl ON tl.tenant_id = t.id
             LEFT JOIN apiome.licenses l ON l.id = tl.license_id
-            WHERE t.deleted_at IS NULL AND t.enabled IS TRUE
-            ORDER BY t.slug ASC
+            WHERE t.deleted_at IS NULL AND t.enabled IS TRUE{after_sql}
+            ORDER BY t.slug ASC, t.id ASC
             LIMIT %s OFFSET %s
         """
-        return self.execute_query(query, (user_id, user_id, user_id, limit, offset))
+        return self.execute_query(
+            query,
+            (user_id, user_id, user_id, *after_params, limit, 0 if cursor is not None else offset),
+        )
 
     def get_tenant_slug_by_id(self, tenant_id: str) -> Optional[str]:
         """The slug of a tenant, by id (MFX-40.1: the MCP export tools know a key's tenant id only).
@@ -2637,15 +2730,33 @@ class Database:
         rows = self.execute_query(query, (tag_id,))
         return dict(rows[0]) if rows else None
 
-    def get_tags_for_project(self, project_id: str) -> List[Dict[str, Any]]:
-        """Get all tags for a specific project."""
-        query = """
+    def get_tags_for_project(
+        self,
+        project_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get the tags of a project, by name.
+
+        Args:
+            project_id: The project whose tags are read.
+            limit: Rows to read; ``None`` reads every tag (internal callers).
+            cursor: ``[name, id]`` of the last tag already seen (#7196), or ``None``.
+
+        Returns:
+            The tag rows.
+        """
+        from .authoring_list_orders import PROJECT_TAGS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        query = f"""
             SELECT id, project_id, name, color, description, created_at, updated_at
             FROM apiome.tags
-            WHERE project_id = %s
-            ORDER BY name ASC
+            WHERE project_id = %s{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, (project_id,))
+        return self.execute_query(query, (project_id, *after_params, *limit_params))
 
     def get_tags_for_class(self, class_id: str) -> List[Dict[str, Any]]:
         """Get all tags assigned to a specific class."""
@@ -3528,7 +3639,13 @@ class Database:
             "unresolved_ref_count": int(row.get("unresolved_ref_count") or 0),
         }
 
-    def get_primitives_with_unresolved_refs(self, tenant_id: str) -> List[Dict[str, Any]]:
+    def get_primitives_with_unresolved_refs(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """List the tenant's primitives that have at least one unresolved ``$ref`` edge (#3457).
 
         Backs the resolver UI's dangling-reference table (#3470): each returned row
@@ -3537,22 +3654,27 @@ class Database:
 
         Args:
             tenant_id: The caller's tenant id (scopes the listing — see section note).
+            limit: Rows to read; ``None`` reads every match (internal callers).
+            cursor: ``[namespace, name, id]`` of the last row already seen (#7196), or ``None``.
 
         Returns:
             The matching primitive rows (id, name, schema_id, namespace, base_uri, refs),
             ordered by namespace then name. Empty when nothing is unresolved.
         """
-        query = """
+        from .authoring_list_orders import UNRESOLVED_PRIMITIVES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        query = f"""
             SELECT id, tenant_id, name, schema_id, namespace, base_uri, refs
             FROM apiome.primitives
             WHERE tenant_id = %s
               AND EXISTS (
                   SELECT 1 FROM jsonb_array_elements(refs) AS e
                   WHERE e->>'status' = 'unresolved'
-              )
-            ORDER BY namespace NULLS FIRST, name
+              ){after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, (tenant_id,))
+        return self.execute_query(query, (tenant_id, *after_params, *limit_params))
 
     def get_dependent_primitives(
         self, target_schema_id: str, tenant_id: str
@@ -3811,7 +3933,12 @@ class Database:
     # apiome.primitives.namespace, which is the join key for a namespace's type count.
 
     def list_type_namespaces(
-        self, tenant_id: str, root_status: Optional[str] = None
+        self,
+        tenant_id: str,
+        root_status: Optional[str] = None,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """List the namespaces visible to a tenant: system-core ∪ this tenant's own.
 
@@ -3823,10 +3950,15 @@ class Database:
             tenant_id: The caller's tenant id.
             root_status: When given (``stable`` or ``draft``), only namespaces whose version root
                 has that status (#3482) — draft roots are listed apart from stable ones.
+            limit: Rows to read; ``None`` reads every namespace (internal callers).
+            cursor: ``[is_system, namespace, id]`` of the last row already seen (#7196).
 
         Returns:
             Namespace rows (system-core first, then alphabetical), each with ``type_count``.
         """
+        from .authoring_list_orders import TYPE_NAMESPACES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         query = """
             SELECT n.id, n.tenant_id, n.namespace, n.base_uri, n.version_root, n.root_status,
                    n.description, n.is_system, n.is_public, n.is_default,
@@ -3840,8 +3972,8 @@ class Database:
         if root_status:
             query += " AND n.root_status = %s"
             params.append(root_status)
-        query += " ORDER BY n.is_system DESC, n.namespace ASC"
-        return self.execute_query(query, tuple(params))
+        query += f"{after_sql} ORDER BY {order.order_by}{limit_sql}"
+        return self.execute_query(query, (*params, *after_params, *limit_params))
 
     def get_type_namespace_by_id(
         self, namespace_id: str, tenant_id: str
@@ -4550,9 +4682,20 @@ class Database:
         return f"AND (p.deleted_at IS NULL OR {cls._PROJECT_NOT_STAGED_SQL})"
 
     def get_projects_for_tenant(
-        self, tenant_id: str, *, include_deleted: bool = False, team: Optional[str] = None
+        self,
+        tenant_id: str,
+        *,
+        include_deleted: bool = False,
+        team: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """Get all projects for a tenant.
+        """Get a tenant's projects, newest first.
+
+        With ``limit`` the read is one keyset page (#7196): ``cursor`` is the
+        ``[is_active, created_at, id]`` of the last project already seen, and the page continues
+        after it. Without ``limit`` every project is returned, for internal callers that need the
+        whole set.
 
         By default only non-deleted rows are returned. When include_deleted is True,
         soft-deleted projects are included too (active rows first, then deleted).
@@ -4563,10 +4706,8 @@ class Database:
         """
         deleted_filter = self._project_deleted_filter(include_deleted)
         team_clause, team_params = owner_team_filter(team)
-        order_clause = (
-            "ORDER BY (p.deleted_at IS NULL) DESC, p.created_at DESC"
-            if include_deleted
-            else "ORDER BY p.created_at DESC"
+        order_clause, after_clause, after_params, limit_clause, limit_params = (
+            project_keyset_sql(include_deleted, limit, cursor)
         )
         query = f"""
             SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug,
@@ -4580,10 +4721,13 @@ class Database:
             LEFT JOIN apiome.users u ON p.creator_id = u.id
             {self._PROJECT_VERSIONS_SUMMARY_LATERAL}
             {self._PROJECT_OWNER_LATERAL}
-            WHERE p.tenant_id = %s {deleted_filter} {team_clause}
+            WHERE p.tenant_id = %s {deleted_filter} {team_clause} {after_clause}
             {order_clause}
+            {limit_clause}
         """
-        return self.execute_query(query, (tenant_id, *team_params))
+        return self.execute_query(
+            query, (tenant_id, *team_params, *after_params, *limit_params)
+        )
 
     # The columns a catalog item projects off its latest live revision (MFI-7.1/7.2): the captured
     # lint score/grade plus what *kind* of API it is and the format provenance. Shared by the list
@@ -4662,8 +4806,13 @@ class Database:
         include_deleted: bool = False,
         identity_group_id: Optional[str] = None,
         team: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """List a tenant's catalog items (MFI-23.1): the ``publishable = false`` slice of projects.
+
+        With ``limit`` the read is one keyset page (#7196), continuing after ``cursor`` (see
+        :mod:`app.project_list_paging`); without it every item is returned.
 
         A catalog item is a projection over the same ``projects`` + ``versions`` tables a Project
         uses, so this mirrors :meth:`get_projects_for_tenant` (creator join, latest-revision quality
@@ -4680,10 +4829,8 @@ class Database:
             "AND aim.group_id = %s::uuid" if identity_group_id else ""
         )
         team_clause, team_params = owner_team_filter(team)
-        order_clause = (
-            "ORDER BY (p.deleted_at IS NULL) DESC, p.created_at DESC"
-            if include_deleted
-            else "ORDER BY p.created_at DESC"
+        order_clause, after_clause, after_params, limit_clause, limit_params = (
+            project_keyset_sql(include_deleted, limit, cursor)
         )
         query = f"""
             SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug,
@@ -4705,12 +4852,16 @@ class Database:
             {self._CATALOG_IDENTITY_JOIN}
             {self._PROJECT_OWNER_LATERAL}
             WHERE p.tenant_id = %s AND p.publishable = false {deleted_filter} {identity_filter} {team_clause}
+                  {after_clause}
             {order_clause}
+            {limit_clause}
         """
         params: tuple[Any, ...] = (tenant_id,)
         if identity_group_id:
             params = (tenant_id, identity_group_id)
-        return self.execute_query(query, (*params, *team_params))
+        return self.execute_query(
+            query, (*params, *team_params, *after_params, *limit_params)
+        )
 
     def get_catalog_item_by_id(
         self, item_id: str, tenant_id: str, *, include_deleted: bool = False
@@ -4986,7 +5137,7 @@ class Database:
     """
 
     def list_lint_evidence_runs_for_version(
-        self, version_record_id: str, tenant_id: str
+        self, version_record_id: str, tenant_id: str, *, limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """List evidence runs for one catalog revision, most recent first (CLX-1.1, #4848).
 
@@ -4997,6 +5148,7 @@ class Database:
         Args:
             version_record_id: The revision (``versions.id``) whose evidence to list.
             tenant_id: The caller's tenant; rows outside it are invisible.
+            limit: Only the newest ``limit`` runs (#7196); ``None`` reads them all.
 
         Returns:
             Evidence-run rows ordered ``created_at DESC, id`` (deterministic).
@@ -5009,9 +5161,13 @@ class Database:
             WHERE r.version_record_id = %s AND p.tenant_id = %s
             ORDER BY r.created_at DESC, r.id
         """
-        return self.execute_query(query, (version_record_id, tenant_id))
+        if limit is None:
+            return self.execute_query(query, (version_record_id, tenant_id))
+        return self.execute_query(query + " LIMIT %s", (version_record_id, tenant_id, int(limit)))
 
-    def list_lint_evidence_runs_for_mcp_version(self, version_id: str) -> List[Dict[str, Any]]:
+    def list_lint_evidence_runs_for_mcp_version(
+        self, version_id: str, *, limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """List evidence runs for one MCP discovery snapshot, most recent first (CLX-1.1, #4848).
 
         Tenant scoping is the caller's job (mirroring :meth:`get_mcp_version_score`): MCP
@@ -5019,17 +5175,24 @@ class Database:
 
         Args:
             version_id: The snapshot (``mcp_endpoint_versions.id``) whose evidence to list.
+            limit: Only the most recent ``limit`` runs (#7196); ``None`` reads every run.
 
         Returns:
             Evidence-run rows ordered ``created_at DESC, id`` (deterministic).
         """
+        params: List[Any] = [version_id]
+        limit_sql = ""
+        if limit is not None:
+            limit_sql = "LIMIT %s"
+            params.append(int(limit))
         query = f"""
             SELECT {self._LINT_EVIDENCE_COLUMNS}
             FROM apiome.lint_evidence_runs r
             WHERE r.mcp_version_id = %s
             ORDER BY r.created_at DESC, r.id
+            {limit_sql}
         """
-        return self.execute_query(query, (version_id,))
+        return self.execute_query(query, tuple(params))
 
     def record_axis_evaluation(self, evaluation: Dict[str, Any]) -> Optional[str]:
         """Insert one write-once multi-axis evaluation (CLX-1.2, #4849).
@@ -5328,20 +5491,38 @@ class Database:
         return rows[0] if rows else None
 
     def list_style_guide_policy_versions(
-        self, guide_id: str, tenant_id: str
+        self,
+        guide_id: str,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """List policy pack versions for a guide, newest first (CLX-1.3, #4850)."""
+        """List policy pack versions for a guide, newest first (CLX-1.3, #4850).
+
+        Args:
+            guide_id: The guide whose policy versions are read. Non-UUID values return ``[]``.
+            tenant_id: The tenant that must own them.
+            limit: Rows to read; ``None`` reads every version (internal callers).
+            cursor: ``[version_number, id]`` of the last row already seen (#7196), or ``None``.
+
+        Returns:
+            The policy version rows, highest ``version_number`` first.
+        """
         if not guide_id or not is_uuid_string(str(guide_id)):
             return []
-        query = """
+        from .authoring_list_orders import STYLE_GUIDE_POLICY_VERSIONS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        query = f"""
             SELECT id, guide_id, tenant_id, version_number, content_fingerprint,
                    rules_snapshot, axis_gates, required_coverage, ci_outcomes,
                    ladder, required_publish_level, actor_user_id, actor_label, created_at
             FROM apiome.style_guide_policy_versions
-            WHERE guide_id = %s AND tenant_id = %s
-            ORDER BY version_number DESC
+            WHERE guide_id = %s AND tenant_id = %s{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, (guide_id, tenant_id))
+        return self.execute_query(query, (guide_id, tenant_id, *after_params, *limit_params))
 
     def get_style_guide_policy_version(
         self, policy_version_id: str, tenant_id: str
@@ -5363,7 +5544,7 @@ class Database:
         self, guide_id: str, tenant_id: str
     ) -> Optional[Dict[str, Any]]:
         """Return the newest policy pack for a guide, or ``None`` (CLX-1.3, #4850)."""
-        rows = self.list_style_guide_policy_versions(guide_id, tenant_id)
+        rows = self.list_style_guide_policy_versions(guide_id, tenant_id, limit=1)
         return rows[0] if rows else None
 
     def list_lint_finding_decisions(
@@ -5372,13 +5553,28 @@ class Database:
         *,
         project_id: Optional[str] = None,
         fingerprints: Optional[Sequence[str]] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """List finding decisions for a tenant, optionally filtered (CLX-1.3, #4850).
 
         When ``project_id`` is set, returns both project-scoped and tenant-wide rows so
         callers can prefer project scope on match. When ``fingerprints`` is set, restricts
         to those source fingerprints.
+
+        Args:
+            tenant_id: The tenant whose decisions are read.
+            project_id: Narrow to one project's decisions plus the tenant-wide ones.
+            fingerprints: Narrow to these source fingerprints.
+            limit: Rows to read; ``None`` reads every match (internal callers).
+            cursor: ``[updated_at, id]`` of the last row already seen (#7196), or ``None``.
+
+        Returns:
+            The decision rows, most recently changed first.
         """
+        from .authoring_list_orders import LINT_DECISIONS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         clauses = ["d.tenant_id = %s"]
         params: List[Any] = [tenant_id]
         if project_id:
@@ -5393,10 +5589,10 @@ class Database:
                    d.policy_version_id, d.evidence_fingerprint_at_decision,
                    d.actor_user_id, d.actor_label, d.created_at, d.updated_at
             FROM apiome.lint_finding_decisions d
-            WHERE {' AND '.join(clauses)}
-            ORDER BY d.updated_at DESC
+            WHERE {' AND '.join(clauses)}{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, tuple(params))
+        return self.execute_query(query, (*params, *after_params, *limit_params))
 
     def get_lint_finding_decision(
         self, decision_id: str, tenant_id: str
@@ -6543,6 +6739,112 @@ class Database:
             tuple(params),
         )
 
+    def aggregate_quality_rank_observations(
+        self,
+        tenant_id: str,
+        *,
+        since: Any,
+        project_id: Optional[str] = None,
+        scope: Optional[str] = None,
+        stage: Optional[str] = None,
+        bucket_limit: int = 20000,
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """One tenant's observations inside a window, rolled up in SQL (DBP-1.13, #7196).
+
+        The quality-rank series only buckets observations per ``(scope, format, UTC day)``, so
+        the database does the bucketing and the API never reads one row per import/export:
+
+        * ``buckets`` — one row per ``(scope, format_key, day, stage, outcome, grade,
+          adapter_key, style_guide_fingerprint)`` with the counts and sums of its observations.
+          ``occurred_at`` is the bucket's day, ``observations`` its weight.
+        * ``drift`` — per ``(scope, format_key)``, the oldest and the newest *scored*
+          observation of the window (what ``scoreDelta`` compares).
+        * ``attribution`` — per ``(scope, format_key, side, class)``, the summed per-class
+          finding counts of the stored ``attribution`` maps.
+
+        Args:
+            tenant_id: Tenant scope.
+            since: Window start; observations with ``occurred_at >= since`` are aggregated.
+            project_id: Restrict to one artifact/project; ``None`` spans the tenant.
+            scope: Restrict to ``import`` or ``export``; ``None`` aggregates both.
+            stage: Restrict to ``preflight`` or ``committed``; ``None`` aggregates both.
+            bucket_limit: Most bucket rows returned, newest day first (clamped to 1..20000).
+
+        Returns:
+            ``{"buckets": [...], "drift": [...], "attribution": [...]}``; all empty for a
+            malformed tenant id.
+        """
+        if not tenant_id or not is_uuid_string(str(tenant_id)):
+            return {"buckets": [], "drift": [], "attribution": []}
+        clauses = ["o.tenant_id = %s::uuid", "o.occurred_at >= %s"]
+        params: List[Any] = [tenant_id, since]
+        if project_id and is_uuid_string(str(project_id)):
+            clauses.append("o.project_id = %s::uuid")
+            params.append(project_id)
+        if scope:
+            clauses.append("o.scope = %s")
+            params.append(scope)
+        if stage:
+            clauses.append("o.stage = %s")
+            params.append(stage)
+        where = " AND ".join(clauses)
+        buckets = self.execute_query(
+            f"""
+            SELECT o.scope, o.format_key,
+                   (o.occurred_at AT TIME ZONE 'UTC')::date AS occurred_at,
+                   o.stage, o.outcome, o.grade, o.adapter_key, o.style_guide_fingerprint,
+                   COUNT(*)::int AS observations,
+                   COALESCE(SUM(o.score), 0)::bigint AS score_sum,
+                   COUNT(o.score)::int AS score_count,
+                   COALESCE(SUM(o.readiness), 0)::bigint AS readiness_sum,
+                   COUNT(o.readiness)::int AS readiness_count,
+                   COALESCE(SUM(GREATEST(o.adapter_finding_count, 0)), 0)::bigint AS adapter_finding_count,
+                   COALESCE(SUM(GREATEST(o.spec_finding_count, 0)), 0)::bigint AS spec_finding_count,
+                   COALESCE(MAX(o.declared_parser_limits), 0)::int AS declared_parser_limits,
+                   (COUNT(*) FILTER (WHERE o.blocking))::int AS blocked_count,
+                   MIN(o.rank) AS rank
+            FROM apiome.quality_rank_observations o
+            WHERE {where}
+            GROUP BY o.scope, o.format_key, (o.occurred_at AT TIME ZONE 'UTC')::date,
+                     o.stage, o.outcome, o.grade, o.adapter_key, o.style_guide_fingerprint
+            ORDER BY (o.occurred_at AT TIME ZONE 'UTC')::date DESC, o.scope, o.format_key
+            LIMIT %s
+            """,
+            (*params, max(1, min(int(bucket_limit), 20000))),
+        )
+        drift = self.execute_query(
+            f"""
+            SELECT o.scope, o.format_key,
+                   MIN(o.occurred_at) AS first_at,
+                   (array_agg(o.score ORDER BY o.occurred_at ASC, o.id ASC))[1] AS first_score,
+                   MAX(o.occurred_at) AS last_at,
+                   (array_agg(o.score ORDER BY o.occurred_at DESC, o.id DESC))[1] AS last_score,
+                   (array_agg(o.grade ORDER BY o.occurred_at DESC, o.id DESC))[1] AS last_grade
+            FROM apiome.quality_rank_observations o
+            WHERE {where} AND o.score IS NOT NULL
+            GROUP BY o.scope, o.format_key
+            """,
+            tuple(params),
+        )
+        attribution = self.execute_query(
+            f"""
+            SELECT o.scope, o.format_key, side.key AS side, cls.key AS class,
+                   SUM(trunc((cls.value #>> '{{}}')::numeric))::bigint AS total
+            FROM apiome.quality_rank_observations o
+            CROSS JOIN LATERAL jsonb_each(o.attribution) AS side(key, value)
+            CROSS JOIN LATERAL jsonb_each(
+                CASE WHEN jsonb_typeof(side.value) = 'object' THEN side.value ELSE '{{}}'::jsonb END
+            ) AS cls(key, value)
+            WHERE {where}
+              AND side.key IN ('adapter', 'spec')
+              AND jsonb_typeof(cls.value) = 'number'
+              AND cls.value > '0'::jsonb
+            GROUP BY o.scope, o.format_key, side.key, cls.key
+            """,
+            tuple(params),
+        )
+        return {"buckets": buckets, "drift": drift, "attribution": attribution}
+
     def prune_quality_rank_observations(self, older_than: datetime) -> int:
         """Delete observations recorded before ``older_than`` (IXH-2.7, #5102).
 
@@ -6691,6 +6993,8 @@ class Database:
         *,
         ref_kind: Optional[str] = None,
         ref_artifact: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """Suites for a tenant, each joined with its newest run (IXH-5.7, #5119).
 
@@ -6701,6 +7005,8 @@ class Database:
             tenant_id: Tenant scope (a non-UUID returns ``[]``).
             ref_kind: Restrict to one reference kind; ``None`` spans both.
             ref_artifact: Restrict to one artifact segment; ``None`` spans the tenant.
+            limit: Rows to read; ``None`` reads the whole list (internal callers).
+            cursor: Where the page starts (:data:`SCHEMA_SUITES_ORDER`, #7196).
 
         Returns:
             The matching rows, newest suite first.
@@ -6716,6 +7022,7 @@ class Database:
             clauses.append("s.ref_artifact = %s")
             params.append(ref_artifact)
         suite_cols = ", ".join(f"s.{col.strip()}" for col in self._SCHEMA_SUITE_COLUMNS.split(","))
+        after_sql, after_params, limit_sql, limit_params = SCHEMA_SUITES_ORDER.window(limit, cursor)
         return self.execute_query(
             f"""
             SELECT {suite_cols},
@@ -6743,10 +7050,10 @@ class Database:
                 ORDER BY r.created_at DESC, r.id DESC
                 LIMIT 1
             ) lr ON TRUE
-            WHERE {' AND '.join(clauses)}
-            ORDER BY s.created_at DESC, s.id DESC
+            WHERE {' AND '.join(clauses)}{after_sql}
+            ORDER BY {SCHEMA_SUITES_ORDER.order_by}{limit_sql}
             """,
-            tuple(params),
+            (*params, *after_params, *limit_params),
         )
 
     def get_schema_test_suite(self, tenant_id: str, suite_id: str) -> Optional[Dict[str, Any]]:
@@ -7040,14 +7347,17 @@ class Database:
         *,
         limit: int = 20,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """Run history of one suite, newest first (IXH-5.7, #5119).
 
         Args:
             tenant_id: Tenant scope.
             suite_id: The suite whose history is read.
-            limit: Page size, clamped to 1..100.
-            offset: Page start, clamped to >= 0.
+            limit: Rows to read, clamped to 1..101 (the largest page plus its look-ahead row).
+            offset: Page start, clamped to >= 0 (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(created_at, id)`` of the last run already seen; the page continues after
+                it (#7196).
 
         Returns:
             The matching run rows.
@@ -7056,15 +7366,22 @@ class Database:
             return []
         if not (suite_id and is_uuid_string(str(suite_id))):
             return []
+        after_sql, after_params = keyset_before("created_at", "id", cursor)
         return self.execute_query(
             f"""
             SELECT {self._SCHEMA_SUITE_RUN_COLUMNS}
             FROM apiome.schema_test_suite_runs
-            WHERE tenant_id = %s::uuid AND suite_id = %s::uuid
+            WHERE tenant_id = %s::uuid AND suite_id = %s::uuid{after_sql}
             ORDER BY created_at DESC, id DESC
             LIMIT %s OFFSET %s
             """,
-            (tenant_id, suite_id, max(1, min(int(limit), 100)), max(0, int(offset))),
+            (
+                tenant_id,
+                suite_id,
+                *after_params,
+                max(1, min(int(limit), 101)),
+                0 if cursor else max(0, int(offset)),
+            ),
         )
 
     def get_schema_test_suite_run(
@@ -7204,18 +7521,36 @@ class Database:
         return "editor" if member else None
 
     def list_lint_finding_decision_events(
-        self, decision_id: str, tenant_id: str
+        self,
+        decision_id: str,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """List audit events for a decision, oldest first (CLX-1.3, #4850)."""
-        query = """
+        """List audit events for a decision, oldest first (CLX-1.3, #4850).
+
+        Args:
+            decision_id: The decision whose history is read.
+            tenant_id: The tenant that must own it.
+            limit: Rows to read; ``None`` reads the whole history (internal callers).
+            cursor: ``[created_at, id]`` of the last event already seen (#7196), or ``None``.
+
+        Returns:
+            The event rows, oldest first.
+        """
+        from .authoring_list_orders import LINT_DECISION_EVENTS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        query = f"""
             SELECT id, decision_id, tenant_id, before_state, after_state, rationale,
                    expires_at, linked_ticket, policy_version_id, actor_user_id, actor_label,
                    created_at
             FROM apiome.lint_finding_decision_events
-            WHERE decision_id = %s AND tenant_id = %s
-            ORDER BY created_at ASC
+            WHERE decision_id = %s AND tenant_id = %s{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, (decision_id, tenant_id))
+        return self.execute_query(query, (decision_id, tenant_id, *after_params, *limit_params))
 
     def record_lint_policy_evaluation(self, evaluation: Dict[str, Any]) -> Optional[str]:
         """Insert one write-once policy evaluation, or reuse the identical stored one.
@@ -7387,8 +7722,22 @@ class Database:
         *,
         project_id: Optional[str] = None,
         runs_per_scanner: int = 2,
+        findings: str = "full",
+        row_limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """List the newest evidence runs per (subject, scanner) across a tenant (CLX-4.1, #4859).
+
+        ``findings`` picks how much of each run's findings array is read (DBP-1.13, #7196) — the
+        array holds every finding body of a run, and most callers need a fraction of it:
+
+        * ``full`` — every run's complete findings (the default).
+        * ``current`` — complete findings for each scanner's newest run; older runs carry only
+          each finding's fingerprint, which is all regression detection compares.
+        * ``summary`` — the newest run's findings cut down to fingerprint, severity and category
+          (what the posture rollup counts); older runs fingerprints only.
+        * ``fingerprints`` — fingerprints only for every run (trend diffing).
+
+        ``row_limit`` caps the rows read, newest first; ``None`` reads every row.
 
         Subjects are the latest live catalog revision per project plus the latest snapshot per
         MCP endpoint. ``runs_per_scanner`` newest rows are returned for each (subject, scanner)
@@ -7413,7 +7762,7 @@ class Database:
                    r.findings, r.coverage, r.created_at
         """
         catalog_branch = f"""
-            SELECT * FROM (
+            SELECT {self._workspace_evidence_projection("c", findings)} FROM (
                 SELECT {run_columns},
                        cs.project_id, cs.project_name::text AS project_name, cs.publishable,
                        cs.subject_label::text AS subject_label,
@@ -7426,7 +7775,7 @@ class Database:
             ) c WHERE c.rn <= %s
         """
         mcp_branch = f"""
-            SELECT * FROM (
+            SELECT {self._workspace_evidence_projection("m", findings)} FROM (
                 SELECT {run_columns},
                        NULL::uuid AS project_id, NULL::text AS project_name,
                        NULL::boolean AS publishable, ms.subject_label::text AS subject_label,
@@ -7456,7 +7805,59 @@ class Database:
             # Placeholder order follows the SQL text: BOTH CTEs first (catalog: tenant,
             # project, project; mcp: tenant), then each branch's rn cap.
             params = (tenant_id, None, None, tenant_id, per_scanner, per_scanner)
+        if row_limit is not None:
+            query += " LIMIT %s"
+            params = (*params, max(1, int(row_limit)))
         return self.execute_query(query, params)
+
+    #: The finding keys each ``findings`` mode of the workspace evidence read keeps.
+    _WORKSPACE_FINGERPRINT_KEYS = ("source_fingerprint", "id")
+    _WORKSPACE_SUMMARY_KEYS = ("source_fingerprint", "id", "severity", "category")
+
+    @classmethod
+    def _workspace_evidence_projection(cls, alias: str, findings: str) -> str:
+        """The outer select list of one branch of the workspace evidence read.
+
+        Args:
+            alias: The branch's subquery alias (``c`` or ``m``).
+            findings: ``full``, ``current``, ``summary`` or ``fingerprints`` — see
+                :meth:`list_latest_lint_evidence_runs_for_tenant`.
+
+        Returns:
+            ``*`` for ``full``; otherwise the branch's columns with ``findings`` cut down in SQL.
+
+        Raises:
+            ValueError: ``findings`` is not one of the four modes.
+        """
+        if findings == "full":
+            return "*"
+        if findings not in ("current", "summary", "fingerprints"):
+            raise ValueError(f"unknown findings mode: {findings!r}")
+
+        def cut(keys: Tuple[str, ...]) -> str:
+            pairs = ", ".join(f"'{key}', f -> '{key}'" for key in keys)
+            return (
+                f"(SELECT COALESCE(jsonb_agg(jsonb_build_object({pairs})), '[]'::jsonb) "
+                f"FROM jsonb_array_elements(CASE WHEN jsonb_typeof({alias}.findings) = 'array' "
+                f"THEN {alias}.findings ELSE '[]'::jsonb END) AS f "
+                "WHERE jsonb_typeof(f) = 'object')"
+            )
+
+        older = cut(cls._WORKSPACE_FINGERPRINT_KEYS)
+        if findings == "fingerprints":
+            findings_sql = older
+        else:
+            newest = (
+                f"{alias}.findings" if findings == "current" else cut(cls._WORKSPACE_SUMMARY_KEYS)
+            )
+            findings_sql = f"CASE WHEN {alias}.rn = 1 THEN {newest} ELSE {older} END"
+        return (
+            f"{alias}.id, {alias}.subject_type, {alias}.version_record_id, {alias}.mcp_version_id, "
+            f"{alias}.scanner_id, {alias}.scanner_version, {alias}.profile, {alias}.outcome, "
+            f"{alias}.report_fingerprint, {findings_sql} AS findings, {alias}.coverage, "
+            f"{alias}.created_at, {alias}.project_id, {alias}.project_name, {alias}.publishable, "
+            f"{alias}.subject_label, {alias}.rn"
+        )
 
     def list_latest_axis_evaluations_for_tenant(
         self,
@@ -7616,16 +8017,37 @@ class Database:
     )
 
     def list_lint_workspace_saved_views(
-        self, tenant_id: str, user_id: str
+        self,
+        tenant_id: str,
+        user_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """List a user's saved workspace views, pinned first then newest (CLX-4.1, #4859)."""
+        """List a user's saved workspace views, pinned first then newest (CLX-4.1, #4859).
+
+        Args:
+            tenant_id: The caller's tenant.
+            user_id: The views' owner.
+            limit: Rows to read; ``None`` reads the whole list (internal callers).
+            cursor: Where the page starts (:data:`LINT_SAVED_VIEWS_ORDER`, #7196).
+
+        Returns:
+            The saved-view rows.
+        """
+        after_sql, after_params, limit_sql, limit_params = LINT_SAVED_VIEWS_ORDER.window(
+            limit, cursor
+        )
         q = f"""
             SELECT {self._LINT_WORKSPACE_SAVED_VIEW_COLUMNS}
             FROM apiome.lint_workspace_saved_views
-            WHERE tenant_id = %s::uuid AND user_id = %s::uuid
-            ORDER BY is_pinned DESC, updated_at DESC, name ASC
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid{after_sql}
+            ORDER BY {LINT_SAVED_VIEWS_ORDER.order_by}{limit_sql}
         """
-        return [dict(r) for r in self.execute_query(q, (tenant_id, user_id))]
+        return [
+            dict(r)
+            for r in self.execute_query(q, (tenant_id, user_id, *after_params, *limit_params))
+        ]
 
     def get_lint_workspace_saved_view(
         self, tenant_id: str, user_id: str, view_id: str
@@ -7910,11 +8332,19 @@ class Database:
         if not rows:
             self.execute_query("SELECT apiome.seed_builtin_style_guide(%s)", (tenant_id,))
 
-    def list_style_guides(self, tenant_id: str) -> List[Dict[str, Any]]:
+    def list_style_guides(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """List a tenant's style guides with list-view rollups (GOV-2.1, #4433).
 
         Args:
             tenant_id: The tenant whose guides to list.
+            limit: Rows to read; ``None`` reads every guide (internal callers).
+            cursor: ``[is_builtin, name, id]`` of the last guide already seen (#7196), or ``None``.
 
         Returns:
             One row per guide — ``id`` / ``name`` / ``description`` / ``source`` /
@@ -7924,10 +8354,14 @@ class Database:
         """
         if not tenant_id or not is_uuid_string(str(tenant_id)):
             return []
-        query = """
+        from .authoring_list_orders import STYLE_GUIDES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        query = f"""
             SELECT g.id, g.name, g.description, g.source, g.is_default,
                    g.external_lint_profile,
                    g.created_at, g.updated_at,
+                   (g.source = 'builtin') AS is_builtin,
                    COUNT(r.id) AS rule_count,
                    COUNT(r.id) FILTER (WHERE r.enabled) AS enabled_rule_count,
                    EXISTS (
@@ -7936,11 +8370,11 @@ class Database:
                    ) AS tenant_assigned
             FROM apiome.style_guides g
             LEFT JOIN apiome.style_guide_rules r ON r.guide_id = g.id
-            WHERE g.tenant_id = %s
+            WHERE g.tenant_id = %s{after_sql}
             GROUP BY g.id
-            ORDER BY (g.source = 'builtin') DESC, g.name ASC
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, (tenant_id,))
+        return self.execute_query(query, (tenant_id, *after_params, *limit_params))
 
     def list_style_guide_project_assignments(self, tenant_id: str) -> List[Dict[str, Any]]:
         """List every project-level style-guide assignment of a tenant (GOV-2.1, #4433).
@@ -8644,14 +9078,21 @@ class Database:
         return rows[0] if rows else None
 
     def list_style_guide_revisions(
-        self, guide_id: str, tenant_id: str, *, limit: int = 100
+        self,
+        guide_id: str,
+        tenant_id: str,
+        *,
+        limit: int = 100,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """List a guide's revisions, newest first (GOV-1.6, #4432).
 
         Args:
             guide_id: The guide whose history to read. Non-UUID values return ``[]``.
             tenant_id: The tenant that must own the guide.
-            limit: Maximum rows to return, clamped to 1..500.
+            limit: Maximum rows to return, clamped to 1..501 (a 500-row page plus the one
+                row that tells the route another page exists).
+            cursor: ``[revision_number, id]`` of the last row already seen (#7196), or ``None``.
 
         Returns:
             Revision rows, highest ``revision_number`` first.
@@ -8660,16 +9101,18 @@ class Database:
             return []
         if not tenant_id or not is_uuid_string(str(tenant_id)):
             return []
+        from .authoring_list_orders import STYLE_GUIDE_REVISIONS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(
+            max(1, min(int(limit), 501)), cursor
+        )
         query = f"""
             SELECT {self._STYLE_GUIDE_REVISION_COLUMNS}
             FROM apiome.style_guide_revisions
-            WHERE guide_id = %s AND tenant_id = %s
-            ORDER BY revision_number DESC
-            LIMIT %s
+            WHERE guide_id = %s AND tenant_id = %s{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(
-            query, (guide_id, tenant_id, max(1, min(int(limit), 500)))
-        )
+        return self.execute_query(query, (guide_id, tenant_id, *after_params, *limit_params))
 
     def get_style_guide_revision(
         self, revision_id: str, tenant_id: str
@@ -9541,8 +9984,14 @@ class Database:
         creator_id: Optional[str] = None,
         created_after: Optional[datetime] = None,
         created_before: Optional[datetime] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
-        """Get all versions for a project, ensuring project belongs to tenant.
+        """Get a project's versions, newest first, ensuring project belongs to tenant.
+
+        With ``limit`` the read is one keyset page on ``idx_versions_project_created`` (#7196):
+        ``cursor`` is the ``(created_at, id)`` of the last version already seen. Without
+        ``limit`` every version is returned, for internal callers that need the whole history.
 
         Optional lifecycle filter (#739). Optional history filters (#2579): substring match on
         revision note / changelog / commit message body, creator id, and created_at range.
@@ -9584,6 +10033,13 @@ class Database:
             created_before_clause = " AND v.created_at <= %s"
             params.append(created_before)
 
+        after_clause, after_params = keyset_before("v.created_at", "v.id", cursor)
+        params.extend(after_params)
+        limit_clause = ""
+        if limit is not None:
+            limit_clause = "LIMIT %s"
+            params.append(int(limit))
+
         query = f"""
             SELECT v.id, v.project_id, v.creator_id, v.version_id, v.description,
                    v.change_log, v.visibility, v.published, v.published_at, v.published_immutable,
@@ -9619,15 +10075,24 @@ class Database:
               {creator_clause}
               {created_after_clause}
               {created_before_clause}
-            ORDER BY v.created_at DESC
+              {after_clause}
+            ORDER BY v.created_at DESC NULLS LAST, v.id DESC
+            {limit_clause}
         """
         return self.execute_query(query, tuple(params))
 
     def list_sunset_timeline_entries(
-        self, tenant_id: str, project_id: Optional[str] = None
+        self, tenant_id: str, project_id: Optional[str] = None, *, limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
-        """
-        Schema revisions with deprecation and/or a sunset date (#508).
+        """Schema revisions with deprecation and/or a sunset date (#508).
+
+        Args:
+            tenant_id: The tenant whose revisions are read.
+            project_id: Narrow to one project.
+            limit: Read at most this many rows (#7196); ``None`` reads every match.
+
+        Returns:
+            The revision rows by project name, then version label.
         """
         project_filter = ""
         params: List[Any] = [tenant_id]
@@ -9649,8 +10114,11 @@ class Database:
                 OR (v.metadata @> '{{"deprecated": true}}'::jsonb)
                 OR NULLIF(trim(COALESCE(v.metadata->>'sunsetDate', v.metadata->>'sunset_date', '')), '') IS NOT NULL
               )
-            ORDER BY p.name ASC, v.version_id ASC
+            ORDER BY p.name ASC, v.version_id ASC, v.id ASC
         """
+        if limit is not None:
+            query += " LIMIT %s"
+            params.append(int(limit))
         return self.execute_query(query, tuple(params))
 
     #: Stored-first security headline (ASP-1.3, #5921): the ``security`` axis of the newest
@@ -10813,6 +11281,7 @@ class Database:
         review_state: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """List a version's captured exchanges, newest first (#4747, PMR-2.4).
 
@@ -10824,7 +11293,9 @@ class Database:
             tenant_id: Tenant scope.
             review_state: Optional filter (``pending``/``approved``/``rejected``/``published``).
             limit: Maximum rows to return.
-            offset: Rows to skip, for paging.
+            offset: Rows to skip, for paging (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(captured_at, id)`` of the last capture already seen; the page continues
+                after it (#7196).
 
         Returns:
             The capture rows (empty when the version has none or the id is not a UUID).
@@ -10840,6 +11311,8 @@ class Database:
         if review_state:
             clauses.append("c.review_state = %s")
             params.append(review_state)
+        after_sql, after_params = keyset_before("c.captured_at", "c.id", cursor)
+        params.extend(after_params)
         query = f"""
             SELECT c.id, c.upstream, c.allowlist_entry, c.policy_digest, c.captured_at,
                    c.captured_by, c.operation_key, c.request_method, c.request_path,
@@ -10848,11 +11321,11 @@ class Database:
                    c.review_state, c.reviewed_by, c.reviewed_at, c.review_note,
                    c.published_pack, c.expires_at
             FROM apiome.mock_capture_exchange c
-            WHERE {' AND '.join(clauses)}
+            WHERE {' AND '.join(clauses)}{after_sql}
             ORDER BY c.captured_at DESC, c.id DESC
             LIMIT %s OFFSET %s
         """
-        params.extend([max(1, min(int(limit), 500)), max(0, int(offset))])
+        params.extend([max(1, min(int(limit), 500)), 0 if cursor else max(0, int(offset))])
         return self.execute_query(query, tuple(params))
 
     def count_mock_capture_exchanges(
@@ -12042,21 +12515,37 @@ class Database:
 
     # ---- Roles -------------------------------------------------------
 
-    def list_roles(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """List a tenant's roles with their assigned-member counts (built-in first, then by name)."""
+    def list_roles(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """List a tenant's roles with their assigned-member counts (built-in first, then by name).
+
+        Args:
+            tenant_id: The tenant.
+            limit: Rows to read; ``None`` reads every role (internal callers).
+            cursor: ``ROLES_ORDER`` values of the last role already seen (#7196).
+
+        Returns:
+            The role rows, each with ``builtin_rank`` (its place among the built-ins).
+        """
+        from .tenant_list_orders import ROLE_BUILTIN_RANK_SQL, ROLES_ORDER
+
+        after_sql, after_params, limit_sql, limit_params = ROLES_ORDER.window(limit, cursor)
         return self.execute_query(
-            """
+            f"""
             SELECT r.id::text, r.slug, r.name, r.description, r.is_builtin,
                    r.created_at, r.updated_at,
+                   {ROLE_BUILTIN_RANK_SQL} AS builtin_rank,
                    (SELECT COUNT(*) FROM apiome.tenant_user_roles tur WHERE tur.role_id = r.id) AS member_count
             FROM apiome.roles r
-            WHERE r.tenant_id = %s::uuid
-            ORDER BY r.is_builtin DESC,
-                     CASE r.slug WHEN 'owner' THEN 0 WHEN 'admin' THEN 1
-                                 WHEN 'editor' THEN 2 WHEN 'viewer' THEN 3 ELSE 4 END,
-                     r.name ASC
+            WHERE r.tenant_id = %s::uuid{after_sql}
+            ORDER BY {ROLES_ORDER.order_by}{limit_sql}
             """,
-            (tenant_id,),
+            (tenant_id, *after_params, *limit_params),
         )
 
     def get_role(self, tenant_id: str, role_id: str) -> Optional[Dict[str, Any]]:
@@ -12205,8 +12694,17 @@ class Database:
         )
         return {row["user_id"]: row["last_sign_in"] for row in rows}
 
-    def list_members(self, tenant_id: str) -> List[Dict[str, Any]]:
+    def list_members(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """List tenant members with their role, lifecycle status, and admin flag.
+
+        ``limit`` reads one keyset page continuing after ``cursor`` (``MEMBERS_ORDER`` values,
+        #7196); without it every member is returned, which the export and import paths rely on.
 
         The three columns beyond the membership itself are what the members screen
         (HIVE-5.2, #5305) prints per row and in its detail drawer, and each is read
@@ -12236,8 +12734,10 @@ class Database:
         :param tenant_id: Canonical UUID string of the tenant.
         :returns: One row per non-deleted member, ordered by display name.
         """
+        from .tenant_list_orders import MEMBERS_ORDER
         from .two_factor_policy import DUE_AT_SQL, STATUS_SQL
 
+        after_sql, after_params, limit_sql, limit_params = MEMBERS_ORDER.window(limit, cursor)
 
         return self.execute_query(
             """
@@ -12264,10 +12764,14 @@ class Database:
             LEFT JOIN apiome.roles r ON r.id = tur.role_id
             LEFT JOIN apiome.sso_provider sp
                    ON sp.tenant_id = tu.tenant_id AND tu.provisioned_by = 'sso:' || sp.slug
-            WHERE tu.tenant_id = %s::uuid AND u.deleted_at IS NULL
-            ORDER BY u.name ASC
-            """.replace("{STATUS_SQL}", STATUS_SQL).replace("{DUE_AT_SQL}", DUE_AT_SQL),
-            (tenant_id,),
+            WHERE tu.tenant_id = %s::uuid AND u.deleted_at IS NULL{AFTER_SQL}
+            ORDER BY {ORDER_SQL}{LIMIT_SQL}
+            """.replace("{STATUS_SQL}", STATUS_SQL)
+            .replace("{DUE_AT_SQL}", DUE_AT_SQL)
+            .replace("{AFTER_SQL}", after_sql)
+            .replace("{ORDER_SQL}", MEMBERS_ORDER.order_by)
+            .replace("{LIMIT_SQL}", limit_sql),
+            (tenant_id, *after_params, *limit_params),
         )
 
     def touch_pending_membership(self, tenant_id: str, user_id: str) -> int:
@@ -12905,7 +13409,21 @@ class Database:
         since=None,
         until=None,
     ) -> int:
-        """Count rows matching filters (no cursor)."""
+        """Count rows matching filters (no cursor), up to ``TOTAL_CAP`` (#7196).
+
+        Args:
+            tenant_id: The tenant whose ledger is counted.
+            project_id: Only this project.
+            actions: Only these actions.
+            actor_id: Only this actor.
+            outcome: Only this outcome.
+            version_id: Only this revision.
+            since: Inclusive lower bound on ``created_at``.
+            until: Inclusive upper bound on ``created_at``.
+
+        Returns:
+            The number of matching rows, never more than the cap.
+        """
         where_sql, params = self._workflow_audit_filter_clauses(
             tenant_id,
             project_id=project_id,
@@ -12918,11 +13436,11 @@ class Database:
             cursor_created_at=None,
             cursor_id=None,
         )
-        q = f"SELECT COUNT(*)::bigint AS cnt FROM apiome.workflow_audit wa WHERE {where_sql}"
+        q = capped_count_sql(f"FROM apiome.workflow_audit wa WHERE {where_sql}")
         rows = self.execute_query(q, tuple(params))
         if not rows:
             return 0
-        return int(rows[0].get("cnt") or 0)
+        return int(rows[0].get("total") or 0)
 
     def search_workflow_audit(
         self,
@@ -13246,7 +13764,21 @@ class Database:
         since=None,
         until=None,
     ) -> int:
-        """Count registry_audit rows matching filters (no cursor)."""
+        """Count registry_audit rows matching filters (no cursor), up to ``TOTAL_CAP`` (#7196).
+
+        Args:
+            tenant_id: The tenant whose ledger is counted.
+            primitive_id: Only this primitive.
+            actions: Only these actions.
+            actor_id: Only this actor.
+            outcome: Only this outcome.
+            schema_id: Only this derived ``$id``.
+            since: Inclusive lower bound on ``created_at``.
+            until: Inclusive upper bound on ``created_at``.
+
+        Returns:
+            The number of matching rows, never more than the cap.
+        """
         where_sql, params = self._registry_audit_filter_clauses(
             tenant_id,
             primitive_id=primitive_id,
@@ -13259,11 +13791,11 @@ class Database:
             cursor_created_at=None,
             cursor_id=None,
         )
-        q = f"SELECT COUNT(*)::bigint AS cnt FROM apiome.registry_audit ra WHERE {where_sql}"
+        q = capped_count_sql(f"FROM apiome.registry_audit ra WHERE {where_sql}")
         rows = self.execute_query(q, tuple(params))
         if not rows:
             return 0
-        return int(rows[0].get("cnt") or 0)
+        return int(rows[0].get("total") or 0)
 
     def search_registry_audit(
         self,
@@ -13371,7 +13903,21 @@ class Database:
         since=None,
         until=None,
     ) -> int:
-        """Count refresh-cycle audit rows matching the filters (RAR-5.3)."""
+        """Count refresh-cycle audit rows matching the filters, up to ``TOTAL_CAP`` (RAR-5.3, #7196).
+
+        Args:
+            tenant_id: The tenant whose history is counted.
+            repository_id: Only this repository.
+            branch: Only this branch.
+            path: Only this file path.
+            trigger: Only this trigger.
+            outcome: Only this refresh outcome.
+            since: Inclusive lower bound on ``created_at``.
+            until: Inclusive upper bound on ``created_at``.
+
+        Returns:
+            The number of matching rows, never more than the cap.
+        """
         where_sql, params = self._refresh_audit_filter_clauses(
             tenant_id,
             repository_id=repository_id,
@@ -13382,11 +13928,11 @@ class Database:
             since=since,
             until=until,
         )
-        q = f"SELECT COUNT(*)::bigint AS cnt FROM apiome.workflow_audit wa WHERE {where_sql}"
+        q = capped_count_sql(f"FROM apiome.workflow_audit wa WHERE {where_sql}")
         rows = self.execute_query(q, tuple(params))
         if not rows:
             return 0
-        return int(rows[0].get("cnt") or 0)
+        return int(rows[0].get("total") or 0)
 
     def search_repository_refresh_audit(
         self,
@@ -13401,6 +13947,7 @@ class Database:
         until=None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """Paginated refresh-cycle history, newest first (RAR-5.3).
 
@@ -13408,6 +13955,23 @@ class Database:
         scoped to the tenant and optionally to a repository / branch / file path and
         the refresh facets. ``repository_id`` makes the history queryable per repo;
         adding ``path`` makes it queryable per file.
+
+        Args:
+            tenant_id: The tenant whose history is read.
+            repository_id: Only this repository.
+            branch: Only this branch.
+            path: Only this file path.
+            trigger: Only this trigger.
+            outcome: Only this refresh outcome.
+            since: Inclusive lower bound on ``created_at``.
+            until: Inclusive upper bound on ``created_at``.
+            limit: Rows to read.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(created_at, id)`` of the last row already seen; the page continues after
+                it (#7196).
+
+        Returns:
+            The rows, newest first.
         """
         where_sql, params = self._refresh_audit_filter_clauses(
             tenant_id,
@@ -13419,16 +13983,18 @@ class Database:
             since=since,
             until=until,
         )
+        after_sql, after_params = keyset_before("wa.created_at", "wa.id", cursor)
         q = f"""
             SELECT wa.id, wa.tenant_id, wa.project_id, wa.version_id, wa.action,
                    wa.outcome, wa.actor_id, wa.detail, wa.created_at
             FROM apiome.workflow_audit wa
-            WHERE {where_sql}
+            WHERE {where_sql}{after_sql}
             ORDER BY wa.created_at DESC, wa.id DESC
             LIMIT %s OFFSET %s
         """
+        params.extend(after_params)
         params.append(limit)
-        params.append(offset)
+        params.append(0 if cursor else offset)
         return self.execute_query(q, tuple(params))
 
     def delete_version(
@@ -13537,25 +14103,40 @@ class Database:
     # ==================== Project Properties Methods ====================
 
     def get_properties_for_project(
-        self, project_id: str, *, with_usage: bool = False
+        self,
+        project_id: str,
+        *,
+        with_usage: bool = False,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """Get all properties for a project.
+        """Get the properties of a project, by name.
 
         Args:
             project_id: The project.
             with_usage: Also return ``used_by`` (distinct class names, sorted) and
                 ``used_by_count`` (class-property references) across the project's live versions
                 (#3223). Classes and versions that are soft-deleted do not count.
+            limit: Rows to read; ``None`` reads every property (internal callers).
+            cursor: ``[name, id]`` of the last property already seen (#7196), or ``None``.
+
+        Returns:
+            The property rows.
         """
+        from .authoring_list_orders import PROJECT_PROPERTIES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        params = (project_id, *after_params, *limit_params)
         if not with_usage:
-            query = """
-                SELECT id, project_id, name, description, data, enabled, created_at, updated_at
-                FROM apiome.properties
-                WHERE project_id = %s AND deleted_at IS NULL
-                ORDER BY name ASC
+            query = f"""
+                SELECT p.id, p.project_id, p.name, p.description, p.data, p.enabled,
+                       p.created_at, p.updated_at
+                FROM apiome.properties p
+                WHERE p.project_id = %s AND p.deleted_at IS NULL{after_sql}
+                ORDER BY {order.order_by}{limit_sql}
             """
-            return self.execute_query(query, (project_id,))
-        query = """
+            return self.execute_query(query, params)
+        query = f"""
             SELECT p.id, p.project_id, p.name, p.description, p.data, p.enabled, p.created_at, p.updated_at,
                    COALESCE(u.used_by, ARRAY[]::text[]) AS used_by,
                    COALESCE(u.used_by_count, 0) AS used_by_count
@@ -13568,10 +14149,10 @@ class Database:
                 JOIN apiome.versions v ON v.id = c.version_id AND v.deleted_at IS NULL
                 WHERE cp.property_id = p.id
             ) u ON true
-            WHERE p.project_id = %s AND p.deleted_at IS NULL
-            ORDER BY p.name ASC
+            WHERE p.project_id = %s AND p.deleted_at IS NULL{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, (project_id,))
+        return self.execute_query(query, params)
 
     def get_property_by_id(self, property_id: str, project_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific property by ID, ensuring it belongs to the project."""
@@ -13867,9 +14448,30 @@ class Database:
         results = self.execute_query(query, (path_id, tenant_id))
         return results[0] if results else None
 
-    def get_paths_for_version_with_tenant(self, version_id: str, tenant_id: str) -> List[Dict[str, Any]]:
-        """Get all paths for a version, ensuring it belongs to the tenant."""
-        query = """
+    def get_paths_for_version_with_tenant(
+        self,
+        version_id: str,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get the paths of a version, by pathname, ensuring it belongs to the tenant.
+
+        Args:
+            version_id: The version.
+            tenant_id: The tenant the version must belong to.
+            limit: Rows to read (#7196); ``None`` reads the whole version.
+            cursor: ``[pathname, id]`` of the last path already seen.
+
+        Returns:
+            The path rows, by pathname then id.
+        """
+        after_sql, after_params = keyset_after(
+            ("vp.pathname", "vp.id"), cursor, casts=("", "::uuid")
+        )
+        limit_sql, limit_params = ("LIMIT %s", [int(limit)]) if limit is not None else ("", [])
+        query = f"""
             SELECT vp.id, vp.version_id, vp.pathname, vp.metadata,
                    vp.metadata->>'summary' as summary,
                    vp.metadata->>'description' as description,
@@ -13877,10 +14479,11 @@ class Database:
             FROM apiome.version_path vp
             JOIN apiome.versions v ON vp.version_id = v.id
             JOIN apiome.projects p ON v.project_id = p.id
-            WHERE vp.version_id = %s AND p.tenant_id = %s
-            ORDER BY vp.pathname
+            WHERE vp.version_id = %s AND p.tenant_id = %s{after_sql}
+            ORDER BY vp.pathname, vp.id
+            {limit_sql}
         """
-        return self.execute_query(query, (version_id, tenant_id))
+        return self.execute_query(query, (version_id, tenant_id, *after_params, *limit_params))
 
     def create_path(
         self,
@@ -14676,9 +15279,29 @@ class Database:
             'properties': inline_properties
         }
 
-    def list_version_tags_for_project(self, project_id: str, tenant_id: str) -> List[Dict[str, Any]]:
-        """List tags for a project; tenant-scoped, with the creator's email (#3263)."""
-        query = """
+    def list_version_tags_for_project(
+        self,
+        project_id: str,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """List tags for a project; tenant-scoped, with the creator's email (#3263).
+
+        Args:
+            project_id: The project whose version tags are read.
+            tenant_id: The tenant that must own it.
+            limit: Rows to read; ``None`` reads every tag (internal callers).
+            cursor: ``[name, id]`` of the last tag already seen (#7196), or ``None``.
+
+        Returns:
+            The tag rows, by name.
+        """
+        from .authoring_list_orders import VERSION_TAGS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        query = f"""
             SELECT t.id, t.project_id, t.version_id, t.name, t.message, t.channel, t.immutable, t.protected,
                    t.created_by, t.created_at, t.updated_at,
                    v.version_id AS target_version_string,
@@ -14690,10 +15313,10 @@ class Database:
             WHERE t.project_id = %s
               AND p.tenant_id = %s
               AND v.deleted_at IS NULL
-              AND p.deleted_at IS NULL
-            ORDER BY t.name ASC
+              AND p.deleted_at IS NULL{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, (project_id, tenant_id))
+        return self.execute_query(query, (project_id, tenant_id, *after_params, *limit_params))
 
     def get_version_tag_by_id(self, tag_id: str, project_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
         query = """
@@ -15646,20 +16269,38 @@ class Database:
         return self.execute_query(q, (project_id, tenant_id))
 
     def list_version_branches_detailed_for_project(
-        self, project_id: str, tenant_id: str
+        self,
+        project_id: str,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """Named branches with tip version string (for Studio / UI BFF consumers)."""
-        q = """
+        """Named branches with tip version string (for Studio / UI BFF consumers).
+
+        Args:
+            project_id: The project whose branches are read.
+            tenant_id: The tenant that must own it.
+            limit: Rows to read; ``None`` reads every branch (internal callers).
+            cursor: ``[name, id]`` of the last branch already seen (#7196), or ``None``.
+
+        Returns:
+            The branch rows, by name.
+        """
+        from .authoring_list_orders import VERSION_BRANCHES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        q = f"""
             SELECT b.id, b.project_id, b.name, b.tip_version_id, b.is_default, b.protected,
                    b.require_merge_path, b.created_by, b.created_at, b.updated_at,
                    v.version_id AS tip_version_string
             FROM apiome.version_branches b
             JOIN apiome.versions v ON v.id = b.tip_version_id AND v.project_id = b.project_id
             JOIN apiome.projects p ON b.project_id = p.id
-            WHERE b.project_id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL
-            ORDER BY b.name ASC
+            WHERE b.project_id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(q, (project_id, tenant_id))
+        return self.execute_query(q, (project_id, tenant_id, *after_params, *limit_params))
 
     def compute_branch_divergence(
         self,
@@ -16066,36 +16707,67 @@ class Database:
         return rows[0] if rows else None
 
     def get_conversions_for_project(
-        self, tenant_id: str, target_project_id: str
+        self,
+        tenant_id: str,
+        target_project_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """All conversion-provenance rows that produced ``target_project_id`` (newest first).
 
         The reverse of :meth:`get_latest_conversion_for_source`: "where did this converted Project come
         from?" — one Project accumulates one row per (re-)convert. Rows carry the CPDO-3.3 history
         enrichment (``snapshot_available``, source/target project display columns). Tenant-scoped.
+
+        Args:
+            tenant_id: Owning tenant.
+            target_project_id: The Project the conversions produced.
+            limit: Rows to read; ``None`` reads the whole history (internal callers).
+            cursor: ``[created_at, id]`` of the last row already seen (#7196), or ``None``.
+
+        Returns:
+            The provenance rows, newest first.
         """
+        from .authoring_list_orders import PROJECT_CONVERSIONS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         query = f"""
             {self._CONVERSION_HISTORY_SELECT.format(columns=self._CONVERSION_PROVENANCE_COLUMNS_CP)}
-            WHERE cp.tenant_id = %s AND cp.target_project_id = %s
-            ORDER BY cp.created_at DESC
+            WHERE cp.tenant_id = %s AND cp.target_project_id = %s{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(query, (tenant_id, target_project_id))
+        return self.execute_query(
+            query, (tenant_id, target_project_id, *after_params, *limit_params)
+        )
 
     def get_conversions_for_source(
-        self, tenant_id: str, source_project_id: str
+        self,
+        tenant_id: str,
+        source_project_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """All conversion-provenance rows converted *from* ``source_project_id`` (newest first).
 
         The catalog item's full conversion history (CPDO-3.3): one row per convert/re-convert, with
         the ``snapshot_available`` flag and the source/target project display columns joined on.
         Tenant-scoped.
+
+        Args:
+            tenant_id: Owning tenant.
+            source_project_id: The catalog item converted from.
+            limit: Rows to read; ``None`` reads the whole history (#7196).
+            cursor: ``CONVERSIONS_BY_SOURCE_ORDER`` values of the last row already seen.
         """
+        after_sql, after_params, limit_sql, limit_params = CONVERSIONS_BY_SOURCE_ORDER.window(limit, cursor)
         query = f"""
             {self._CONVERSION_HISTORY_SELECT.format(columns=self._CONVERSION_PROVENANCE_COLUMNS_CP)}
-            WHERE cp.tenant_id = %s AND cp.source_project_id = %s
-            ORDER BY cp.created_at DESC
+            WHERE cp.tenant_id = %s AND cp.source_project_id = %s{after_sql}
+            ORDER BY {CONVERSIONS_BY_SOURCE_ORDER.order_by}{limit_sql}
         """
-        return self.execute_query(query, (tenant_id, source_project_id))
+        return self.execute_query(query, (tenant_id, source_project_id, *after_params, *limit_params))
 
     def get_conversion_provenance_by_id(
         self, tenant_id: str, provenance_id: str
@@ -18033,14 +18705,33 @@ class Database:
             conn.rollback()
             raise e
 
-    def list_push_webhook_subscriptions(self, tenant_id: str) -> List[Dict[str, Any]]:
-        q = """
+    def list_push_webhook_subscriptions(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """A tenant's live push-webhook subscriptions, newest first.
+
+        Args:
+            tenant_id: Owning tenant id.
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``PUSH_WEBHOOK_SUBSCRIPTIONS_ORDER`` values of the last row already seen (#7196).
+
+        Returns:
+            The subscription rows.
+        """
+        from .tenant_list_orders import PUSH_WEBHOOK_SUBSCRIPTIONS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        q = f"""
             SELECT id, url, active, signing_secret_ref, min_severity, created_at, updated_at
             FROM apiome.push_webhook_subscriptions
-            WHERE tenant_id = %s::uuid AND deleted_at IS NULL
-            ORDER BY created_at DESC
+            WHERE tenant_id = %s::uuid AND deleted_at IS NULL{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(q, (tenant_id,))
+        return self.execute_query(q, (tenant_id, *after_params, *limit_params))
 
     def list_active_push_webhook_subscription_ids(self, tenant_id: str) -> List[str]:
         """Return the ids of every active (non-deleted) push-webhook subscription for a tenant.
@@ -18400,15 +19091,29 @@ class Database:
             conn.rollback()
             raise e
 
-    def list_push_webhook_dead_letter_events(self, tenant_id: str, limit: int = 100) -> List[Dict[str, Any]]:
-        q = """
+    def list_push_webhook_dead_letter_events(
+        self, tenant_id: str, limit: int = 100, *, cursor: Optional[Sequence[Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """A tenant's dead-lettered webhook deliveries, most recently failed first.
+
+        Args:
+            tenant_id: Owning tenant id.
+            limit: Rows to read.
+            cursor: ``PUSH_WEBHOOK_DEAD_LETTER_ORDER`` values of the last row already seen (#7196).
+
+        Returns:
+            The delivery-event rows.
+        """
+        from .tenant_list_orders import PUSH_WEBHOOK_DEAD_LETTER_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        q = f"""
             SELECT id, subscription_id, event_type, payload, attempt_count, last_error, created_at, updated_at
             FROM apiome.push_webhook_delivery_events
-            WHERE tenant_id = %s::uuid AND status = 'dead_letter'
-            ORDER BY updated_at DESC
-            LIMIT %s
+            WHERE tenant_id = %s::uuid AND status = 'dead_letter'{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(q, (tenant_id, limit))
+        return self.execute_query(q, (tenant_id, *after_params, *limit_params))
 
     def get_push_webhook_delivery_event(self, tenant_id: str, event_id: str) -> Optional[Dict[str, Any]]:
         q = """
@@ -19210,14 +19915,33 @@ class Database:
         rows = self.execute_query(q, (template_id,))
         return dict(rows[0]) if rows else None
 
-    def list_change_report_template_version_summaries(self, tenant_id: str) -> List[Dict[str, Any]]:
-        q = """
+    def list_change_report_template_version_summaries(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """System change-report templates, then the tenant's own, by semver (ids only, no bodies).
+
+        Args:
+            tenant_id: The tenant whose templates are listed after the system ones.
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``CHANGE_REPORT_TEMPLATE_VERSIONS_ORDER`` values of the last row seen (#7196).
+
+        Returns:
+            The summary rows.
+        """
+        from .tenant_list_orders import CHANGE_REPORT_TEMPLATE_VERSIONS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        q = f"""
             SELECT id, owner_tenant_id, semver, created_at
             FROM apiome.change_report_template_versions
-            WHERE owner_tenant_id IS NULL OR owner_tenant_id = %s::uuid
-            ORDER BY owner_tenant_id NULLS FIRST, semver ASC
+            WHERE (owner_tenant_id IS NULL OR owner_tenant_id = %s::uuid){after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(q, (tenant_id,))
+        return self.execute_query(q, (tenant_id, *after_params, *limit_params))
 
     def insert_change_report_template_version(
         self,
@@ -19320,8 +20044,27 @@ class Database:
         row["access_token"] = unseal_token(row.get("access_token"))
         return row
 
-    def list_tenant_repositories(self, tenant_id: str) -> List[Dict[str, Any]]:
-        q = """
+    def list_tenant_repositories(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """A tenant's live registered repositories, newest registration first.
+
+        Args:
+            tenant_id: Owning tenant id.
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``TENANT_REPOSITORIES_ORDER`` values of the last row already seen (#7196).
+
+        Returns:
+            The repository rows.
+        """
+        from .tenant_list_orders import TENANT_REPOSITORIES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        q = f"""
             SELECT id, tenant_id, source, provider, clone_url, repository_full_name,
                    description, default_branch, visibility, status, created_at, updated_at,
                    linked_account_id, last_scanned_at, total_files, importable_count, branch_count,
@@ -19330,10 +20073,10 @@ class Database:
                    refresh_paused_at, refresh_pause_reason, refresh_conflict_policy,
                    inherits_refresh_interval, inherits_conflict_policy, inherits_auto_refresh
             FROM apiome.tenant_repositories
-            WHERE tenant_id = %s::uuid AND deleted_at IS NULL
-            ORDER BY created_at DESC
+            WHERE tenant_id = %s::uuid AND deleted_at IS NULL{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return self.execute_query(q, (tenant_id,))
+        return self.execute_query(q, (tenant_id, *after_params, *limit_params))
 
     def get_tenant_repository(self, tenant_id: str, repository_id: str) -> Optional[Dict[str, Any]]:
         q = """
@@ -21045,11 +21788,37 @@ class Database:
         path_prefix: Optional[str],
         limit: int,
         offset: int,
+        cursor: Optional[str] = None,
+        include_total: bool = True,
     ) -> Optional[Dict[str, Any]]:
         """
         Return indexed totals for the branch, filtered counts, and one page of file rows.
         ``like_patterns`` entries are passed to ``path ILIKE ... ESCAPE '\\'`` (OR together).
         If ``path_regex`` is set, it replaces all LIKE path matching (POSIX ``~*``).
+
+        Args:
+            tenant_id: Owning tenant.
+            repository_id: The repository whose index is listed.
+            branch: The branch listed.
+            path_regex: POSIX regex on the path; replaces ``like_patterns``.
+            like_patterns: ``ILIKE`` patterns on the path, OR'd together.
+            hide_non_importable: Only files of an importable kind.
+            skip_vendor: Leave out vendored trees (``node_modules``, ``vendor``, ``.git``).
+            include_hidden: Keep dot-directories.
+            path_prefix: Only this directory.
+            limit: Rows to read, clamped to 1..500.
+            offset: Rows to skip, clamped to 0..10,000 (deprecated; ignored when ``cursor`` is
+                given).
+            cursor: The path of the last row already seen. Paths are unique per repository and
+                branch, so the page continues on ``uq_tenant_repository_files_repo_branch_path``
+                (#7196).
+            include_total: Count ``indexed_total``, ``match_count`` and
+                ``importable_match_count``. Each is a full scan of the branch's index, so a
+                paging request passes ``False`` and gets ``None`` for all three.
+
+        Returns:
+            The counts (``None`` unless ``include_total``), the clamped ``limit``/``offset`` and
+            the ``rows`` ordered by path; ``None`` when the repository is not the tenant's.
         """
         if not self.get_tenant_repository(tenant_id, repository_id):
             return None
@@ -21101,40 +21870,47 @@ class Database:
                 path_parts.append("(" + ors + ")")
                 path_params.extend(pats)
 
-        idx_parts = base_parts + extra_parts
-        idx_params = base_params + extra_params
-        q_indexed = "SELECT COUNT(*) AS c " + from_sql + " AND ".join(idx_parts)
-        indexed_rows = self.execute_query(q_indexed, tuple(idx_params))
-        indexed_total = int(indexed_rows[0]["c"]) if indexed_rows else 0
-
         filt_parts = base_parts + extra_parts + path_parts
         filt_params = base_params + extra_params + path_params
         if hide_non_importable:
             filt_parts.append(importable_sql)
-
         where_f = " AND ".join(filt_parts)
-        q_match = (
-            "SELECT COUNT(*) AS c, COUNT(*) FILTER (WHERE "
-            + importable_sql
-            + ") AS ic "
-            + from_sql
-            + where_f
-        )
-        match_rows = self.execute_query(q_match, tuple(filt_params))
-        match_count = int(match_rows[0]["c"]) if match_rows else 0
-        importable_match = int(match_rows[0]["ic"]) if match_rows else 0
+
+        indexed_total: Optional[int] = None
+        match_count: Optional[int] = None
+        importable_match: Optional[int] = None
+        if include_total:
+            idx_parts = base_parts + extra_parts
+            idx_params = base_params + extra_params
+            q_indexed = "SELECT COUNT(*) AS c " + from_sql + " AND ".join(idx_parts)
+            indexed_rows = self.execute_query(q_indexed, tuple(idx_params))
+            indexed_total = int(indexed_rows[0]["c"]) if indexed_rows else 0
+
+            q_match = (
+                "SELECT COUNT(*) AS c, COUNT(*) FILTER (WHERE "
+                + importable_sql
+                + ") AS ic "
+                + from_sql
+                + where_f
+            )
+            match_rows = self.execute_query(q_match, tuple(filt_params))
+            match_count = int(match_rows[0]["c"]) if match_rows else 0
+            importable_match = int(match_rows[0]["ic"]) if match_rows else 0
 
         lim = max(1, min(int(limit), 500))
-        off = max(0, min(int(offset), 500_000))
+        off = 0 if cursor is not None else max(0, min(int(offset), 10_000))
+        after_sql = " AND f.path > %s" if cursor is not None else ""
+        after_params: List[Any] = [cursor] if cursor is not None else []
         q_page = (
             "SELECT f.id, f.path, f.name, f.ext, f.size_bytes, f.blob_sha, f.detected_kind, "
             "       f.quality_score, f.quality_grade, f.quality_status, f.quality_reason, "
             "       f.external_ref_warning "
             + from_sql
             + where_f
+            + after_sql
             + " ORDER BY f.path ASC LIMIT %s OFFSET %s"
         )
-        page_params = tuple(filt_params + [lim, off])
+        page_params = tuple([*filt_params, *after_params, lim, off])
         rows = self.execute_query(q_page, page_params)
 
         return {
@@ -21236,6 +22012,8 @@ class Database:
         limit: int = 50,
         offset: int = 0,
         include_facets: bool = False,
+        cursor: Optional[Sequence[Any]] = None,
+        include_total: bool = True,
     ) -> Dict[str, Any]:
         """Return one page of the tenant-wide discovered-spec catalog (REPO-6.4).
 
@@ -21263,16 +22041,23 @@ class Database:
             all_branches: See :meth:`_catalog_scope`.
             sort: A :data:`~app.repository_spec_catalog.SPEC_SORT_SQL` key; anything else falls
                 back to the default. Never interpolated unvalidated.
-            limit: Page size, clamped to 1..500.
-            offset: Rows to skip, clamped to 0..500,000.
+            limit: Rows to read, clamped to 1..500.
+            offset: Rows to skip, clamped to 0..10,000 (deprecated; ignored when ``cursor`` is
+                given).
             include_facets: Also compute the filter dropdown options (formats, statuses,
                 repositories, projects) over the *unfiltered* catalog scope. Off by default so
                 a paging click does not pay for four extra ``GROUP BY`` scans.
+            cursor: The sort values of the last row already seen, from
+                :func:`~app.repository_spec_catalog.decode_spec_cursor` for the same ``sort``;
+                the page continues after that row (#7196).
+            include_total: Count ``catalog_total`` and ``match_count``. Both are full scans of
+                the catalog join, so a paging request passes ``False`` and gets ``None``.
 
         Returns:
             A dict with ``catalog_total`` (rows in scope before user filters), ``match_count``
-            (rows matching the filters), the clamped ``limit``/``offset``, ``sort``, ``rows``,
-            and ``facets`` (``None`` unless ``include_facets``).
+            (rows matching the filters) — both ``None`` unless ``include_total`` — the clamped
+            ``limit``/``offset``, ``sort``, ``rows``, and ``facets`` (``None`` unless
+            ``include_facets``).
         """
         scope_parts, scope_params = self._catalog_scope(
             tenant_id, importable_only=importable_only, all_branches=all_branches
@@ -21309,23 +22094,27 @@ class Database:
         scope_only_params = tuple(scope_params)
         all_params = tuple(scope_params + filter_params)
 
-        total_rows = self.execute_query(
-            "SELECT COUNT(*) AS c " + self._CATALOG_FROM_SQL + where_scope, scope_only_params
-        )
-        catalog_total = int(total_rows[0]["c"]) if total_rows else 0
-
-        if filter_parts:
-            match_rows = self.execute_query(
-                "SELECT COUNT(*) AS c " + self._CATALOG_FROM_SQL + where_all, all_params
+        catalog_total: Optional[int] = None
+        match_count: Optional[int] = None
+        if include_total:
+            total_rows = self.execute_query(
+                "SELECT COUNT(*) AS c " + self._CATALOG_FROM_SQL + where_scope, scope_only_params
             )
-            match_count = int(match_rows[0]["c"]) if match_rows else 0
-        else:
-            # No filters means the two counts are the same query; skip the duplicate scan.
-            match_count = catalog_total
+            catalog_total = int(total_rows[0]["c"]) if total_rows else 0
+
+            if filter_parts:
+                match_rows = self.execute_query(
+                    "SELECT COUNT(*) AS c " + self._CATALOG_FROM_SQL + where_all, all_params
+                )
+                match_count = int(match_rows[0]["c"]) if match_rows else 0
+            else:
+                # No filters means the two counts are the same query; skip the duplicate scan.
+                match_count = catalog_total
 
         sort_key = normalize_sort(sort)
         lim = max(1, min(int(limit), 500))
-        off = max(0, min(int(offset), 500_000))
+        off = 0 if cursor is not None else max(0, min(int(offset), 10_000))
+        after_sql, after_params = spec_keyset_after(sort_key, cursor)
 
         page_sql = (
             "SELECT f.id, f.repository_id, f.branch, f.path, f.name, f.ext, f.size_bytes, "
@@ -21343,11 +22132,12 @@ class Database:
             "       (" + SPEC_STATUS_RANK_SQL + ") AS status_rank "
             + self._CATALOG_FROM_SQL
             + where_all
+            + after_sql
             + " ORDER BY "
             + SPEC_SORT_SQL[sort_key]
             + " LIMIT %s OFFSET %s"
         )
-        rows = self.execute_query(page_sql, tuple(list(all_params) + [lim, off]))
+        rows = self.execute_query(page_sql, tuple([*all_params, *after_params, lim, off]))
 
         facets = (
             self._tenant_repository_spec_catalog_facets(where_scope, scope_only_params)
@@ -23359,16 +24149,32 @@ class Database:
         "added_via, registry_metadata, created_at, updated_at"
     )
 
-    def list_mcp_endpoints(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """List a tenant's live catalog endpoints, newest first (MCAT-3.1), each with its owner (CDG-2.2)."""
+    def list_mcp_endpoints(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """List a tenant's live catalog endpoints, newest first (MCAT-3.1), each with its owner (CDG-2.2).
+
+        Args:
+            tenant_id: The owning tenant.
+            limit: Rows to read; ``None`` reads the whole list (internal callers).
+            cursor: Where the page starts (:data:`MCP_ENDPOINTS_NEWEST`, #7196).
+
+        Returns:
+            The endpoint rows.
+        """
+        after_sql, after_params, limit_sql, limit_params = MCP_ENDPOINTS_NEWEST.window(limit, cursor)
         q = f"""
             SELECT {self._MCP_ENDPOINT_COLUMNS}, own.entity_owner
             FROM apiome.mcp_endpoints
             {owner_envelope_join(("mcp_endpoint",), "mcp_endpoints.id", "mcp_endpoints.tenant_id")}
-            WHERE tenant_id = %s::uuid AND deleted_at IS NULL
-            ORDER BY created_at DESC
+            WHERE tenant_id = %s::uuid AND deleted_at IS NULL{after_sql}
+            ORDER BY {MCP_ENDPOINTS_NEWEST.order_by}{limit_sql}
         """
-        return self.execute_query(q, (tenant_id,))
+        return self.execute_query(q, (tenant_id, *after_params, *limit_params))
 
     def browse_mcp_endpoints(
         self,
@@ -23377,8 +24183,13 @@ class Database:
         team: Optional[str] = None,
         categories: Optional[List[str]] = None,
         tags: Optional[List[str]] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """List a tenant's live endpoints enriched for the private browse view (MCAT-9.1).
+
+        ``limit`` / ``cursor`` read one page in ``(name, id)`` order
+        (:data:`MCP_ENDPOINTS_BY_NAME`, #7196); ``limit=None`` reads the whole catalog.
 
         Each row is a catalog endpoint joined to its *current* version snapshot's quality
         ``score`` / ``grade`` (from ``mcp_version_scores``, NULL until the snapshot is scored)
@@ -23414,6 +24225,7 @@ class Database:
             categories=categories, tags=tags
         )
         facet_clause = "".join(f" AND {c}" for c in facet_clauses)
+        after_sql, after_params, limit_sql, limit_params = MCP_ENDPOINTS_BY_NAME.window(limit, cursor)
         q = f"""
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    e.description, e.category, e.visibility, e.published, e.enabled,
@@ -23442,26 +24254,32 @@ class Database:
             CROSS JOIN LATERAL (SELECT {self._MCP_MAX_TOOL_PROPS_EXPR} AS max_tool_props) mtp
             {owner_envelope_join(("mcp_endpoint",), "e.id", "e.tenant_id")}
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL {team_clause}{facet_clause}
+            {after_sql}
             GROUP BY e.id, s.score, s.grade, s.scored_at, cv.server_branding,
                      cv.protocol_version, cv.discovered_at, mtp.max_tool_props, own.entity_owner
-            ORDER BY e.name ASC
+            ORDER BY {MCP_ENDPOINTS_BY_NAME.order_by}
+            {limit_sql}
         """
-        return self.execute_query(q, (tenant_id, *team_params, *facet_params))
+        return self.execute_query(
+            q, (tenant_id, *team_params, *facet_params, *after_params, *limit_params)
+        )
 
     def list_mcp_duplicate_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
         """Live endpoints in a tenant with fields needed for duplicate detection (MCAT-22.1).
 
         Each row is an endpoint joined to its current snapshot's ``surface_fingerprint`` (NULL when
-        never discovered). Scoping is by ``tenant_id`` only.
+        never discovered). Scoping is by ``tenant_id`` only. Reads at most
+        :data:`MCP_REPORT_SCAN_CAP` endpoints (#7196).
         """
-        q = """
+        q = f"""
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    e.visibility, e.published,
                    v.surface_fingerprint
             FROM apiome.mcp_endpoints e
             LEFT JOIN apiome.mcp_endpoint_versions v ON v.id = e.current_version_id
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            ORDER BY e.name ASC
+            ORDER BY e.name ASC, e.id ASC
+            LIMIT {int(MCP_REPORT_SCAN_CAP)}
         """
         return self.execute_query(q, (tenant_id,))
 
@@ -23469,9 +24287,10 @@ class Database:
         """Published endpoints in other tenants for cross-tenant duplicate hints (MCAT-22.1).
 
         Returns only ``published = true`` live rows outside ``exclude_tenant_id``, with each
-        owning tenant's slug for display.
+        owning tenant's slug for display. Reads at most :data:`MCP_REPORT_SCAN_CAP` endpoints
+        (#7196).
         """
-        q = """
+        q = f"""
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    t.slug AS tenant_slug,
                    v.surface_fingerprint
@@ -23481,7 +24300,8 @@ class Database:
             WHERE e.deleted_at IS NULL
               AND e.published = true
               AND e.tenant_id <> %s::uuid
-            ORDER BY t.slug ASC, e.name ASC
+            ORDER BY t.slug ASC, e.name ASC, e.id ASC
+            LIMIT {int(MCP_REPORT_SCAN_CAP)}
         """
         return self.execute_query(q, (exclude_tenant_id,))
 
@@ -23490,9 +24310,9 @@ class Database:
 
         Each row joins the current snapshot's ``discovered_at`` as ``last_known_good_at`` (the last
         successful discovery anchor) and carries cadence/backoff/quarantine columns from
-        ``mcp_endpoints``.
+        ``mcp_endpoints``. Reads at most :data:`MCP_REPORT_SCAN_CAP` endpoints (#7196).
         """
-        q = """
+        q = f"""
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    e.visibility, e.published, e.enabled,
                    e.discovery_cadence_seconds, e.last_discovered_at, e.last_discovery_status,
@@ -23502,7 +24322,8 @@ class Database:
             FROM apiome.mcp_endpoints e
             LEFT JOIN apiome.mcp_endpoint_versions cv ON cv.id = e.current_version_id
             WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL
-            ORDER BY e.name ASC
+            ORDER BY e.name ASC, e.id ASC
+            LIMIT {int(MCP_REPORT_SCAN_CAP)}
         """
         return self.execute_query(q, (tenant_id,))
 
@@ -23836,7 +24657,9 @@ class Database:
         direction: str = "asc",
         limit: int = 50,
         offset: int = 0,
-    ) -> Tuple[List[Dict[str, Any]], int]:
+        cursor: Optional[Sequence[Any]] = None,
+        include_total: bool = True,
+    ) -> Tuple[List[Dict[str, Any]], Optional[int]]:
         """Paginated directory of every live capability item in the caller's catalog (MCAT-21.4).
 
         Lists tools/resources/resource templates/prompts from each endpoint's *current* snapshot,
@@ -23844,7 +24667,29 @@ class Database:
         catalog search. Optional ``name_pattern`` matches item ``name`` or ``title`` case-
         insensitively (substring); ``item_type`` and ``endpoint_id`` narrow to one kind or server.
         ``sort`` picks the primary column (server/name/type) and ``direction`` (asc/desc) flips it;
-        secondary tie-break columns stay ascending for a stable order.
+        secondary tie-break columns stay ascending and every ordering ends in the item id, so the
+        order is total (:func:`~app.mcp_facets.capability_directory_sort_columns`).
+
+        Args:
+            tenant_id: The caller's token tenant.
+            name_pattern: Substring matched against item name or title.
+            item_type: Only this capability kind.
+            endpoint_id: Only this server.
+            host: Only endpoints on this host.
+            category: Only endpoints in this category.
+            grade: Only endpoints whose current snapshot earned this grade.
+            visibility: Only ``private`` or ``public`` endpoints.
+            sort: ``server``, ``name`` or ``type``.
+            direction: ``asc`` or ``desc``.
+            limit: Rows to read.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: The sort values of the last row already seen, decoded for the same
+                ``sort`` / ``direction``; the page continues after that row (#7196).
+            include_total: Count the matches, up to ``TOTAL_CAP``. A paging request passes
+                ``False`` and gets ``None``.
+
+        Returns:
+            ``(rows, total)``; ``total`` is ``None`` unless ``include_total``.
         """
         where_extra, fparams = self._mcp_capability_directory_where(
             name_pattern=name_pattern,
@@ -23855,21 +24700,21 @@ class Database:
             grade=grade,
             visibility=visibility,
         )
-        dir_kw = "DESC" if str(direction).lower() == "desc" else "ASC"
-        order_by = {
-            "name": f"ci.name {dir_kw}, ci.item_type ASC, e.name ASC",
-            "type": f"ci.item_type {dir_kw}, ci.name ASC, e.name ASC",
-            "server": f"e.name {dir_kw}, ci.ordinal ASC",
-        }.get(sort, f"e.name {dir_kw}, ci.ordinal ASC")
+        columns = capability_directory_sort_columns(sort, direction)
+        order_by = order_by_sql(columns)
+        after_sql, after_params = keyset_after_columns(columns, cursor)
         base_from = """
             FROM apiome.mcp_capability_items ci
             JOIN apiome.mcp_endpoints e ON e.current_version_id = ci.version_id
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = e.current_version_id
             WHERE e.tenant_id = %s::uuid
               AND e.deleted_at IS NULL"""
-        count_q = f"SELECT COUNT(*) AS total {base_from}{where_extra}"
-        count_row = self.execute_query(count_q, (tenant_id, *fparams))
-        total = int(count_row[0]["total"]) if count_row else 0
+        total: Optional[int] = None
+        if include_total:
+            count_row = self.execute_query(
+                capped_count_sql(f"{base_from}{where_extra}"), (tenant_id, *fparams)
+            )
+            total = int(count_row[0]["total"]) if count_row else 0
         list_q = f"""
             SELECT ci.item_type AS kind,
                    ci.id AS item_id, ci.name AS item_name, ci.title AS item_title,
@@ -23877,11 +24722,20 @@ class Database:
                    e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
                    e.endpoint_url, e.category, e.visibility, e.current_version_id,
                    s.score, s.grade
-            {base_from}{where_extra}
+            {base_from}{where_extra}{after_sql}
             ORDER BY {order_by}
             LIMIT %s OFFSET %s
         """
-        rows = self.execute_query(list_q, (tenant_id, *fparams, int(limit), int(offset)))
+        rows = self.execute_query(
+            list_q,
+            (
+                tenant_id,
+                *fparams,
+                *after_params,
+                int(limit),
+                0 if cursor is not None else int(offset),
+            ),
+        )
         return rows, total
 
     def search_mcp_endpoints_fts(
@@ -24234,6 +25088,7 @@ class Database:
         tags: Optional[List[str]] = None,
         limit: int = 100,
         offset: int = 0,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> Dict[str, Any]:
         """Faceted search over a tenant's live catalog: filtered endpoints + live facet counts (MCAT-21.1).
 
@@ -24257,7 +25112,9 @@ class Database:
                 empty means no constraint on that dimension.
             visibility: Restrict to ``private`` or ``public`` endpoints within the tenant.
             limit: Maximum endpoint rows in the page.
-            offset: Endpoint rows to skip (pagination).
+            offset: Endpoint rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``[name, id]`` of the last endpoint already seen; the page continues after
+                it (#7196). The total and the bucket counts still describe the whole match.
 
         Returns:
             A dict with ``endpoints`` (the page rows), ``total`` (the full match count), the
@@ -24289,6 +25146,7 @@ class Database:
                 f"WHERE i.version_id = e.current_version_id AND i.item_type = '{kind}')"
             )
 
+        after_sql, after_params = keyset_after(["e.name", "e.id"], cursor, casts=["", "::uuid"])
         endpoints_q = f"""
             SELECT e.id, e.name, e.slug, e.endpoint_url, e.transport, e.description,
                    e.category, e.visibility, e.published, e.enabled,
@@ -24308,7 +25166,7 @@ class Database:
                    {_kind_count('resource')}          AS resource_count,
                    {_kind_count('resource_template')} AS resource_template_count,
                    {_kind_count('prompt')}            AS prompt_count
-            {base}
+            {base}{after_sql}
             ORDER BY e.name ASC, e.id ASC
             LIMIT %s OFFSET %s
         """
@@ -24343,7 +25201,10 @@ class Database:
         safety_rows = self.execute_query(safety_q, params)
         safety_counts = dict(safety_rows[0]) if safety_rows else {}
         return {
-            "endpoints": self.execute_query(endpoints_q, (*params, int(limit), int(offset))),
+            "endpoints": self.execute_query(
+                endpoints_q,
+                (*params, *after_params, int(limit), 0 if cursor is not None else int(offset)),
+            ),
             "total": int(total_rows[0]["total"]) if total_rows else 0,
             "grade_rows": self.execute_query(_bucket_q("upper(s.grade)"), params),
             "transport_rows": self.execute_query(_bucket_q("e.transport"), params),
@@ -24378,22 +25239,37 @@ class Database:
         FROM apiome.mcp_categories c
     """
 
-    def list_mcp_categories(self, tenant_id: str) -> List[Dict[str, Any]]:
+    def list_mcp_categories(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """List the categories a tenant can file endpoints under: built-ins plus its own (MCAT-9.3).
 
         Args:
             tenant_id: The caller's token tenant; only its own tenant-defined rows are included.
+            limit: Rows to read; ``None`` reads every category (internal callers).
+            cursor: ``MCP_CATEGORIES_ORDER`` values of the last row already seen (#7196).
 
         Returns:
-            One row per category (see :data:`_MCP_CATEGORY_SELECT`), ordered by ``sort_order``,
-            then label, then slug.
+            One row per category (see :data:`_MCP_CATEGORY_COLUMNS`, plus ``label_key``, the
+            lowercased label it sorts by), ordered by ``sort_order``, then label, then slug.
         """
+        from .tenant_list_orders import MCP_CATEGORIES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         q = f"""
-            {self._MCP_CATEGORY_SELECT}
-            WHERE c.tenant_id IS NULL OR c.tenant_id = %s::uuid
-            ORDER BY c.sort_order ASC, lower(c.label) ASC, c.slug ASC
+            {self._MCP_CATEGORY_COLUMNS}, lower(c.label) AS label_key
+            FROM apiome.mcp_categories c
+            WHERE (c.tenant_id IS NULL OR c.tenant_id = %s::uuid){after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return [dict(r) for r in self.execute_query(q, (tenant_id, tenant_id))]
+        return [
+            dict(r)
+            for r in self.execute_query(q, (tenant_id, tenant_id, *after_params, *limit_params))
+        ]
 
     def get_mcp_category(self, tenant_id: str, slug: str) -> Optional[Dict[str, Any]]:
         """Fetch one category visible to the tenant by slug — a built-in or its own (MCAT-9.3).
@@ -24560,21 +25436,35 @@ class Database:
         q = "DELETE FROM apiome.mcp_endpoint_tags WHERE endpoint_id = %s::uuid AND tag = %s"
         return self._execute_write(q, (endpoint_id, tag)) > 0
 
-    def list_mcp_tag_vocabulary(self, tenant_id: str) -> List[Dict[str, Any]]:
+    def list_mcp_tag_vocabulary(
+        self, tenant_id: str, *, limit: Optional[int] = None, offset: int = 0
+    ) -> List[Dict[str, Any]]:
         """Every tag in use across a tenant's live endpoints, busiest first (MCAT-9.3).
+
+        The order is a computed count, so the list pages by ``limit`` / ``offset`` rather than by
+        a keyset cursor (#7196).
+
+        Args:
+            tenant_id: The tenant.
+            limit: Rows to read; ``None`` reads the whole vocabulary.
+            offset: Rows to skip.
 
         Returns:
             ``{tag, endpoint_count}`` rows ordered by count desc, then tag.
         """
-        q = """
+        window_sql, window_params = "", []
+        if limit is not None:
+            window_sql, window_params = "LIMIT %s OFFSET %s", [int(limit), max(0, int(offset))]
+        q = f"""
             SELECT t.tag, COUNT(*)::int AS endpoint_count
             FROM apiome.mcp_endpoint_tags t
             JOIN apiome.mcp_endpoints e ON e.id = t.endpoint_id
             WHERE t.tenant_id = %s::uuid AND e.deleted_at IS NULL
             GROUP BY t.tag
             ORDER BY endpoint_count DESC, t.tag ASC
+            {window_sql}
         """
-        return [dict(r) for r in self.execute_query(q, (tenant_id,))]
+        return [dict(r) for r in self.execute_query(q, (tenant_id, *window_params))]
 
     # -----------------------------------------------------------------------
     # MCP Catalog — saved searches (V2-MCP-35.3 / MCAT-21.3, #4662)
@@ -24585,16 +25475,37 @@ class Database:
     )
 
     def list_mcp_saved_searches(
-        self, tenant_id: str, user_id: str
+        self,
+        tenant_id: str,
+        user_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """List a user's saved catalog searches, pinned first then newest (MCAT-21.3)."""
+        """List a user's saved catalog searches, pinned first then newest (MCAT-21.3).
+
+        Args:
+            tenant_id: The tenant.
+            user_id: The owner.
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``MCP_SAVED_SEARCHES_ORDER`` values of the last row already seen (#7196).
+
+        Returns:
+            The saved-search rows.
+        """
+        from .tenant_list_orders import MCP_SAVED_SEARCHES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         q = f"""
             SELECT {self._MCP_SAVED_SEARCH_COLUMNS}
             FROM apiome.mcp_saved_searches
-            WHERE tenant_id = %s::uuid AND user_id = %s::uuid
-            ORDER BY is_pinned DESC, updated_at DESC, name ASC
+            WHERE tenant_id = %s::uuid AND user_id = %s::uuid{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return [dict(r) for r in self.execute_query(q, (tenant_id, user_id))]
+        return [
+            dict(r)
+            for r in self.execute_query(q, (tenant_id, user_id, *after_params, *limit_params))
+        ]
 
     def get_mcp_saved_search(
         self, tenant_id: str, user_id: str, search_id: str
@@ -24705,16 +25616,37 @@ class Database:
     """ + _MCP_ENDPOINT_NOTE_JOINS
 
     def list_mcp_endpoint_notes(
-        self, tenant_id: str, endpoint_id: str
+        self,
+        tenant_id: str,
+        endpoint_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """List cataloger notes for an endpoint, newest first (MCAT-22.3)."""
+        """List cataloger notes for an endpoint, newest first (MCAT-22.3).
+
+        Args:
+            tenant_id: The tenant.
+            endpoint_id: The endpoint.
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``MCP_ENDPOINT_NOTES_ORDER`` values of the last note already seen (#7196).
+
+        Returns:
+            The note rows.
+        """
+        from .tenant_list_orders import MCP_ENDPOINT_NOTES_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         q = f"""
             SELECT {self._MCP_ENDPOINT_NOTE_COLUMNS}
             {self._MCP_ENDPOINT_NOTE_FROM}
-            WHERE n.tenant_id = %s::uuid AND n.endpoint_id = %s::uuid
-            ORDER BY n.created_at DESC, n.id DESC
+            WHERE n.tenant_id = %s::uuid AND n.endpoint_id = %s::uuid{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return [dict(r) for r in self.execute_query(q, (tenant_id, endpoint_id))]
+        return [
+            dict(r)
+            for r in self.execute_query(q, (tenant_id, endpoint_id, *after_params, *limit_params))
+        ]
 
     def get_mcp_endpoint_note(
         self, tenant_id: str, endpoint_id: str, note_id: str
@@ -24802,19 +25734,37 @@ class Database:
         s.grade
     """
 
-    def list_mcp_collections(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """List a tenant's curated collections, newest first (MCAT-22.4)."""
+    def list_mcp_collections(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """List a tenant's curated collections, most recently changed first (MCAT-22.4).
+
+        Args:
+            tenant_id: The tenant.
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``MCP_COLLECTIONS_ORDER`` values of the last row already seen (#7196).
+
+        Returns:
+            The collection rows, each with ``member_count``.
+        """
+        from .tenant_list_orders import MCP_COLLECTIONS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         q = f"""
             SELECT {self._MCP_COLLECTION_COLUMNS},
                    COUNT(m.endpoint_id)::int AS member_count
             FROM apiome.mcp_collections c
             LEFT JOIN apiome.mcp_collection_members m ON m.collection_id = c.id
-            WHERE c.tenant_id = %s::uuid
+            WHERE c.tenant_id = %s::uuid{after_sql}
             GROUP BY c.id, c.tenant_id, c.name, c.slug, c.description, c.is_published,
                      c.created_by, c.created_at, c.updated_at
-            ORDER BY c.updated_at DESC, c.name ASC
+            ORDER BY {order.order_by}{limit_sql}
         """
-        return [dict(r) for r in self.execute_query(q, (tenant_id,))]
+        return [dict(r) for r in self.execute_query(q, (tenant_id, *after_params, *limit_params))]
 
     def get_mcp_collection(
         self, tenant_id: str, collection_id: str
@@ -26206,16 +27156,34 @@ class Database:
         return dict(rows[0]) if rows else None
 
     def list_mcp_discovery_jobs(
-        self, tenant_id: str, endpoint_id: str
+        self,
+        tenant_id: str,
+        endpoint_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """List discovery jobs for one endpoint (newest first), scoped to the tenant."""
+        """List discovery jobs for one endpoint (newest first), scoped to the tenant.
+
+        Args:
+            tenant_id: The owning tenant.
+            endpoint_id: The endpoint whose jobs to list.
+            limit: Rows to read; ``None`` reads the whole list (internal callers).
+            cursor: Where the page starts (:data:`MCP_DISCOVERY_JOBS_ORDER`, #7196).
+
+        Returns:
+            The job rows.
+        """
+        after_sql, after_params, limit_sql, limit_params = MCP_DISCOVERY_JOBS_ORDER.window(
+            limit, cursor
+        )
         q = f"""
             SELECT {self._MCP_DISCOVERY_JOB_COLUMNS}
             FROM apiome.mcp_discovery_jobs
-            WHERE endpoint_id = %s::uuid AND tenant_id = %s::uuid
-            ORDER BY created_at DESC
+            WHERE endpoint_id = %s::uuid AND tenant_id = %s::uuid{after_sql}
+            ORDER BY {MCP_DISCOVERY_JOBS_ORDER.order_by}{limit_sql}
         """
-        return self.execute_query(q, (endpoint_id, tenant_id))
+        return self.execute_query(q, (endpoint_id, tenant_id, *after_params, *limit_params))
 
     # --- Discovery sweep runs (V2-MCP-19.4 / MCAT-5.4, #3676) -----------------------------------
     _MCP_SWEEP_RUN_COLUMNS = (
@@ -26622,8 +27590,17 @@ class Database:
         COUNT(c.id)                                           AS total_count
     """
 
-    def list_mcp_endpoint_versions(self, endpoint_id: str) -> List[Dict[str, Any]]:
+    def list_mcp_endpoint_versions(
+        self,
+        endpoint_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """List an endpoint's version snapshots newest-first, with score and change counts.
+
+        ``limit`` / ``cursor`` read one page (:data:`MCP_ENDPOINT_VERSIONS_ORDER`, #7196);
+        ``limit=None`` reads the whole history.
 
         Each row carries the snapshot's identity (``version_seq``, the human-readable
         ``version_tag``, server/protocol identity, ``surface_fingerprint``, timings), its
@@ -26639,6 +27616,9 @@ class Database:
         Returns:
             One dict per snapshot, newest first; empty when the endpoint was never discovered.
         """
+        after_sql, after_params, limit_sql, limit_params = MCP_ENDPOINT_VERSIONS_ORDER.window(
+            limit, cursor
+        )
         q = f"""
             SELECT v.id, v.endpoint_id, v.version_seq, v.version_tag, v.protocol_version,
                    v.server_name, v.server_title, v.server_version, v.surface_fingerprint,
@@ -26649,11 +27629,11 @@ class Database:
             FROM apiome.mcp_endpoint_versions v
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = v.id
             LEFT JOIN apiome.mcp_version_changes c ON c.version_id = v.id
-            WHERE v.endpoint_id = %s::uuid
+            WHERE v.endpoint_id = %s::uuid{after_sql}
             GROUP BY v.id, s.score, s.grade, s.scored_at
-            ORDER BY v.version_seq DESC
+            ORDER BY {MCP_ENDPOINT_VERSIONS_ORDER.order_by}{limit_sql}
         """
-        return self.execute_query(q, (endpoint_id,))
+        return self.execute_query(q, (endpoint_id, *after_params, *limit_params))
 
     def get_mcp_endpoint_version(
         self, endpoint_id: str, version_id: str
@@ -26762,8 +27742,13 @@ class Database:
         """
         return self.execute_query(q, (version_id,))
 
-    def get_mcp_version_changes_for_endpoint(self, endpoint_id: str) -> List[Dict[str, Any]]:
+    def get_mcp_version_changes_for_endpoint(
+        self, endpoint_id: str, *, limit_versions: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """Fetch every ``mcp_version_changes`` row across all of an endpoint's snapshots.
+
+        ``limit_versions`` keeps the read to the endpoint's most recent snapshots (#7196), the
+        same window :meth:`get_mcp_evolution_series` reads with its ``limit``.
 
         The per-endpoint analogue of :meth:`get_mcp_version_changes`: one flat list spanning
         every version the endpoint owns, each row carrying its ``version_id`` so the caller
@@ -26778,11 +27763,16 @@ class Database:
         Returns:
             One dict per change row across all snapshots; empty when the endpoint has none.
         """
-        q = """
+        params: List[Any] = [endpoint_id]
+        recent_clause = ""
+        if limit_versions is not None:
+            recent_clause = self._MCP_RECENT_VERSIONS_CLAUSE
+            params.extend([endpoint_id, int(limit_versions)])
+        q = f"""
             SELECT c.version_id, c.change_type, c.item_type, c.item_name, c.detail
             FROM apiome.mcp_version_changes c
             JOIN apiome.mcp_endpoint_versions v ON v.id = c.version_id
-            WHERE v.endpoint_id = %s::uuid
+            WHERE v.endpoint_id = %s::uuid{recent_clause}
             ORDER BY
                 v.version_seq ASC,
                 CASE c.item_type
@@ -26795,7 +27785,7 @@ class Database:
                 END ASC,
                 c.item_name ASC
         """
-        return self.execute_query(q, (endpoint_id,))
+        return self.execute_query(q, tuple(params))
 
     def get_mcp_endpoint_view(
         self, user_id: str, endpoint_id: str
@@ -27460,7 +28450,12 @@ class Database:
         return dict(existing[0]) if existing else None
 
     def list_mcp_endpoint_sources(
-        self, endpoint_id: str, *, include_retired: bool = False
+        self,
+        endpoint_id: str,
+        *,
+        include_retired: bool = False,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """List an endpoint's source associations, newest first.
 
@@ -27469,19 +28464,24 @@ class Database:
             include_retired: When ``False`` (default), retired links are excluded — they stay in the
                 table so historical evidence citing them remains interpretable, but they no longer
                 back new scans, so the default listing hides them.
+            limit: Rows to read; ``None`` reads the whole list (internal callers).
+            cursor: Where the page starts (:data:`MCP_ENDPOINT_SOURCES_ORDER`, #7196).
 
         Returns:
             The source rows.
         """
         clause = "" if include_retired else "AND retired_at IS NULL"
+        after_sql, after_params, limit_sql, limit_params = MCP_ENDPOINT_SOURCES_ORDER.window(
+            limit, cursor
+        )
         rows = self.execute_query(
             f"""
             SELECT {self._MCP_SOURCE_COLUMNS}
             FROM apiome.mcp_endpoint_sources
-            WHERE endpoint_id = %s::uuid {clause}
-            ORDER BY created_at DESC
+            WHERE endpoint_id = %s::uuid {clause}{after_sql}
+            ORDER BY {MCP_ENDPOINT_SOURCES_ORDER.order_by}{limit_sql}
             """,
-            (endpoint_id,),
+            (endpoint_id, *after_params, *limit_params),
         )
         return [dict(r) for r in rows]
 
@@ -27642,7 +28642,12 @@ class Database:
         return dict(rows[0]) if rows else None
 
     def list_mcp_endpoint_manifests(
-        self, endpoint_id: str, *, include_retired: bool = False
+        self,
+        endpoint_id: str,
+        *,
+        include_retired: bool = False,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """List an endpoint's declared manifests, newest first.
 
@@ -27651,19 +28656,24 @@ class Database:
             include_retired: When ``False`` (default), superseded declarations are excluded. They
                 stay in the table so an attribution made against one remains interpretable, but they
                 no longer describe the endpoint.
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``MCP_ENDPOINT_MANIFESTS_ORDER`` values of the last row already seen (#7196).
 
         Returns:
             The manifest rows.
         """
+        from .tenant_list_orders import MCP_ENDPOINT_MANIFESTS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         clause = "" if include_retired else "AND retired_at IS NULL"
         rows = self.execute_query(
             f"""
             SELECT {self._MCP_MANIFEST_COLUMNS}
             FROM apiome.mcp_endpoint_manifests
-            WHERE endpoint_id = %s::uuid {clause}
-            ORDER BY created_at DESC
+            WHERE endpoint_id = %s::uuid {clause}{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
             """,
-            (endpoint_id,),
+            (endpoint_id, *after_params, *limit_params),
         )
         return [dict(r) for r in rows]
 
@@ -28808,7 +29818,19 @@ class Database:
     # endpoint has been re-validated against the caller's token tenant, so no method re-checks
     # tenancy; the catalog aggregate scopes on ``tenant_id`` directly.
 
-    def get_mcp_evolution_series(self, endpoint_id: str) -> List[Dict[str, Any]]:
+    #: Keeps a per-endpoint read to the endpoint's most recent snapshots (#7196). Takes the
+    #: endpoint id and the snapshot count as parameters.
+    _MCP_RECENT_VERSIONS_CLAUSE = """
+              AND v.id IN (
+                  SELECT recent.id FROM apiome.mcp_endpoint_versions recent
+                  WHERE recent.endpoint_id = %s::uuid
+                  ORDER BY recent.version_seq DESC
+                  LIMIT %s
+              )"""
+
+    def get_mcp_evolution_series(
+        self, endpoint_id: str, *, limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """Return an endpoint's per-version evolution series, oldest snapshot first.
 
         One row per ``mcp_endpoint_versions`` snapshot carrying the fields an evolution chart
@@ -28825,11 +29847,17 @@ class Database:
 
         Args:
             endpoint_id: The owning endpoint (already tenant-validated by the caller).
+            limit: Only the most recent ``limit`` snapshots (#7196); ``None`` reads every one.
 
         Returns:
             One dict per snapshot, oldest first; empty when the endpoint was never discovered.
         """
-        q = """
+        params: List[Any] = [endpoint_id]
+        recent_clause = ""
+        if limit is not None:
+            recent_clause = self._MCP_RECENT_VERSIONS_CLAUSE
+            params.extend([endpoint_id, int(limit)])
+        q = f"""
             SELECT
                 v.id, v.endpoint_id, v.version_seq, v.version_tag,
                 v.discovered_at, v.created_at, v.surface_fingerprint,
@@ -28850,10 +29878,10 @@ class Database:
                    WHERE c.version_id = v.id AND c.change_type = 'modified')        AS modified_count
             FROM apiome.mcp_endpoint_versions v
             LEFT JOIN apiome.mcp_version_scores s ON s.version_id = v.id
-            WHERE v.endpoint_id = %s::uuid
+            WHERE v.endpoint_id = %s::uuid{recent_clause}
             ORDER BY v.version_seq ASC
         """
-        return self.execute_query(q, (endpoint_id,))
+        return self.execute_query(q, tuple(params))
 
     def list_mcp_discovery_trigger_stats(self, endpoint_id: str) -> List[Dict[str, Any]]:
         """Tally an endpoint's discovery jobs per ``trigger`` for provenance (MCAT-20.5).
@@ -28884,32 +29912,34 @@ class Database:
         """
         return self.execute_query(q, (endpoint_id,))
 
-    def list_mcp_discovery_job_stats(self, endpoint_id: str) -> List[Dict[str, Any]]:
-        """Return an endpoint's discovery jobs as ``(state, duration_ms)`` rows for reliability.
+    def get_mcp_discovery_job_reliability(self, endpoint_id: str) -> Dict[str, Any]:
+        """Aggregate an endpoint's discovery jobs for reliability, in SQL (DBP-1.13, #7196).
 
-        Each row is a discovery job's lifecycle ``state`` plus its wall-clock ``duration_ms`` —
-        ``finished_at - started_at`` converted to milliseconds in SQL, or NULL when the job never
-        both started and finished (still queued/running, or a failure before it began). The pure
-        aggregator turns these into success rate and run-latency statistics.
+        One row: how many jobs there are, how many per lifecycle state, and the count / average /
+        min / max / p50 / p95 / p99 of their run durations (``finished_at - started_at`` in
+        milliseconds; a job that never both started and finished has no duration). The jobs
+        themselves are not fetched.
 
         Args:
             endpoint_id: The owning endpoint (already tenant-validated by the caller).
 
         Returns:
-            One dict per discovery job; empty when the endpoint has no discovery history.
+            The aggregate row :func:`app.mcp_insight_aggregation.discovery_reliability_from_aggregate`
+            reads; all zeros and ``None`` statistics when the endpoint has no discovery history.
         """
-        q = """
-            SELECT
-                state,
-                CASE
-                    WHEN started_at IS NOT NULL AND finished_at IS NOT NULL
-                    THEN EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000.0
-                    ELSE NULL
-                END AS duration_ms
+        duration = (
+            "CASE WHEN started_at IS NOT NULL AND finished_at IS NOT NULL "
+            "THEN EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000.0 END"
+        )
+        rows = self.execute_query(
+            f"""
+            SELECT {discovery_aggregate_sql(duration)}
             FROM apiome.mcp_discovery_jobs
             WHERE endpoint_id = %s::uuid
-        """
-        return self.execute_query(q, (endpoint_id,))
+            """,
+            (endpoint_id,),
+        )
+        return dict(rows[0]) if rows else {}
 
     def list_mcp_discovery_job_timeline(
         self, endpoint_id: str, limit: int
@@ -28956,25 +29986,30 @@ class Database:
         """
         return self.execute_query(q, (endpoint_id, capped))
 
-    def list_mcp_invocation_stats(self, endpoint_id: str) -> List[Dict[str, Any]]:
-        """Return an endpoint's test invocations as ``(is_error, latency_ms)`` rows for reliability.
+    def get_mcp_invocation_reliability(self, endpoint_id: str) -> Dict[str, Any]:
+        """Aggregate an endpoint's test invocations for reliability, in SQL (DBP-1.13, #7196).
 
-        Each row is one recorded test-console call: whether it errored and its round-trip
-        ``latency_ms`` (NULL when the call never completed). The pure aggregator turns these into an
-        error rate and latency statistics.
+        One row: how many test-console calls were recorded, how many errored, and the count /
+        average / min / max / p50 / p95 / p99 of their round-trip latencies (a call that never
+        completed has none). The calls themselves are not fetched.
 
         Args:
             endpoint_id: The owning endpoint (already tenant-validated by the caller).
 
         Returns:
-            One dict per test invocation; empty when the endpoint has never been tested.
+            The aggregate row
+            :func:`app.mcp_insight_aggregation.invocation_reliability_from_aggregate` reads; all
+            zeros and ``None`` statistics when the endpoint has never been tested.
         """
-        q = """
-            SELECT is_error, latency_ms
+        rows = self.execute_query(
+            f"""
+            SELECT {invocation_aggregate_sql()}
             FROM apiome.mcp_test_invocations
             WHERE endpoint_id = %s::uuid
-        """
-        return self.execute_query(q, (endpoint_id,))
+            """,
+            (endpoint_id,),
+        )
+        return dict(rows[0]) if rows else {}
 
     def get_tenant_mcp_policy(self, tenant_id: str) -> Optional[Dict[str, Any]]:
         """Load a tenant's MCP policy row plus tool flags (MTG-3.1, #4775).
@@ -29360,25 +30395,36 @@ class Database:
             "created_by": str(created_by) if created_by is not None else None,
         }
 
-    def list_mcp_api_keys(self, tenant_id: str) -> List[Dict[str, Any]]:
+    def list_mcp_api_keys(
+        self,
+        tenant_id: str,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
         """List MCP API key metadata for a tenant (includes revoked; never returns hashes).
 
         Args:
             tenant_id: Owning tenant UUID.
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``MCP_API_KEYS_ORDER`` values of the last key already seen (#7196).
 
         Returns:
             Public metadata dicts ordered by ``created_at`` descending. Empty when none.
         """
         if not tenant_id or not is_uuid_string(str(tenant_id)):
             return []
+        from .tenant_list_orders import MCP_API_KEYS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._MCP_API_KEY_METADATA_SELECT}
             FROM apiome.mcp_api_keys
-            WHERE tenant_id = %s::uuid
-            ORDER BY created_at DESC
+            WHERE tenant_id = %s::uuid{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
             """,
-            (tenant_id,),
+            (tenant_id, *after_params, *limit_params),
         )
         return [self._normalize_mcp_api_key_row(row) for row in rows]
 
@@ -29979,8 +31025,8 @@ class Database:
         * ``auth_type`` from its stored credential (safety axis cross-reference);
         * ``version`` + ``items`` — the current snapshot's ``mcp_endpoint_versions`` row and its
           ``mcp_capability_items`` — to reconstruct the surface for the safety & documentation axes;
-        * ``invocation_stats`` — its ``mcp_test_invocations`` ``(is_error, latency_ms)`` rows for the
-          latency axis.
+        * ``invocation_reliability`` — its ``mcp_test_invocations`` aggregated in SQL (call and
+          error counts, latency statistics) for the latency axis.
 
         A member that was never discovered (no ``current_version_id``) carries ``version=None`` and an
         empty ``items`` list, so it simply contributes gaps on the surface-derived axes rather than
@@ -29992,7 +31038,7 @@ class Database:
 
         Returns:
             One dict per cohort member with keys ``endpoint_id``, ``current_version_id``, ``score``,
-            ``grade``, ``auth_type``, ``version``, ``items``, and ``invocation_stats``. Empty when the
+            ``grade``, ``auth_type``, ``version``, ``items``, and ``invocation_reliability``. Empty when the
             tenant has no live endpoint in the category.
         """
         normalized = (category or "").strip()
@@ -30053,21 +31099,22 @@ class Database:
             for row in item_rows:
                 items_by_version.setdefault(str(row["version_id"]), []).append(dict(row))
 
-        # Test-invocation reliability rows for every cohort endpoint, grouped by endpoint id.
-        invocations_by_endpoint: Dict[str, List[Dict[str, Any]]] = {}
+        # Test-invocation reliability of every cohort endpoint: one aggregate row per endpoint,
+        # computed in SQL (#7196), instead of every recorded call.
+        invocations_by_endpoint: Dict[str, Dict[str, Any]] = {}
         if endpoint_ids:
             invocation_rows = self.execute_query(
-                """
-                SELECT endpoint_id, is_error, latency_ms
+                f"""
+                SELECT endpoint_id, {invocation_aggregate_sql()}
                 FROM apiome.mcp_test_invocations
                 WHERE endpoint_id = ANY(%s::uuid[])
+                GROUP BY endpoint_id
                 """,
                 (endpoint_ids,),
             )
             for row in invocation_rows:
-                invocations_by_endpoint.setdefault(str(row["endpoint_id"]), []).append(
-                    {"is_error": row["is_error"], "latency_ms": row["latency_ms"]}
-                )
+                aggregate = dict(row)
+                invocations_by_endpoint[str(aggregate.pop("endpoint_id"))] = aggregate
 
         cohort: List[Dict[str, Any]] = []
         for member in members:
@@ -30084,7 +31131,7 @@ class Database:
                     "auth_type": member.get("auth_type"),
                     "version": versions_by_id.get(version_id) if version_id else None,
                     "items": items_by_version.get(version_id, []) if version_id else [],
-                    "invocation_stats": invocations_by_endpoint.get(endpoint_id, []),
+                    "invocation_reliability": invocations_by_endpoint.get(endpoint_id, {}),
                 }
             )
         return cohort
@@ -30686,11 +31733,15 @@ class Database:
         sort: str = "name",
         protocol: Optional[str] = None,
         source_format: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: int = 0,
     ) -> List[Dict[str, Any]]:
         """
         Tenants that have at least one published public version, with aggregates.
         Optional ``search`` filters by tenant name or slug (substring, case-insensitive).
         ``sort`` is one of: name, projects, latest.
+        ``limit`` / ``offset`` read one window of the sorted directory (#7196); ``limit=None``
+        reads all of it. Two of the three sorts are aggregates, so the list pages by offset.
         Optional ``protocol`` / ``source_format`` keep only tenants publishing at least one version
         with that protocol/format (MFI-6.1); the per-tenant aggregates still describe *all* of the
         tenant's published public versions, so a facet narrows the directory without rewriting the
@@ -30762,6 +31813,9 @@ class Database:
             LEFT JOIN latest_ver lv ON lv.tenant_id = a.tenant_id
             ORDER BY {order_clause}
         """
+        if limit is not None:
+            query += " LIMIT %s OFFSET %s"
+            params.extend([int(limit), max(0, int(offset))])
         return self.execute_query(query, tuple(params))
 
     def _public_browse_tenant_eligible_cte(self, search_clause: str) -> str:
@@ -30923,9 +31977,14 @@ class Database:
         require_published: bool = False,
         protocol: Optional[str] = None,
         source_format: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Projects with at least one published **public** version (browse-app parity).
+
+        ``limit`` / ``cursor`` read one page in slug order (:data:`BROWSE_PROJECTS_ORDER`, #7196);
+        ``limit=None`` reads the whole list.
 
         Optional ``search`` filters slug/name (substring, case-insensitive).
         Optional ``domain`` filters metadata ``domain`` / ``domainCategory`` (case-insensitive).
@@ -30942,6 +32001,7 @@ class Database:
         published_outer = ""
         if require_published:
             published_outer = " AND a.published_versions >= 1"
+        after_sql, after_params, limit_sql, limit_params = BROWSE_PROJECTS_ORDER.window(limit, cursor)
 
         query = f"""
             WITH eligible AS ({eligible_cte}),
@@ -30992,9 +32052,11 @@ class Database:
             LEFT JOIN latest_ver lv ON lv.project_id = a.project_id
             WHERE 1 = 1
               {published_outer}
+              {after_sql}
             ORDER BY a.slug ASC
+            {limit_sql}
         """
-        return self.execute_query(query, tuple(params))
+        return self.execute_query(query, tuple([*params, *after_params, *limit_params]))
 
     def get_public_browse_project_facets_for_tenant(
         self,
@@ -31075,9 +32137,14 @@ class Database:
         require_published: bool = False,
         protocol: Optional[str] = None,
         source_format: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         All non-deleted projects for a tenant member (JWT/API key scoped to tenant).
+
+        ``limit`` / ``cursor`` read one page in slug order (#7196); ``limit=None`` reads the
+        whole list.
 
         Counts and ``latest_*`` consider any published version (any visibility).
         Optional ``protocol`` / ``source_format`` keep only projects with at least one published
@@ -31092,6 +32159,9 @@ class Database:
         published_clause = ""
         if require_published:
             published_clause = " AND COALESCE(va.published_versions, 0) >= 1"
+        after_sql, after_params, limit_sql, limit_params = BROWSE_MEMBER_PROJECTS_ORDER.window(
+            limit, cursor
+        )
 
         query = f"""
             WITH {base_ctes},
@@ -31156,9 +32226,11 @@ class Database:
             LEFT JOIN latest_ver lv ON lv.project_id = pb.project_id
             WHERE 1 = 1
               {published_clause}
+              {after_sql}
             ORDER BY pb.slug ASC
+            {limit_sql}
         """
-        return self.execute_query(query, tuple(params))
+        return self.execute_query(query, tuple([*params, *after_params, *limit_params]))
 
     def get_member_browse_project_facets_for_tenant(
         self,
@@ -31276,7 +32348,27 @@ class Database:
                 v.change_log,
                 v.protocol,
                 v.source_format,
-                cr.change_model_json,
+                -- The change model can be megabytes; the list shows two counts from it (#7196).
+                (
+                    CASE WHEN jsonb_typeof(cr.change_model_json -> 'schemas' -> 'added') = 'array'
+                         THEN jsonb_array_length(cr.change_model_json -> 'schemas' -> 'added') ELSE 0 END
+                    + CASE WHEN jsonb_typeof(cr.change_model_json -> 'schemas' -> 'removed') = 'array'
+                           THEN jsonb_array_length(cr.change_model_json -> 'schemas' -> 'removed') ELSE 0 END
+                    + CASE WHEN jsonb_typeof(cr.change_model_json -> 'schemas' -> 'modified') = 'array'
+                           THEN jsonb_array_length(cr.change_model_json -> 'schemas' -> 'modified') ELSE 0 END
+                ) AS change_class_count,
+                (
+                    SELECT COUNT(DISTINCT d ->> 'path')
+                    FROM jsonb_array_elements(
+                        CASE WHEN jsonb_typeof(cr.change_model_json -> 'documentation') = 'array'
+                             THEN cr.change_model_json -> 'documentation' ELSE '[]'::jsonb END
+                    ) AS d
+                    WHERE jsonb_typeof(d) = 'object'
+                      AND d ->> 'scope' = 'operation'
+                      AND d ->> 'changeKind' IN ('added', 'removed', 'modified')
+                      AND jsonb_typeof(d -> 'path') = 'string'
+                      AND d ->> 'path' <> ''
+                )::int AS change_path_count,
                 COALESCE(
                     (
                         SELECT array_agg(t.name ORDER BY t.name)
@@ -31312,6 +32404,8 @@ class Database:
             since_clause = " AND v.published_at IS NOT NULL AND v.published_at >= %s"
             params.append(since)
         query = self._browse_versions_query(public=public, project_filter="= %s", since_clause=since_clause)
+        # Sorted by semantic version by the caller, so the read is capped rather than paged (#7196).
+        query += f" ORDER BY v.published_at DESC NULLS LAST, v.id DESC LIMIT {int(BROWSE_VERSIONS_CAP)}"
         rows = self.execute_query(query, tuple(params))
         for row in rows:
             row.pop("browse_project_slug", None)
@@ -31441,15 +32535,74 @@ class Database:
         )
         return rows[0]
 
-    def list_mock_instances(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """List a tenant's mock instances, newest first."""
-        query = f"""
-            SELECT {self._MOCK_INSTANCE_COLUMNS}
-            FROM apiome.mock_instances
-            WHERE tenant_id = %s
-            ORDER BY created_at DESC
+    # What the mock list shows (#7196): the instance row without its frozen ``spec`` document. The
+    # one thing the list derives from the spec, the operation count, is counted in SQL with the
+    # rule :func:`app.mock_routing.extract_operations` applies. A row whose ``settings`` was never
+    # folded still carries its spec, because the fold reads it.
+    _MOCK_INSTANCE_SUMMARY_COLUMNS = """
+        id, tenant_id, version_id, tenant_slug, project_slug, version_slug, name,
+        CASE WHEN settings IS NULL THEN spec END AS spec,
+        config, settings, migration_notes, rate_limit_per_minute, status, created_by,
+        request_count, created_at, expires_at, last_activity_at,
+        (
+            SELECT count(*)::int
+            FROM jsonb_each(
+                CASE WHEN jsonb_typeof(spec->'paths') = 'object' THEN spec->'paths' ELSE '{}'::jsonb END
+            ) AS path_item
+            CROSS JOIN LATERAL jsonb_each(
+                CASE WHEN jsonb_typeof(path_item.value) = 'object' THEN path_item.value ELSE '{}'::jsonb END
+            ) AS operation
+            WHERE lower(operation.key) = ANY (%s)
+              AND jsonb_typeof(operation.value) = 'object'
+        ) AS operation_count
+    """
+
+    def list_mock_instances(
+        self,
+        tenant_id: str,
+        *,
+        origin: Optional[str] = None,
+        summary: bool = False,
+        limit: Optional[int] = None,
+        cursor: Optional[Tuple[Any, str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """List a tenant's mock instances, newest first.
+
+        Args:
+            tenant_id: The owning tenant.
+            origin: Only instances whose ``config.origin`` is this marker (the export test drive
+                reads only its own rows).
+            summary: Leave the frozen ``spec`` out and return ``operation_count`` instead (#7196).
+            limit: Rows to read; ``None`` reads them all.
+            cursor: ``(created_at, id)`` of the last instance already seen.
+
+        Returns:
+            The rows, newest first.
         """
-        return self.execute_query(query, (tenant_id,))
+        params: List[Any] = []
+        columns = self._MOCK_INSTANCE_COLUMNS
+        if summary:
+            columns = self._MOCK_INSTANCE_SUMMARY_COLUMNS
+            params.append(list(MOCK_HTTP_METHODS))
+        where = "tenant_id = %s"
+        params.append(tenant_id)
+        if origin is not None:
+            where += " AND config->>'origin' = %s"
+            params.append(origin)
+        after_sql, after_params = keyset_before("created_at", "id", cursor)
+        params.extend(after_params)
+        limit_sql = ""
+        if limit is not None:
+            limit_sql = "LIMIT %s"
+            params.append(int(limit))
+        query = f"""
+            SELECT {columns}
+            FROM apiome.mock_instances
+            WHERE {where}{after_sql}
+            ORDER BY created_at DESC, id DESC
+            {limit_sql}
+        """
+        return self.execute_query(query, tuple(params))
 
     def get_mock_instance_for_tenant(
         self, mock_id: str, tenant_id: str
@@ -31472,6 +32625,84 @@ class Database:
         """
         rows = self.execute_query(query, (mock_id,))
         return rows[0] if rows else None
+
+    # What one data-plane request needs to decide whether and how to serve (#7196): everything
+    # except the frozen ``spec`` document, which is read once per instance and cached
+    # (:mod:`app.mock_data_plane`). ``config`` is reduced to the stored seed, the only part of it
+    # the serving path reads once ``settings`` is folded.
+    _MOCK_SERVING_COLUMNS = (
+        "id, tenant_id, version_id, tenant_slug, project_slug, version_slug, "
+        "settings, rate_limit_per_minute, expires_at, "
+        "jsonb_build_object('seed', config->'seed') AS config"
+    )
+
+    def get_mock_serving_row(self, mock_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch what the public data plane needs to serve one request (DBP-1.13, #7196).
+
+        One narrow statement: no ``spec``, no counters. A row whose ``settings`` is still NULL
+        (provisioned before MSC-2.2 and never read since) has to be folded from its legacy
+        ``config`` and ``spec``, so the caller reads it once through :meth:`get_mock_instance`.
+
+        Args:
+            mock_id: The instance id from the URL.
+
+        Returns:
+            The serving row, or ``None`` when no such instance exists.
+        """
+        query = f"""
+            SELECT {self._MOCK_SERVING_COLUMNS}
+            FROM apiome.mock_instances
+            WHERE id = %s
+        """
+        rows = self.execute_query(query, (mock_id,))
+        return rows[0] if rows else None
+
+    def get_mock_instance_spec(self, mock_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch one instance's frozen spec document (DBP-1.13, #7196).
+
+        Read on a cache miss only; the document never changes after the instance is provisioned.
+
+        Args:
+            mock_id: The instance id.
+
+        Returns:
+            The spec, or ``None`` when no such instance exists.
+        """
+        rows = self.execute_query(
+            "SELECT spec FROM apiome.mock_instances WHERE id = %s", (mock_id,)
+        )
+        return rows[0]["spec"] if rows else None
+
+    def add_mock_instance_activity(self, batch: Sequence[Tuple[str, int, Any]]) -> int:
+        """Add buffered data-plane request counts to their instances, in one statement (#7196).
+
+        Args:
+            batch: ``(mock_id, requests, last_activity_at)`` per instance served since the last
+                flush.
+
+        Returns:
+            How many instances were updated (an instance deleted in the meantime is skipped).
+        """
+        if not batch:
+            return 0
+        query = """
+            UPDATE apiome.mock_instances m
+            SET request_count = m.request_count + b.requests,
+                last_activity_at = GREATEST(m.last_activity_at, b.last_at)
+            FROM unnest(%s::uuid[], %s::bigint[], %s::timestamptz[]) AS b(id, requests, last_at)
+            WHERE m.id = b.id
+        """
+        return int(
+            self._execute_write(
+                query,
+                (
+                    [str(item[0]) for item in batch],
+                    [int(item[1]) for item in batch],
+                    [item[2] for item in batch],
+                ),
+            )
+            or 0
+        )
 
     def update_mock_instance_settings(
         self, mock_id: str, tenant_id: str, settings: Dict[str, Any]
@@ -31548,23 +32779,6 @@ class Database:
         rows = self.execute_query(query, (mock_id, tenant_id))
         return bool(rows)
 
-    def touch_mock_instance(self, mock_id: str) -> None:
-        """Best-effort: bump request_count and last_activity_at for a served data-plane request.
-
-        Failures are swallowed — usage accounting must never break the mock response itself.
-        """
-        query = """
-            UPDATE apiome.mock_instances
-            SET request_count = request_count + 1,
-                last_activity_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-            RETURNING id
-        """
-        try:
-            self.execute_query(query, (mock_id,))
-        except Exception as exc:  # pragma: no cover - accounting must never raise
-            _logger.warning("Failed to update mock instance activity for %s: %s", mock_id, exc)
-
     def get_mock_license_limits_for_tenant(self, tenant_id: str) -> Dict[str, Any]:
         """Return mock RPS/monthly quota from the tenant admin's license seats (#4420)."""
         query = """
@@ -31636,7 +32850,11 @@ class Database:
         project_slug: Optional[str] = None,
         version_label: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Daily mock usage rollups for a tenant, newest first (#4420)."""
+        """Daily mock usage rollups for a tenant, newest first (#4420).
+
+        At most 5,000 rows (the newest days first): the window is at most 366 days, and the cap
+        keeps a tenant with very many mocked versions from reading an unbounded series (#7196).
+        """
         days = max(1, min(int(days), 366))
         clauses = [
             "tenant_id = %s::uuid",
@@ -31654,6 +32872,7 @@ class Database:
             FROM apiome.mock_usage
             WHERE {' AND '.join(clauses)}
             ORDER BY usage_date DESC, project_slug ASC, version_label ASC
+            LIMIT 5000
         """
         return self.execute_query(query, tuple(params))
 
@@ -31822,26 +33041,34 @@ class Database:
         state: Optional[str] = None,
         created_after: Optional[Any] = None,
         created_before: Optional[Any] = None,
+        cursor: Optional[Tuple[Any, str]] = None,
+        include_total: bool = False,
     ) -> Dict[str, Any]:
         """List a tenant's jobs of one kind with stable pagination and filters (IXH-6.3).
 
         Ordering is ``created_at DESC, job_id DESC`` so pages are stable under inserts.
-        ``limit`` is clamped to ``[1, 200]``; ``offset`` to ``>= 0``.
+        ``limit`` is clamped to ``[1, 200]``; ``offset`` to ``>= 0``. One row more than the page
+        is read to learn whether another page exists, so nothing is counted unless
+        ``include_total`` asks for it (#7196).
 
         Args:
             tenant_slug: Owning tenant.
             kind: Job kind (``export`` or ``spec_import``).
             limit: Page size (default 50, max 200).
-            offset: Rows to skip.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
             state: Optional exact state filter.
             created_after: Inclusive lower bound on ``created_at``.
             created_before: Inclusive upper bound on ``created_at``.
+            cursor: ``(created_at, job_id)`` of the last job already seen; the page continues
+                after it.
+            include_total: Also count the matching jobs, up to ``TOTAL_CAP``.
 
         Returns:
-            ``{"jobs": [...], "total": int, "limit": int, "offset": int}``.
+            ``{"jobs": [...], "total": Optional[int], "limit": int, "offset": int,
+            "has_more": bool}``; ``total`` is ``None`` unless ``include_total``.
         """
         page_limit = max(1, min(int(limit), 200))
-        page_offset = max(0, int(offset))
+        page_offset = 0 if cursor else max(0, int(offset))
         where = ["tenant_slug = %s", "kind = %s"]
         params: List[Any] = [tenant_slug, kind]
         if state is not None and str(state).strip():
@@ -31854,27 +33081,32 @@ class Database:
             where.append("created_at <= %s")
             params.append(created_before)
         where_sql = " AND ".join(where)
-        count_rows = self.execute_query(
-            f"SELECT COUNT(*)::int AS total FROM apiome.async_job WHERE {where_sql}",
-            tuple(params),
-        )
-        total = int(count_rows[0]["total"]) if count_rows else 0
-        list_params = list(params) + [page_limit, page_offset]
+        total: Optional[int] = None
+        if include_total:
+            count_rows = self.execute_query(
+                capped_count_sql(f"FROM apiome.async_job WHERE {where_sql}"),
+                tuple(params),
+            )
+            total = int(count_rows[0]["total"]) if count_rows else 0
+        after_sql, after_params = keyset_before("created_at", "job_id", cursor, id_cast="")
+        list_params = list(params) + after_params + [page_limit + 1, page_offset]
         rows = self.execute_query(
             f"""
             SELECT job_id, state, status, extra, created_at, updated_at
             FROM apiome.async_job
-            WHERE {where_sql}
+            WHERE {where_sql}{after_sql}
             ORDER BY created_at DESC, job_id DESC
             LIMIT %s OFFSET %s
             """,
             tuple(list_params),
         )
+        rows = list(rows or [])
         return {
-            "jobs": rows,
+            "jobs": rows[:page_limit],
             "total": total,
             "limit": page_limit,
             "offset": page_offset,
+            "has_more": len(rows) > page_limit,
         }
 
     def request_async_job_cancel(self, job_id: str, tenant_slug: str, kind: str) -> bool:
@@ -35085,6 +36317,8 @@ class Database:
         *,
         include_deleted: bool = False,
         team: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """A project's consumers, newest first (CTG-4.1, #4479).
 
@@ -35092,6 +36326,9 @@ class Database:
             project_id: Project whose registry to read.
             tenant_id: Tenant the caller is acting in; a project in another tenant reads as empty.
             include_deleted: Include retired consumers.
+            team: Only consumers this team slug owns.
+            limit: Rows to read; ``None`` reads every consumer (#7196).
+            cursor: ``CONSUMERS_ORDER`` values of the last row already seen.
 
         Returns:
             The consumer rows, each with ``entity_owner`` (CDG-2.2); empty when nothing is
@@ -35101,15 +36338,16 @@ class Database:
             return []
         clause = "" if include_deleted else " AND deleted_at IS NULL"
         team_clause, team_params = owner_team_filter(team)
+        after_sql, after_params, limit_sql, limit_params = CONSUMERS_ORDER.window(limit, cursor)
         return self.execute_query(
             f"""
             SELECT {self._CONSUMER_COLUMNS}, own.entity_owner
             FROM apiome.consumer
             {owner_envelope_join(("consumer",), "consumer.id", "consumer.tenant_id")}
-            WHERE project_id = %s::uuid AND tenant_id = %s::uuid{clause} {team_clause}
-            ORDER BY created_at DESC, slug
+            WHERE project_id = %s::uuid AND tenant_id = %s::uuid{clause} {team_clause}{after_sql}
+            ORDER BY {CONSUMERS_ORDER.order_by}{limit_sql}
             """,
-            (project_id, tenant_id, *team_params),
+            (project_id, tenant_id, *team_params, *after_params, *limit_params),
         )
 
     def get_consumer_by_slug(
@@ -35861,10 +37099,15 @@ class Database:
         if version_label:
             clauses.append("version_label = %s")
             params.append(version_label)
-        params.append(max(1, int(limit)))
+        params.append(max(1, min(int(limit), self._PROVIDER_VERIFICATION_LIST_MAX)))
+        # A list answers with summaries, which never read the report body (#7196): it is the
+        # one document-sized column of the table, so the list does not select it.
+        summary_columns = self._PROVIDER_VERIFICATION_REPORT_COLUMNS.replace(
+            "        report,\n", ""
+        )
         return self.execute_query(
             f"""
-            SELECT {self._PROVIDER_VERIFICATION_REPORT_COLUMNS}
+            SELECT {summary_columns}
             FROM apiome.provider_verification_report
             WHERE {" AND ".join(clauses)}
             ORDER BY created_at DESC, id
@@ -35872,6 +37115,9 @@ class Database:
             """,
             tuple(params),
         )
+
+    #: The most reports one list read returns, whatever the caller asks for (#7196).
+    _PROVIDER_VERIFICATION_LIST_MAX = 200
 
     # =========================================================================================
     # Scheduled verification & drift alerts (CTG-4.4, #4501)
@@ -37575,6 +38821,8 @@ class Database:
         *,
         toolset_id: Optional[str] = None,
         include_revoked: bool = False,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """Return a tenant's agent keys, newest first (AGX-3.1).
 
@@ -37582,6 +38830,8 @@ class Database:
             tenant_id: The caller's tenant.
             toolset_id: When set, only keys bound to this toolset.
             include_revoked: When ``True``, revoked (soft-deleted) keys are included.
+            limit: Rows to read; ``None`` reads every key (#7196).
+            cursor: ``AGENT_KEYS_ORDER`` values of the last row already seen.
 
         Returns:
             Metadata rows. Empty when an id is not a UUID.
@@ -37597,14 +38847,15 @@ class Database:
             params.append(toolset_id)
         if not include_revoked:
             clauses.append("ak.deleted_at IS NULL")
+        after_sql, after_params, limit_sql, limit_params = AGENT_KEYS_ORDER.window(limit, cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._AGENT_KEY_COLUMNS}
             FROM apiome.api_keys ak
-            WHERE {' AND '.join(clauses)}
-            ORDER BY ak.created_at DESC, ak.id
+            WHERE {' AND '.join(clauses)}{after_sql}
+            ORDER BY {AGENT_KEYS_ORDER.order_by}{limit_sql}
             """,
-            tuple(params),
+            (*params, *after_params, *limit_params),
         )
         return [dict(row) for row in rows or []]
 
@@ -37941,13 +39192,20 @@ class Database:
         return bool(rows)
 
     def list_agent_toolsets(
-        self, tenant_id: str, *, version_id: Optional[str] = None
+        self,
+        tenant_id: str,
+        *,
+        version_id: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """Return a tenant's agent toolsets, newest first (AGX-1.2).
 
         Args:
             tenant_id: The caller's tenant.
             version_id: When set, only the toolset of this version.
+            limit: Rows to read; ``None`` reads the whole list (internal callers).
+            cursor: Where the page starts (:data:`AGENT_TOOLSETS_ORDER`, #7196).
 
         Returns:
             Metadata rows with tool counts. Empty when an id is not a UUID.
@@ -37961,15 +39219,16 @@ class Database:
         if version_id is not None:
             clauses.append("ts.version_id = %s::uuid")
             params.append(version_id)
+        after_sql, after_params, limit_sql, limit_params = AGENT_TOOLSETS_ORDER.window(limit, cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._AGENT_TOOLSET_COLUMNS}
             FROM apiome.agent_toolsets ts
             JOIN apiome.versions v ON v.id = ts.version_id
-            WHERE {' AND '.join(clauses)}
-            ORDER BY ts.created_at DESC, ts.id
+            WHERE {' AND '.join(clauses)}{after_sql}
+            ORDER BY {AGENT_TOOLSETS_ORDER.order_by}{limit_sql}
             """,
-            tuple(params),
+            (*params, *after_params, *limit_params),
         )
         return [dict(row) for row in rows or []]
 
@@ -38691,6 +39950,7 @@ class Database:
         ecosystem: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """List a project's publish history, newest first (SDK-4.1).
 
@@ -38698,8 +39958,10 @@ class Database:
             tenant_id: Owning tenant.
             project_id: The project whose history to read.
             ecosystem: Narrow to one ecosystem.
-            limit: Page size.
-            offset: Rows to skip.
+            limit: Rows to read.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(started_at, id)`` of the last row already seen; the page continues after
+                it (#7196).
 
         Returns:
             The matching rows. Empty when the ids are not UUIDs.
@@ -38711,8 +39973,10 @@ class Database:
         if ecosystem:
             clauses.append("ecosystem = %s")
             params.append(ecosystem)
-        params.extend([max(1, int(limit)), max(0, int(offset))])
-        joined = " AND ".join(clauses)
+        after_sql, after_params = keyset_before("started_at", "id", cursor)
+        params.extend(after_params)
+        params.extend([max(1, int(limit)), 0 if cursor else max(0, int(offset))])
+        joined = " AND ".join(clauses) + after_sql
         query = f"""
             SELECT {self._SDK_PUBLISH_RUN_COLUMNS}
             FROM apiome.sdk_publish_runs
@@ -38734,7 +39998,8 @@ class Database:
             ecosystem: Narrow to one ecosystem.
 
         Returns:
-            The number of rows, or ``0`` when the ids are not UUIDs.
+            The number of rows, counted up to ``TOTAL_CAP`` (#7196), or ``0`` when the ids are
+            not UUIDs.
         """
         if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
             return 0
@@ -38745,11 +40010,7 @@ class Database:
             params.append(ecosystem)
         joined = " AND ".join(clauses)
         rows = self.execute_query(
-            f"""
-            SELECT COUNT(*) AS total
-            FROM apiome.sdk_publish_runs
-            WHERE {joined}
-            """,
+            capped_count_sql(f"FROM apiome.sdk_publish_runs WHERE {joined}"),
             tuple(params),
         )
         return int(rows[0].get("total") or 0) if rows else 0
@@ -39195,6 +40456,7 @@ class Database:
         ecosystem: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """List a project's delivery history, newest first (SDK-4.2).
 
@@ -39202,8 +40464,10 @@ class Database:
             tenant_id: Owning tenant.
             project_id: The project whose history to read.
             ecosystem: Narrow to one ecosystem.
-            limit: Page size.
-            offset: Rows to skip.
+            limit: Rows to read.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(started_at, id)`` of the last row already seen; the page continues after
+                it (#7196).
 
         Returns:
             The matching rows. Empty when the ids are not UUIDs.
@@ -39215,8 +40479,10 @@ class Database:
         if ecosystem:
             clauses.append("ecosystem = %s")
             params.append(ecosystem)
-        params.extend([max(1, int(limit)), max(0, int(offset))])
-        joined = " AND ".join(clauses)
+        after_sql, after_params = keyset_before("started_at", "id", cursor)
+        params.extend(after_params)
+        params.extend([max(1, int(limit)), 0 if cursor else max(0, int(offset))])
+        joined = " AND ".join(clauses) + after_sql
         rows = self.execute_query(
             f"""
             SELECT {self._SDK_GIT_DELIVERY_RUN_COLUMNS}
@@ -39240,7 +40506,8 @@ class Database:
             ecosystem: Narrow to one ecosystem.
 
         Returns:
-            The number of rows, or ``0`` when the ids are not UUIDs.
+            The number of rows, counted up to ``TOTAL_CAP`` (#7196), or ``0`` when the ids are
+            not UUIDs.
         """
         if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
             return 0
@@ -39251,11 +40518,7 @@ class Database:
             params.append(ecosystem)
         joined = " AND ".join(clauses)
         rows = self.execute_query(
-            f"""
-            SELECT COUNT(*) AS total
-            FROM apiome.sdk_git_delivery_runs
-            WHERE {joined}
-            """,
+            capped_count_sql(f"FROM apiome.sdk_git_delivery_runs WHERE {joined}"),
             tuple(params),
         )
         return int(rows[0].get("total") or 0) if rows else 0
@@ -39854,18 +41117,28 @@ class Database:
             conn.rollback()
             raise e
 
-    def list_export_storage_credentials(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """A tenant's storage credentials by name, without their sealed payloads (MFX-38.3)."""
+    def list_export_storage_credentials(
+        self, tenant_id: str, *, limit: Optional[int] = None, cursor: Optional[Sequence[Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """A tenant's storage credentials by name, without their sealed payloads (MFX-38.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            limit: Rows to read; ``None`` reads every credential (#7196).
+            cursor: ``EXPORT_STORAGE_CREDENTIALS_ORDER`` values of the last row already seen.
+        """
         if not is_uuid_string(str(tenant_id or "")):
             return []
+        order = EXPORT_STORAGE_CREDENTIALS_ORDER
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._EXPORT_STORAGE_CREDENTIAL_COLUMNS}
             FROM apiome.export_storage_credentials
-            WHERE tenant_id = %s::uuid
-            ORDER BY name ASC
+            WHERE tenant_id = %s::uuid{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
             """,
-            (tenant_id,),
+            (tenant_id, *after_params, *limit_params),
         )
         return [dict(row) for row in rows or []]
 
@@ -40152,18 +41425,34 @@ class Database:
             conn.rollback()
             raise e
 
-    def list_export_delivery_profiles(self, tenant_id: str, channel: Optional[str] = None) -> List[Dict[str, Any]]:
-        """A tenant's delivery profiles by name, optionally of one channel, without secrets (MFX-38.4)."""
+    def list_export_delivery_profiles(
+        self,
+        tenant_id: str,
+        channel: Optional[str] = None,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """A tenant's delivery profiles by name, optionally of one channel, without secrets (MFX-38.4).
+
+        Args:
+            tenant_id: Owning tenant.
+            channel: Only profiles of this channel.
+            limit: Rows to read; ``None`` reads every profile (#7196).
+            cursor: ``EXPORT_DELIVERY_PROFILES_ORDER`` values of the last row already seen.
+        """
         if not is_uuid_string(str(tenant_id or "")):
             return []
+        order = EXPORT_DELIVERY_PROFILES_ORDER
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._EXPORT_DELIVERY_PROFILE_COLUMNS}
             FROM apiome.export_delivery_profiles
-            WHERE tenant_id = %s::uuid AND (%s::text IS NULL OR channel = %s::text)
-            ORDER BY name ASC
+            WHERE tenant_id = %s::uuid AND (%s::text IS NULL OR channel = %s::text){after_sql}
+            ORDER BY {order.order_by}{limit_sql}
             """,
-            (tenant_id, channel, channel),
+            (tenant_id, channel, channel, *after_params, *limit_params),
         )
         return [dict(row) for row in rows or []]
 
@@ -40502,14 +41791,23 @@ class Database:
                 (preset_id, profile_id, position),
             )
 
-    def list_export_presets(self, tenant_id: str) -> List[Dict[str, Any]]:
-        """A tenant's export presets by name (MFX-39.3)."""
+    def list_export_presets(
+        self, tenant_id: str, *, limit: Optional[int] = None, cursor: Optional[Sequence[Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """A tenant's export presets by name (MFX-39.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            limit: Rows to read; ``None`` reads every preset (#7196).
+            cursor: ``EXPORT_PRESETS_ORDER`` values of the last row already seen.
+        """
         if not is_uuid_string(str(tenant_id or "")):
             return []
+        after_sql, after_params, limit_sql, limit_params = EXPORT_PRESETS_ORDER.window(limit, cursor)
         rows = self.execute_query(
             f"SELECT {self._EXPORT_PRESET_COLUMNS} FROM {self._EXPORT_PRESET_FROM} "
-            "WHERE x.tenant_id = %s::uuid ORDER BY x.name ASC",
-            (tenant_id,),
+            f"WHERE x.tenant_id = %s::uuid{after_sql} ORDER BY {EXPORT_PRESETS_ORDER.order_by}{limit_sql}",
+            (tenant_id, *after_params, *limit_params),
         )
         return [dict(row) for row in rows or []]
 
@@ -40713,23 +42011,39 @@ class Database:
         return self._export_auto_subscription_by_id(tenant_id, row["id"]) if row else None
 
     def list_export_auto_subscriptions(
-        self, tenant_id: str, *, project_id: Optional[str] = None, preset_id: Optional[str] = None
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+        preset_id: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """A tenant's auto-export subscriptions, optionally of one project or one preset (MFX-39.4)."""
+        """A tenant's auto-export subscriptions, optionally of one project or one preset (MFX-39.4).
+
+        Args:
+            tenant_id: Owning tenant.
+            project_id: Only this project's subscriptions.
+            preset_id: Only subscriptions to this preset.
+            limit: Rows to read; ``None`` reads every subscription (#7196).
+            cursor: ``EXPORT_AUTO_SUBSCRIPTIONS_ORDER`` values of the last row already seen.
+        """
         if not is_uuid_string(str(tenant_id or "")):
             return []
         for value in (project_id, preset_id):
             if value is not None and not is_uuid_string(str(value)):
                 return []
+        order = EXPORT_AUTO_SUBSCRIPTIONS_ORDER
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._EXPORT_AUTO_SUBSCRIPTION_COLUMNS} FROM {self._EXPORT_AUTO_SUBSCRIPTION_FROM}
             WHERE s.tenant_id = %s::uuid
               AND (%s::uuid IS NULL OR s.project_id = %s::uuid)
-              AND (%s::uuid IS NULL OR s.preset_id = %s::uuid)
-            ORDER BY p.name ASC, x.name ASC
+              AND (%s::uuid IS NULL OR s.preset_id = %s::uuid){after_sql}
+            ORDER BY {order.order_by}{limit_sql}
             """,
-            (tenant_id, project_id, project_id, preset_id, preset_id),
+            (tenant_id, project_id, project_id, preset_id, preset_id, *after_params, *limit_params),
         )
         return [dict(row) for row in rows or []]
 
@@ -41650,6 +42964,7 @@ class Database:
         job_status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """List a project's regen runs (publish events), newest first (SDK-4.3).
 
@@ -41657,8 +42972,10 @@ class Database:
             tenant_id: Owning tenant.
             project_id: The project whose history to read.
             job_status: Narrow to runs with at least one job in this status (``dead_letter``…).
-            limit: Page size.
-            offset: Rows to skip.
+            limit: Rows to read.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(created_at, id)`` of the last run already seen; the page continues after
+                it (#7196).
 
         Returns:
             The run rows. Empty when the ids are not UUIDs.
@@ -41666,12 +42983,14 @@ class Database:
         if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
             return []
         clauses, params = self._sdk_regen_run_filter(tenant_id, project_id, job_status)
-        params.extend([max(1, int(limit)), max(0, int(offset))])
+        after_sql, after_params = keyset_before("r.created_at", "r.id", cursor)
+        params.extend(after_params)
+        params.extend([max(1, int(limit)), 0 if cursor else max(0, int(offset))])
         rows = self.execute_query(
             f"""
             SELECT {self._SDK_REGEN_RUN_COLUMNS}
             FROM apiome.sdk_regen_runs r
-            WHERE {clauses}
+            WHERE {clauses}{after_sql}
             ORDER BY r.created_at DESC, r.id DESC
             LIMIT %s OFFSET %s
             """,
@@ -41690,17 +43009,14 @@ class Database:
             job_status: Narrow to runs with at least one job in this status.
 
         Returns:
-            The number of runs, or ``0`` when the ids are not UUIDs.
+            The number of runs, counted up to ``TOTAL_CAP`` (#7196), or ``0`` when the ids are
+            not UUIDs.
         """
         if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
             return 0
         clauses, params = self._sdk_regen_run_filter(tenant_id, project_id, job_status)
         rows = self.execute_query(
-            f"""
-            SELECT COUNT(*) AS total
-            FROM apiome.sdk_regen_runs r
-            WHERE {clauses}
-            """,
+            capped_count_sql(f"FROM apiome.sdk_regen_runs r WHERE {clauses}"),
             tuple(params),
         )
         return int(rows[0].get("total") or 0) if rows else 0
@@ -42201,11 +43517,13 @@ class Database:
         created_by: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """A page of a project's threads, most recently active first (COL-1.1, #4513).
 
         Each row carries the thread's opening comment as ``root_*`` columns, so a list needs no
-        second read per thread.
+        second read per thread. Ties on ``last_activity_at`` break on the id, descending, so the
+        order is total and a cursor can continue it (#7196).
 
         Args:
             tenant_id: The caller's tenant.
@@ -42217,8 +43535,10 @@ class Database:
             mentioned_user_id: Only threads with a comment mentioning this user, when given.
             origin: Only ``internal`` or only ``consumer`` threads, when given (COL-4.4, #4528).
             created_by: Only threads this user opened, when given (a reader's own feedback).
-            limit: Page size.
-            offset: Rows to skip.
+            limit: Rows to read.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(last_activity_at, id)`` of the last thread already seen; the page continues
+                after it.
 
         Returns:
             The thread rows (empty when an id is not a UUID).
@@ -42237,6 +43557,7 @@ class Database:
         if built is None:
             return []
         where, params = built
+        after_sql, after_params = keyset_before("t.last_activity_at", "t.id", cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._COMMENT_THREAD_COLUMNS},
@@ -42254,11 +43575,11 @@ class Database:
                 ORDER BY c.created_at ASC, c.id ASC
                 LIMIT 1
             ) root ON TRUE
-            WHERE {where}
-            ORDER BY t.last_activity_at DESC, t.id ASC
+            WHERE {where}{after_sql}
+            ORDER BY t.last_activity_at DESC, t.id DESC
             LIMIT %s OFFSET %s
             """,
-            (*params, int(limit), int(offset)),
+            (*params, *after_params, int(limit), 0 if cursor else int(offset)),
         )
         return [dict(row) for row in rows]
 
@@ -42289,7 +43610,7 @@ class Database:
             created_by: Only threads this user opened, when given (a reader's own feedback).
 
         Returns:
-            The total (0 when an id is not a UUID).
+            The total, counted up to ``TOTAL_CAP`` (#7196); 0 when an id is not a UUID.
         """
         built = self._comment_thread_filters(
             tenant_id=tenant_id,
@@ -42306,7 +43627,7 @@ class Database:
             return 0
         where, params = built
         rows = self.execute_query(
-            f"SELECT count(*)::int AS total FROM apiome.comment_threads t WHERE {where}",
+            capped_count_sql(f"FROM apiome.comment_threads t WHERE {where}"),
             tuple(params),
         )
         return int(rows[0]["total"]) if rows else 0
@@ -42747,6 +44068,83 @@ class Database:
         )
         return [dict(row) for row in rows]
 
+    def find_comment_mention_candidates(
+        self, tenant_id: str, handles: Sequence[str]
+    ) -> List[Dict[str, Any]]:
+        """The mentionable members one of ``handles`` could name (DBP-1.13, #7196).
+
+        The narrow form of :meth:`list_comment_mention_candidates`, read on every comment write
+        that carries an ``@``: instead of every member of the tenant, only those whose email,
+        email local part or display name could match a handle actually written in the body.
+        The filter is deliberately a superset — a display name is matched by its handle's
+        characters in order, with anything between them — so
+        :func:`app.comment_mentions.resolve_mentions` still decides exact and ambiguous
+        matches from every member a handle could mean.
+
+        Args:
+            tenant_id: The tenant.
+            handles: The body's mention handles, lower-cased
+                (:func:`app.comment_mentions.extract_mention_handles`).
+
+        Returns:
+            ``{"user_id", "name", "email"}`` rows; empty without handles or when the tenant id
+            is not a UUID.
+        """
+        wanted = [str(handle) for handle in handles if handle]
+        if not wanted or not is_uuid_string(str(tenant_id or "")):
+            return []
+        # A display-name handle never contains "@" (the name is stripped to handle characters).
+        name_patterns = ["%" + "%".join(handle) + "%" for handle in wanted if "@" not in handle]
+        rows = self.execute_query(
+            """
+            SELECT u.id::text AS user_id, u.name, u.email
+            FROM apiome.tenant_users tu
+            JOIN apiome.users u ON u.id = tu.user_id
+            WHERE tu.tenant_id = %s::uuid
+              AND tu.status IN ('active', 'pending')
+              AND u.deleted_at IS NULL
+              AND (
+                    lower(u.email) = ANY(%s::text[])
+                 OR lower(split_part(u.email, '@', 1)) = ANY(%s::text[])
+                 OR lower(u.name) LIKE ANY(%s::text[])
+              )
+            """,
+            (tenant_id, wanted, wanted, name_patterns),
+        )
+        return [dict(row) for row in rows]
+
+    def filter_mentionable_member_ids(
+        self, tenant_id: str, user_ids: Sequence[str]
+    ) -> List[str]:
+        """Which of ``user_ids`` are mentionable members of a tenant (DBP-1.13, #7196).
+
+        Answers "are these people members?" for a handful of ids without reading the tenant's
+        member list. Same membership rule as :meth:`list_comment_mention_candidates`.
+
+        Args:
+            tenant_id: The tenant.
+            user_ids: The user ids to check; anything that is not a UUID is ignored.
+
+        Returns:
+            The ids that are active or pending members with a live account.
+        """
+        wanted = [str(user_id) for user_id in user_ids if is_uuid_string(str(user_id or ""))]
+        if not wanted or not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            """
+            SELECT u.id::text AS user_id
+            FROM apiome.tenant_users tu
+            JOIN apiome.users u ON u.id = tu.user_id
+            WHERE tu.tenant_id = %s::uuid
+              AND tu.status IN ('active', 'pending')
+              AND u.deleted_at IS NULL
+              AND u.id = ANY(%s::uuid[])
+            """,
+            (tenant_id, wanted),
+        )
+        return [str(row["user_id"]) for row in rows]
+
     # -----------------------------------------------------------------------------------------
     # Review requests & decisions (COL-2.1, #4517)
     # -----------------------------------------------------------------------------------------
@@ -42940,8 +44338,12 @@ class Database:
         open_only: Optional[bool] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """A page of a project's reviews, most recently active first (COL-2.1, #4517).
+
+        Ties on ``updated_at`` break on the id, descending, so the order is total and a cursor
+        can continue it (#7196).
 
         Args:
             tenant_id: The caller's tenant.
@@ -42949,8 +44351,10 @@ class Database:
             version_id: Only reviews of this version, when given.
             state: Only reviews in this state, when given.
             open_only: ``True`` for open reviews, ``False`` for withdrawn ones, ``None`` for both.
-            limit: Page size.
-            offset: Rows to skip.
+            limit: Rows to read.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(updated_at, id)`` of the last review already seen; the page continues
+                after it.
 
         Returns:
             The review rows (empty when an id is not a UUID).
@@ -42961,15 +44365,16 @@ class Database:
         if built is None:
             return []
         where, params = built
+        after_sql, after_params = keyset_before("r.updated_at", "r.id", cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._REVIEW_COLUMNS}
             FROM {self._REVIEW_FROM}
-            WHERE {where}
-            ORDER BY r.updated_at DESC, r.id ASC
+            WHERE {where}{after_sql}
+            ORDER BY r.updated_at DESC, r.id DESC
             LIMIT %s OFFSET %s
             """,
-            (*params, int(limit), int(offset)),
+            (*params, *after_params, int(limit), 0 if cursor else int(offset)),
         )
         return [dict(row) for row in rows]
 
@@ -42992,7 +44397,7 @@ class Database:
             open_only: ``True`` for open reviews, ``False`` for withdrawn ones, ``None`` for both.
 
         Returns:
-            The total (0 when an id is not a UUID).
+            The total, counted up to ``TOTAL_CAP`` (#7196); 0 when an id is not a UUID.
         """
         built = self._review_filters(
             tenant_id=tenant_id, project_id=project_id, version_id=version_id, state=state, open_only=open_only
@@ -43001,7 +44406,7 @@ class Database:
             return 0
         where, params = built
         rows = self.execute_query(
-            f"SELECT count(*)::int AS total FROM apiome.reviews r WHERE {where}", tuple(params)
+            capped_count_sql(f"FROM apiome.reviews r WHERE {where}"), tuple(params)
         )
         return int(rows[0]["total"]) if rows else 0
 
@@ -43402,6 +44807,7 @@ class Database:
         type_filter: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """A page of one user's inbox, newest first (COL-3.1, #4521).
 
@@ -43410,8 +44816,10 @@ class Database:
             user_id: The caller.
             unread_only: Only unread notifications.
             type_filter: Only this type.
-            limit: Page size.
-            offset: Notifications to skip.
+            limit: Rows to read.
+            offset: Notifications to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(created_at, id)`` of the last row already seen; the page continues after
+                it on ``idx_notifications_user_created`` (#7196).
 
         Returns:
             The rows, newest first; empty when an id is not a UUID.
@@ -43422,15 +44830,16 @@ class Database:
         if built is None:
             return []
         where, params = built
+        after_sql, after_params = keyset_before("n.created_at", "n.id", cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._NOTIFICATION_COLUMNS}
             FROM apiome.notifications n
-            WHERE {where}
+            WHERE {where}{after_sql}
             ORDER BY n.created_at DESC, n.id DESC
             LIMIT %s OFFSET %s
             """,
-            tuple([*params, int(limit), int(offset)]),
+            tuple([*params, *after_params, int(limit), 0 if cursor else int(offset)]),
         )
         return [dict(row) for row in rows]
 
@@ -43451,7 +44860,7 @@ class Database:
             type_filter: Only this type.
 
         Returns:
-            The total; ``0`` when an id is not a UUID.
+            The total, counted up to ``TOTAL_CAP`` (#7196); ``0`` when an id is not a UUID.
         """
         built = self._notification_filters(
             tenant_id=tenant_id, user_id=user_id, unread_only=unread_only, type_filter=type_filter
@@ -43460,7 +44869,7 @@ class Database:
             return 0
         where, params = built
         rows = self.execute_query(
-            f"SELECT count(*)::int AS total FROM apiome.notifications n WHERE {where}",
+            capped_count_sql(f"FROM apiome.notifications n WHERE {where}"),
             tuple(params),
         )
         return int(rows[0]["total"]) if rows else 0
@@ -43725,6 +45134,7 @@ class Database:
         active: Optional[bool] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """List a project's bindings, active and released, newest first (GNC-2.1, #4737).
 
@@ -43733,8 +45143,10 @@ class Database:
             project_id: The project.
             version_id: Only this version's bindings.
             active: Only active or only released bindings.
-            limit: Page size.
-            offset: Bindings to skip.
+            limit: Rows to read.
+            offset: Bindings to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(created_at, id)`` of the last binding already seen; the page continues
+                after it (#7196).
 
         Returns:
             The page of binding rows.
@@ -43745,15 +45157,20 @@ class Database:
         if built is None:
             return []
         where_sql, params = built
+        after_sql, after_params = keyset_before("b.created_at", "b.id", cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._BINDING_COLUMNS}
             FROM {self._BINDING_FROM}
-            WHERE {where_sql}
+            WHERE {where_sql}{after_sql}
             ORDER BY b.created_at DESC, b.id DESC
             LIMIT %s OFFSET %s
             """,
-            tuple(params + [max(1, int(limit)), max(0, int(offset))]),
+            tuple(
+                params
+                + after_params
+                + [max(1, int(limit)), 0 if cursor else max(0, int(offset))]
+            ),
         )
         return [dict(row) for row in rows]
 
@@ -43774,7 +45191,7 @@ class Database:
             active: Only active or only released bindings.
 
         Returns:
-            The total.
+            The total, counted up to ``TOTAL_CAP`` (#7196).
         """
         built = self._draft_binding_filters(
             tenant_id=tenant_id, project_id=project_id, version_id=version_id, active=active
@@ -43783,7 +45200,7 @@ class Database:
             return 0
         where_sql, params = built
         rows = self.execute_query(
-            f"SELECT COUNT(*)::int AS total FROM apiome.draft_repository_bindings b WHERE {where_sql}",
+            capped_count_sql(f"FROM apiome.draft_repository_bindings b WHERE {where_sql}"),
             tuple(params),
         )
         return int(rows[0]["total"]) if rows else 0
@@ -44484,6 +45901,7 @@ class Database:
         state: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """List a tenant's check runs, newest first (GNC-2.2, #4738).
 
@@ -44494,8 +45912,10 @@ class Database:
             version_id: Only this version's checks.
             commit_sha: Only checks about this commit.
             state: Only checks in this normalized state.
-            limit: Page size.
-            offset: Checks to skip.
+            limit: Rows to read.
+            offset: Checks to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(created_at, id)`` of the last check already seen; the page continues
+                after it (#7196).
 
         Returns:
             One row per check, newest first.
@@ -44525,12 +45945,14 @@ class Database:
         if state:
             clauses.append("r.state = %s")
             params.append(str(state).strip())
-        params.extend([int(limit), int(offset)])
+        after_sql, after_params = keyset_before("r.created_at", "r.id", cursor)
+        params.extend(after_params)
+        params.extend([int(limit), 0 if cursor else int(offset)])
         rows = self.execute_query(
             f"""
             SELECT {self._CHECK_COLUMNS}
             FROM {self._CHECK_FROM}
-            WHERE {' AND '.join(clauses)}
+            WHERE {' AND '.join(clauses)}{after_sql}
             ORDER BY r.created_at DESC, r.id DESC
             LIMIT %s OFFSET %s
             """,
@@ -45742,6 +47164,7 @@ class Database:
         evaluated: Optional[bool] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
     ) -> List[Dict[str, Any]]:
         """A version's check-suite evaluations, newest first (GNC-3.1, #4740).
 
@@ -45750,8 +47173,10 @@ class Database:
             version_id: The version.
             commit_sha: Only evaluations reported against this commit.
             evaluated: ``True`` for judged evaluations only, ``False`` for placeholders only.
-            limit: Page size.
-            offset: Evaluations to skip.
+            limit: Rows to read.
+            offset: Evaluations to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(created_at, id)`` of the last evaluation already seen; the page continues
+                after it (#7196).
 
         Returns:
             The page of rows.
@@ -45766,15 +47191,20 @@ class Database:
         if evaluated is not None:
             clauses.append("s.evaluated = %s")
             params.append(bool(evaluated))
+        after_sql, after_params = keyset_before("s.created_at", "s.id", cursor)
         rows = self.execute_query(
             f"""
             SELECT {self._CHECK_SUITE_RUN_COLUMNS}
             FROM {self._CHECK_SUITE_RUN_FROM}
-            WHERE {" AND ".join(clauses)}
+            WHERE {" AND ".join(clauses)}{after_sql}
             ORDER BY s.created_at DESC, s.id DESC
             LIMIT %s OFFSET %s
             """,
-            tuple(params + [max(1, int(limit)), max(0, int(offset))]),
+            tuple(
+                params
+                + after_params
+                + [max(1, int(limit)), 0 if cursor else max(0, int(offset))]
+            ),
         )
         return [dict(row) for row in rows]
 
@@ -45954,8 +47384,13 @@ class Database:
         finished_before: Optional[Any] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Optional[Tuple[Any, str]] = None,
+        include_total: bool = False,
     ) -> Dict[str, Any]:
         """List a tenant's export history, newest first, filtered (MFX-46.1).
+
+        Reads one row more than the page to learn whether another page exists, so nothing is
+        counted unless ``include_total`` asks for it (#7196).
 
         Args:
             tenant_id: Owning tenant (the only rows ever returned).
@@ -45970,15 +47405,24 @@ class Database:
             finished_after: Inclusive lower bound on ``finished_at``.
             finished_before: Inclusive upper bound on ``finished_at``.
             limit: Page size, clamped to ``[1, 200]``.
-            offset: Rows to skip.
+            offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+            cursor: ``(finished_at, job_id)`` of the last run already seen; the page continues after it
+                on ``export_run_ledger_tenant_finished_idx`` (#7196).
+            include_total: Also count the matching runs, up to ``TOTAL_CAP``.
 
         Returns:
-            ``{"runs": [...], "total": int, "limit": int, "offset": int}`` — empty when the tenant id is
-            not a UUID.
+            ``{"runs": [...], "total": Optional[int], "limit": int, "offset": int, "has_more": bool}`` —
+            ``total`` is ``None`` unless ``include_total``; empty when the tenant id is not a UUID.
         """
         page_limit = max(1, min(int(limit), 200))
-        page_offset = max(0, int(offset))
-        empty: Dict[str, Any] = {"runs": [], "total": 0, "limit": page_limit, "offset": page_offset}
+        page_offset = 0 if cursor else max(0, int(offset))
+        empty: Dict[str, Any] = {
+            "runs": [],
+            "total": 0 if include_total else None,
+            "limit": page_limit,
+            "offset": page_offset,
+            "has_more": False,
+        }
         if not is_uuid_string(str(tenant_id or "")):
             return empty
         where = ["l.tenant_id = %s::uuid"]
@@ -46017,21 +47461,31 @@ class Database:
             where.append("l.finished_at <= %s")
             params.append(finished_before)
         where_sql = " AND ".join(where)
-        count_rows = self.execute_query(
-            f"SELECT COUNT(*)::int AS total FROM apiome.export_run_ledger l WHERE {where_sql}", tuple(params)
-        )
-        total = int(count_rows[0]["total"]) if count_rows else 0
+        total: Optional[int] = None
+        if include_total:
+            count_rows = self.execute_query(
+                capped_count_sql(f"FROM apiome.export_run_ledger l WHERE {where_sql}"), tuple(params)
+            )
+            total = int(count_rows[0]["total"]) if count_rows else 0
+        after_sql, after_params = keyset_before("l.finished_at", "l.job_id", cursor, id_cast="")
         rows = self.execute_query(
             f"""
             SELECT {self._EXPORT_RUN_SUMMARY_COLUMNS}
             FROM apiome.export_run_ledger l
-            WHERE {where_sql}
+            WHERE {where_sql}{after_sql}
             ORDER BY l.finished_at DESC, l.job_id DESC
             LIMIT %s OFFSET %s
             """,
-            tuple(params) + (page_limit, page_offset),
+            tuple(params) + tuple(after_params) + (page_limit + 1, page_offset),
         )
-        return {"runs": [dict(r) for r in rows or []], "total": total, "limit": page_limit, "offset": page_offset}
+        runs = [dict(r) for r in rows or []]
+        return {
+            "runs": runs[:page_limit],
+            "total": total,
+            "limit": page_limit,
+            "offset": page_offset,
+            "has_more": len(runs) > page_limit,
+        }
 
     def get_export_run(self, tenant_id: str, job_id: str) -> Optional[Dict[str, Any]]:
         """One ledger row with its stored reports (MFX-46.1), or ``None`` outside the tenant.
@@ -46280,19 +47734,29 @@ class Database:
         return snapshot, compute_payload_digest(snapshot)
 
     def list_operational_components(
-        self, tenant_id: str, kind: Optional[str] = None
+        self,
+        tenant_id: str,
+        kind: Optional[str] = None,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """List the tenant's live components with revision/publication summary.
 
         Args:
             tenant_id: The caller's tenant.
             kind: Optional kind filter.
+            limit: Rows to read; ``None`` reads every component (internal callers).
+            cursor: ``[kind, name, id]`` of the last component already seen (#7196), or ``None``.
 
         Returns:
             Component rows ordered by kind then name, each carrying
             ``revision_count``, ``published_count``, and ``head_revision``
             (the highest published semver, or ``None``).
         """
+        from .authoring_list_orders import COMPONENTS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         params: List[Any] = [tenant_id]
         kind_filter = ""
         if kind:
@@ -46310,12 +47774,13 @@ class Database:
             LEFT JOIN apiome.operational_component_revisions r ON r.component_id = c.id
             WHERE c.tenant_id = %s AND c.deleted_at IS NULL"""
             + kind_filter
-            + """
+            + after_sql
+            + f"""
             GROUP BY c.id, c.name, c.kind, c.description, c.owner_id,
                      c.created_by, c.created_at, c.updated_at
-            ORDER BY c.kind, c.name
+            ORDER BY {order.order_by}{limit_sql}
             """,
-            tuple(params),
+            (*params, *after_params, *limit_params),
         )
         from .component_library import parse_semver
 
@@ -47278,13 +48743,21 @@ class Database:
         return components, revisions
 
     def get_component_usage_pins(
-        self, tenant_id: str, component_ids: List[str]
+        self,
+        tenant_id: str,
+        component_ids: List[str],
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """Live pins of the given components across the tenant, with project and version.
 
         Args:
             tenant_id: Owning tenant.
             component_ids: The analyzed component and its dependents.
+            limit: Rows to read; ``None`` reads every pin (internal callers).
+            cursor: ``[component_name, project_id, version_id, id]`` of the last pin already
+                seen (#7196), or ``None``.
 
         Returns:
             Pin rows (``id, local_name, revision_id, revision, payload_digest, component_id,
@@ -47293,8 +48766,11 @@ class Database:
         """
         if not component_ids:
             return []
+        from .authoring_list_orders import COMPONENT_USAGE_PINS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
         return self.execute_query(
-            """
+            f"""
             SELECT p.id, p.local_name, r.id AS revision_id, r.revision, r.payload_digest,
                    c.id AS component_id, c.name AS component_name, c.kind,
                    p.version_id, v.project_id
@@ -47303,10 +48779,10 @@ class Database:
             JOIN apiome.operational_components c ON r.component_id = c.id
             JOIN apiome.versions v ON p.version_id = v.id
             WHERE p.tenant_id = %s AND c.id = ANY(%s::uuid[])
-              AND p.deleted_at IS NULL AND v.deleted_at IS NULL AND c.deleted_at IS NULL
-            ORDER BY c.name, v.project_id, p.version_id, p.id
+              AND p.deleted_at IS NULL AND v.deleted_at IS NULL AND c.deleted_at IS NULL{after_sql}
+            ORDER BY {order.order_by}{limit_sql}
             """,
-            (tenant_id, list(component_ids)),
+            (tenant_id, list(component_ids), *after_params, *limit_params),
         )
 
     def list_component_revision_approvals(
@@ -47427,13 +48903,21 @@ class Database:
         return self._component_tx(work)
 
     def list_component_deprecations(
-        self, tenant_id: str, component_id: Optional[str] = None
+        self,
+        tenant_id: str,
+        component_id: Optional[str] = None,
+        *,
+        limit: Optional[int] = None,
+        cursor: Optional[Sequence[Any]] = None,
     ) -> List[Dict[str, Any]]:
         """Live (not cancelled) deprecations, soonest sunset first.
 
         Args:
             tenant_id: Owning tenant.
             component_id: Restrict to one component, or ``None`` for the whole tenant.
+            limit: Rows to read; ``None`` reads every deprecation (internal callers).
+            cursor: ``[sunset_at, component_name, revision, id]`` of the last row already seen
+                (#7196), or ``None``.
 
         Returns:
             Rows with the component name/kind and the deprecated and replacement semvers.
@@ -47454,8 +48938,11 @@ class Database:
         if component_id:
             query += " AND d.component_id = %s::uuid"
             params.append(component_id)
-        query += " ORDER BY d.sunset_at, c.name, r.revision"
-        return self.execute_query(query, tuple(params))
+        from .authoring_list_orders import COMPONENT_DEPRECATIONS_ORDER as order
+
+        after_sql, after_params, limit_sql, limit_params = order.window(limit, cursor)
+        query += f"{after_sql} ORDER BY {order.order_by}{limit_sql}"
+        return self.execute_query(query, (*params, *after_params, *limit_params))
 
     def schedule_component_deprecation(
         self,

@@ -28,6 +28,8 @@ import json
 import uuid as _uuid
 from typing import Any, Dict, List, Optional, Protocol, Sequence
 
+from .authoring_list_orders import CUSTOM_ACTIONS_ORDER
+
 __all__ = [
     "ACTION_COLUMNS",
     "CustomActionConflictError",
@@ -133,7 +135,13 @@ def _is_uuid(value: Optional[str]) -> bool:
 # ─── Reads ───────────────────────────────────────────────────────────────────
 
 
-def list_actions(db: _DbLike, *, tenant_id: str) -> List[Dict[str, Any]]:
+def list_actions(
+    db: _DbLike,
+    *,
+    tenant_id: str,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[Dict[str, Any]]:
     """List a tenant's live custom actions, alphabetically by name.
 
     Alphabetical rather than by creation: the palette appends these after the built-ins, and a
@@ -143,22 +151,25 @@ def list_actions(db: _DbLike, *, tenant_id: str) -> List[Dict[str, Any]]:
     Args:
         db: Database handle.
         tenant_id: The caller's tenant.
+        limit: Rows to read; ``None`` reads every action (internal callers).
+        cursor: ``[lower(name), id]`` of the last action already seen (#7196), or ``None``.
 
     Returns:
-        The live action rows, name-ordered.
+        The live action rows, name-ordered; each also carries ``name_sort``, its sort key.
     """
+    after_sql, after_params, limit_sql, limit_params = CUSTOM_ACTIONS_ORDER.window(limit, cursor)
     conn = db.connect()
     try:
-        with conn.cursor() as cursor:
+        with conn.cursor() as db_cursor:
             rows = _fetch_all(
-                cursor,
+                db_cursor,
                 f"""
-                SELECT {ACTION_COLUMNS}
+                SELECT {ACTION_COLUMNS}, lower(name) AS name_sort
                   FROM apiome.workspace_custom_actions
-                 WHERE tenant_id = %s::uuid AND deleted_at IS NULL
-                 ORDER BY lower(name) ASC
+                 WHERE tenant_id = %s::uuid AND deleted_at IS NULL{after_sql}
+                 ORDER BY {CUSTOM_ACTIONS_ORDER.order_by}{limit_sql}
                 """,
-                (tenant_id,),
+                (tenant_id, *after_params, *limit_params),
             )
         conn.commit()
     except Exception:

@@ -32,6 +32,7 @@ from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, T
 
 from . import notification_fanout as fanout
 from .database import db
+from .keyset_pagination import Page, page_of, time_id_key
 from .notification_fanout import NotificationDraft
 from .notifications import (
     CODE_FORBIDDEN,
@@ -76,13 +77,17 @@ class NotificationFilters:
         unread: Only notifications the caller has not read.
         type: Only this notification type.
         limit: Page size.
-        offset: Notifications to skip.
+        offset: Notifications to skip (deprecated; ignored when ``cursor`` is set).
+        cursor: ``(created_at, id)`` of the last notification already seen (#7196).
+        include_total: Also count the matches (capped); off by default.
     """
 
     unread: bool = False
     type: Optional[str] = None
     limit: int = 50
     offset: int = 0
+    cursor: Optional[Tuple[Any, str]] = None
+    include_total: bool = False
 
 
 # ---------------------------------------------------------------------------------------------
@@ -127,16 +132,19 @@ def _record(row: Mapping[str, Any]) -> NotificationRecord:
 
 def list_notifications(
     tenant_id: str, user_id: str, filters: NotificationFilters
-) -> Tuple[List[NotificationRecord], int]:
+) -> Tuple[Page[NotificationRecord], Optional[int]]:
     """A page of the caller's inbox, newest first.
+
+    Reads one row more than the page to learn whether another page exists, so nothing is counted
+    unless the caller asks for a total (#7196).
 
     Args:
         tenant_id: The caller's tenant.
         user_id: The caller.
-        filters: What to narrow to.
+        filters: What to narrow to, and where the page starts.
 
     Returns:
-        The page of records and the total matching the filters.
+        The page, and the capped total when ``filters.include_total`` (else ``None``).
     """
     scope = {
         "tenant_id": tenant_id,
@@ -144,9 +152,19 @@ def list_notifications(
         "unread_only": filters.unread,
         "type_filter": filters.type,
     }
-    rows = db.list_notifications(**scope, limit=filters.limit, offset=filters.offset)
-    total = db.count_notifications(**scope)
-    return [_record(row) for row in rows], total
+    rows = db.list_notifications(
+        **scope, limit=filters.limit + 1, offset=filters.offset, cursor=filters.cursor
+    )
+    page = page_of(rows, filters.limit, time_id_key())
+    total = db.count_notifications(**scope) if filters.include_total else None
+    return (
+        Page(
+            items=[_record(row) for row in page.items],
+            has_more=page.has_more,
+            next_cursor=page.next_cursor,
+        ),
+        total,
+    )
 
 
 def unread_count(tenant_id: str, user_id: str) -> UnreadCount:

@@ -144,6 +144,17 @@ function lastQuery(): URLSearchParams {
   return queries[queries.length - 1];
 }
 
+/** A first page of a longer directory, in apiome-rest's cursor envelope (#7196). */
+const PAGED_BODY = {
+  success: true,
+  items: ROWS,
+  total: 120,
+  limit: 50,
+  offset: 0,
+  has_more: true,
+  next_cursor: 'after-50',
+};
+
 function stubFetch(): void {
   requests = [];
   global.fetch = jest.fn(async (input: unknown) => {
@@ -240,7 +251,10 @@ describe('the table sorts and pages server-side', () => {
     const query = lastQuery();
     expect(query.get('sort')).toBe('server');
     expect(query.get('direction')).toBe('asc');
-    expect(query.get('offset')).toBe('0');
+    // The first page: no cursor, no offset, and the one request that asks for the count (#7196).
+    expect(query.has('offset')).toBe(false);
+    expect(query.has('cursor')).toBe(false);
+    expect(query.get('include_total')).toBe('true');
     expect(query.get('limit')).toBe(String(MCP_CAPABILITY_DIRECTORY_PAGE_SIZE));
   });
 
@@ -295,14 +309,46 @@ describe('the table sorts and pages server-side', () => {
     );
   });
 
-  test('the pager moves the offset by a whole page', async () => {
+  test('the pager steps by cursor: Next continues from next_cursor, Previous goes back', async () => {
     const user = userEvent.setup();
-    directory = { body: { success: true, items: ROWS, total: 120, limit: 50, offset: 0 } };
+    directory = { body: { ...PAGED_BODY } };
     await renderDirectory();
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+    // There are no page numbers: a cursor says whether more follows, not how many pages.
+    expect(screen.queryByRole('button', { name: 'Page 2' })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Page 2' }));
+    await user.click(screen.getByRole('button', { name: 'Next page' }));
 
-    await waitFor(() => expect(lastQuery().get('offset')).toBe('50'));
+    await waitFor(() => expect(lastQuery().get('cursor')).toBe('after-50'));
+    expect(lastQuery().has('offset')).toBe(false);
+    // Only the first page is counted, and its count is kept.
+    expect(lastQuery().has('include_total')).toBe(false);
+    await waitFor(() =>
+      expect(screen.getByTestId('mcp-capabilities-range')).toHaveTextContent('51–53 of 120'),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Previous page' }));
+    await waitFor(() => expect(lastQuery().has('cursor')).toBe(false));
+    expect(lastQuery().get('include_total')).toBe('true');
+  });
+
+  test('offers no next page when has_more is false, whatever the total says', async () => {
+    directory = {
+      body: { success: true, items: ROWS, total: 120, limit: 50, offset: 0, has_more: false, next_cursor: null },
+    };
+    await renderDirectory();
+    expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
+  });
+
+  test('draws no count it was not given', async () => {
+    directory = {
+      body: { success: true, items: ROWS, total: null, limit: 50, offset: 0, has_more: false, next_cursor: null },
+    };
+    await renderDirectory();
+    expect(screen.getByTestId('mcp-capabilities-range')).toHaveTextContent(/^1–3$/);
+    expect(screen.getByTestId('mcp-capabilities-foot')).toHaveTextContent(
+      /^page size 50 · sorted by server ascending$/,
+    );
   });
 
   test('each of the five filters travels as a query parameter', async () => {
@@ -331,14 +377,16 @@ describe('the table sorts and pages server-side', () => {
 
   test('any filter change returns the reader to page one', async () => {
     const user = userEvent.setup();
-    directory = { body: { success: true, items: ROWS, total: 120, limit: 50, offset: 0 } };
+    directory = { body: { ...PAGED_BODY } };
     await renderDirectory();
 
-    await user.click(screen.getByRole('button', { name: 'Page 2' }));
-    await waitFor(() => expect(lastQuery().get('offset')).toBe('50'));
+    await user.click(screen.getByRole('button', { name: 'Next page' }));
+    await waitFor(() => expect(lastQuery().get('cursor')).toBe('after-50'));
 
     await user.type(screen.getByLabelText('Host'), 'acme');
-    await waitFor(() => expect(lastQuery().get('offset')).toBe('0'));
+    await waitFor(() => expect(lastQuery().get('host')).toBe('acme'));
+    expect(lastQuery().has('cursor')).toBe(false);
+    expect(lastQuery().get('include_total')).toBe('true');
   });
 
   test('the foot states the query — what matched, the page size and the order', async () => {

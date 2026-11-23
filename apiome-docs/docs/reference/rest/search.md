@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `search` · 1 operation
 
@@ -23,7 +23,9 @@ Matches operations, types and messages of catalog items and Projects alike. Valu
 facet OR together and facets AND; each facet's counts are computed over the matches every
 *other* facet keeps, so ticking a value shows exactly that many. An unknown facet value narrows
 to nothing rather than failing. Matches are ranked by full-text relevance; at most 2 000 are
-considered, and ``truncated`` says when that cap was reached.
+considered, and ``truncated`` says when that cap was reached. A relevance order has no cursor,
+so this list pages by ``offset`` within those capped matches, and its totals are their
+lengths rather than separate counts (#7196).
 
 Args:
     tenant_slug: The tenant slug.
@@ -56,8 +58,8 @@ Operation id: `search_normalized_model_v1_search__tenant_slug__model_get`
 | `format` | query | array of string or null | no | Source-format key, repeatable (openapi-3.1, protobuf, …). |
 | `grade` | query | array of string or null | no | Captured quality grade, repeatable: A, B, C, D, F or ungraded. |
 | `all_versions` | query | boolean | no | Search every live revision instead of each project's latest. |
-| `limit` | query | integer | no | Page size. |
-| `offset` | query | integer | no | Matches to skip. |
+| `limit` | query | integer | no | Page size. At most 100. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

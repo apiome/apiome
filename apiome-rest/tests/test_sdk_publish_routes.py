@@ -28,6 +28,7 @@ from app.sdk_publish_pipeline import (
     PublishOutcome,
 )
 from app.sdk_registry_credentials import RegistryCredentialError, RegistryCredentialOut
+from tests.keyset_paging_fakes import keyset_rows, stamps, walk
 
 client = TestClient(app)
 
@@ -374,10 +375,11 @@ def test_listing_runs_requires_versions_view_and_pages():
     with patch("app.sdk_publish_routes.enforce_permission") as guard, _project_lookup(), patch(
         "app.sdk_publish_routes.db.list_sdk_publish_runs", return_value=[row]
     ) as listed, patch("app.sdk_publish_routes.db.count_sdk_publish_runs", return_value=1):
-        response = client.get(f"{_RUNS}?ecosystem=npm&limit=10&offset=5")
+        response = client.get(f"{_RUNS}?ecosystem=npm&limit=10&offset=5&include_total=true")
     assert response.status_code == 200
     assert guard.call_args.args[2:] == (Resource.VERSIONS, Action.VIEW)
-    assert listed.call_args.kwargs == {"ecosystem": "npm", "limit": 10, "offset": 5}
+    # One row more than the page is read, to learn whether another page follows (#7196).
+    assert listed.call_args.kwargs == {"ecosystem": "npm", "limit": 11, "offset": 5, "cursor": None}
     body = response.json()
     assert body["total"] == 1
     assert body["runs"][0]["packageVersion"] == "1.4.3"
@@ -417,3 +419,38 @@ def test_reading_a_run_returns_its_log():
 def test_the_history_page_size_is_bounded():
     with patch("app.sdk_publish_routes.enforce_permission"), _project_lookup():
         assert client.get(f"{_RUNS}?limit=5000").status_code == 422
+
+
+# --------------------------------------------------------------------------------------------
+# Keyset paging (DBP-1.13, #7196)
+# --------------------------------------------------------------------------------------------
+
+
+def _publish_history(count: int = 5) -> list:
+    return [
+        {"id": f"00000000-0000-4000-8000-{index:012d}", "project_id": _PROJECT, "started_at": stamp}
+        for index, stamp in enumerate(stamps(count))
+    ]
+
+
+def test_the_publish_history_pages_by_cursor_to_the_end_without_duplicates():
+    rows = _publish_history()
+    with patch("app.sdk_publish_routes.enforce_permission"), _project_lookup(), patch(
+        "app.sdk_publish_routes.db.list_sdk_publish_runs", side_effect=keyset_rows(rows, "started_at")
+    ), patch(
+        "app.sdk_publish_routes.db.count_sdk_publish_runs", side_effect=AssertionError("counted")
+    ):
+        first = client.get(_RUNS, params={"limit": 2}).json()
+        seen = walk(lambda params: client.get(_RUNS, params=params), "runs",
+                    has_more_key="hasMore", next_cursor_key="nextCursor")
+    assert first["total"] is None and first["hasMore"] is True and first["nextCursor"]
+    ids = [run["runId"] for run in seen]
+    assert ids == sorted((row["id"] for row in rows), reverse=True)
+    assert len(ids) == len(set(ids)) == 5
+
+
+def test_a_malformed_publish_history_cursor_is_a_400_and_the_page_size_is_capped():
+    with patch("app.sdk_publish_routes.enforce_permission"), _project_lookup():
+        assert client.get(_RUNS, params={"cursor": "not-a-cursor"}).status_code == 400
+        assert client.get(_RUNS, params={"limit": 201}).status_code == 422
+        assert client.get(_RUNS, params={"offset": 10_001}).status_code == 422

@@ -14,6 +14,7 @@
  *    options pre-filled (the MFX-41.3 re-run mechanism).
  */
 
+import { setPageParams, type PageRequest } from '@lib/cursor-pages';
 import { exportStudioHref } from '../../dashboard/export/exportStudioLink';
 
 // ---------------------------------------------------------------------------
@@ -72,9 +73,14 @@ export interface ExportRunDetail extends ExportRunSummary {
 /** A page of the history. */
 export interface ExportRunPage {
   runs: ExportRunSummary[];
-  total: number;
+  /** The matches — counted only when the request set `include_total`, and only up to 10,000. */
+  total: number | null;
   limit: number;
   offset: number;
+  /** Whether another page follows. */
+  has_more?: boolean;
+  /** The cursor of the next page; null on the last page. */
+  next_cursor?: string | null;
 }
 
 /** Someone in the history. */
@@ -143,12 +149,19 @@ export function activeFilterCount(filters: HistoryFilters): number {
  * The query string of one page of the history. A value outside its allowed set (a hand-edited URL) is
  * left out rather than sent; dates become whole UTC days.
  *
+ * The history pages by cursor (#7196): the first page sends none, a later page sends the previous
+ * page's `next_cursor`. `offset` is only the fallback for a page that issued no cursor.
+ *
  * @param filters The filters.
- * @param page Zero-based page.
+ * @param page Where the page starts, and whether to count the matches.
  * @param pageSize Rows per page.
  * @returns The query string, without the `?`.
  */
-export function historyQuery(filters: HistoryFilters, page = 0, pageSize = HISTORY_PAGE_SIZE): string {
+export function historyQuery(
+  filters: HistoryFilters,
+  page: PageRequest = {},
+  pageSize = HISTORY_PAGE_SIZE
+): string {
   const query = new URLSearchParams();
   const allowed: Array<[keyof HistoryFilters, readonly string[] | null]> = [
     ['artifact', null],
@@ -166,8 +179,7 @@ export function historyQuery(filters: HistoryFilters, page = 0, pageSize = HISTO
   if (DATE.test(filters.from)) query.set('finished_after', `${filters.from}T00:00:00Z`);
   if (DATE.test(filters.to)) query.set('finished_before', `${filters.to}T23:59:59Z`);
   query.set('limit', String(pageSize));
-  query.set('offset', String(Math.max(0, page) * pageSize));
-  return query.toString();
+  return setPageParams(query, page).toString();
 }
 
 // ---------------------------------------------------------------------------

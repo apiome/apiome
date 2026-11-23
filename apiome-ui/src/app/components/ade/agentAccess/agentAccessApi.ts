@@ -7,6 +7,7 @@
  */
 
 import { getPublishedVersionsForTenant } from '@lib/db/helper-actions';
+import { MAX_LIST_ROWS, MAX_UNPAGED_ROWS } from '@lib/db/list-bounds';
 import type { VersionOverlaysRevisionRow } from '@/app/components/ade/versionOverlays/versionOverlaysApi';
 
 import {
@@ -246,14 +247,27 @@ export async function fetchAgentUsage(days: number): Promise<AgentUsage> {
  * @throws AgentAccessError when they could not be read.
  */
 export async function fetchPublishedVersions(tenantId: string): Promise<PublishedVersionOption[]> {
-  const payload = JSON.parse(await getPublishedVersionsForTenant(tenantId)) as {
-    success?: boolean;
-    error?: string;
-  };
-  if (!payload.success) {
-    throw new AgentAccessError(payload.error || 'Failed to load published versions', 500);
+  // The read is paged (DBP-1.13, #7196). The picker needs the whole list, so the pages are
+  // followed — up to MAX_UNPAGED_ROWS revisions, the cap of every list read whole.
+  const options: PublishedVersionOption[] = [];
+  let cursor: string | null = null;
+  for (let page = 0; page < MAX_UNPAGED_ROWS / MAX_LIST_ROWS; page += 1) {
+    const payload = JSON.parse(
+      await getPublishedVersionsForTenant(tenantId, null, { limit: MAX_LIST_ROWS, cursor })
+    ) as {
+      success?: boolean;
+      error?: string;
+      hasMore?: boolean;
+      nextCursor?: string | null;
+    };
+    if (!payload.success) {
+      throw new AgentAccessError(payload.error || 'Failed to load published versions', 500);
+    }
+    options.push(...parsePublishedVersionOptions(payload));
+    cursor = payload.hasMore && payload.nextCursor ? payload.nextCursor : null;
+    if (!cursor) break;
   }
-  return parsePublishedVersionOptions(payload);
+  return options;
 }
 
 /** A toolset's accepted enrichment as an Overlay document (GVM-4.3, REST `EnrichmentOverlayOut`). */

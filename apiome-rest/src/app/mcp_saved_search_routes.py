@@ -23,6 +23,7 @@ from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .mcp_facets import FacetValidationError
 from .mcp_saved_search import (
     SavedSearchValidationError,
@@ -41,6 +42,7 @@ from .models import (
     mcp_faceted_search_response_from_bundle,
     mcp_saved_search_out_from_row,
 )
+from .tenant_list_orders import MCP_SAVED_SEARCHES_ORDER
 
 router = APIRouter(prefix="/v1/mcp", tags=["mcp-catalog"])
 
@@ -92,16 +94,29 @@ def _normalize_update(body: McpSavedSearchUpdate) -> Dict[str, Any]:
 @router.get("/{tenant_slug}/saved-searches", response_model=McpSavedSearchListResponse)
 def list_mcp_saved_searches(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpSavedSearchListResponse:
-    """List the caller's saved catalog searches (pinned first, then newest)."""
+    """List the caller's saved catalog searches (pinned first, then newest).
+
+    One page of at most ``limit`` searches (1,000 at most); pass ``next_cursor`` as ``cursor``
+    until ``has_more`` is false (#7196).
+    """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     user_id = _require_user_id(auth_data)
-    rows = db.list_mcp_saved_searches(tenant_id, user_id)
+    page = MCP_SAVED_SEARCHES_ORDER.page(
+        db.list_mcp_saved_searches(
+            tenant_id, user_id, limit=limit + 1, cursor=MCP_SAVED_SEARCHES_ORDER.parse(cursor)
+        ),
+        limit,
+    )
     return McpSavedSearchListResponse(
         success=True,
-        searches=[mcp_saved_search_out_from_row(r) for r in rows],
+        searches=[mcp_saved_search_out_from_row(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

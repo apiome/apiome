@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
-import base64
-import binascii
-import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
+from apiome_mcp.cursor_codec import (
+    clamp_page_limit,
+    cursor_timestamp,
+    decode_cursor_payload,
+    encode_cursor_payload,
+    utc,
+)
 from apiome_mcp.mcp_access_audit import schedule_mcp_private_access_audit_batch
 from apiome_mcp.mcp_auth import McpAuthContext
 from apiome_mcp.spec_authorization import (
@@ -28,75 +32,40 @@ class InvalidSpecListCursorError(ValueError):
     """Raised when ``cursor`` cannot be decoded or fails validation."""
 
 
-def _utc(dt: datetime) -> datetime:
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
-
-
 def encode_spec_list_cursor(updated_at: datetime, spec_id: UUID) -> str:
     """Return a stable URL-safe cursor (versioned JSON, base64url without ``=`` padding)."""
-    u = _utc(updated_at)
+    u = utc(updated_at)
     payload = {
         "v": CURSOR_VERSION,
         "i": str(spec_id),
         "u": u.isoformat().replace("+00:00", "Z"),
     }
-    raw = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
-    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
-
-
-def _b64url_pad(s: str) -> str:
-    return s + "=" * ((4 - len(s) % 4) % 4)
+    return encode_cursor_payload(payload)
 
 
 def decode_spec_list_cursor(raw: str | None) -> tuple[datetime, UUID] | None:
     """Decode ``cursor`` into ``(updated_at, id)`` or ``None`` when absent."""
-    if raw is None:
+    obj = decode_cursor_payload(raw, tool="spec.list", version=CURSOR_VERSION, error=InvalidSpecListCursorError)
+    if obj is None:
         return None
-    if not raw.strip():
-        raise InvalidSpecListCursorError("Invalid spec.list cursor (empty value).")
-    try:
-        blob = base64.urlsafe_b64decode(_b64url_pad(raw.strip()))
-        obj = json.loads(blob.decode("utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError, binascii.Error) as exc:
-        raise InvalidSpecListCursorError("Invalid spec.list cursor (malformed encoding).") from exc
-
-    if not isinstance(obj, dict):
-        raise InvalidSpecListCursorError("Invalid spec.list cursor (expected JSON object).")
-
-    ver = obj.get("v")
-    if ver != CURSOR_VERSION:
-        raise InvalidSpecListCursorError(f"Unsupported spec.list cursor version: {ver!r}.")
 
     u_raw = obj.get("u")
     i_raw = obj.get("i")
     if not isinstance(u_raw, str) or not isinstance(i_raw, str):
         raise InvalidSpecListCursorError("Invalid spec.list cursor (missing fields).")
 
-    iso = u_raw.replace("Z", "+00:00")
-    try:
-        parsed_at = datetime.fromisoformat(iso)
-    except ValueError as exc:
-        raise InvalidSpecListCursorError("Invalid spec.list cursor (bad timestamp).") from exc
-
-    if parsed_at.tzinfo is None:
-        raise InvalidSpecListCursorError("Invalid spec.list cursor (timestamp must include timezone offset).")
+    parsed_at = cursor_timestamp(u_raw, tool="spec.list", error=InvalidSpecListCursorError)
 
     try:
         parsed_id = UUID(i_raw.strip())
     except ValueError as exc:
         raise InvalidSpecListCursorError("Invalid spec.list cursor (bad id).") from exc
 
-    return (_utc(parsed_at), parsed_id)
+    return (utc(parsed_at), parsed_id)
 
 
 def _clamp_limit(limit: int | None) -> int:
-    if limit is None:
-        return DEFAULT_PAGE_SIZE
-    if limit < 1:
-        raise ValueError(f"limit must be at least 1, got {limit}.")
-    return min(limit, MAX_PAGE_SIZE)
+    return clamp_page_limit(limit, default=DEFAULT_PAGE_SIZE, maximum=MAX_PAGE_SIZE)
 
 
 def _parse_optional_uuid(label: str, raw: str | None) -> UUID | None:
@@ -124,7 +93,7 @@ def _row_out(row: dict[str, Any]) -> dict[str, Any]:
         "version": row["version"],
         "description": row["description"],
         "tags": tag_list,
-        "updated_at": _utc(ua).isoformat().replace("+00:00", "Z"),
+        "updated_at": utc(ua).isoformat().replace("+00:00", "Z"),
     }
 
 

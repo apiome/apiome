@@ -9,13 +9,19 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `browse` · 12 operations
 
 ## `GET /v1/browse/tenants` {#list-public-browse-tenants-v1-browse-tenants-get}
 
 **List Public Browse Tenants**
+
+The public tenant directory, one window at a time.
+
+Two of the three sorts are aggregates (project count, latest activity), so the directory
+pages by ``limit`` + ``offset`` rather than by cursor; ``has_more`` says whether another
+window follows (#7196).
 
 Operation id: `list_public_browse_tenants_v1_browse_tenants_get`
 
@@ -27,6 +33,8 @@ Operation id: `list_public_browse_tenants_v1_browse_tenants_get`
 | `sort` | query | enum `"latest"`, `"name"`, `"projects"` | no | Sort order: name (default), projects (desc), or latest activity (desc). |
 | `protocol` | query | string or null | no | Filter by canonical paradigm: rest, rpc, event, graph, data_schema, agent. Punctuation-insensitive (``data-schema`` works) and unknown values simply match nothing. |
 | `format` | query | string or null | no | Filter by specific source format key as captured at import (e.g. openapi-3.1, protobuf, graphql). Case-insensitive; unknown values simply match nothing. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 
 **Responses**
 
@@ -87,6 +95,11 @@ Operation id: `get_tenant_llms_txt_v1_browse_tenants__tenant_slug__llms_txt_get`
 
 **List Public Browse Projects**
 
+A tenant's Browse projects in slug order, one page at a time (#7196).
+
+Pass the previous page's ``next_cursor`` as ``cursor`` until ``has_more`` is false. A
+malformed cursor is a ``400``.
+
 Operation id: `list_public_browse_projects_v1_browse_tenants__tenant_slug__projects_get`
 
 **Parameters**
@@ -99,6 +112,8 @@ Operation id: `list_public_browse_projects_v1_browse_tenants__tenant_slug__proje
 | `has_published` | query | boolean | no | Only include projects with at least one published version (visibility rules apply). |
 | `protocol` | query | string or null | no | Filter by canonical paradigm: rest, rpc, event, graph, data_schema, agent. Punctuation-insensitive (``data-schema`` works) and unknown values simply match nothing. |
 | `format` | query | string or null | no | Filter by specific source format key as captured at import (e.g. openapi-3.1, protobuf, graphql). Case-insensitive; unknown values simply match nothing. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -149,6 +164,12 @@ Operation id: `get_public_browse_project_changelog_markdown_v1_browse_tenants__t
 
 **List Public Browse Versions**
 
+A project's published versions, highest semantic version first (#7196).
+
+The order is computed after the read, so the list pages by ``limit`` + ``offset`` (not by
+cursor) over the project's 2,000 most recently published versions; ``has_more`` says whether
+another window follows.
+
 Operation id: `list_public_browse_versions_v1_browse_tenants__tenant_slug__projects__project_slug__versions_get`
 
 **Parameters**
@@ -158,6 +179,8 @@ Operation id: `list_public_browse_versions_v1_browse_tenants__tenant_slug__proje
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
 | `since` | query | string (date-time) or null | no | Include only versions whose published_at is at or after this timestamp (ISO 8601). |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -398,7 +421,9 @@ Published-public projects for a tenant (anonymous), or full tenant project list 
 | `tenant_slug` | string | yes | URL-safe tenant slug used in path parameters. |
 | `tenant_name` | string | yes | Tenant Name. |
 | `projects` | array of `BrowsePublicProjectRow` | yes | Projects. |
-| `filtered_count` | integer | yes | Number of filtered. |
+| `filtered_count` | integer | yes | How many projects this page holds. |
+| `has_more` | boolean | no | Whether more projects follow this page (#7196). |
+| `next_cursor` | string or null | no | Pass as ``cursor`` to read the next page; null on the last page. |
 | `facets` | `BrowseFacets` | no | Protocol/format facet counts for this tenant, honouring ``search``/``domain`` (MFI-6.1). |
 
 ### `BrowsePublicTenantsResponse` {#schema-browsepublictenantsresponse}
@@ -409,7 +434,8 @@ Public tenant directory for CLI and integrations (no authentication).
 | --- | --- | --- | --- |
 | `directory_stats` | `BrowseDirectoryStats` | yes | Directory Stats. |
 | `tenants` | array of `BrowsePublicTenantRow` | yes | Tenants. |
-| `filtered_count` | integer | yes | Number of filtered. |
+| `filtered_count` | integer | yes | How many tenants this page holds. |
+| `has_more` | boolean | no | Whether more tenants follow this page (#7196). |
 | `facets` | `BrowseFacets` | no | Protocol/format facet counts across the directory, honouring ``search`` (MFI-6.1). |
 
 ### `BrowsePublicVersionsResponse` {#schema-browsepublicversionsresponse}
@@ -423,7 +449,8 @@ Published versions for browse parity (anonymous public slice or member-authentic
 | `project_slug` | string | yes | Project Slug. |
 | `project_name` | string | yes | Project Name. |
 | `versions` | array of `BrowsePublicVersionRow` | yes | Versions. |
-| `filtered_count` | integer | yes | Number of filtered. |
+| `filtered_count` | integer | yes | How many versions this page holds. |
+| `has_more` | boolean | no | Whether more versions follow this page (#7196). |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

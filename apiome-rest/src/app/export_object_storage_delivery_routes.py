@@ -24,10 +24,10 @@ import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from psycopg2.errors import ForeignKeyViolation
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.concurrency import run_in_threadpool
 from psycopg2 import errors as pg_errors
+from psycopg2.errors import ForeignKeyViolation
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import get_authenticated_user_id, validate_authentication
@@ -49,10 +49,12 @@ from .export_object_storage_delivery import (
     normalize_request,
 )
 from .export_object_storage_delivery_pipeline import deliver_to_object_storage
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .mcp_credential_crypto import CredentialEncryptionError, seal_credential_payload
 from .permissions import Action, Resource, enforce_permission
 from .sdk_publish_routes import tenant_id_of, write_audit
 from .ssrf_guard import SSRFError, validate_url
+from .tenant_config_list_orders import EXPORT_STORAGE_CREDENTIALS_ORDER
 
 router = APIRouter(prefix="/v1/export", tags=["export-delivery"])
 
@@ -85,6 +87,8 @@ class StorageCredentialListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     credentials: List[StorageCredentialModel] = Field(default_factory=list)
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 class ExportObjectStorageObjectModel(BaseModel):
@@ -256,18 +260,29 @@ async def create_storage_credential(
     response_model=StorageCredentialListResponse,
     response_model_by_alias=True,
     summary="List the workspace's bucket credentials",
-    description="Every storage credential, by name — never a secret. Requires `projects:view`.",
+    description="Every storage credential, by name — never a secret. At most 1,000 a page: pass the "
+    "previous page's `nextCursor` as `cursor` until `hasMore` is false. Requires `projects:view`.",
 )
 async def list_storage_credentials(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> StorageCredentialListResponse:
-    """List the tenant's storage credentials."""
+    """List one page of the tenant's storage credentials (400 for a malformed cursor)."""
     await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
+    after = EXPORT_STORAGE_CREDENTIALS_ORDER.parse(cursor)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
-    rows = await asyncio.to_thread(db.list_export_storage_credentials, tenant_id)
-    return StorageCredentialListResponse(credentials=[credential_model(row) for row in rows])
+    rows = await asyncio.to_thread(
+        db.list_export_storage_credentials, tenant_id, limit=limit + 1, cursor=after
+    )
+    page = EXPORT_STORAGE_CREDENTIALS_ORDER.page(rows, limit)
+    return StorageCredentialListResponse(
+        credentials=[credential_model(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.delete(

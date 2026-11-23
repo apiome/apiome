@@ -44,6 +44,16 @@ from .auth import get_authenticated_user_id, validate_authentication
 from .config import settings
 from .database import db
 from .export_mock import mock_request_log
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    page_of,
+    parse_time_id_cursor,
+    set_page_headers,
+    time_id_key,
+)
+from .mock_data_plane import activity_buffer, spec_cache
 from .mock_instance_config import (
     ACTIVE_SCENARIO_KEY,
     DEFAULT_SCENARIO_NAME,
@@ -243,8 +253,11 @@ def _build_spec_for_version(
 
 def _instance_to_response(instance: Dict[str, Any], request: Request) -> MockInstanceResponse:
     """Project a stored row into the public response, computing the stable base URL + op count."""
-    spec = instance.get("spec") or {}
     settings_map = instance_settings(instance)
+    # A list row carries the count computed in SQL instead of the spec it is counted from (#7196).
+    operation_count = instance.get("operation_count")
+    if operation_count is None:
+        operation_count = len(extract_operations(instance.get("spec") or {}))
     base = str(request.base_url).rstrip("/")
     status = "expired" if mock_instance_is_expired(instance) else instance.get("status", "active")
     notes = instance.get("migration_notes")
@@ -258,7 +271,7 @@ def _instance_to_response(instance: Dict[str, Any], request: Request) -> MockIns
         status=status,
         active_scenario=instance_active_scenario(settings_map),
         scenarios=instance_scenario_names(settings_map),
-        operation_count=len(extract_operations(spec)),
+        operation_count=int(operation_count),
         rate_limit_per_minute=instance["rate_limit_per_minute"],
         request_count=instance.get("request_count", 0),
         created_at=_iso(instance.get("created_at")),
@@ -357,12 +370,41 @@ def provision_mock(
 def list_mocks(
     tenant_slug: str,
     request: Request,
+    response: Response,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[MockInstanceResponse]:
-    """List the tenant's mock instances, newest first."""
+    """List the tenant's mock instances, newest first, one page at a time.
+
+    The body is a JSON array of at most ``limit`` instances (200 at most). The ``X-Has-More``
+    response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        request: The inbound request, for the instances' base URLs.
+        response: The outgoing response (paging headers are set on it).
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+        auth_data: The authenticated principal.
+
+    Returns:
+        One page of instances.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the mock server is disabled.
+    """
     _require_enabled()
-    instances = db.list_mock_instances(auth_data["tenant_id"])
-    return [_instance_to_response(row, request) for row in instances]
+    rows = db.list_mock_instances(
+        auth_data["tenant_id"],
+        summary=True,
+        limit=limit + 1,
+        cursor=parse_time_id_cursor(cursor),
+    )
+    page = page_of(rows, limit, time_id_key())
+    set_page_headers(response, page)
+    return [_instance_to_response(row, request) for row in page.items]
 
 
 @router.get("/{tenant_slug}/usage", response_model=MockUsageResponse)
@@ -465,6 +507,7 @@ def destroy_mock(
     """Destroy a mock instance and all of its state."""
     _require_enabled()
     deleted = db.delete_mock_instance(mock_id, auth_data["tenant_id"])
+    spec_cache.forget(mock_id)
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Mock instance not found: {mock_id}")
     return Response(status_code=204)
@@ -603,11 +646,18 @@ async def _serve_mock(mock_id: str, sub_path: str, request: Request) -> Response
     """
     _require_enabled()
     started = time.perf_counter()
-    instance = db.get_mock_instance(mock_id)
+    # One narrow statement per request (#7196): the frozen spec is cached and the request counter
+    # is buffered, so serving neither reads a document-sized column nor writes the row.
+    instance = db.get_mock_serving_row(mock_id)
+    if instance and instance.get("settings") is None:
+        # Provisioned before MSC-2.2 and never read since: the one-time fold needs the whole row.
+        instance = db.get_mock_instance(mock_id)
     if not instance:
+        spec_cache.forget(mock_id)
         raise HTTPException(status_code=404, detail=f"Mock instance not found: {mock_id}")
 
     if mock_instance_is_expired(instance):
+        spec_cache.forget(mock_id)
         raise HTTPException(
             status_code=410,
             detail="This mock instance has expired. Provision a new one to continue.",
@@ -658,6 +708,12 @@ async def _serve_mock(mock_id: str, sub_path: str, request: Request) -> Response
     sandbox_request = _sandbox_request(request, relative_request_path, _instance_seed(instance))
     sandbox_request["body"] = await _request_body(request)
 
+    if instance.get("spec") is None:
+        spec = spec_cache.get(mock_id, db.get_mock_instance_spec)
+        if spec is None:
+            raise HTTPException(status_code=404, detail=f"Mock instance not found: {mock_id}")
+        instance = {**instance, "spec": spec}
+
     try:
         result = await request_sandbox_serve(
             sandbox_id=str(instance["id"]),
@@ -677,7 +733,8 @@ async def _serve_mock(mock_id: str, sub_path: str, request: Request) -> Response
     except MockSandboxError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
-    db.touch_mock_instance(mock_id)
+    # Counted in memory and written by the flush sweep (#7196): no write on the request path.
+    activity_buffer.record(mock_id)
 
     operation_key = result.get("operation")
     matched = operation_key is not None

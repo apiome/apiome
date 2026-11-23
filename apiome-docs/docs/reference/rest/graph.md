@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `graph` · 6 operations
 
@@ -48,7 +48,7 @@ Request body for ask what a change affects.
 
 **Search the entities in the dependency graph**
 
-Every entity that has at least one edge, most connected first, with its name, owner team and in/out/stale edge counts. Filter with `q` (name or slug), `kind` and `provenance` (each repeatable) and `team` (owner team slug). `limit` is 1–2000 (default 200); `truncated` is true when more match.
+Every entity that has at least one edge, most connected first, with its name, owner team and in/out/stale edge counts. Filter with `q` (name or slug), `kind` and `provenance` (each repeatable) and `team` (owner team slug). `limit` is 1–2000 (default 200); `truncated` is true when more match. The order is a computed rank (edge count), which no cursor can continue, so this list pages by `offset` (at most 10,000).
 
 Requires `projects:view`.
 
@@ -63,8 +63,8 @@ Operation id: `get_graph_entities_v1_graph__tenant_slug__entities_get`
 | `kind` | query | array of string or null | no | Node kinds to keep. |
 | `team` | query | string or null | no | Owner team slug. |
 | `provenance` | query | array of string or null | no | Only count edges of these provenances. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 2000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -81,6 +81,8 @@ Operation id: `get_graph_entities_v1_graph__tenant_slug__entities_get`
 
 The entity's edges in the catalog dependency graph. `direction` is `out` (edges from the entity, the default) or `in` (edges to it); `kind` and `provenance` filter and may repeat. `limit` is 1–500 (default 100); `truncated` is true when more edges match. Stale edges come last with `stale: true`.
 
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. The `total` is counted only when `include_total` is set.
+
 Requires `projects:view`.
 
 Operation id: `get_entity_edges_v1_graph__tenant_slug__entities__kind___entity_id__edges_get`
@@ -95,8 +97,10 @@ Operation id: `get_entity_edges_v1_graph__tenant_slug__entities__kind___entity_i
 | `direction` | query | string | no | `out` or `in`. |
 | `kind` | query | array of string or null | no | Edge kinds to keep. |
 | `provenance` | query | array of string or null | no | Provenances to keep. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 500. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `labels` | query | boolean | no | Add each end's name, slug and owner team. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -267,10 +271,12 @@ One page of an entity's edges.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `edges` | array of `GraphEdge` | no | Edges. |
-| `total` | integer | yes | How many edges match the filters. |
+| `total` | integer or null | no | How many edges match the filters, counted up to 10,000. Present only when the request set `include_total`. |
 | `truncated` | boolean | yes | True when more edges match than this page holds. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `GraphEntityPage` {#schema-graphentitypage}
 

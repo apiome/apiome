@@ -28,6 +28,13 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from . import notification_store
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import (
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    parse_time_id_cursor,
+)
 from .notification_store import NotificationFilters
 from .notifications import (
     CODE_FORBIDDEN,
@@ -96,6 +103,8 @@ def _http_error(exc: NotificationValidationError) -> HTTPException:
         "event's `type`, the `payload` its sentence and deep link need, who caused it, and the "
         "project and version it points at.\n\n"
         "Filters combine: `unread` (only what has not been read) and `type`.\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. "
+        "The `total` is counted only when `include_total` is set.\n\n"
         "Reading the list never marks anything read. Requires only authentication — an inbox is "
         "the caller's own, so there is no permission to grant."
     ),
@@ -104,8 +113,10 @@ def list_notifications(
     tenant_slug: str,
     unread: bool = Query(default=False, description="Only unread notifications."),
     type: Optional[NotificationType] = Query(default=None, description="Only this event type."),
-    limit: int = Query(default=50, ge=1, le=200, description="Page size."),
-    offset: int = Query(default=0, ge=0, description="Notifications to skip."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> NotificationListResponse:
     """List the caller's notifications.
@@ -115,21 +126,37 @@ def list_notifications(
         unread: Only unread notifications.
         type: Only this event type.
         limit: Page size.
-        offset: Notifications to skip.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        include_total: Also count the matches.
+        offset: Notifications to skip (deprecated).
         auth_data: The authenticated principal.
 
     Returns:
-        The page and the total.
+        The page, whether another follows, and the total when asked for.
 
     Raises:
-        HTTPException: 403 for a credential with no tenant or no user behind it.
+        HTTPException: 400 for a malformed cursor; 403 for a credential with no tenant or no user
+            behind it.
     """
     tenant_id, user_id = _caller(auth_data)
     _ = tenant_slug
-    filters = NotificationFilters(unread=unread, type=type, limit=limit, offset=offset)
-    records, total = notification_store.list_notifications(tenant_id, user_id, filters)
+    filters = NotificationFilters(
+        unread=unread,
+        type=type,
+        limit=limit,
+        offset=offset,
+        cursor=parse_time_id_cursor(cursor),
+        include_total=include_total,
+    )
+    page, total = notification_store.list_notifications(tenant_id, user_id, filters)
     return NotificationListResponse(
-        notifications=records, count=len(records), total=total, limit=limit, offset=offset
+        notifications=page.items,
+        count=len(page.items),
+        total=total,
+        limit=limit,
+        offset=0 if filters.cursor else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

@@ -149,8 +149,16 @@ class FakeToolsetStore:
         return self._owned(tenant_id, toolset_id) is not None
 
     def list_agent_toolsets(
-        self, tenant_id: str, *, version_id: Optional[str] = None
+        self,
+        tenant_id: str,
+        *,
+        version_id: Optional[str] = None,
+        limit: Optional[int] = None,
+        cursor: Any = None,
     ) -> List[Dict[str, Any]]:
+        from app.tenant_list_paging import AGENT_TOOLSETS_ORDER
+        from tests.keyset_paging_fakes import ordered_rows
+
         self.calls.append("list_agent_toolsets")
         rows = [
             self._project(toolset)
@@ -158,7 +166,10 @@ class FakeToolsetStore:
             if toolset["tenant_id"] == tenant_id
             and (version_id is None or toolset["version_id"] == version_id)
         ]
-        return sorted(rows, key=lambda row: row["created_at"], reverse=True)
+        # Newest first, id ascending within one instant — the accessor's ORDER BY.
+        rows.sort(key=lambda row: str(row["id"]))
+        rows.sort(key=lambda row: row["created_at"], reverse=True)
+        return ordered_rows(AGENT_TOOLSETS_ORDER, rows)(limit=limit, cursor=cursor)
 
     def get_agent_toolset(self, tenant_id: str, toolset_id: str) -> Optional[Dict[str, Any]]:
         self.calls.append("get_agent_toolset")

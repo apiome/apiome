@@ -231,7 +231,7 @@ describe('tabs load lazily', () => {
   it('opens a deep-linked tab first and reads nothing for the others', async () => {
     await renderPage({ initialTab: 'discussion' });
     await screen.findByTestId('project-discussion-panel');
-    expect(urls(/comment-threads\?/)).toEqual([`/api/projects/${PROJECT_ID}/comment-threads?status=open&version=${HEAD}&limit=50&offset=0`]);
+    expect(urls(/comment-threads\?/)).toEqual([`/api/projects/${PROJECT_ID}/comment-threads?status=open&version=${HEAD}&limit=50&include_total=true`]);
     expect(urls(/\/changes$/)).toEqual([]);
   });
 

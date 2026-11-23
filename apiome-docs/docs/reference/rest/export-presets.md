@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-presets` · 5 operations
 
@@ -17,7 +17,7 @@ Tag: `export-presets` · 5 operations
 
 **List the workspace's export presets**
 
-Every export preset, by name. Requires `projects:view`.
+Every export preset, by name. At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is false. Requires `projects:view`.
 
 Operation id: `list_export_presets_v1_export__tenant_slug__presets_get`
 
@@ -26,6 +26,8 @@ Operation id: `list_export_presets_v1_export__tenant_slug__presets_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -171,6 +173,8 @@ A workspace's export presets, by name.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `presets` | array of [`ExportPresetModel`](#schema-exportpresetmodel) | no | Presets. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `ExportPresetModel` {#schema-exportpresetmodel}
 

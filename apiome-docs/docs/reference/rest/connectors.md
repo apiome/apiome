@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `connectors` · 16 operations
 
@@ -19,7 +19,9 @@ Tag: `connectors` · 16 operations
 
 List the tenant's catalog connectors (``imports:view``).
 
-Also returns every connector kind and the kinds this deployment can sync.
+Also returns every connector kind and the kinds this deployment can sync. By name, at most
+1,000 a page: pass the previous page's ``nextCursor`` as ``cursor`` until ``hasMore`` is false;
+a malformed cursor is a 400.
 
 Operation id: `list_connectors_v1_tenants__tenant_slug__connectors_get`
 
@@ -28,6 +30,8 @@ Operation id: `list_connectors_v1_tenants__tenant_slug__connectors_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -234,6 +238,9 @@ List the remote APIs a connector has seen (``imports:view``).
 ``catalogItemId`` links an imported API to its catalog item. An API that left the inventory
 is ``missing``; it is never deleted.
 
+Pages by ``cursor``: pass the previous page's ``nextCursor`` until ``hasMore`` is false. The
+``total`` is counted, up to 10,000, only when ``include_total`` is set (#7196).
+
 Operation id: `list_connector_items_v1_tenants__tenant_slug__connectors__connector_id__items_get`
 
 **Parameters**
@@ -243,8 +250,10 @@ Operation id: `list_connector_items_v1_tenants__tenant_slug__connectors__connect
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `connector_id` | path | string (uuid) | yes | Path parameter identifying the connector id segment. |
 | `status` | query | string or null | no | discovered \| imported \| ignored \| missing |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -389,6 +398,9 @@ List a connector's sync runs, newest first (``imports:view``).
 Runs are rows of the same refresh ledger Git refresh jobs use (``refreshSource:
 "connector"``), and their pulls count against the same tenant quota.
 
+Pages by ``cursor``: pass the previous page's ``nextCursor`` until ``hasMore`` is false. The
+``total`` is counted, up to 10,000, only when ``include_total`` is set (#7196).
+
 Operation id: `list_connector_runs_v1_tenants__tenant_slug__connectors__connector_id__runs_get`
 
 **Parameters**
@@ -397,8 +409,10 @@ Operation id: `list_connector_runs_v1_tenants__tenant_slug__connectors__connecto
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `connector_id` | path | string (uuid) | yes | Path parameter identifying the connector id segment. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -448,6 +462,9 @@ Each run says its ``source`` — ``git`` (with the repository, branch and path) 
 the connector's name and kind) — so one list can badge both. ``connector`` narrows it to one
 connector (a 404 for an unknown one).
 
+Pages by ``cursor``: pass the previous page's ``nextCursor`` until ``hasMore`` is false. The
+``total`` is counted, up to 10,000, only when ``include_total`` is set (#7196).
+
 Operation id: `list_refresh_runs_v1_tenants__tenant_slug__refresh_runs_get`
 
 **Parameters**
@@ -457,8 +474,10 @@ Operation id: `list_refresh_runs_v1_tenants__tenant_slug__refresh_runs_get`
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `connector` | query | string (uuid) or null | no | Only this connector's runs. |
 | `source` | query | string or null | no | git \| connector (both when omitted). |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -482,6 +501,10 @@ described APIs with HTTP servers that no connected gateway serves; **drift** lis
 whose deployed revision the catalog does not have; **ignored** lists ignored rows with their
 reasons. An unknown connector id is a 404.
 
+The report is computed over the connector inventory (its first 20,000 rows); each section
+returns its first ``limit`` rows (1,000 at most) while ``summary`` counts them all. Narrow with
+``connector`` or ``environment`` to see the rest of a longer section.
+
 Operation id: `get_shadow_report_v1_tenants__tenant_slug__shadow_report_get`
 
 **Parameters**
@@ -491,6 +514,7 @@ Operation id: `get_shadow_report_v1_tenants__tenant_slug__shadow_report_get`
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `connector` | query | string (uuid) or null | no | Only this connector's inventory. |
 | `environment` | query | string or null | no | Only inventory rows in this environment. |
+| `limit` | query | integer | no | Most rows returned in each section. At most 1000; `summary` still counts every row. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -607,9 +631,11 @@ One remote API in a connector's inventory.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `items` | array of [`ConnectorItemOut`](#schema-connectoritemout) | yes | Items. |
-| `total` | integer | yes | Total. |
+| `total` | integer or null | no | How many rows match, counted up to 10,000. Present only when the request set `include_total`. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ConnectorListResponse` {#schema-connectorlistresponse}
 
@@ -620,6 +646,8 @@ One remote API in a connector's inventory.
 | `connectors` | array of [`ConnectorOut`](#schema-connectorout) | yes | Connectors. |
 | `kinds` | array of string | yes | Kinds. |
 | `syncableKinds` | array of string | yes | Syncable Kinds. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `ConnectorOut` {#schema-connectorout}
 
@@ -669,9 +697,11 @@ One sync run of a connector (a row of the shared refresh ledger).
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `runs` | array of [`ConnectorRunOut`](#schema-connectorrunout) | yes | Runs. |
-| `total` | integer | yes | Total. |
+| `total` | integer or null | no | How many rows match, counted up to 10,000. Present only when the request set `include_total`. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ConnectorUpdate` {#schema-connectorupdate}
 
@@ -701,9 +731,11 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `runs` | array of `RefreshRunOut` | yes | Runs. |
-| `total` | integer | yes | Total. |
+| `total` | integer or null | no | How many rows match, counted up to 10,000. Present only when the request set `include_total`. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ShadowReport` {#schema-shadowreport}
 

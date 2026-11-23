@@ -89,7 +89,7 @@ def test_list_namespaces_scoped_to_caller_tenant():
     with patch("app.type_namespaces_routes.db") as mdb:
         mdb.list_type_namespaces.return_value = []
         client.get("/v1/types/some-other-slug/namespaces")
-        mdb.list_type_namespaces.assert_called_once_with("t1", root_status=None)
+        mdb.list_type_namespaces.assert_called_once_with("t1", root_status=None, limit=1001, cursor=None)
 
 
 def test_list_namespaces_requires_authentication():
@@ -341,7 +341,7 @@ def test_list_namespaces_filters_by_root_status(status):
         mdb.list_type_namespaces.return_value = []
         r = client.get(f"/v1/types/acme/namespaces?root_status={status}")
     assert r.status_code == 200
-    mdb.list_type_namespaces.assert_called_once_with("t1", root_status=status)
+    mdb.list_type_namespaces.assert_called_once_with("t1", root_status=status, limit=1001, cursor=None)
 
 
 def test_list_namespaces_rejects_unknown_root_status():

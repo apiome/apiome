@@ -36,6 +36,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .keyset_pagination import (
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    page_of,
+    parse_time_id_cursor,
+    time_id_key,
+)
 from .permissions import Action, Resource, enforce_permission
 from .sdk_publish_routes import resolve_project, tenant_id_of, write_audit
 from .sdk_regen_policy import (
@@ -297,17 +306,22 @@ class RegenRunListResponse(BaseModel):
 
     Attributes:
         runs: The runs, newest first.
-        total: How many runs match.
+        total: How many runs match, counted up to 10,000; set only when the request asked
+            for it with ``include_total``.
         limit: The page size used.
-        offset: The offset used.
+        offset: The offset used (deprecated; ``0`` when paging by cursor).
+        has_more: Whether another page exists.
+        next_cursor: Pass as ``cursor`` to read the next page; ``None`` on the last page.
     """
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     runs: List[RegenRunModel]
-    total: int
+    total: Optional[int] = None
     limit: int
     offset: int
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 # ===========================================================================
@@ -710,7 +724,10 @@ def _runs_with_jobs(
         "the SDK-4.2 delivery run (pull request), with links to both, and every attempt.\n\n"
         "`status=dead_letter` lists the dead letter: runs with at least one job that failed "
         "permanently or spent its attempts, each retryable with `POST …/sdk-regen-jobs/{jobId}/"
-        "retry`.\n\nRequires `versions:view`."
+        "retry`.\n\n"
+        "Pages by `cursor`: pass the previous page's `nextCursor` until `hasMore` is false. The `total` "
+        "is counted only when `include_total` is set.\n\n"
+        "Requires `versions:view`."
     ),
     responses={
         404: {"description": "Project not found in this tenant."},
@@ -724,8 +741,10 @@ def list_regen_runs(
         default=None,
         description=f"Only runs with a job in this status: {', '.join(JOB_STATUSES)}.",
     ),
-    limit: int = Query(default=50, ge=1, le=MAX_HISTORY_LIMIT),
-    offset: int = Query(default=0, ge=0),
+    limit: int = limit_query(maximum=MAX_HISTORY_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> RegenRunListResponse:
     """Return a page of a project's regen history.
@@ -735,17 +754,20 @@ def list_regen_runs(
         project_ref: The project's id or slug.
         status: Narrow to runs with a job in this status.
         limit: Page size.
-        offset: Runs to skip.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        include_total: Also count the matches.
+        offset: Runs to skip (deprecated).
         auth_data: Authenticated principal.
 
     Returns:
-        The page, newest first.
+        The page, newest first, whether another follows, and the total when asked for.
 
     Raises:
-        HTTPException: 403 without ``versions:view``; 404 when the project is unknown; 422 for an
-            unknown status.
+        HTTPException: 400 for a malformed cursor; 403 without ``versions:view``; 404 when the
+            project is unknown; 422 for an unknown status.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    after = parse_time_id_cursor(cursor)
     tenant_id = tenant_id_of(auth_data)
     project = resolve_project(tenant_id, project_ref)
     project_id = str(project["id"])
@@ -758,12 +780,21 @@ def list_regen_runs(
                 "message": f"status must be one of {', '.join(JOB_STATUSES)}.",
             },
         )
-    rows = db.list_sdk_regen_runs(tenant_id, project_id, job_status=key, limit=limit, offset=offset)
+    rows = db.list_sdk_regen_runs(
+        tenant_id, project_id, job_status=key, limit=limit + 1, offset=offset, cursor=after
+    )
+    page = page_of(rows, limit, time_id_key())
     return RegenRunListResponse(
-        runs=_runs_with_jobs(tenant_id, rows, tenant_slug=tenant_slug),
-        total=db.count_sdk_regen_runs(tenant_id, project_id, job_status=key),
+        runs=_runs_with_jobs(tenant_id, page.items, tenant_slug=tenant_slug),
+        total=(
+            db.count_sdk_regen_runs(tenant_id, project_id, job_status=key)
+            if include_total
+            else None
+        ),
         limit=limit,
-        offset=offset,
+        offset=0 if after else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

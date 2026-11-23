@@ -245,7 +245,7 @@ def test_a_revoked_consumers_edges_go_stale_then_are_purged(tx) -> None:
     assert len(mobile) == 2 and all(e["stale_since"] is not None for e in mobile)
     assert all(e["stale_since"] is None for e in edges if e["from_id"] != seed["consumers"]["mobile"])
 
-    page = list_edges(db, seed["tenant"], "consumer", seed["consumers"]["mobile"])
+    page = list_edges(db, seed["tenant"], "consumer", seed["consumers"]["mobile"], include_total=True)
     assert page.total == 2 and all(edge["stale"] for edge in page.edges)
     incoming = list_edges(db, seed["tenant"], "project", seed["project"], direction="in")
     assert [edge["stale"] for edge in incoming.edges] == [False, False, True, True]  # stale last
@@ -279,13 +279,23 @@ def test_reads_are_bounded_and_report_truncation(tx) -> None:
     db, cursor = tx
     seed = _seed(cursor)
     materialize_on_cursor(cursor, seed["tenant"], ("consumes",))
-    first = list_edges(db, seed["tenant"], "project", seed["project"], direction="in", limit=3)
+    counted = {"direction": "in", "include_total": True}
+    first = list_edges(db, seed["tenant"], "project", seed["project"], limit=3, **counted)
     assert (len(first.edges), first.total, first.truncated) == (3, 4, True)
-    last = list_edges(db, seed["tenant"], "project", seed["project"], direction="in", limit=3, offset=3)
+    last = list_edges(db, seed["tenant"], "project", seed["project"], limit=3, offset=3, **counted)
     assert (len(last.edges), last.total, last.truncated) == (1, 4, False)
-    past = list_edges(db, seed["tenant"], "project", seed["project"], direction="in", limit=3, offset=10)
+    past = list_edges(db, seed["tenant"], "project", seed["project"], limit=3, offset=10, **counted)
     assert (len(past.edges), past.total, past.truncated) == (0, 4, False)
+    # The cursor reaches the same fourth edge the offset does, and then the list ends (#7196).
+    from app.catalog_graph import decode_edge_cursor
+
+    after = list_edges(
+        db, seed["tenant"], "project", seed["project"], direction="in", limit=3,
+        cursor=decode_edge_cursor(first.next_cursor),
+    )
+    assert [edge["id"] for edge in after.edges] == [edge["id"] for edge in last.edges]
+    assert (after.total, after.truncated, after.next_cursor) == (None, False, None)
     # The other node kind spelling of a projects row finds the same edges.
-    assert list_edges(db, seed["tenant"], "catalog_item", seed["project"], direction="in").total == 4
-    served = list_edges(db, seed["tenant"], "project", seed["project"], direction="in", edge_kinds=("served_by",))
+    assert list_edges(db, seed["tenant"], "catalog_item", seed["project"], **counted).total == 4
+    served = list_edges(db, seed["tenant"], "project", seed["project"], edge_kinds=("served_by",), **counted)
     assert served.total == 0

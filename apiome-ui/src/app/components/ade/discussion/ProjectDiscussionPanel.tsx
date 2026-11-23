@@ -57,6 +57,7 @@ import {
   type DiscussionThread,
 } from '@lib/comment-discussion';
 import { scrollBehavior } from '@lib/motion';
+import { formatTotal, hasMoreAfter, readPage, type PageInfo } from '@lib/cursor-pages';
 
 /** The part of a version row the panel reads: its id and its label. */
 export interface ProjectDiscussionVersion {
@@ -107,8 +108,10 @@ interface LoadedPage {
   key: string;
   /** The threads loaded so far. */
   threads: DiscussionThread[];
-  /** How many threads match in all. */
-  total: number;
+  /** The first page's count of every match, or null when apiome-rest did not count. */
+  total: number | null;
+  /** The latest page's paging fields: whether another follows, and where it starts. */
+  paging: PageInfo;
 }
 
 /** What the BFF routes answer with. */
@@ -263,7 +266,12 @@ export function ProjectDiscussionPanel({
   const [mountedAt] = React.useState(() => Date.now());
 
   const routeBase = `/api/projects/${encodeURIComponent(projectId)}/comment-threads`;
-  const listKey = discussionListParams(filters, { limit: DISCUSSION_PAGE_SIZE, offset: 0 }, versionId);
+  // Only the first page asks for the count; later pages continue from its cursor (#7196).
+  const listKey = discussionListParams(
+    filters,
+    { limit: DISCUSSION_PAGE_SIZE, includeTotal: true },
+    versionId
+  );
   const summaryKey = discussionSummaryParams(filters, versionId);
 
   // The latest callback, without re-reading the summary each time the parent re-renders.
@@ -287,7 +295,8 @@ export function ProjectDiscussionPanel({
         setPage({
           key: listKey,
           threads: json.threads,
-          total: typeof json.total === 'number' ? json.total : json.threads.length,
+          total: readPage(json).total,
+          paging: readPage(json),
         });
       } catch (error) {
         if (!cancelled) {
@@ -379,7 +388,11 @@ export function ProjectDiscussionPanel({
       const json = await getEnvelope<DiscussionThreadPageShape>(
         `${routeBase}${discussionListParams(
           filters,
-          { limit: DISCUSSION_PAGE_SIZE, offset: current.threads.length },
+          {
+            limit: DISCUSSION_PAGE_SIZE,
+            cursor: current.paging.nextCursor,
+            offset: current.threads.length,
+          },
           versionId
         )}`
       );
@@ -394,7 +407,8 @@ export function ProjectDiscussionPanel({
         return {
           key,
           threads: [...previous.threads, ...next.filter((thread) => !seen.has(thread.id))],
-          total: typeof json.total === 'number' ? json.total : previous.total,
+          total: readPage(json).total ?? previous.total,
+          paging: readPage(json),
         };
       });
     } catch (error) {
@@ -403,6 +417,10 @@ export function ProjectDiscussionPanel({
       setLoadingMore(false);
     }
   };
+
+  // Whether another page follows is apiome-rest's `has_more`, never a comparison with the count.
+  const hasMore = current ? hasMoreAfter(current.paging, current.threads.length) : false;
+  const shownTotal = formatTotal(current?.total);
 
   let body: React.ReactNode;
   if (current && current.threads.length === 0) {
@@ -435,7 +453,7 @@ export function ProjectDiscussionPanel({
             />
           ))}
         </ul>
-        {current.threads.length < current.total || moreError ? (
+        {hasMore || moreError ? (
           <div className="disc-more">
             {moreError ? (
               <Alert variant="error" className="disc-more__error" data-testid="discussion-more-error">
@@ -443,9 +461,10 @@ export function ProjectDiscussionPanel({
               </Alert>
             ) : null}
             <span className="disc-more__count" data-testid="discussion-shown">
-              Showing {current.threads.length} of {current.total}
+              Showing {current.threads.length.toLocaleString('en-US')}
+              {shownTotal ? ` of ${shownTotal}` : ''}
             </span>
-            {current.threads.length < current.total ? (
+            {hasMore ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -548,5 +567,7 @@ export function ProjectDiscussionPanel({
 /** The list route's payload, as the panel reads it. */
 interface DiscussionThreadPageShape {
   threads: DiscussionThread[];
-  total: number;
+  total: number | null;
+  has_more?: boolean;
+  next_cursor?: string | null;
 }

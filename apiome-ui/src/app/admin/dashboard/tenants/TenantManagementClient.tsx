@@ -38,6 +38,7 @@ import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm'
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { SkeletonText } from '@/app/components/ui/Skeleton';
+import { AdminLoadMore, useAdminPagedList, useSettledChange } from '../components/adminPagedList';
 
 interface Tenant {
   id: string;
@@ -50,6 +51,14 @@ interface Tenant {
   user_count?: number;
   admin_count?: number;
   project_count?: number;
+}
+
+/** The console's headline numbers, counted by the server over every live tenant. */
+interface TenantTotals {
+  tenant_count: number;
+  active_count: number;
+  user_count: number;
+  admin_count: number;
 }
 
 interface TenantUser {
@@ -72,11 +81,50 @@ interface User {
 
 export default function TenantManagementClient() {
   const { confirm } = useDialog();
-  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
-  const [tenantUsers, setTenantUsers] = useState<TenantUser[]>([]);
-  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  // The id the member lists read: set before `selectedTenant` re-renders, so a read started
+  // from the click that selects a tenant already asks for that tenant.
+  const selectedTenantIdRef = useRef<string | null>(null);
+
+  // Every list here is paged and searched by the server (DBP-1.13, #7196).
+  const [tenantSearch, setTenantSearch] = useState('');
+  const [availableUserSearch, setAvailableUserSearch] = useState('');
+  const [initialUserSearch, setInitialUserSearch] = useState('');
+  const tenantList = useAdminPagedList<Tenant, { totals?: TenantTotals | null }>(
+    ({ cursor }) => getTenantStats({ cursor, search: tenantSearch, includeTotals: cursor === null }),
+    'tenants',
+    // PostgreSQL COUNT returns a bigint, which serializes as a string.
+    (t) => ({
+      ...t,
+      user_count: Number(t.user_count) || 0,
+      admin_count: Number(t.admin_count) || 0,
+      project_count: Number(t.project_count) || 0,
+    }),
+  );
+  const tenantUserList = useAdminPagedList<TenantUser>(
+    ({ cursor }) => getTenantUsers(selectedTenantIdRef.current ?? '', { cursor }),
+    'users',
+  );
+  const availableUserList = useAdminPagedList<User>(
+    ({ cursor }) =>
+      getUsersNotInTenant(selectedTenantIdRef.current ?? '', { cursor, search: availableUserSearch }),
+    'users',
+  );
+  const allUserList = useAdminPagedList<User>(
+    ({ cursor }) => getAllUsers({ cursor, search: initialUserSearch }),
+    'users',
+  );
+  const tenants = tenantList.items;
+  const tenantUsers = tenantUserList.items;
+  const availableUsers = availableUserList.items;
+  const allUsers = allUserList.items;
+  // The headline numbers cover every tenant, so the server counts them; the loaded rows are
+  // the fallback when it did not.
+  const totals = tenantList.extra?.totals ?? null;
+  const tenantCount = totals?.tenant_count ?? tenants.length;
+  const memberCount = totals?.user_count ?? tenants.reduce((sum, t) => sum + (t.user_count || 0), 0);
+  const adminCount = totals?.admin_count ?? tenants.reduce((sum, t) => sum + (t.admin_count || 0), 0);
+  const activeCount = totals?.active_count ?? tenants.filter((t) => t.enabled).length;
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -103,18 +151,7 @@ export default function TenantManagementClient() {
   const loadTenants = async () => {
     setLoading(true);
     try {
-      const result = await getTenantStats();
-      const data = JSON.parse(result);
-      if (data.success) {
-        // Convert string counts to numbers (PostgreSQL COUNT returns BigInt which serializes as string)
-        const tenantsWithNumbers = data.tenants.map((t: any) => ({
-          ...t,
-          user_count: Number(t.user_count) || 0,
-          admin_count: Number(t.admin_count) || 0,
-          project_count: Number(t.project_count) || 0,
-        }));
-        setTenants(tenantsWithNumbers);
-      }
+      await tenantList.reload();
     } catch (error) {
       console.error('Error loading tenants:', error);
       showMessage('error', 'Failed to load tenants');
@@ -125,32 +162,23 @@ export default function TenantManagementClient() {
 
   const loadAllUsers = async () => {
     try {
-      const result = await getAllUsers();
-      const data = JSON.parse(result);
-      if (data.success) {
-        setAllUsers(data.users);
-      }
+      await allUserList.reload();
     } catch (error) {
       console.error('Error loading users:', error);
     }
   };
 
+  useSettledChange(tenantSearch, () => void loadTenants());
+  useSettledChange(initialUserSearch, () => void loadAllUsers());
+  useSettledChange(availableUserSearch, () => {
+    if (!selectedTenantIdRef.current) return;
+    void availableUserList.reload().catch((error) => console.error('Error loading users:', error));
+  });
+
   const loadTenantUsers = async (tenantId: string) => {
+    selectedTenantIdRef.current = tenantId;
     try {
-      const [usersResult, availableResult] = await Promise.all([
-        getTenantUsers(tenantId),
-        getUsersNotInTenant(tenantId),
-      ]);
-
-      const usersData = JSON.parse(usersResult);
-      const availableData = JSON.parse(availableResult);
-
-      if (usersData.success) {
-        setTenantUsers(usersData.users);
-      }
-      if (availableData.success) {
-        setAvailableUsers(availableData.users);
-      }
+      await Promise.all([tenantUserList.reload(), availableUserList.reload()]);
     } catch (error) {
       console.error('Error loading tenant users:', error);
     }
@@ -305,7 +333,9 @@ export default function TenantManagementClient() {
         await loadTenants();
         if (selectedTenant?.id === tenant.id) {
           setSelectedTenant(null);
-          setTenantUsers([]);
+          selectedTenantIdRef.current = null;
+          tenantUserList.clear();
+          availableUserList.clear();
         }
       } else {
         showMessage('error', data.error || 'Failed to delete tenant');
@@ -447,7 +477,7 @@ export default function TenantManagementClient() {
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 text-xs">Total Tenants</p>
-                  <p className="text-gray-900 dark:text-white text-xl font-bold">{tenants.length}</p>
+                  <p className="text-gray-900 dark:text-white text-xl font-bold">{tenantCount}</p>
                 </div>
               </div>
             </div>
@@ -460,7 +490,7 @@ export default function TenantManagementClient() {
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 text-xs">Total Users</p>
                   <p className="text-gray-900 dark:text-white text-xl font-bold">
-                    {tenants.reduce((sum, t) => sum + (t.user_count || 0), 0)}
+                    {memberCount}
                   </p>
                 </div>
               </div>
@@ -474,7 +504,7 @@ export default function TenantManagementClient() {
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 text-xs">Total Admins</p>
                   <p className="text-gray-900 dark:text-white text-xl font-bold">
-                    {tenants.reduce((sum, t) => sum + (t.admin_count || 0), 0)}
+                    {adminCount}
                   </p>
                 </div>
               </div>
@@ -488,7 +518,7 @@ export default function TenantManagementClient() {
                 <div>
                   <p className="text-gray-500 dark:text-gray-400 text-xs">Active Tenants</p>
                   <p className="text-gray-900 dark:text-white text-xl font-bold">
-                    {tenants.filter((t) => t.enabled).length}
+                    {activeCount}
                   </p>
                 </div>
               </div>
@@ -511,8 +541,17 @@ export default function TenantManagementClient() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Tenants List */}
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
-              <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tenants</h3>
+                <input
+                  type="search"
+                  value={tenantSearch}
+                  onChange={(e) => setTenantSearch(e.target.value)}
+                  placeholder="Search tenants by name or slug…"
+                  aria-label="Search tenants"
+                  data-testid="admin-tenants-search"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
+                />
               </div>
               <div className="max-h-[600px] divide-y divide-slate-200 overflow-y-auto dark:divide-slate-800">
                 {loading ? (
@@ -522,8 +561,12 @@ export default function TenantManagementClient() {
                     variant="compact"
                     surface={false}
                     icon={<Building2 />}
-                    title="No tenants yet"
-                    description="Create a tenant to group users and their projects."
+                    title={tenantSearch.trim() ? 'No matching tenants' : 'No tenants yet'}
+                    description={
+                      tenantSearch.trim()
+                        ? 'No tenant has a name or slug matching the search.'
+                        : 'Create a tenant to group users and their projects.'
+                    }
                   />
                 ) : (
                   tenants.map((tenant) => (
@@ -625,6 +668,9 @@ export default function TenantManagementClient() {
                       </div>
                     </div>
                   ))
+                )}
+                {loading ? null : (
+                  <AdminLoadMore list={tenantList} noun="tenants" testId="admin-tenants-load-more" />
                 )}
               </div>
             </div>
@@ -755,6 +801,9 @@ export default function TenantManagementClient() {
                     </div>
                   ))
                 )}
+                {selectedTenant ? (
+                  <AdminLoadMore list={tenantUserList} noun="members" testId="admin-tenant-users-load-more" />
+                ) : null}
               </div>
             </div>
           </div>
@@ -826,6 +875,15 @@ export default function TenantManagementClient() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Initial User (Optional)
                 </label>
+                <input
+                  type="search"
+                  value={initialUserSearch}
+                  onChange={(e) => setInitialUserSearch(e.target.value)}
+                  placeholder="Search users by name or email…"
+                  aria-label="Search users for the initial user"
+                  data-testid="admin-tenants-initial-user-search"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 mb-2"
+                />
                 <select
                   value={newTenant.initialUserId}
                   onChange={(e) => setNewTenant({ ...newTenant, initialUserId: e.target.value })}
@@ -840,6 +898,9 @@ export default function TenantManagementClient() {
                 </select>
                 <p className="text-gray-500 text-xs mt-1">
                   Add a user to this tenant immediately upon creation
+                  {allUserList.hasMore
+                    ? ` — showing the first ${allUsers.length} users; search to find another`
+                    : ''}
                 </p>
               </div>
 
@@ -979,13 +1040,26 @@ export default function TenantManagementClient() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
+              <input
+                type="search"
+                value={availableUserSearch}
+                onChange={(e) => setAvailableUserSearch(e.target.value)}
+                placeholder="Search users by name or email…"
+                aria-label="Search users to add"
+                data-testid="admin-tenants-add-user-search"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 mb-3"
+              />
               {availableUsers.length === 0 ? (
                 <EmptyState
                   variant="compact"
                   surface={false}
                   icon={<Users />}
-                  title="Everyone is already here"
-                  description="Every user already belongs to this tenant."
+                  title={availableUserSearch.trim() ? 'No matching users' : 'Everyone is already here'}
+                  description={
+                    availableUserSearch.trim()
+                      ? 'No user outside this tenant matches the search.'
+                      : 'Every user already belongs to this tenant.'
+                  }
                 />
               ) : (
                 <div className="space-y-2">
@@ -1010,6 +1084,7 @@ export default function TenantManagementClient() {
                   ))}
                 </div>
               )}
+              <AdminLoadMore list={availableUserList} noun="users" testId="admin-tenants-add-user-load-more" />
             </div>
           </div>
         </div>

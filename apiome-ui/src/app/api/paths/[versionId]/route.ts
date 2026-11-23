@@ -9,6 +9,7 @@ import { getAuthSession } from '@lib/auth/server-session';
 import jwt from 'jsonwebtoken';
 import { getTenantById } from '@lib/db/helper';
 import { getJwtSigningSecret } from '@lib/rest-auth';
+import { fetchAllPages } from '@lib/rest-paged-list';
 
 const REST_API_BASE_URL = process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
 
@@ -99,7 +100,8 @@ export async function GET(
       current_tenant_id: tenantId,
     });
 
-    const response = await fetch(`${REST_API_BASE_URL}/paths/${tenant.slug}/${versionId}`, {
+    // The REST list is paged (#7196); this route still answers with the whole list.
+    const response = await fetchAllPages(`${REST_API_BASE_URL}/paths/${tenant.slug}/${versionId}`, {
       method: 'GET',
       headers,
     });

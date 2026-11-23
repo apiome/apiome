@@ -21,6 +21,7 @@
     "Database.update_class": 1,
     "Database.update_operation": 1,
     "Database.update_path": 1,
+    "GET /v1/mock/{mock}/\u2026 (warm)": 1,
     "GET /v1/paths/{tenant}/{version}/{path}/full (1,000 operations)": 6,
     "GET /v1/paths/{tenant}/{version}/{path}/full (10 operations)": 6,
     "GET /v1/projects/{tenant}": 2,

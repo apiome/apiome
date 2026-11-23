@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `projects` · 21 operations
 
@@ -34,7 +34,11 @@ Operation id: `list_project_domain_categories_global_v1_projects_domains_get`
 
 **List Projects**
 
-List all projects for a tenant.
+List a tenant's projects, newest first, one page at a time.
+
+The body is a JSON array. At most ``limit`` projects (200 at most) are returned; the
+``X-Has-More`` response header says whether more exist and ``X-Next-Cursor`` carries the
+``cursor`` of the next page (#7196).
 
 Supports authentication via:
 - JWT token in Authorization header (Bearer token)
@@ -42,11 +46,18 @@ Supports authentication via:
 
 Args:
     tenant_slug: The tenant slug
+    response: The outgoing response (paging headers are set on it).
     include_deleted: Include rows with deleted_at set (for trash / restore flows).
+    team: Only projects owned by this team.
+    limit: Page size.
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
     auth_data: Authentication data (injected by dependency)
 
 Returns:
-    List of projects for the tenant
+    One page of the tenant's projects.
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
 
 Operation id: `list_projects_v1_projects__tenant_slug__get`
 
@@ -57,6 +68,8 @@ Operation id: `list_projects_v1_projects__tenant_slug__get`
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `include_deleted` | query | boolean | no | When true, include soft-deleted projects (active projects listed first). |
 | `team` | query | string or null | no | Only projects whose owner (confirmed, else suggested) is this team slug (CDG-2.4). |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -430,13 +443,21 @@ outcome, the content-addressed evidence snapshot id, and whether that snapshot i
 Empty for projects that were never a conversion target. Requires authentication + tenant
 scoping only, like every other project read.
 
+One page of at most ``limit`` rows (200 at most); pass the page's ``nextCursor`` as ``cursor``
+while ``hasMore`` is true (#7196).
+
 Args:
     tenant_slug: The tenant slug.
     project_id: The (target) project ID.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
     auth_data: Authentication data (injected by dependency).
 
 Returns:
     The :class:`~app.models.ProjectConversionHistoryResponse`, newest first.
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 when the project is unknown.
 
 Operation id: `get_project_conversion_history_v1_projects__tenant_slug___project_id__conversions_get`
 
@@ -446,6 +467,8 @@ Operation id: `get_project_conversion_history_v1_projects__tenant_slug___project
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -794,6 +817,8 @@ Project, newest first (CPDO-3.3). Empty for projects that were never a conversio
 | --- | --- | --- | --- |
 | `projectId` | string | yes | The target Project id. |
 | `conversions` | array of `ConversionProvenanceEntry` | no | Provenance rows targeting this Project, newest first. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ProjectCreateRequest` {#schema-projectcreaterequest}
 

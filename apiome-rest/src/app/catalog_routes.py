@@ -19,7 +19,7 @@ import logging
 import time
 from typing import Any, Dict, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
@@ -69,6 +69,17 @@ from .conversion_projection import (
     summarize_conversion_manifest,
 )
 from .database import db
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    Page,
+    cursor_query,
+    limit_query,
+    page_of,
+    parse_key_cursor,
+    set_page_headers,
+)
+from .project_list_paging import PROJECT_CURSOR_SIZE, project_row_cursor
+from .tenant_config_list_orders import CONVERSIONS_BY_SOURCE_ORDER
 from .lint_routes import build_lint_report
 from .models import (
     CatalogCategoriesResponse,
@@ -221,9 +232,71 @@ _CONVENTION_QUERY = Query(
 )
 
 
+#: Rows read per statement while a facet filter is being applied in Python (see below).
+_CATALOG_SCAN_BATCH = 500
+
+
+def _catalog_page(
+    tenant_id: str,
+    *,
+    include_deleted: bool,
+    identity_group_id: Optional[str],
+    team: Optional[str],
+    filters: CatalogFacetFilters,
+    limit: int,
+    cursor: Optional[List[Any]],
+) -> tuple[Page[Dict[str, Any]], Dict[str, List[str]]]:
+    """Read one page of catalog items that pass the facet filters (#7196).
+
+    The facets are derived in Python, so the list cannot be cut in SQL alone. Without a facet
+    filter one statement reads exactly ``limit + 1`` rows. With one, rows are read in keyset
+    batches and filtered until the page is full or the catalog ends, so a page never comes back
+    short while matches remain.
+
+    Args:
+        tenant_id: The caller's tenant.
+        include_deleted: List soft-deleted items after the live ones.
+        identity_group_id: Only this identity group.
+        team: Only items owned by this team.
+        filters: The parsed facet selection (:func:`_facet_filters`).
+        limit: Page size.
+        cursor: The decoded cursor of the last item already seen, or ``None``.
+
+    Returns:
+        The page, and the tags of every item on it (by item id).
+    """
+    batch_size = max(limit + 1, _CATALOG_SCAN_BATCH) if filters.active else limit + 1
+    kept: List[Dict[str, Any]] = []
+    tags_by_item: Dict[str, List[str]] = {}
+    position = cursor
+    while len(kept) <= limit:
+        batch = db.get_catalog_items_for_tenant(
+            tenant_id,
+            include_deleted=include_deleted,
+            identity_group_id=identity_group_id,
+            team=team,
+            limit=batch_size,
+            cursor=position,
+        )
+        if not batch:
+            break
+        batch_tags = db.get_artifact_tags_for_projects(
+            tenant_id, [str(item["id"]) for item in batch]
+        )
+        tags_by_item.update(batch_tags)
+        kept.extend(filter_catalog_items(batch, batch_tags, filters))
+        if len(batch) < batch_size:
+            break
+        last = batch[-1]
+        position = [last.get("deleted_at") is None, last["created_at"], last["id"]]
+    page = page_of(kept, limit, project_row_cursor)
+    return page, tags_by_item
+
+
 @router.get("/{tenant_slug}")
 def list_catalog_items(
     tenant_slug: str,
+    response: Response,
     include_deleted: bool = Query(
         False,
         description="When true, include soft-deleted catalog items (active items listed first).",
@@ -243,10 +316,17 @@ def list_catalog_items(
         max_length=128,
         description="Only items whose owner (confirmed, else suggested) is this team slug (CDG-2.4).",
     ),
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[CatalogItemSchema]:
     """
-    List all catalog items for a tenant.
+    List a tenant's catalog items, newest first, one page at a time.
+
+    The body is a JSON array. At most ``limit`` items (200 at most) are returned; the
+    ``X-Has-More`` response header says whether more exist and ``X-Next-Cursor`` carries the
+    ``cursor`` of the next page (#7196). Facet filters apply before paging, so a page is full
+    whenever enough items match.
 
     Returns the same envelope as ``GET /v1/projects/{tenant_slug}`` (so the Catalog screen can be
     cloned from the Projects dashboard) restricted to the non-publishable slice, with each item
@@ -273,24 +353,28 @@ def list_catalog_items(
         tag: Tag facet values.
         convention: REST hypermedia convention facet values (MFI-19.6).
         team: Owner team slug; filtered in SQL, on the owner each item shows (CDG-2.4).
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
         auth_data: Authentication data (injected by dependency).
 
     Returns:
-        List of catalog items for the tenant (active first when include_deleted is set).
+        One page of the tenant's catalog items (active first when include_deleted is set).
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
     """
     tenant_id = auth_data["tenant_id"]
-    items = db.get_catalog_items_for_tenant(
+    page, tags_by_item = _catalog_page(
         tenant_id,
         include_deleted=include_deleted,
         identity_group_id=identity_group_id,
         team=team,
+        filters=_facet_filters(protocol, format_, domain, tag, convention),
+        limit=limit,
+        cursor=parse_key_cursor(cursor, PROJECT_CURSOR_SIZE),
     )
-    tags_by_item = db.get_artifact_tags_for_projects(
-        tenant_id, [str(item["id"]) for item in items]
-    )
-    kept = filter_catalog_items(
-        items, tags_by_item, _facet_filters(protocol, format_, domain, tag, convention)
-    )
+    set_page_headers(response, page)
+    kept = page.items
     # MFI-31.3: each item's newest undismissed drift, for the card badge.
     drift = drift_badges(tenant_id, [str(item["id"]) for item in kept])
     return [
@@ -918,9 +1002,14 @@ def get_catalog_projection(
 def get_catalog_conversion_history(
     tenant_slug: str,
     item_id: str,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CatalogConversionHistoryResponse:
-    """Return a catalog item's full conversion history, newest first (CPDO-3.3).
+    """Return a catalog item's conversion history, newest first, one page at a time (CPDO-3.3).
+
+    At most 200 rows a page (#7196): pass the previous page's ``nextCursor`` as ``cursor`` until
+    ``hasMore`` is false; a malformed cursor is a 400.
 
     One entry per convert/re-convert from the append-only ``conversion_provenance`` ledger: the
     target Project + revision it produced, the fidelity outcome, the converter tool versions, the
@@ -943,17 +1032,21 @@ def get_catalog_conversion_history(
         The :class:`~app.models.CatalogConversionHistoryResponse`, newest first.
     """
     _ = tenant_slug
+    after = CONVERSIONS_BY_SOURCE_ORDER.parse(cursor)
     tenant_id = auth_data["tenant_id"]
 
     item = db.get_catalog_item_by_id(item_id, tenant_id)
     if not item:
         raise HTTPException(status_code=404, detail=f"Catalog item not found: {item_id}")
 
-    rows = db.get_conversions_for_source(tenant_id, item_id)
+    rows = db.get_conversions_for_source(tenant_id, item_id, limit=limit + 1, cursor=after)
+    page = CONVERSIONS_BY_SOURCE_ORDER.page(rows, limit)
     return CatalogConversionHistoryResponse(
         item_id=item_id,
         current_source_hash=current_source_digest(item),
-        conversions=[provenance_entry(row) for row in rows],
+        conversions=[provenance_entry(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

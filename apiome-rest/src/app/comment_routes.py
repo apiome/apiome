@@ -60,6 +60,13 @@ from .comments import (
 )
 from .config import settings
 from .database import db
+from .keyset_pagination import (
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    parse_time_id_cursor,
+)
 from .permissions import Action, Resource, enforce_permission
 from .rate_limit import FixedWindowRateLimiter
 
@@ -98,9 +105,19 @@ class CommentThreadListResponse(BaseModel):
         default_factory=list, description="Threads, most recently active first."
     )
     count: int = Field(description="How many threads this page holds.")
-    total: int = Field(description="How many threads match the filters in all.")
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many threads match the filters, counted up to 10,000. Present only when the "
+            "request set `include_total`."
+        ),
+    )
     limit: int = Field(description="The page size used.")
-    offset: int = Field(description="The offset used.")
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class CommentDeletionResponse(BaseModel):
@@ -208,6 +225,8 @@ def enforce_comment_rate_limit(tenant_id: str, user_id: str) -> None:
         "narrow to one kind of element or one element; `mentions_me=true` keeps threads with a "
         "comment mentioning the caller; `origin` keeps `internal` threads or the `consumer` "
         "feedback Browse readers opened (every thread carries its `origin`).\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. "
+        "The `total` is counted only when `include_total` is set.\n\n"
         "Requires `projects:view`."
     ),
 )
@@ -227,8 +246,10 @@ def list_comment_threads(
         default=None,
         description="`internal` (workspace members) or `consumer` (Browse reader feedback, COL-4.4).",
     ),
-    limit: int = Query(default=50, ge=1, le=200, description="Page size."),
-    offset: int = Query(default=0, ge=0, description="Threads to skip."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CommentThreadListResponse:
     """List a project's threads.
@@ -243,15 +264,17 @@ def list_comment_threads(
         mentions_me: Only threads mentioning the caller.
         origin: Only ``internal`` or only ``consumer`` threads.
         limit: Page size.
-        offset: Threads to skip.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        include_total: Also count the matches.
+        offset: Threads to skip (deprecated).
         auth_data: The authenticated principal.
 
     Returns:
-        The page and the total.
+        The page, whether another follows, and the total when asked for.
 
     Raises:
-        HTTPException: 404 for an unknown project or version, 400 for a malformed `anchor_id`,
-            403 without ``projects:view``.
+        HTTPException: 404 for an unknown project or version, 400 for a malformed `anchor_id` or
+            cursor, 403 without ``projects:view``.
     """
     tenant_id, user_id = _commenter(auth_data)
     _ = tenant_slug
@@ -264,13 +287,21 @@ def list_comment_threads(
         origin=origin,
         limit=limit,
         offset=offset,
+        cursor=parse_time_id_cursor(cursor),
+        include_total=include_total,
     )
     try:
-        threads, total = comment_store.list_threads(tenant_id, project_ref, filters, user_id)
+        page, total = comment_store.list_threads(tenant_id, project_ref, filters, user_id)
     except CommentValidationError as exc:
         raise _http_error(exc) from exc
     return CommentThreadListResponse(
-        threads=threads, count=len(threads), total=total, limit=limit, offset=offset
+        threads=page.items,
+        count=len(page.items),
+        total=total,
+        limit=limit,
+        offset=0 if filters.cursor else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

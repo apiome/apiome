@@ -38,6 +38,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .authoring_list_orders import COMPONENT_USAGE_PINS_ORDER, COMPONENTS_ORDER
 from .component_governance_service import (
     assess_revision_approval,
     find_revision,
@@ -53,6 +54,7 @@ from .component_library import (
 )
 from .component_usage import head_payloads, transitive_dependents
 from .database import ComponentLibraryConflictError, db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .rendered_documents import REASON_COMPONENT_PINS_OVERRIDE, render_uncached
 
@@ -109,6 +111,11 @@ class ComponentDetailBody(ComponentSummaryBody):
 
 class ComponentListResponse(_CamelModel):
     components: List[ComponentSummaryBody] = Field(default_factory=list)
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None,
+        description="Pass as `cursor` to read the next page; null on the last page.",
+    )
 
 
 class InitialRevisionBody(_CamelModel):
@@ -413,13 +420,39 @@ def _approval_gate(
 def list_components(
     tenant_slug: str,
     kind: Optional[str] = Query(default=None),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ComponentListResponse:
-    """List the tenant's live library components with publication summary."""
+    """List the tenant's live library components with publication summary.
+
+    By kind, then name; one page of at most ``limit`` components (1,000 at most). Pass the
+    page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        kind: Narrow to one component kind.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of components and whether another follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 422 for an unknown kind.
+    """
     if kind is not None and kind not in COMPONENT_KINDS:
         raise HTTPException(status_code=422, detail={"code": "COMPONENT_KIND_INVALID"})
-    rows = db.list_operational_components(auth_data["tenant_id"], kind)
-    return ComponentListResponse(components=[_summary_body(row) for row in rows])
+    rows = db.list_operational_components(
+        auth_data["tenant_id"], kind, limit=limit + 1, cursor=COMPONENTS_ORDER.parse(cursor)
+    )
+    page = COMPONENTS_ORDER.page(rows, limit)
+    return ComponentListResponse(
+        components=[_summary_body(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.post(
@@ -686,6 +719,11 @@ class ComponentUsageResponse(_CamelModel):
     component_id: str
     pins: List[UsagePinBody] = Field(default_factory=list)
     dependents: List[UsageDependentBody] = Field(default_factory=list)
+    has_more: bool = Field(default=False, description="Whether another page of `pins` exists.")
+    next_cursor: Optional[str] = Field(
+        default=None,
+        description="Pass as `cursor` to read the next page of `pins`; null on the last page.",
+    )
 
 
 @router.get(
@@ -696,24 +734,52 @@ class ComponentUsageResponse(_CamelModel):
 def component_usage(
     tenant_slug: str,
     component_id: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ComponentUsageResponse:
-    """Who uses a component: dependents and every live pin (DCW-3.3, private-suite#2361).
+    """Who uses a component: dependents and its live pins (DCW-3.3, private-suite#2361).
 
     Dependents are the library components whose published head references this one, directly
-    or transitively (:mod:`app.component_usage`); pins are every live pin of the component and
+    or transitively (:mod:`app.component_usage`); pins are the live pins of the component and
     of those dependents, across all of the tenant's projects. Computed server-side in one pass
     over the tenant's library so latency stays flat for a tenant-scale graph.
+
+    ``dependents`` is always whole. ``pins`` is one page of at most ``limit`` pins (1,000 at
+    most); pass the page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        component_id: The component whose usage is read.
+        limit: Page size of ``pins``.
+        cursor: Where the page of pins starts (``nextCursor`` of the previous page).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The dependents, one page of pins, and whether another page follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the component is unknown.
     """
     tenant_id = auth_data["tenant_id"]
+    after = COMPONENT_USAGE_PINS_ORDER.parse(cursor)
     _component_or_404(tenant_id, component_id)
     components, revisions = db.get_component_graph_rows(tenant_id)
     dependents = transitive_dependents(components, head_payloads(revisions), component_id)
-    pin_rows = db.get_component_usage_pins(
-        tenant_id, [component_id, *[d["componentId"] for d in dependents]]
+    page = COMPONENT_USAGE_PINS_ORDER.page(
+        db.get_component_usage_pins(
+            tenant_id,
+            [component_id, *[d["componentId"] for d in dependents]],
+            limit=limit + 1,
+            cursor=after,
+        ),
+        limit,
     )
+    pin_rows = page.items
     return ComponentUsageResponse(
         component_id=component_id,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
         dependents=[
             UsageDependentBody(
                 component_id=d["componentId"], name=d["name"], kind=d["kind"], depth=d["depth"]

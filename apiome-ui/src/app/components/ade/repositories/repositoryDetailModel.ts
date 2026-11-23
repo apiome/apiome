@@ -32,6 +32,7 @@ import {
   type RepositoryProvider,
 } from './repositoriesModel';
 import type { FactsLineFact } from '@/app/components/ui/FactsLine';
+import { formatTotal } from '@lib/cursor-pages';
 
 // ============================================================================
 // Tabs and routing
@@ -552,19 +553,29 @@ export function escapeRegexPath(path: string): string {
  * have shown it.
  *
  * @param filters The toolbar state, already debounced.
- * @param page Where in the result set to read from.
+ * @param page Where in the result set to read from. The listing pages by cursor (#7196): pass the
+ *   previous page's `next_cursor` as `cursor` and the deprecated `offset` is left out; the counts
+ *   (`indexed_total`, `match_count`, `importable_match_count`) come back only with `includeTotal`.
  * @param deepLink When present, the one path to open instead of the filtered list.
  * @returns The search parameters for `GET /api/repositories/{id}/files`.
  */
 export function repositoryFilesQuery(
   filters: RepositoryFileFilterState,
-  page: { branch: string; offset: number; limit?: number },
+  page: {
+    branch: string;
+    offset: number;
+    limit?: number;
+    cursor?: string | null;
+    includeTotal?: boolean;
+  },
   deepLink?: RepositoryFileDeepLink | null
 ): URLSearchParams {
   const qs = new URLSearchParams();
   qs.set('branch', deepLink?.branch ?? page.branch);
   qs.set('limit', String(page.limit ?? FILE_PAGE_SIZE));
-  qs.set('offset', String(deepLink ? 0 : page.offset));
+  if (!deepLink && page.cursor) qs.set('cursor', page.cursor);
+  else qs.set('offset', String(deepLink ? 0 : page.offset));
+  if (page.includeTotal) qs.set('include_total', 'true');
 
   if (deepLink) {
     qs.set('regex', `^${escapeRegexPath(deepLink.path)}$`);
@@ -659,18 +670,22 @@ export function repositoryFilesSummaryLine(counts: {
 /**
  * The pager's position line.
  *
- * @param page Offset, rows on this page, and the total the filter matched.
- * @returns "Showing 1–50 of 1,204", or an em dash before the first read.
+ * @param page Offset, rows on this page, and the total the filter matched — null when the server
+ *   did not count it (the request did not set `include_total`).
+ * @returns "Showing 1–50 of 1,204" ("of 10,000+" at the counting cap, and just "Showing 1–50"
+ *   without a count), or an em dash before the first read.
  */
 export function repositoryFilesShowingLine(page: {
   offset: number;
   rows: number;
-  matchCount: number;
+  matchCount: number | null;
 }): string {
-  if (page.matchCount <= 0 || page.rows <= 0) return '—';
+  if (page.matchCount === 0 || page.rows <= 0) return '—';
   const from = page.offset + 1;
   const to = page.offset + page.rows;
-  return `Showing ${from.toLocaleString()}–${to.toLocaleString()} of ${page.matchCount.toLocaleString()}`;
+  const range = `Showing ${from.toLocaleString()}–${to.toLocaleString()}`;
+  const count = formatTotal(page.matchCount);
+  return count === null ? range : `${range} of ${count}`;
 }
 
 /** What the file table says when a scan has produced nothing for this branch. */

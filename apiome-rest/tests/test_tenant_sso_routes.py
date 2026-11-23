@@ -412,7 +412,7 @@ class TestIsolation:
         _add_domain(ws, mine["id"])
 
         ws.sign_in(OTHER_TENANT, OTHER_OWNER)
-        assert ws.http.get(BASE).json() == {"providers": []}
+        assert ws.http.get(BASE).json() == {"providers": [], "has_more": False, "next_cursor": None}
         pid = mine["id"]
         for method, path, body in [
             ("GET", f"{BASE}/{pid}", None),

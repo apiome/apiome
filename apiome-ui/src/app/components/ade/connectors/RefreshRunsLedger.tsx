@@ -9,6 +9,8 @@ import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { connectorKindLabel } from '@lib/connector-kinds';
 import { listRefreshRuns, runOutcome, type RefreshRun } from '@lib/connectors-api';
+import { formatTotal } from '@lib/cursor-pages';
+import { useCursorPages } from '@/app/hooks/useCursorPages';
 
 /**
  * The refresh ledger: Git refresh jobs and connector runs, interleaved newest first (CDG-1.7, #5958).
@@ -33,28 +35,38 @@ export function RefreshRunsLedger({
   refreshKey?: number;
   title?: string;
 }) {
-  const [runs, setRuns] = React.useState<RefreshRun[] | null>(null);
-  const [total, setTotal] = React.useState(0);
-  const [error, setError] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(false);
+  // The ledger pages by cursor (#7196): the newest page first, older ones on "Load more". Only
+  // the first page asks for the count.
+  const pages = useCursorPages<RefreshRun>({
+    key: `${connectorId ?? ''}:${limit}`,
+    getRowId: (run) => run.id,
+    errorMessage: 'The runs could not be read. Try again.',
+    load: async ({ cursor, offset, first }) => {
+      const page = await listRefreshRuns({
+        connector: connectorId,
+        limit,
+        cursor,
+        offset,
+        includeTotal: first,
+      });
+      return { rows: page.runs, page: page.page };
+    },
+  });
+  const { total, loading, hasMore, loadingMore } = pages;
+  const error = pages.error ?? pages.moreError;
+  // Nothing is drawn until a read has answered: a failed first read is not "no runs".
+  const runs = loading || (pages.error !== null && pages.rows.length === 0) ? null : pages.rows;
+  const load = pages.reload;
+  const shownTotal = formatTotal(total);
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const page = await listRefreshRuns({ connector: connectorId, limit });
-      setRuns(page.runs);
-      setTotal(page.total);
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'The runs could not be read. Try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [connectorId, limit]);
-
+  // A sync elsewhere on the page bumps `refreshKey`: read the newest page again, keeping the rows
+  // on screen until it answers.
+  const seenRefreshKey = React.useRef(refreshKey);
   React.useEffect(() => {
-    void load();
-  }, [load, refreshKey]);
+    if (seenRefreshKey.current === refreshKey) return;
+    seenRefreshKey.current = refreshKey;
+    load();
+  }, [refreshKey, load]);
 
   return (
     <section className="cnx-ledger" aria-labelledby="cnx-ledger-title" data-testid="refresh-runs-ledger">
@@ -139,10 +151,23 @@ export function RefreshRunsLedger({
               ))}
             </tbody>
           </table>
-          {total > runs.length ? (
-            <p className="cnx-note">
-              Showing the newest {runs.length} of {total} runs.
-            </p>
+          {hasMore ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="cnx-note" data-testid="refresh-runs-shown">
+                Showing the newest {runs.length.toLocaleString('en-US')}
+                {shownTotal ? ` of ${shownTotal}` : ''} runs.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={pages.loadMore}
+                disabled={loadingMore}
+                title={loadingMore ? 'Loading the next page' : undefined}
+                data-testid="refresh-runs-load-more"
+              >
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </Button>
+            </div>
           ) : null}
         </div>
       ) : null}

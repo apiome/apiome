@@ -8,6 +8,7 @@ guardrails and against a real database.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from app.database import db
@@ -170,3 +171,19 @@ def test_run_reads_are_scoped_to_the_tenant() -> None:
     with patch.object(db, "execute_query", return_value=[{"id": _RUN}]) as query:
         assert db.get_sdk_git_delivery_run(_RUN, _TENANT) == {"id": _RUN}
     assert "WHERE id = %s::uuid AND tenant_id = %s::uuid" in query.call_args.args[0]
+
+
+def test_list_sdk_git_delivery_runs_continues_after_a_cursor_without_an_offset() -> None:
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+    with patch.object(db, "execute_query", return_value=[]) as query:
+        db.list_sdk_git_delivery_runs(_TENANT, _PROJECT, ecosystem="npm", limit=10, offset=20, cursor=(stamp, _RUN))
+    sql, params = query.call_args.args
+    assert "(started_at, id) < (%s, %s::uuid)" in sql
+    assert "ORDER BY started_at DESC, id DESC" in sql
+    assert params == (_TENANT, _PROJECT, "npm", stamp, _RUN, 10, 0)
+
+
+def test_count_sdk_git_delivery_runs_stops_at_the_cap() -> None:
+    with patch.object(db, "execute_query", return_value=[{"total": 3}]) as query:
+        assert db.count_sdk_git_delivery_runs(_TENANT, _PROJECT) == 3
+    assert "LIMIT 10000" in query.call_args.args[0]

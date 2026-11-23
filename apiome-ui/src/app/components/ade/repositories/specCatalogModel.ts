@@ -29,6 +29,8 @@
  * the rendered test and the browser fixture assert against the same string the screen prints.
  */
 
+import { formatTotal, setPageParams } from '@lib/cursor-pages';
+
 
 /** One catalog row as returned by `GET /api/repositories/catalog`. */
 export type SpecCatalogRow = {
@@ -79,12 +81,19 @@ export type SpecCatalogFacets = {
 /** The catalog API response. */
 export type SpecCatalogResponse = {
   success?: boolean;
-  catalog_total: number;
-  match_count: number;
+  /** Specs before any filter — counted (up to 10,000) only when the request set `include_total`. */
+  catalog_total: number | null;
+  /** Specs matching the filters — counted only when the request set `include_total`. */
+  match_count: number | null;
   limit: number;
+  /** The offset used (deprecated; `0` when the page was read by cursor). */
   offset: number;
   sort: string;
   specs: SpecCatalogRow[];
+  /** Whether another page follows. */
+  has_more?: boolean;
+  /** The cursor of the next page; null on the last page. */
+  next_cursor?: string | null;
   facets?: SpecCatalogFacets | null;
   error?: string;
 };
@@ -189,7 +198,7 @@ export function specCatalogFiltersFromSearchParams(
  */
 export function specCatalogApiQuery(
   filters: SpecCatalogFilters,
-  options?: { includeFacets?: boolean }
+  options?: { includeFacets?: boolean; cursor?: string | null; includeTotal?: boolean }
 ): string {
   const qs = new URLSearchParams();
   if (filters.q.trim()) qs.set('q', filters.q.trim());
@@ -201,7 +210,14 @@ export function specCatalogApiQuery(
   if (filters.allBranches) qs.set('all_branches', 'true');
   if (!filters.importableOnly) qs.set('importable_only', 'false');
   qs.set('limit', String(SPEC_CATALOG_PAGE_SIZE));
-  qs.set('offset', String(Math.max(0, filters.offset)));
+  // The catalog pages by cursor (#7196). `filters.offset` is still where the page starts — it is
+  // what the address bar carries — but it is sent only when no cursor is known for it (a shared
+  // link opened on a later page); the cursor wins whenever the screen has one.
+  setPageParams(qs, {
+    cursor: options?.cursor,
+    offset: Math.max(0, filters.offset),
+    includeTotal: options?.includeTotal,
+  });
   if (options?.includeFacets) qs.set('include_facets', 'true');
   return qs.toString();
 }
@@ -417,8 +433,9 @@ export const SPEC_CATALOG_VOCABULARY_TITLE = 'Status vocabulary';
  */
 export function specCatalogSummaryLine(catalogTotal: number | null | undefined): string {
   const base = 'Every spec the scanner has found across all repositories in this tenant.';
-  if (catalogTotal == null || !Number.isFinite(catalogTotal)) return base;
-  return `${base} ${catalogTotal.toLocaleString()} indexed.`;
+  const count = formatTotal(catalogTotal);
+  if (count === null) return base;
+  return `${base} ${count} indexed.`;
 }
 
 /**
@@ -431,18 +448,21 @@ export function specCatalogSummaryLine(catalogTotal: number | null | undefined):
  *
  * @param offset - Rows skipped by the current request.
  * @param shown - How many rows this page actually returned.
- * @param matchCount - How many rows matched in total.
- * @returns `Showing 1–50 of 128`, or `No specs` when nothing matched.
+ * @param matchCount - How many rows matched in total; null when the server did not count them.
+ * @returns `Showing 1–50 of 128` (`of 10,000+` at the counting cap, and just `Showing 1–50` when
+ *   the count is unknown), or `No specs` when nothing matched.
  */
 export function specCatalogRangeLabel(
   offset: number,
   shown: number,
-  matchCount: number
+  matchCount: number | null
 ): string {
-  if (shown <= 0 || matchCount <= 0) return 'No specs';
+  if (shown <= 0 || matchCount === 0) return 'No specs';
   const first = Math.max(0, offset) + 1;
   const last = Math.max(0, offset) + shown;
-  return `Showing ${first.toLocaleString()}–${last.toLocaleString()} of ${matchCount.toLocaleString()}`;
+  const range = `Showing ${first.toLocaleString()}–${last.toLocaleString()}`;
+  const count = formatTotal(matchCount);
+  return count === null ? range : `${range} of ${count}`;
 }
 
 /**

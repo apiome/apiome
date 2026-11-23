@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `sdk-regen` · 7 operations
 
@@ -52,6 +52,8 @@ One entry per publish that had an active subscription, newest first, each with i
 
 `status=dead_letter` lists the dead letter: runs with at least one job that failed permanently or spent its attempts, each retryable with `POST …/sdk-regen-jobs/{jobId}/retry`.
 
+Pages by `cursor`: pass the previous page's `nextCursor` until `hasMore` is false. The `total` is counted only when `include_total` is set.
+
 Requires `versions:view`.
 
 Operation id: `list_regen_runs_v1_projects__tenant_slug___project_ref__sdk_regen_runs_get`
@@ -63,8 +65,10 @@ Operation id: `list_regen_runs_v1_projects__tenant_slug___project_ref__sdk_regen
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
 | `status` | query | string or null | no | Only runs with a job in this status: pending, running, retrying, succeeded, dead_letter, cancelled. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
-| `offset` | query | integer | no | Number of rows to skip before returning results. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -311,16 +315,21 @@ A page of regen history.
 
 Attributes:
     runs: The runs, newest first.
-    total: How many runs match.
+    total: How many runs match, counted up to 10,000; set only when the request asked
+        for it with ``include_total``.
     limit: The page size used.
-    offset: The offset used.
+    offset: The offset used (deprecated; ``0`` when paging by cursor).
+    has_more: Whether another page exists.
+    next_cursor: Pass as ``cursor`` to read the next page; ``None`` on the last page.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `runs` | array of [`RegenRunModel`](#schema-regenrunmodel) | yes | Runs. |
-| `total` | integer | yes | Total. |
+| `total` | integer or null | no | Total. |
 | `limit` | integer | yes | Limit. |
 | `offset` | integer | yes | Offset. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `RegenRunModel` {#schema-regenrunmodel}
 

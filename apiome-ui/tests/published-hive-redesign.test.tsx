@@ -825,6 +825,80 @@ describe('search and the foot', () => {
   });
 });
 
+describe('paging (DBP-1.13)', () => {
+  /** The read's third argument: the page asked for. */
+  const pageAsked = (call: number) =>
+    (mockReadVersions.mock.calls[call] as unknown as [string, unknown, unknown])[2];
+
+  it('asks for one page, and draws no "Load more" when that is everything', async () => {
+    await renderPublished();
+
+    expect(pageAsked(0)).toEqual({ limit: 50 });
+    expect(screen.queryByTestId('published-load-more')).not.toBeInTheDocument();
+    expect(screen.getByTestId('published-foot')).toHaveTextContent(
+      'Showing 4 of 4 published versions'
+    );
+  });
+
+  it('loads the next page after the cursor and appends it', async () => {
+    await renderPublished({
+      readPayload: {
+        success: true,
+        versions: ROWS.slice(0, 2),
+        hasMore: true,
+        nextCursor: 'cursor-after-2',
+      },
+    });
+
+    expect(screen.getByTestId('published-foot')).toHaveTextContent(
+      'Showing 2 of the first 2 published versions'
+    );
+    expect(document.querySelectorAll('tr[data-row-id]')).toHaveLength(2);
+
+    mockReadVersions.mockResolvedValue(
+      JSON.stringify({ success: true, versions: ROWS.slice(2), hasMore: false, nextCursor: null })
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('published-load-more'));
+    });
+
+    await waitFor(() => expect(document.querySelectorAll('tr[data-row-id]')).toHaveLength(4));
+    expect(pageAsked(1)).toEqual({ limit: 50, cursor: 'cursor-after-2' });
+    expect(screen.queryByTestId('published-load-more')).not.toBeInTheDocument();
+    expect(screen.getByTestId('published-foot')).toHaveTextContent(
+      'Showing 4 of 4 published versions'
+    );
+  });
+
+  it('keeps the loaded rows and offers a retry when the next page cannot be read', async () => {
+    await renderPublished({
+      readPayload: { success: true, versions: ROWS.slice(0, 2), hasMore: true, nextCursor: 'c1' },
+    });
+
+    mockReadVersions.mockResolvedValue(JSON.stringify({ success: false, error: 'connection refused' }));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('published-load-more'));
+    });
+
+    expect(await screen.findByTestId('published-load-more-error')).toHaveTextContent(
+      'connection refused'
+    );
+    expect(document.querySelectorAll('tr[data-row-id]')).toHaveLength(2);
+    expect(screen.getByTestId('published-load-more')).toBeInTheDocument();
+  });
+
+  it('says a search with no match only covered what is loaded', async () => {
+    await renderPublished({
+      readPayload: { success: true, versions: ROWS.slice(0, 2), hasMore: true, nextCursor: 'c1' },
+    });
+
+    fireEvent.change(screen.getByTestId('published-search'), { target: { value: 'zzz' } });
+
+    expect(await screen.findByText('No matching versions loaded')).toBeInTheDocument();
+    expect(screen.getByTestId('published-load-more')).toBeInTheDocument();
+  });
+});
+
 describe('the states with no rows', () => {
   it('asks for a workspace when none is chosen', async () => {
     sessionUser = { user_id: 'u-ada', email: 'ada@acme.io' };

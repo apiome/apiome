@@ -76,7 +76,7 @@ def test_series_is_grouped_per_format_and_serialized_in_camel_case():
         ),
     ]
     with patch(
-        "app.lint_workspace_routes.load_quality_rank_observations", return_value=rows
+        "app.lint_workspace_routes.load_quality_rank_rollup", return_value=rows
     ) as loader:
         resp = _get(days=7)
 
@@ -111,7 +111,7 @@ def test_series_is_grouped_per_format_and_serialized_in_camel_case():
 
 def test_adapter_and_spec_attribution_are_reported_separately():
     rows = [_observation(), _observation(declared_parser_limits=2, adapter_key="thrift")]
-    with patch("app.lint_workspace_routes.load_quality_rank_observations", return_value=rows):
+    with patch("app.lint_workspace_routes.load_quality_rank_rollup", return_value=rows):
         body = _get(days=3).json()
 
     entry = body["formats"][0]
@@ -145,7 +145,7 @@ def test_unknown_scope_or_stage_is_a_400(params):
 )
 def test_scope_and_stage_filters_are_pushed_into_the_read(params, expected):
     with patch(
-        "app.lint_workspace_routes.load_quality_rank_observations", return_value=[]
+        "app.lint_workspace_routes.load_quality_rank_rollup", return_value=[]
     ) as loader:
         assert _get(**params).status_code == 200
     kwargs = loader.call_args.kwargs
@@ -155,16 +155,30 @@ def test_scope_and_stage_filters_are_pushed_into_the_read(params, expected):
 
 def test_project_scope_is_forwarded():
     with patch(
-        "app.lint_workspace_routes.load_quality_rank_observations", return_value=[]
+        "app.lint_workspace_routes.load_quality_rank_rollup", return_value=[]
     ) as loader:
         assert _get(projectId="p-1").status_code == 200
     assert loader.call_args.kwargs["project_id"] == "p-1"
 
 
 def test_a_tenant_with_no_observations_gets_an_empty_but_well_formed_series():
-    with patch("app.lint_workspace_routes.load_quality_rank_observations", return_value=[]):
+    with patch("app.lint_workspace_routes.load_quality_rank_rollup", return_value=[]):
         body = _get(days=14).json()
     assert body["formats"] == []
     assert body["observationCount"] == 0
     assert body["windowStart"] < body["windowEnd"]
     assert body["formatLimit"] > 0
+
+
+def test_the_series_is_read_as_a_sql_rollup_starting_at_the_windows_first_day():
+    """#7196: the route asks the database for buckets, never for one row per observation."""
+    with patch("app.quality_rank_telemetry.logger"), patch("app.database.db") as database:
+        database.aggregate_quality_rank_observations.return_value = {
+            "buckets": [],
+            "drift": [],
+            "attribution": [],
+        }
+        assert _get(days=7).status_code == 200
+    database.list_quality_rank_observations.assert_not_called()
+    since = database.aggregate_quality_rank_observations.call_args.kwargs["since"]
+    assert (since.hour, since.minute, since.second, since.microsecond) == (0, 0, 0, 0)

@@ -262,6 +262,8 @@ class ConnectorListResponse(BaseModel):
     connectors: List[ConnectorOut]
     kinds: List[str]
     syncable_kinds: List[str] = Field(serialization_alias="syncableKinds")
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 class ConnectorItemOut(BaseModel):
@@ -390,9 +392,23 @@ class RefreshRunPage(BaseModel):
     """``GET /v1/tenants/{t}/refresh-runs``."""
 
     runs: List[RefreshRunOut]
-    total: int
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many rows match, counted up to 10,000. Present only when the request set "
+            "`include_total`."
+        ),
+    )
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(
+        default=False, serialization_alias="hasMore", description="Whether another page exists."
+    )
+    next_cursor: Optional[str] = Field(
+        default=None,
+        serialization_alias="nextCursor",
+        description="Pass as `cursor` to read the next page; null on the last page.",
+    )
 
 
 class ConnectorItemIgnore(BaseModel):
@@ -417,9 +433,23 @@ class ConnectorItemPage(BaseModel):
     """``GET /v1/tenants/{t}/connectors/{id}/items``."""
 
     items: List[ConnectorItemOut]
-    total: int
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many rows match, counted up to 10,000. Present only when the request set "
+            "`include_total`."
+        ),
+    )
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(
+        default=False, serialization_alias="hasMore", description="Whether another page exists."
+    )
+    next_cursor: Optional[str] = Field(
+        default=None,
+        serialization_alias="nextCursor",
+        description="Pass as `cursor` to read the next page; null on the last page.",
+    )
 
 
 class ConnectorRunOut(BaseModel):
@@ -446,9 +476,23 @@ class ConnectorRunPage(BaseModel):
     """``GET /v1/tenants/{t}/connectors/{id}/runs``: newest first."""
 
     runs: List[ConnectorRunOut]
-    total: int
+    total: Optional[int] = Field(
+        default=None,
+        description=(
+            "How many rows match, counted up to 10,000. Present only when the request set "
+            "`include_total`."
+        ),
+    )
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(
+        default=False, serialization_alias="hasMore", description="Whether another page exists."
+    )
+    next_cursor: Optional[str] = Field(
+        default=None,
+        serialization_alias="nextCursor",
+        description="Pass as `cursor` to read the next page; null on the last page.",
+    )
 
 
 class ConnectorCredentialsOut(BaseModel):

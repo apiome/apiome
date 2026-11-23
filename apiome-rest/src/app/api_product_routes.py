@@ -16,19 +16,20 @@ published — so a client can say what to publish first.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .api_lifecycle import CODE_RETIRE_EARLY, CODE_TRANSITION
 from .api_product_store import (
+    PRODUCTS_ORDER,
     add_member,
     create_product,
     delete_product,
     get_product,
     list_members,
-    list_products,
+    page_products,
     remove_member,
     update_product,
 )
@@ -51,6 +52,7 @@ from .api_products import (
 from .auth import validate_authentication
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 
 __all__ = ["router"]
@@ -79,6 +81,10 @@ class ApiProductListResponse(BaseModel):
 
     products: List[ApiProductRecord] = Field(default_factory=list, description="The products, by name.")
     count: int = Field(description="How many products were returned.")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class ApiProductMemberListResponse(BaseModel):
@@ -139,28 +145,38 @@ def _http_error(exc: ApiProductValidationError) -> HTTPException:
     summary="List API products",
     description=(
         "Every live API product of the tenant, by name, with its owner team, visibility, state and "
-        "member count. Deleted products are not listed.\n\nRequires `projects:view`."
+        "member count. Deleted products are not listed.\n\n"
+        "At most 1,000 a page: pass the previous page's `next_cursor` as `cursor` until `has_more` "
+        "is false.\n\nRequires `projects:view`."
     ),
 )
 def list_tenant_products(
-    tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
+    tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ApiProductListResponse:
-    """List the tenant's products.
+    """List one page of the tenant's products.
 
     Args:
         tenant_slug: The tenant in the URL (the authenticated tenant is what scopes the read).
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``next_cursor``).
         auth_data: The authenticated principal.
 
     Returns:
-        The products.
+        The products of the page and whether another follows.
 
     Raises:
-        HTTPException: 403 without ``projects:view``.
+        HTTPException: 400 for a malformed cursor; 403 without ``projects:view``.
     """
     enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    after = PRODUCTS_ORDER.parse(cursor)
     _ = tenant_slug
-    products = list_products(_tenant_id(auth_data))
-    return ApiProductListResponse(products=products, count=len(products))
+    page = page_products(_tenant_id(auth_data), limit=limit, cursor=after)
+    return ApiProductListResponse(
+        products=page.items, count=len(page.items), has_more=page.has_more, next_cursor=page.next_cursor
+    )
 
 
 @router.post(

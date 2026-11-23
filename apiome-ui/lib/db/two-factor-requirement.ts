@@ -10,6 +10,7 @@
  */
 
 import type { TwoFactorRequirementRow } from '../two-factor-policy';
+import { MAX_UNPAGED_ROWS } from './list-bounds';
 
 // `lib/db/db` is a CommonJS module (`module.exports = pool`), like every other lib/db consumer.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -25,8 +26,11 @@ export const TWO_FACTOR_DUE_AT_SQL =
  * Only active memberships of live, enabled workspaces count: a pending invitation or a suspended
  * member is not asked to comply, and a user with two-factor on gets no rows at all.
  *
+ * A safety bound, not a page (DBP-1.13, #7196): at most `MAX_UNPAGED_ROWS` (1,000) workspaces
+ * are read, earliest deadline first — so the deadline that matters is always among them.
+ *
  * @param userId - The signed-in user's `apiome.users.id`.
- * @returns One row per requiring workspace (unsorted; see `summarizeTwoFactorRequirement`).
+ * @returns One row per requiring workspace, earliest deadline first.
  */
 export async function getTwoFactorRequirementRows(userId: string): Promise<TwoFactorRequirementRow[]> {
   const result = await connectionPool.query(
@@ -41,8 +45,10 @@ export async function getTwoFactorRequirementRows(userId: string): Promise<TwoFa
         AND tn.require_two_factor
         AND tn.two_factor_required_since IS NOT NULL
         AND u.deleted_at IS NULL
-        AND NOT COALESCE(u."twoFactorEnabled", false)`,
-    [userId]
+        AND NOT COALESCE(u."twoFactorEnabled", false)
+      ORDER BY due_at ASC
+      LIMIT $2`,
+    [userId, MAX_UNPAGED_ROWS]
   );
   return (result.rows as Array<{ tenant_name: string; due_at: Date | string }>).map((row) => ({
     tenantName: row.tenant_name,

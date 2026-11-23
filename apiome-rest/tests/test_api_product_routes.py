@@ -32,6 +32,7 @@ from app.api_products import (
     ApiProductValidationError,
 )
 from app.auth import validate_authentication
+from app.keyset_pagination import Page
 from app.main import app
 
 client = TestClient(app)
@@ -61,7 +62,12 @@ _MEMBER = ApiProductMember(id="m-1", kind="project_latest", ref="r-1", name="Pay
 def calls(monkeypatch) -> List[tuple]:
     """Replace the store with recorders; ``raise_for`` makes one function refuse."""
     seen: List[tuple] = []
-    monkeypatch.setattr(api_product_routes, "list_products", lambda t: seen.append(("list", t)) or [_record()])
+    monkeypatch.setattr(
+        api_product_routes,
+        "page_products",
+        lambda t, limit, cursor=None: seen.append(("list", t))
+        or Page(items=[_record()], has_more=False, next_cursor=None),
+    )
     monkeypatch.setattr(api_product_routes, "get_product",
                         lambda t, s: seen.append(("get", s)) or _record(s, [_MEMBER]))
     monkeypatch.setattr(api_product_routes, "create_product",

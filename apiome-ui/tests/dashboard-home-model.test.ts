@@ -20,6 +20,7 @@ import {
   PULSE_WINDOW_DAYS,
   SUNSET_ATTENTION_DAYS,
   bucketPublishesByWeek,
+  pulseWeeksFromCounts,
   daysUntil,
   deadlinePhrase,
   emptyDashboardHome,
@@ -435,6 +436,64 @@ describe('bucketPublishesByWeek', () => {
   it('ignores an unparseable instant', () => {
     const weeks = bucketPublishesByWeek(['not a date'], NOW);
     expect(weeks.reduce((total, week) => total + week.count, 0)).toBe(0);
+  });
+});
+
+describe('pulseWeeksFromCounts', () => {
+  /**
+   * What the pulse query computes for each publish: the Monday of its UTC week
+   * (`date_trunc('week', published_at AT TIME ZONE 'UTC')`), counted per week.
+   */
+  const groupInSql = (instants: readonly string[]) => {
+    const counts = new Map<string, number>();
+    for (const instant of instants) {
+      const week = weekStartOf(new Date(instant));
+      counts.set(week, (counts.get(week) ?? 0) + 1);
+    }
+    return [...counts].map(([weekStart, count]) => ({ weekStart, count }));
+  };
+
+  it('draws the same bars from weekly counts as bucketing the instants did (DBP-1.13)', () => {
+    const instants = [
+      // This week, including both of its edges.
+      '2026-08-10T00:00:00.000Z',
+      '2026-08-12T09:30:00.000Z',
+      '2026-08-16T23:59:59.999Z',
+      // A Sunday belongs to the week that began six days before it.
+      '2026-08-09T23:59:59.999Z',
+      // Late Sunday in Denver is already Monday in UTC.
+      '2026-08-02T23:30:00.000-06:00',
+      // The first bucket's first instant, and the instant before it (outside the window).
+      '2026-05-25T00:00:00.000Z',
+      '2026-05-24T23:59:59.999Z',
+      // Inside the query's 84-day reach but before the first bucket.
+      '2026-05-20T12:00:00.000Z',
+      // After this week.
+      '2026-08-17T00:00:00.000Z',
+      '2026-07-01T00:00:00.000Z',
+      '2026-07-01T00:00:00.000Z',
+    ];
+    const fromCounts = pulseWeeksFromCounts(groupInSql(instants), NOW);
+    expect(fromCounts).toEqual(bucketPublishesByWeek(instants, NOW));
+    expect(fromCounts.reduce((total, week) => total + week.count, 0)).toBe(8);
+  });
+
+  it('returns a full window with nothing published', () => {
+    expect(pulseWeeksFromCounts([], NOW)).toEqual(bucketPublishesByWeek([], NOW));
+  });
+
+  it('adds up a week reported twice and ignores a count that is not a positive number', () => {
+    const weeks = pulseWeeksFromCounts(
+      [
+        { weekStart: '2026-08-10', count: 2 },
+        { weekStart: '2026-08-10', count: 3 },
+        { weekStart: '2026-08-03', count: Number.NaN },
+        { weekStart: '2026-07-27', count: -4 },
+      ],
+      NOW,
+    );
+    expect(weeks[weeks.length - 1].count).toBe(5);
+    expect(weeks.slice(0, -1).every((week) => week.count === 0)).toBe(true);
   });
 });
 

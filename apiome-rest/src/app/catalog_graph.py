@@ -46,12 +46,23 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from .keyset_columns import (
+    SortColumn,
+    decode_columns_cursor,
+    encode_columns_cursor,
+    keyset_after_columns,
+    order_by_sql,
+)
+from .keyset_pagination import MAX_OFFSET, capped_count_sql
+
 __all__ = [
     "EDGE_KINDS",
+    "EDGE_SORT_COLUMNS",
     "FAMILIES",
     "MAX_READ_LIMIT",
     "NODE_KINDS",
     "PROVENANCES",
+    "decode_edge_cursor",
     "STALE_PURGE_DAYS",
     "EdgePage",
     "GraphValidationError",
@@ -370,13 +381,47 @@ class EdgePage:
 
     Attributes:
         edges: The edges, each with ``stale`` set.
-        total: How many edges match.
+        total: How many edges match, counted up to the cap; ``None`` unless the read asked for it.
         truncated: True when more edges match than were returned.
+        next_cursor: The cursor of the next page; ``None`` on the last page.
     """
 
     edges: List[Dict[str, Any]]
-    total: int
+    total: Optional[int]
     truncated: bool
+    next_cursor: Optional[str] = None
+
+
+#: The order an entity's edges are listed in: current before stale, then a stable order ending in
+#: the edge id. The ids compare as text because the query projects them as text and ``ORDER BY``
+#: resolves a bare name to the projected column.
+EDGE_SORT_COLUMNS: Tuple[SortColumn, ...] = (
+    SortColumn("(stale_since IS NOT NULL)", "bool", ("stale",)),
+    SortColumn("edge_kind", "text", ("edge_kind",)),
+    SortColumn("to_kind", "text", ("to_kind",)),
+    SortColumn("to_id::text", "text", ("to_id",)),
+    SortColumn("from_id::text", "text", ("from_id",)),
+    SortColumn("pointer", "text", ("pointer",), nullable=True, nulls_first=True),
+    SortColumn("id::text", "text", ("id",)),
+)
+
+#: Cursor tag of the edge list's one ordering.
+_EDGE_CURSOR_TAG = "edges"
+
+
+def decode_edge_cursor(token: Any) -> List[Any]:
+    """Read an edge-list cursor.
+
+    Args:
+        token: The ``cursor`` query parameter.
+
+    Returns:
+        The sort values of the last edge already seen, one per :data:`EDGE_SORT_COLUMNS` column.
+
+    Raises:
+        InvalidCursor: The token is not one :func:`list_edges` issued.
+    """
+    return decode_columns_cursor(token, _EDGE_CURSOR_TAG, EDGE_SORT_COLUMNS)
 
 
 def _iso(value: Any) -> Optional[str]:
@@ -397,8 +442,13 @@ def list_edges(
     provenances: Sequence[str] = (),
     limit: int = 100,
     offset: int = 0,
+    cursor: Optional[Sequence[Any]] = None,
+    include_total: bool = False,
 ) -> EdgePage:
     """One entity's edges, bounded: current edges first, then stale, in a stable order.
+
+    Reads one row more than the page to learn whether more match, so nothing is counted unless
+    the caller asks for a total (#7196).
 
     Args:
         db: Database handle.
@@ -409,10 +459,12 @@ def list_edges(
         edge_kinds: Only these edge kinds (empty for all).
         provenances: Only these provenances (empty for all).
         limit: Page size, 1..:data:`MAX_READ_LIMIT`.
-        offset: Rows to skip.
+        offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: The values from :func:`decode_edge_cursor`; the page continues after that edge.
+        include_total: Also count the matching edges, up to ``TOTAL_CAP``.
 
     Returns:
-        The page; ``truncated`` says whether more match.
+        The page; ``truncated`` says whether more match and ``next_cursor`` continues it.
 
     Raises:
         GraphValidationError: ``graph-invalid`` for an unknown kind, direction, edge kind or
@@ -438,35 +490,38 @@ def list_edges(
     if provenances:
         clauses.append("provenance = ANY(%s::text[])")
         params.append(list(provenances))
+    where_sql = " AND ".join(clauses)
+    after_sql, after_params = keyset_after_columns(EDGE_SORT_COLUMNS, cursor)
+    skip = 0 if cursor is not None else max(0, min(int(offset), MAX_OFFSET))
     rows = db.execute_query(
         f"""
         SELECT id::text AS id, from_kind, from_id::text AS from_id, to_kind, to_id::text AS to_id,
                edge_kind, pointer, provenance, source_ref, evidence,
-               first_seen_at, last_seen_at, stale_since,
-               count(*) OVER () AS total
+               first_seen_at, last_seen_at, stale_since
         FROM apiome.catalog_edges
-        WHERE {' AND '.join(clauses)}
-        ORDER BY (stale_since IS NOT NULL), edge_kind, to_kind, to_id, from_id, pointer NULLS FIRST, id
+        WHERE {where_sql}{after_sql}
+        ORDER BY {order_by_sql(EDGE_SORT_COLUMNS)}
         LIMIT %s OFFSET %s
         """,
-        tuple(params + [int(limit), max(0, int(offset))]),
+        tuple(params + after_params + [int(limit) + 1, skip]),
     )
-    if rows:
-        total = int(rows[0]["total"])
-    elif offset > 0:
-        # Paged past the end: the window count is empty, so count separately.
+    total: Optional[int] = None
+    if include_total:
         counted = db.execute_query(
-            f"SELECT count(*) AS total FROM apiome.catalog_edges WHERE {' AND '.join(clauses)}", tuple(params)
+            capped_count_sql(f"FROM apiome.catalog_edges WHERE {where_sql}"), tuple(params)
         )
         total = int(counted[0]["total"]) if counted else 0
-    else:
-        total = 0
+    has_more = len(rows) > int(limit)
     edges = []
-    for row in rows:
-        edge = {key: value for key, value in dict(row).items() if key != "total"}
+    for row in rows[: int(limit)]:
+        edge = dict(row)
         for key in ("first_seen_at", "last_seen_at", "stale_since"):
             edge[key] = _iso(edge.get(key))
         edge["stale"] = edge["stale_since"] is not None
         edges.append(edge)
-    return EdgePage(edges=edges, total=total, truncated=max(0, int(offset)) + len(edges) < total)
-
+    next_cursor = (
+        encode_columns_cursor(_EDGE_CURSOR_TAG, EDGE_SORT_COLUMNS, edges[-1])
+        if has_more and edges
+        else None
+    )
+    return EdgePage(edges=edges, total=total, truncated=has_more, next_cursor=next_cursor)

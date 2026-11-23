@@ -31,8 +31,8 @@
     },
     {
       "name": "rest.projects_for_tenant",
-      "source": "apiome-rest/src/app/database.py Database.get_projects_for_tenant (GET /v1/projects/{tenant})",
-      "sql": "SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug, p.enabled, p.metadata, p.change_report_template_version_id, p.publishable, p.created_at, p.updated_at, p.deleted_at, u.name as creator_name, u.email as creator_email, COALESCE(qs.versions_count, 0) AS versions_count, qs.quality_score, CASE WHEN qs.quality_score IS NULL THEN NULL WHEN qs.quality_score >= 90 THEN 'A' WHEN qs.quality_score >= 80 THEN 'B' WHEN qs.quality_score >= 70 THEN 'C' WHEN qs.quality_score >= 60 THEN 'D' ELSE 'F' END AS quality_grade , own.entity_owner FROM apiome.projects p LEFT JOIN apiome.users u ON p.creator_id = u.id LEFT JOIN LATERAL ( SELECT COUNT(*)::int AS versions_count, ROUND(AVG(v.quality_score))::int AS quality_score FROM apiome.versions v WHERE v.project_id = p.id AND v.deleted_at IS NULL ) qs ON TRUE LEFT JOIN LATERAL ( SELECT jsonb_build_object( 'team', jsonb_build_object('id', ot.id::text, 'slug', ot.slug, 'name', ot.name), 'status', eo.status, 'source', eo.source ) AS entity_owner FROM apiome.entity_owners eo JOIN apiome.teams ot ON ot.id = eo.team_id AND ot.deleted_at IS NULL WHERE eo.tenant_id = p.tenant_id AND eo.entity_id = p.id AND eo.entity_kind IN ('project', 'catalog_item') ORDER BY (eo.status = 'confirmed') DESC, eo.created_at, eo.id LIMIT 1 ) own ON TRUE WHERE p.tenant_id = $1 AND p.deleted_at IS NULL ORDER BY p.created_at DESC",
+      "source": "apiome-rest/src/app/database.py Database.get_projects_for_tenant (GET /v1/projects/{tenant}, one page of 200)",
+      "sql": "SELECT p.id, p.tenant_id, p.creator_id, p.name, p.description, p.slug, p.enabled, p.metadata, p.change_report_template_version_id, p.publishable, p.created_at, p.updated_at, p.deleted_at, u.name as creator_name, u.email as creator_email, COALESCE(qs.versions_count, 0) AS versions_count, qs.quality_score, CASE WHEN qs.quality_score IS NULL THEN NULL WHEN qs.quality_score >= 90 THEN 'A' WHEN qs.quality_score >= 80 THEN 'B' WHEN qs.quality_score >= 70 THEN 'C' WHEN qs.quality_score >= 60 THEN 'D' ELSE 'F' END AS quality_grade , own.entity_owner FROM apiome.projects p LEFT JOIN apiome.users u ON p.creator_id = u.id LEFT JOIN LATERAL ( SELECT COUNT(*)::int AS versions_count, ROUND(AVG(v.quality_score))::int AS quality_score FROM apiome.versions v WHERE v.project_id = p.id AND v.deleted_at IS NULL ) qs ON TRUE LEFT JOIN LATERAL ( SELECT jsonb_build_object( 'team', jsonb_build_object('id', ot.id::text, 'slug', ot.slug, 'name', ot.name), 'status', eo.status, 'source', eo.source ) AS entity_owner FROM apiome.entity_owners eo JOIN apiome.teams ot ON ot.id = eo.team_id AND ot.deleted_at IS NULL WHERE eo.tenant_id = p.tenant_id AND eo.entity_id = p.id AND eo.entity_kind IN ('project', 'catalog_item') ORDER BY (eo.status = 'confirmed') DESC, eo.created_at, eo.id LIMIT 1 ) own ON TRUE WHERE p.tenant_id = $1 AND p.deleted_at IS NULL ORDER BY p.created_at DESC, p.id DESC LIMIT 201",
       "params": [
         "scale:tenant:0"
       ]
@@ -264,6 +264,47 @@
       "sql": "SELECT 1 FROM ONLY apiome.classes x WHERE $1::uuid OPERATOR(pg_catalog.=) version_id FOR KEY SHARE OF x",
       "params": [
         "scale:version:0"
+      ]
+    },
+    {
+      "name": "audit.workflow_page_1000",
+      "source": "apiome-rest/src/app/database.py Database.search_workflow_audit (keyset page deep in the list, DBP-1.13)",
+      "sql": "SELECT wa.id, wa.tenant_id, wa.project_id, wa.version_id, wa.action, wa.outcome, wa.actor_id, wa.detail, wa.created_at FROM apiome.workflow_audit wa WHERE wa.tenant_id = $1::uuid AND (wa.created_at, wa.id) < ('2026-01-15T00:00:00Z'::timestamptz, 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid) ORDER BY wa.created_at DESC, wa.id DESC LIMIT 51",
+      "params": [
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "export.runs_page_1",
+      "source": "apiome-rest/src/app/database.py Database.list_export_runs (GET /v1/export/{tenant}/runs, first page, DBP-1.13)",
+      "sql": "SELECT l.job_id, l.artifact_id, l.target, l.state, l.finished_at FROM apiome.export_run_ledger l WHERE l.tenant_id = $1::uuid ORDER BY l.finished_at DESC, l.job_id DESC LIMIT 51",
+      "params": [
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "export.runs_page_1000",
+      "source": "apiome-rest/src/app/database.py Database.list_export_runs (keyset page deep in the list, DBP-1.13)",
+      "sql": "SELECT l.job_id, l.artifact_id, l.target, l.state, l.finished_at FROM apiome.export_run_ledger l WHERE l.tenant_id = $1::uuid AND (l.finished_at, l.job_id) < ('2026-01-10T00:00:00Z'::timestamptz, 'zzzz') ORDER BY l.finished_at DESC, l.job_id DESC LIMIT 51",
+      "params": [
+        "scale:tenant:0"
+      ]
+    },
+    {
+      "name": "notifications.inbox_page",
+      "source": "apiome-rest/src/app/database.py Database.list_notifications (GET /v1/tenants/{tenant}/notifications, keyset page, DBP-1.13)",
+      "sql": "SELECT n.id, n.type, n.payload, n.read_at, n.created_at FROM apiome.notifications n WHERE n.tenant_id = $1::uuid AND n.user_id = $2::uuid AND (n.created_at, n.id) < ('2026-06-01T00:00:00Z'::timestamptz, 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid) ORDER BY n.created_at DESC, n.id DESC LIMIT 51",
+      "params": [
+        "scale:tenant:0",
+        "scale:user:0"
+      ]
+    },
+    {
+      "name": "mock.serving_row",
+      "source": "apiome-rest/src/app/database.py Database.get_mock_serving_row (every mock data-plane request, DBP-1.13)",
+      "sql": "SELECT id, tenant_id, version_id, tenant_slug, project_slug, version_slug, settings, rate_limit_per_minute, expires_at, jsonb_build_object('seed', config->'seed') AS config FROM apiome.mock_instances WHERE id = $1::uuid",
+      "params": [
+        "scale:tenant:0"
       ]
     }
   ]

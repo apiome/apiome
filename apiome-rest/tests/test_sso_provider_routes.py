@@ -97,8 +97,9 @@ class FakeSsoStore:
             key=lambda d: d["domain"],
         )
 
-    def list_providers(self, _db, *, tenant_id=None):
-        return [self._public(r) for r in self.providers.values() if tenant_id is None or r["tenant_id"] == tenant_id]
+    def list_providers(self, _db, *, tenant_id=None, limit=None, cursor=None):
+        rows = [self._public(r) for r in self.providers.values() if tenant_id is None or r["tenant_id"] == tenant_id]
+        return rows if limit is None else rows[:limit]
 
     def get_provider(self, _db, provider_id, *, tenant_id=None):
         row = self.providers.get(provider_id)
@@ -186,7 +187,7 @@ class FakeSsoStore:
     def remove_domain(self, _db, provider_id, domain):
         return self.domains.pop((provider_id, domain), None) is not None
 
-    def list_routable_with_secrets(self, _db):
+    def list_routable_with_secrets(self, _db, *, limit=None, cursor=None):
         out = []
         for row in self.providers.values():
             verified = sorted(

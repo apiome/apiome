@@ -29,6 +29,7 @@ from app.schema_instance_service import SchemaInstanceValidationResponse
 from app.schema_instance_validation import InstanceFinding
 from app.schema_reference import SchemaReferenceError
 from app.schema_suite_service import parse_suite_reference
+from tests.keyset_paging_fakes import walk
 
 client = TestClient(app)
 
@@ -102,11 +103,23 @@ class FakeSuiteDb:
             })
         self.payloads[suite_id] = rows
 
-    def list_schema_test_suites(self, tenant_id, *, ref_kind=None, ref_artifact=None):
+    def list_schema_test_suites(
+        self, tenant_id, *, ref_kind=None, ref_artifact=None, limit=None, cursor=None
+    ):
         if not is_uuid_string(str(tenant_id)):
             return []
         out = []
-        for suite in sorted(self.suites.values(), key=lambda s: s["created_at"], reverse=True):
+        newest_first = sorted(
+            self.suites.values(), key=lambda s: (s["created_at"], str(s["id"])), reverse=True
+        )
+        if cursor is not None:
+            stamp, suite_id = cursor
+            newest_first = [
+                s for s in newest_first if (s["created_at"], str(s["id"])) < (stamp, str(suite_id))
+            ]
+        for suite in newest_first:
+            if limit is not None and len(out) >= limit:
+                break
             if suite["tenant_id"] != tenant_id:
                 continue
             if ref_kind and suite["ref_kind"] != ref_kind:
@@ -222,15 +235,19 @@ class FakeSuiteDb:
         ]
         return dict(row)
 
-    def list_schema_test_suite_runs(self, tenant_id, suite_id, *, limit=20, offset=0):
+    def list_schema_test_suite_runs(self, tenant_id, suite_id, *, limit=20, offset=0, cursor=None):
         if not (is_uuid_string(str(tenant_id)) and is_uuid_string(str(suite_id))):
             return []
         rows = sorted(
             (run for run in self.runs.values()
              if run["suite_id"] == suite_id and run["tenant_id"] == tenant_id),
-            key=lambda run: run["created_at"], reverse=True,
+            key=lambda run: (run["created_at"], str(run["id"])), reverse=True,
         )
-        limit = max(1, min(int(limit), 100))
+        if cursor is not None:
+            # Keyset: only rows strictly older than the cursor row (#7196).
+            rows = [run for run in rows if (run["created_at"], str(run["id"])) < tuple(cursor)]
+            offset = 0
+        limit = max(1, min(int(limit), 101))
         return [dict(row) for row in rows[offset:offset + limit]]
 
     def get_schema_test_suite_run(self, tenant_id, suite_id, run_id):
@@ -639,8 +656,32 @@ def test_an_unresolvable_reference_records_an_error_run(fake_db: FakeSuiteDb) ->
     assert "9.9.9" in run["message"]
     assert run["resolved_revision_id"] is None
 
-    history = client.get(_url(f"/{suite['id']}/runs")).json()
+    listed = client.get(_url(f"/{suite['id']}/runs"))
+    history = listed.json()
     assert [row["status"] for row in history] == ["error"]
+    # A bare array keeps its body; paging state travels in headers (#7196).
+    assert listed.headers["X-Has-More"] == "false" and "X-Next-Cursor" not in listed.headers
+
+
+def test_the_run_history_pages_by_cursor_in_response_headers(fake_db: FakeSuiteDb) -> None:
+    suite = _create()
+    with patch(
+        "app.schema_suite_service.resolve_revision_model",
+        side_effect=SchemaReferenceError("Version '9.9.9' was not found", status_code=404),
+    ):
+        ran = [
+            client.post(_url(f"/{suite['id']}/runs"), json={"version": "9.9.9"}).json()["id"]
+            for _ in range(5)
+        ]
+
+    runs_url = _url(f"/{suite['id']}/runs")
+    seen = walk(lambda params: client.get(runs_url, params=params), None, limit=2)
+    ids = [row["id"] for row in seen]
+    assert ids == list(reversed(ran)) and len(set(ids)) == 5
+
+    assert client.get(runs_url, params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get(runs_url, params={"limit": 101}).status_code == 422
+    assert client.get(runs_url, params={"offset": 10_001}).status_code == 422
 
 
 def test_running_a_missing_suite_is_a_404(fake_db: FakeSuiteDb) -> None:

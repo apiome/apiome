@@ -140,26 +140,89 @@ def compute_latency_stats(values: Iterable[Optional[float]]) -> LatencyStats:
     Returns:
         The rolled-up :class:`LatencyStats`.
     """
+    return latency_stats_from_aggregate(latency_aggregate(values))
+
+
+#: The latency columns of an aggregate row, as SQL and :func:`latency_aggregate` both produce them.
+LATENCY_AGGREGATE_KEYS = ("latency_count", "avg_ms", "min_ms", "max_ms", "p50_ms", "p95_ms", "p99_ms")
+
+
+def latency_aggregate(values: Iterable[Optional[float]]) -> Dict[str, Any]:
+    """Aggregate a latency sample into the unrounded row SQL returns for the same sample.
+
+    The Python twin of :func:`latency_aggregate_sql` (DBP-1.13, #7196): the database computes
+    this row with ``count`` / ``avg`` / ``min`` / ``max`` / ``percentile_cont`` so the sample's
+    rows never leave it; this function computes the identical row from rows already in memory.
+
+    Args:
+        values: The latencies in milliseconds; ``None`` entries are ignored.
+
+    Returns:
+        A mapping with :data:`LATENCY_AGGREGATE_KEYS`; every statistic is ``None`` for an empty
+        sample.
+    """
     sample = [float(v) for v in values if v is not None]
     if not sample:
+        return {key: (0 if key == "latency_count" else None) for key in LATENCY_AGGREGATE_KEYS}
+    row: Dict[str, Any] = {
+        "latency_count": len(sample),
+        "avg_ms": sum(sample) / len(sample),
+        "min_ms": min(sample),
+        "max_ms": max(sample),
+    }
+    for name, fraction in _PERCENTILE_FRACTIONS:
+        row[name] = percentile_cont(sample, fraction)
+    return row
+
+
+def latency_aggregate_sql(expression: str) -> str:
+    """The SQL select-list that aggregates a latency expression into :data:`LATENCY_AGGREGATE_KEYS`.
+
+    Args:
+        expression: The per-row latency in milliseconds, as the query names it. Trusted SQL.
+
+    Returns:
+        Comma-separated aggregate columns (no leading or trailing comma). ``NULL`` latencies are
+        ignored by every aggregate, as :func:`latency_aggregate` ignores ``None``.
+    """
+    value = f"({expression})::double precision"
+    percentiles = ", ".join(
+        f"percentile_cont({fraction}) WITHIN GROUP (ORDER BY {value}) AS {name}"
+        for name, fraction in _PERCENTILE_FRACTIONS
+    )
+    return (
+        f"count({value})::int AS latency_count, avg({value}) AS avg_ms, "
+        f"min({value}) AS min_ms, max({value}) AS max_ms, {percentiles}"
+    )
+
+
+def latency_stats_from_aggregate(row: Mapping[str, Any]) -> LatencyStats:
+    """Build :class:`LatencyStats` from an aggregate row.
+
+    Args:
+        row: A mapping with :data:`LATENCY_AGGREGATE_KEYS` (from SQL or :func:`latency_aggregate`).
+
+    Returns:
+        The statistics, rounded to two decimals; all ``None`` when the sample was empty.
+    """
+
+    def stat(key: str) -> Optional[float]:
+        value = row.get(key)
+        return None if value is None else _round(float(value))
+
+    count = int(row.get("latency_count") or 0)
+    if not count:
         return LatencyStats(
-            count=0,
-            avg_ms=None,
-            min_ms=None,
-            max_ms=None,
-            p50_ms=None,
-            p95_ms=None,
-            p99_ms=None,
+            count=0, avg_ms=None, min_ms=None, max_ms=None, p50_ms=None, p95_ms=None, p99_ms=None
         )
-    percentiles = {name: _round(percentile_cont(sample, frac)) for name, frac in _PERCENTILE_FRACTIONS}
     return LatencyStats(
-        count=len(sample),
-        avg_ms=_round(sum(sample) / len(sample)),
-        min_ms=_round(min(sample)),
-        max_ms=_round(max(sample)),
-        p50_ms=percentiles["p50_ms"],
-        p95_ms=percentiles["p95_ms"],
-        p99_ms=percentiles["p99_ms"],
+        count=count,
+        avg_ms=stat("avg_ms"),
+        min_ms=stat("min_ms"),
+        max_ms=stat("max_ms"),
+        p50_ms=stat("p50_ms"),
+        p95_ms=stat("p95_ms"),
+        p99_ms=stat("p99_ms"),
     )
 
 
@@ -213,7 +276,24 @@ def compute_discovery_reliability(rows: Iterable[Dict[str, Any]]) -> DiscoveryRe
     Returns:
         The rolled-up :class:`DiscoveryReliability` (all zeros / empty latency for no jobs).
     """
-    per_state = {state: 0 for state in ("queued", "running", "completed", "failed")}
+    return discovery_reliability_from_aggregate(discovery_aggregate(rows))
+
+
+#: The lifecycle states a discovery job is tallied under.
+_DISCOVERY_STATES = ("queued", "running", "completed", "failed")
+
+
+def discovery_aggregate(rows: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
+    """Aggregate discovery-job rows into the row SQL returns for the same jobs (#7196).
+
+    Args:
+        rows: ``(state, duration_ms)`` rows.
+
+    Returns:
+        ``job_count``, one ``<state>_count`` per lifecycle state, and the latency aggregate of the
+        durations (:data:`LATENCY_AGGREGATE_KEYS`).
+    """
+    per_state = {state: 0 for state in _DISCOVERY_STATES}
     job_count = 0
     durations: List[Optional[float]] = []
     for row in rows:
@@ -222,17 +302,50 @@ def compute_discovery_reliability(rows: Iterable[Dict[str, Any]]) -> DiscoveryRe
         if state in per_state:
             per_state[state] += 1
         durations.append(row.get("duration_ms"))
+    return {
+        "job_count": job_count,
+        **{f"{state}_count": count for state, count in per_state.items()},
+        **latency_aggregate(durations),
+    }
 
-    terminal = per_state["completed"] + per_state["failed"]
-    success_rate = round(per_state["completed"] / terminal, 4) if terminal else 0.0
+
+def discovery_aggregate_sql(duration_expression: str) -> str:
+    """The SQL select-list that aggregates discovery jobs as :func:`discovery_aggregate` does.
+
+    Args:
+        duration_expression: A job's duration in milliseconds (``NULL`` when it never both started
+            and finished), as the query names it. Trusted SQL.
+
+    Returns:
+        Comma-separated aggregate columns over a set of ``mcp_discovery_jobs`` rows.
+    """
+    states = ", ".join(
+        f"count(*) FILTER (WHERE state = '{state}')::int AS {state}_count"
+        for state in _DISCOVERY_STATES
+    )
+    return f"count(*)::int AS job_count, {states}, {latency_aggregate_sql(duration_expression)}"
+
+
+def discovery_reliability_from_aggregate(row: Mapping[str, Any]) -> DiscoveryReliability:
+    """Build :class:`DiscoveryReliability` from an aggregate row.
+
+    Args:
+        row: The row :func:`discovery_aggregate_sql` or :func:`discovery_aggregate` produces.
+
+    Returns:
+        The rolled-up reliability (all zeros / empty latency for no jobs).
+    """
+    completed = int(row.get("completed_count") or 0)
+    failed = int(row.get("failed_count") or 0)
+    terminal = completed + failed
     return DiscoveryReliability(
-        job_count=job_count,
-        completed_count=per_state["completed"],
-        failed_count=per_state["failed"],
-        running_count=per_state["running"],
-        queued_count=per_state["queued"],
-        success_rate=success_rate,
-        latency=compute_latency_stats(durations),
+        job_count=int(row.get("job_count") or 0),
+        completed_count=completed,
+        failed_count=failed,
+        running_count=int(row.get("running_count") or 0),
+        queued_count=int(row.get("queued_count") or 0),
+        success_rate=round(completed / terminal, 4) if terminal else 0.0,
+        latency=latency_stats_from_aggregate(row),
     )
 
 
@@ -450,6 +563,18 @@ def compute_invocation_reliability(rows: Iterable[Dict[str, Any]]) -> Invocation
     Returns:
         The rolled-up :class:`InvocationReliability` (all zeros / empty latency for no calls).
     """
+    return invocation_reliability_from_aggregate(invocation_aggregate(rows))
+
+
+def invocation_aggregate(rows: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
+    """Aggregate test-invocation rows into the row SQL returns for the same calls (#7196).
+
+    Args:
+        rows: ``(is_error, latency_ms)`` rows.
+
+    Returns:
+        ``call_count``, ``error_count`` and the latency aggregate (:data:`LATENCY_AGGREGATE_KEYS`).
+    """
     call_count = 0
     error_count = 0
     latencies: List[Optional[float]] = []
@@ -458,14 +583,40 @@ def compute_invocation_reliability(rows: Iterable[Dict[str, Any]]) -> Invocation
         if bool(row.get("is_error")):
             error_count += 1
         latencies.append(row.get("latency_ms"))
+    return {"call_count": call_count, "error_count": error_count, **latency_aggregate(latencies)}
 
-    error_rate = round(error_count / call_count, 4) if call_count else 0.0
+
+def invocation_aggregate_sql() -> str:
+    """The SQL select-list that aggregates test invocations as :func:`invocation_aggregate` does.
+
+    Returns:
+        Comma-separated aggregate columns over a set of ``mcp_test_invocations`` rows.
+    """
+    return (
+        "count(*)::int AS call_count, "
+        "count(*) FILTER (WHERE is_error)::int AS error_count, "
+        f"{latency_aggregate_sql('latency_ms')}"
+    )
+
+
+def invocation_reliability_from_aggregate(row: Mapping[str, Any]) -> InvocationReliability:
+    """Build :class:`InvocationReliability` from an aggregate row.
+
+    Args:
+        row: The row :func:`invocation_aggregate_sql` or :func:`invocation_aggregate` produces. An
+            empty mapping (an endpoint with no calls) reads as zero calls.
+
+    Returns:
+        The rolled-up reliability (all zeros / empty latency for no calls).
+    """
+    call_count = int(row.get("call_count") or 0)
+    error_count = int(row.get("error_count") or 0)
     return InvocationReliability(
         call_count=call_count,
         error_count=error_count,
         success_count=call_count - error_count,
-        error_rate=error_rate,
-        latency=compute_latency_stats(latencies),
+        error_rate=round(error_count / call_count, 4) if call_count else 0.0,
+        latency=latency_stats_from_aggregate(row),
     )
 
 

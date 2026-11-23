@@ -9,13 +9,18 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `webhooks` · 6 operations
 
 ## `GET /v1/push-webhook-subscriptions/{tenant_slug}` {#list-push-webhook-subscriptions-v1-push-webhook-subscriptions-tenant-slug-get}
 
 **List Push Webhook Subscriptions**
+
+List the tenant's push-webhook subscriptions, newest first.
+
+The body is a JSON array of at most ``limit`` subscriptions (1,000 at most). ``X-Has-More``
+says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the next page (#7196).
 
 Operation id: `list_push_webhook_subscriptions_v1_push_webhook_subscriptions__tenant_slug__get`
 
@@ -24,6 +29,8 @@ Operation id: `list_push_webhook_subscriptions_v1_push_webhook_subscriptions__te
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -67,6 +74,10 @@ Request body for create push webhook subscription.
 
 List terminal dead-letter webhook deliveries for the tenant (#2588).
 
+The body is a JSON array of at most ``limit`` deliveries (200 at most), most recently failed
+first. ``X-Has-More`` says whether more exist and ``X-Next-Cursor`` carries the ``cursor``
+of the next page (#7196).
+
 Operation id: `list_push_webhook_dead_letter_deliveries_v1_push_webhook_subscriptions__tenant_slug__deliveries_dead_letter_get`
 
 **Parameters**
@@ -74,6 +85,8 @@ Operation id: `list_push_webhook_dead_letter_deliveries_v1_push_webhook_subscrip
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

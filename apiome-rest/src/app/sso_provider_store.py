@@ -20,11 +20,12 @@ Every function takes the :class:`~app.database.Database` it runs on.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 import psycopg2
 from psycopg2.extras import Json
 
+from .keyset_lists import ListOrder, SortColumn, by_name
 from .sso_metadata import CODE_DOMAIN_CLAIMED, CODE_DOMAIN_EXISTS, CODE_SLUG_TAKEN, SsoConfigError
 
 __all__ = [
@@ -80,36 +81,65 @@ def _adapt(column: str, value: Any) -> Any:
     return value
 
 
-def list_providers(db, *, tenant_id: Optional[str] = None) -> List[Dict[str, Any]]:
+#: The provider list's ordering: newest first, then by slug (#7196).
+PROVIDERS_ORDER = ListOrder(
+    "sso-providers",
+    (
+        SortColumn("p.created_at", "time", ("created_at",), descending=True),
+        SortColumn("p.slug", "text", ("slug",)),
+        SortColumn("p.id", "uuid", ("id",)),
+    ),
+)
+
+#: The routable-provider list's ordering: by slug (#7196).
+ROUTABLE_PROVIDERS_ORDER = by_name("sso-routable-providers", "p.slug", "p.id", name_field="slug")
+
+
+def list_providers(
+    db,
+    *,
+    tenant_id: Optional[str] = None,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[Dict[str, Any]]:
     """Providers, newest first, each with its domains under ``domains``.
 
     Args:
         db: The database.
         tenant_id: When given, only that workspace's providers.
+        limit: Providers to read; ``None`` reads them all.
+        cursor: :data:`PROVIDERS_ORDER` values of the last provider already seen (#7196).
 
     Returns:
         Provider rows (no ciphertext), each carrying a ``domains`` list.
     """
-    scope, params = ("WHERE p.tenant_id = %s::uuid", (tenant_id,)) if tenant_id else ("", ())
+    scope, params = ("WHERE p.tenant_id = %s::uuid", (tenant_id,)) if tenant_id else ("WHERE TRUE", ())
+    after_sql, after_params, limit_sql, limit_params = PROVIDERS_ORDER.window(limit, cursor)
     providers = db.execute_query(
         f"""
         SELECT {_READ_COLUMNS}
         FROM apiome.sso_provider p
         LEFT JOIN apiome.tenants t ON t.id = p.tenant_id
-        {scope}
-        ORDER BY p.created_at DESC, p.slug
+        {scope}{after_sql}
+        ORDER BY {PROVIDERS_ORDER.order_by}{limit_sql}
         """,
-        params,
+        (*params, *after_params, *limit_params),
     )
+    if limit is None and cursor is None:
+        domain_scope, domain_params = scope, params
+    else:
+        # One page of providers: read only their domains.
+        domain_scope = "WHERE d.provider_id = ANY(%s::uuid[])"
+        domain_params = ([row["id"] for row in providers],)
     domains = db.execute_query(
         f"""
         SELECT {_DOMAIN_COLUMNS}
         FROM apiome.sso_provider_domain d
         JOIN apiome.sso_provider p ON p.id = d.provider_id
-        {scope}
+        {domain_scope}
         ORDER BY d.domain
         """,
-        params,
+        domain_params,
     )
     by_provider: Dict[str, List[Dict[str, Any]]] = {}
     for row in domains:
@@ -347,7 +377,9 @@ def remove_domain(db, provider_id: str, domain: str) -> bool:
     return bool(rows)
 
 
-def list_routable_with_secrets(db) -> List[Dict[str, Any]]:
+def list_routable_with_secrets(
+    db, *, limit: Optional[int] = None, cursor: Optional[Sequence[Any]] = None
+) -> List[Dict[str, Any]]:
     """Enabled providers with a workspace and at least one verified domain, **including ciphertext**.
 
     A provider without a workspace (registered before EID-1.3 and switched off by V394) has nowhere
@@ -358,13 +390,16 @@ def list_routable_with_secrets(db) -> List[Dict[str, Any]]:
 
     Args:
         db: The database.
+        limit: Providers to read; ``None`` reads them all.
+        cursor: :data:`ROUTABLE_PROVIDERS_ORDER` values of the last provider already seen (#7196).
 
     Returns:
         One row per routable provider: id, slug, protocol, display name, issuer, tenant, configs,
         both ciphertexts with their key ids, and ``domains`` — the verified domains only.
     """
+    after_sql, after_params, limit_sql, limit_params = ROUTABLE_PROVIDERS_ORDER.window(limit, cursor)
     rows = db.execute_query(
-        """
+        f"""
         SELECT p.id::text AS id, p.slug, p.protocol, p.display_name, p.issuer,
                p.tenant_id::text AS tenant_id, p.oidc_config, p.saml_config,
                p.client_secret_encrypted, p.client_secret_key_id,
@@ -373,9 +408,10 @@ def list_routable_with_secrets(db) -> List[Dict[str, Any]]:
         FROM apiome.sso_provider p
         JOIN apiome.sso_provider_domain d
           ON d.provider_id = p.id AND d.verified_at IS NOT NULL
-        WHERE p.enabled AND p.tenant_id IS NOT NULL
+        WHERE p.enabled AND p.tenant_id IS NOT NULL{after_sql}
         GROUP BY p.id
-        ORDER BY p.slug
-        """
+        ORDER BY {ROUTABLE_PROVIDERS_ORDER.order_by}{limit_sql}
+        """,
+        (*after_params, *limit_params),
     )
     return [dict(row) for row in rows]

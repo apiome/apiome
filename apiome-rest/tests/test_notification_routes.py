@@ -38,6 +38,7 @@ ALICE = "5a2b7c10-0000-4000-8000-00000000e001"
 BOB = "5a2b7c10-0000-4000-8000-00000000e002"
 CAROL_ADMIN = "5a2b7c10-0000-4000-8000-00000000e003"
 
+TOTAL = {"include_total": "true"}
 BASE = "/v1/tenants/acme/notifications"
 
 
@@ -87,7 +88,7 @@ def _seed(fake: FakeNotificationDb, *, user_id: str = ALICE, **kwargs: Any) -> s
 def test_the_inbox_lists_newest_first_with_the_actors_name(fake, act_as):
     _seed(fake, type="mention", payload={"thread_id": "t1"})
     _seed(fake, type="version_published")
-    body = client.get(BASE).json()
+    body = client.get(BASE, params={"include_total": "true"}).json()
     assert [row["type"] for row in body["notifications"]] == ["version_published", "mention"]
     assert body["count"] == 2 and body["total"] == 2
     row = body["notifications"][1]
@@ -107,13 +108,13 @@ def test_an_inbox_holds_only_its_owners_rows(fake, act_as):
 
 def test_an_inbox_is_scoped_to_the_authenticated_tenant(fake, act_as):
     _seed(fake, tenant_id=OTHER_TENANT)
-    assert client.get(BASE).json()["total"] == 0
+    assert client.get(BASE, params=TOTAL).json()["total"] == 0
 
 
 def test_a_tenant_administrator_reads_no_colleagues_inbox(fake, act_as):
     _seed(fake, user_id=ALICE)
     act_as(CAROL_ADMIN)
-    assert client.get(BASE).json()["total"] == 0
+    assert client.get(BASE, params=TOTAL).json()["total"] == 0
 
 
 def test_no_inbox_route_asks_for_a_permission(fake, act_as):
@@ -136,9 +137,11 @@ def test_the_unread_filter_and_the_type_filter_combine(fake, act_as):
     _seed(fake, type="mention")
     _seed(fake, type="mention", read=True)
     _seed(fake, type="review_requested")
-    assert client.get(BASE, params={"unread": "true"}).json()["total"] == 2
-    assert client.get(BASE, params={"type": "mention"}).json()["total"] == 2
-    assert client.get(BASE, params={"unread": "true", "type": "mention"}).json()["total"] == 1
+    assert client.get(BASE, params={"unread": "true", **TOTAL}).json()["total"] == 2
+    assert client.get(BASE, params={"type": "mention", **TOTAL}).json()["total"] == 2
+    assert (
+        client.get(BASE, params={"unread": "true", "type": "mention", **TOTAL}).json()["total"] == 1
+    )
 
 
 def test_an_unknown_type_filter_is_refused_rather_than_ignored(fake, act_as):
@@ -148,8 +151,44 @@ def test_an_unknown_type_filter_is_refused_rather_than_ignored(fake, act_as):
 def test_the_list_pages_and_reports_the_total(fake, act_as):
     for _ in range(5):
         _seed(fake)
-    body = client.get(BASE, params={"limit": 2, "offset": 2}).json()
+    body = client.get(BASE, params={"limit": 2, "offset": 2, **TOTAL}).json()
     assert (body["count"], body["total"], body["limit"], body["offset"]) == (2, 5, 2, 2)
+    assert body["has_more"] is True and body["next_cursor"]
+
+
+def test_the_total_is_not_counted_unless_asked_for(fake, act_as, monkeypatch):
+    _seed(fake)
+    monkeypatch.setattr(
+        fake, "count_notifications", lambda **_: pytest.fail("counted without include_total")
+    )
+    body = client.get(BASE).json()
+    assert body["total"] is None and body["count"] == 1
+    assert body["has_more"] is False and body["next_cursor"] is None
+
+
+def test_the_list_pages_by_cursor_until_has_more_is_false(fake, act_as):
+    for _ in range(5):
+        _seed(fake)
+    seen, cursor = [], None
+    for _ in range(4):
+        params = {"limit": 2, **({"cursor": cursor} if cursor else {})}
+        body = client.get(BASE, params=params).json()
+        seen += [row["id"] for row in body["notifications"]]
+        cursor = body["next_cursor"]
+        if not body["has_more"]:
+            break
+    assert cursor is None
+    assert seen == [row["id"] for row in client.get(BASE).json()["notifications"]]
+    assert len(seen) == len(set(seen)) == 5
+
+
+def test_a_malformed_cursor_is_a_400(fake, act_as):
+    assert client.get(BASE, params={"cursor": "not-a-cursor"}).status_code == 400
+
+
+def test_the_page_size_has_a_hard_maximum(fake, act_as):
+    assert client.get(BASE, params={"limit": 201}).status_code == 422
+    assert client.get(BASE, params={"offset": 10_001}).status_code == 422
 
 
 def test_reading_the_list_never_marks_anything_read(fake, act_as):

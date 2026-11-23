@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from .keyset_lists import ListOrder, SortColumn, by_name
 from .revision_source import attach_revision_source, sourceless_format_metadata_sql
 from .schema_registry import FINGERPRINT_KIND, MODE_READWRITE, SchemaRegistryError
 
@@ -107,11 +108,36 @@ def put_config(
 # --------------------------------------------------------------------------- subjects
 
 
-def list_subjects(db: Any, tenant_id: str) -> List[Dict[str, Any]]:
+#: The subject list's ordering (#7196).
+SUBJECTS_ORDER = by_name("schema-subjects", "s.name", "s.id")
+
+#: A subject's version list: its version numbers are unique, so they are the whole key (#7196).
+SUBJECT_VERSIONS_ORDER = ListOrder(
+    "schema-subject-versions", (SortColumn("v.version", "int", ("version",)),)
+)
+
+
+def list_subjects(
+    db: Any,
+    tenant_id: str,
+    *,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[Dict[str, Any]]:
     """List the tenant's live subjects by name, each with ``version_count`` and ``latest_version``.
 
     Soft-deleted subjects and soft-deleted versions are left out.
+
+    Args:
+        db: The database.
+        tenant_id: The tenant.
+        limit: Rows to read; ``None`` reads every subject.
+        cursor: :data:`SUBJECTS_ORDER` values of the last subject already seen (#7196).
+
+    Returns:
+        The subject rows.
     """
+    after_sql, after_params, limit_sql, limit_params = SUBJECTS_ORDER.window(limit, cursor)
     rows = db.execute_query(
         f"""
         SELECT {SUBJECT_COLUMNS},
@@ -120,11 +146,11 @@ def list_subjects(db: Any, tenant_id: str) -> List[Dict[str, Any]]:
         FROM apiome.schema_subjects s
         LEFT JOIN apiome.schema_subject_versions v
                ON v.subject_id = s.id AND v.deleted_at IS NULL
-        WHERE s.tenant_id = %s AND s.deleted_at IS NULL
+        WHERE s.tenant_id = %s AND s.deleted_at IS NULL{after_sql}
         GROUP BY s.id
-        ORDER BY s.name ASC
+        ORDER BY {SUBJECTS_ORDER.order_by}{limit_sql}
         """,
-        (tenant_id,),
+        (tenant_id, *after_params, *limit_params),
     )
     return [dict(r) for r in rows or []]
 
@@ -226,16 +252,33 @@ def soft_delete_subject(db: Any, tenant_id: str, name: str) -> Optional[List[int
 # --------------------------------------------------------------------------- versions
 
 
-def list_versions(db: Any, subject_id: str) -> List[Dict[str, Any]]:
-    """Return a subject's live versions, oldest first."""
+def list_versions(
+    db: Any,
+    subject_id: str,
+    *,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[Dict[str, Any]]:
+    """Return a subject's live versions, oldest first.
+
+    Args:
+        db: The database.
+        subject_id: The subject.
+        limit: Rows to read; ``None`` reads every version (compatibility checks need them all).
+        cursor: :data:`SUBJECT_VERSIONS_ORDER` values of the last version already seen (#7196).
+
+    Returns:
+        The version rows.
+    """
+    after_sql, after_params, limit_sql, limit_params = SUBJECT_VERSIONS_ORDER.window(limit, cursor)
     rows = db.execute_query(
         f"""
         SELECT {VERSION_COLUMNS}
         FROM apiome.schema_subject_versions v
-        WHERE v.subject_id = %s AND v.deleted_at IS NULL
-        ORDER BY v.version ASC
+        WHERE v.subject_id = %s AND v.deleted_at IS NULL{after_sql}
+        ORDER BY {SUBJECT_VERSIONS_ORDER.order_by}{limit_sql}
         """,
-        (subject_id,),
+        (subject_id, *after_params, *limit_params),
     )
     return [dict(r) for r in rows or []]
 

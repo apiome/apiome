@@ -314,7 +314,7 @@ def test_listing_and_reading_need_projects_view() -> None:
         response = client.get(_PROFILES, params={"channel": "webhook"})
     assert response.status_code == 200, response.text
     assert [call.args[2:] for call in guard.call_args_list] == [(Resource.PROJECTS, Action.VIEW)]
-    listing.assert_called_once_with(_TENANT, "webhook")
+    listing.assert_called_once_with(_TENANT, "webhook", limit=1001, cursor=None)
     assert [p["name"] for p in response.json()["profiles"]] == ["ci"]
     with patch(f"{_ROUTES}.enforce_permission"), _tenant(), \
             patch(f"{_ROUTES}.db.get_export_delivery_profile", return_value=None):

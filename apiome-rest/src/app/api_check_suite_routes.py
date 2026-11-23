@@ -52,6 +52,7 @@ from .api_check_suite import (
 from .api_check_suite_policy_store import audit_detail, clear_policy, load_policy, save_policy
 from .auth import get_authenticated_user_id, require_tenant_admin_session, validate_authentication
 from .database import db
+from .keyset_pagination import cursor_query, limit_query, offset_query, parse_time_id_cursor
 from .permissions import Action, Resource, enforce_permission, has_permission
 
 logger = logging.getLogger(__name__)
@@ -366,15 +367,20 @@ def read_check_suite(
     f"{_VERSION_BASE}/runs",
     response_model=CheckSuiteRunList,
     summary="List a version's API change check suite evaluations",
-    description="Every evaluation of the version, newest first.\n\nRequires `projects:view`.",
+    description=(
+        "Every evaluation of the version, newest first.\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false.\n\n"
+        "Requires `projects:view`."
+    ),
 )
 def list_check_suite_runs(
     tenant_slug: str,
     project_ref: str,
     version_ref: str,
     commit_sha: Optional[str] = Query(default=None, description="Only evaluations at this commit."),
-    limit: int = Query(default=50, ge=1, le=200, description="Page size."),
-    offset: int = Query(default=0, ge=0, description="Evaluations to skip."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CheckSuiteRunList:
     """List a version's evaluations.
@@ -385,13 +391,19 @@ def list_check_suite_runs(
         version_ref: Revision id or version label.
         commit_sha: Only evaluations at this commit.
         limit: Page size.
-        offset: Evaluations to skip.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        offset: Evaluations to skip (deprecated).
         auth_data: The authenticated principal.
 
     Returns:
-        The page.
+        The page and whether another follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor, 404 for an unknown project or version, 403
+            without ``projects:view``.
     """
     tenant_id, _user_id = _caller(auth_data, Resource.PROJECTS, Action.VIEW)
+    after = parse_time_id_cursor(cursor)
     try:
         return api_check_suite_store.list_runs(
             tenant_id,
@@ -401,6 +413,7 @@ def list_check_suite_runs(
             commit_sha=commit_sha,
             limit=limit,
             offset=offset,
+            cursor=after,
             consumers_visible=_consumers_visible(auth_data),
         )
     except CheckSuiteError as exc:

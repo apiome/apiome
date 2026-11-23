@@ -31,6 +31,7 @@ from .auth import (
     validate_authentication,
 )
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .mcp_effective_policy import (
     KeyCapabilitySnapshot,
     TenantMcpPolicySnapshot,
@@ -39,6 +40,7 @@ from .mcp_effective_policy import (
     tool_in_ceiling,
 )
 from .mcp_tool_registry import is_registered_mcp_tool
+from .tenant_list_orders import MCP_API_KEYS_ORDER
 
 router = APIRouter(prefix="/v1/tenants", tags=["mcp-keys"])
 
@@ -95,6 +97,10 @@ class McpApiKeyListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     keys: List[McpApiKeyMetadata]
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class McpApiKeyCreateRequest(BaseModel):
@@ -327,13 +333,26 @@ def _preview_for(
 )
 def list_mcp_api_keys(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpApiKeyListResponse:
-    """List MCP API keys for the authenticated tenant."""
+    """List MCP API keys for the authenticated tenant.
+
+    One page of at most ``limit`` keys (1,000 at most), newest first; pass ``next_cursor`` as
+    ``cursor`` until ``has_more`` is false (#7196).
+    """
     _ = tenant_slug
     tenant_id = _require_tenant_admin(auth_data)
-    rows = db.list_mcp_api_keys(tenant_id)
-    return McpApiKeyListResponse(keys=[_to_metadata(r) for r in rows])
+    page = MCP_API_KEYS_ORDER.page(
+        db.list_mcp_api_keys(tenant_id, limit=limit + 1, cursor=MCP_API_KEYS_ORDER.parse(cursor)),
+        limit,
+    )
+    return McpApiKeyListResponse(
+        keys=[_to_metadata(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.post(

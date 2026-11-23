@@ -106,6 +106,7 @@ class FakeCheckDb(FakeBindingDb):
         state: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Any = None,
     ) -> List[Dict[str, Any]]:
         """A tenant's check runs, newest first, narrowed by the filters given."""
         rows = [row for row in self.check_runs.values() if row["tenant_id"] == tenant_id]
@@ -119,7 +120,11 @@ class FakeCheckDb(FakeBindingDb):
             rows = [row for row in rows if row["commit_sha"] == commit_sha]
         if state:
             rows = [row for row in rows if row["state"] == state]
-        rows.sort(key=lambda row: row["created_at"], reverse=True)
+        rows.sort(key=lambda row: (row["created_at"], row["id"]), reverse=True)
+        if cursor is not None:
+            # Keyset: only rows strictly older than the cursor row (#7196).
+            rows = [row for row in rows if (row["created_at"], row["id"]) < tuple(cursor)]
+            offset = 0
         return [self._check_view(row) for row in rows[offset : offset + limit]]
 
     def list_provider_check_deliveries(

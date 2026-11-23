@@ -12,6 +12,17 @@ import { AUTH_ERROR_CODES } from '../auth/account-resolution';
 import { upsertCredentialAccountPassword } from './credential-account';
 import { withTransaction } from './with-transaction';
 import { bulkInsert } from './import-bulk';
+import { PROJECT_COLUMNS, VERSION_COLUMNS, columnList } from './row-columns';
+import {
+  InvalidCursorError,
+  MAX_UNPAGED_ROWS,
+  clampListLimit,
+  decodeKeyCursor,
+  encodeKeyCursor,
+  pageOf,
+  withoutCursorColumns,
+  type ListPageOptions,
+} from './list-bounds';
 import {
   KEYS_SETTING as TOKEN_KEYS_SETTING,
   sealToken,
@@ -27,6 +38,38 @@ const crypto = require('crypto');
 // Helper to standardize error responses
 const errorResponse = (error: string) => JSON.stringify({ success: false, error });
 const successResponse = (data: any = {}) => JSON.stringify({ success: true, ...data });
+
+// Explicit projections (DBP-1.13, #7196). No statement in this file selects `*`: a new column —
+// a password hash, a 1536-dimension embedding — must be asked for by name before it travels.
+
+/** `apiome.users` as account resolution reads it. Never the `password` hash. */
+const USER_IDENTITY_COLUMNS =
+  'id, name, email, verified, enabled, created_at, updated_at, last_login_at';
+
+/** `apiome.tenants` as `TenantRecord` (tenantsModel.ts) declares it. */
+const TENANT_COLUMNS = [
+  'id', 'name', 'description', 'slug', 'enabled', 'deleted_at', 'created_at', 'updated_at',
+] as const;
+
+/** `apiome.api_keys` as the key list shows it (`ApiKeyRecord`). Never `key_hash`. */
+const API_KEY_LIST_COLUMNS =
+  'id, tenant_id, name, description, key_prefix, scopes, last_used_at, expires_at, enabled, ' +
+  'created_at, updated_at, created_by_user_id, kind, cli_login';
+
+/** Every column of `apiome.groups`. */
+const GROUP_COLUMNS =
+  'id, version_id, name, description, color, position_x, position_y, width, height, z_index, ' +
+  'is_collapsed, is_locked, opacity, border_style, metadata, created_at, updated_at, parent_group_id';
+
+/**
+ * The Published list's sort keys. `published_at DESC` has always drawn a missing timestamp
+ * first; `infinity` keeps that order while giving the keyset comparison a value to compare.
+ */
+const PUBLISHED_SORT_PUBLISHED_AT = "COALESCE(v.published_at, 'infinity'::timestamptz)";
+const PUBLISHED_SORT_CREATED_AT = "COALESCE(v.created_at, 'infinity'::timestamptz)";
+
+/** Every column of `apiome.group_classes`. */
+const GROUP_CLASS_COLUMNS = 'id, group_id, class_id, position_x, position_y, sort_order, created_at';
 
 /** Max PNG size for canvas layout snapshots (~512 KiB). */
 const MAX_CANVAS_LAYOUT_SNAPSHOT_BYTES = 512 * 1024;
@@ -111,12 +154,15 @@ function sanitizeNamedLayoutAnnotations(input: NamedLayoutAnnotationsInput) {
  */
 export const getUserByEmail = async (emailAddress: string) =>
   connectionPool.query(
-    'SELECT * FROM apiome.users WHERE lower(email) = $1 AND deleted_at IS NULL',
+    `SELECT ${USER_IDENTITY_COLUMNS} FROM apiome.users WHERE lower(email) = $1 AND deleted_at IS NULL`,
     [String(emailAddress ?? '').trim().toLowerCase()]
   );
 
 export const getUserById = async (userId: string) =>
-  connectionPool.query('SELECT * FROM apiome.users WHERE id = $1 AND deleted_at IS NULL', [userId]);
+  connectionPool.query(
+    `SELECT ${USER_IDENTITY_COLUMNS} FROM apiome.users WHERE id = $1 AND deleted_at IS NULL`,
+    [userId]
+  );
 
 const emptyStats = {
   total_tenants: 0, admin_tenants: 0, total_projects: 0, created_projects: 0,
@@ -179,17 +225,26 @@ export async function getRecentActivity(userId: string, limit: number = 10) {
   }
 }
 
+/**
+ * The live tenants a user belongs to or administers.
+ *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) tenants are read.
+ *
+ * @param userId The `apiome.users.id`.
+ * @returns A JSON array of tenant rows (`TenantRecord`).
+ */
 export async function getTenantsForUser(userId: string) {
   const result = await connectionPool.query(
-    `SELECT DISTINCT a.*
+    `SELECT DISTINCT ${columnList(TENANT_COLUMNS, 'a')}
      FROM apiome.tenants a
      INNER JOIN (
        SELECT tenant_id FROM apiome.tenant_users WHERE user_id = $1
        UNION
        SELECT tenant_id FROM apiome.tenant_administrators WHERE user_id = $1
      ) access ON access.tenant_id = a.id
-     WHERE a.deleted_at IS NULL`,
-    [userId]
+     WHERE a.deleted_at IS NULL
+     LIMIT $2`,
+    [userId, MAX_UNPAGED_ROWS]
   );
   return JSON.stringify(result.rows);
 }
@@ -254,13 +309,22 @@ export async function isTenantSlugTaken(slug: string): Promise<boolean> {
   return (result.rowCount ?? 0) > 0;
 }
 
+/**
+ * The `tenant_administrators` rows of one user, joined to the user.
+ *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) rows are read.
+ *
+ * @param userId The `apiome.users.id`.
+ * @returns A JSON array of `{ id, tenant_id, user_id, name, email }`.
+ */
 export async function getTenantsAdministratedByUser(userId: string) {
   const result = await connectionPool.query(
     `SELECT ta.id, ta.tenant_id, ta.user_id, u.name, u.email
      FROM apiome.tenant_administrators ta
      INNER JOIN apiome.users u ON u.id = ta.user_id
-     WHERE ta.user_id = $1`,
-    [userId]
+     WHERE ta.user_id = $1
+     LIMIT $2`,
+    [userId, MAX_UNPAGED_ROWS]
   );
   return JSON.stringify(result.rows);
 }
@@ -289,11 +353,20 @@ export async function resolveTenantAdminForSession(
   return isUserTenantAdministrator(userId, tenantId);
 }
 
+/**
+ * The `tenant_users` rows of one tenant, joined to their users.
+ *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) members are read.
+ *
+ * @param tenantId The tenant.
+ * @returns A JSON array of `{ id, tenant_id, user_id, name, email }`.
+ */
 export async function getTenantUsers(tenantId: string) {
   const result = await connectionPool.query(
     `SELECT a.id, a.tenant_id, a.user_id, b.name, b.email FROM apiome.tenant_users a, apiome.users b 
-     WHERE b.id = a.user_id AND a.tenant_id = $1`,
-    [tenantId]);
+     WHERE b.id = a.user_id AND a.tenant_id = $1
+     LIMIT $2`,
+    [tenantId, MAX_UNPAGED_ROWS]);
   return JSON.stringify(result.rows);
 }
 
@@ -467,13 +540,16 @@ export async function updateUserPassword(userId: string, currentPassword: string
  *   // Use data.projects
  * }
  * ```
+ *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) projects are read, newest first.
  */
 export async function getProjectsForTenant(tenantId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT p.*, u.name as creator_name, u.email as creator_email FROM apiome.projects p 
-       LEFT JOIN apiome.users u ON p.creator_id = u.id WHERE p.tenant_id = $1 AND p.deleted_at IS NULL ORDER BY p.created_at DESC`,
-      [tenantId]);
+      `SELECT ${columnList(PROJECT_COLUMNS, 'p')}, u.name as creator_name, u.email as creator_email FROM apiome.projects p 
+       LEFT JOIN apiome.users u ON p.creator_id = u.id WHERE p.tenant_id = $1 AND p.deleted_at IS NULL ORDER BY p.created_at DESC
+       LIMIT $2`,
+      [tenantId, MAX_UNPAGED_ROWS]);
     return JSON.stringify(result.rows);
   } catch (error: any) {
     return JSON.stringify([]);
@@ -498,7 +574,7 @@ export async function createProject(tenantId: string, creatorId: string, name: s
     if (planErr) return errorResponse(planErr);
 
     const result = await connectionPool.query(
-      `INSERT INTO apiome.projects (tenant_id, creator_id, name, description, slug, metadata) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO apiome.projects (tenant_id, creator_id, name, description, slug, metadata) VALUES ($1, $2, $3, $4, $5, $6) RETURNING ${columnList(PROJECT_COLUMNS)}`,
       [tenantId, creatorId, name.trim(), description?.trim() || null, slug.trim().toLowerCase(), metadata ? JSON.stringify(metadata) : '{}']);
     return successResponse({ project: result.rows[0] });
   } catch (error: any) {
@@ -668,13 +744,17 @@ export async function permanentDeleteProject(projectId: string) {
  * }
  * 
  * This function is kept for backward compatibility and testing purposes only.
+ *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) versions are read, newest
+ * first. The search columns (`mcp_public_embedding`, `mcp_public_doc_tsv`) are never selected.
  */
 export async function getVersionsForProject(projectId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT v.*, u.name as creator_name, u.email as creator_email FROM apiome.versions v 
-       LEFT JOIN apiome.users u ON v.creator_id = u.id WHERE v.project_id = $1 AND v.deleted_at IS NULL ORDER BY v.created_at DESC`,
-      [projectId]);
+      `SELECT ${columnList(VERSION_COLUMNS, 'v')}, u.name as creator_name, u.email as creator_email FROM apiome.versions v 
+       LEFT JOIN apiome.users u ON v.creator_id = u.id WHERE v.project_id = $1 AND v.deleted_at IS NULL ORDER BY v.created_at DESC
+       LIMIT $2`,
+      [projectId, MAX_UNPAGED_ROWS]);
     return JSON.stringify(result.rows);
   } catch (error: any) {
     return JSON.stringify([]);
@@ -1151,7 +1231,7 @@ export async function createVersion(projectId: string, creatorId: string, versio
     const result = await connectionPool.query(
       `INSERT INTO apiome.versions (project_id, creator_id, version_id, description, change_log)
        VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
+       RETURNING ${columnList(VERSION_COLUMNS)}`,
       [projectId, creatorId, finalVersionId.trim(), description?.trim() || null, changeLog?.trim() || null]
     );
 
@@ -1289,12 +1369,36 @@ export async function unpublishVersion(versionRecordId: string, userId: string) 
  * suggestion, in the shape apiome-rest's list envelopes use — a published version is owned by the
  * project it belongs to. `team` narrows the read, in SQL, to projects that team owns.
  *
+ * The list is paged (DBP-1.13, #7196): one call reads at most `MAX_LIST_ROWS` (200) revisions —
+ * `DEFAULT_LIST_ROWS` (50) when no `limit` is named — and answers whether more exist. The order
+ * is the one the screen has always drawn, with `id` as the final tie-breaker so a cursor names
+ * exactly one position: `published_at DESC, created_at DESC, id DESC`.
+ *
  * @param tenantId The workspace's id.
  * @param team A team slug to filter by, or `null` / omitted for every owner.
- * @returns `{"success": true, "versions": [...]}`, or `{"success": false, "error": "..."}`.
+ * @param options `limit` and the previous page's `cursor`.
+ * @returns `{"success": true, "versions": [...], "hasMore": boolean, "nextCursor": string | null}`,
+ *   or `{"success": false, "error": "..."}` (a cursor this list did not issue is an error).
  */
-export async function getPublishedVersionsForTenant(tenantId: string, team: string | null = null) {
+export async function getPublishedVersionsForTenant(
+  tenantId: string,
+  team: string | null = null,
+  options: ListPageOptions = {}
+) {
   try {
+    const limit = clampListLimit(options?.limit);
+    const params: unknown[] = [tenantId, sanitizeTeamParam(team)];
+    let cursorSql = '';
+    if (options?.cursor) {
+      const key = decodeKeyCursor(options.cursor, 3);
+      if (!key.every((value) => typeof value === 'string' && value)) {
+        throw new InvalidCursorError('cursor does not match this list');
+      }
+      params.push(...key);
+      cursorSql = `AND (${PUBLISHED_SORT_PUBLISHED_AT}, ${PUBLISHED_SORT_CREATED_AT}, v.id)
+               < ($3::timestamptz, $4::timestamptz, $5::uuid)`;
+    }
+    params.push(limit + 1);
     const result = await connectionPool.query(
       `SELECT 
         v.id,
@@ -1324,7 +1428,10 @@ export async function getPublishedVersionsForTenant(tenantId: string, team: stri
         t.slug as tenant_slug,
         u.name as creator_name,
         u.email as creator_email,
-        own.owner
+        own.owner,
+        -- The sort key as text, for the cursor: a JS Date would drop the microseconds.
+        ${PUBLISHED_SORT_PUBLISHED_AT}::text AS cursor_published_at,
+        ${PUBLISHED_SORT_CREATED_AT}::text AS cursor_created_at
        FROM apiome.versions v
        JOIN apiome.projects p ON v.project_id = p.id
        JOIN apiome.tenants t ON p.tenant_id = t.id
@@ -1349,12 +1456,27 @@ export async function getPublishedVersionsForTenant(tenantId: string, team: stri
          AND p.deleted_at IS NULL
          AND t.deleted_at IS NULL
          AND ($2::text IS NULL OR own.owner->'team'->>'slug' = $2::text)
-       ORDER BY v.published_at DESC, v.created_at DESC`,
-      [tenantId, sanitizeTeamParam(team)]
+         ${cursorSql}
+       ORDER BY ${PUBLISHED_SORT_PUBLISHED_AT} DESC, ${PUBLISHED_SORT_CREATED_AT} DESC, v.id DESC
+       LIMIT $${params.length}`,
+      params
     );
 
-    return JSON.stringify({ success: true, versions: result.rows });
+    const page = pageOf(result.rows as Record<string, unknown>[], limit, (row) =>
+      encodeKeyCursor([row.cursor_published_at, row.cursor_created_at, row.id])
+    );
+    return JSON.stringify({
+      success: true,
+      versions: page.items.map((row) =>
+        withoutCursorColumns(row, ['cursor_published_at', 'cursor_created_at'])
+      ),
+      hasMore: page.hasMore,
+      nextCursor: page.nextCursor,
+    });
   } catch (error: any) {
+    if (error instanceof InvalidCursorError) {
+      return JSON.stringify({ success: false, error: 'Invalid cursor' });
+    }
     console.error('Error fetching published versions:', error);
     return JSON.stringify({ success: false, error: error?.message ?? 'Unknown database error' });
   }
@@ -2052,7 +2174,7 @@ export async function extractObjectPropertyToClass(
         FROM apiome.class_properties cp
         INNER JOIN nested_props np ON cp.parent_id = np.id
       )
-      SELECT * FROM nested_props
+      SELECT id, property_id, name, description, data, parent_id, depth FROM nested_props
       ORDER BY depth ASC, name ASC`,
       [classPropertyId]
     );
@@ -2387,7 +2509,7 @@ export async function importProjectFromOpenAPI(
     const projectResult = await client.query(
       `INSERT INTO apiome.projects (tenant_id, creator_id, name, description, slug)
        VALUES ($1, $2, $3, $4, $5)
-       RETURNING *`,
+       RETURNING id`,
       [tenantId, creatorId, projectName.trim(), projectDescription?.trim() || null, projectSlug.trim().toLowerCase()]
     );
     const project = projectResult.rows[0];
@@ -2396,7 +2518,7 @@ export async function importProjectFromOpenAPI(
     const versionResult = await client.query(
       `INSERT INTO apiome.versions (project_id, creator_id, version_id, description)
        VALUES ($1, $2, $3, $4)
-       RETURNING *`,
+       RETURNING id`,
       [project.id, creatorId, versionId.trim(), versionDescription?.trim() || null]
     );
     const version = versionResult.rows[0];
@@ -2625,16 +2747,20 @@ export async function importProjectFromOpenAPI(
  * one toolset and a tool allowlist, managed through apiome-rest's `/agent-keys` API, and this
  * table would otherwise present one as a full-access workspace key.
  *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) keys are read. The stored
+ * `key_hash` is never selected.
+ *
  * @param tenantId The tenant.
  * @returns A JSON array of `api_keys` rows (`[]` on any error).
  */
 export async function getApiKeysForTenant(tenantId: string) {
   try {
     const result = await connectionPool.query(
-      `SELECT * FROM apiome.api_keys 
+      `SELECT ${API_KEY_LIST_COLUMNS} FROM apiome.api_keys 
        WHERE tenant_id = $1 AND deleted_at IS NULL AND kind = 'workspace'
-       ORDER BY created_at DESC`,
-      [tenantId]
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [tenantId, MAX_UNPAGED_ROWS]
     );
 
     return JSON.stringify(result.rows);
@@ -3488,14 +3614,23 @@ export async function removePersonalAccessToken(
 // TAG MANAGEMENT FUNCTIONS
 // =============================================================================
 
+/**
+ * A project's tags, by name.
+ *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) tags are read.
+ *
+ * @param projectId The project.
+ * @returns A JSON array of tag rows (`[]` on any error).
+ */
 export async function getTagsForProject(projectId: string) {
   try {
     const result = await connectionPool.query(
       `SELECT id, project_id, name, color, description, created_at, updated_at
        FROM apiome.tags
        WHERE project_id = $1
-       ORDER BY name ASC`,
-      [projectId]
+       ORDER BY name ASC
+       LIMIT $2`,
+      [projectId, MAX_UNPAGED_ROWS]
     );
 
     return JSON.stringify(result.rows);
@@ -4819,7 +4954,8 @@ export async function updateCanvasLayout(
     // Lock the layout row for the duration of the transaction so concurrent saves
     // for the same layout cannot race on the revision counter.
     const currentResult = await client.query(
-      `SELECT * FROM apiome.canvas_layouts WHERE id = $1 FOR UPDATE`,
+      `SELECT id, version_id, user_id, viewport, nodes, edges, grid_settings, minimap_settings
+       FROM apiome.canvas_layouts WHERE id = $1 FOR UPDATE`,
       [layoutId]
     );
 
@@ -5606,7 +5742,7 @@ export async function updateGroup(
     values.push(groupId);
 
     const result = await connectionPool.query(
-      `UPDATE apiome.groups SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+      `UPDATE apiome.groups SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING ${GROUP_COLUMNS}`,
       values
     );
 
@@ -5660,7 +5796,7 @@ export async function addClassToGroup(
          position_x = EXCLUDED.position_x,
          position_y = EXCLUDED.position_y,
          sort_order = EXCLUDED.sort_order
-       RETURNING *`,
+       RETURNING ${GROUP_CLASS_COLUMNS}`,
       [groupId, classId, positionX, positionY, sortOrder]
     );
 
@@ -5706,7 +5842,7 @@ export async function updateClassPositionInGroup(
       `UPDATE apiome.group_classes 
        SET position_x = $3, position_y = $4
        WHERE group_id = $1 AND class_id = $2
-       RETURNING *`,
+       RETURNING ${GROUP_CLASS_COLUMNS}`,
       [groupId, classId, positionX, positionY]
     );
 
@@ -6213,7 +6349,11 @@ export async function assertProjectInTenant(projectId: string, tenantId: string)
   return (r.rowCount ?? 0) > 0;
 }
 
-/** List named branches for a project (tips are version row ids). */
+/**
+ * List named branches for a project (tips are version row ids).
+ *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) branches are read, by name.
+ */
 export async function listVersionBranches(projectId: string, tenantId: string) {
   try {
     const ok = await assertProjectInTenant(projectId, tenantId);
@@ -6225,8 +6365,9 @@ export async function listVersionBranches(projectId: string, tenantId: string) {
        JOIN apiome.versions v ON v.id = b.tip_version_id AND v.project_id = b.project_id
        JOIN apiome.projects p ON b.project_id = p.id
        WHERE b.project_id = $1 AND p.tenant_id = $2 AND v.deleted_at IS NULL
-       ORDER BY b.name ASC`,
-      [projectId, tenantId]
+       ORDER BY b.name ASC
+       LIMIT $3`,
+      [projectId, tenantId, MAX_UNPAGED_ROWS]
     );
     return JSON.stringify({ success: true, branches: result.rows });
   } catch (error: any) {
@@ -6476,7 +6617,11 @@ export async function setVersionRevisionLock(
   }
 }
 
-/** List named tags for a project (pointers to version row ids). */
+/**
+ * List named tags for a project (pointers to version row ids).
+ *
+ * A safety bound, not a page: at most `MAX_UNPAGED_ROWS` (1,000) tags are read, by name.
+ */
 export async function listVersionTags(projectId: string, tenantId: string) {
   try {
     const ok = await assertProjectInTenant(projectId, tenantId);
@@ -6488,8 +6633,9 @@ export async function listVersionTags(projectId: string, tenantId: string) {
        JOIN apiome.versions v ON v.id = t.version_id AND v.project_id = t.project_id
        JOIN apiome.projects p ON t.project_id = p.id
        WHERE t.project_id = $1 AND p.tenant_id = $2 AND v.deleted_at IS NULL
-       ORDER BY t.name ASC`,
-      [projectId, tenantId]
+       ORDER BY t.name ASC
+       LIMIT $3`,
+      [projectId, tenantId, MAX_UNPAGED_ROWS]
     );
     return JSON.stringify({ success: true, tags: result.rows });
   } catch (error: any) {

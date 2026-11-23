@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `style-guides` · 23 operations
 
@@ -19,6 +19,21 @@ Tag: `style-guides` · 23 operations
 
 List the tenant's style guides with list-view rollups (rules on, assignments).
 
+Builtin guide first, then by name; one page of at most ``limit`` guides (1,000 at most).
+Pass the page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of guides and whether another follows.
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
+
 Operation id: `list_style_guides_v1_style_guides__tenant_slug__get`
 
 **Parameters**
@@ -26,6 +41,8 @@ Operation id: `list_style_guides_v1_style_guides__tenant_slug__get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -498,7 +515,23 @@ Request body for put style guide policy settings.
 
 **List Style Guide Policy Versions**
 
-List immutable policy pack versions for a style guide (CLX-1.3, #4850).
+List immutable policy pack versions for a style guide, newest first (CLX-1.3, #4850).
+
+One page of at most ``limit`` versions (200 at most); pass the page's ``nextCursor`` as
+``cursor`` while ``hasMore`` is true (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    guide_id: The guide whose policy versions are read.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of policy versions and whether another follows.
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 when the guide is unknown.
 
 Operation id: `list_style_guide_policy_versions_v1_style_guides__tenant_slug___guide_id__policy_versions_get`
 
@@ -508,6 +541,8 @@ Operation id: `list_style_guide_policy_versions_v1_style_guides__tenant_slug___g
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `guide_id` | path | string | yes | Style guide identifier. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -582,6 +617,23 @@ V159 migration): its current state is captured as revision 1 rather than showing
 list for a guide that demonstrably exists. Readable by any tenant member — compliance
 review is not an admin-only activity.
 
+One page of at most ``limit`` revisions (500 at most; a larger ``limit`` is now a 422
+rather than silently clamped). Pass the page's ``nextCursor`` as ``cursor`` while
+``hasMore`` is true (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    guide_id: The guide whose history is read.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of revisions and whether another follows.
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 when the guide is unknown.
+
 Operation id: `list_style_guide_revisions_v1_style_guides__tenant_slug___guide_id__revisions_get`
 
 **Parameters**
@@ -590,7 +642,8 @@ Operation id: `list_style_guide_revisions_v1_style_guides__tenant_slug___guide_i
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `guide_id` | path | string | yes | Style guide identifier. |
-| `limit` | query | integer | no | Maximum number of rows to return. |
+| `limit` | query | integer | no | Page size. At most 500. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -830,8 +883,10 @@ The tenant's style guides for the Control Panel list view (GOV-2.1, #4433).
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `guides` | array of [`StyleGuideOut`](#schema-styleguideout) | yes | Every guide of the tenant, builtin first then by name. |
-| `count` | integer | yes | Number of guides (== len(guides)). |
+| `guides` | array of [`StyleGuideOut`](#schema-styleguideout) | yes | One page of the tenant's guides, builtin first then by name. |
+| `count` | integer | yes | Number of guides in this page (== len(guides)). |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `StyleGuideOut` {#schema-styleguideout}
 
@@ -904,7 +959,9 @@ List of policy pack versions for a style guide (CLX-1.3, #4850).
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `versions` | array of [`StyleGuidePolicyVersionOut`](#schema-styleguidepolicyversionout) | no | Versions. |
-| `count` | integer | no | Number of count. |
+| `count` | integer | no | Number of versions in this page. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `StyleGuidePolicyVersionOut` {#schema-styleguidepolicyversionout}
 
@@ -959,7 +1016,9 @@ A style guide's immutable revision history, newest first (GOV-1.6, #4432).
 | `guideId` | string | yes | Guide ID. |
 | `guideName` | string | yes | Guide Name. |
 | `revisions` | array of `StyleGuideRevisionOut` | no | Revisions. |
-| `count` | integer | no | Number of count. |
+| `count` | integer | no | Number of revisions in this page. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `StyleGuideRulesPutRequest` {#schema-styleguiderulesputrequest}
 

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export` · 19 operations
 
@@ -273,7 +273,7 @@ Request body for on-demand round-trip comparison: emit → re-import → diff �
 
 **List the export history**
 
-The tenant's export runs, newest first (MFX-46.1): source and revision, target, actor, outcome, preserved %, validation and lint verdicts, delivery decision and every delivery. Filter by `artifact`, `target`, `actor`, `state`, `channel` (`git`, `webhook`, `object-storage`, `none`), `validation`, `decision` and `finished_after` / `finished_before`. Runs are kept for the job history window (90 days by default). Requires `projects:view`.
+The tenant's export runs, newest first (MFX-46.1): source and revision, target, actor, outcome, preserved %, validation and lint verdicts, delivery decision and every delivery. Filter by `artifact`, `target`, `actor`, `state`, `channel` (`git`, `webhook`, `object-storage`, `none`), `validation`, `decision` and `finished_after` / `finished_before`. Runs are kept for the job history window (90 days by default). Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false; the `total` is counted only when `include_total` is set. Requires `projects:view`.
 
 Operation id: `list_export_runs_v1_export__tenant_slug__runs_get`
 
@@ -291,8 +291,10 @@ Operation id: `list_export_runs_v1_export__tenant_slug__runs_get`
 | `decision` | query | enum `"allow"`, `"allow_with_warning"`, `"block"` or null | no | Only runs with this delivery decision. |
 | `finished_after` | query | string (date-time) or null | no | Inclusive lower bound on when the run ended. |
 | `finished_before` | query | string (date-time) or null | no | Inclusive upper bound on when the run ended. |
-| `limit` | query | integer | no | Page size (default 50, max 200). |
-| `offset` | query | integer | no | Runs to skip. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -893,9 +895,11 @@ A page of the tenant's export history.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `runs` | array of `ExportRunSummary` | yes | Runs. |
-| `total` | integer | no | Runs matching the filters (not just this page). |
+| `total` | integer or null | no | Runs matching the filters (not just this page), counted up to 10,000. Present only when the request set `include_total`. |
 | `limit` | integer | no | Limit. |
-| `offset` | integer | no | Offset. |
+| `offset` | integer | no | The offset used (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ExportTargetsFidelityStatus` {#schema-exporttargetsfidelitystatus}
 

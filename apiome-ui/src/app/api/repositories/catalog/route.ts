@@ -32,6 +32,8 @@ const FORWARD_PARAMS = [
   'all_branches',
   'sort',
   'limit',
+  'cursor',
+  'include_total',
   'offset',
   'include_facets',
 ] as const;

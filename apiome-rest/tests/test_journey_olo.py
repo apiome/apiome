@@ -155,7 +155,7 @@ class FakeJourneyDb:
         return sum(1 for (_, u) in self.memberships if u == user_id)
 
     def list_tenants_for_user_page(
-        self, user_id: str, limit: int, offset: int
+        self, user_id: str, limit: int, offset: int, cursor: Any = None
     ) -> List[Dict[str, Any]]:
         rows = []
         for (tenant_id, member_id), membership in self.memberships.items():
@@ -173,7 +173,11 @@ class FakeJourneyDb:
                     "license_type": tenant["license"]["license_type"],
                 }
             )
-        rows.sort(key=lambda r: r["slug"])
+        rows.sort(key=lambda r: (r["slug"], r["id"]))
+        if cursor is not None:
+            # Keyset: only tenants strictly after the cursor row (#7196).
+            rows = [r for r in rows if (r["slug"], r["id"]) > tuple(cursor)]
+            offset = 0
         return rows[offset : offset + limit]
 
 

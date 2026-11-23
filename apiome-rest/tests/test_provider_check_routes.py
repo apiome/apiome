@@ -39,6 +39,7 @@ from app.provider_checks import (
     STATE_SKIPPED,
 )
 from tests.fake_check_db import FakeCheckDb
+from tests.keyset_paging_fakes import walk
 
 client = TestClient(app)
 
@@ -335,6 +336,23 @@ def test_a_projects_checks_list_newest_first_with_the_adapter_providers(fake, pr
     assert [check["name"] for check in body["checks"]] == ["apiome/two", "apiome/one"]
     assert body["count"] == 2
     assert body["providers"] == ["bitbucket", "github", "gitlab"]
+    assert body["has_more"] is False and body["next_cursor"] is None
+
+
+@pytest.mark.parametrize("url", [f"{PROJECT_BASE}/checks", CHECKS])
+def test_the_check_lists_page_by_cursor_until_has_more_is_false(fake, provider, act_as, url):
+    for name in ("apiome/one", "apiome/two", "apiome/three"):
+        _recorded(state=STATE_PASS, name=name)
+    seen = walk(lambda params: client.get(url, params=params), "checks", limit=2)
+    assert [check["name"] for check in seen] == ["apiome/three", "apiome/two", "apiome/one"]
+    assert len({check["id"] for check in seen}) == 3
+
+
+@pytest.mark.parametrize("url", [f"{PROJECT_BASE}/checks", CHECKS])
+def test_a_malformed_cursor_is_a_400_and_the_page_size_is_capped(fake, provider, act_as, url):
+    assert client.get(url, params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get(url, params={"limit": 201}).status_code == 422
+    assert client.get(url, params={"offset": 10_001}).status_code == 422
 
 
 def test_the_list_narrows_by_state_commit_and_version(fake, provider, act_as):

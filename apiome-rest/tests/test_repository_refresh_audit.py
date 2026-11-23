@@ -323,11 +323,27 @@ def test_count_uses_same_filter_and_returns_int():
     db = Database()
 
     def fake_execute_query(query, params=None):
-        assert "COUNT(*)" in query
+        assert "count(*)" in query
+        # The count stops reading at the cap (#7196).
+        assert "LIMIT 10000" in query
         assert "wa.detail->>'path' = %s" in query
-        return [{"cnt": 7}]
+        return [{"total": 7}]
 
     db.execute_query = fake_execute_query  # type: ignore[method-assign]
     assert (
         db.count_repository_refresh_audit("t1", repository_id="r1", path="api.yaml") == 7
     )
+
+
+def test_search_continues_after_a_cursor_without_an_offset():
+    from datetime import datetime, timezone
+
+    db, captured = _db_capturing()
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+    row_id = "aaaaaaaa-bbbb-cccc-dddd-000000000001"
+    db.search_repository_refresh_audit(
+        "t1", repository_id="r1", limit=10, offset=20, cursor=(stamp, row_id)
+    )
+    assert "(wa.created_at, wa.id) < (%s, %s::uuid)" in captured["query"]
+    assert "ORDER BY wa.created_at DESC, wa.id DESC" in captured["query"]
+    assert tuple(captured["params"])[-4:] == (stamp, row_id, 10, 0)

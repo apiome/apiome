@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-import base64
-import binascii
-import json
 from typing import Any
 
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
+
+from apiome_mcp.cursor_codec import (
+    clamp_page_limit,
+    decode_cursor_payload,
+    encode_cursor_payload,
+)
 
 CURSOR_VERSION = 1
 MAX_PAGE_SIZE = 100
@@ -19,35 +22,19 @@ class InvalidSpecListTagsCursorError(ValueError):
     """Raised when ``cursor`` cannot be decoded or fails validation."""
 
 
-def _b64url_pad(s: str) -> str:
-    return s + "=" * ((4 - len(s) % 4) % 4)
-
-
 def encode_spec_list_tags_cursor(cnt: int, tag: str) -> str:
     """Return a stable URL-safe cursor (versioned JSON, base64url without ``=`` padding)."""
     payload = {"v": CURSOR_VERSION, "c": int(cnt), "t": str(tag)}
-    raw = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
-    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+    return encode_cursor_payload(payload)
 
 
 def decode_spec_list_tags_cursor(raw: str | None) -> tuple[int, str] | None:
     """Decode ``cursor`` into ``(count, tag)`` or ``None`` when absent."""
-    if raw is None:
+    obj = decode_cursor_payload(
+        raw, tool="spec.list_tags", version=CURSOR_VERSION, error=InvalidSpecListTagsCursorError
+    )
+    if obj is None:
         return None
-    if not raw.strip():
-        raise InvalidSpecListTagsCursorError("Invalid spec.list_tags cursor (empty value).")
-    try:
-        blob = base64.urlsafe_b64decode(_b64url_pad(raw.strip()))
-        obj = json.loads(blob.decode("utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError, binascii.Error) as exc:
-        raise InvalidSpecListTagsCursorError("Invalid spec.list_tags cursor (malformed encoding).") from exc
-
-    if not isinstance(obj, dict):
-        raise InvalidSpecListTagsCursorError("Invalid spec.list_tags cursor (expected JSON object).")
-
-    ver = obj.get("v")
-    if ver != CURSOR_VERSION:
-        raise InvalidSpecListTagsCursorError(f"Unsupported spec.list_tags cursor version: {ver!r}.")
 
     c_raw = obj.get("c")
     t_raw = obj.get("t")
@@ -63,11 +50,7 @@ def decode_spec_list_tags_cursor(raw: str | None) -> tuple[int, str] | None:
 
 
 def _clamp_limit(limit: int | None) -> int:
-    if limit is None:
-        return DEFAULT_PAGE_SIZE
-    if limit < 1:
-        raise ValueError(f"limit must be at least 1, got {limit}.")
-    return min(limit, MAX_PAGE_SIZE)
+    return clamp_page_limit(limit, default=DEFAULT_PAGE_SIZE, maximum=MAX_PAGE_SIZE)
 
 
 def _row_out(row: dict[str, Any]) -> dict[str, Any]:

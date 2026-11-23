@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `slate-git-preview` · 8 operations
 
@@ -19,12 +19,17 @@ Tag: `slate-git-preview` · 8 operations
 
 List the tenant's git provider connections, without their secrets.
 
+One page of at most ``limit`` connections (1,000 at most), newest first; pass ``nextCursor``
+as ``cursor`` until ``hasMore`` is false (#7196).
+
 Operation id: `list_git_connections_v1_slate_git_connections_get`
 
 **Parameters**
 
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `tenantSlug` | query | string or null | no | Tenant slug. Optional: the Slate routes read tenancy from the credential, so a browser call carrying a session JWT does not need to name a tenant in the URL. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -256,6 +261,8 @@ ConnectionListResponse schema.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `connections` | array of [`ConnectionBody`](#schema-connectionbody) | yes | Connections. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `CreateConnectionRequest` {#schema-createconnectionrequest}
 

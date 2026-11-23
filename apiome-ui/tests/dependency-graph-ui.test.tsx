@@ -193,8 +193,8 @@ describe('the Dependencies panel', () => {
     await screen.findByTestId('dependency-edge-e1');
     // The edge reads; a project also reads its suggested consumers (CDG-3.5) once the edges land.
     expect(calls.map((c) => c.url).filter((url) => url.startsWith('/api/graph')).sort()).toEqual([
-      `/api/graph/edges/project/${PROJECT}?direction=in&limit=500`,
-      `/api/graph/edges/project/${PROJECT}?direction=out&limit=500`,
+      `/api/graph/edges/project/${PROJECT}?direction=in&limit=500&include_total=true`,
+      `/api/graph/edges/project/${PROJECT}?direction=out&limit=500&include_total=true`,
     ]);
   });
 
@@ -229,7 +229,7 @@ describe('the Dependencies panel', () => {
       fireEvent.keyDown(expand, { key: 'Enter' });
     });
     await waitFor(() => expect(screen.getByTestId(`graph-node-${id(5)}`)).toBeInTheDocument());
-    expect(calls.some((c) => c.url === `/api/graph/edges/consumer/${id(1)}?direction=in&limit=500`)).toBe(true);
+    expect(calls.some((c) => c.url === `/api/graph/edges/consumer/${id(1)}?direction=in&limit=500&include_total=true`)).toBe(true);
     expect(screen.getByTestId(`graph-expand-${id(1)}`)).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(screen.getByTestId(`graph-expand-${id(1)}`));
     expect(screen.queryByTestId(`graph-node-${id(5)}`)).not.toBeInTheDocument();

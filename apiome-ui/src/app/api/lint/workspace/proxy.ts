@@ -97,6 +97,8 @@ export const FINDINGS_PARAM_WHITELIST = [
   'q',
   'sort',
   'limit',
+  'cursor',
+  'include_total',
   'offset',
 ] as const;
 

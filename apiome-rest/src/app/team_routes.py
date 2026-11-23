@@ -23,12 +23,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from .auth import validate_authentication
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .team_store import (
+    TEAMS_ORDER,
     create_team,
     delete_team,
     get_team,
-    list_teams,
+    page_teams,
     replace_team_members,
     team_activity,
     update_team,
@@ -65,6 +67,10 @@ class TeamListResponse(BaseModel):
 
     teams: List[TeamRecord] = Field(default_factory=list, description="The teams, by name.")
     count: int = Field(description="How many teams were returned.")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class OwnedEntity(BaseModel):
@@ -163,28 +169,38 @@ def _http_error(exc: TeamValidationError) -> HTTPException:
     summary="List teams",
     description=(
         "Every live team of the tenant, by name, with its owner links and member count. "
-        "Deleted teams are not listed.\n\nRequires `teams:view`."
+        "Deleted teams are not listed.\n\n"
+        "At most 1,000 a page: pass the previous page's `next_cursor` as `cursor` until `has_more` "
+        "is false.\n\nRequires `teams:view`."
     ),
 )
 def list_tenant_teams(
-    tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
+    tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TeamListResponse:
-    """List the tenant's teams.
+    """List one page of the tenant's teams.
 
     Args:
         tenant_slug: The tenant in the URL (the authenticated tenant is what scopes the read).
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``next_cursor``).
         auth_data: The authenticated principal.
 
     Returns:
-        The teams.
+        The teams of the page and whether another follows.
 
     Raises:
-        HTTPException: 403 without ``teams:view``.
+        HTTPException: 400 for a malformed cursor; 403 without ``teams:view``.
     """
     enforce_permission(db, auth_data, Resource.TEAMS, Action.VIEW)
+    after = TEAMS_ORDER.parse(cursor)
     _ = tenant_slug
-    teams = list_teams(_tenant_id(auth_data))
-    return TeamListResponse(teams=teams, count=len(teams))
+    page = page_teams(_tenant_id(auth_data), limit=limit, cursor=after)
+    return TeamListResponse(
+        teams=page.items, count=len(page.items), has_more=page.has_more, next_cursor=page.next_cursor
+    )
 
 
 @router.post(

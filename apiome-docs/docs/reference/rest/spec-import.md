@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `spec-import` · 16 operations
 
@@ -329,7 +329,7 @@ Request body for compare an incoming spec with the target project's latest versi
 
 **List specification import jobs**
 
-Paginated tenant import jobs from the shared store (IXH-6.3), newest first. Supports ``state`` and ``created_after`` / ``created_before`` filters. Default page size is 50 (max 200).
+Paginated tenant import jobs from the shared store (IXH-6.3), newest first. Supports ``state`` and ``created_after`` / ``created_before`` filters. Default page size is 50 (max 200). Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false; the `total` is counted only when `include_total` is set.
 
 Operation id: `list_spec_import_jobs_v1_tenants__tenant_slug__imports_get`
 
@@ -338,8 +338,10 @@ Operation id: `list_spec_import_jobs_v1_tenants__tenant_slug__imports_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
-| `limit` | query | integer | no | Page size (default 50, max 200). |
-| `offset` | query | integer | no | Number of matching jobs to skip. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `state` | query | string or null | no | Exact job state filter (e.g. completed, failed, running). |
 | `created_after` | query | string (date-time) or null | no | Inclusive lower bound on job created_at (ISO-8601). |
 | `created_before` | query | string (date-time) or null | no | Inclusive upper bound on job created_at (ISO-8601). |
@@ -813,9 +815,11 @@ Paginated tenant-scoped import jobs (IXH-6.3).
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `jobs` | array of `SpecImportJobListItem` | yes | Jobs. |
-| `total` | integer | no | Total jobs matching the filter (not just this page). |
+| `total` | integer or null | no | Total jobs matching the filter (not just this page), counted up to 10,000. Present only when the request set `include_total`. |
 | `limit` | integer | no | Page size applied to this response. |
-| `offset` | integer | no | Number of matching jobs skipped before this page. |
+| `offset` | integer | no | Number of matching jobs skipped before this page (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `SpecImportJobStatus` {#schema-specimportjobstatus}
 

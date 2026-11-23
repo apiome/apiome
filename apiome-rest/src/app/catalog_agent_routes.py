@@ -14,7 +14,7 @@ audited on the tenant's access audit (``catalog.agent.*`` / ``catalog.model.*``)
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 
@@ -39,6 +39,7 @@ from .catalog_agents import (
 )
 from .consumer_contract_store import ConsumerValidationError, actor_from_auth
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 
 router = APIRouter(prefix="/v1/tenants", tags=["catalog-agents"])
@@ -84,12 +85,22 @@ def _permit(auth_data: Dict[str, Any], action: str, target: str) -> Any:
 
 @router.get(_AGENTS, response_model=AgentList, response_model_by_alias=True, summary="List agents")
 def list_catalog_agents(
-    tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
+    tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> AgentList:
-    """The tenant's live agents with their model (and its deprecation) and owner (`consumer_contracts:view`)."""
+    """The tenant's live agents with their model (and its deprecation) and owner (`consumer_contracts:view`).
+
+    By name, at most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore`
+    is false. A malformed cursor is a 400.
+    """
     _ = tenant_slug
     _permit(auth_data, Action.VIEW, "catalog-agents")
-    return AgentList(agents=store.list_agents(_tenant_id(auth_data)))
+    page = store.page_agents(
+        _tenant_id(auth_data), limit=limit, cursor=store.AGENTS_ORDER.parse(cursor)
+    )
+    return AgentList(agents=page.items, has_more=page.has_more, next_cursor=page.next_cursor)
 
 
 @router.post(
@@ -202,12 +213,22 @@ def unlink_catalog_agent_key(
 
 @router.get(_MODELS, response_model=ModelList, response_model_by_alias=True, summary="List models")
 def list_catalog_models(
-    tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
+    tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ModelList:
-    """The tenant's live models with their deprecation and owner (`consumer_contracts:view`)."""
+    """The tenant's live models with their deprecation and owner (`consumer_contracts:view`).
+
+    By name, at most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore`
+    is false. A malformed cursor is a 400.
+    """
     _ = tenant_slug
     _permit(auth_data, Action.VIEW, "catalog-models")
-    return ModelList(models=store.list_models(_tenant_id(auth_data)))
+    page = store.page_models(
+        _tenant_id(auth_data), limit=limit, cursor=store.MODELS_ORDER.parse(cursor)
+    )
+    return ModelList(models=page.items, has_more=page.has_more, next_cursor=page.next_cursor)
 
 
 @router.post(

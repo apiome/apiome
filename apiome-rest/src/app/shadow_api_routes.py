@@ -26,8 +26,12 @@ from pydantic.alias_generators import to_camel
 from . import shadow_api_store
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT
 from .permissions import Action, Resource, enforce_permission
 from .shadow_api_report import build_shadow_report
+
+#: The report's row sections, each cut to the request's ``limit`` (#7196).
+_SECTIONS = ("shadow", "possibleMatches", "undeployed", "drift", "ignored")
 
 __all__ = ["ShadowReport", "router"]
 
@@ -166,6 +170,15 @@ def get_shadow_report(
     tenant_slug: str,
     connector: Optional[UUID] = Query(None, description="Only this connector's inventory."),
     environment: Optional[str] = Query(None, max_length=200, description="Only inventory rows in this environment."),
+    limit: int = Query(
+        default=MAX_REVISION_PAGE_LIMIT,
+        ge=1,
+        le=MAX_REVISION_PAGE_LIMIT,
+        description=(
+            f"Most rows returned in each section. At most {MAX_REVISION_PAGE_LIMIT}; `summary` "
+            "still counts every row."
+        ),
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Dict[str, Any]:
     """The shadow-API report (``imports:view``).
@@ -176,6 +189,10 @@ def get_shadow_report(
     described APIs with HTTP servers that no connected gateway serves; **drift** lists linked APIs
     whose deployed revision the catalog does not have; **ignored** lists ignored rows with their
     reasons. An unknown connector id is a 404.
+
+    The report is computed over the connector inventory (its first 20,000 rows); each section
+    returns its first ``limit`` rows (1,000 at most) while ``summary`` counts them all. Narrow with
+    ``connector`` or ``environment`` to see the rest of a longer section.
     """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
@@ -187,6 +204,10 @@ def get_shadow_report(
         raise HTTPException(status_code=404, detail={"code": "connector-not-found", "message": "Connector not found."})
     items = shadow_api_store.load_report_items(db, [str(c["id"]) for c in connectors], env)
     entries = shadow_api_store.load_catalog_entries(db, tenant_id)
-    return build_shadow_report(
+    report = build_shadow_report(
         connectors=connectors, items=items, entries=entries, connector_filter=connector_id, environment=env
     )
+    for section in _SECTIONS:
+        if isinstance(report.get(section), list):
+            report[section] = report[section][:limit]
+    return report

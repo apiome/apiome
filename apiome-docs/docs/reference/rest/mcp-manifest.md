@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `mcp-manifest` · 3 operations
 
@@ -61,6 +61,8 @@ Operation id: `list_mcp_endpoint_manifests_v1_mcp__tenant_slug__endpoints__endpo
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
 | `include_retired` | query | boolean | no | Include superseded declarations. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -115,6 +117,8 @@ Every declaration attached to one endpoint.
 | --- | --- | --- | --- |
 | `success` | boolean | no | Always true for a 2xx response. |
 | `manifests` | array of `McpDeclaredManifestOut` | no | Declarations, newest first. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `McpManifestImportRequest` {#schema-mcpmanifestimportrequest}
 

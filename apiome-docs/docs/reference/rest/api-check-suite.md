@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `api-check-suite` · 10 operations
 
@@ -289,6 +289,8 @@ Request body for run the api change check suite for a version.
 
 Every evaluation of the version, newest first.
 
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false.
+
 Requires `projects:view`.
 
 Operation id: `list_check_suite_runs_v1_tenants__tenant_slug__projects__project_ref__versions__version_ref__check_suite_runs_get`
@@ -301,8 +303,9 @@ Operation id: `list_check_suite_runs_v1_tenants__tenant_slug__projects__project_
 | `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
 | `version_ref` | path | string | yes | Path parameter identifying the version ref segment. |
 | `commit_sha` | query | string or null | no | Only evaluations at this commit. |
-| `limit` | query | integer | no | Page size. |
-| `offset` | query | integer | no | Evaluations to skip. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -371,7 +374,9 @@ A page of a version's evaluations.
 | `runs` | array of `CheckSuiteRunRecord` | no | Newest first. |
 | `count` | integer | yes | Number of count. |
 | `limit` | integer | yes | Limit. |
-| `offset` | integer | yes | Offset. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `CheckSuiteRunRequest` {#schema-checksuiterunrequest}
 

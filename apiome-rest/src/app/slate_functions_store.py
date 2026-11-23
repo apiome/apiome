@@ -132,6 +132,71 @@ class SlateFunctionPolicyConflictError(Exception):
         )
 
 
+# Every column of each table, named: the store hands rows to the service layer whole, so the lists
+# are complete rather than narrowed. (``_FUNCTION_COLUMNS`` below is a different thing — the
+# writable function columns an upsert binds.)
+
+_POLICY_ROW_COLUMNS = (
+    "id, tenant_id, site_id, environment_id, functions_enabled, policy_version, edge_attached, "
+    "edge_provider, default_region, default_residency_class, default_cpu_ms_limit, "
+    "default_memory_mb_limit, default_wall_ms_limit, created_at, updated_at, "
+    "updated_by_actor_id, updated_by_actor_name, updated_by_actor_key, residency_waiver_reason"
+)
+
+_FUNCTION_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, ordinal, enabled, label, matcher_kind, matcher_value, "
+    "matcher_methods, matcher_hosts, runtime, active_version_id, rollout_mode, rollout_percent, "
+    "region, residency_class, cpu_ms_limit, memory_mb_limit, wall_ms_limit, env_var_names, "
+    "acknowledged_warnings, body_digest, revision, created_at, updated_at, "
+    "created_by_actor_id, created_by_actor_name, created_by_actor_kind"
+)
+
+_REVISION_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, function_id, revision, body, body_digest, change_kind, at, "
+    "actor_id, actor_name"
+)
+
+_VERSION_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, function_id, revision, source_digest, body, runtime, "
+    "source_bytes, source_origin, source_ref, created_at, created_by_actor_id, "
+    "created_by_actor_name"
+)
+
+_SECRET_REF_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, function_id, secret_name, alias, scope, created_at, "
+    "actor_id, actor_name"
+)
+
+_CAPABILITY_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, function_id, capability, reason, expires_at, granted_at, "
+    "granted_by_actor_id, granted_by_actor_name, granted_by_actor_key"
+)
+
+_EGRESS_RULE_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, function_id, destination_kind, destination, scheme, port, "
+    "methods, reason, expires_at, granted_at, granted_by_actor_id, granted_by_actor_name, "
+    "granted_by_actor_key"
+)
+
+_VARIANT_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, function_id, ordinal, label, audience_kind, "
+    "audience_matcher, fallback_variant, cache_key_effect, analytics_dimension, privacy_class, "
+    "consent_basis, enabled, created_at, updated_at, actor_id, actor_name"
+)
+
+_APPROVAL_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, subject_kind, subject_id, digest, author_actor_id, "
+    "author_actor_name, author_actor_key, approver_actor_id, approver_actor_name, "
+    "approver_actor_key, approved_at, note"
+)
+
+_INVOCATION_ROW_COLUMNS = (
+    "id, tenant_id, environment_id, at, source, function_ref, function_label, route, method, "
+    "release_id, region, variant_ref, outcome, executed, edge_attached, cpu_ms, wall_ms, "
+    "memory_peak_mb, denial_reason, evidence, retain_until"
+)
+
+
 def _as_dict(row: Any) -> Optional[Dict[str, Any]]:
     """Normalize a cursor row to a plain dict, preserving None."""
     return None if row is None else dict(row)
@@ -305,8 +370,8 @@ def get_policy(db: _DbLike, *, tenant_id: str, environment_id: str) -> Optional[
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_POLICY_ROW_COLUMNS}
               FROM apiome.slate_function_policies
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
             """,
@@ -356,14 +421,14 @@ def ensure_policy(
         with conn.cursor() as cursor:
             created = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_function_policies
                     (tenant_id, site_id, environment_id, default_region,
                      default_residency_class, updated_by_actor_id, updated_by_actor_name,
                      updated_by_actor_key)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, 'auto', 'in-region-only', %s, %s, %s)
                 ON CONFLICT (environment_id) DO NOTHING
-                RETURNING *
+                RETURNING {_POLICY_ROW_COLUMNS}
                 """,
                 (tenant_id, site_id, environment_id, actor_id, actor_name, actor_key),
             )
@@ -499,7 +564,7 @@ def set_policy(
             )
             updated = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_function_policies
                    SET functions_enabled = %s,
                        default_region = %s,
@@ -512,7 +577,7 @@ def set_policy(
                        updated_by_actor_name = %s,
                        updated_by_actor_key = %s
                  WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
-                RETURNING *
+                RETURNING {_POLICY_ROW_COLUMNS}
                 """,
                 (
                     functions_enabled,
@@ -594,8 +659,8 @@ def list_functions(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_FUNCTION_ROW_COLUMNS}
               FROM apiome.slate_functions
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY ordinal, id
@@ -621,8 +686,8 @@ def get_function(
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_FUNCTION_ROW_COLUMNS}
               FROM apiome.slate_functions
              WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
             """,
@@ -737,8 +802,8 @@ def upsert_function(
             if function_id:
                 prior = _fetch_one(
                     cursor,
-                    """
-                    SELECT *
+                    f"""
+                    SELECT {_FUNCTION_ROW_COLUMNS}
                       FROM apiome.slate_functions
                      WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                     """,
@@ -772,7 +837,7 @@ def upsert_function(
                            revision = revision + 1,
                            updated_at = CURRENT_TIMESTAMP
                      WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
-                    RETURNING *
+                    RETURNING {_FUNCTION_ROW_COLUMNS}
                     """,
                     (*payload, function_id, environment_id, tenant_id),
                 )
@@ -791,7 +856,7 @@ def upsert_function(
                         (tenant_id, environment_id, {", ".join(_FUNCTION_COLUMNS)},
                          created_by_actor_id, created_by_actor_name, created_by_actor_kind)
                     VALUES (%s::uuid, %s::uuid, {placeholders}, %s, %s, %s)
-                    RETURNING *
+                    RETURNING {_FUNCTION_ROW_COLUMNS}
                     """,
                     (
                         tenant_id,
@@ -871,8 +936,8 @@ def set_rollout(
             )
             prior = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_FUNCTION_ROW_COLUMNS}
                   FROM apiome.slate_functions
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                 """,
@@ -896,14 +961,14 @@ def set_rollout(
             )
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_functions
                    SET rollout_mode = %s,
                        rollout_percent = %s,
                        revision = revision + 1,
                        updated_at = CURRENT_TIMESTAMP
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
-                RETURNING *
+                RETURNING {_FUNCTION_ROW_COLUMNS}
                 """,
                 (rollout_mode, rollout_percent, function_id, environment_id, tenant_id),
             )
@@ -958,8 +1023,8 @@ def delete_function(
             )
             prior = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_FUNCTION_ROW_COLUMNS}
                   FROM apiome.slate_functions
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                 """,
@@ -1013,8 +1078,8 @@ def list_revisions(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_REVISION_ROW_COLUMNS}
               FROM apiome.slate_function_revisions
              WHERE function_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY revision DESC
@@ -1155,8 +1220,8 @@ def revert_function(
             )
             target = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_REVISION_ROW_COLUMNS}
                   FROM apiome.slate_function_revisions
                  WHERE function_id = %s::uuid AND tenant_id = %s::uuid AND revision = %s
                 """,
@@ -1169,8 +1234,8 @@ def revert_function(
                 )
             prior = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_FUNCTION_ROW_COLUMNS}
                   FROM apiome.slate_functions
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                 """,
@@ -1205,7 +1270,7 @@ def revert_function(
                        revision = revision + 1,
                        updated_at = CURRENT_TIMESTAMP
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
-                RETURNING *
+                RETURNING {_FUNCTION_ROW_COLUMNS}
                 """,
                 (
                     *[body.get(column) for column in _FUNCTION_COLUMNS],
@@ -1241,8 +1306,8 @@ def list_versions(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_VERSION_ROW_COLUMNS}
               FROM apiome.slate_function_versions
              WHERE function_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY revision DESC
@@ -1310,8 +1375,8 @@ def add_version(
             )
             prior = _fetch_one(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_FUNCTION_ROW_COLUMNS}
                   FROM apiome.slate_functions
                  WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
                 """,
@@ -1336,13 +1401,13 @@ def add_version(
 
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_function_versions
                     (tenant_id, environment_id, function_id, revision, source_digest, body,
                      runtime, source_bytes, source_origin, source_ref, created_by_actor_id,
                      created_by_actor_name)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s::jsonb, %s, %s, %s, %s, %s, %s)
-                RETURNING *
+                RETURNING {_VERSION_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1412,7 +1477,7 @@ def list_secret_refs(
         return _fetch_all(
             cursor,
             f"""
-            SELECT *
+            SELECT {_SECRET_REF_ROW_COLUMNS}
               FROM apiome.slate_function_secret_refs
              WHERE {" AND ".join(clauses)}
              ORDER BY alias
@@ -1468,7 +1533,7 @@ def set_secret_ref(
             )
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_function_secret_refs
                     (tenant_id, environment_id, function_id, secret_name, alias, scope,
                      actor_id, actor_name)
@@ -1478,7 +1543,7 @@ def set_secret_ref(
                         scope = EXCLUDED.scope,
                         actor_id = EXCLUDED.actor_id,
                         actor_name = EXCLUDED.actor_name
-                RETURNING *
+                RETURNING {_SECRET_REF_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1586,7 +1651,7 @@ def list_capabilities(
         return _fetch_all(
             cursor,
             f"""
-            SELECT *
+            SELECT {_CAPABILITY_ROW_COLUMNS}
               FROM apiome.slate_function_capabilities
              WHERE {" AND ".join(clauses)}
              ORDER BY capability
@@ -1647,7 +1712,7 @@ def grant_capability(
             )
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_function_capabilities
                     (tenant_id, environment_id, function_id, capability, reason, expires_at,
                      granted_by_actor_id, granted_by_actor_name, granted_by_actor_key)
@@ -1659,7 +1724,7 @@ def grant_capability(
                         granted_by_actor_id = EXCLUDED.granted_by_actor_id,
                         granted_by_actor_name = EXCLUDED.granted_by_actor_name,
                         granted_by_actor_key = EXCLUDED.granted_by_actor_key
-                RETURNING *
+                RETURNING {_CAPABILITY_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1768,7 +1833,7 @@ def list_egress_rules(
         return _fetch_all(
             cursor,
             f"""
-            SELECT *
+            SELECT {_EGRESS_RULE_ROW_COLUMNS}
               FROM apiome.slate_function_egress_rules
              WHERE {" AND ".join(clauses)}
              ORDER BY destination_kind, destination
@@ -1834,7 +1899,7 @@ def set_egress_rule(
             )
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_function_egress_rules
                     (tenant_id, environment_id, function_id, destination_kind, destination,
                      scheme, port, methods, reason, expires_at, granted_by_actor_id,
@@ -1850,7 +1915,7 @@ def set_egress_rule(
                         granted_by_actor_id = EXCLUDED.granted_by_actor_id,
                         granted_by_actor_name = EXCLUDED.granted_by_actor_name,
                         granted_by_actor_key = EXCLUDED.granted_by_actor_key
-                RETURNING *
+                RETURNING {_EGRESS_RULE_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1959,7 +2024,7 @@ def list_variants(
         return _fetch_all(
             cursor,
             f"""
-            SELECT *
+            SELECT {_VARIANT_ROW_COLUMNS}
               FROM apiome.slate_personalization_variants
              WHERE {" AND ".join(clauses)}
              ORDER BY function_id, ordinal, id
@@ -2030,7 +2095,7 @@ def upsert_variant(
             if variant_id:
                 written = _fetch_one(
                     cursor,
-                    """
+                    f"""
                     UPDATE apiome.slate_personalization_variants
                        SET ordinal = %s,
                            label = %s,
@@ -2046,7 +2111,7 @@ def upsert_variant(
                            actor_name = %s,
                            updated_at = CURRENT_TIMESTAMP
                      WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
-                    RETURNING *
+                    RETURNING {_VARIANT_ROW_COLUMNS}
                     """,
                     (*params, variant_id, environment_id, tenant_id),
                 )
@@ -2058,7 +2123,7 @@ def upsert_variant(
             else:
                 written = _fetch_one(
                     cursor,
-                    """
+                    f"""
                     INSERT INTO apiome.slate_personalization_variants
                         (tenant_id, environment_id, function_id, ordinal, label, audience_kind,
                          audience_matcher, fallback_variant, cache_key_effect,
@@ -2066,7 +2131,7 @@ def upsert_variant(
                          actor_name)
                     VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s::jsonb, %s, %s, %s, %s,
                             %s, %s, %s, %s)
-                    RETURNING *
+                    RETURNING {_VARIANT_ROW_COLUMNS}
                     """,
                     (tenant_id, environment_id, function_id, *params),
                 )
@@ -2172,7 +2237,7 @@ def list_approvals(
         return _fetch_all(
             cursor,
             f"""
-            SELECT *
+            SELECT {_APPROVAL_ROW_COLUMNS}
               FROM apiome.slate_function_approvals
              WHERE {" AND ".join(clauses)}
              ORDER BY approved_at DESC
@@ -2228,7 +2293,7 @@ def record_approval(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_function_approvals
                     (tenant_id, environment_id, subject_kind, subject_id, digest,
                      author_actor_id, author_actor_name, author_actor_key,
@@ -2236,7 +2301,7 @@ def record_approval(
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (subject_id, digest, approver_actor_key) DO UPDATE
                     SET note = EXCLUDED.note
-                RETURNING *
+                RETURNING {_APPROVAL_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -2323,14 +2388,14 @@ def record_invocation(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_function_invocations
                     (tenant_id, environment_id, at, source, function_ref, function_label, route,
                      method, release_id, region, variant_ref, outcome, executed, edge_attached,
                      denial_reason, evidence, retain_until)
                 VALUES (%s::uuid, %s::uuid, %s, 'policy-simulation', %s, %s, %s, %s, %s, %s, %s,
                         %s, FALSE, FALSE, %s, %s::jsonb, %s)
-                RETURNING *
+                RETURNING {_INVOCATION_ROW_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -2413,7 +2478,7 @@ def list_invocations(
         return _fetch_all(
             cursor,
             f"""
-            SELECT *
+            SELECT {_INVOCATION_ROW_COLUMNS}
               FROM apiome.slate_function_invocations
              WHERE {" AND ".join(clauses)}
              ORDER BY at DESC
@@ -2440,8 +2505,8 @@ def get_invocation(
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_INVOCATION_ROW_COLUMNS}
               FROM apiome.slate_function_invocations
              WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
             """,
@@ -2531,7 +2596,8 @@ def list_audit(
         return _fetch_all(
             cursor,
             """
-            SELECT *
+            SELECT id, tenant_id, environment_id, at, actor_id, actor_name, actor_kind,
+                   subject_kind, subject_id, summary, detail
               FROM apiome.slate_function_audit
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY at DESC

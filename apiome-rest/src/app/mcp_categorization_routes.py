@@ -41,6 +41,8 @@ from psycopg2 import errors as pg_errors
 from .auth import get_authenticated_user_id, validate_authentication
 from .config import settings
 from .database import db
+from .keyset_pagination import MAX_OFFSET, MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
+from .tenant_list_orders import MCP_CATEGORIES_ORDER
 from .mcp_category_llm import ai_categorization_available, suggest_category_with_claude
 from .mcp_category_suggestion import (
     CategorySuggestion,
@@ -127,13 +129,27 @@ def _label_taken(categories: List[Dict[str, Any]], label: str, *, except_slug: O
 @router.get("/{tenant_slug}/categories", response_model=McpCategoryListResponse)
 def list_mcp_categories(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpCategoryListResponse:
-    """List the category lookup: built-in categories plus the tenant's own, with endpoint counts."""
+    """List the category lookup: built-in categories plus the tenant's own, with endpoint counts.
+
+    One page of at most ``limit`` categories (1,000 at most); pass ``next_cursor`` as ``cursor``
+    until ``has_more`` is false (#7196).
+    """
     _ = tenant_slug
-    rows = db.list_mcp_categories(_tenant_id(auth_data))
+    page = MCP_CATEGORIES_ORDER.page(
+        db.list_mcp_categories(
+            _tenant_id(auth_data), limit=limit + 1, cursor=MCP_CATEGORIES_ORDER.parse(cursor)
+        ),
+        limit,
+    )
     return McpCategoryListResponse(
-        success=True, categories=[mcp_category_out_from_row(r) for r in rows]
+        success=True,
+        categories=[mcp_category_out_from_row(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -258,17 +274,26 @@ def delete_mcp_category(
 @router.get("/{tenant_slug}/tags", response_model=McpTagVocabularyResponse)
 def list_mcp_tag_vocabulary(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    offset: int = Query(
+        default=0, ge=0, le=MAX_OFFSET, description=f"Tags to skip. At most {MAX_OFFSET:,}."
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpTagVocabularyResponse:
-    """List every tag in use across the tenant's live endpoints, busiest first."""
+    """List every tag in use across the tenant's live endpoints, busiest first.
+
+    The order is a computed count, so the list pages by ``limit`` (1,000 at most) and ``offset``
+    rather than by cursor; ``has_more`` says whether more tags follow (#7196).
+    """
     _ = tenant_slug
-    rows = db.list_mcp_tag_vocabulary(_tenant_id(auth_data))
+    rows = db.list_mcp_tag_vocabulary(_tenant_id(auth_data), limit=limit + 1, offset=offset)
     return McpTagVocabularyResponse(
         success=True,
         tags=[
             McpTagUsageOut(tag=str(r["tag"]), endpoint_count=int(r.get("endpoint_count") or 0))
-            for r in rows
+            for r in rows[:limit]
         ],
+        has_more=len(rows) > limit,
     )
 
 

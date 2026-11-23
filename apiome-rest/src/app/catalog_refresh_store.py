@@ -157,7 +157,11 @@ def upsert_refresh(
               next_check_after = NULL,
               updated_by = EXCLUDED.updated_by,
               updated_at = now()
-            RETURNING r.*
+            RETURNING r.project_id, r.tenant_id, r.cadence, r.adapter_key, r.endpoint, r.options,
+                      r.auth_type, r.encrypted_payload, r.status, r.last_checked_at,
+                      r.last_success_at, r.last_failure_at, r.last_error, r.last_fingerprint,
+                      r.consecutive_failures, r.next_check_after, r.keep_versions,
+                      r.created_at, r.updated_at
         )
         SELECT {_PUBLIC_COLUMNS} FROM saved r
         """,

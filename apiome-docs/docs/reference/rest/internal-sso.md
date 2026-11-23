@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `internal-sso` · 1 operation
 
@@ -18,6 +18,10 @@ Tag: `internal-sso` · 1 operation
 **Get Resolved Sso Providers**
 
 Every enabled provider with a verified domain, secrets decrypted, for the sign-in resolver.
+
+One page of at most ``limit`` providers (1,000 at most), by slug; ``has_more`` and
+``next_cursor`` say whether and where the list continues, and ``fingerprint`` covers the
+providers of this page (#7196).
 
 A provider whose secret cannot be decrypted (rotated-away key, corrupt blob) is omitted and
 logged secret-free, so one bad row cannot take sign-in down for every other provider.
@@ -28,6 +32,8 @@ Operation id: `get_resolved_sso_providers_v1_internal_sso_providers_resolved_get
 
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `X-Internal-Service-Token` | header | string or null | no | Header parameter: X Internal Service Token. |
 
 **Responses**
@@ -58,3 +64,5 @@ Payload of ``GET /v1/internal/sso/providers/resolved``.
 | --- | --- | --- | --- |
 | `providers` | array of `ResolvedSsoProvider` | no | Providers. |
 | `fingerprint` | string | yes | Changes whenever any routable provider changes; secret-free hash. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |

@@ -35,9 +35,11 @@ from .consumer_binding import (
     normalize_binding,
 )
 from .consumer_runtime_edges import UsageRow
+from .keyset_lists import ListOrder, SortColumn
 from .revision_deprecation import is_uuid_string
 
 __all__ = [
+    "BINDINGS_ORDER",
     "create_binding",
     "delete_binding",
     "insert_binding",
@@ -55,7 +57,25 @@ _COLUMNS = """
 """
 
 
-def list_bindings(db: Any, tenant_id: str, consumer_id: str, *, include_deleted: bool = False) -> List[BindingRecord]:
+#: The order of :func:`list_bindings`: newest first (#7196).
+BINDINGS_ORDER = ListOrder(
+    "consumer-bindings",
+    (
+        SortColumn("created_at", "time", ("created_at",), descending=True),
+        SortColumn("id", "uuid", ("id",)),
+    ),
+)
+
+
+def list_bindings(
+    db: Any,
+    tenant_id: str,
+    consumer_id: str,
+    *,
+    include_deleted: bool = False,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[BindingRecord]:
     """A consumer's bindings, newest first.
 
     Args:
@@ -63,19 +83,22 @@ def list_bindings(db: Any, tenant_id: str, consumer_id: str, *, include_deleted:
         tenant_id: The tenant.
         consumer_id: The consumer.
         include_deleted: Also return deleted bindings (they still attribute history).
+        limit: Bindings to read; ``None`` reads every one (#7196).
+        cursor: :data:`BINDINGS_ORDER` values of the last binding already seen.
 
     Returns:
         The bindings.
     """
+    after_sql, after_params, limit_sql, limit_params = BINDINGS_ORDER.window(limit, cursor)
     rows = db.execute_query(
         f"""
         SELECT {_COLUMNS}
         FROM apiome.usage_consumer_binding
         WHERE tenant_id = %s::uuid AND consumer_id = %s::uuid
-          AND (%s OR deleted_at IS NULL)
-        ORDER BY created_at DESC, id
+          AND (%s OR deleted_at IS NULL){after_sql}
+        ORDER BY {BINDINGS_ORDER.order_by}{limit_sql}
         """,
-        (tenant_id, consumer_id, include_deleted),
+        (tenant_id, consumer_id, include_deleted, *after_params, *limit_params),
     )
     return [binding_record_from_row(dict(row)) for row in rows]
 

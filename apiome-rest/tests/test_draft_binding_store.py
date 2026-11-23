@@ -223,11 +223,18 @@ def test_re_binding_keeps_the_old_row_as_history(fake, provider):
 def test_two_versions_of_one_project_can_each_be_bound(fake, provider):
     _bind("1.0.0")
     _bind("1.1.0")
-    bindings, total = draft_binding_store.list_bindings(
-        TENANT, "pets", draft_binding_store.BindingFilters(active=True)
+    page, total = draft_binding_store.list_bindings(
+        TENANT, "pets", draft_binding_store.BindingFilters(active=True, include_total=True)
     )
     assert total == 2
-    assert {row.version_id for row in bindings} == {VERSION, OTHER_VERSION}
+    assert {row.version_id for row in page.items} == {VERSION, OTHER_VERSION}
+    assert page.has_more is False and page.next_cursor is None
+
+    # Without include_total nothing is counted; has_more comes from the look-ahead row (#7196).
+    first, uncounted = draft_binding_store.list_bindings(
+        TENANT, "pets", draft_binding_store.BindingFilters(active=True, limit=1)
+    )
+    assert uncounted is None and first.has_more is True and first.next_cursor
 
 
 def test_losing_the_race_to_bind_names_what_is_there(fake, provider):

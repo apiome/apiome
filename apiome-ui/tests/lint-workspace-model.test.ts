@@ -392,6 +392,10 @@ describe('offset paging', () => {
     expect(queueRangeLabel(200, 50, 213)).toBe('201–213 of 213 findings · page size 50');
     expect(queueRangeLabel(0, 50, 1)).toBe('1–1 of 1 finding · page size 50');
     expect(queueRangeLabel(0, 50, 0)).toBe('No findings');
+    // #7196: a count at the cap is "at least", and an uncounted queue states only its window.
+    expect(queueRangeLabel(0, 50, 10000)).toBe('1–50 of 10,000+ findings · page size 50');
+    expect(queueRangeLabel(50, 50, null, 12)).toBe('51–62 · page size 50');
+    expect(queueRangeLabel(0, 50, null, 0)).toBe('No findings');
   });
 
   it('converts between an offset and a page number without ever leaving the list', () => {
@@ -400,6 +404,8 @@ describe('offset paging', () => {
     expect(queuePageNumber(-10, 50)).toBe(1);
     expect(queuePageCount(213, 50)).toBe(5);
     expect(queuePageCount(0, 50)).toBe(1);
+    // The count and the deepest offset both stop at 10,000, so the pages do too.
+    expect(queuePageCount(250000, 50)).toBe(200);
     expect(queueOffsetForPage(3, 50)).toBe(100);
     expect(queueOffsetForPage(0, 50)).toBe(0);
   });

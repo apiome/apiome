@@ -297,11 +297,17 @@ export function searchPublishedVersions(
 /**
  * The foot's sentence — `Showing 3 of 4 published versions`.
  *
+ * The list is read a page at a time (DBP-1.13, #7196). While the workspace has revisions the
+ * screen has not loaded, `total` is only what is loaded, and the sentence says so —
+ * `Showing 3 of the first 50 published versions` — rather than presenting a page as the whole.
+ *
  * @param shown How many rows the table is drawing.
- * @param total How many the workspace has.
+ * @param total How many are loaded: all the workspace has, unless `hasMore`.
+ * @param hasMore Whether the workspace has revisions that are not loaded yet.
  * @returns The sentence, with `version` singular when the workspace holds exactly one.
  */
-export function publishedFootLabel(shown: number, total: number): string {
+export function publishedFootLabel(shown: number, total: number, hasMore: boolean = false): string {
+  if (hasMore) return `Showing ${shown} of the first ${total} published versions`;
   return `Showing ${shown} of ${total} published ${total === 1 ? 'version' : 'versions'}`;
 }
 
@@ -557,13 +563,33 @@ export const PUBLISHED_NO_TENANT = {
   description: 'Please select a tenant before managing publications.',
 } as const;
 
-/** The one line under the page title, describing what the workspace has published. */
-export function publishedSummaryLine(versions: readonly PublishedVersion[]): string {
+/** What the search says when it matched nothing among the loaded rows and more can be loaded. */
+export const PUBLISHED_NO_MATCHES_LOADED = {
+  title: 'No matching versions loaded',
+  description:
+    'None of the published versions loaded so far match your search. Load more to search the rest.',
+} as const;
+
+/**
+ * The one line under the page title, describing what the workspace has published.
+ *
+ * @param versions The revisions loaded so far.
+ * @param hasMore Whether the workspace has revisions that are not loaded yet; the counts are
+ *   then of the newest ones only, and the line says so.
+ * @returns The line.
+ */
+export function publishedSummaryLine(
+  versions: readonly PublishedVersion[],
+  hasMore: boolean = false
+): string {
   if (versions.length === 0) {
     return 'Published, locked versions with access URLs, visibility and hosted mocks.';
   }
   const publicCount = versions.filter((version) => version.visibility === 'public').length;
   const mockCount = versions.filter((version) => version.mock_enabled).length;
+  if (hasMore) {
+    return `The newest ${versions.length} published versions · ${publicCount} public · ${mockCount} with a hosted mock`;
+  }
   const noun = versions.length === 1 ? 'version' : 'versions';
   return `${versions.length} published ${noun} · ${publicCount} public · ${mockCount} with a hosted mock`;
 }

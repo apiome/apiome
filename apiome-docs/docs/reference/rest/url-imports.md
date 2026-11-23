@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `url-imports` · 3 operations
 
@@ -19,6 +19,9 @@ Tag: `url-imports` · 3 operations
 
 List the tenant's URL imports, newest first, with when each was last checked and refreshed.
 
+At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is
+false. A malformed cursor is a 400.
+
 Operation id: `list_url_imports_v1_tenants__tenant_slug__url_imports_get`
 
 **Parameters**
@@ -27,6 +30,8 @@ Operation id: `list_url_imports_v1_tenants__tenant_slug__url_imports_get`
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `projectId` | query | string or null | no | Only this project's. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -125,6 +130,8 @@ URL import lineages, newest first.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `urlImports` | array of [`UrlImportOut`](#schema-urlimportout) | yes | URL Imports. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `UrlImportOut` {#schema-urlimportout}
 

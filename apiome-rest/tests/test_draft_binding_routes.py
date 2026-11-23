@@ -27,6 +27,7 @@ from app.draft_bindings import source_digest
 from app.git_intake import GitFilesetResult, GitIntakeError, GitProvenance
 from app.main import app
 from tests.fake_binding_db import FakeBindingDb
+from tests.keyset_paging_fakes import walk
 
 client = TestClient(app)
 
@@ -263,18 +264,51 @@ def test_the_project_list_pages_and_filters_by_version_and_state(fake, provider,
     _bound(replace=True, ref="next")
     client.post(f"{PROJECT_BASE}/versions/2.0.0/binding", json={"repository_id": REPOSITORY, "ref": "main"})
 
-    listed = client.get(f"{PROJECT_BASE}/bindings").json()
+    counted = {"include_total": "true"}
+    listed = client.get(f"{PROJECT_BASE}/bindings", params=counted).json()
     assert (listed["total"], listed["count"]) == (3, 3)
 
-    active = client.get(f"{PROJECT_BASE}/bindings", params={"active": True}).json()
+    active = client.get(f"{PROJECT_BASE}/bindings", params={"active": True, **counted}).json()
     assert active["total"] == 2
 
-    one_version = client.get(f"{PROJECT_BASE}/bindings", params={"version": "1.0.0"}).json()
+    one_version = client.get(
+        f"{PROJECT_BASE}/bindings", params={"version": "1.0.0", **counted}
+    ).json()
     assert one_version["total"] == 2
     assert {row["version_id"] for row in one_version["bindings"]} == {VERSION_1}
 
-    paged = client.get(f"{PROJECT_BASE}/bindings", params={"limit": 1, "offset": 1}).json()
+    paged = client.get(
+        f"{PROJECT_BASE}/bindings", params={"limit": 1, "offset": 1, **counted}
+    ).json()
     assert (paged["count"], paged["total"], paged["offset"]) == (1, 3, 1)
+    assert paged["has_more"] is True and paged["next_cursor"]
+
+
+def test_the_project_list_pages_by_cursor_until_has_more_is_false(fake, provider, act_as):
+    _bound()
+    _bound(replace=True, ref="next")
+    client.post(f"{PROJECT_BASE}/versions/2.0.0/binding", json={"repository_id": REPOSITORY, "ref": "main"})
+
+    seen = walk(lambda params: client.get(f"{PROJECT_BASE}/bindings", params=params), "bindings", limit=2)
+    ids = [row["id"] for row in seen]
+    assert ids == [row["id"] for row in client.get(f"{PROJECT_BASE}/bindings").json()["bindings"]]
+    assert len(ids) == len(set(ids)) == 3
+
+
+def test_the_total_is_not_counted_unless_asked_for(fake, provider, act_as, monkeypatch):
+    _bound()
+    monkeypatch.setattr(
+        fake, "count_draft_bindings", lambda **_: pytest.fail("counted without include_total")
+    )
+    body = client.get(f"{PROJECT_BASE}/bindings").json()
+    assert body["total"] is None and body["count"] == 1
+    assert body["has_more"] is False and body["next_cursor"] is None
+
+
+def test_a_malformed_cursor_is_a_400_and_the_page_size_is_capped(fake, provider, act_as):
+    assert client.get(f"{PROJECT_BASE}/bindings", params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get(f"{PROJECT_BASE}/bindings", params={"limit": 201}).status_code == 422
+    assert client.get(f"{PROJECT_BASE}/bindings", params={"offset": 10_001}).status_code == 422
 
 
 def test_one_binding_reads_back_by_id(fake, provider, act_as):

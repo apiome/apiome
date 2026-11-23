@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `component-library` · 22 operations
 
@@ -50,6 +50,22 @@ Operation id: `export_audit_v1_component_library__tenant_slug__audit_export_get`
 
 List the tenant's live library components with publication summary.
 
+By kind, then name; one page of at most ``limit`` components (1,000 at most). Pass the
+page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    kind: Narrow to one component kind.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of components and whether another follows.
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 422 for an unknown kind.
+
 Operation id: `list_components_v1_component_library__tenant_slug__components_get`
 
 **Parameters**
@@ -58,6 +74,8 @@ Operation id: `list_components_v1_component_library__tenant_slug__components_get
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `kind` | query | string or null | no | Query parameter: kind. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -455,12 +473,28 @@ Request body for preview upgrade.
 
 **Component Usage**
 
-Who uses a component: dependents and every live pin (DCW-3.3, private-suite#2361).
+Who uses a component: dependents and its live pins (DCW-3.3, private-suite#2361).
 
 Dependents are the library components whose published head references this one, directly
-or transitively (:mod:`app.component_usage`); pins are every live pin of the component and
+or transitively (:mod:`app.component_usage`); pins are the live pins of the component and
 of those dependents, across all of the tenant's projects. Computed server-side in one pass
 over the tenant's library so latency stays flat for a tenant-scale graph.
+
+``dependents`` is always whole. ``pins`` is one page of at most ``limit`` pins (1,000 at
+most); pass the page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    component_id: The component whose usage is read.
+    limit: Page size of ``pins``.
+    cursor: Where the page of pins starts (``nextCursor`` of the previous page).
+    auth_data: The authenticated principal.
+
+Returns:
+    The dependents, one page of pins, and whether another page follows.
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 when the component is unknown.
 
 Operation id: `component_usage_v1_component_library__tenant_slug__components__component_id__usage_get`
 
@@ -470,6 +504,8 @@ Operation id: `component_usage_v1_component_library__tenant_slug__components__co
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `component_id` | path | string | yes | Path parameter identifying the component id segment. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -486,6 +522,22 @@ Operation id: `component_usage_v1_component_library__tenant_slug__components__co
 
 Live deprecations with their affected pinned projects and migration guidance.
 
+Soonest sunset first; one page of at most ``limit`` deprecations (200 at most). Pass the
+page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    component_id: Narrow to one component.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of deprecations and whether another follows.
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
+
 Operation id: `list_deprecations_v1_component_library__tenant_slug__deprecations_get`
 
 **Parameters**
@@ -494,6 +546,8 @@ Operation id: `list_deprecations_v1_component_library__tenant_slug__deprecations
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `componentId` | query | string or null | no | Query parameter: component id. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -717,6 +771,8 @@ ComponentListResponse schema.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `components` | array of `ComponentSummaryBody` | no | Components. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ComponentUsageResponse` {#schema-componentusageresponse}
 
@@ -727,6 +783,8 @@ DCW-3.3 usage report: tenant-wide pins and direct/transitive dependents.
 | `componentId` | string | yes | Component ID. |
 | `pins` | array of `UsagePinBody` | no | Pins. |
 | `dependents` | array of `UsageDependentBody` | no | Reverse index of ``refs``: the visible types that reference this one, one entry per referencing edge. |
+| `hasMore` | boolean | no | Whether another page of `pins` exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page of `pins`; null on the last page. |
 
 ### `DeletedResponse` {#schema-deletedresponse}
 
@@ -763,6 +821,8 @@ DeprecationListResponse schema.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `deprecations` | array of [`DeprecationBody`](#schema-deprecationbody) | no | Deprecations. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `DeprecationRequest` {#schema-deprecationrequest}
 

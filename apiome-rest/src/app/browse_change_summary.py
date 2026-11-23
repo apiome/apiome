@@ -52,12 +52,27 @@ def _structured_summary(model: Dict[str, Any], baseline_version_slug: Optional[s
         if isinstance(p, str) and p:
             path_keys.add(p)
 
+    return _counts_summary(len(path_keys), modified_n + added_n + removed_n, baseline_version_slug)
+
+
+def _counts_summary(
+    path_count: int, class_count: int, baseline_version_slug: Optional[str]
+) -> Optional[str]:
+    """The structured blurb from the two counts a change model yields.
+
+    Args:
+        path_count: Distinct operation paths added, removed or modified.
+        class_count: Schemas added, removed or modified.
+        baseline_version_slug: The version the change is measured against, when known.
+
+    Returns:
+        The blurb, or ``None`` when both counts are zero.
+    """
     parts: List[str] = []
-    if path_keys:
-        parts.append(f"{len(path_keys)} paths changed")
-    class_moves = modified_n + added_n + removed_n
-    if class_moves:
-        parts.append(f"~{class_moves} classes")
+    if path_count:
+        parts.append(f"{path_count} paths changed")
+    if class_count:
+        parts.append(f"~{class_count} classes")
 
     if not parts:
         return None
@@ -68,17 +83,29 @@ def _structured_summary(model: Dict[str, Any], baseline_version_slug: Optional[s
 
 def browse_version_changes_summary(
     *,
-    change_model_json: Any,
+    change_model_json: Any = None,
     change_log: Optional[str],
     description: Optional[str],
     baseline_version_slug: Optional[str],
+    change_path_count: Optional[int] = None,
+    change_class_count: Optional[int] = None,
 ) -> Optional[str]:
     """
     Single-line summary for CLI / API ``changes_summary`` field.
 
     Prefers structured diff stats when ``change_model_json`` yields a non-empty summary;
     otherwise ``change_log``, then truncated ``description``.
+
+    A list read does not carry the change model (it can be megabytes per row); it passes the
+    two counts the blurb needs, computed in SQL, as ``change_path_count`` / ``change_class_count``
+    instead (#7196).
     """
+    if change_path_count is not None or change_class_count is not None:
+        structured = _counts_summary(
+            int(change_path_count or 0), int(change_class_count or 0), baseline_version_slug
+        )
+        if structured:
+            return structured
     model = _parse_change_model(change_model_json)
     if model:
         structured = _structured_summary(model, baseline_version_slug)

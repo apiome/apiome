@@ -40,6 +40,7 @@ import {
   DataTableFilterChip,
   DataTableFoot,
   DataTablePager,
+  DataTableCursorPager,
   DataTableSearch,
   DataTableToolbar,
   DataTableToolbarSpacer,
@@ -781,6 +782,44 @@ describe('the foot', () => {
 
   it('draws nothing at all when there is only one page', () => {
     render(<DataTablePager page={1} pageCount={1} onPageChange={jest.fn()} />);
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+  });
+});
+
+describe('the cursor pager (#7196)', () => {
+  it('steps to the neighbouring pages, with no page numbers', async () => {
+    const user = userEvent.setup();
+    const onPrevious = jest.fn();
+    const onNext = jest.fn();
+    render(
+      <DataTableCursorPager
+        hasPrevious={false}
+        hasNext
+        onPrevious={onPrevious}
+        onNext={onNext}
+        label="Run pages"
+      />
+    );
+
+    const pager = screen.getByRole('navigation', { name: 'Run pages' });
+    expect(within(pager).getAllByRole('button')).toHaveLength(2);
+    expect(within(pager).getByRole('button', { name: 'Previous page' })).toBeDisabled();
+
+    await user.click(within(pager).getByRole('button', { name: 'Next page' }));
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(onPrevious).not.toHaveBeenCalled();
+  });
+
+  it('blocks both steps while a page is being read', () => {
+    render(<DataTableCursorPager hasPrevious hasNext busy onPrevious={jest.fn()} onNext={jest.fn()} />);
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled();
+  });
+
+  it('draws nothing when the list fits on one page', () => {
+    render(
+      <DataTableCursorPager hasPrevious={false} hasNext={false} onPrevious={jest.fn()} onNext={jest.fn()} />
+    );
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
 });

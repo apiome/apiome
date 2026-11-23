@@ -34,6 +34,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import Field
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .authoring_list_orders import COMPONENT_DEPRECATIONS_ORDER
 from .change_taxonomy import classify_openapi_changes
 from .compatibility_engine import openapi_for_revision
 from .component_governance import (
@@ -55,6 +56,7 @@ from .component_governance_service import (
 )
 from .component_library_routes import _CamelModel, _component_or_404, _raise_conflict
 from .database import ComponentLibraryConflictError, db
+from .keyset_pagination import MAX_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 
 router = APIRouter(prefix="/v1/component-library", tags=["component-library"])
@@ -162,6 +164,11 @@ class DeprecationBody(_CamelModel):
 
 class DeprecationListResponse(_CamelModel):
     deprecations: List[DeprecationBody] = Field(default_factory=list)
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None,
+        description="Pass as `cursor` to read the next page; null on the last page.",
+    )
 
 
 class UpgradePreviewRequest(_CamelModel):
@@ -584,11 +591,39 @@ def cancel_deprecation(
 def list_deprecations(
     tenant_slug: str,
     component_id: Optional[str] = Query(default=None, alias="componentId"),
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> DeprecationListResponse:
-    """Live deprecations with their affected pinned projects and migration guidance."""
+    """Live deprecations with their affected pinned projects and migration guidance.
+
+    Soonest sunset first; one page of at most ``limit`` deprecations (200 at most). Pass the
+    page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        component_id: Narrow to one component.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of deprecations and whether another follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
+    """
     tenant_id = auth_data["tenant_id"]
-    rows = db.list_component_deprecations(tenant_id, component_id) or []
+    rows = (
+        db.list_component_deprecations(
+            tenant_id,
+            component_id,
+            limit=limit + 1,
+            cursor=COMPONENT_DEPRECATIONS_ORDER.parse(cursor),
+        )
+        or []
+    )
+    page = COMPONENT_DEPRECATIONS_ORDER.page(rows, limit)
     return DeprecationListResponse(
         deprecations=[
             _deprecation_body(
@@ -598,8 +633,10 @@ def list_deprecations(
                 )
                 or [],
             )
-            for row in rows
-        ]
+            for row in page.items
+        ],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

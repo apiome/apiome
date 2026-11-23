@@ -26,7 +26,7 @@ is audited there.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence, Tuple
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -429,18 +429,28 @@ def create_agent_toolset(
 
 
 def list_agent_toolsets(
-    tenant_id: str, *, version_id: Optional[str] = None
+    tenant_id: str,
+    *,
+    version_id: Optional[str] = None,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
 ) -> List[AgentToolsetOut]:
     """Describe a tenant's toolsets, newest first.
 
     Args:
         tenant_id: The caller's tenant.
         version_id: When set, only that version's toolset.
+        limit: Toolsets to read; ``None`` reads them all (internal callers).
+        cursor: Where the page starts (``AGENT_TOOLSETS_ORDER``, #7196).
 
     Returns:
         The toolsets with their tool counts.
     """
-    return [_toolset_out(row) for row in db.list_agent_toolsets(tenant_id, version_id=version_id)]
+    if limit is None and cursor is None:
+        rows = db.list_agent_toolsets(tenant_id, version_id=version_id)
+    else:
+        rows = db.list_agent_toolsets(tenant_id, version_id=version_id, limit=limit, cursor=cursor)
+    return [_toolset_out(row) for row in rows]
 
 
 def get_agent_toolset(tenant_id: str, toolset_id: str) -> AgentToolsetDetail:

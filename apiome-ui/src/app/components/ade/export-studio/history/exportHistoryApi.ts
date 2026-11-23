@@ -4,12 +4,14 @@
  * message.
  */
 
+import { readPage, type PageInfo, type PageRequest } from '@lib/cursor-pages';
 import { deliveryApi } from '../delivery/deliveryProfilesApi';
 import {
   historyQuery,
   type ExportRunActor,
   type ExportRunDetail,
   type ExportRunPage,
+  type ExportRunSummary,
   type HistoryFilters,
 } from './exportHistoryModel';
 
@@ -17,16 +19,18 @@ import {
  * One page of the workspace's export history.
  *
  * @param filters The filters.
- * @param page Zero-based page.
- * @returns The runs on that page and the total matching.
+ * @param page Where the page starts (the previous page's cursor), and whether to count.
+ * @returns The runs on that page and what it says about the rest: whether another page follows,
+ *   its cursor, and the total when it was asked for.
  */
-export async function fetchExportRuns(filters: HistoryFilters, page: number): Promise<ExportRunPage> {
+export async function fetchExportRuns(
+  filters: HistoryFilters,
+  page: PageRequest = {}
+): Promise<{ runs: ExportRunSummary[]; page: PageInfo }> {
   const data = await deliveryApi<Partial<ExportRunPage>>(`/api/export/runs?${historyQuery(filters, page)}`);
   return {
     runs: Array.isArray(data?.runs) ? data.runs : [],
-    total: typeof data?.total === 'number' ? data.total : 0,
-    limit: typeof data?.limit === 'number' ? data.limit : 0,
-    offset: typeof data?.offset === 'number' ? data.offset : 0,
+    page: readPage(data),
   };
 }
 

@@ -530,3 +530,111 @@ def test_stage_and_outcome_tallies_cover_both_halves():
     assert series["stages"] == {qrt.STAGE_PREFLIGHT: 1, qrt.STAGE_COMMITTED: 2}
     assert series["outcomes"]["warn"] == 1
     assert series["formats"][0]["blocked_count"] == 1
+
+
+# --- SQL rollup (DBP-1.13, #7196) -----------------------------------------------------------
+
+
+def _rollup_of(rows):
+    """Bucket observation rows the way ``aggregate_quality_rank_observations`` does in SQL."""
+    buckets, scored, attribution = {}, {}, {}
+    for row in rows:
+        day = row["occurred_at"].date()
+        group = (row["scope"], row["format_key"])
+        key = (
+            *group, day, row["stage"], row["outcome"], row.get("grade"),
+            row.get("adapter_key"), row.get("style_guide_fingerprint"),
+        )
+        bucket = buckets.setdefault(
+            key,
+            {
+                "scope": row["scope"], "format_key": row["format_key"], "occurred_at": day,
+                "stage": row["stage"], "outcome": row["outcome"], "grade": row.get("grade"),
+                "adapter_key": row.get("adapter_key"),
+                "style_guide_fingerprint": row.get("style_guide_fingerprint"),
+                "observations": 0, "score_sum": 0, "score_count": 0, "readiness_sum": 0,
+                "readiness_count": 0, "adapter_finding_count": 0, "spec_finding_count": 0,
+                "declared_parser_limits": 0, "blocked_count": 0, "rank": None,
+            },
+        )
+        bucket["observations"] += 1
+        if row.get("score") is not None:
+            bucket["score_sum"] += row["score"]
+            bucket["score_count"] += 1
+            scored.setdefault(group, []).append(row)
+        if row.get("readiness") is not None:
+            bucket["readiness_sum"] += row["readiness"]
+            bucket["readiness_count"] += 1
+        bucket["adapter_finding_count"] += max(0, row.get("adapter_finding_count") or 0)
+        bucket["spec_finding_count"] += max(0, row.get("spec_finding_count") or 0)
+        bucket["declared_parser_limits"] = max(
+            bucket["declared_parser_limits"], row.get("declared_parser_limits") or 0
+        )
+        bucket["blocked_count"] += 1 if row.get("blocking") else 0
+        if row.get("rank") is not None:
+            bucket["rank"] = row["rank"] if bucket["rank"] is None else min(bucket["rank"], row["rank"])
+        for side, classes in (row.get("attribution") or {}).items():
+            for name, count in classes.items():
+                attribution[(*group, side, name)] = attribution.get((*group, side, name), 0) + count
+    drift = []
+    for (scope, format_key), observations in scored.items():
+        ordered = sorted(observations, key=lambda o: o["occurred_at"])
+        drift.append(
+            {
+                "scope": scope, "format_key": format_key,
+                "first_at": ordered[0]["occurred_at"], "first_score": ordered[0]["score"],
+                "last_at": ordered[-1]["occurred_at"], "last_score": ordered[-1]["score"],
+                "last_grade": ordered[-1].get("grade"),
+            }
+        )
+    return qrt.QualityRankRollup(
+        rows=list(buckets.values()),
+        drift=drift,
+        attribution=[
+            {"scope": s, "format_key": f, "side": side, "class": name, "total": total}
+            for (s, f, side, name), total in attribution.items()
+        ],
+    )
+
+
+def test_a_sql_rollup_yields_the_same_series_as_the_observations_it_buckets():
+    def observation(**overrides):
+        row = {
+            "scope": "import", "stage": "preflight", "outcome": "pass",
+            "format_key": "openapi-3.1", "adapter_key": "openapi",
+            "style_guide_fingerprint": "guide-a", "score": 84, "grade": "B", "readiness": None,
+            "rank": None, "blocking": False, "adapter_finding_count": 1, "spec_finding_count": 5,
+            "declared_parser_limits": 0,
+            "attribution": {"adapter": {"intake-resolution": 1}, "spec": {"documentation": 5}},
+            "occurred_at": NOW,
+        }
+        row.update(overrides)
+        return row
+
+    rows = [
+        observation(),
+        observation(score=60, grade="D", occurred_at=NOW - timedelta(days=2), blocking=True),
+        observation(score=None, grade=None, outcome="error", occurred_at=NOW - timedelta(days=1)),
+        observation(score=70, grade="C", occurred_at=NOW - timedelta(hours=1), declared_parser_limits=3),
+        observation(
+            scope="export", stage="committed", format_key="grpc", adapter_key="grpc",
+            readiness=77, rank=2, outcome="warn", score=None, grade=None, attribution={},
+        ),
+        observation(
+            scope="export", stage="committed", format_key="grpc", adapter_key="grpc",
+            readiness=91, rank=1, score=None, grade=None, attribution={},
+            occurred_at=NOW - timedelta(days=3),
+        ),
+    ]
+    from_rows = qrt.build_quality_rank_series(rows, days=7, now=NOW)
+    from_rollup = qrt.build_quality_rank_series(_rollup_of(rows), days=7, now=NOW)
+    assert from_rollup == from_rows
+    assert from_rollup["observation_count"] == 6
+
+
+def test_the_rollup_loader_degrades_to_an_empty_rollup_when_the_read_fails():
+    with patch("app.database.db") as database:
+        database.aggregate_quality_rank_observations.side_effect = RuntimeError("down")
+        rollup = qrt.load_quality_rank_rollup("t-1", since=NOW)
+    assert rollup == qrt.QualityRankRollup()
+    assert qrt.build_quality_rank_series(rollup, days=3, now=NOW)["formats"] == []

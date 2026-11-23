@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-auto` · 6 operations
 
@@ -70,7 +70,7 @@ Operation id: `release_auto_export_run_v1_export__tenant_slug__auto_export_runs_
 
 **List auto-export subscriptions**
 
-Every export preset run on publish, by project. `projectId` or `preset` (id or name) narrow. Requires `projects:view`.
+Every export preset run on publish, by project. `projectId` or `preset` (id or name) narrow. At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is false. Requires `projects:view`.
 
 Operation id: `list_auto_exports_v1_export__tenant_slug__auto_exports_get`
 
@@ -81,6 +81,8 @@ Operation id: `list_auto_exports_v1_export__tenant_slug__auto_exports_get`
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `projectId` | query | string or null | no | Query parameter: project id. |
 | `preset` | query | string or null | no | Query parameter: preset. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -242,6 +244,8 @@ Auto-export subscriptions.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `subscriptions` | array of [`AutoExportSubscriptionModel`](#schema-autoexportsubscriptionmodel) | no | Subscriptions. |
+| `hasMore` | boolean | no | Has More. |
+| `nextCursor` | string or null | no | Next Cursor. |
 
 ### `AutoExportSubscriptionModel` {#schema-autoexportsubscriptionmodel}
 

@@ -3,13 +3,20 @@ Version tags API — named pointers to schema revisions (git tag analog).
 """
 
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import psycopg2
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .authoring_list_orders import VERSION_TAGS_ORDER
 from .database import db
+from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    set_page_headers,
+)
 from .models import VersionTagCreateRequest, VersionTagSchema, VersionTagUpdateRequest
 from .permissions import Action, Resource, enforce_permission
 from .project_timeline import tag_audit_detail
@@ -62,15 +69,40 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
 def list_version_tags(
     tenant_slug: str,
     project_id: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[VersionTagSchema]:
-    """List all tags for a project."""
+    """List the version tags of a project, by name.
+
+    The body is a JSON array of at most ``limit`` tags (1,000 at most). The ``X-Has-More``
+    response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_id: The project whose tags are listed.
+        response: The outgoing response (paging headers are set on it).
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+        auth_data: The authenticated principal.
+
+    Returns:
+        One page of tags.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the project is unknown.
+    """
     tenant_id = _tenant_id(auth_data)
+    after = VERSION_TAGS_ORDER.parse(cursor)
     project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    rows = db.list_version_tags_for_project(project_id, tenant_id)
-    return [VersionTagSchema(**dict(r)) for r in rows]
+    rows = db.list_version_tags_for_project(project_id, tenant_id, limit=limit + 1, cursor=after)
+    page = VERSION_TAGS_ORDER.page(rows, limit)
+    set_page_headers(response, page)
+    return [VersionTagSchema(**dict(r)) for r in page.items]
 
 
 @router.post("/{tenant_slug}/{project_id}", response_model=VersionTagSchema)

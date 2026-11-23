@@ -240,6 +240,7 @@ class FakeSuiteDb(FakeSyncDb):
         evaluated: Optional[bool] = None,
         limit: int = 50,
         offset: int = 0,
+        cursor: Any = None,
     ) -> List[Dict[str, Any]]:
         """A version's evaluations, newest first."""
         rows = [
@@ -250,7 +251,11 @@ class FakeSuiteDb(FakeSyncDb):
             and (commit_sha is None or row.get("commit_sha") == commit_sha)
             and (evaluated is None or bool(row["evaluated"]) == evaluated)
         ]
-        rows.sort(key=lambda row: row["created_at"], reverse=True)
+        rows.sort(key=lambda row: (row["created_at"], row["id"]), reverse=True)
+        if cursor is not None:
+            # Keyset: only rows strictly older than the cursor row (#7196).
+            rows = [row for row in rows if (row["created_at"], row["id"]) < tuple(cursor)]
+            offset = 0
         return [self._run_view(row) for row in rows[offset : offset + max(1, int(limit))]]
 
     def find_current_check_suite_run(

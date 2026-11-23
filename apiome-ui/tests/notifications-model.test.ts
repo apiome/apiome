@@ -333,6 +333,19 @@ describe('sanitizeNotificationListParams', () => {
     });
   });
 
+  test('forwards a cursor and the count request, and drops the offset beside a cursor', () => {
+    expect(sanitize('cursor=abc123&include_total=true&offset=50')).toEqual({
+      limit: String(NOTIFICATION_PAGE_SIZE),
+      cursor: 'abc123',
+      include_total: 'true',
+    });
+    // `include_total` is a flag: anything but the literal `true` is not forwarded.
+    expect(sanitize('include_total=1')).not.toHaveProperty('include_total');
+    // A cursor longer than apiome-rest issues is dropped, and the page falls back to the start.
+    expect(sanitize(`cursor=${'x'.repeat(3000)}`)).toMatchObject({ offset: '0' });
+    expect(sanitize(`cursor=${'x'.repeat(3000)}`)).not.toHaveProperty('cursor');
+  });
+
   test('refuses a negative or unreadable offset rather than forwarding it', () => {
     expect(sanitize('offset=-5')).toMatchObject({ offset: '0' });
     expect(sanitize('offset=x')).toMatchObject({ offset: '0' });

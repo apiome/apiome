@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 
 from app import merge_request_routes as routes
 from app.auth import validate_authentication
+from app.keyset_pagination import Page, encode_time_id_cursor
 from app.main import app
 from app.merge_requests import (
     CODE_CONFLICTS,
@@ -116,16 +117,28 @@ def test_open_answers_201_with_the_detail(ctx, monkeypatch):
 def test_list_reads_with_versions_view_and_filters_by_state(ctx, monkeypatch):
     seen = {}
 
-    def list_(tenant_id, project_ref, *, state, limit, offset):
-        seen.update(state=state, limit=limit, offset=offset)
-        return [_detail().merge_request], 7
+    def list_(tenant_id, project_ref, *, state, limit, offset, cursor, include_total):
+        seen.update(state=state, limit=limit, offset=offset, cursor=cursor, include_total=include_total)
+        return Page(items=[_detail().merge_request], has_more=True, next_cursor="next"), 7 if include_total else None
 
     monkeypatch.setattr(routes.merge_request_store, "list_merge_requests", list_)
-    body = client.get(f"{PROJECT}/merge-requests?state=open&limit=5").json()
+    body = client.get(f"{PROJECT}/merge-requests?state=open&limit=5&include_total=true").json()
     assert body["count"] == 1 and body["total"] == 7
-    assert seen == {"state": "open", "limit": 5, "offset": 0}
+    assert body["has_more"] is True and body["next_cursor"] == "next"
+    assert seen == {"state": "open", "limit": 5, "offset": 0, "cursor": None, "include_total": True}
     assert ctx["permissions"] == [(Resource.VERSIONS, Action.VIEW)]
     assert client.get(f"{PROJECT}/merge-requests?state=bogus").status_code == 422
+
+    # Keyset paging (#7196): the cursor reaches the store decoded, the total is opt-in, a bad
+    # cursor is a 400 and the page size keeps its maximum.
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+    cursor = encode_time_id_cursor(stamp, "0a1b2c30-1111-4222-8333-000000000001")
+    paged = client.get(f"{PROJECT}/merge-requests", params={"cursor": cursor, "offset": 9}).json()
+    assert seen["cursor"] == (stamp, "0a1b2c30-1111-4222-8333-000000000001")
+    assert paged["total"] is None and paged["offset"] == 0
+    assert client.get(f"{PROJECT}/merge-requests?cursor=not-a-cursor").status_code == 400
+    assert client.get(f"{PROJECT}/merge-requests?limit=101").status_code == 422
+    assert client.get(f"{PROJECT}/merge-requests?offset=10001").status_code == 422
 
 
 def test_unknown_merge_request_is_404(ctx, monkeypatch):

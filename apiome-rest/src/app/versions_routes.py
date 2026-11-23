@@ -30,6 +30,17 @@ from .canonical_model import ApiParadigm
 from .compatibility_engine import CompatibilityCheckEngine, compat_audit_detail, openapi_for_revision
 from .config import settings
 from .database import BranchNotFoundError, StaleHeadPushError, db
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    offset_query,
+    page_of,
+    parse_time_id_cursor,
+    set_page_headers,
+    time_id_key,
+)
 from .version_retention import raise_if_pruned
 from .mock_bundle import BundleIdentity, build_bundle
 from .mock_callbacks import (
@@ -197,6 +208,10 @@ from . import version_overlay_store
 router = APIRouter(prefix="/v1/versions", tags=["versions"])
 
 logger = logging.getLogger(__name__)
+
+#: How many deprecated revisions the sunset timeline reads and sorts at most (#7196); its sort
+#: date comes from revision metadata, so it cannot be ordered — or cut — in SQL.
+SUNSET_TIMELINE_SCAN_CAP = 10_000
 
 
 _DEFAULT_COMMIT_METADATA_MAX_CHARS = 10_000
@@ -627,11 +642,39 @@ def _resolve_expected_push_head(
 def get_sunset_timeline(
     tenant_slug: str,
     project_id: Optional[str] = Query(None, alias="projectId"),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    offset: int = Query(
+        default=0,
+        ge=0,
+        le=SUNSET_TIMELINE_SCAN_CAP,
+        description=(
+            "Entries to skip. The timeline is ordered by a date computed from each revision's "
+            f"metadata, so it pages by offset; at most {SUNSET_TIMELINE_SCAN_CAP:,}."
+        ),
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SunsetTimelineResponse:
     """
     Aggregate deprecation and sunset dates across projects (#508).
     Must be registered before ``/{tenant_slug}/{project_id}`` so ``sunset-timeline`` is not parsed as a project id.
+
+    ``entries`` is one page of at most ``limit`` revisions (1,000 at most), soonest sunset
+    first; ``hasMore`` says whether the timeline continues at ``offset + limit`` (#7196). The
+    order is computed from revision metadata, so the timeline is sorted in memory over at most
+    10,000 deprecated revisions and pages by ``offset`` rather than by cursor.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_id: Narrow to one project.
+        limit: Page size.
+        offset: Entries to skip.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of timeline entries, whether more follow, and the product timeline.
+
+    Raises:
+        HTTPException: 404 when ``projectId`` names an unknown project.
     """
     tid = auth_data["tenant_id"]
     if project_id:
@@ -639,7 +682,7 @@ def get_sunset_timeline(
         if not proj:
             raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
 
-    rows = db.list_sunset_timeline_entries(tid, project_id)
+    rows = db.list_sunset_timeline_entries(tid, project_id, limit=SUNSET_TIMELINE_SCAN_CAP)
     decorated: List[tuple] = []
     for row in rows:
         meta = row.get("metadata")
@@ -674,6 +717,8 @@ def get_sunset_timeline(
     decorated.sort(
         key=lambda x: (x[0], (x[1].get("project_name") or ""), (x[1].get("version_id") or ""))
     )
+    has_more = len(decorated) > offset + limit
+    decorated = decorated[offset : offset + limit]
 
     entries: List[SunsetTimelineEntryOut] = []
     for _, row, t_status, life, norm, msg, succ_str, warns in decorated:
@@ -697,7 +742,11 @@ def get_sunset_timeline(
 
     readiness = _sunset_readiness(tid, auth_data, [(entry.revision_id, entry.project_id) for entry in entries])
     entries = [entry.model_copy(update={"still_used": readiness.get(entry.revision_id)}) for entry in entries]
-    return SunsetTimelineResponse(entries=entries, products=_product_timeline(tid, auth_data, project_id))
+    return SunsetTimelineResponse(
+        entries=entries,
+        products=_product_timeline(tid, auth_data, project_id),
+        has_more=has_more,
+    )
 
 
 def _product_timeline(tenant_id: str, auth_data: Dict[str, Any], project_id: Optional[str]) -> List[Any]:
@@ -758,6 +807,7 @@ def _sunset_readiness(
 def list_versions(
     tenant_slug: str,
     project_id: str,
+    response: Response,
     lifecycle: Optional[str] = Query(
         None,
         description="Filter catalog/history by revision lifecycle tag (#739): stable, beta, deprecated, archived.",
@@ -781,10 +831,16 @@ def list_versions(
         alias="createdBefore",
         description="Include revisions with created_at on or before this instant (ISO 8601, #2579).",
     ),
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[VersionSchema]:
     """
-    List all versions for a project.
+    List a project's versions, newest first, one page at a time.
+
+    The body is a JSON array. At most ``limit`` versions (200 at most) are returned; the
+    ``X-Has-More`` response header says whether more exist and ``X-Next-Cursor`` carries the
+    ``cursor`` of the next page (#7196).
 
     Supports authentication via:
     - JWT token in Authorization header (Bearer token)
@@ -793,10 +849,21 @@ def list_versions(
     Args:
         tenant_slug: The tenant slug
         project_id: The project ID
+        lifecycle: Only revisions with this lifecycle tag.
+        q: Search text over the revision note, changelog and commit message.
+        creator_id: Only revisions created by this user.
+        created_after: Only revisions created on or after this instant.
+        created_before: Only revisions created on or before this instant.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+        response: The outgoing response (paging headers are set on it).
         auth_data: Authentication data (injected by dependency)
 
     Returns:
-        List of versions for the project
+        One page of the project's versions.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor or lifecycle filter; 404 for an unknown project.
     """
     # Verify project belongs to tenant
     project = db.get_project_core(project_id, auth_data['tenant_id'])
@@ -827,9 +894,13 @@ def list_versions(
         creator_id=cid or None,
         created_after=created_after,
         created_before=created_before,
+        limit=limit + 1,
+        cursor=parse_time_id_cursor(cursor),
     )
+    page = page_of(versions, limit, time_id_key())
+    set_page_headers(response, page)
 
-    return [_version_schema_response(v, tenant_slug) for v in versions]
+    return [_version_schema_response(v, tenant_slug) for v in page.items]
 
 
 @router.get(
@@ -3807,8 +3878,9 @@ def list_version_mock_captures(
     state: Optional[Literal["pending", "approved", "rejected", "published"]] = Query(
         default=None, description="Filter by review state."
     ),
-    limit: int = Query(default=50, ge=1, le=500, description="Maximum captures to return."),
-    offset: int = Query(default=0, ge=0, description="Captures to skip, for paging."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    offset: int = offset_query(),
     include_exchange: bool = Query(
         default=False,
         alias="includeExchange",
@@ -3821,19 +3893,44 @@ def list_version_mock_captures(
     This is the review queue. Every entry is already redacted — the runtime never stores anything
     else — and carries the full list of redaction decisions plus the provenance of the fetch, so a
     reviewer can see what was removed and where the data came from before approving anything.
+
+    Pages by `cursor`: pass the previous page's `nextCursor` until `hasMore` is false (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_id: The project owning the version.
+        version_record_id: The ``versions.id`` UUID whose mock recorded the captures.
+        state: Only captures in this review state.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        offset: Captures to skip (deprecated).
+        include_exchange: Include each capture's full redacted document.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of captures, whether another follows, and the live counts by review state.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor, 403 without ``versions:view``, 404 for an
+            unknown version.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    after = parse_time_id_cursor(cursor)
     _get_version_for_mock_scenarios(project_id, version_record_id, auth_data["tenant_id"])
     rows = db.list_mock_capture_exchanges(
         version_record_id,
         auth_data["tenant_id"],
         review_state=state,
-        limit=limit,
+        limit=limit + 1,
         offset=offset,
+        cursor=after,
     )
+    page = page_of(rows, limit, time_id_key("captured_at"))
     return VersionMockCapturesResponse(
-        captures=[_capture_summary(row, include_exchange=include_exchange) for row in rows],
+        captures=[_capture_summary(row, include_exchange=include_exchange) for row in page.items],
         counts=db.count_mock_capture_exchanges(version_record_id, auth_data["tenant_id"]),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

@@ -108,8 +108,10 @@ from .agent_toolsets import (
 )
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .mcp_registry import body_etag
 from .permissions import Action, Resource, enforce_permission
+from .tenant_list_paging import AGENT_TOOLSETS_ORDER
 
 logger = logging.getLogger(__name__)
 
@@ -162,6 +164,8 @@ class AgentToolsetListResponse(BaseModel):
     Attributes:
         schema_version: The projection's shape.
         toolsets: One entry per toolset, newest first.
+        has_more: Whether another page exists.
+        next_cursor: Pass as ``cursor`` to read the next page; ``None`` on the last page.
     """
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
@@ -170,6 +174,8 @@ class AgentToolsetListResponse(BaseModel):
         default=AGENT_TOOLSET_SCHEMA_VERSION, serialization_alias="schemaVersion"
     )
     toolsets: List[AgentToolsetOut]
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 class AgentToolListResponse(BaseModel):
@@ -283,27 +289,36 @@ def _settings(toolset: AgentToolsetOut) -> Dict[str, Any]:
 def list_agent_toolsets_route(
     tenant_slug: str,
     version_id: Optional[UUID] = Query(default=None, alias="versionId"),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> AgentToolsetListResponse:
-    """List the tenant's toolsets.
+    """List the tenant's toolsets, one page at a time.
 
     Args:
         tenant_slug: The tenant in the URL (the authenticated tenant is what scopes it).
         version_id: Optional version filter.
+        limit: Page size (1,000 at most).
+        cursor: Where the page starts (``nextCursor`` of the previous page).
         auth_data: The authenticated principal.
 
     Returns:
-        The toolsets.
+        The page of toolsets and whether another follows.
 
     Raises:
-        HTTPException: 403 without ``api_keys:view``.
+        HTTPException: 400 for a malformed cursor; 403 without ``api_keys:view``.
     """
     enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
     _ = tenant_slug
+    toolsets = list_agent_toolsets(
+        _tenant_id(auth_data),
+        version_id=str(version_id) if version_id else None,
+        limit=limit + 1,
+        cursor=AGENT_TOOLSETS_ORDER.parse(cursor),
+    )
+    page = AGENT_TOOLSETS_ORDER.page(toolsets, limit)
     return AgentToolsetListResponse(
-        toolsets=list_agent_toolsets(
-            _tenant_id(auth_data), version_id=str(version_id) if version_id else None
-        )
+        toolsets=page.items, has_more=page.has_more, next_cursor=page.next_cursor
     )
 
 

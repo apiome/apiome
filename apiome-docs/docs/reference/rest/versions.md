@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `versions` · 68 operations
 
@@ -20,6 +20,24 @@ Tag: `versions` · 68 operations
 Aggregate deprecation and sunset dates across projects (#508).
 Must be registered before ``/{tenant_slug}/{project_id}`` so ``sunset-timeline`` is not parsed as a project id.
 
+``entries`` is one page of at most ``limit`` revisions (1,000 at most), soonest sunset
+first; ``hasMore`` says whether the timeline continues at ``offset + limit`` (#7196). The
+order is computed from revision metadata, so the timeline is sorted in memory over at most
+10,000 deprecated revisions and pages by ``offset`` rather than by cursor.
+
+Args:
+    tenant_slug: The tenant in the URL.
+    project_id: Narrow to one project.
+    limit: Page size.
+    offset: Entries to skip.
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of timeline entries, whether more follow, and the product timeline.
+
+Raises:
+    HTTPException: 404 when ``projectId`` names an unknown project.
+
 Operation id: `get_sunset_timeline_v1_versions__tenant_slug__sunset_timeline_get`
 
 **Parameters**
@@ -28,6 +46,8 @@ Operation id: `get_sunset_timeline_v1_versions__tenant_slug__sunset_timeline_get
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `projectId` | query | string or null | no | Query parameter: project id. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `offset` | query | integer | no | Entries to skip. The timeline is ordered by a date computed from each revision's metadata, so it pages by offset; at most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -42,7 +62,11 @@ Operation id: `get_sunset_timeline_v1_versions__tenant_slug__sunset_timeline_get
 
 **List Versions**
 
-List all versions for a project.
+List a project's versions, newest first, one page at a time.
+
+The body is a JSON array. At most ``limit`` versions (200 at most) are returned; the
+``X-Has-More`` response header says whether more exist and ``X-Next-Cursor`` carries the
+``cursor`` of the next page (#7196).
 
 Supports authentication via:
 - JWT token in Authorization header (Bearer token)
@@ -51,10 +75,21 @@ Supports authentication via:
 Args:
     tenant_slug: The tenant slug
     project_id: The project ID
+    lifecycle: Only revisions with this lifecycle tag.
+    q: Search text over the revision note, changelog and commit message.
+    creator_id: Only revisions created by this user.
+    created_after: Only revisions created on or after this instant.
+    created_before: Only revisions created on or before this instant.
+    limit: Page size.
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+    response: The outgoing response (paging headers are set on it).
     auth_data: Authentication data (injected by dependency)
 
 Returns:
-    List of versions for the project
+    One page of the project's versions.
+
+Raises:
+    HTTPException: 400 for a malformed cursor or lifecycle filter; 404 for an unknown project.
 
 Operation id: `list_versions_v1_versions__tenant_slug___project_id__get`
 
@@ -69,6 +104,8 @@ Operation id: `list_versions_v1_versions__tenant_slug___project_id__get`
 | `creatorId` | query | string or null | no | Filter by creator user id (#2579). |
 | `createdAfter` | query | string (date-time) or null | no | Include revisions with created_at on or after this instant (ISO 8601, #2579). |
 | `createdBefore` | query | string (date-time) or null | no | Include revisions with created_at on or before this instant (ISO 8601, #2579). |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -387,7 +424,25 @@ Operation id: `get_project_timeline_v1_versions__tenant_slug___project_id__timel
 
 **List Version Branches**
 
-List named version branches for a project (Studio BFF / git menu).
+List named version branches for a project, by name (Studio BFF / git menu).
+
+The body is a JSON array of at most ``limit`` branches (1,000 at most). The ``X-Has-More``
+response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+next page (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    project_id: The project whose branches are listed.
+    response: The outgoing response (paging headers are set on it).
+    limit: Page size.
+    cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+    auth_data: The authenticated principal.
+
+Returns:
+    One page of branches.
+
+Raises:
+    HTTPException: 400 for a malformed cursor; 404 when the project is unknown.
 
 Operation id: `list_version_branches_v1_versions__tenant_slug___project_id__version_branches_get`
 
@@ -397,6 +452,8 @@ Operation id: `list_version_branches_v1_versions__tenant_slug___project_id__vers
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -1398,6 +1455,26 @@ This is the review queue. Every entry is already redacted — the runtime never 
 else — and carries the full list of redaction decisions plus the provenance of the fetch, so a
 reviewer can see what was removed and where the data came from before approving anything.
 
+Pages by `cursor`: pass the previous page's `nextCursor` until `hasMore` is false (#7196).
+
+Args:
+    tenant_slug: The tenant in the URL.
+    project_id: The project owning the version.
+    version_record_id: The ``versions.id`` UUID whose mock recorded the captures.
+    state: Only captures in this review state.
+    limit: Page size.
+    cursor: Where the page starts (``nextCursor`` of the previous page).
+    offset: Captures to skip (deprecated).
+    include_exchange: Include each capture's full redacted document.
+    auth_data: The authenticated principal.
+
+Returns:
+    The page of captures, whether another follows, and the live counts by review state.
+
+Raises:
+    HTTPException: 400 for a malformed cursor, 403 without ``versions:view``, 404 for an
+        unknown version.
+
 Operation id: `list_version_mock_captures_v1_versions__tenant_slug___project_id___version_record_id__mock_captures_get`
 
 **Parameters**
@@ -1408,8 +1485,9 @@ Operation id: `list_version_mock_captures_v1_versions__tenant_slug___project_id_
 | `project_id` | path | string | yes | Project identifier that scopes the request. |
 | `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
 | `state` | query | enum `"pending"`, `"approved"`, `"rejected"`, `"published"` or null | no | Filter by review state. |
-| `limit` | query | integer | no | Maximum captures to return. |
-| `offset` | query | integer | no | Captures to skip, for paging. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `includeExchange` | query | boolean | no | Include each capture's full redacted document, not only its summary. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
@@ -2653,6 +2731,7 @@ Aggregated sunset / deprecation timeline for accessible projects (#508).
 | --- | --- | --- | --- |
 | `entries` | array of `SunsetTimelineEntryOut` | no | Entries. |
 | `products` | array of `SunsetTimelineProductEntryOut` | no | Deprecated and retired API products and plans (APX-1.4), soonest retirement first. Empty without `projects:view`; with `projectId`, only products that include that project. |
+| `hasMore` | boolean | no | Whether `entries` continues past this page (read it with a larger `offset`). |
 
 ### `VersionBranchCreateRequest` {#schema-versionbranchcreaterequest}
 
@@ -2928,6 +3007,8 @@ A version's recorded exchanges awaiting review (#4747 PMR-2.4).
 | --- | --- | --- | --- |
 | `captures` | array of `MockCaptureSummary` | no | Recorded exchanges, newest first. |
 | `counts` | map of integer | no | Live capture counts by review state. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `VersionMockCorrelationRequest` {#schema-versionmockcorrelationrequest}
 

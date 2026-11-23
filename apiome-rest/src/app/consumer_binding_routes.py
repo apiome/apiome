@@ -40,7 +40,13 @@ from .consumer_binding import (
     BindingInput,
     BindingRecord,
 )
-from .consumer_binding_store import create_binding, delete_binding, list_bindings, usage_by_consumer
+from .consumer_binding_store import (
+    BINDINGS_ORDER,
+    create_binding,
+    delete_binding,
+    list_bindings,
+    usage_by_consumer,
+)
 from .consumer_contract import ConsumerContractSurface, ConsumerSummary, ConsumerValidationError
 from .consumer_contract_routes import _http_error, _tenant_id
 from .consumer_contract_store import actor_from_auth, current_contract, get_consumer, resolve_project
@@ -55,6 +61,7 @@ from .consumer_suggestions import (
     register_suggestion,
 )
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .redacted_validation_route import RedactedValidationRoute
 from .usage_controls import AUDIT_CONSUMER_ERASED
@@ -81,6 +88,10 @@ class BindingListResponse(BaseModel):
 
     bindings: List[BindingRecord] = Field(default_factory=list, description="Newest first.")
     count: int = Field(description="How many bindings were returned.")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 def _binding_error(exc: BindingError) -> HTTPException:
@@ -154,6 +165,8 @@ def attach_runtime_summaries(
         "user-agent glob. A bound value is never returned — not even as a hash.\n\n"
         "Deleted bindings are listed with `include_deleted=true`; they no longer match traffic but "
         "keep the history they attributed.\n\n"
+        "At most 1,000 a page: pass the previous page's `next_cursor` as `cursor` until `has_more` "
+        "is false.\n\n"
         "Requires `consumer_contracts:view`."
     ),
 )
@@ -162,25 +175,30 @@ def list_consumer_bindings(
     project_ref: str,
     consumer_ref: str,
     include_deleted: bool = Query(default=False, description="Also list deleted bindings."),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> BindingListResponse:
-    """List a consumer's bindings.
+    """List one page of a consumer's bindings.
 
     Args:
         tenant_slug: The tenant in the URL (the authenticated tenant scopes it).
         project_ref: Project slug or id.
         consumer_ref: Consumer slug or id.
         include_deleted: Also return deleted bindings.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``next_cursor``).
         auth_data: The authenticated principal.
 
     Returns:
-        The bindings.
+        The bindings of the page and whether another follows.
 
     Raises:
-        HTTPException: 404 for an unknown project or consumer, 403 without
-            ``consumer_contracts:view``.
+        HTTPException: 400 for a malformed cursor, 404 for an unknown project or consumer, 403
+            without ``consumer_contracts:view``.
     """
     enforce_permission(db, auth_data, Resource.CONSUMER_CONTRACTS, Action.VIEW)
+    after = BINDINGS_ORDER.parse(cursor)
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     try:
@@ -188,8 +206,16 @@ def list_consumer_bindings(
         consumer = get_consumer(tenant_id, str(project["id"]), consumer_ref)
     except ConsumerValidationError as exc:
         raise _http_error(exc) from exc
-    bindings = list_bindings(db, tenant_id, consumer.id, include_deleted=include_deleted)
-    return BindingListResponse(bindings=bindings, count=len(bindings))
+    rows = list_bindings(
+        db, tenant_id, consumer.id, include_deleted=include_deleted, limit=limit + 1, cursor=after
+    )
+    page = BINDINGS_ORDER.page(rows, limit)
+    return BindingListResponse(
+        bindings=page.items,
+        count=len(page.items),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.post(

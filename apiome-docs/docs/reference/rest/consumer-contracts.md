@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `consumer-contracts` · 18 operations
 
@@ -182,6 +182,8 @@ A consumer that has never declared a contract is still listed, with `contract: n
 
 Each row's `runtime` counts its declared-and-used, declared-unused and used-undeclared operations over `runtime_days`, from the traffic its bindings attribute.
 
+At most 1,000 a page: pass the previous page's `next_cursor` as `cursor` until `has_more` is false.
+
 Requires `consumer_contracts:view`.
 
 Operation id: `list_project_consumers_v1_tenants__tenant_slug__projects__project_ref__consumers_get`
@@ -194,6 +196,8 @@ Operation id: `list_project_consumers_v1_tenants__tenant_slug__projects__project
 | `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
 | `team` | query | string or null | no | Only consumers whose owner (confirmed, else suggested) is this team slug (CDG-2.4). |
 | `runtime_days` | query | integer | no | Window, in UTC days ending today, of each row's `runtime` counts (RDG-1.8). |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -335,6 +339,8 @@ How this consumer is recognised in usage traffic: a header, an API key, a JWT cl
 
 Deleted bindings are listed with `include_deleted=true`; they no longer match traffic but keep the history they attributed.
 
+At most 1,000 a page: pass the previous page's `next_cursor` as `cursor` until `has_more` is false.
+
 Requires `consumer_contracts:view`.
 
 Operation id: `list_consumer_bindings_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__bindings_get`
@@ -347,6 +353,8 @@ Operation id: `list_consumer_bindings_v1_tenants__tenant_slug__projects__project
 | `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
 | `consumer_ref` | path | string | yes | Path parameter identifying the consumer ref segment. |
 | `include_deleted` | query | boolean | no | Also list deleted bindings. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -663,6 +671,8 @@ A consumer's bindings.
 | --- | --- | --- | --- |
 | `bindings` | array of [`BindingRecord`](#schema-bindingrecord) | no | Newest first. |
 | `count` | integer | yes | How many bindings were returned. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ConsumerContractRecord` {#schema-consumercontractrecord}
 
@@ -745,6 +755,8 @@ Every live consumer of a project with its current contract.
 | --- | --- | --- | --- |
 | `consumers` | array of `ConsumerSummary` | no | The project's consumers, newest first. |
 | `count` | integer | yes | How many consumers were returned. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `ConsumerPatch` {#schema-consumerpatch}
 

@@ -46,6 +46,17 @@ from .gate_report_emit import (
     normalize_gate_format,
     serialize_gate,
 )
+from .keyset_columns import decode_columns_cursor, encode_columns_cursor
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    MAX_REVISION_PAGE_LIMIT,
+    InvalidCursor,
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    page_of,
+)
 from .lint_evidence import (
     MCP_CONFORMANCE_SCANNER_ID,
     MCP_POSTURE_SCANNER_ID,
@@ -84,7 +95,14 @@ from .mcp_discovery_engine import (
     trigger_discovery,
 )
 from .mcp_duplicate_detection import mcp_duplicate_report_from_rows
-from .mcp_facets import FacetValidationError, canonical_tag, normalize_catalog_facet_filters
+from .mcp_facets import (
+    FACETED_SEARCH_SORT_COLUMNS,
+    FacetValidationError,
+    canonical_tag,
+    capability_directory_sort_columns,
+    capability_directory_sort_tag,
+    normalize_catalog_facet_filters,
+)
 from .mcp_freshness_report import mcp_freshness_report_from_rows
 from .mcp_health import (
     DEFAULT_WINDOW_HOURS,
@@ -99,10 +117,10 @@ from .mcp_insight_aggregation import (
     build_tool_examples,
     capability_name_set,
     compute_capability_overlap,
-    compute_discovery_reliability,
+    discovery_reliability_from_aggregate,
     compute_discovery_timeline,
     compute_endpoint_percentile_axes,
-    compute_invocation_reliability,
+    invocation_reliability_from_aggregate,
     compute_peer_percentiles,
     compute_tool_reliability,
     compute_trust_profile,
@@ -114,6 +132,13 @@ from .mcp_insight_aggregation import (
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_license_signals import detect_license_signals
 from .mcp_lifecycle_signals import detect_lifecycle_signals
+from .mcp_list_paging import (
+    MCP_DISCOVERY_JOBS_ORDER,
+    MCP_ENDPOINT_SOURCES_ORDER,
+    MCP_ENDPOINT_VERSIONS_ORDER,
+    MCP_ENDPOINTS_BY_NAME,
+    MCP_ENDPOINTS_NEWEST,
+)
 from .mcp_oauth_flow import OAuthFlowError
 from .mcp_oauth_service import complete_authorization, start_authorization
 from .mcp_owasp import catalog as owasp_catalog
@@ -326,6 +351,8 @@ def browse_mcp_endpoints(
         None,
         description="Tag facet: manual tags and/or 'untagged'. Repeatable; values OR.",
     ),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpBrowseResponse:
     """Private browse: the caller's cataloged endpoints grouped by host (V2-MCP-23.1 / MCAT-9.1).
@@ -340,14 +367,27 @@ def browse_mcp_endpoints(
     Each endpoint carries its manual ``tags``, and the ``category`` / ``tag`` facets (V2-MCP-23.3 /
     MCAT-9.3) narrow the list: the two facets AND together, values within one facet OR, and
     ``uncategorized`` / ``untagged`` select endpoints with none.
+
+    The view pages over endpoints in name order (#7196): at most ``limit`` endpoints (1,000 at
+    most) are grouped per response, ``has_more`` says whether more exist and ``next_cursor``
+    reads them. A host's group — and the counts — describe the endpoints of that page.
     """
     _ = tenant_slug  # scoping comes from the token, not the URL slug
     tenant_id = str(auth_data["tenant_id"])
     filters = normalize_catalog_facet_filters(category=category, tag=tag)
     rows = db.browse_mcp_endpoints(
-        tenant_id, team=team, categories=filters.categories, tags=filters.tags
+        tenant_id,
+        team=team,
+        categories=filters.categories,
+        tags=filters.tags,
+        limit=limit + 1,
+        cursor=MCP_ENDPOINTS_BY_NAME.parse(cursor),
     )
-    return group_mcp_browse_endpoints(rows)
+    page = MCP_ENDPOINTS_BY_NAME.page(rows, limit)
+    result = group_mcp_browse_endpoints(page.items)
+    result.has_more = page.has_more
+    result.next_cursor = page.next_cursor
+    return result
 
 
 @mcp_endpoints_router.get(
@@ -356,6 +396,8 @@ def browse_mcp_endpoints(
 )
 def list_mcp_duplicate_report(
     tenant_slug: str,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpDuplicateReportResponse:
     """Advisory duplicate review list for the caller's catalog (V2-MCP-36.1 / MCAT-22.1).
@@ -364,16 +406,25 @@ def list_mcp_duplicate_report(
     fingerprints do not prove they are distinct), or an identical current ``surface_fingerprint``.
     Published endpoints in other tenants that match the same keys are returned as cross-tenant hints.
     The report is advisory only — nothing is merged automatically.
+
+    The groups are computed in memory, so the report pages by ``limit`` + ``offset`` (not by
+    cursor) and scans at most 5,000 of the tenant's endpoints and 5,000 published endpoints of
+    other tenants (#7196). ``group_count`` / ``flagged_endpoint_count`` describe the whole
+    report; at most ``limit`` cross-tenant hints are returned.
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     candidates = db.list_mcp_duplicate_candidates(tenant_id)
     foreign = db.list_published_mcp_duplicate_hints(tenant_id)
-    return mcp_duplicate_report_from_rows(
+    report = mcp_duplicate_report_from_rows(
         tenant_id=tenant_id,
         candidates=candidates,
         foreign_published=foreign,
     )
+    report.has_more = offset + limit < len(report.groups)
+    report.groups = report.groups[offset : offset + limit]
+    report.cross_tenant_hints = report.cross_tenant_hints[:limit]
+    return report
 
 
 @mcp_endpoints_router.get(
@@ -382,6 +433,8 @@ def list_mcp_duplicate_report(
 )
 def list_mcp_freshness_report(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpFreshnessReportResponse:
     """Freshness report for the caller's catalog (V2-MCP-36.2 / MCAT-22.2).
@@ -390,14 +443,21 @@ def list_mcp_freshness_report(
     failing streak. Each flagged row carries a ``last_known_good_at`` anchor from the current
     snapshot (when one exists) plus the live cadence/backoff fields from ``mcp_endpoints``.
     Healthy, in-cadence endpoints are omitted.
+
+    The flags are computed in memory, so the report pages by ``limit`` + ``offset`` (not by
+    cursor) over at most 5,000 of the tenant's endpoints (#7196). ``flagged_endpoint_count``
+    describes the whole report.
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     candidates = db.list_mcp_freshness_candidates(tenant_id)
-    return mcp_freshness_report_from_rows(
+    report = mcp_freshness_report_from_rows(
         default_cadence_seconds=int(settings.mcp_discovery_default_cadence_seconds),
         candidates=candidates,
     )
+    report.has_more = offset + limit < len(report.endpoints)
+    report.endpoints = report.endpoints[offset : offset + limit]
+    return report
 
 
 @mcp_endpoints_router.get(
@@ -433,8 +493,8 @@ async def search_mcp_catalog(
     tag: Optional[str] = Query(
         None, description="Filter to endpoints carrying this manual tag (case-insensitive)."
     ),
-    limit: int = Query(50, ge=1, le=200, description="Maximum hits to return."),
-    offset: int = Query(0, ge=0, description="Hits to skip (pagination)."),
+    limit: int = limit_query(),
+    offset: int = offset_query(),
     include_registry: bool = Query(
         False,
         description=(
@@ -470,6 +530,9 @@ async def search_mcp_catalog(
     Federated search (V2-MCP-26.4 / MCAT-12.4): with ``include_registry=true`` the first page also
     carries the MCP registry's matches (:func:`_federate_with_registry`), each labeled
     ``source = "registry"``; local hits stay ``source = "local"``.
+
+    Hits are ordered by relevance, which no cursor can continue, so this list pages by ``offset``
+    (at most 10,000) and ``limit`` (at most 200) and counts nothing (#7196).
     """
     _ = tenant_slug  # scoping comes from the token, not the URL slug
     tenant_id = str(auth_data["tenant_id"])
@@ -589,6 +652,9 @@ async def _federate_with_registry(
 #: server-level pagination still finds matches when many capabilities share one endpoint.
 _CROSS_SERVER_CAPABILITY_RAW_LIMIT = 200
 
+#: Cursor tag of the faceted search's one ordering (endpoint name, then id).
+_FACETED_CURSOR_TAG = "name:asc"
+
 _MCP_CAPABILITY_DIRECTORY_SORTS = frozenset({"server", "name", "type"})
 _MCP_CAPABILITY_DIRECTORY_DIRECTIONS = frozenset({"asc", "desc"})
 
@@ -630,8 +696,10 @@ def list_mcp_capability_directory(
         "asc",
         description="Sort direction: asc (default) or desc.",
     ),
-    limit: int = Query(50, ge=1, le=200, description="Maximum items to return."),
-    offset: int = Query(0, ge=0, description="Items to skip (pagination)."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpCapabilityDirectoryResponse:
     """Capability directory — paginated index of every live tool/resource/prompt (MCAT-21.4).
@@ -641,6 +709,10 @@ def list_mcp_capability_directory(
     second read. ``name`` matches item name or title case-insensitively (substring); ``type``,
     ``endpoint_id``, and the usual host/category/grade/visibility filters compose (ANDed). Like
     every catalog route, scoping comes from the token's ``tenant_id`` — never the URL slug.
+
+    Pages by ``cursor``: pass the previous page's ``next_cursor`` (with the same ``sort`` and
+    ``direction``) until ``has_more`` is false. ``total`` is counted, up to 10,000, only when
+    ``include_total`` is set (#7196).
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
@@ -655,6 +727,15 @@ def list_mcp_capability_directory(
     category_filter = category.strip() if category and category.strip() else None
     grade_filter = grade.strip() if grade and grade.strip() else None
 
+    columns = capability_directory_sort_columns(sort, direction)
+    tag = capability_directory_sort_tag(sort, direction)
+    after: Optional[List[Any]] = None
+    if cursor is not None and cursor.strip():
+        try:
+            after = decode_columns_cursor(cursor, tag, columns)
+        except InvalidCursor as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid cursor: {exc}") from exc
+
     rows, total = db.list_mcp_capability_directory(
         tenant_id,
         name_pattern=name_pattern,
@@ -666,11 +747,20 @@ def list_mcp_capability_directory(
         visibility=visibility,
         sort=sort,
         direction=direction,
-        limit=limit,
+        # One row past the page answers "is there more?" without counting (#7196).
+        limit=limit + 1,
         offset=offset,
+        cursor=after,
+        include_total=include_total,
     )
+    page = page_of(rows, limit, lambda row: encode_columns_cursor(tag, columns, row))
     return mcp_capability_directory_response_from_rows(
-        rows=rows, total=total, limit=limit, offset=offset
+        rows=page.items,
+        total=total,
+        limit=limit,
+        offset=0 if after is not None else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -703,8 +793,8 @@ def cross_server_capability_search(
         None,
         description="Filter to 'private' or 'public' endpoints within the caller's own catalog.",
     ),
-    limit: int = Query(20, ge=1, le=100, description="Maximum server groups to return."),
-    offset: int = Query(0, ge=0, description="Server groups to skip (pagination)."),
+    limit: int = limit_query(20, maximum=100),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpCrossServerCapabilitySearchResponse:
     """Cross-server capability search — keyword + semantic, grouped by owning server (MCAT-21.2).
@@ -722,6 +812,9 @@ def cross_server_capability_search(
     relevance desc, then ordinal. ``visibility`` and tenant scoping are enforced like the flat
     search route — only the caller's own catalog is searched. An empty or whitespace-only query, or
     a query that matches nothing, returns ``groups: []`` (not an error).
+
+    Groups are ranked by relevance over at most 200 keyword and 200 semantic matches, so this list
+    pages by ``offset`` and ``limit`` within that bounded set; no cursor applies (#7196).
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
@@ -843,8 +936,9 @@ def faceted_mcp_catalog_search(
         None,
         description="Filter to 'private' or 'public' endpoints within the caller's own catalog.",
     ),
-    limit: int = Query(100, ge=1, le=500, description="Maximum endpoints to return."),
-    offset: int = Query(0, ge=0, description="Endpoints to skip (pagination)."),
+    limit: int = limit_query(100),
+    cursor: Optional[str] = cursor_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpFacetedSearchResponse:
     """Faceted search over the caller's MCP catalog with live facet counts (V2-MCP-35.1 / MCAT-21.1).
@@ -862,6 +956,10 @@ def faceted_mcp_catalog_search(
     so the search only ever spans the caller's own catalog, and ``visibility`` narrows the
     caller's *own* private/public endpoints. A filter combination matching nothing returns an
     empty page with zeroed counts, not an error; an invalid facet value is a ``422``.
+
+    The endpoint page is ordered by name and pages by ``cursor``: pass the previous page's
+    ``next_cursor`` until ``has_more`` is false. ``total`` and the facet counts always describe
+    the whole match, not the page (#7196).
     """
     _ = tenant_slug  # scoping comes from the token, not the URL slug
     tenant_id = str(auth_data["tenant_id"])
@@ -880,6 +978,13 @@ def faceted_mcp_catalog_search(
     except FacetValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
+    after: Optional[List[Any]] = None
+    if cursor is not None and cursor.strip():
+        try:
+            after = decode_columns_cursor(cursor, _FACETED_CURSOR_TAG, FACETED_SEARCH_SORT_COLUMNS)
+        except InvalidCursor as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid cursor: {exc}") from exc
+
     bundle = db.search_mcp_catalog_faceted(
         tenant_id,
         grades=filters.grades,
@@ -891,10 +996,23 @@ def faceted_mcp_catalog_search(
         health=filters.health,
         visibility=visibility,
         tags=filters.tags,
-        limit=limit,
+        limit=limit + 1,
         offset=offset,
+        cursor=after,
     )
-    return mcp_faceted_search_response_from_bundle(bundle, limit=limit, offset=offset)
+    page = page_of(
+        bundle.get("endpoints") or [],
+        limit,
+        lambda row: encode_columns_cursor(_FACETED_CURSOR_TAG, FACETED_SEARCH_SORT_COLUMNS, row),
+    )
+    result = mcp_faceted_search_response_from_bundle(
+        {**bundle, "endpoints": page.items},
+        limit=limit,
+        offset=0 if after is not None else offset,
+    )
+    result.has_more = page.has_more
+    result.next_cursor = page.next_cursor
+    return result
 
 
 @mcp_endpoints_router.get(
@@ -903,15 +1021,26 @@ def faceted_mcp_catalog_search(
 )
 def list_mcp_endpoints(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpEndpointListResponse:
-    """List every catalog endpoint owned by the caller's tenant (newest first)."""
+    """List the catalog endpoints owned by the caller's tenant, newest first, one page at a time.
+
+    At most ``limit`` endpoints (1,000 at most); pass ``next_cursor`` as ``cursor`` until
+    ``has_more`` is false (#7196). A malformed cursor is a ``400``.
+    """
     _ = tenant_slug  # scoping comes from the token, not the URL slug
     tenant_id = str(auth_data["tenant_id"])
-    rows = db.list_mcp_endpoints(tenant_id)
+    rows = db.list_mcp_endpoints(
+        tenant_id, limit=limit + 1, cursor=MCP_ENDPOINTS_NEWEST.parse(cursor)
+    )
+    page = MCP_ENDPOINTS_NEWEST.page(rows, limit)
     return McpEndpointListResponse(
         success=True,
-        endpoints=[mcp_endpoint_out_from_row(r) for r in rows],
+        endpoints=[mcp_endpoint_out_from_row(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -1335,18 +1464,28 @@ async def discover_mcp_endpoint(
 def list_mcp_discovery_jobs(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpDiscoveryJobListResponse:
-    """List an endpoint's discovery jobs, newest first; 404 when not the tenant's endpoint."""
+    """List an endpoint's discovery jobs, newest first; 404 when not the tenant's endpoint.
+
+    At most ``limit`` jobs (200 at most); pass ``next_cursor`` as ``cursor`` until ``has_more``
+    is false (#7196). A malformed cursor is a ``400``.
+    """
     _ = tenant_slug
+    after = MCP_DISCOVERY_JOBS_ORDER.parse(cursor)
     tenant_id = str(auth_data["tenant_id"])
     endpoint = db.get_mcp_endpoint(tenant_id, str(endpoint_id))
     if not endpoint:
         raise HTTPException(status_code=404, detail="MCP endpoint not found")
-    rows = db.list_mcp_discovery_jobs(tenant_id, str(endpoint_id))
+    rows = db.list_mcp_discovery_jobs(tenant_id, str(endpoint_id), limit=limit + 1, cursor=after)
+    page = MCP_DISCOVERY_JOBS_ORDER.page(rows, limit)
     return McpDiscoveryJobListResponse(
         success=True,
-        jobs=[mcp_discovery_job_out_from_row(r) for r in rows],
+        jobs=[mcp_discovery_job_out_from_row(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -1388,21 +1527,30 @@ def get_mcp_discovery_job(
 def list_mcp_endpoint_jobs(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpDiscoveryJobStatusListResponse:
     """List an endpoint's discovery-job status snapshots, newest first.
 
     404 when the endpoint is not the caller's tenant's (so an unknown id never
     discloses another tenant's jobs as an empty list).
+
+    At most ``limit`` jobs (200 at most); pass ``next_cursor`` as ``cursor`` until ``has_more``
+    is false (#7196). A malformed cursor is a ``400``.
     """
+    after = MCP_DISCOVERY_JOBS_ORDER.parse(cursor)
     tenant_id = str(auth_data["tenant_id"])
     endpoint = db.get_mcp_endpoint(tenant_id, str(endpoint_id))
     if not endpoint:
         raise HTTPException(status_code=404, detail="MCP endpoint not found")
-    rows = db.list_mcp_discovery_jobs(tenant_id, str(endpoint_id))
+    rows = db.list_mcp_discovery_jobs(tenant_id, str(endpoint_id), limit=limit + 1, cursor=after)
+    page = MCP_DISCOVERY_JOBS_ORDER.page(rows, limit)
     return McpDiscoveryJobStatusListResponse(
         success=True,
-        jobs=[mcp_discovery_job_status_from_row(r, tenant_slug) for r in rows],
+        jobs=[mcp_discovery_job_status_from_row(r, tenant_slug) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -1469,6 +1617,8 @@ def _require_tenant_endpoint(
 def list_mcp_endpoint_versions(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpEndpointVersionListResponse:
     """List an endpoint's version history newest-first (seq, date tag, score, change counts).
@@ -1477,14 +1627,21 @@ def list_mcp_endpoint_versions(
     identity and fingerprint, the quality score/grade (when scored), and the per-direction
     tally of changes it introduced. ``is_current`` marks the snapshot the endpoint currently
     points at. 404 when the endpoint is not the caller's tenant's.
+
+    At most ``limit`` snapshots (200 at most); pass ``next_cursor`` as ``cursor`` until
+    ``has_more`` is false (#7196). A malformed cursor is a ``400``.
     """
     _ = tenant_slug
+    after = MCP_ENDPOINT_VERSIONS_ORDER.parse(cursor)
     endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
     current_version_id = endpoint.get("current_version_id")
-    rows = db.list_mcp_endpoint_versions(str(endpoint_id))
+    rows = db.list_mcp_endpoint_versions(str(endpoint_id), limit=limit + 1, cursor=after)
+    page = MCP_ENDPOINT_VERSIONS_ORDER.page(rows, limit)
     return McpEndpointVersionListResponse(
         success=True,
-        versions=[mcp_version_summary_from_row(r, current_version_id) for r in rows],
+        versions=[mcp_version_summary_from_row(r, current_version_id) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -2076,15 +2233,27 @@ def list_mcp_endpoint_sources(
         alias="includeRetired",
         description="Include retired source links (kept for historical evidence).",
     ),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpSourceListResponse:
-    """List an endpoint's linked sources, newest first. 404 when the endpoint is not the caller's."""
+    """List an endpoint's linked sources, newest first. 404 when the endpoint is not the caller's.
+
+    At most ``limit`` sources (1,000 at most); pass ``nextCursor`` as ``cursor`` until
+    ``hasMore`` is false (#7196). A malformed cursor is a ``400``.
+    """
     _ = tenant_slug
+    after = MCP_ENDPOINT_SOURCES_ORDER.parse(cursor)
     _require_tenant_endpoint(auth_data, endpoint_id)
-    rows = db.list_mcp_endpoint_sources(str(endpoint_id), include_retired=include_retired)
+    rows = db.list_mcp_endpoint_sources(
+        str(endpoint_id), include_retired=include_retired, limit=limit + 1, cursor=after
+    )
+    page = MCP_ENDPOINT_SOURCES_ORDER.page(rows, limit)
     return McpSourceListResponse(
         endpoint_id=str(endpoint_id),
-        sources=[mcp_source_out_from_row(r) for r in rows],
+        sources=[mcp_source_out_from_row(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -2353,9 +2522,13 @@ def get_mcp_endpoint_version_lint_evidence(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
     version_id: uuid.UUID,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintEvidenceResponse:
     """Return the immutable lint evidence recorded for a version snapshot (CLX-1.1, #4848).
+
+    Reads the snapshot's ``limit`` most recent evidence runs (200 at most, #7196); the coverage
+    summary describes those runs.
 
     Lists every evidence run captured for the snapshot — provenance (scanner, adapter,
     profile, fingerprints), outcome, normalized findings, and coverage — plus a per-scanner
@@ -2370,7 +2543,7 @@ def get_mcp_endpoint_version_lint_evidence(
     if version is None:
         raise HTTPException(status_code=404, detail="MCP endpoint version not found")
 
-    rows = db.list_lint_evidence_runs_for_mcp_version(str(version_id))
+    rows = db.list_lint_evidence_runs_for_mcp_version(str(version_id), limit=limit)
     return lint_evidence_response_from_rows(
         SUBJECT_MCP_ENDPOINT_VERSION, str(version_id), rows
     )
@@ -3410,9 +3583,12 @@ def get_mcp_endpoint_insight_graph(
 def get_mcp_endpoint_insight_evolution(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpInsightEvolutionResponse:
     """Return the endpoint's per-version evolution series (oldest snapshot first).
+
+    The series covers the endpoint's ``limit`` most recent snapshots (1,000 at most, #7196).
 
     One point per discovery snapshot carrying its capability ``type_counts``, quality
     ``score`` / ``grade``, the ``change_counts`` (churn by direction) it introduced, and the
@@ -3424,12 +3600,12 @@ def get_mcp_endpoint_insight_evolution(
     _ = tenant_slug
     endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
     current_version_id = endpoint.get("current_version_id")
-    rows = db.get_mcp_evolution_series(str(endpoint_id))
+    rows = db.get_mcp_evolution_series(str(endpoint_id), limit=limit)
 
     # Bucket every snapshot's change rows by version so each point can classify its own
     # churn severity — one query for the whole endpoint rather than one per snapshot.
     changes_by_version: Dict[str, List[Dict[str, Any]]] = {}
-    for change in db.get_mcp_version_changes_for_endpoint(str(endpoint_id)):
+    for change in db.get_mcp_version_changes_for_endpoint(str(endpoint_id), limit_versions=limit):
         changes_by_version.setdefault(str(change["version_id"]), []).append(change)
 
     return McpInsightEvolutionResponse(
@@ -3596,8 +3772,13 @@ def get_mcp_endpoint_insight_reliability(
     _ = tenant_slug
     endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
 
-    discovery = compute_discovery_reliability(db.list_mcp_discovery_job_stats(str(endpoint_id)))
-    invocation = compute_invocation_reliability(db.list_mcp_invocation_stats(str(endpoint_id)))
+    # Both are aggregated in SQL (#7196): one row each, however long the endpoint's history is.
+    discovery = discovery_reliability_from_aggregate(
+        db.get_mcp_discovery_job_reliability(str(endpoint_id))
+    )
+    invocation = invocation_reliability_from_aggregate(
+        db.get_mcp_invocation_reliability(str(endpoint_id))
+    )
     timeline = compute_discovery_timeline(
         db.list_mcp_discovery_job_timeline(str(endpoint_id), DISCOVERY_TIMELINE_WINDOW),
         window=DISCOVERY_TIMELINE_WINDOW,
@@ -3740,7 +3921,9 @@ def get_mcp_endpoint_insight_trust(
     ]
 
     # Responsiveness reads the test-invocation reliability (error rate + latency percentiles).
-    invocation = compute_invocation_reliability(db.list_mcp_invocation_stats(str(endpoint_id)))
+    invocation = invocation_reliability_from_aggregate(
+        db.get_mcp_invocation_reliability(str(endpoint_id))
+    )
 
     profile = compute_trust_profile(
         quality_score=quality_score,
@@ -3823,7 +4006,9 @@ def _report_trust_profile(
         severity_counts(changes_by_version.get(str(row["id"]), [])) for row in series[1:]
     ]
 
-    invocation = compute_invocation_reliability(db.list_mcp_invocation_stats(endpoint_id))
+    invocation = invocation_reliability_from_aggregate(
+        db.get_mcp_invocation_reliability(endpoint_id)
+    )
 
     profile = compute_trust_profile(
         quality_score=version.get("score"),
@@ -4149,7 +4334,7 @@ def _cohort_member_axis_values(member: Dict[str, Any]) -> Dict[str, Optional[flo
 
     Args:
         member: One entry from :meth:`Database.get_mcp_category_cohort` (its ``version`` / ``items`` /
-            ``invocation_stats`` / ``score`` / ``grade`` / ``auth_type`` fields).
+            ``invocation_reliability`` / ``score`` / ``grade`` / ``auth_type`` fields).
 
     Returns:
         A ``{axis_key: value_or_None}`` map over the four ranked axes for this member.
@@ -4170,7 +4355,7 @@ def _cohort_member_axis_values(member: Dict[str, Any]) -> Dict[str, Optional[flo
             if isinstance(tool.annotations, Mapping)
             and tool.annotations.get("destructiveHint") is True
         )
-    invocation = compute_invocation_reliability(member.get("invocation_stats") or [])
+    invocation = invocation_reliability_from_aggregate(member.get("invocation_reliability") or {})
     return compute_endpoint_percentile_axes(
         score=member.get("score"),
         grade=member.get("grade"),
@@ -4263,6 +4448,7 @@ SIMILAR_SERVERS_LIMIT = 10
 def get_mcp_endpoint_similar(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
+    limit: int = limit_query(SIMILAR_SERVERS_LIMIT, maximum=SIMILAR_SERVERS_LIMIT),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpSimilarServersResponse:
     """Return "servers like this one" from capability overlap + optional semantic embeddings (MCAT-18.4).
@@ -4292,7 +4478,7 @@ def get_mcp_endpoint_similar(
     target_embedding = (target or {}).get("embedding")
     target_capability_count = len(capability_name_set(target_names))
 
-    overlap = compute_capability_overlap(target_names, peers, limit=SIMILAR_SERVERS_LIMIT)
+    overlap = compute_capability_overlap(target_names, peers, limit=limit)
 
     # The semantic signal is active only when the flag is on and there are vectors on both sides to
     # compare — otherwise it is an explicit no-op (empty, embeddings_enabled=False), never an error.
@@ -4301,7 +4487,7 @@ def get_mcp_endpoint_similar(
         settings.mcp_similarity_embeddings_enabled and target_embedding and peer_has_embedding
     )
     semantic = (
-        rank_embedding_neighbors(target_embedding, peers, limit=SIMILAR_SERVERS_LIMIT)
+        rank_embedding_neighbors(target_embedding, peers, limit=limit)
         if embeddings_enabled
         else []
     )

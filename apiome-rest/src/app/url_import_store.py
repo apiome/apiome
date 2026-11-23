@@ -8,8 +8,9 @@ Every function takes the database handle first and runs one statement through
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from .keyset_lists import ListOrder, SortColumn
 from .url_import_refresh import STATUS_DIVERGED, STATUS_FAILED, STATUS_REFRESHED, STATUS_REFRESHING
 
 __all__ = [
@@ -124,18 +125,44 @@ def upsert_spec(
     return dict(rows[0])
 
 
-def list_specs(db: Any, tenant_id: str, *, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    """A tenant's URL lineages on live projects, newest first; optionally one project's."""
+#: The order of :func:`list_specs`: most recently updated first (#7196).
+SPECS_ORDER = ListOrder(
+    "url-imports",
+    (
+        SortColumn("s.updated_at", "time", ("updated_at",), descending=True),
+        SortColumn("s.id", "uuid", ("id",)),
+    ),
+)
+
+
+def list_specs(
+    db: Any,
+    tenant_id: str,
+    *,
+    project_id: Optional[str] = None,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[Dict[str, Any]]:
+    """A tenant's URL lineages on live projects, newest first; optionally one project's.
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        project_id: Only this project's lineages.
+        limit: Rows to read; ``None`` reads every lineage (#7196).
+        cursor: :data:`SPECS_ORDER` values of the last lineage already seen.
+    """
     clause, params = ("AND s.project_id = %s::uuid", (tenant_id, project_id)) if project_id else ("", (tenant_id,))
+    after_sql, after_params, limit_sql, limit_params = SPECS_ORDER.window(limit, cursor)
     rows = db.execute_query(
         f"""
         SELECT {_COLUMNS}, p.name AS project_name, p.slug AS project_slug
         FROM apiome.url_import_specs s
         JOIN apiome.projects p ON p.id = s.project_id AND p.deleted_at IS NULL
-        WHERE s.tenant_id = %s::uuid {clause}
-        ORDER BY s.updated_at DESC, s.id
+        WHERE s.tenant_id = %s::uuid {clause}{after_sql}
+        ORDER BY {SPECS_ORDER.order_by}{limit_sql}
         """,
-        params,
+        (*params, *after_params, *limit_params),
     )
     return [dict(row) for row in rows]
 

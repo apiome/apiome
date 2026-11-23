@@ -143,6 +143,90 @@ class SlateInsightPolicyConflictError(Exception):
         )
 
 
+# ─── Column lists ────────────────────────────────────────────────────────────
+#
+# Every column of each table, named: the store hands rows to the service layer whole, so the lists
+# are complete rather than narrowed — what they buy is that a column added by a later migration
+# does not silently start travelling with every read.
+
+_POLICY_COLUMNS = (
+    "id, tenant_id, site_id, environment_id, telemetry_enabled, policy_version, edge_attached, "
+    "edge_provider, metric_retention_days, log_retention_days, trace_retention_days, "
+    "default_sample_rate, max_tail_sample_rate, max_tail_events_per_sec, privacy_threshold, "
+    "created_at, updated_at, updated_by_actor_id, updated_by_actor_name, updated_by_actor_key, "
+    "retention_waiver_reason"
+)
+
+_RESIDENCY_LANE_COLUMNS = (
+    "id, tenant_id, environment_id, stage, residency_class, regions, uncovered_sentence, "
+    "enforced, created_at, updated_at, updated_by_actor_id, updated_by_actor_name, "
+    "updated_by_actor_key, residency_waiver_reason"
+)
+
+_METRIC_SERIES_COLUMNS = (
+    "id, tenant_id, environment_id, release_id, region, metric_family, metric_key, "
+    "window_start, window_end, value, unit, sample_count, suppressed, basis, edge_attached, "
+    "created_at"
+)
+
+_LOG_COLUMNS = (
+    "id, tenant_id, environment_id, release_id, region, at, level, source, message, trace_ref, "
+    "evidence, basis, edge_attached, retain_until"
+)
+
+_TRACE_COLUMNS = (
+    "id, tenant_id, environment_id, release_id, region, trace_id, started_at, duration_ms, "
+    "route, method, status_code, sample_rate, basis, edge_attached, retain_until"
+)
+
+_TAIL_SESSION_COLUMNS = (
+    "id, tenant_id, environment_id, sample_rate, max_events_per_sec, redaction_allowlist, "
+    "filter_expression, stream_state, started_at, ended_at, events_delivered, "
+    "opened_by_actor_id, opened_by_actor_name, opened_by_actor_key, reason, edge_attached, "
+    "retain_until"
+)
+
+_OTLP_EXPORT_COLUMNS = (
+    "id, tenant_id, environment_id, label, endpoint, protocol, signals, header_secret_ref, "
+    "enabled, last_delivery_state, last_delivery_at, last_failure_reason, edge_attached, "
+    "created_at, updated_at, updated_by_actor_id, updated_by_actor_name, updated_by_actor_key"
+)
+
+_SYNTHETIC_CHECK_COLUMNS = (
+    "id, tenant_id, environment_id, label, target_path, method, regions, interval_seconds, "
+    "expected_status, latency_budget_ms, enabled, created_at, updated_at, updated_by_actor_id, "
+    "updated_by_actor_name, updated_by_actor_key"
+)
+
+_SYNTHETIC_RESULT_COLUMNS = (
+    "id, tenant_id, check_id, environment_id, release_id, region, at, outcome, status_code, "
+    "latency_ms, annotation_kind, annotation_note, basis, edge_attached, retain_until"
+)
+
+_USAGE_RECORD_COLUMNS = (
+    "id, tenant_id, environment_id, release_id, region, service, usage_date, quantity, unit, "
+    "amount, currency, included_quantity, overage_quantity, cache_savings_amount, "
+    "forecast_amount, basis, billable, edge_attached, created_at"
+)
+
+_BUDGET_COLUMNS = (
+    "id, tenant_id, environment_id, label, service, period, amount, currency, alert_thresholds, "
+    "notify_channel_ref, enabled, created_at, updated_at, updated_by_actor_id, "
+    "updated_by_actor_name, updated_by_actor_key"
+)
+
+_BUDGET_ALERT_COLUMNS = (
+    "id, tenant_id, budget_id, environment_id, at, threshold, observed_amount, budget_amount, "
+    "currency, period_start, period_end, basis, delivery_state, edge_attached, acknowledged_at, "
+    "acknowledged_by_actor_id, acknowledged_by_actor_name, acknowledged_by_actor_key"
+)
+
+_AUDIT_COLUMNS = (
+    "id, tenant_id, environment_id, at, actor_id, actor_name, actor_key, actor_kind, "
+    "subject_kind, subject_id, summary, detail"
+)
+
+
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
 
@@ -221,8 +305,8 @@ def get_policy(db: _DbLike, *, tenant_id: str, environment_id: str) -> Optional[
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT * FROM apiome.slate_insight_policies
+            f"""
+            SELECT {_POLICY_COLUMNS} FROM apiome.slate_insight_policies
              WHERE tenant_id = %s::uuid AND environment_id = %s::uuid
             """,
             (tenant_id, environment_id),
@@ -267,13 +351,13 @@ def ensure_policy(
         with conn.cursor() as cursor:
             created = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_policies
                     (tenant_id, site_id, environment_id, edge_attached,
                      updated_by_actor_id, updated_by_actor_name, updated_by_actor_key)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, FALSE, %s::uuid, %s, %s)
                 ON CONFLICT (environment_id) DO NOTHING
-                RETURNING *
+                RETURNING {_POLICY_COLUMNS}
                 """,
                 (tenant_id, site_id, environment_id, actor_id, actor_name, actor_key),
             )
@@ -385,7 +469,7 @@ def update_policy(
         with conn.cursor() as cursor:
             updated = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_insight_policies
                    SET telemetry_enabled = %s,
                        metric_retention_days = %s,
@@ -401,7 +485,7 @@ def update_policy(
                        updated_by_actor_name = %s,
                        updated_by_actor_key = %s
                  WHERE tenant_id = %s::uuid AND environment_id = %s::uuid
-                 RETURNING *
+                 RETURNING {_POLICY_COLUMNS}
                 """,
                 (
                     bool(policy["telemetry_enabled"]),
@@ -453,8 +537,8 @@ def list_residency_lanes(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT * FROM apiome.slate_residency_lanes
+            f"""
+            SELECT {_RESIDENCY_LANE_COLUMNS} FROM apiome.slate_residency_lanes
              WHERE tenant_id = %s::uuid AND environment_id = %s::uuid
              ORDER BY array_position(
                  ARRAY['ingress','tls-termination','decrypted-processing','cache-storage',
@@ -564,7 +648,7 @@ def upsert_residency_lane(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_residency_lanes
                     (tenant_id, environment_id, stage, residency_class, regions,
                      uncovered_sentence, enforced, residency_waiver_reason,
@@ -579,7 +663,7 @@ def upsert_residency_lane(
                        updated_by_actor_id = EXCLUDED.updated_by_actor_id,
                        updated_by_actor_name = EXCLUDED.updated_by_actor_name,
                        updated_by_actor_key = EXCLUDED.updated_by_actor_key
-                RETURNING *
+                RETURNING {_RESIDENCY_LANE_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -663,7 +747,7 @@ def list_metric_series(
         return _fetch_all(
             cursor,
             f"""
-            SELECT * FROM apiome.slate_insight_metric_series
+            SELECT {_METRIC_SERIES_COLUMNS} FROM apiome.slate_insight_metric_series
              WHERE {' AND '.join(clauses)}
              ORDER BY metric_family, metric_key, window_start
              LIMIT %s
@@ -721,14 +805,14 @@ def record_metric_point(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_metric_series
                     (tenant_id, environment_id, release_id, region, metric_family, metric_key,
                      window_start, window_end, value, unit, sample_count, suppressed,
                      basis, edge_attached)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         'modelled', FALSE)
-                RETURNING *
+                RETURNING {_METRIC_SERIES_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -812,7 +896,7 @@ def list_logs(
         return _fetch_all(
             cursor,
             f"""
-            SELECT * FROM apiome.slate_insight_logs
+            SELECT {_LOG_COLUMNS} FROM apiome.slate_insight_logs
              WHERE {' AND '.join(clauses)}
              ORDER BY at DESC
              LIMIT %s
@@ -862,13 +946,13 @@ def record_log(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_logs
                     (tenant_id, environment_id, release_id, region, at, level, source, message,
                      trace_ref, evidence, basis, edge_attached, retain_until)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s::uuid, %s::jsonb,
                         'modelled', FALSE, %s)
-                RETURNING *
+                RETURNING {_LOG_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -942,7 +1026,7 @@ def list_traces(
         return _fetch_all(
             cursor,
             f"""
-            SELECT * FROM apiome.slate_insight_traces
+            SELECT {_TRACE_COLUMNS} FROM apiome.slate_insight_traces
              WHERE {' AND '.join(clauses)}
              ORDER BY started_at DESC
              LIMIT %s
@@ -975,8 +1059,8 @@ def get_trace(
     with db_cursor(db) as cursor:
         trace = _fetch_one(
             cursor,
-            """
-            SELECT * FROM apiome.slate_insight_traces
+            f"""
+            SELECT {_TRACE_COLUMNS} FROM apiome.slate_insight_traces
              WHERE tenant_id = %s::uuid AND environment_id = %s::uuid AND trace_id = %s
             """,
             (tenant_id, environment_id, trace_id),
@@ -988,7 +1072,9 @@ def get_trace(
         spans = _fetch_all(
             cursor,
             """
-            SELECT * FROM apiome.slate_insight_trace_spans
+            SELECT id, tenant_id, trace_id, span_id, parent_span_ref, name, component,
+                   start_offset_ms, duration_ms, status, attributes
+              FROM apiome.slate_insight_trace_spans
              WHERE trace_id = %s::uuid
              ORDER BY start_offset_ms, name
             """,
@@ -1047,7 +1133,7 @@ def record_trace(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_traces
                     (tenant_id, environment_id, release_id, region, trace_id, started_at,
                      duration_ms, route, method, status_code, sample_rate, basis, edge_attached,
@@ -1055,7 +1141,7 @@ def record_trace(
                 VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s,
                         'modelled', FALSE, %s)
                 ON CONFLICT (environment_id, trace_id) DO NOTHING
-                RETURNING *
+                RETURNING {_TRACE_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1149,7 +1235,7 @@ def open_tail_session(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_live_tail_sessions
                     (tenant_id, environment_id, sample_rate, max_events_per_sec,
                      redaction_allowlist, filter_expression, stream_state, started_at,
@@ -1157,7 +1243,7 @@ def open_tail_session(
                      opened_by_actor_key, reason, edge_attached, retain_until)
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s::text[], %s, 'requested', %s, 0,
                         %s::uuid, %s, %s, %s, FALSE, %s)
-                RETURNING *
+                RETURNING {_TAIL_SESSION_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1207,11 +1293,11 @@ def close_tail_session(
         with conn.cursor() as cursor:
             updated = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_insight_live_tail_sessions
                    SET stream_state = 'closed', ended_at = %s
                  WHERE tenant_id = %s::uuid AND environment_id = %s::uuid AND id = %s::uuid
-                 RETURNING *
+                 RETURNING {_TAIL_SESSION_COLUMNS}
                 """,
                 (_now(), tenant_id, environment_id, session_id),
             )
@@ -1243,8 +1329,8 @@ def list_tail_sessions(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT * FROM apiome.slate_insight_live_tail_sessions
+            f"""
+            SELECT {_TAIL_SESSION_COLUMNS} FROM apiome.slate_insight_live_tail_sessions
              WHERE tenant_id = %s::uuid AND environment_id = %s::uuid
              ORDER BY started_at DESC
              LIMIT %s
@@ -1270,8 +1356,8 @@ def list_exports(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Di
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT * FROM apiome.slate_insight_otlp_exports
+            f"""
+            SELECT {_OTLP_EXPORT_COLUMNS} FROM apiome.slate_insight_otlp_exports
              WHERE tenant_id = %s::uuid AND environment_id = %s::uuid
              ORDER BY label
             """,
@@ -1315,7 +1401,7 @@ def upsert_export(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_otlp_exports
                     (tenant_id, environment_id, label, endpoint, protocol, signals,
                      header_secret_ref, enabled, last_delivery_state, edge_attached,
@@ -1332,7 +1418,7 @@ def upsert_export(
                        updated_by_actor_id = EXCLUDED.updated_by_actor_id,
                        updated_by_actor_name = EXCLUDED.updated_by_actor_name,
                        updated_by_actor_key = EXCLUDED.updated_by_actor_key
-                RETURNING *
+                RETURNING {_OTLP_EXPORT_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1381,10 +1467,10 @@ def delete_export(
         with conn.cursor() as cursor:
             deleted = _fetch_one(
                 cursor,
-                """
+                f"""
                 DELETE FROM apiome.slate_insight_otlp_exports
                  WHERE tenant_id = %s::uuid AND environment_id = %s::uuid AND id = %s::uuid
-                 RETURNING *
+                 RETURNING {_OTLP_EXPORT_COLUMNS}
                 """,
                 (tenant_id, environment_id, export_id),
             )
@@ -1418,8 +1504,8 @@ def list_synthetic_checks(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT * FROM apiome.slate_insight_synthetic_checks
+            f"""
+            SELECT {_SYNTHETIC_CHECK_COLUMNS} FROM apiome.slate_insight_synthetic_checks
              WHERE tenant_id = %s::uuid AND environment_id = %s::uuid
              ORDER BY label
             """,
@@ -1456,7 +1542,7 @@ def upsert_synthetic_check(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_synthetic_checks
                     (tenant_id, environment_id, label, target_path, method, regions,
                      interval_seconds, expected_status, latency_budget_ms, enabled,
@@ -1475,7 +1561,7 @@ def upsert_synthetic_check(
                        updated_by_actor_id = EXCLUDED.updated_by_actor_id,
                        updated_by_actor_name = EXCLUDED.updated_by_actor_name,
                        updated_by_actor_key = EXCLUDED.updated_by_actor_key
-                RETURNING *
+                RETURNING {_SYNTHETIC_CHECK_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1526,10 +1612,10 @@ def delete_synthetic_check(
         with conn.cursor() as cursor:
             deleted = _fetch_one(
                 cursor,
-                """
+                f"""
                 DELETE FROM apiome.slate_insight_synthetic_checks
                  WHERE tenant_id = %s::uuid AND environment_id = %s::uuid AND id = %s::uuid
-                 RETURNING *
+                 RETURNING {_SYNTHETIC_CHECK_COLUMNS}
                 """,
                 (tenant_id, environment_id, check_id),
             )
@@ -1586,7 +1672,7 @@ def list_synthetic_results(
         return _fetch_all(
             cursor,
             f"""
-            SELECT * FROM apiome.slate_insight_synthetic_results
+            SELECT {_SYNTHETIC_RESULT_COLUMNS} FROM apiome.slate_insight_synthetic_results
              WHERE {' AND '.join(clauses)}
              ORDER BY at DESC
              LIMIT %s
@@ -1637,14 +1723,14 @@ def record_synthetic_result(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_synthetic_results
                     (tenant_id, check_id, environment_id, release_id, region, at, outcome,
                      status_code, latency_ms, annotation_kind, annotation_note, basis,
                      edge_attached, retain_until)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s,
                         'modelled', FALSE, %s)
-                RETURNING *
+                RETURNING {_SYNTHETIC_RESULT_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1723,7 +1809,7 @@ def list_usage(
         return _fetch_all(
             cursor,
             f"""
-            SELECT * FROM apiome.slate_insight_usage_records
+            SELECT {_USAGE_RECORD_COLUMNS} FROM apiome.slate_insight_usage_records
              WHERE {' AND '.join(clauses)}
              ORDER BY usage_date, service
              LIMIT %s
@@ -1785,7 +1871,7 @@ def record_usage(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_usage_records
                     (tenant_id, environment_id, release_id, region, service, usage_date,
                      quantity, unit, amount, currency, included_quantity, overage_quantity,
@@ -1800,7 +1886,7 @@ def record_usage(
                        included_quantity = EXCLUDED.included_quantity,
                        overage_quantity = EXCLUDED.overage_quantity,
                        forecast_amount = EXCLUDED.forecast_amount
-                RETURNING *
+                RETURNING {_USAGE_RECORD_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1842,8 +1928,8 @@ def list_budgets(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Di
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT * FROM apiome.slate_insight_budgets
+            f"""
+            SELECT {_BUDGET_COLUMNS} FROM apiome.slate_insight_budgets
              WHERE tenant_id = %s::uuid AND environment_id = %s::uuid
              ORDER BY label
             """,
@@ -1880,7 +1966,7 @@ def upsert_budget(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_budgets
                     (tenant_id, environment_id, label, service, period, amount, currency,
                      alert_thresholds, notify_channel_ref, enabled, updated_by_actor_id,
@@ -1899,7 +1985,7 @@ def upsert_budget(
                        updated_by_actor_id = EXCLUDED.updated_by_actor_id,
                        updated_by_actor_name = EXCLUDED.updated_by_actor_name,
                        updated_by_actor_key = EXCLUDED.updated_by_actor_key
-                RETURNING *
+                RETURNING {_BUDGET_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -1950,10 +2036,10 @@ def delete_budget(
         with conn.cursor() as cursor:
             deleted = _fetch_one(
                 cursor,
-                """
+                f"""
                 DELETE FROM apiome.slate_insight_budgets
                  WHERE tenant_id = %s::uuid AND environment_id = %s::uuid AND id = %s::uuid
-                 RETURNING *
+                 RETURNING {_BUDGET_COLUMNS}
                 """,
                 (tenant_id, environment_id, budget_id),
             )
@@ -2004,7 +2090,7 @@ def list_budget_alerts(
         return _fetch_all(
             cursor,
             f"""
-            SELECT * FROM apiome.slate_insight_budget_alerts
+            SELECT {_BUDGET_ALERT_COLUMNS} FROM apiome.slate_insight_budget_alerts
              WHERE {' AND '.join(clauses)}
              ORDER BY at DESC
              LIMIT %s
@@ -2044,7 +2130,7 @@ def record_budget_alert(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_budget_alerts
                     (tenant_id, budget_id, environment_id, at, threshold, observed_amount,
                      budget_amount, currency, period_start, period_end, basis, delivery_state,
@@ -2052,7 +2138,7 @@ def record_budget_alert(
                 VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s,
                         'modelled', 'not-dispatched', FALSE)
                 ON CONFLICT (budget_id, threshold, period_start) DO NOTHING
-                RETURNING *
+                RETURNING {_BUDGET_ALERT_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -2109,14 +2195,14 @@ def acknowledge_budget_alert(
         with conn.cursor() as cursor:
             updated = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_insight_budget_alerts
                    SET acknowledged_at = %s,
                        acknowledged_by_actor_id = %s::uuid,
                        acknowledged_by_actor_name = %s,
                        acknowledged_by_actor_key = %s
                  WHERE tenant_id = %s::uuid AND environment_id = %s::uuid AND id = %s::uuid
-                 RETURNING *
+                 RETURNING {_BUDGET_ALERT_COLUMNS}
                 """,
                 (
                     _now(),
@@ -2182,12 +2268,12 @@ def append_audit(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_insight_audit
                     (tenant_id, environment_id, at, actor_id, actor_name, actor_key, actor_kind,
                      subject_kind, subject_id, summary, detail)
                 VALUES (%s::uuid, %s::uuid, %s, %s::uuid, %s, %s, %s, %s, %s, %s, %s::jsonb)
-                RETURNING *
+                RETURNING {_AUDIT_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -2242,7 +2328,7 @@ def list_audit(
         return _fetch_all(
             cursor,
             f"""
-            SELECT * FROM apiome.slate_insight_audit
+            SELECT {_AUDIT_COLUMNS} FROM apiome.slate_insight_audit
              WHERE {' AND '.join(clauses)}
              ORDER BY at DESC
              LIMIT %s

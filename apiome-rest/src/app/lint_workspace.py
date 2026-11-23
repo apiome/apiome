@@ -399,16 +399,38 @@ def build_index_from_rows(
     return {"findings": findings, "subjects": list(subjects.values())}
 
 
+#: Most evidence runs one workspace read loads (#7196). The index holds two runs per
+#: (subject, scanner); past this many rows the oldest evidence is left out of the rollup.
+WORKSPACE_EVIDENCE_ROW_CAP = 10_000
+
+
 def build_workspace_index(
     tenant_id: str,
     *,
     project_id: Optional[str] = None,
     now: Optional[datetime] = None,
+    summary_only: bool = False,
 ) -> Dict[str, Any]:
-    """Load rows from the database and assemble the workspace index for one tenant."""
+    """Load rows from the database and assemble the workspace index for one tenant.
+
+    Args:
+        tenant_id: The caller's tenant.
+        project_id: Restrict to one project's latest revision.
+        now: Clock for waiver-expiry evaluation (UTC).
+        summary_only: The caller only counts findings (the posture summary), so each finding
+            is read as its fingerprint, severity and category instead of its whole body
+            (#7196). The index's findings then carry no message, location or remediation.
+
+    Returns:
+        The index (see :func:`build_index_from_rows`).
+    """
     return build_index_from_rows(
         evidence_rows=db.list_latest_lint_evidence_runs_for_tenant(
-            tenant_id, project_id=project_id
+            tenant_id,
+            project_id=project_id,
+            # Older runs are only ever compared by fingerprint, so their bodies are never read.
+            findings="summary" if summary_only else "current",
+            row_limit=WORKSPACE_EVIDENCE_ROW_CAP,
         ),
         axis_rows=db.list_latest_axis_evaluations_for_tenant(
             tenant_id, project_id=project_id
@@ -864,6 +886,9 @@ def build_summary(
 #: Evidence-run depth per (subject, scanner) fetched for trend diffing.
 TRENDS_RUNS_PER_SCANNER = 64
 
+#: Most evidence runs one trends read loads, newest first (#7196).
+TRENDS_EVIDENCE_ROW_CAP = 20_000
+
 
 def load_trend_inputs(
     tenant_id: str, *, project_id: Optional[str] = None, since: datetime
@@ -874,6 +899,9 @@ def load_trend_inputs(
             tenant_id,
             project_id=project_id,
             runs_per_scanner=TRENDS_RUNS_PER_SCANNER,
+            # Trends diff fingerprints between runs; no finding body is read (#7196).
+            findings="fingerprints",
+            row_limit=TRENDS_EVIDENCE_ROW_CAP,
         ),
         "decision_events": db.list_lint_finding_decision_events_for_tenant(
             tenant_id, since=since, project_id=project_id

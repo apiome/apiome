@@ -4,22 +4,33 @@
  * Compact paginated recent-jobs table (IXH-6.3, #5122).
  *
  * Consumes the BFF list proxies (`GET /api/export/jobs` or `GET /api/catalog/import`)
- * with offset/limit — never fetches the unbounded full history.
+ * one page at a time — never fetches the unbounded full history. The lists page by cursor
+ * (DBP-1.13, #7196): Next continues from the page's `next_cursor`, Previous returns to a cursor
+ * already used, and only the first page asks for the count.
  *
  * Re-skinned by HIVE-6.4 (#5315) onto `DataTable`, which is what the import wizard's *Recent
  * import jobs* drawer needed anyway: the table brings the caps header, the dense rows, the
  * loading placeholders, the empty state and the failure state that this had hand-rolled or
- * lacked. The pager stays bespoke — the endpoint pages by offset and reports a total, so the
- * two buttons are the honest control for it, where `DataTablePager` wants a page count.
+ * lacked. The pager stays the two buttons: a cursor says whether another page follows, not how
+ * many there are, which is what `DataTablePager` wants.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
+import {
+  EMPTY_PAGE_INFO,
+  cursorRangeLabel,
+  hasMoreAfter,
+  readPage,
+  setPageParams,
+  type PageInfo,
+  type PageRequest,
+} from '@lib/cursor-pages';
+import { useCursorTrail } from '@/app/hooks/useCursorPages';
 import { Badge } from '../../../ui/Badge';
 import { Button } from '../../../ui/Button';
 import {
   DataTable,
   DataTableFoot,
-  dataTableRangeLabel,
   type DataTableColumn,
 } from '../../../ui/DataTable';
 import { EmptyState } from '../../../ui/EmptyState';
@@ -38,9 +49,11 @@ export interface RecentAsyncJobRow {
 
 interface ListPayload {
   jobs?: RecentAsyncJobRow[];
-  total?: number;
+  total?: number | null;
   limit?: number;
   offset?: number;
+  has_more?: boolean;
+  next_cursor?: string | null;
   success?: boolean;
   error?: string;
 }
@@ -60,15 +73,16 @@ export interface RecentAsyncJobsPanelProps {
  *
  * @param kind Which job store.
  * @param limit Page size.
- * @param offset Rows to skip.
+ * @param page Where the page starts (the previous page's cursor) and whether to count the jobs.
  * @returns The relative URL.
  */
-export function recentAsyncJobsUrl(kind: RecentAsyncJobKind, limit: number, offset: number): string {
+export function recentAsyncJobsUrl(
+  kind: RecentAsyncJobKind,
+  limit: number,
+  page: PageRequest = {}
+): string {
   const base = kind === 'export' ? '/api/export/jobs' : '/api/catalog/import';
-  const params = new URLSearchParams({
-    limit: String(limit),
-    offset: String(offset),
-  });
+  const params = setPageParams(new URLSearchParams({ limit: String(limit) }), page);
   return `${base}?${params.toString()}`;
 }
 
@@ -81,44 +95,57 @@ export function RecentAsyncJobsPanel({
   testId,
 }: RecentAsyncJobsPanelProps) {
   const pageLimit = Math.max(1, Math.min(limit, 50));
-  const [offset, setOffset] = useState(0);
+  const trail = useCursorTrail(`${kind}:${pageLimit}`, pageLimit);
+  const { cursor, offset, first } = trail;
   const [jobs, setJobs] = useState<RecentAsyncJobRow[]>([]);
-  const [total, setTotal] = useState(0);
+  const [pageInfo, setPageInfo] = useState<PageInfo>(EMPTY_PAGE_INFO);
+  const [total, setTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const id = testId ?? (kind === 'export' ? 'export-recent-jobs' : 'import-recent-jobs');
   const heading = title ?? (kind === 'export' ? 'Recent export jobs' : 'Recent import jobs');
 
   const load = useCallback(
-    async (nextOffset: number) => {
+    async (signal?: AbortSignal) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(recentAsyncJobsUrl(kind, pageLimit, nextOffset), { cache: 'no-store' });
+        const res = await fetch(
+          recentAsyncJobsUrl(kind, pageLimit, { cursor, offset, includeTotal: first }),
+          { cache: 'no-store', signal },
+        );
         const body = (await res.json().catch(() => null)) as ListPayload | null;
+        if (signal?.aborted) return;
         if (!res.ok || !body || body.success === false) {
           setError(body?.error || `Failed to load jobs (${res.status})`);
           setJobs([]);
-          setTotal(0);
+          setPageInfo(EMPTY_PAGE_INFO);
           return;
         }
+        const page = readPage(body);
         setJobs(Array.isArray(body.jobs) ? body.jobs : []);
-        setTotal(typeof body.total === 'number' ? body.total : 0);
-        setOffset(typeof body.offset === 'number' ? body.offset : nextOffset);
+        setPageInfo(page);
+        // Only the first page is counted; the later ones keep its answer.
+        if (first) setTotal(page.total);
       } catch (err) {
+        if (signal?.aborted) return;
         setError(err instanceof Error ? err.message : 'Failed to load jobs');
         setJobs([]);
-        setTotal(0);
+        setPageInfo(EMPTY_PAGE_INFO);
       } finally {
-        setLoading(false);
+        if (!signal?.aborted) setLoading(false);
       }
     },
-    [kind, pageLimit],
+    [kind, pageLimit, cursor, offset, first],
   );
 
   useEffect(() => {
-    void load(0);
+    const controller = new AbortController();
+    void load(controller.signal);
+    return () => controller.abort();
   }, [load]);
+
+  const hasNext = hasMoreAfter(pageInfo, offset + jobs.length);
 
   const columns: DataTableColumn<RecentAsyncJobRow>[] = [
     {
@@ -166,20 +193,20 @@ export function RecentAsyncJobsPanel({
         loading={loading && jobs.length === 0}
         loadingLabel={`Loading ${kind} jobs…`}
         error={error ? <span data-testid={`${id}-error`}>{error}</span> : undefined}
-        onRetry={() => void load(offset)}
+        onRetry={() => void load()}
         empty={<EmptyState variant="compact" tone="neutral" title="No jobs yet." />}
         footer={
           <DataTableFoot>
             <span data-testid={`${id}-pagination-summary`}>
-              {dataTableRangeLabel(Math.floor(offset / pageLimit) + 1, pageLimit, total, 'job')}
+              {cursorRangeLabel(offset, jobs.length, total, 'job')}
             </span>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 data-testid={`${id}-prev-page`}
-                disabled={offset <= 0 || loading}
-                onClick={() => void load(Math.max(0, offset - pageLimit))}
+                disabled={first || loading}
+                onClick={trail.previous}
               >
                 Previous
               </Button>
@@ -187,8 +214,8 @@ export function RecentAsyncJobsPanel({
                 variant="outline"
                 size="sm"
                 data-testid={`${id}-next-page`}
-                disabled={offset + pageLimit >= total || loading}
-                onClick={() => void load(offset + pageLimit)}
+                disabled={!hasNext || loading}
+                onClick={() => trail.next(pageInfo.nextCursor)}
               >
                 Next
               </Button>

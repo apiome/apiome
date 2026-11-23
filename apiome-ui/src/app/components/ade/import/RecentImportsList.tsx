@@ -42,7 +42,7 @@ export function RecentImportsList({ onShowAll }: RecentImportsListProps) {
     let cancelled = false;
     void (async () => {
       try {
-        const response = await fetch(recentAsyncJobsUrl('import', RECENT_IMPORTS_SHOWN, 0), {
+        const response = await fetch(recentAsyncJobsUrl('import', RECENT_IMPORTS_SHOWN), {
           cache: 'no-store',
         });
         const body = (await response.json().catch(() => null)) as

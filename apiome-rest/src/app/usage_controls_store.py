@@ -136,6 +136,9 @@ def write_retention(
 # Sources and toolsets
 # ---------------------------------------------------------------------------------------------
 
+#: The most usage sources, and the most agent toolsets, one project's listing returns (#7196).
+LIST_CAP = 1000
+
 _SOURCE_COLUMNS = """
     id::text AS id, kind, environment, enabled, sampling_rate, field_capture, body_sample_rate,
     body_sample_until, last_received_at
@@ -165,7 +168,7 @@ def list_sources(db: Any, tenant_id: str, project_id: str) -> List[UsageSourceOu
         project_id: The project.
 
     Returns:
-        The sources.
+        The sources (the first :data:`LIST_CAP`).
     """
     rows = db.execute_query(
         f"""
@@ -173,6 +176,7 @@ def list_sources(db: Any, tenant_id: str, project_id: str) -> List[UsageSourceOu
         FROM apiome.usage_source
         WHERE tenant_id = %s::uuid AND project_id = %s::uuid
         ORDER BY created_at, id
+        LIMIT {LIST_CAP}
         """,
         (tenant_id, project_id),
     )
@@ -286,7 +290,7 @@ def list_toolsets(db: Any, tenant_id: str, project_id: str) -> List[ToolsetBodyS
         project_id: The project.
 
     Returns:
-        The toolsets, newest version first.
+        The toolsets, newest version first (the newest :data:`LIST_CAP`).
     """
     rows = db.execute_query(
         f"""
@@ -295,6 +299,7 @@ def list_toolsets(db: Any, tenant_id: str, project_id: str) -> List[ToolsetBodyS
         JOIN apiome.versions v ON v.id = ts.version_id
         WHERE ts.tenant_id = %s::uuid AND v.project_id = %s::uuid
         ORDER BY ts.created_at DESC, ts.id
+        LIMIT {LIST_CAP}
         """,
         (tenant_id, project_id),
     )

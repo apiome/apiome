@@ -27,6 +27,20 @@ from .auth import (
     validate_authentication,
 )
 from .database import db
+from .tenant_list_orders import TENANT_REPOSITORIES_ORDER
+from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    InvalidCursor,
+    encode_key_cursor,
+    page_of,
+    parse_key_cursor,
+    parse_time_id_cursor,
+    time_id_key,
+)
 from .permissions import enforce_permission, Resource, Action
 from .models import (
     RefreshHistoryEntryOut,
@@ -106,6 +120,8 @@ from .repository_audit_export import (
 from .repository_health import health_payloads_for_rows
 from .repository_refresh_audit import RefreshOutcome, RefreshTrigger
 from .repository_spec_catalog import (
+    decode_spec_cursor,
+    encode_spec_cursor,
     SPEC_FORMAT_LABELS,
     format_facet_options,
     normalize_format,
@@ -933,24 +949,40 @@ def _lookup_allowlist_entry(tenant_id: str, entry_id: str) -> Dict[str, Any]:
 @router.get("/{tenant_slug}/repositories", response_model=TenantRepositoriesListResponse)
 def list_tenant_repositories(
     tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantRepositoriesListResponse:
     """List the tenant's registered repositories, each with its REPO-6.5 health badge.
 
     Args:
         tenant_slug: Tenant slug from the path (scoping comes from the token).
+        limit: Page size (1,000 at most).
+        cursor: Where the page starts (``next_cursor`` of the previous page).
         auth_data: Authenticated principal; supplies the tenant scope.
 
     Returns:
-        Every live repository for the tenant, newest registration first.
+        One page of the tenant's live repositories, newest registration first, and whether
+        another follows (#7196).
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
-    rows = db.list_tenant_repositories(tenant_id)
+    page = TENANT_REPOSITORIES_ORDER.page(
+        db.list_tenant_repositories(
+            tenant_id, limit=limit + 1, cursor=TENANT_REPOSITORIES_ORDER.parse(cursor)
+        ),
+        limit,
+    )
+    rows = page.items
     health = _repository_health_by_id(tenant_id) if rows else {}
     return TenantRepositoriesListResponse(
         success=True,
         repositories=[_row_to_record(r, health.get(str(r.get("id")))) for r in rows],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -1129,6 +1161,12 @@ def set_tenant_repository_notification_preferences(
 @router.get(
     "/{tenant_slug}/repositories/{repository_id}/files",
     response_model=TenantRepositoryFilesListResponse,
+    description=(
+        "List the indexed files of one repository branch, ordered by path.\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. "
+        "`indexed_total`, `match_count` and `importable_match_count` each scan the whole branch "
+        "index, so they are returned only when `include_total` is set."
+    ),
 )
 def list_tenant_repository_files(
     tenant_slug: str,
@@ -1142,9 +1180,37 @@ def list_tenant_repository_files(
     skip_vendor: bool = True,
     include_hidden: bool = False,
     path_prefix: Optional[str] = None,
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
 ) -> TenantRepositoryFilesListResponse:
+    """List the indexed files of one repository branch, ordered by path.
+
+    Args:
+        tenant_slug: Present for URL symmetry; the tenant comes from the token.
+        repository_id: The repository whose index is listed.
+        auth_data: The authenticated principal.
+        branch: The branch to list; the repository's default when omitted.
+        preset: A named set of path patterns.
+        glob: Comma-separated globs; replaces the preset's patterns.
+        regex: POSIX regex on the path; replaces ``glob`` and ``preset``.
+        hide_non_importable: Only files of an importable kind.
+        skip_vendor: Leave out vendored trees.
+        include_hidden: Keep dot-directories.
+        path_prefix: Only this directory.
+        limit: Page size.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        include_total: Also count the indexed and matching files.
+        offset: Rows to skip (deprecated).
+
+    Returns:
+        The page, whether another follows, and the counts when asked for.
+
+    Raises:
+        HTTPException: 400 for an unusable regex or a malformed cursor; 404 when the repository
+            is not the tenant's.
+    """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
     rid = str(repository_id)
@@ -1184,6 +1250,11 @@ def list_tenant_repository_files(
             if pk:
                 likes.extend(_preset_like_patterns(pk))
 
+    after = parse_key_cursor(cursor, 1)
+    if after is not None and (not isinstance(after[0], str) or "\x00" in after[0]):
+        raise HTTPException(status_code=400, detail="Invalid cursor: not a file-list cursor")
+    after_path: Optional[str] = after[0] if after is not None else None
+
     raw = db.tenant_repository_files_stats_and_page(
         tenant_id,
         rid,
@@ -1194,18 +1265,22 @@ def list_tenant_repository_files(
         skip_vendor=skip_vendor,
         include_hidden=include_hidden,
         path_prefix=(path_prefix or "").strip() or None,
-        limit=limit,
+        # One row past the page answers "is there more?" without counting (#7196).
+        limit=limit + 1,
         offset=offset,
+        cursor=after_path,
+        include_total=include_total,
     )
     if raw is None:
         raise HTTPException(status_code=404, detail="repository not found")
+    page = page_of(raw["rows"], limit, lambda fr: encode_key_cursor([str(fr.get("path") or "")]))
 
     branches = db.list_tenant_repository_file_branches(tenant_id, rid)
     if default_b not in branches:
         branches = sorted(set([*branches, default_b]))
 
     files_out: List[TenantRepositoryFileRow] = []
-    for fr in raw["rows"]:
+    for fr in page.items:
         path = str(fr.get("path") or "")
         dk = fr.get("detected_kind")
         dk_s = str(dk) if dk is not None else None
@@ -1240,12 +1315,14 @@ def list_tenant_repository_files(
     return TenantRepositoryFilesListResponse(
         branch=br,
         branches=branches,
-        indexed_total=int(raw["indexed_total"]),
-        match_count=int(raw["match_count"]),
-        importable_match_count=int(raw["importable_match_count"]),
-        limit=int(raw["limit"]),
+        indexed_total=raw["indexed_total"],
+        match_count=raw["match_count"],
+        importable_match_count=raw["importable_match_count"],
+        limit=limit,
         offset=int(raw["offset"]),
         files=files_out,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -1346,8 +1423,10 @@ def list_tenant_repository_spec_catalog(
     sort: Optional[str] = Query(
         default=None, description="`repository` (default), `path`, `format`, `status`, `recent`."
     ),
-    limit: int = Query(default=50, ge=1, le=500),
-    offset: int = Query(default=0, ge=0),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     include_facets: bool = Query(
         default=False,
         description=(
@@ -1362,6 +1441,10 @@ def list_tenant_repository_spec_catalog(
     this spec live" across the whole tenant. Search, filtering, ordering and pagination are all
     evaluated in SQL so the response carries only the requested page.
 
+    Pages by ``cursor``: pass the previous page's ``next_cursor`` (with the same ``sort``) until
+    ``has_more`` is false. ``catalog_total`` and ``match_count`` scan the whole catalog, so they
+    are returned only when ``include_total`` is set.
+
     Args:
         tenant_slug: Present for URL symmetry only — the tenant is always taken from the
             authenticated token, never from the path.
@@ -1374,16 +1457,20 @@ def list_tenant_repository_spec_catalog(
         importable_only: Whether to hide indexed files that are not spec candidates.
         all_branches: Whether to list non-default branches.
         sort: Ordering key.
-        limit: Page size (1..500).
-        offset: Rows to skip.
+        limit: Page size (1..200).
+        cursor: Where the page starts (``next_cursor`` of the previous page, read with the
+            same ``sort``).
+        include_total: Also count the catalog and the matches.
+        offset: Rows to skip (deprecated).
         include_facets: Whether to compute filter options.
 
     Returns:
-        One page of catalog rows plus the total and matched counts.
+        One page of catalog rows, whether another follows, and the total and matched counts
+        when asked for.
 
     Raises:
-        HTTPException: 400 when a filter names an unknown format or status, or the search term
-            is unusable.
+        HTTPException: 400 when a filter names an unknown format or status, the search term
+            is unusable, or the cursor is malformed or belongs to a different sort.
     """
     _ = tenant_slug
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW)
@@ -1396,7 +1483,15 @@ def list_tenant_repository_spec_catalog(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    page = db.tenant_repository_spec_catalog(
+    sort_key = normalize_sort(sort)
+    after: Optional[List[Any]] = None
+    if cursor is not None and cursor.strip():
+        try:
+            after = decode_spec_cursor(cursor, sort_key)
+        except InvalidCursor as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid cursor: {exc}") from exc
+
+    raw = db.tenant_repository_spec_catalog(
         tenant_id,
         search=term,
         repository_id=str(repository_id) if repository_id else None,
@@ -1405,21 +1500,27 @@ def list_tenant_repository_spec_catalog(
         status_key=st,
         importable_only=importable_only,
         all_branches=all_branches,
-        sort=normalize_sort(sort),
-        limit=limit,
+        sort=sort_key,
+        # One row past the page answers "is there more?" without counting (#7196).
+        limit=limit + 1,
         offset=offset,
         include_facets=include_facets,
+        cursor=after,
+        include_total=include_total,
     )
+    page = page_of(raw["rows"], limit, lambda row: encode_spec_cursor(sort_key, row))
 
     return SpecCatalogResponse(
         success=True,
-        catalog_total=int(page["catalog_total"]),
-        match_count=int(page["match_count"]),
-        limit=int(page["limit"]),
-        offset=int(page["offset"]),
-        sort=str(page["sort"]),
-        specs=[_catalog_row(r) for r in page["rows"]],
-        facets=_catalog_facets(page["facets"]) if page.get("facets") else None,
+        catalog_total=raw["catalog_total"],
+        match_count=raw["match_count"],
+        limit=limit,
+        offset=int(raw["offset"]),
+        sort=str(raw["sort"]),
+        specs=[_catalog_row(r) for r in page.items],
+        facets=_catalog_facets(raw["facets"]) if raw.get("facets") else None,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 
@@ -2819,6 +2920,12 @@ def _refresh_audit_row_to_entry(row: Dict[str, Any]) -> RefreshHistoryEntryOut:
     "/{tenant_slug}/repositories/{repository_id}/refresh-history",
     response_model=RefreshHistoryPageResponse,
     response_model_by_alias=True,
+    description=(
+        "List the refresh-cycle audit history of a repository, newest first; add `path` for one "
+        "file's history.\n\n"
+        "Pages by `cursor`: pass `pagination.nextCursor` until `pagination.hasMore` is false. "
+        "`pagination.total` is counted (up to 10,000) only when `include_total` is set."
+    ),
 )
 def list_repository_refresh_history(
     tenant_slug: str,
@@ -2848,8 +2955,10 @@ def list_repository_refresh_history(
         None,
         description="Inclusive upper bound on createdAt (ISO 8601).",
     ),
-    limit: int = Query(_REFRESH_HISTORY_DEFAULT_LIMIT, ge=1, le=_REFRESH_HISTORY_MAX_LIMIT),
-    offset: int = Query(0, ge=0),
+    limit: int = limit_query(_REFRESH_HISTORY_DEFAULT_LIMIT, maximum=_REFRESH_HISTORY_MAX_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
 ) -> RefreshHistoryPageResponse:
     """List refresh-cycle audit history for a repository (RAR-5.3, #3534).
 
@@ -2868,13 +2977,16 @@ def list_repository_refresh_history(
         since: Optional inclusive ISO-8601 lower bound on ``createdAt``.
         until: Optional inclusive ISO-8601 upper bound on ``createdAt``.
         limit: Page size (1..200).
-        offset: Page offset.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        include_total: Also count the matches, up to the cap.
+        offset: Page offset (deprecated; ignored when ``cursor`` is given).
 
     Returns:
         A paginated, newest-first page of refresh-cycle entries.
 
     Raises:
-        HTTPException: 404 when the repository does not belong to the tenant.
+        HTTPException: 400 for a malformed cursor; 404 when the repository does not belong to
+            the tenant.
     """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
@@ -2890,8 +3002,8 @@ def list_repository_refresh_history(
     since_dt = _parse_history_datetime("since", since)
     until_dt = _parse_history_datetime("until", until)
 
-    total = db.count_repository_refresh_audit(
-        tenant_id,
+    after = parse_time_id_cursor(cursor)
+    filters: Dict[str, Any] = dict(
         repository_id=rid,
         branch=branch_f,
         path=path_f,
@@ -2900,27 +3012,24 @@ def list_repository_refresh_history(
         since=since_dt,
         until=until_dt,
     )
-    rows = db.search_repository_refresh_audit(
-        tenant_id,
-        repository_id=rid,
-        branch=branch_f,
-        path=path_f,
-        trigger=trigger_f,
-        outcome=outcome_f,
-        since=since_dt,
-        until=until_dt,
-        limit=limit,
-        offset=offset,
+    total = db.count_repository_refresh_audit(tenant_id, **filters) if include_total else None
+    # One row past the page answers "is there more?" without counting (#7196).
+    page = page_of(
+        db.search_repository_refresh_audit(
+            tenant_id, **filters, limit=limit + 1, offset=0 if after else offset, cursor=after
+        ),
+        limit,
+        time_id_key(),
     )
-
-    has_more = offset + len(rows) < total
-    next_offset = (offset + len(rows)) if has_more else None
+    rows = page.items
+    effective_offset = 0 if after else offset
     pagination = RefreshHistoryPaginationOut(
         limit=limit,
         total=total,
-        offset=offset,
-        has_more=has_more,
-        next_offset=next_offset,
+        offset=effective_offset,
+        has_more=page.has_more,
+        next_offset=(effective_offset + len(rows)) if page.has_more and not after else None,
+        next_cursor=page.next_cursor,
     )
     items = [_refresh_audit_row_to_entry(r) for r in rows]
     return RefreshHistoryPageResponse(items=items, pagination=pagination)

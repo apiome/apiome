@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from .auth import validate_authentication
 from .browse_facets import format_label, protocol_label
 from .database import db
+from .keyset_pagination import limit_query, offset_query
 from .model_search import (
     MAX_QUERY_LENGTH,
     SEARCH_HIT_CAP,
@@ -116,8 +117,8 @@ def search_normalized_model(
     all_versions: bool = Query(
         False, description="Search every live revision instead of each project's latest."
     ),
-    limit: int = Query(25, ge=1, le=100, description="Page size."),
-    offset: int = Query(0, ge=0, description="Matches to skip."),
+    limit: int = limit_query(25, maximum=100),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ModelSearchResponse:
     """
@@ -127,7 +128,9 @@ def search_normalized_model(
     facet OR together and facets AND; each facet's counts are computed over the matches every
     *other* facet keeps, so ticking a value shows exactly that many. An unknown facet value narrows
     to nothing rather than failing. Matches are ranked by full-text relevance; at most 2 000 are
-    considered, and ``truncated`` says when that cap was reached.
+    considered, and ``truncated`` says when that cap was reached. A relevance order has no cursor,
+    so this list pages by ``offset`` within those capped matches, and its totals are their
+    lengths rather than separate counts (#7196).
 
     Args:
         tenant_slug: The tenant slug.

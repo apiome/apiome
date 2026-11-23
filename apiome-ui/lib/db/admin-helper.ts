@@ -6,27 +6,185 @@ import {
   clearCredentialAccountPassword,
 } from './credential-account';
 
+import {
+  InvalidCursorError,
+  clampListLimit,
+  cursorTimestampSql,
+  decodeKeyCursor,
+  decodeTimeIdCursor,
+  encodeKeyCursor,
+  encodeTimeIdCursor,
+  pageOf,
+  searchPattern,
+  withoutCursorColumns,
+  type ListPage,
+  type ListPageOptions,
+} from './list-bounds';
+
 // Helper to standardize error responses
 const errorResponse = (error: string) => JSON.stringify({ success: false, error });
 const successResponse = (data: any = {}) => JSON.stringify({ success: true, ...data });
 
+// ==================== Paged lists (DBP-1.13, #7196) ====================
+
+/**
+ * What every paged admin list accepts: a page size (at most `MAX_LIST_ROWS`, 200; 50 when
+ * omitted), the previous page's cursor, and a search the database applies — a capped list is
+ * only usable when the reader can narrow it past the cap.
+ */
+export interface AdminListOptions extends ListPageOptions {
+  /** Text matched, case-insensitively and anywhere, against the list's name-like columns. */
+  search?: string | null;
+}
+
+/** How one admin list is read a page at a time. */
+interface AdminPageQuery {
+  /** The `SELECT` list (the cursor columns are added to it). */
+  select: string;
+  /** `FROM …` with its joins. */
+  from: string;
+  /** `WHERE` conditions, ANDed; they may use the placeholders of `params`. */
+  where: string[];
+  /** The parameters `where` already refers to. */
+  params: unknown[];
+  /** SQL expressions the `search` text is matched against. */
+  searchColumns: string[];
+  /**
+   * The ordering, which is also the keyset:
+   * - `time-id`: `timestamp DESC, id DESC`, cursor `{"t", "i"}`;
+   * - `key`: every key ascending, cursor `{"k": [...]}`; `cast` is the placeholder's type.
+   */
+  order:
+    | { kind: 'time-id'; timestamp: string; id: string }
+    | { kind: 'key'; keys: Array<{ sql: string; cast: string }> };
+}
+
+/**
+ * Read one page of an admin list: `limit + 1` rows after the cursor, in keyset order.
+ *
+ * @param query The list.
+ * @param options The page size, cursor and search.
+ * @returns The page, its rows free of the cursor-only columns.
+ * @throws InvalidCursorError The cursor is not one this list issued.
+ */
+async function readAdminPage(
+  query: AdminPageQuery,
+  options: AdminListOptions = {}
+): Promise<ListPage<Record<string, unknown>>> {
+  const limit = clampListLimit(options?.limit);
+  const params = [...query.params];
+  const where = [...query.where];
+  const bind = (value: unknown) => {
+    params.push(value);
+    return `$${params.length}`;
+  };
+
+  const pattern = searchPattern(options?.search);
+  if (pattern && query.searchColumns.length > 0) {
+    const placeholder = bind(pattern);
+    where.push(`(${query.searchColumns.map((column) => `${column} ILIKE ${placeholder}`).join(' OR ')})`);
+  }
+
+  let cursorColumns: string[];
+  let cursorSelect: string;
+  let orderBy: string;
+  let cursorOf: (row: Record<string, unknown>) => string;
+
+  if (query.order.kind === 'time-id') {
+    // A missing timestamp sorts as the epoch, so the row comparison always has a value.
+    const stamp = `COALESCE(${query.order.timestamp}, 'epoch'::timestamptz)`;
+    const id = query.order.id;
+    cursorColumns = ['cursor_ts', 'cursor_id'];
+    cursorSelect = `${cursorTimestampSql(stamp)} AS cursor_ts, (${id})::text AS cursor_id`;
+    orderBy = `${stamp} DESC, ${id} DESC`;
+    cursorOf = (row) => encodeTimeIdCursor(String(row.cursor_ts), String(row.cursor_id));
+    if (options?.cursor) {
+      const { t, i } = decodeTimeIdCursor(options.cursor);
+      where.push(`(${stamp}, ${id}) < (${bind(t)}::timestamptz, ${bind(i)}::uuid)`);
+    }
+  } else {
+    const keys = query.order.keys;
+    cursorColumns = keys.map((_, index) => `cursor_k${index}`);
+    cursorSelect = keys.map((key, index) => `(${key.sql})::text AS cursor_k${index}`).join(', ');
+    orderBy = keys.map((key) => key.sql).join(', ');
+    cursorOf = (row) => encodeKeyCursor(cursorColumns.map((column) => row[column]));
+    if (options?.cursor) {
+      const values = decodeKeyCursor(options.cursor, keys.length);
+      if (!values.every((value) => typeof value === 'string')) {
+        throw new InvalidCursorError('cursor does not match this list');
+      }
+      const placeholders = keys.map((key, index) => `${bind(values[index])}::${key.cast}`);
+      where.push(`(${keys.map((key) => key.sql).join(', ')}) > (${placeholders.join(', ')})`);
+    }
+  }
+
+  const result = await connectionPool.query(
+    `SELECT ${query.select}, ${cursorSelect}
+       ${query.from}
+       WHERE ${where.join(' AND ')}
+       ORDER BY ${orderBy}
+       LIMIT ${bind(limit + 1)}`,
+    params
+  );
+  const page = pageOf(result.rows as Record<string, unknown>[], limit, cursorOf);
+  return { ...page, items: page.items.map((row) => withoutCursorColumns(row, cursorColumns)) };
+}
+
+/**
+ * The response of a paged admin list: the rows under the key the list has always used, plus
+ * `hasMore` and `nextCursor`.
+ *
+ * @param key The rows' key (`users`, `tenants`, `templates`).
+ * @param page The page.
+ * @param extra Further fields to carry.
+ * @returns The JSON envelope.
+ */
+const pageResponse = (
+  key: string,
+  page: ListPage<Record<string, unknown>>,
+  extra: Record<string, unknown> = {}
+) => successResponse({ [key]: page.items, hasMore: page.hasMore, nextCursor: page.nextCursor, ...extra });
+
+/**
+ * The error envelope of a failed list read; a cursor this list did not issue reads as such.
+ *
+ * @param error What was thrown.
+ * @returns The JSON envelope.
+ */
+const listErrorResponse = (error: unknown) =>
+  errorResponse(
+    error instanceof InvalidCursorError
+      ? 'Invalid cursor'
+      : error instanceof Error
+        ? error.message
+        : String(error)
+  );
+
 // ==================== User Management ====================
 
 /**
- * Get all users from the database
+ * One page of the live users, newest first (`created_at DESC, id DESC`).
+ *
+ * @param options Page size, cursor, and a search over name and email.
+ * @returns `{ success, users, hasMore, nextCursor }`.
  */
-export async function getAllUsers() {
+export async function getAllUsers(options: AdminListOptions = {}) {
   try {
-    const result = await connectionPool.query(
-      `SELECT id, name, email, verified, enabled, created_at, updated_at, deleted_at
-       FROM apiome.users 
-       WHERE deleted_at IS NULL
-       ORDER BY created_at DESC`
+    const page = await readAdminPage(
+      {
+        select: 'id, name, email, verified, enabled, created_at, updated_at, deleted_at',
+        from: 'FROM apiome.users',
+        where: ['deleted_at IS NULL'],
+        params: [],
+        searchColumns: ['name', 'email'],
+        order: { kind: 'time-id', timestamp: 'created_at', id: 'id' },
+      },
+      options
     );
-    return successResponse({ users: result.rows });
+    return pageResponse('users', page);
   } catch (error: any) {
     console.error('Error fetching users:', error);
-    return errorResponse(error.message);
+    return listErrorResponse(error);
   }
 }
 
@@ -262,76 +420,116 @@ export async function getUserStats() {
 // ==================== Tenant Management ====================
 
 /**
- * Get all tenants
+ * One page of the live tenants, newest first (`created_at DESC, id DESC`).
+ *
+ * @param options Page size, cursor, and a search over name and slug.
+ * @returns `{ success, tenants, hasMore, nextCursor }`.
  */
-export async function getAllTenants() {
+export async function getAllTenants(options: AdminListOptions = {}) {
   try {
-    const result = await connectionPool.query(
-      `SELECT id, name, description, slug, enabled, created_at, updated_at
-       FROM apiome.tenants 
-       WHERE deleted_at IS NULL
-       ORDER BY created_at DESC`
+    const page = await readAdminPage(
+      {
+        select: 'id, name, description, slug, enabled, created_at, updated_at',
+        from: 'FROM apiome.tenants',
+        where: ['deleted_at IS NULL'],
+        params: [],
+        searchColumns: ['name', 'slug'],
+        order: { kind: 'time-id', timestamp: 'created_at', id: 'id' },
+      },
+      options
     );
-    return successResponse({ tenants: result.rows });
+    return pageResponse('tenants', page);
   } catch (error: any) {
     console.error('Error fetching tenants:', error);
-    return errorResponse(error.message);
+    return listErrorResponse(error);
   }
 }
 
 /**
- * Get tenant with user counts
+ * One page of the live tenants with their member, administrator and project counts, newest
+ * first (`created_at DESC, id DESC`).
+ *
+ * The counts are correlated subqueries over the page's tenants, so a page costs the same
+ * whatever the number of tenants (the three-way join this replaces multiplied members by
+ * administrators by projects for every tenant before grouping).
+ *
+ * `includeTotals` adds the console's four headline numbers, counted in SQL over every live
+ * tenant — the page in hand can no longer answer them.
+ *
+ * @param options Page size, cursor, a search over name and slug, and `includeTotals`.
+ * @returns `{ success, tenants, hasMore, nextCursor }`, plus
+ *   `totals: { tenant_count, active_count, user_count, admin_count }` when asked for.
  */
-export async function getTenantStats() {
+export async function getTenantStats(options: AdminListOptions & { includeTotals?: boolean } = {}) {
   try {
-    const result = await connectionPool.query(
-      `SELECT 
-        t.id,
+    const page = await readAdminPage(
+      {
+        select: `t.id,
         t.name,
         t.slug,
         t.enabled,
-        COUNT(DISTINCT tu.user_id) as user_count,
-        COUNT(DISTINCT ta.user_id) as admin_count,
-        COUNT(DISTINCT p.id) as project_count
-       FROM apiome.tenants t
-       LEFT JOIN apiome.tenant_users tu ON t.id = tu.tenant_id
-       LEFT JOIN apiome.tenant_administrators ta ON t.id = ta.tenant_id
-       LEFT JOIN apiome.projects p ON t.id = p.tenant_id AND p.deleted_at IS NULL
-       WHERE t.deleted_at IS NULL
-       GROUP BY t.id, t.name, t.slug, t.enabled
-       ORDER BY t.created_at DESC`
+        (SELECT COUNT(DISTINCT tu.user_id) FROM apiome.tenant_users tu WHERE tu.tenant_id = t.id) as user_count,
+        (SELECT COUNT(DISTINCT ta.user_id) FROM apiome.tenant_administrators ta WHERE ta.tenant_id = t.id) as admin_count,
+        (SELECT COUNT(*) FROM apiome.projects p WHERE p.tenant_id = t.id AND p.deleted_at IS NULL) as project_count`,
+        from: 'FROM apiome.tenants t',
+        where: ['t.deleted_at IS NULL'],
+        params: [],
+        searchColumns: ['t.name', 't.slug'],
+        order: { kind: 'time-id', timestamp: 't.created_at', id: 't.id' },
+      },
+      options
     );
-    return successResponse({ tenants: result.rows });
+    if (!options?.includeTotals) return pageResponse('tenants', page);
+
+    const totals = await connectionPool.query(
+      `SELECT
+         (SELECT COUNT(*) FROM apiome.tenants t WHERE t.deleted_at IS NULL)::int AS tenant_count,
+         (SELECT COUNT(*) FROM apiome.tenants t WHERE t.deleted_at IS NULL AND t.enabled)::int AS active_count,
+         (SELECT COUNT(DISTINCT (tu.tenant_id, tu.user_id))
+            FROM apiome.tenant_users tu
+            JOIN apiome.tenants t ON t.id = tu.tenant_id AND t.deleted_at IS NULL)::int AS user_count,
+         (SELECT COUNT(DISTINCT (ta.tenant_id, ta.user_id))
+            FROM apiome.tenant_administrators ta
+            JOIN apiome.tenants t ON t.id = ta.tenant_id AND t.deleted_at IS NULL)::int AS admin_count`
+    );
+    return pageResponse('tenants', page, { totals: totals.rows[0] ?? null });
   } catch (error: any) {
     console.error('Error fetching tenant stats:', error);
-    return errorResponse(error.message);
+    return listErrorResponse(error);
   }
 }
 
 /**
- * Get users for a specific tenant
+ * One page of a tenant's members, most recently added first (`added_at DESC, id DESC`).
+ *
+ * @param tenantId The tenant.
+ * @param options Page size, cursor, and a search over name and email.
+ * @returns `{ success, users, hasMore, nextCursor }`.
  */
-export async function getTenantUsers(tenantId: string) {
+export async function getTenantUsers(tenantId: string, options: AdminListOptions = {}) {
   try {
-    const result = await connectionPool.query(
-      `SELECT 
-        u.id,
+    const page = await readAdminPage(
+      {
+        select: `u.id,
         u.name,
         u.email,
         u.verified,
         u.enabled,
         tu.created_at as added_at,
-        EXISTS(SELECT 1 FROM apiome.tenant_administrators ta WHERE ta.tenant_id = $1 AND ta.user_id = u.id) as is_admin
-       FROM apiome.users u
-       JOIN apiome.tenant_users tu ON u.id = tu.user_id
-       WHERE tu.tenant_id = $1 AND u.deleted_at IS NULL
-       ORDER BY tu.created_at DESC`,
-      [tenantId]
+        EXISTS(SELECT 1 FROM apiome.tenant_administrators ta WHERE ta.tenant_id = $1 AND ta.user_id = u.id) as is_admin`,
+        from: `FROM apiome.users u
+       JOIN apiome.tenant_users tu ON u.id = tu.user_id`,
+        where: ['tu.tenant_id = $1', 'u.deleted_at IS NULL'],
+        params: [tenantId],
+        searchColumns: ['u.name', 'u.email'],
+        order: { kind: 'time-id', timestamp: 'tu.created_at', id: 'u.id' },
+      },
+      options
     );
-    return successResponse({ users: result.rows });
+    return pageResponse('users', page);
   } catch (error: any) {
     console.error('Error fetching tenant users:', error);
-    return errorResponse(error.message);
+    return listErrorResponse(error);
   }
 }
 
@@ -620,50 +818,102 @@ export async function removeTenantAdministrator(tenantId: string, userId: string
 }
 
 /**
- * Get all users not in a specific tenant (for assignment)
+ * One page of the live users who are not members of a tenant (for assignment), by name
+ * (`name, id`).
+ *
+ * @param tenantId The tenant.
+ * @param options Page size, cursor, and a search over name and email.
+ * @returns `{ success, users, hasMore, nextCursor }`.
  */
-export async function getUsersNotInTenant(tenantId: string) {
+export async function getUsersNotInTenant(tenantId: string, options: AdminListOptions = {}) {
   try {
-    const result = await connectionPool.query(
-      `SELECT id, name, email, verified, enabled
-       FROM apiome.users
-       WHERE deleted_at IS NULL
-         AND id NOT IN (
-           SELECT user_id FROM apiome.tenant_users WHERE tenant_id = $1
-         )
-       ORDER BY name`,
-      [tenantId]
+    const page = await readAdminPage(
+      {
+        select: 'u.id, u.name, u.email, u.verified, u.enabled',
+        from: 'FROM apiome.users u',
+        where: [
+          'u.deleted_at IS NULL',
+          'NOT EXISTS (SELECT 1 FROM apiome.tenant_users tu WHERE tu.tenant_id = $1 AND tu.user_id = u.id)',
+        ],
+        params: [tenantId],
+        searchColumns: ['u.name', 'u.email'],
+        order: {
+          kind: 'key',
+          keys: [
+            { sql: 'u.name', cast: 'text' },
+            { sql: 'u.id', cast: 'uuid' },
+          ],
+        },
+      },
+      options
     );
-    return successResponse({ users: result.rows });
+    return pageResponse('users', page);
   } catch (error: any) {
     console.error('Error fetching users not in tenant:', error);
-    return errorResponse(error.message);
+    return listErrorResponse(error);
   }
 }
 
 // ==================== Property Template Management ====================
 
+/** Filters of the admin property-template list, applied in SQL. */
+export interface AdminPropertyTemplateListOptions extends AdminListOptions {
+  /** Only templates of this category. */
+  category?: string | null;
+  /** Only system templates, or only tenant templates. */
+  scope?: 'system' | 'tenant' | null;
+}
+
 /**
- * Get all property templates (including system and tenant templates)
+ * One page of the property templates (system and tenant), system templates first, then by
+ * category and name (`is_system DESC, category, name, id`).
+ *
+ * @param options Page size, cursor, a search over name, description and tags, and the category
+ *   and scope filters.
+ * @returns `{ success, templates, hasMore, nextCursor }`.
  */
-export async function getAllPropertyTemplates() {
+export async function getAllPropertyTemplates(options: AdminPropertyTemplateListOptions = {}) {
   try {
-    const result = await connectionPool.query(
-      `SELECT pt.id, pt.name, pt.description, pt.category, pt.schema, pt.tags,
+    const where = ['pt.deleted_at IS NULL'];
+    const params: unknown[] = [];
+    const category = typeof options?.category === 'string' ? options.category.trim() : '';
+    if (category) {
+      params.push(category);
+      where.push(`pt.category = $${params.length}`);
+    }
+    if (options?.scope === 'system') where.push('pt.is_system');
+    if (options?.scope === 'tenant') where.push('NOT pt.is_system');
+
+    const page = await readAdminPage(
+      {
+        select: `pt.id, pt.name, pt.description, pt.category, pt.schema, pt.tags,
               pt.tenant_id, pt.created_by, pt.is_system, pt.is_public,
               pt.usage_count, pt.enabled, pt.created_at, pt.updated_at,
               t.name as tenant_name,
-              u.name as creator_name, u.email as creator_email
-       FROM apiome.property_templates pt
+              u.name as creator_name, u.email as creator_email`,
+        from: `FROM apiome.property_templates pt
        LEFT JOIN apiome.tenants t ON pt.tenant_id = t.id
-       LEFT JOIN apiome.users u ON pt.created_by = u.id
-       WHERE pt.deleted_at IS NULL
-       ORDER BY pt.is_system DESC, pt.category, pt.name`
+       LEFT JOIN apiome.users u ON pt.created_by = u.id`,
+        where,
+        params,
+        searchColumns: ['pt.name', 'pt.description', "array_to_string(pt.tags, ' ')"],
+        order: {
+          kind: 'key',
+          keys: [
+            // `NOT is_system` ascending is `is_system DESC`: one direction for the whole keyset.
+            { sql: '(NOT pt.is_system)', cast: 'boolean' },
+            { sql: 'pt.category', cast: 'text' },
+            { sql: 'pt.name', cast: 'text' },
+            { sql: 'pt.id', cast: 'uuid' },
+          ],
+        },
+      },
+      options
     );
-    return successResponse({ templates: result.rows });
+    return pageResponse('templates', page);
   } catch (error: any) {
     console.error('Error fetching property templates:', error);
-    return errorResponse(error.message);
+    return listErrorResponse(error);
   }
 }
 
@@ -1297,12 +1547,22 @@ export async function deleteFeatureFlagGroup(groupId: string) {
 // ==================== User License Assignments ====================
 
 /**
- * Get all users with their assigned license
+ * One page of the live users with their assigned license, by name (`name, id`).
+ *
+ * `includeTotals` adds how many live users hold a license, counted in SQL — the page in hand
+ * can no longer answer it.
+ *
+ * @param options Page size, cursor, a search over name and email, and `includeTotals`.
+ * @returns `{ success, users, hasMore, nextCursor }`, plus `totals: { assigned_count }` when
+ *   asked for.
  */
-export async function getAllUsersWithLicenses() {
+export async function getAllUsersWithLicenses(
+  options: AdminListOptions & { includeTotals?: boolean } = {}
+) {
   try {
-    const result = await connectionPool.query(
-      `SELECT
+    const page = await readAdminPage(
+      {
+        select: `
          u.id, u.name, u.email, u.enabled, u.verified, u.suite_access,
          u.created_at, u.updated_at, u.last_login_at,
          -- Last active: the later of the last completed sign-in and the newest session refresh
@@ -1316,17 +1576,35 @@ export async function getAllUsersWithLicenses() {
          l.name        AS license_name,
          l.license_type,
          l.seats,
-         ue.plan_code
-       FROM apiome.users u
+         ue.plan_code`,
+        from: `FROM apiome.users u
        LEFT JOIN apiome.user_entitlements ue ON ue.user_id = u.id
-       LEFT JOIN apiome.licenses          l  ON l.id = ue.license_id
-       WHERE u.deleted_at IS NULL
-       ORDER BY u.name`
+       LEFT JOIN apiome.licenses          l  ON l.id = ue.license_id`,
+        where: ['u.deleted_at IS NULL'],
+        params: [],
+        searchColumns: ['u.name', 'u.email'],
+        order: {
+          kind: 'key',
+          keys: [
+            { sql: 'u.name', cast: 'text' },
+            { sql: 'u.id', cast: 'uuid' },
+          ],
+        },
+      },
+      options
     );
-    return successResponse({ users: result.rows });
+    if (!options?.includeTotals) return pageResponse('users', page);
+
+    const totals = await connectionPool.query(
+      `SELECT COUNT(*)::int AS assigned_count
+         FROM apiome.user_entitlements ue
+         JOIN apiome.users u ON u.id = ue.user_id AND u.deleted_at IS NULL
+        WHERE ue.license_id IS NOT NULL`
+    );
+    return pageResponse('users', page, { totals: totals.rows[0] ?? null });
   } catch (error: any) {
     console.error('Error fetching users with licenses:', error);
-    return errorResponse(error.message);
+    return listErrorResponse(error);
   }
 }
 

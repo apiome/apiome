@@ -28,6 +28,7 @@ from app.auth import validate_authentication
 from app.main import app
 from app.review_lifecycle import is_allowed_transition
 from tests.fake_review_db import ORIGINAL_FINGERPRINT, FakeReviewDb
+from tests.keyset_paging_fakes import walk
 
 client = TestClient(app)
 
@@ -363,7 +364,7 @@ def test_a_version_has_at_most_one_open_review(fake, act_as):
     assert client.post(f"{BASE}/{review_id}/withdraw").status_code == 200
     again = _requested(reviewers=[CAROL_ADMIN])
     assert again["review"]["id"] != review_id
-    assert client.get(BASE, params={"open": "false"}).json()["total"] == 1
+    assert client.get(BASE, params={"open": "false", "include_total": "true"}).json()["total"] == 1
 
 
 # ---------------------------------------------------------------------------------------------
@@ -494,7 +495,7 @@ def test_the_list_filters_by_version_state_and_openness(fake, act_as):
     act_as(ALICE)
 
     def ids(**params: Any):
-        body = client.get(BASE, params=params).json()
+        body = client.get(BASE, params={**params, "include_total": "true"}).json()
         return [review["id"] for review in body["reviews"]], body["total"]
 
     assert ids() == ([decided_id, open_id, withdrawn_id], 3)
@@ -507,7 +508,28 @@ def test_the_list_filters_by_version_state_and_openness(fake, act_as):
     page = client.get(BASE, params={"version": VERSION_2}).json()
     assert page["reviews"][0]["changes_requested_count"] == 1
     assert (page["count"], page["limit"], page["offset"]) == (1, 50, 0)
+    # Nothing is counted unless asked for (#7196).
+    assert page["total"] is None and page["has_more"] is False and page["next_cursor"] is None
 
+    # Keyset paging: follow next_cursor to the end, seeing every review once, in list order.
+    seen = walk(lambda params: client.get(BASE, params=params), "reviews", limit=2)
+    assert [review["id"] for review in seen] == [decided_id, open_id, withdrawn_id]
+
+
+def test_the_total_is_not_counted_unless_asked_for(fake, act_as, monkeypatch):
+    _requested()
+    monkeypatch.setattr(fake, "count_reviews", lambda **_: pytest.fail("counted without include_total"))
+    body = client.get(BASE).json()
+    assert body["total"] is None and body["count"] == 1
+
+
+def test_a_malformed_cursor_is_a_400_and_the_page_size_is_capped(fake, act_as):
+    assert client.get(BASE, params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get(BASE, params={"limit": 201}).status_code == 422
+    assert client.get(BASE, params={"offset": 10_001}).status_code == 422
+
+
+def test_the_list_filters_reject_an_unknown_version(fake, act_as):
     unknown = client.get(BASE, params={"version": "9.9.9"})
     assert unknown.status_code == 404
     assert _code(unknown) == "review-version-not-found"

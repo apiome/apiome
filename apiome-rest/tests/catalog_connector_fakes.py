@@ -24,6 +24,7 @@ from app.catalog_connectors import (
     ConnectorError,
 )
 from app.refresh_source import RefreshCandidate
+from tests.keyset_paging_fakes import ordered_rows
 
 _FUNCTIONS = [name for name in real_store.__all__]
 
@@ -86,9 +87,13 @@ class FakeConnectorStore:
 
     # --- connectors -----------------------------------------------------------------
 
-    def list_connectors(self, db, tenant_id):
+    def list_connectors(self, db, tenant_id, *, limit=None, cursor=None):
         rows = [r for r in self.connectors.values() if r["tenant_id"] == tenant_id and r["deleted_at"] is None]
-        return [self._view(r) for r in sorted(rows, key=lambda r: r["name"].lower())]
+        ordered = [
+            {**self._view(r), "name_key": r["name"].lower()}
+            for r in sorted(rows, key=lambda r: (r["name"].lower(), str(r["id"])))
+        ]
+        return ordered_rows(real_store.CONNECTORS_ORDER, ordered)(limit=limit, cursor=cursor)
 
     def get_connector(self, db, tenant_id, connector_id):
         row = self.connectors.get(str(connector_id))
@@ -157,9 +162,15 @@ class FakeConnectorStore:
     def list_item_rows(self, db, connector_id):
         return [dict(i) for i in self.items.values() if i["connector_id"] == connector_id]
 
-    def list_items(self, db, connector_id, *, status, limit, offset):
+    def list_items(self, db, connector_id, *, status, limit, offset, cursor=None):
         rows = [i for i in self.list_item_rows(db, connector_id) if status is None or i["status"] == status]
-        rows.sort(key=lambda i: (i["remote_name"] or i["remote_id"]).lower())
+        for row in rows:
+            row["sort_key"] = (row["remote_name"] or row["remote_id"]).lower()
+        rows.sort(key=lambda i: (i["sort_key"], i["remote_id"]))
+        if cursor is not None:
+            # Keyset: only rows strictly after the cursor row (#7196).
+            rows = [i for i in rows if (i["sort_key"], i["remote_id"]) > tuple(cursor)]
+            offset = 0
         return rows[offset : offset + limit]
 
     def count_items(self, db, connector_id, *, status):
@@ -296,8 +307,17 @@ class FakeConnectorStore:
         rows.sort(key=lambda r: r["_seq"], reverse=True)
         return rows
 
-    def list_refresh_runs(self, db, tenant_id, *, connector_id, source, limit, offset):
-        return self._ledger(tenant_id, connector_id, source)[offset : offset + limit]
+    @staticmethod
+    def _after(rows, cursor):
+        """The rows that follow the cursor's run in an already newest-first list (#7196)."""
+        ids = [str(row["id"]) for row in rows]
+        return rows[ids.index(str(cursor[1])) + 1 :] if str(cursor[1]) in ids else []
+
+    def list_refresh_runs(self, db, tenant_id, *, connector_id, source, limit, offset, cursor=None):
+        rows = self._ledger(tenant_id, connector_id, source)
+        if cursor is not None:
+            rows, offset = self._after(rows, cursor), 0
+        return rows[offset : offset + limit]
 
     def count_refresh_runs(self, db, tenant_id, *, connector_id, source):
         return len(self._ledger(tenant_id, connector_id, source))
@@ -329,9 +349,11 @@ class FakeConnectorStore:
         self.runs[row["id"]] = row
         return row
 
-    def list_runs(self, db, tenant_id, connector_id, *, limit, offset):
+    def list_runs(self, db, tenant_id, connector_id, *, limit, offset, cursor=None):
         rows = [r for r in self.runs.values() if r["tenant_id"] == tenant_id and r["connector_id"] == connector_id]
         rows.sort(key=lambda r: r["_seq"], reverse=True)
+        if cursor is not None:
+            rows, offset = self._after(rows, cursor), 0
         return [dict(r) for r in rows[offset : offset + limit]]
 
     def count_runs(self, db, tenant_id, connector_id):

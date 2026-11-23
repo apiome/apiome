@@ -175,7 +175,7 @@ def test_list_jobs_ok():
     jobs = r.json()["jobs"]
     assert [j["state"] for j in jobs] == ["completed", "queued"]
     assert jobs[0]["version_id"] == "ver-1"
-    mdb.list_mcp_discovery_jobs.assert_called_once_with("t1", _EP_UUID)
+    mdb.list_mcp_discovery_jobs.assert_called_once_with("t1", _EP_UUID, limit=201, cursor=None)
 
 
 def test_list_jobs_empty():

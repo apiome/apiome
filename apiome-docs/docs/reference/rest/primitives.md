@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `primitives` · 14 operations
 
@@ -380,13 +380,22 @@ unresolved edges — the resolver UI lists (#3470).
 Registered before ``GET /{tenant_slug}/{primitive_id}`` so the literal ``unresolved``
 path is matched here rather than being captured as a primitive id.
 
+``primitives`` is one page of at most ``limit`` primitives (1,000 at most); read the
+next with the ``next_cursor`` of this one while ``has_more`` is true (#7196). The two
+counts always cover the whole tenant.
+
 Args:
     tenant_slug: The tenant slug.
+    limit: Page size.
+    cursor: Where the page starts (``next_cursor`` of the previous page).
     auth_data: Authentication data (injected by dependency).
 
 Returns:
     ``UnresolvedRefsResponse`` with the total unresolved-edge count, the number of
-    affected primitives, and the per-primitive unresolved-edge breakdown.
+    affected primitives, and one page of the per-primitive unresolved-edge breakdown.
+
+Raises:
+    HTTPException: 400 for a malformed cursor.
 
 Operation id: `list_unresolved_refs_v1_primitives__tenant_slug__unresolved_get`
 
@@ -395,6 +404,8 @@ Operation id: `list_unresolved_refs_v1_primitives__tenant_slug__unresolved_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -799,10 +810,14 @@ Tenant-wide unresolved-``$ref`` summary for the type registry (#3457).
 ``unresolved_ref_count`` (every unresolved edge) and ``affected_primitive_count``
 (distinct primitives carrying at least one) are the KPIs consumed by the registry
 coverage/stats endpoint (#3454); ``primitives`` is the per-primitive breakdown the
-resolver UI lists (#3470).
+resolver UI lists (#3470), one page at a time: ``has_more`` says whether another page
+exists and ``next_cursor`` is the ``cursor`` that reads it (#7196). The two counts cover
+the whole tenant, not the page.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `unresolved_ref_count` | integer | no | Number of unresolved ref. |
 | `affected_primitive_count` | integer | no | Number of affected primitive. |
 | `primitives` | array of `UnresolvedRefPrimitive` | no | Primitives. |
+| `has_more` | boolean | no | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |

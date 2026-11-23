@@ -562,9 +562,9 @@ def test_list_is_tenant_scoped_newest_first_and_clamps_the_limit():
     db.list_style_guide_revisions(GUIDE, TENANT, limit=10_000)
 
     query, params = db.execute_query.call_args.args
-    assert "ORDER BY revision_number DESC" in query
+    assert "ORDER BY revision_number DESC, id DESC LIMIT %s" in query
     assert "WHERE guide_id = %s AND tenant_id = %s" in query
-    assert params == (GUIDE, TENANT, 500)
+    assert params == (GUIDE, TENANT, 501)
 
 
 def test_list_and_get_guard_non_uuid_ids():

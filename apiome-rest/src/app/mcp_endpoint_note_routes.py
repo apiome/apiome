@@ -15,12 +15,13 @@ require an attributable user for the author/time audit trail.
 from __future__ import annotations
 
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
+from .keyset_pagination import MAX_PAGE_LIMIT, cursor_query, limit_query
 from .mcp_endpoint_notes import EndpointNoteValidationError, normalize_endpoint_note_body
 from .models import (
     McpEndpointNoteCreate,
@@ -29,6 +30,7 @@ from .models import (
     McpEndpointNoteUpdate,
     mcp_endpoint_note_out_from_row,
 )
+from .tenant_list_orders import MCP_ENDPOINT_NOTES_ORDER
 
 router = APIRouter(prefix="/v1/mcp", tags=["mcp-catalog"])
 
@@ -59,16 +61,28 @@ def _require_tenant_endpoint(tenant_id: str, endpoint_id: uuid.UUID) -> Dict[str
 def list_mcp_endpoint_notes(
     tenant_slug: str,
     endpoint_id: uuid.UUID,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpEndpointNoteListResponse:
-    """List cataloger notes for an endpoint (newest first)."""
+    """List cataloger notes for an endpoint (newest first).
+
+    One page of at most ``limit`` notes (200 at most); pass ``next_cursor`` as ``cursor`` until
+    ``has_more`` is false (#7196).
+    """
     _ = tenant_slug
     tenant_id = str(auth_data["tenant_id"])
+    after = MCP_ENDPOINT_NOTES_ORDER.parse(cursor)
     _require_tenant_endpoint(tenant_id, endpoint_id)
-    rows = db.list_mcp_endpoint_notes(tenant_id, str(endpoint_id))
+    page = MCP_ENDPOINT_NOTES_ORDER.page(
+        db.list_mcp_endpoint_notes(tenant_id, str(endpoint_id), limit=limit + 1, cursor=after),
+        limit,
+    )
     return McpEndpointNoteListResponse(
         success=True,
-        notes=[mcp_endpoint_note_out_from_row(r) for r in rows],
+        notes=[mcp_endpoint_note_out_from_row(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

@@ -59,7 +59,9 @@ from .agent_keys import (
 from .agent_toolset_routes import require_agent_toolset
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
+from .tenant_config_list_orders import AGENT_KEYS_ORDER
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +116,8 @@ class AgentKeyListResponse(BaseModel):
         default=AGENT_KEY_SCHEMA_VERSION, serialization_alias="schemaVersion"
     )
     keys: List[AgentKeyOut]
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 def _tenant_id(auth_data: Dict[str, Any]) -> str:
@@ -181,6 +185,8 @@ def _audit(
     description=(
         _WHAT_IT_IS + "\n\n" + _METADATA_ONLY + "\n\nNewest first. `toolsetId` narrows the list "
         "to one toolset's keys; revoked keys are left out unless `includeRevoked=true`.\n\n"
+        "At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` "
+        "is false.\n\n"
         "Requires `api_keys:view`."
     ),
 )
@@ -188,31 +194,38 @@ def list_agent_keys_route(
     tenant_slug: str,
     toolset_id: Optional[UUID] = Query(default=None, alias="toolsetId"),
     include_revoked: bool = Query(default=False, alias="includeRevoked"),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> AgentKeyListResponse:
-    """List the tenant's agent keys.
+    """List one page of the tenant's agent keys.
 
     Args:
         tenant_slug: The tenant in the URL (the authenticated tenant is what scopes it).
         toolset_id: Optional toolset filter.
         include_revoked: Whether to include revoked keys.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``nextCursor``).
         auth_data: The authenticated principal.
 
     Returns:
-        The keys, as metadata.
+        The keys, as metadata, and whether another page follows.
 
     Raises:
-        HTTPException: 403 without ``api_keys:view``.
+        HTTPException: 400 for a malformed cursor; 403 without ``api_keys:view``.
     """
     enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    after = AGENT_KEYS_ORDER.parse(cursor)
     _ = tenant_slug
-    return AgentKeyListResponse(
-        keys=list_agent_keys(
-            _tenant_id(auth_data),
-            toolset_id=str(toolset_id) if toolset_id is not None else None,
-            include_revoked=include_revoked,
-        )
+    keys = list_agent_keys(
+        _tenant_id(auth_data),
+        toolset_id=str(toolset_id) if toolset_id is not None else None,
+        include_revoked=include_revoked,
+        limit=limit + 1,
+        cursor=after,
     )
+    page = AGENT_KEYS_ORDER.page(keys, limit)
+    return AgentKeyListResponse(keys=page.items, has_more=page.has_more, next_cursor=page.next_cursor)
 
 
 @router.post(

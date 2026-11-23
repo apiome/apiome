@@ -45,6 +45,15 @@ from .auth import get_authenticated_user_id, validate_authentication
 from .database import db
 from .envelope_crypto import EnvelopeEncryptionError
 from .export_source import ExportSource, ExportSourceError, load_export_source
+from .keyset_pagination import (
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    page_of,
+    parse_time_id_cursor,
+    time_id_key,
+)
 from .permissions import Action, Resource, enforce_permission
 from .revision_deprecation import is_uuid_string
 from .sdk_publish_pipeline import (
@@ -251,17 +260,22 @@ class SdkPublishRunListResponse(BaseModel):
 
     Attributes:
         runs: The rows, newest first.
-        total: How many rows match.
+        total: How many rows match, counted up to 10,000; set only when the request asked
+            for it with ``include_total``.
         limit: The page size used.
-        offset: The offset used.
+        offset: The offset used (deprecated; ``0`` when paging by cursor).
+        has_more: Whether another page exists.
+        next_cursor: Pass as ``cursor`` to read the next page; ``None`` on the last page.
     """
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     runs: List[SdkPublishRunModel]
-    total: int
+    total: Optional[int] = None
     limit: int
     offset: int
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 def _run_model(outcome: PublishOutcome) -> SdkPublishRunModel:
@@ -960,7 +974,10 @@ def publish_project_sdk(
     summary="List a project's package publish history",
     description=(
         "Every publish attempt, newest first — dry runs included, because a dry run is the record "
-        "of what a release *would* have been.\n\nRequires `versions:view`."
+        "of what a release *would* have been.\n\n"
+        "Pages by `cursor`: pass the previous page's `nextCursor` until `hasMore` is false. The `total` "
+        "is counted only when `include_total` is set.\n\n"
+        "Requires `versions:view`."
     ),
     responses={404: {"description": "Project not found in this tenant."}},
 )
@@ -970,8 +987,10 @@ def list_project_publish_runs(
     ecosystem: Optional[str] = Query(
         default=None, description="Narrow to one ecosystem (`npm` or `pypi`)."
     ),
-    limit: int = Query(default=50, ge=1, le=MAX_HISTORY_LIMIT),
-    offset: int = Query(default=0, ge=0),
+    limit: int = limit_query(maximum=MAX_HISTORY_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SdkPublishRunListResponse:
     """Return a page of a project's publish history.
@@ -981,27 +1000,38 @@ def list_project_publish_runs(
         project_ref: The project's id or slug.
         ecosystem: Narrow to one ecosystem.
         limit: Page size.
-        offset: Rows to skip.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        include_total: Also count the matches.
+        offset: Rows to skip (deprecated).
         auth_data: Authenticated principal.
 
     Returns:
-        The page, newest first.
+        The page, newest first, whether another follows, and the total when asked for.
 
     Raises:
-        HTTPException: 403 without ``versions:view``; 404 when the project is unknown.
+        HTTPException: 400 for a malformed cursor; 403 without ``versions:view``; 404 when the
+            project is unknown.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    after = parse_time_id_cursor(cursor)
     tenant_id = tenant_id_of(auth_data)
     project = resolve_project(tenant_id, project_ref)
     project_id = str(project["id"])
     rows = db.list_sdk_publish_runs(
-        tenant_id, project_id, ecosystem=ecosystem, limit=limit, offset=offset
+        tenant_id, project_id, ecosystem=ecosystem, limit=limit + 1, offset=offset, cursor=after
     )
+    page = page_of(rows, limit, time_id_key("started_at"))
     return SdkPublishRunListResponse(
-        runs=[_run_model(run_row_to_outcome(row)) for row in rows],
-        total=db.count_sdk_publish_runs(tenant_id, project_id, ecosystem=ecosystem),
+        runs=[_run_model(run_row_to_outcome(row)) for row in page.items],
+        total=(
+            db.count_sdk_publish_runs(tenant_id, project_id, ecosystem=ecosystem)
+            if include_total
+            else None
+        ),
         limit=limit,
-        offset=offset,
+        offset=0 if after else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

@@ -67,11 +67,13 @@ from .auth import get_authenticated_user_id
 from .slate_auth import validate_slate_authentication
 from .config import settings
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .slate_artifacts import ArtifactDigests, SlateArtifactError, verify_signature
 from .slate_cdn_dispatch import CdnClientFactory, dispatch_deploy_purge, get_cdn_client_factory
 from .slate_cdn_routes import CdnPurgeSummaryBody, purge_summary
 from .slate_deployment_store import (
+    SITES_ORDER,
     SlateActivationConflictError,
     activate,
     append_audit,
@@ -276,6 +278,10 @@ class SiteListResponse(_CamelModel):
     """The tenant's managed sites."""
 
     sites: List[SiteBody]
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class RetentionResponse(_CamelModel):
@@ -513,6 +519,8 @@ def list_managed_sites(
     project_id: Optional[str] = Query(
         default=None, alias="projectId", description="Restrict to one project's sites."
     ),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> SiteListResponse:
     """List the tenant's managed sites with their environment lanes.
@@ -520,12 +528,27 @@ def list_managed_sites(
     This is how the Release Center resolves a project to a site and its lanes; it works in
     terms of a project and a version, not a site id. An empty list is a legitimate answer
     meaning "this project is not hosted", which is different from an error.
+
+    One page of at most ``limit`` sites (1,000 at most), newest first; pass ``nextCursor`` as
+    ``cursor`` until ``hasMore`` is false (#7196).
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    sites = list_sites(db, tenant_id=tenant_id, project_id=project_id)
+    page = SITES_ORDER.page(
+        list_sites(
+            db,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            limit=limit + 1,
+            cursor=SITES_ORDER.parse(cursor),
+        ),
+        limit,
+    )
+    sites = page.items
 
     return SiteListResponse(
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
         sites=[
             SiteBody(
                 id=str(site["id"]),

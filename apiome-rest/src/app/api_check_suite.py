@@ -1752,4 +1752,8 @@ class CheckSuiteRunList(BaseModel):
     runs: List[CheckSuiteRunRecord] = Field(default_factory=list, description="Newest first.")
     count: int
     limit: int
-    offset: int
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )

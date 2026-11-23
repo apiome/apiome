@@ -154,16 +154,22 @@ function installFetch() {
       const type = params.get('type');
       if (type) matching = matching.filter((entry) => entry.type === type);
 
-      const offset = Number(params.get('offset') ?? 0);
+      // The #7196 contract: pages by an opaque cursor, says `has_more`, and counts nothing unless
+      // asked (`total` is null).
+      const cursor = params.get('cursor');
+      const start = cursor ? Number(cursor.replace('after-', '')) : 0;
       const limit = Number(params.get('limit') ?? 50);
-      const page = matching.slice(offset, offset + limit);
+      const page = matching.slice(start, start + limit);
+      const hasMore = start + limit < matching.length;
       return reply({
         success: true,
         notifications: page,
         count: page.length,
-        total: matching.length,
+        total: params.get('include_total') === 'true' ? matching.length : null,
         limit,
-        offset,
+        offset: 0,
+        has_more: hasMore,
+        next_cursor: hasMore ? `after-${start + limit}` : null,
       });
     }
 
@@ -333,7 +339,10 @@ describe('paging', () => {
     expect(await screen.findByTestId('notification-n50')).toBeInTheDocument();
     // Still there: a page is appended, never swapped.
     expect(screen.getByTestId('notification-n0')).toBeInTheDocument();
-    expect(queries.at(-1)?.get('offset')).toBe('50');
+    // The next page continues from the cursor the first page issued — no offset, and no count.
+    expect(queries.at(-1)?.get('cursor')).toBe('after-50');
+    expect(queries.at(-1)?.has('offset')).toBe(false);
+    expect(queries.at(-1)?.has('include_total')).toBe(false);
   });
 
   test('offers no more when there is no more', async () => {

@@ -36,6 +36,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence
 
 from .db_cursor import db_cursor
+from .keyset_lists import newest_first
 from .slate_releases import ActivationPlan
 
 __all__ = [
@@ -91,6 +92,12 @@ class SlateActivationConflictError(Exception):
             f"Environment {environment_id} routing changed while this activation was being "
             f"prepared (expected routing_version {expected_routing_version}, found {actual})."
         )
+
+
+#: Every ``slate_sites`` column — site rows are returned whole to the service layer.
+_SITE_COLUMNS = (
+    "id, tenant_id, project_id, name, slug, retained_releases, activation_slo_seconds, created_at"
+)
 
 
 def _as_dict(row: Any) -> Optional[Dict[str, Any]]:
@@ -152,11 +159,11 @@ def create_site(
         with conn.cursor() as cursor:
             row = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_sites
                     (tenant_id, project_id, name, slug, retained_releases, activation_slo_seconds)
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s)
-                RETURNING *
+                RETURNING {_SITE_COLUMNS}
                 """,
                 (tenant_id, project_id, name, slug, retained_releases, activation_slo_seconds),
             )
@@ -207,7 +214,8 @@ def create_environment(
                 INSERT INTO apiome.slate_environments
                     (tenant_id, site_id, kind, name, robots_excluded, access_policy, expires_at)
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s)
-                RETURNING *
+                RETURNING id, tenant_id, site_id, kind, name, active_release_id, routing_version,
+                          robots_excluded, expires_at, access_policy, created_at
                 """,
                 (tenant_id, site_id, kind, name, excluded, access_policy, expires_at),
             )
@@ -218,8 +226,17 @@ def create_environment(
         raise
 
 
+#: The managed-site list's ordering: newest first (#7196).
+SITES_ORDER = newest_first("slate-sites")
+
+
 def list_sites(
-    db: _DbLike, *, tenant_id: str, project_id: Optional[str] = None
+    db: _DbLike,
+    *,
+    tenant_id: str,
+    project_id: Optional[str] = None,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
 ) -> List[Dict[str, Any]]:
     """List a tenant's managed sites with their environment lanes.
 
@@ -232,28 +249,24 @@ def list_sites(
         db: Database handle exposing ``connect()``.
         tenant_id: Caller's tenant.
         project_id: Restrict to one project when given.
+        limit: Sites to read; ``None`` reads them all.
+        cursor: :data:`SITES_ORDER` values of the last site already seen (#7196).
 
     Returns:
         Site rows, each with an ``environments`` list, newest first.
     """
+    after_sql, after_params, limit_sql, limit_params = SITES_ORDER.window(limit, cursor)
+    scope_sql, scope_params = (" AND project_id = %s::uuid", [project_id]) if project_id else ("", [])
     with db_cursor(db) as cursor:
-        if project_id:
-            sites = _fetch_all(
-                cursor,
-                """
-                SELECT * FROM apiome.slate_sites
-                 WHERE tenant_id = %s::uuid AND project_id = %s::uuid
-                 ORDER BY created_at DESC
-                """,
-                (tenant_id, project_id),
-            )
-        else:
-            sites = _fetch_all(
-                cursor,
-                "SELECT * FROM apiome.slate_sites WHERE tenant_id = %s::uuid "
-                "ORDER BY created_at DESC",
-                (tenant_id,),
-            )
+        sites = _fetch_all(
+            cursor,
+            f"""
+            SELECT {_SITE_COLUMNS} FROM apiome.slate_sites
+             WHERE tenant_id = %s::uuid{scope_sql}{after_sql}
+             ORDER BY {SITES_ORDER.order_by}{limit_sql}
+            """,
+            (tenant_id, *scope_params, *after_params, *limit_params),
+        )
 
         for site in sites:
             site["environments"] = _fetch_all(
@@ -288,7 +301,9 @@ def get_environment(
         return _fetch_one(
             cursor,
             """
-            SELECT e.*,
+            SELECT e.id, e.tenant_id, e.site_id, e.kind, e.name, e.active_release_id,
+                   e.routing_version, e.robots_excluded, e.expires_at, e.access_policy,
+                   e.created_at,
                    s.retained_releases,
                    s.activation_slo_seconds
               FROM apiome.slate_environments e
@@ -357,7 +372,9 @@ def record_artifact(
                 ON CONFLICT (site_id, content_digest) DO UPDATE
                     SET storage_uri = COALESCE(apiome.slate_artifacts.storage_uri,
                                                EXCLUDED.storage_uri)
-                RETURNING *
+                RETURNING id, tenant_id, site_id, content_digest, source_digest, config_digest,
+                          signature, signature_key_id, manifest, page_count, size_bytes,
+                          storage_uri, built_at, reaped_at, created_at
                 """,
                 (
                     tenant_id,
@@ -386,7 +403,10 @@ def record_artifact(
 # Columns every release read needs, joined to the artifact so the promotion gate can check
 # digest, retention and signature state without a second round trip.
 _RELEASE_SELECT = """
-    SELECT r.*,
+    SELECT r.id, r.tenant_id, r.site_id, r.environment_id, r.release_ref, r.artifact_id, r.status,
+           r.source_commit, r.source_ref, r.source_message, r.actor_id, r.actor_name,
+           r.actor_kind, r.impact, r.traffic_percent, r.traffic_requests_per_min, r.created_at,
+           r.activated_at, r.activation_completed_at, r.deactivated_at,
            a.content_digest AS artifact_digest,
            a.source_digest,
            a.config_digest,
@@ -456,7 +476,10 @@ def create_release(
                      actor_id, actor_name, actor_kind, impact)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s::jsonb)
-                RETURNING *
+                RETURNING id, tenant_id, site_id, environment_id, release_ref, artifact_id, status,
+                          source_commit, source_ref, source_message, actor_id, actor_name,
+                          actor_kind, impact, traffic_percent, traffic_requests_per_min,
+                          created_at, activated_at, activation_completed_at, deactivated_at
                 """,
                 (
                     tenant_id,

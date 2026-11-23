@@ -122,7 +122,9 @@ def stored(monkeypatch) -> Dict[str, Any]:
     monkeypatch.setattr(
         url_import_store,
         "list_specs",
-        lambda db_, tenant_id, project_id=None: [state["row"]] if project_id in (None, _PROJECT) else [],
+        lambda db_, tenant_id, project_id=None, limit=None, cursor=None: (
+            [state["row"]] if project_id in (None, _PROJECT) else []
+        ),
     )
     return state
 

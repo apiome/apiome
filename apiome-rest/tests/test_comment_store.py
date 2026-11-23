@@ -91,12 +91,82 @@ def test_a_list_row_carries_its_opening_comment(fake):
     detail = comment_store.create_thread(TENANT, "pets", request, AUTHOR)
     comment_store.add_comment(TENANT, "pets", detail.thread.id, "second", AUTHOR)
 
-    threads, total = comment_store.list_threads(TENANT, "pets", comment_store.ThreadFilters(), AUTHOR)
+    page, total = comment_store.list_threads(
+        TENANT, "pets", comment_store.ThreadFilters(include_total=True), AUTHOR
+    )
     assert total == 1
-    (summary,) = threads
+    assert page.has_more is False and page.next_cursor is None
+    (summary,) = page.items
     assert summary.comment_count == 2
     assert summary.root_comment is not None
     assert summary.root_comment.body == "first @ada"
     assert summary.root_comment.thread_id == summary.id
     assert summary.root_comment.mentions == [AUTHOR]
     assert summary.root_comment.author_name == "Ada Author"
+
+
+# --- narrow mention lookup (DBP-1.13, #7196) ---------------------------------------------------
+
+
+def test_a_mention_looks_up_only_the_handles_in_the_body(fake):
+    for index in range(40):
+        fake.add_member(f"00000000-0000-4000-8000-{index:012d}", f"Member {index}", f"m{index}@example.com")
+    assert comment_store.resolve_body_mentions(TENANT, "hey @ada and @m7") == [
+        AUTHOR,
+        "00000000-0000-4000-8000-000000000007",
+    ]
+    assert fake.full_member_reads == 0
+    assert fake.mention_lookups == [["ada", "m7"]]
+
+
+def test_an_at_sign_that_is_no_mention_reads_no_member(fake):
+    assert comment_store.resolve_body_mentions(TENANT, "mail jane@example.com") == []
+    assert fake.member_reads == 0
+
+
+def test_a_body_with_too_many_handles_falls_back_to_the_member_list(fake):
+    body = " ".join(f"@nobody{index}" for index in range(comment_store.MAX_MENTION_LOOKUP_HANDLES + 1))
+    assert comment_store.resolve_body_mentions(TENANT, body + " @ada") == [AUTHOR]
+    assert fake.full_member_reads == 1 and fake.mention_lookups == []
+
+
+def test_the_narrow_lookup_keeps_every_member_a_handle_could_mean():
+    """The SQL filter is a superset: emails and local parts exactly, names by characters in order."""
+    from unittest.mock import patch
+
+    from app.database import db as real_db
+
+    with patch.object(real_db, "execute_query", return_value=[]) as query:
+        real_db.find_comment_mention_candidates(TENANT, ["ada", "jane.doe@example.com"])
+    sql, params = query.call_args.args
+    assert "lower(u.email) = ANY(%s::text[])" in sql
+    assert "lower(split_part(u.email, '@', 1)) = ANY(%s::text[])" in sql
+    assert "lower(u.name) LIKE ANY(%s::text[])" in sql
+    assert "tu.status IN ('active', 'pending')" in sql and "u.deleted_at IS NULL" in sql
+    handles = ["ada", "jane.doe@example.com"]
+    # An email handle can never be a display-name handle, so it gets no name pattern.
+    assert params == (TENANT, handles, handles, ["%a%d%a%"])
+
+
+def test_the_narrow_lookup_reads_nothing_without_handles_or_a_tenant():
+    from unittest.mock import patch
+
+    from app.database import db as real_db
+
+    with patch.object(real_db, "execute_query") as query:
+        assert real_db.find_comment_mention_candidates(TENANT, []) == []
+        assert real_db.find_comment_mention_candidates("not-a-uuid", ["ada"]) == []
+        assert real_db.filter_mentionable_member_ids(TENANT, ["not-a-uuid"]) == []
+    query.assert_not_called()
+
+
+def test_member_ids_are_checked_with_one_id_predicate():
+    from unittest.mock import patch
+
+    from app.database import db as real_db
+
+    with patch.object(real_db, "execute_query", return_value=[{"user_id": AUTHOR}]) as query:
+        assert real_db.filter_mentionable_member_ids(TENANT, [AUTHOR, "junk"]) == [AUTHOR]
+    sql, params = query.call_args.args
+    assert "u.id = ANY(%s::uuid[])" in sql
+    assert params == (TENANT, [AUTHOR])

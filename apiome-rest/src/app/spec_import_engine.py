@@ -16,9 +16,9 @@ import shutil
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Tuple
 
 from fastapi import HTTPException
 
@@ -36,6 +36,7 @@ from .import_source_pipeline import (
     run_adapter_import_job,
 )
 from .intake_streaming import cleanup_intake_tempfile
+from .keyset_pagination import encode_time_id_cursor
 from .logging_config import bind_contextvars
 from .models import (
     SpecImportCommitResponse,
@@ -1320,11 +1321,34 @@ async def list_spec_import_jobs(
     state: Optional[str] = None,
     created_after: Optional[datetime] = None,
     created_before: Optional[datetime] = None,
+    cursor: Optional[Tuple[Any, str]] = None,
+    include_total: bool = False,
 ) -> SpecImportJobListResponse:
+    """List a tenant's import jobs from the shared store, newest first (IXH-6.3).
+
+    Falls back to this process's in-memory jobs if the shared store is unreachable.
+
+    Args:
+        tenant_slug: The tenant whose jobs to list.
+        limit: Page size, clamped to ``[1, 200]``.
+        offset: Jobs to skip (deprecated; ignored when ``cursor`` is given).
+        state: Optional exact state filter.
+        created_after: Inclusive lower bound on ``created_at``.
+        created_before: Inclusive upper bound on ``created_at``.
+        cursor: ``(created_at, job_id)`` of the last job already seen (#7196).
+        include_total: Also count the matching jobs (capped); off by default.
+
+    Returns:
+        The page, whether another follows, and the total when asked for.
+    """
     from .database import db
 
     page_limit = max(1, min(int(limit), 200))
-    page_offset = max(0, int(offset))
+    page_offset = 0 if cursor else max(0, int(offset))
+
+    def _created_at(st: SpecImportJobStatus) -> datetime:
+        created_ms = int(getattr(st, "created_at_ms", None) or getattr(st, "updated_at_ms", None) or 0)
+        return datetime.fromtimestamp(created_ms / 1000.0, tz=timezone.utc)
 
     def _from_status(st: SpecImportJobStatus) -> SpecImportJobListItem:
         return SpecImportJobListItem(
@@ -1351,6 +1375,8 @@ async def list_spec_import_jobs(
                 state=state,
                 created_after=created_after,
                 created_before=created_before,
+                cursor=cursor,
+                include_total=include_total,
             )
         )
     except Exception:  # noqa: BLE001 - shared store is best-effort; degrade to local view
@@ -1369,22 +1395,36 @@ async def list_spec_import_jobs(
             reverse=True,
         )
         total = len(local)
-        slice_rows = local[page_offset : page_offset + page_limit]
+        if cursor is not None:
+            after = (cursor[0], str(cursor[1]))
+            local = [st for st in local if (_created_at(st), st.job_id) < after]
+        window = local[page_offset : page_offset + page_limit + 1]
+        slice_rows = window[:page_limit]
+        more = len(window) > page_limit
         return SpecImportJobListResponse(
             jobs=[_from_status(st) for st in slice_rows],
-            total=total,
+            total=total if include_total else None,
             limit=page_limit,
             offset=page_offset,
+            has_more=more,
+            next_cursor=(
+                encode_time_id_cursor(_created_at(slice_rows[-1]), slice_rows[-1].job_id) if more else None
+            ),
         )
     items = [
         _from_status(SpecImportJobStatus.model_validate(row["status"]))
         for row in page["jobs"]
     ]
+    rows = page["jobs"]
+    more = bool(page.get("has_more")) and bool(rows)
+    counted = page.get("total")
     return SpecImportJobListResponse(
         jobs=items,
-        total=int(page["total"]),
+        total=int(counted) if include_total and counted is not None else None,
         limit=int(page["limit"]),
         offset=int(page["offset"]),
+        has_more=more,
+        next_cursor=encode_time_id_cursor(rows[-1]["created_at"], rows[-1]["job_id"]) if more else None,
     )
 
 

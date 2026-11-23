@@ -40,6 +40,7 @@ from pydantic.alias_generators import to_camel
 
 from .config import settings
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .push_webhook_crypto import decrypt_signing_secret
 from .slate_auth import validate_slate_authentication
@@ -50,6 +51,7 @@ from .slate_git_preview import (
     verify_github_signature,
 )
 from .slate_git_preview_store import (
+    CONNECTIONS_ORDER,
     SlatePreviewStoreError,
     find_connections_by_repo,
     get_connection,
@@ -115,6 +117,8 @@ class ConnectionBody(_CamelModel):
 
 class ConnectionListResponse(_CamelModel):
     connections: List[ConnectionBody]
+    has_more: bool = False
+    next_cursor: Optional[str] = None
 
 
 class ChangedPageBody(_CamelModel):
@@ -280,13 +284,28 @@ def create_git_connection(
     response_model_by_alias=True,
 )
 def list_git_connections(
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
 ) -> ConnectionListResponse:
-    """List the tenant's git provider connections, without their secrets."""
+    """List the tenant's git provider connections, without their secrets.
+
+    One page of at most ``limit`` connections (1,000 at most), newest first; pass ``nextCursor``
+    as ``cursor`` until ``hasMore`` is false (#7196).
+    """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
     tenant_id = auth_data["tenant_id"]
-    rows = list_connections(db, tenant_id=tenant_id)
-    return ConnectionListResponse(connections=[_connection_body(r) for r in rows])
+    page = CONNECTIONS_ORDER.page(
+        list_connections(
+            db, tenant_id=tenant_id, limit=limit + 1, cursor=CONNECTIONS_ORDER.parse(cursor)
+        ),
+        limit,
+    )
+    return ConnectionListResponse(
+        connections=[_connection_body(r) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.post(

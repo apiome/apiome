@@ -33,6 +33,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Protocol, Sequence, Tuple
 
 from .db_cursor import db_cursor
+from .keyset_lists import newest_first
 from .mcp_credential_crypto import (
     credential_encryption_configured,
     seal_credential_payload,
@@ -80,6 +81,15 @@ class SlatePreviewStoreError(Exception):
     def __init__(self, code: str, message: str):
         self.code = code
         super().__init__(message)
+
+
+#: Every ``slate_preview_builds`` column — build rows are returned whole to the service layer.
+_PREVIEW_BUILD_COLUMNS = (
+    "id, tenant_id, connection_id, site_id, environment_id, delivery_id, source_commit, "
+    "source_ref, source_message, source_digest, status, checks_state, immutable_url, "
+    "access_policy, robots_excluded, failure_evidence, build_dispatched, retry_count, "
+    "expires_at, cleaned_up_at, created_at, updated_at"
+)
 
 
 # ─── Small helpers (mirroring slate_deployment_store) ────────────────────────
@@ -239,17 +249,38 @@ def get_connection(
         )
 
 
-def list_connections(db: _DbLike, *, tenant_id: str) -> List[Dict[str, Any]]:
-    """List a tenant's connections (public projection), newest first."""
-    with db_cursor(db) as cursor:
+#: The connection list's ordering: newest first (#7196).
+CONNECTIONS_ORDER = newest_first("slate-git-connections")
+
+
+def list_connections(
+    db: _DbLike,
+    *,
+    tenant_id: str,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[Dict[str, Any]]:
+    """List a tenant's connections (public projection), newest first.
+
+    Args:
+        db: Database handle.
+        tenant_id: Caller's tenant.
+        limit: Rows to read; ``None`` reads them all.
+        cursor: :data:`CONNECTIONS_ORDER` values of the last connection already seen (#7196).
+
+    Returns:
+        The connection rows, without secrets.
+    """
+    after_sql, after_params, limit_sql, limit_params = CONNECTIONS_ORDER.window(limit, cursor)
+    with db_cursor(db) as cursor_:
         return _fetch_all(
-            cursor,
-            "SELECT " + _CONNECTION_PUBLIC_SELECT + """
+            cursor_,
+            "SELECT " + _CONNECTION_PUBLIC_SELECT + f"""
               FROM apiome.slate_git_connections
-             WHERE tenant_id = %s::uuid
-             ORDER BY created_at DESC
+             WHERE tenant_id = %s::uuid{after_sql}
+             ORDER BY {CONNECTIONS_ORDER.order_by}{limit_sql}
             """,
-            (tenant_id,),
+            (tenant_id, *after_params, *limit_params),
         )
 
 
@@ -375,8 +406,8 @@ def ingest_preview_event(
         with conn.cursor() as cursor:
             existing = _fetch_one(
                 cursor,
-                """
-                SELECT * FROM apiome.slate_preview_builds
+                f"""
+                SELECT {_PREVIEW_BUILD_COLUMNS} FROM apiome.slate_preview_builds
                  WHERE connection_id = %s::uuid AND source_digest = %s
                 """,
                 (connection_id, source_digest),
@@ -416,7 +447,7 @@ def ingest_preview_event(
 
             build = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_preview_builds
                     (tenant_id, connection_id, site_id, environment_id, delivery_id,
                      source_commit, source_ref, source_message, source_digest,
@@ -424,7 +455,7 @@ def ingest_preview_event(
                 VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s,
                         %s, %s, %s, %s, %s, %s, TRUE, %s)
                 ON CONFLICT (connection_id, source_digest) DO NOTHING
-                RETURNING *
+                RETURNING {_PREVIEW_BUILD_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -448,8 +479,8 @@ def ingest_preview_event(
                 with conn.cursor() as cursor2:
                     raced = _fetch_one(
                         cursor2,
-                        """
-                        SELECT * FROM apiome.slate_preview_builds
+                        f"""
+                        SELECT {_PREVIEW_BUILD_COLUMNS} FROM apiome.slate_preview_builds
                          WHERE connection_id = %s::uuid AND source_digest = %s
                         """,
                         (connection_id, source_digest),
@@ -539,8 +570,8 @@ def get_preview(
     with db_cursor(db) as cursor:
         build = _fetch_one(
             cursor,
-            """
-            SELECT * FROM apiome.slate_preview_builds
+            f"""
+            SELECT {_PREVIEW_BUILD_COLUMNS} FROM apiome.slate_preview_builds
              WHERE id = %s::uuid AND tenant_id = %s::uuid
             """,
             (build_id, tenant_id),
@@ -561,8 +592,8 @@ def list_previews(
     with db_cursor(db) as cursor:
         rows = _fetch_all(
             cursor,
-            """
-            SELECT * FROM apiome.slate_preview_builds
+            f"""
+            SELECT {_PREVIEW_BUILD_COLUMNS} FROM apiome.slate_preview_builds
              WHERE tenant_id = %s::uuid
                AND (%s::uuid IS NULL OR connection_id = %s::uuid)
              ORDER BY created_at DESC
@@ -620,7 +651,13 @@ def record_checks(
             build = _fetch_one(
                 cursor,
                 """
-                SELECT b.*, c.preview_host, c.repo_full_name, s.slug AS site_slug
+                SELECT b.id, b.tenant_id, b.connection_id, b.site_id, b.environment_id,
+                       b.delivery_id, b.source_commit, b.source_ref, b.source_message,
+                       b.source_digest, b.status, b.checks_state, b.immutable_url,
+                       b.access_policy, b.robots_excluded, b.failure_evidence,
+                       b.build_dispatched, b.retry_count, b.expires_at, b.cleaned_up_at,
+                       b.created_at, b.updated_at,
+                       c.preview_host, c.repo_full_name, s.slug AS site_slug
                   FROM apiome.slate_preview_builds b
                   JOIN apiome.slate_git_connections c ON c.id = b.connection_id
                   JOIN apiome.slate_sites s ON s.id = b.site_id
@@ -768,14 +805,14 @@ def retry_build(
         with conn.cursor() as cursor:
             build = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_preview_builds
                    SET retry_count = retry_count + 1,
                        checks_state = 'pending',
                        failure_evidence = NULL,
                        updated_at = CURRENT_TIMESTAMP
                  WHERE id = %s::uuid AND tenant_id = %s::uuid
-                RETURNING *
+                RETURNING {_PREVIEW_BUILD_COLUMNS}
                 """,
                 (build_id, tenant_id),
             )

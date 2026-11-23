@@ -327,6 +327,12 @@ describe('the foot', () => {
     expect(publishedFootLabel(0, 4)).toBe('Showing 0 of 4 published versions');
   });
 
+  it('says the count is of what is loaded while more can be loaded (DBP-1.13)', () => {
+    expect(publishedFootLabel(50, 50, true)).toBe('Showing 50 of the first 50 published versions');
+    expect(publishedFootLabel(3, 50, true)).toBe('Showing 3 of the first 50 published versions');
+    expect(publishedFootLabel(50, 50, false)).toBe('Showing 50 of 50 published versions');
+  });
+
   it('marks the list filtered only when a search is actually hiding rows', () => {
     expect(isPublishedListFiltered('', 4, 4)).toBe(false);
     expect(isPublishedListFiltered('payments', 4, 4)).toBe(false);
@@ -354,6 +360,16 @@ describe('the summary line', () => {
   it('keeps the noun singular for one row', () => {
     expect(publishedSummaryLine([version()])).toBe(
       '1 published version · 1 public · 1 with a hosted mock'
+    );
+  });
+
+  it('does not present a page as the whole workspace (DBP-1.13)', () => {
+    const rows = [version(), version({ id: 'b', visibility: 'private', mock_enabled: false })];
+    expect(publishedSummaryLine(rows, true)).toBe(
+      'The newest 2 published versions · 1 public · 1 with a hosted mock'
+    );
+    expect(publishedSummaryLine(rows, false)).toBe(
+      '2 published versions · 1 public · 1 with a hosted mock'
     );
   });
 });

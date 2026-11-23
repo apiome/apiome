@@ -167,11 +167,16 @@ class NotificationDbMixin:
         return rows
 
     def list_notifications(
-        self, *, limit: int = 50, offset: int = 0, **filters: Any
+        self, *, limit: int = 50, offset: int = 0, cursor: Any = None, **filters: Any
     ) -> List[Dict[str, Any]]:
         """A page of one user's inbox, with the actor's display name read fresh."""
         page = []
-        for row in self._matching(**filters)[offset : offset + limit]:
+        matching = self._matching(**filters)
+        if cursor is not None:
+            # Keyset: only rows strictly older than the cursor row (#7196).
+            matching = [row for row in matching if (row["created_at"], row["id"]) < tuple(cursor)]
+            offset = 0
+        for row in matching[offset : offset + limit]:
             view = dict(row)
             view["actor_name"] = self.user_names.get(row.get("actor_id") or "")
             page.append(view)

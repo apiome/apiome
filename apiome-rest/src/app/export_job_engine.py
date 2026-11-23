@@ -107,6 +107,7 @@ from .export_overlay import (
 )
 from . import version_overlay_store
 from .export_run_ledger import actor_from_auth, build_ledger_row, record_export_run
+from .keyset_pagination import encode_time_id_cursor
 from .export_service import (
     ExportError,
     ExportPersistenceContext,
@@ -966,9 +967,24 @@ class ExportJobListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     jobs: List[ExportJobListItem]
-    total: int = Field(0, ge=0, description="Total jobs matching the filter (not just this page).")
+    total: Optional[int] = Field(
+        None,
+        ge=0,
+        description=(
+            "Total jobs matching the filter (not just this page), counted up to 10,000. Present only "
+            "when the request set `include_total`."
+        ),
+    )
     limit: int = Field(50, ge=1, le=200, description="Page size applied to this response.")
-    offset: int = Field(0, ge=0, description="Number of matching jobs skipped before this page.")
+    offset: int = Field(
+        0,
+        ge=0,
+        description="Number of matching jobs skipped before this page (deprecated; `0` when paging by cursor).",
+    )
+    has_more: bool = Field(False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class ExportJobAccepted(BaseModel):
@@ -3376,6 +3392,18 @@ async def get_export_job_status(tenant_slug: str, job_id: str) -> ExportJobStatu
     raise HTTPException(status_code=404, detail="Export job not found")
 
 
+def _created_at_of_ms(created_ms: int) -> datetime:
+    """The in-memory fallback's sort timestamp as the ``created_at`` a cursor carries.
+
+    Args:
+        created_ms: A job's creation time in epoch milliseconds.
+
+    Returns:
+        The same instant, timezone-aware (UTC).
+    """
+    return datetime.fromtimestamp(created_ms / 1000.0, tz=timezone.utc)
+
+
 async def list_export_jobs(
     tenant_slug: str,
     *,
@@ -3384,11 +3412,26 @@ async def list_export_jobs(
     state: Optional[str] = None,
     created_after: Optional[datetime] = None,
     created_before: Optional[datetime] = None,
+    cursor: Optional[Tuple[Any, str]] = None,
+    include_total: bool = False,
 ) -> ExportJobListResponse:
     """List a tenant's export jobs from the shared store (summary rows, no event logs).
 
     Paginated with stable newest-first ordering (IXH-6.3). Falls back to this process's
     in-memory jobs if the shared store is unreachable (same filters/pagination applied).
+
+    Args:
+        tenant_slug: The tenant whose jobs to list.
+        limit: Page size, clamped to ``[1, 200]``.
+        offset: Jobs to skip (deprecated; ignored when ``cursor`` is given).
+        state: Optional exact state filter.
+        created_after: Inclusive lower bound on ``created_at``.
+        created_before: Inclusive upper bound on ``created_at``.
+        cursor: ``(created_at, job_id)`` of the last job already seen (#7196).
+        include_total: Also count the matching jobs (capped); off by default.
+
+    Returns:
+        The page, whether another follows, and the total when asked for.
     """
     from .database import db
 
@@ -3396,7 +3439,7 @@ async def list_export_jobs(
         # X5: listing reclaims expired artifacts too (see schedule_export_job).
         _expire_stale_artifacts(_now_ms())
     page_limit = max(1, min(int(limit), 200))
-    page_offset = max(0, int(offset))
+    page_offset = 0 if cursor else max(0, int(offset))
 
     def _item(st: ExportJobStatus, artifact: Any, target: Any, dry_run: Any) -> ExportJobListItem:
         return ExportJobListItem(
@@ -3426,6 +3469,8 @@ async def list_export_jobs(
                 state=state,
                 created_after=created_after,
                 created_before=created_before,
+                cursor=cursor,
+                include_total=include_total,
             )
         )
     except Exception:  # noqa: BLE001 - shared store is best-effort; degrade to local view
@@ -3438,23 +3483,41 @@ async def list_export_jobs(
             ]
         local.sort(key=lambda t: (_created_ms(t[0]), t[0].job_id), reverse=True)
         total = len(local)
-        slice_rows = local[page_offset : page_offset + page_limit]
+        if cursor is not None:
+            after = (cursor[0], str(cursor[1]))
+            local = [t for t in local if (_created_at_of_ms(_created_ms(t[0])), t[0].job_id) < after]
+        window = local[page_offset : page_offset + page_limit + 1]
+        slice_rows = window[:page_limit]
+        more = len(window) > page_limit
         return ExportJobListResponse(
             jobs=[_item(st, a, t, d) for (st, a, t, d) in slice_rows],
-            total=total,
+            total=total if include_total else None,
             limit=page_limit,
             offset=page_offset,
+            has_more=more,
+            next_cursor=(
+                encode_time_id_cursor(
+                    _created_at_of_ms(_created_ms(slice_rows[-1][0])), slice_rows[-1][0].job_id
+                )
+                if more
+                else None
+            ),
         )
     items: List[ExportJobListItem] = []
     for row in page["jobs"]:
         st = ExportJobStatus.model_validate(row["status"])
         extra = row.get("extra") or {}
         items.append(_item(st, extra.get("artifact"), extra.get("target"), extra.get("dry_run")))
+    rows = page["jobs"]
+    more = bool(page.get("has_more")) and bool(rows)
+    counted = page.get("total")
     return ExportJobListResponse(
         jobs=items,
-        total=int(page["total"]),
+        total=int(counted) if include_total and counted is not None else None,
         limit=int(page["limit"]),
         offset=int(page["offset"]),
+        has_more=more,
+        next_cursor=encode_time_id_cursor(rows[-1]["created_at"], rows[-1]["job_id"]) if more else None,
     )
 
 

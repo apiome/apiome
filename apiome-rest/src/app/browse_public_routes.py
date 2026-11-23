@@ -23,7 +23,9 @@ from .browse_facets import (
     sort_format_counts,
     sort_protocol_counts,
 )
+from .browse_list_paging import BROWSE_PROJECTS_ORDER
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query, offset_query
 from .models import (
     BrowseDirectoryStats,
     BrowseFacetCount,
@@ -202,7 +204,15 @@ def list_public_browse_tenants(
     ),
     protocol: str | None = Query(None, description=_PROTOCOL_QUERY_DESCRIPTION),
     source_format: str | None = Query(None, alias="format", description=_FORMAT_QUERY_DESCRIPTION),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    offset: int = offset_query(),
 ) -> BrowsePublicTenantsResponse:
+    """The public tenant directory, one window at a time.
+
+    Two of the three sorts are aggregates (project count, latest activity), so the directory
+    pages by ``limit`` + ``offset`` rather than by cursor; ``has_more`` says whether another
+    window follows (#7196).
+    """
     protocol_filter = normalize_protocol_filter(protocol)
     format_filter = normalize_format_filter(source_format)
 
@@ -212,7 +222,11 @@ def list_public_browse_tenants(
         sort=sort,
         protocol=protocol_filter,
         source_format=format_filter,
+        limit=limit + 1,
+        offset=offset,
     )
+    has_more = len(rows) > limit
+    rows = rows[:limit]
     tenants = [
         BrowsePublicTenantRow.model_validate(
             {**r, "protocols": _string_list(r.get("protocols")), "formats": _string_list(r.get("formats"))}
@@ -224,6 +238,7 @@ def list_public_browse_tenants(
         directory_stats=BrowseDirectoryStats.model_validate(stats),
         tenants=tenants,
         filtered_count=len(tenants),
+        has_more=has_more,
         facets=facets,
     )
 
@@ -253,9 +268,17 @@ def list_public_browse_projects(
     ),
     protocol: str | None = Query(None, description=_PROTOCOL_QUERY_DESCRIPTION),
     source_format: str | None = Query(None, alias="format", description=_FORMAT_QUERY_DESCRIPTION),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: str | None = cursor_query(),
     authorization: str | None = Header(None),
     x_api_key: str | None = Header(None, alias="X-API-Key"),
 ) -> BrowsePublicProjectsResponse:
+    """A tenant's Browse projects in slug order, one page at a time (#7196).
+
+    Pass the previous page's ``next_cursor`` as ``cursor`` until ``has_more`` is false. A
+    malformed cursor is a ``400``.
+    """
+    after = BROWSE_PROJECTS_ORDER.parse(cursor)
     tenant = db.get_tenant_row_by_slug(tenant_slug)
     if tenant is None:
         raise HTTPException(status_code=404, detail=f"Tenant not found: {tenant_slug}")
@@ -277,6 +300,8 @@ def list_public_browse_projects(
             require_published=has_published,
             protocol=protocol_filter,
             source_format=format_filter,
+            limit=limit + 1,
+            cursor=after,
         )
         facet_counts = db.get_member_browse_project_facets_for_tenant(
             tenant_id,
@@ -291,6 +316,8 @@ def list_public_browse_projects(
             require_published=has_published,
             protocol=protocol_filter,
             source_format=format_filter,
+            limit=limit + 1,
+            cursor=after,
         )
         facet_counts = db.get_public_browse_project_facets_for_tenant(
             tenant_id,
@@ -298,6 +325,7 @@ def list_public_browse_projects(
             domain=domain,
         )
 
+    page = BROWSE_PROJECTS_ORDER.page(raw_rows, limit)
     projects = [
         BrowsePublicProjectRow(
             slug=row["slug"],
@@ -309,7 +337,7 @@ def list_public_browse_projects(
             protocols=_string_list(row.get("protocols")),
             formats=_string_list(row.get("formats")),
         )
-        for row in raw_rows
+        for row in page.items
     ]
 
     return BrowsePublicProjectsResponse(
@@ -317,6 +345,8 @@ def list_public_browse_projects(
         tenant_name=str(tenant["name"]),
         projects=projects,
         filtered_count=len(projects),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
         facets=_build_facets(facet_counts),
     )
 
@@ -337,9 +367,17 @@ def list_public_browse_versions(
         None,
         description="Include only versions whose published_at is at or after this timestamp (ISO 8601).",
     ),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    offset: int = offset_query(),
     authorization: str | None = Header(None),
     x_api_key: str | None = Header(None, alias="X-API-Key"),
 ) -> BrowsePublicVersionsResponse:
+    """A project's published versions, highest semantic version first (#7196).
+
+    The order is computed after the read, so the list pages by ``limit`` + ``offset`` (not by
+    cursor) over the project's 2,000 most recently published versions; ``has_more`` says whether
+    another window follows.
+    """
     tenant = db.get_tenant_row_by_slug(tenant_slug)
     if tenant is None:
         raise HTTPException(status_code=404, detail=f"Tenant not found: {tenant_slug}")
@@ -367,7 +405,7 @@ def list_public_browse_versions(
     rows_sorted = _sort_versions_semver_desc(raw_rows)
 
     versions_out: List[BrowsePublicVersionRow] = []
-    for i, row in enumerate(rows_sorted):
+    for i, row in enumerate(rows_sorted[offset : offset + limit], start=offset):
         next_row = rows_sorted[i + 1] if i + 1 < len(rows_sorted) else None
         baseline_slug = str(next_row["version_id"]) if next_row else None
 
@@ -377,7 +415,8 @@ def list_public_browse_versions(
         desc = row.get("description")
         clog = row.get("change_log")
         summary = browse_version_changes_summary(
-            change_model_json=row.get("change_model_json"),
+            change_path_count=row.get("change_path_count"),
+            change_class_count=row.get("change_class_count"),
             change_log=str(clog) if clog is not None else None,
             description=str(desc) if desc is not None else None,
             baseline_version_slug=baseline_slug,
@@ -404,6 +443,7 @@ def list_public_browse_versions(
         project_name=str(project["name"]),
         versions=versions_out,
         filtered_count=len(versions_out),
+        has_more=offset + limit < len(rows_sorted),
     )
 
 

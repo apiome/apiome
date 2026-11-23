@@ -40,7 +40,9 @@ def _get(path):
 def test_the_version_list_returns_counts_and_tags() -> None:
     response, mock_db = _get("/v1/classes/acme?version_id=v1")
     assert response.status_code == 200, response.text
-    mock_db.get_classes_for_tenant_version.assert_called_once_with("tenant-1", "v1", with_summary=True)
+    mock_db.get_classes_for_tenant_version.assert_called_once_with(
+        "tenant-1", "v1", with_summary=True, limit=1001, cursor=None
+    )
     body = response.json()
     assert [(c["name"], c["property_count"], [t["name"] for t in c["tags"]]) for c in body] == [
         ("Charge", 11, ["financial"]),
@@ -52,7 +54,7 @@ def test_the_unfiltered_list_does_not_ask_for_the_summary() -> None:
     response, mock_db = _get("/v1/classes/acme")
     assert response.status_code == 200, response.text
     # One tenant-wide query, not one per version (DBP-1.6, #7189).
-    mock_db.get_classes_for_tenant.assert_called_once_with("tenant-1")
+    mock_db.get_classes_for_tenant.assert_called_once_with("tenant-1", limit=1001, cursor=None)
     mock_db.get_classes_for_tenant_version.assert_not_called()
     mock_db.get_versions_for_tenant.assert_not_called()
     assert [c["name"] for c in response.json()] == ["Charge", "Refund"]

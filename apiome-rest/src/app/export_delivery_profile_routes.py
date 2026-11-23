@@ -50,10 +50,12 @@ from .export_git_delivery_routes import _check_tenant, perform_git_delivery
 from .export_object_storage_delivery_routes import perform_object_storage_delivery
 from .export_webhook_delivery import display_url
 from .export_webhook_delivery_routes import perform_webhook_delivery
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .mcp_credential_crypto import CredentialEncryptionError, seal_credential_payload, unseal_credential_payload
 from .permissions import Action, Resource, enforce_permission
 from .sdk_publish_routes import tenant_id_of, write_audit
 from .ssrf_guard import SSRFError, validate_url
+from .tenant_config_list_orders import EXPORT_DELIVERY_PROFILES_ORDER
 
 router = APIRouter(prefix="/v1/export", tags=["export-delivery"])
 
@@ -108,6 +110,8 @@ class ExportDeliveryProfileListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     profiles: List[ExportDeliveryProfileModel] = Field(default_factory=list)
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 class ProfileDeliveryRequest(BaseModel):
@@ -338,19 +342,30 @@ async def create_delivery_profile(
     response_model_by_alias=True,
     summary="List the workspace's export delivery profiles",
     description="Every delivery profile, by name — never a secret. `channel` narrows to one channel. "
+    "At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is false. "
     "Requires `projects:view`.",
 )
 async def list_delivery_profiles(
     tenant_slug: str,
     channel: Optional[Literal["git", "webhook", "object_storage"]] = Query(default=None),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> ExportDeliveryProfileListResponse:
-    """List the tenant's delivery profiles."""
+    """List one page of the tenant's delivery profiles (400 for a malformed cursor)."""
     await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
+    after = EXPORT_DELIVERY_PROFILES_ORDER.parse(cursor)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
-    rows = await asyncio.to_thread(db.list_export_delivery_profiles, tenant_id, channel)
-    return ExportDeliveryProfileListResponse(profiles=[profile_model(row) for row in rows])
+    rows = await asyncio.to_thread(
+        db.list_export_delivery_profiles, tenant_id, channel, limit=limit + 1, cursor=after
+    )
+    page = EXPORT_DELIVERY_PROFILES_ORDER.page(rows, limit)
+    return ExportDeliveryProfileListResponse(
+        profiles=[profile_model(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.get(

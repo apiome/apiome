@@ -23,7 +23,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict, List, Literal, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,6 +32,7 @@ from .auth import validate_authentication
 from .auth_provider_config_routes import require_super_admin
 from .database import db
 from .document_store_health import describe_store, probe_store
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT
 from .permissions import enforce_platform_admin
 
 ops_router = APIRouter(prefix="/v1/ops", tags=["ops"])
@@ -144,6 +145,11 @@ class DocumentStoreStatus(_CamelModel):
         description="Tenants that have configured their own bucket, with its health.",
         alias="tenantBuckets",
     )
+    tenant_buckets_truncated: bool = Field(
+        False,
+        description="True when more tenants have a bucket than `limit` listed.",
+        alias="tenantBucketsTruncated",
+    )
 
 
 class DocumentStoreProbeStep(_CamelModel):
@@ -166,9 +172,22 @@ class DocumentStoreProbeResult(_CamelModel):
     steps: List[DocumentStoreProbeStep]
 
 
-async def _status() -> JSONResponse:
+def _tenant_bucket_limit() -> Any:
+    """The ``limit`` query parameter of the status read: how many ``tenantBuckets`` it lists."""
+    return Query(
+        default=MAX_REVISION_PAGE_LIMIT,
+        ge=1,
+        le=MAX_REVISION_PAGE_LIMIT,
+        description=(
+            f"How many `tenantBuckets` to list (by tenant slug). At most {MAX_REVISION_PAGE_LIMIT:,}; "
+            "`tenantBucketsTruncated` says whether more exist."
+        ),
+    )
+
+
+async def _status(limit: int) -> JSONResponse:
     """Describe the store from a worker thread (the check and the query block)."""
-    body: Dict[str, Any] = await asyncio.to_thread(describe_store, db)
+    body: Dict[str, Any] = await asyncio.to_thread(describe_store, db, tenant_bucket_limit=limit)
     return JSONResponse(content=body, headers=_NO_STORE)
 
 
@@ -179,14 +198,17 @@ async def _probe() -> JSONResponse:
 
 
 @ops_router.get("/document-store", response_model=DocumentStoreStatus)
-async def ops_document_store(auth_data: Dict[str, Any] = Depends(validate_authentication)) -> JSONResponse:
+async def ops_document_store(
+    limit: int = _tenant_bucket_limit(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> JSONResponse:
     """The active document store: backend, settings, health and usage (COA-5.9, #7085). Platform-admin only.
 
     Settings come from the server environment and are read-only here; credentials are never
     returned — ``credentials`` only says whether static keys or boto3's default chain are used.
     """
     await run_in_threadpool(enforce_platform_admin, db, auth_data)
-    return await _status()
+    return await _status(limit)
 
 
 @ops_router.post("/document-store/test", response_model=DocumentStoreProbeResult)
@@ -201,9 +223,11 @@ async def ops_test_document_store(auth_data: Dict[str, Any] = Depends(validate_a
 
 
 @admin_router.get("/document-store", response_model=DocumentStoreStatus)
-async def admin_document_store(_: None = Depends(require_super_admin)) -> JSONResponse:
+async def admin_document_store(
+    limit: int = _tenant_bucket_limit(), _: None = Depends(require_super_admin)
+) -> JSONResponse:
     """The super-admin console's view of ``GET /v1/ops/document-store`` (COA-5.9, #7085)."""
-    return await _status()
+    return await _status(limit)
 
 
 @admin_router.post("/document-store/test", response_model=DocumentStoreProbeResult)

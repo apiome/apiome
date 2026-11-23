@@ -26,6 +26,7 @@ from typing import Any, List
 
 import pytest
 
+from app.keyset_pagination import decode_key_cursor
 from app.scoped_catalog_store import (
     load_classes_by_domain,
     load_classes_by_ids,
@@ -494,19 +495,21 @@ class TestDomainPagination:
 
         assert _names(page) == ["Address", "Customer"]
         assert page.total == 3
-        assert page.next_offset == 2
+        # A keyset cursor naming the last item served, not an offset (#7196).
+        assert decode_key_cursor(page.next_cursor, 2)[0] == "Customer"
+        assert page.next_offset is None
 
     def test_paging_visits_every_member_exactly_once(self, catalog):
         seen: List[str] = []
-        offset = 0
+        after = None
         while True:
             page = load_classes_by_domain(
-                catalog, version_id=VERSION, domain_id=BILLING_DOMAIN, limit=25, offset=offset
+                catalog, version_id=VERSION, domain_id=BILLING_DOMAIN, limit=25, after=after
             )
             seen.extend(_names(page))
-            if page.next_offset is None:
+            if page.next_cursor is None:
                 break
-            offset = page.next_offset
+            after = tuple(decode_key_cursor(page.next_cursor, 2))
 
         assert len(seen) == len(set(seen))
         assert len(seen) == page.total
@@ -614,7 +617,7 @@ class TestScopedPaths:
         )
 
         assert page.total == 2
-        assert page.next_offset == 1
+        assert page.next_cursor is not None and page.next_offset is None
 
     def test_the_shared_bucket_holds_the_rest_of_the_catalog(self, catalog):
         page = load_paths_by_domain(catalog, version_id=VERSION, domain_id=None, limit=10)

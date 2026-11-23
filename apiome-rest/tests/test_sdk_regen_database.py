@@ -283,3 +283,19 @@ def test_deleting_a_subscription_is_a_plain_scoped_delete() -> None:
     sql, params = write.call_args.args
     assert "DELETE FROM apiome.sdk_regen_subscriptions" in sql
     assert params == (_TENANT, _PROJECT, "npm")
+
+
+def test_list_sdk_regen_runs_continues_after_a_cursor_without_an_offset() -> None:
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+    with patch.object(db, "execute_query", return_value=[]) as query:
+        db.list_sdk_regen_runs(_TENANT, _PROJECT, limit=10, offset=20, cursor=(stamp, _RUN))
+    sql, params = query.call_args.args
+    assert "(r.created_at, r.id) < (%s, %s::uuid)" in sql
+    assert "ORDER BY r.created_at DESC, r.id DESC" in sql
+    assert params == (_TENANT, _PROJECT, stamp, _RUN, 10, 0)
+
+
+def test_count_sdk_regen_runs_stops_at_the_cap() -> None:
+    with patch.object(db, "execute_query", return_value=[{"total": 3}]) as query:
+        assert db.count_sdk_regen_runs(_TENANT, _PROJECT) == 3
+    assert "LIMIT 10000" in query.call_args.args[0]

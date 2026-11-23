@@ -241,7 +241,7 @@ def test_the_page_size_is_clamped(requested: int, expected: int) -> None:
     assert params[-2] == expected
 
 
-@pytest.mark.parametrize("requested,expected", [(-5, 0), (0, 0), (900_000, 500_000)])
+@pytest.mark.parametrize("requested,expected", [(-5, 0), (0, 0), (900_000, 10_000)])
 def test_the_offset_is_clamped(requested: int, expected: int) -> None:
     rec, result = _run(offset=requested)
     _sql, params = rec.page_call
@@ -277,3 +277,100 @@ def test_the_project_facet_skips_unmapped_specs() -> None:
     ]
     assert len(project_facet) == 1
     assert "IS NOT NULL" in project_facet[0][0]
+
+
+# --- keyset paging (#7196) ----------------------------------------------------------------
+
+_FILE = "990e8400-e29b-41d4-a716-446655440001"
+
+
+def test_a_paging_request_issues_no_count() -> None:
+    rec, result = _run(include_total=False, search="orders")
+    assert not [c for c in rec.calls if c[0].lstrip().startswith("SELECT COUNT(*) AS c ")]
+    assert result["catalog_total"] is None and result["match_count"] is None
+
+
+def test_a_cursor_continues_the_path_sort_without_an_offset() -> None:
+    rec, result = _run(sort="path", offset=40, cursor=["a/b.yaml", _FILE], include_total=False)
+    sql, params = rec.page_call
+    assert "(f.path > %s) OR (f.path = %s AND f.id > %s::uuid)" in sql
+    assert sql.index("f.path > %s") < sql.index(" ORDER BY f.path ASC, f.id ASC")
+    assert params[-5:] == ("a/b.yaml", "a/b.yaml", _FILE, 50, 0)
+    assert result["offset"] == 0
+
+
+def test_the_default_sort_continues_past_a_repository_without_a_name() -> None:
+    """`repository_full_name` is nullable and sorts last; the cursor must not lose those rows."""
+    rec, _ = _run(cursor=["acme/api", "a.yaml", _FILE], include_total=False)
+    sql, _params = rec.page_call
+    assert "(r.repository_full_name > %s OR r.repository_full_name IS NULL)" in sql
+
+    rec, _ = _run(cursor=[None, "a.yaml", _FILE], include_total=False)
+    sql, params = rec.page_call
+    assert "(r.repository_full_name IS NULL AND f.path > %s)" in sql
+    assert "r.repository_full_name > %s" not in sql
+    assert sql.count("%s") == len(params)
+
+
+def test_the_recent_sort_continues_newest_first() -> None:
+    from datetime import datetime, timezone
+
+    stamp = datetime(2026, 7, 20, tzinfo=timezone.utc)
+    rec, _ = _run(sort="recent", cursor=[stamp, _FILE], include_total=False)
+    sql, params = rec.page_call
+    assert "COALESCE(imp.created_at, f.created_at) < %s::timestamptz" in sql
+    assert "COALESCE(imp.created_at, f.created_at) = %s::timestamptz AND f.id > %s::uuid" in sql
+    assert sql.count("%s") == len(params)
+
+
+@pytest.mark.parametrize(
+    "sort,cursor",
+    [("format", ["openapi", "a.yaml", _FILE]), ("status", [1, "a.yaml", _FILE])],
+)
+def test_computed_sorts_compare_the_same_expression_they_order_by(sort, cursor) -> None:
+    rec, _ = _run(sort=sort, cursor=cursor, include_total=False, search="orders")
+    sql, params = rec.page_call
+    assert sql.count("%s") == len(params)
+    assert "(CASE" in sql.split(" ORDER BY ")[0].rsplit(" AND (", 1)[1]
+
+
+# --- per-repository file list (#7196) ---------------------------------------------------
+
+
+def _run_files(**kwargs) -> Tuple[_Recorder, Dict[str, Any]]:
+    db = Database.__new__(Database)
+    rec = _Recorder()
+    defaults: Dict[str, Any] = dict(
+        path_regex=None,
+        like_patterns=None,
+        hide_non_importable=False,
+        skip_vendor=True,
+        include_hidden=False,
+        path_prefix=None,
+        limit=50,
+        offset=0,
+    )
+    defaults.update(kwargs)
+    with patch.object(Database, "execute_query", rec), patch.object(
+        Database, "get_tenant_repository", lambda *_: {"id": _REPO}
+    ):
+        result = db.tenant_repository_files_stats_and_page(_TENANT, _REPO, "main", **defaults)
+    return rec, result
+
+
+def test_the_file_list_continues_after_a_path() -> None:
+    rec, result = _run_files(cursor="openapi/a.yaml", offset=40, include_total=False)
+    sql, params = rec.page_call
+    assert " AND f.path > %s ORDER BY f.path ASC LIMIT %s OFFSET %s" in sql
+    assert params[-3:] == ("openapi/a.yaml", 50, 0)
+    assert len(rec.calls) == 1
+    assert result["indexed_total"] is None
+    assert result["match_count"] is None and result["importable_match_count"] is None
+
+
+def test_the_file_list_counts_when_asked_and_clamps_the_offset() -> None:
+    rec, result = _run_files(offset=900_000)
+    _sql, params = rec.page_call
+    assert params[-1] == 10_000
+    assert len(rec.calls) == 3
+    assert result["indexed_total"] == 7 and result["match_count"] is not None

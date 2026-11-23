@@ -16,6 +16,8 @@ import {
   type NotificationUnreadCounts,
 } from '@lib/notifications';
 
+import { hasMoreAfter, readPage, setPageParams, type PageInfo } from '@lib/cursor-pages';
+
 import { announceNotificationsRead, subscribeNotificationsRead } from './notificationsReadBus';
 import { useNotificationPreferences } from './useNotificationPreferences';
 
@@ -92,9 +94,13 @@ export interface UseNotificationsResult {
   counts: NotificationUnreadCounts;
   /** Unread rows of the types the reader has left on — the badge. */
   unreadTotal: number;
-  /** How many rows match upstream, before muting. */
-  total: number;
-  /** True when more rows remain upstream than have been read. */
+  /**
+   * How many rows match upstream, before muting — or null when apiome-rest did not count them.
+   * The inbox pages by cursor and asks for no count (#7196), so this is null in practice; use
+   * {@link UseNotificationsResult.hasMore} to decide whether to offer more.
+   */
+  total: number | null;
+  /** True when apiome-rest says another page follows the rows read so far. */
   hasMore: boolean;
   /** True until the first read for the current inputs has resolved. */
   loading: boolean;
@@ -118,8 +124,8 @@ interface LoadedInbox {
   key: string;
   /** Every row read so far for those inputs. */
   rows: NotificationRow[];
-  /** How many match upstream. */
-  total: number;
+  /** The latest page's paging fields: whether another follows, and where it starts. */
+  page: PageInfo;
 }
 
 /** The envelope every notification BFF route answers with. */
@@ -145,16 +151,20 @@ async function getEnvelope<T>(url: string): Promise<Envelope<T>> {
  * The query string for one read.
  *
  * @param options - The hook's inputs.
- * @param offset - Where the page starts.
+ * @param cursor - The previous page's `next_cursor`; null for the first page.
+ * @param offset - Rows already read; sent only when the previous page issued no cursor.
  * @returns The query, without its leading `?`.
  */
-function listQuery(options: UseNotificationsOptions, offset: number): string {
+function listQuery(
+  options: UseNotificationsOptions,
+  cursor: string | null = null,
+  offset = 0
+): string {
   const params = new URLSearchParams();
   if (options.unreadOnly) params.set('unread', 'true');
   if (options.type) params.set('type', options.type);
   params.set('limit', String(options.limit ?? NOTIFICATION_PAGE_SIZE));
-  params.set('offset', String(offset));
-  return params.toString();
+  return setPageParams(params, { cursor, offset }).toString();
 }
 
 /**
@@ -178,7 +188,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
   const key = useMemo(
     () =>
       enabled
-        ? `${countsOnly ? 'counts&' : ''}${listQuery({ enabled, unreadOnly, type, limit }, 0)}`
+        ? `${countsOnly ? 'counts&' : ''}${listQuery({ enabled, unreadOnly, type, limit })}`
         : '',
     [enabled, unreadOnly, type, limit, countsOnly]
   );
@@ -206,7 +216,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
           countsOnly
             ? Promise.resolve(null)
             : getEnvelope<NotificationPage>(
-                `/api/notifications?${listQuery({ enabled, unreadOnly, type, limit }, 0)}`
+                `/api/notifications?${listQuery({ enabled, unreadOnly, type, limit })}`
               ),
           getEnvelope<{ unread: NotificationUnreadCounts }>('/api/notifications/unread-count'),
         ]);
@@ -215,7 +225,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
           setLoaded({
             key: requested,
             rows: page.notifications ?? [],
-            total: page.total ?? page.notifications?.length ?? 0,
+            page: readPage(page),
           });
         }
         setCounts(parseUnreadCounts(unread.unread));
@@ -269,13 +279,17 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
   const loadMore = useCallback(() => {
     const current = loaded;
     if (!enabled || !current || current.key !== key) return;
-    if (current.rows.length >= current.total) return;
+    if (!hasMoreAfter(current.page, current.rows.length)) return;
 
     setLoadingMore(true);
     void (async () => {
       try {
         const page = await getEnvelope<NotificationPage>(
-          `/api/notifications?${listQuery({ enabled, unreadOnly, type, limit }, current.rows.length)}`
+          `/api/notifications?${listQuery(
+            { enabled, unreadOnly, type, limit },
+            current.page.nextCursor,
+            current.rows.length
+          )}`
         );
         if (keyRef.current !== current.key) return;
         setLoaded((previous) => {
@@ -288,7 +302,7 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
           return {
             key: previous.key,
             rows: [...previous.rows, ...added],
-            total: page.total ?? previous.total,
+            page: readPage(page),
           };
         });
         setError(null);
@@ -374,8 +388,8 @@ export function useNotifications(options: UseNotificationsOptions): UseNotificat
     rows,
     counts,
     unreadTotal: visibleUnreadTotal(counts, preferences),
-    total: loaded?.key === key ? loaded.total : 0,
-    hasMore: Boolean(rowsForKey && loaded && loaded.rows.length < loaded.total),
+    total: loaded?.key === key ? loaded.page.total : null,
+    hasMore: Boolean(rowsForKey && loaded && hasMoreAfter(loaded.page, loaded.rows.length)),
     // Derived rather than a `useState`: a background refresh must not blank a list that
     // already has an answer (the rule `useOpenReviews` follows). A counts-only read has no
     // list to be waiting for.

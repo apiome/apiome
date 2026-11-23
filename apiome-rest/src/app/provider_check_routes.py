@@ -41,6 +41,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from . import provider_check_store
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import cursor_query, limit_query, offset_query, parse_time_id_cursor
 from .permissions import Action, Resource, enforce_permission
 from .provider_check_store import CheckFilters
 from .provider_checks import (
@@ -100,7 +101,11 @@ class CheckListResponse(BaseModel):
     )
     count: int = Field(description="How many check runs this page holds.")
     limit: int = Field(description="The page size used.")
-    offset: int = Field(description="The offset used.")
+    offset: int = Field(description="The offset used (deprecated; `0` when paging by cursor).")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
     providers: List[str] = Field(
         default_factory=list,
         description="Providers a verdict can be published to through the status adapter.",
@@ -162,6 +167,7 @@ def _http_error(exc: ProviderCheckValidationError) -> HTTPException:
         "`pending`, `pass`, `fail` or `skipped` about one commit of one bound draft.\n\n"
         "Filters combine: `version` (revision id or version label), `commit_sha`, and `state`.\n\n"
         "No repository credential appears anywhere in the response.\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false.\n\n"
         "Requires `projects:view`."
     ),
 )
@@ -173,8 +179,9 @@ def list_checks(
     state: Optional[str] = Query(
         default=None, description=f"Only checks in this state: {', '.join(CHECK_STATES)}."
     ),
-    limit: int = Query(default=50, ge=1, le=200, description="Page size."),
-    offset: int = Query(default=0, ge=0, description="Check runs to skip."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CheckListResponse:
     """List a project's check runs.
@@ -186,15 +193,16 @@ def list_checks(
         commit_sha: Only checks about this commit.
         state: Only checks in this normalized state.
         limit: Page size.
-        offset: Check runs to skip.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        offset: Check runs to skip (deprecated).
         auth_data: The authenticated principal.
 
     Returns:
-        The page.
+        The page and whether another follows.
 
     Raises:
-        HTTPException: 404 for an unknown project or version, 422 for an unknown state, 403
-            without ``projects:view``.
+        HTTPException: 400 for a malformed cursor, 404 for an unknown project or version, 422
+            for an unknown state, 403 without ``projects:view``.
     """
     tenant_id, _user_id = _caller(auth_data, Resource.PROJECTS, Action.VIEW)
     _ = tenant_slug
@@ -207,17 +215,24 @@ def list_checks(
             },
         )
     filters = CheckFilters(
-        version=version, commit_sha=commit_sha, state=state, limit=limit, offset=offset
+        version=version,
+        commit_sha=commit_sha,
+        state=state,
+        limit=limit,
+        offset=offset,
+        cursor=parse_time_id_cursor(cursor),
     )
     try:
-        checks, _version_id = provider_check_store.list_checks(tenant_id, project_ref, filters)
+        page, _version_id = provider_check_store.list_checks(tenant_id, project_ref, filters)
     except ProviderCheckValidationError as exc:
         raise _http_error(exc) from exc
     return CheckListResponse(
-        checks=checks,
-        count=len(checks),
+        checks=page.items,
+        count=len(page.items),
         limit=limit,
-        offset=offset,
+        offset=0 if filters.cursor else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
         providers=list(supported_providers()),
     )
 
@@ -267,6 +282,7 @@ def read_check(
     summary="List a version's provider check runs",
     description=(
         "The checks recorded against this version's binding, newest first.\n\n"
+        "Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false.\n\n"
         "Requires `projects:view`."
     ),
 )
@@ -275,8 +291,9 @@ def list_version_checks(
     project_ref: str,
     version_ref: str,
     commit_sha: Optional[str] = Query(default=None, description="Only checks about this commit."),
-    limit: int = Query(default=50, ge=1, le=200, description="Page size."),
-    offset: int = Query(default=0, ge=0, description="Check runs to skip."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    offset: int = offset_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> CheckListResponse:
     """List one version's check runs.
@@ -287,29 +304,37 @@ def list_version_checks(
         version_ref: Revision id or version label.
         commit_sha: Only checks about this commit.
         limit: Page size.
-        offset: Check runs to skip.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        offset: Check runs to skip (deprecated).
         auth_data: The authenticated principal.
 
     Returns:
-        The page.
+        The page and whether another follows.
 
     Raises:
-        HTTPException: 404 for an unknown project or version, 403 without ``projects:view``.
+        HTTPException: 400 for a malformed cursor, 404 for an unknown project or version, 403
+            without ``projects:view``.
     """
     tenant_id, _user_id = _caller(auth_data, Resource.PROJECTS, Action.VIEW)
     _ = tenant_slug
     filters = CheckFilters(
-        version=version_ref, commit_sha=commit_sha, limit=limit, offset=offset
+        version=version_ref,
+        commit_sha=commit_sha,
+        limit=limit,
+        offset=offset,
+        cursor=parse_time_id_cursor(cursor),
     )
     try:
-        checks, _version_id = provider_check_store.list_checks(tenant_id, project_ref, filters)
+        page, _version_id = provider_check_store.list_checks(tenant_id, project_ref, filters)
     except ProviderCheckValidationError as exc:
         raise _http_error(exc) from exc
     return CheckListResponse(
-        checks=checks,
-        count=len(checks),
+        checks=page.items,
+        count=len(page.items),
         limit=limit,
-        offset=offset,
+        offset=0 if filters.cursor else offset,
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
         providers=list(supported_providers()),
     )
 

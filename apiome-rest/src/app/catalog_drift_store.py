@@ -36,11 +36,17 @@ _EVENT_COLUMNS = """
     e.notification, e.notified_at, e.dismissed_at, e.dismissed_by, e.created_at
 """
 
+#: Every ``catalog_drift_settings`` column — the settings row is read and written whole.
+_SETTINGS_COLUMNS = (
+    "tenant_id, notify_breaking, notify_dangerous, notify_safe, delivery, breaking_immediate, "
+    "email_enabled, last_digest_at, updated_by, updated_at"
+)
+
 
 def get_settings_row(db: Any, tenant_id: str) -> Optional[Dict[str, Any]]:
     """The tenant's stored settings row, or ``None`` when it uses the defaults."""
     rows = db.execute_query(
-        "SELECT * FROM apiome.catalog_drift_settings WHERE tenant_id = %s::uuid",
+        f"SELECT {_SETTINGS_COLUMNS} FROM apiome.catalog_drift_settings WHERE tenant_id = %s::uuid",
         (tenant_id,),
     )
     return dict(rows[0]) if rows else None
@@ -49,7 +55,7 @@ def get_settings_row(db: Any, tenant_id: str) -> Optional[Dict[str, Any]]:
 def put_settings(db: Any, tenant_id: str, settings: DriftSettings, *, actor_id: Optional[str]) -> Dict[str, Any]:
     """Create or replace the tenant's settings (``last_digest_at`` is kept) and return the row."""
     rows = db.execute_query(
-        """
+        f"""
         INSERT INTO apiome.catalog_drift_settings
             (tenant_id, notify_breaking, notify_dangerous, notify_safe, delivery, breaking_immediate,
              email_enabled, updated_by, updated_at)
@@ -63,7 +69,7 @@ def put_settings(db: Any, tenant_id: str, settings: DriftSettings, *, actor_id: 
             email_enabled = EXCLUDED.email_enabled,
             updated_by = EXCLUDED.updated_by,
             updated_at = CURRENT_TIMESTAMP
-        RETURNING *
+        RETURNING {_SETTINGS_COLUMNS}
         """,
         (
             tenant_id,
@@ -109,7 +115,7 @@ def insert_event(
             ON CONFLICT (version_id) DO NOTHING
             RETURNING {_EVENT_COLUMNS}
         )
-        SELECT * FROM inserted
+        SELECT {_EVENT_COLUMNS} FROM inserted e
         UNION ALL
         SELECT {_EVENT_COLUMNS} FROM apiome.catalog_drift_events e
         WHERE e.version_id = %s::uuid AND NOT EXISTS (SELECT 1 FROM inserted)

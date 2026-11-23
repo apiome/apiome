@@ -115,7 +115,7 @@ class FakeMultiTenantDb:
         return len(_FIXTURE) if user_id == _GRACE_ID else 0
 
     def list_tenants_for_user_page(
-        self, user_id: str, limit: int, offset: int
+        self, user_id: str, limit: int, offset: int, cursor: Any = None
     ) -> List[Dict[str, Any]]:
         if user_id != _GRACE_ID:
             return []
@@ -131,7 +131,11 @@ class FakeMultiTenantDb:
             }
             for slug, (tenant_id, name, role, lic_name, lic_type) in _FIXTURE.items()
         ]
-        rows.sort(key=lambda r: r["slug"])
+        rows.sort(key=lambda r: (r["slug"], r["id"]))
+        if cursor is not None:
+            # Keyset: only tenants strictly after the cursor row (#7196).
+            rows = [r for r in rows if (r["slug"], r["id"]) > tuple(cursor)]
+            offset = 0
         return rows[offset : offset + limit]
 
     # -- RBAC resolution (permissions guard) -------------------------------

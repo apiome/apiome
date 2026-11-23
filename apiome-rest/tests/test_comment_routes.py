@@ -30,6 +30,7 @@ from app.config import settings
 from app.main import app
 from app.rate_limit import FixedWindowRateLimiter
 from tests.fake_comment_db import FakeCommentDb
+from tests.keyset_paging_fakes import walk
 
 client = TestClient(app)
 
@@ -126,8 +127,8 @@ def test_a_thread_on_a_class_is_listed_by_its_version(fake, act_as):
     assert thread["created_by_name"] == "Alice Anders"
     assert [c["body"] for c in detail["comments"]] == ["Why is this nullable?"]
 
-    by_id = client.get(BASE, params={"version": VERSION_1}).json()
-    by_label = client.get(BASE, params={"version": "1.0.0"}).json()
+    by_id = client.get(BASE, params={"version": VERSION_1, "include_total": "true"}).json()
+    by_label = client.get(BASE, params={"version": "1.0.0", "include_total": "true"}).json()
     for listing in (by_id, by_label):
         assert [t["id"] for t in listing["threads"]] == [thread["id"]]
         assert listing["threads"][0]["root_comment"]["body"] == "Why is this nullable?"
@@ -489,11 +490,36 @@ def test_mentions_me_matches_a_mention_in_any_reply(fake, act_as):
 
 def test_list_pages_with_a_total(fake, act_as):
     opened = [_opened()["thread"]["id"] for _ in range(3)]
-    page = client.get(BASE, params={"limit": 2, "offset": 1}).json()
+    page = client.get(BASE, params={"limit": 2, "offset": 1, "include_total": "true"}).json()
     assert page["total"] == 3
     assert page["count"] == 2
     assert (page["limit"], page["offset"]) == (2, 1)
     assert [t["id"] for t in page["threads"]] == [opened[1], opened[0]]
+    assert page["has_more"] is False and page["next_cursor"] is None
+
+
+def test_the_total_is_not_counted_unless_asked_for(fake, act_as, monkeypatch):
+    _opened()
+    monkeypatch.setattr(
+        fake, "count_comment_threads", lambda **_: pytest.fail("counted without include_total")
+    )
+    body = client.get(BASE).json()
+    assert body["total"] is None and body["count"] == 1
+    assert body["has_more"] is False and body["next_cursor"] is None
+
+
+def test_the_list_pages_by_cursor_until_has_more_is_false(fake, act_as):
+    opened = [_opened()["thread"]["id"] for _ in range(5)]
+    seen = walk(lambda params: client.get(BASE, params=params), "threads", limit=2)
+    ids = [thread["id"] for thread in seen]
+    assert ids == [thread["id"] for thread in client.get(BASE).json()["threads"]]
+    assert sorted(ids) == sorted(opened) and len(set(ids)) == 5
+
+
+def test_a_malformed_cursor_is_a_400_and_the_page_size_is_capped(fake, act_as):
+    assert client.get(BASE, params={"cursor": "not-a-cursor"}).status_code == 400
+    assert client.get(BASE, params={"limit": 201}).status_code == 422
+    assert client.get(BASE, params={"offset": 10_001}).status_code == 422
 
 
 def test_a_malformed_anchor_filter_is_400(fake, act_as):
@@ -644,7 +670,7 @@ def test_relink_reattaches_an_orphaned_thread_to_a_chosen_element(fake, act_as):
 
     on_operation = client.get(BASE, params={"status": "open", "anchor_type": "operation", "anchor_id": OPERATION_ID})
     assert [t["id"] for t in on_operation.json()["threads"]] == [thread_id]
-    assert client.get(BASE, params={"status": "orphaned"}).json()["total"] == 0
+    assert client.get(BASE, params={"status": "orphaned", "include_total": "true"}).json()["total"] == 0
 
 
 def test_relink_restores_a_resolution_the_thread_had(fake, act_as):

@@ -22,12 +22,14 @@ reads zero. A team with confirmed ownership rows can only be deleted with
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
 import psycopg2
 
 from .consumer_contract_store import ConsumerActor
 from .database import db
+from .keyset_lists import ListOrder, SortColumn
+from .keyset_pagination import Page
 from .revision_deprecation import is_uuid_string
 from .teams import (
     CODE_MEMBER_NOT_IN_TENANT,
@@ -50,11 +52,13 @@ from .teams import (
 
 __all__ = [
     "ACTIVITY_DAYS",
+    "TEAMS_ORDER",
     "create_team",
     "delete_team",
     "get_team",
     "insert_team",
     "list_teams",
+    "page_teams",
     "replace_team_members",
     "team_activity",
     "update_team",
@@ -303,16 +307,54 @@ def list_teams(tenant_id: str) -> List[TeamRecord]:
     """
     if not is_uuid_string(tenant_id):
         return []
-    rows = db.execute_query(
+    return [_record(dict(row)) for row in _team_rows(tenant_id, None, None)]
+
+
+#: The order of the team list: by name; a slug is unique among a tenant's live teams (#7196).
+TEAMS_ORDER = ListOrder(
+    "teams",
+    (
+        SortColumn("lower(t.name)", "text", ("name_key",)),
+        SortColumn("t.slug", "text", ("slug",)),
+    ),
+)
+
+
+def _team_rows(tenant_id: str, limit: Optional[int], cursor: Optional[Sequence[Any]]) -> List[Any]:
+    """The live team rows of a tenant in :data:`TEAMS_ORDER`, whole or one window of it."""
+    after_sql, after_params, limit_sql, limit_params = TEAMS_ORDER.window(limit, cursor)
+    return db.execute_query(
         f"""
-        SELECT {_TEAM_COLUMNS}
+        SELECT {_TEAM_COLUMNS}, lower(t.name) AS name_key
         FROM apiome.teams t
-        WHERE t.tenant_id = %s::uuid AND t.deleted_at IS NULL
-        ORDER BY lower(t.name), t.slug
+        WHERE t.tenant_id = %s::uuid AND t.deleted_at IS NULL{after_sql}
+        ORDER BY {TEAMS_ORDER.order_by}{limit_sql}
         """,
-        (tenant_id,),
+        (tenant_id, *after_params, *limit_params),
     )
-    return [_record(dict(row)) for row in rows]
+
+
+def page_teams(
+    tenant_id: str, *, limit: int, cursor: Optional[Sequence[Any]] = None
+) -> Page[TeamRecord]:
+    """One page of the tenant's live teams, by name (#7196).
+
+    Args:
+        tenant_id: The caller's tenant.
+        limit: Page size.
+        cursor: :data:`TEAMS_ORDER` values of the last team already seen.
+
+    Returns:
+        The page (no member lists); empty for a non-UUID tenant.
+    """
+    if not is_uuid_string(tenant_id):
+        return Page(items=[], has_more=False, next_cursor=None)
+    page = TEAMS_ORDER.page([dict(row) for row in _team_rows(tenant_id, limit + 1, cursor)], limit)
+    return Page(
+        items=[_record(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 def get_team(tenant_id: str, slug: str) -> TeamRecord:

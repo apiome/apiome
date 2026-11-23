@@ -63,7 +63,7 @@ import {
   PULSE_WINDOW_DAYS,
   RECENTLY_VIEWED_LIMIT,
   TIME_SPENT_CANDIDATES,
-  bucketPublishesByWeek,
+  pulseWeeksFromCounts,
   emptyDashboardHome,
   keyAttention,
   lintAttention,
@@ -566,18 +566,21 @@ async function loadWorkspaceName(userId: string, tenantId: string): Promise<stri
 }
 
 /**
- * Publish instants inside the pulse window, bucketed into weeks.
+ * Publishes inside the pulse window, counted per week.
  *
- * The query returns bare timestamps and {@link bucketPublishesByWeek} does the bucketing, so
- * the boundary arithmetic is covered by a unit test against a fixed clock rather than by a
- * `date_trunc` nobody can exercise without a database.
+ * The database does the counting (DBP-1.13, #7196): one row per week instead of one per
+ * publish. `date_trunc('week', …)` over the UTC wall time is the Monday `weekStartOf` computes —
+ * ISO weeks start on Monday, and converting to UTC first keeps the session's time zone out of
+ * it. {@link pulseWeeksFromCounts} then lays the counts onto the twelve bars, so the shape (every
+ * week present, nothing outside the window) is still decided by the unit-tested model.
  *
  * @param userId The reader, from the session.
  * @returns One bucket per week of the pulse window, oldest first.
  */
 async function loadPulse(userId: string): Promise<PulseWeek[]> {
   const result = await connectionPool.query(
-    `SELECT v.published_at
+    `SELECT to_char(date_trunc('week', v.published_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS week_start,
+            COUNT(*)::int AS publish_count
      FROM apiome.versions v
      JOIN apiome.projects p ON p.id = v.project_id
      WHERE p.tenant_id IN ${MEMBER_TENANTS}
@@ -585,15 +588,17 @@ async function loadPulse(userId: string): Promise<PulseWeek[]> {
        AND v.deleted_at IS NULL
        AND v.published = true
        AND v.published_at IS NOT NULL
-       AND v.published_at >= NOW() - ($2 || ' days')::interval`,
+       AND v.published_at >= NOW() - ($2 || ' days')::interval
+     GROUP BY 1`,
     [userId, String(PULSE_WINDOW_DAYS)],
   );
 
-  const instants = result.rows.flatMap((row) => {
-    const instant = asInstant(row.published_at);
-    return instant ? [instant] : [];
+  const counts = result.rows.flatMap((row) => {
+    const weekStart = asText(row.week_start);
+    const count = Number(row.publish_count);
+    return weekStart && Number.isFinite(count) ? [{ weekStart, count }] : [];
   });
-  return bucketPublishesByWeek(instants, new Date());
+  return pulseWeeksFromCounts(counts, new Date());
 }
 
 /**

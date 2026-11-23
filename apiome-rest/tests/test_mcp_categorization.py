@@ -320,7 +320,7 @@ def test_list_categories_scoped_to_token_tenant():
         mdb.list_mcp_categories.return_value = _LOOKUP
         res = client.get("/v1/mcp/other-slug/categories")
     assert res.status_code == 200
-    mdb.list_mcp_categories.assert_called_once_with("t1")
+    mdb.list_mcp_categories.assert_called_once_with("t1", limit=1001, cursor=None)
     body = res.json()
     assert [c["slug"] for c in body["categories"]] == [
         "developer-tools",
@@ -494,7 +494,7 @@ def test_tag_vocabulary():
         ]
         res = client.get("/v1/mcp/acme/tags")
     assert res.status_code == 200
-    mdb.list_mcp_tag_vocabulary.assert_called_once_with("t1")
+    mdb.list_mcp_tag_vocabulary.assert_called_once_with("t1", limit=1001, offset=0)
     assert res.json()["tags"] == [
         {"tag": "prod", "endpoint_count": 3},
         {"tag": "beta", "endpoint_count": 1},
@@ -599,7 +599,12 @@ def test_browse_passes_category_and_tag_facets():
         )
     assert res.status_code == 200
     mdb.browse_mcp_endpoints.assert_called_once_with(
-        "t1", team=None, categories=["Weather", "uncategorized"], tags=["prod", "untagged"]
+        "t1",
+        team=None,
+        categories=["Weather", "uncategorized"],
+        tags=["prod", "untagged"],
+        limit=1001,
+        cursor=None,
     )
     endpoint = res.json()["groups"][0]["endpoints"][0]
     assert endpoint["tags"] == ["beta", "prod"]

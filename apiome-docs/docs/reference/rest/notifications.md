@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `notifications` · 3 operations
 
@@ -20,6 +20,8 @@ Tag: `notifications` · 3 operations
 A page of the caller's own inbox in this tenant, newest first. Each row carries the event's `type`, the `payload` its sentence and deep link need, who caused it, and the project and version it points at.
 
 Filters combine: `unread` (only what has not been read) and `type`.
+
+Pages by `cursor`: pass the previous page's `next_cursor` until `has_more` is false. The `total` is counted only when `include_total` is set.
 
 Reading the list never marks anything read. Requires only authentication — an inbox is the caller's own, so there is no permission to grant.
 
@@ -32,8 +34,10 @@ Operation id: `list_notifications_v1_tenants__tenant_slug__notifications_get`
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `unread` | query | boolean | no | Only unread notifications. |
 | `type` | query | enum `"mention"`, `"review_requested"`, `"review_decision"`, `"thread_resolved"`, `"version_published"`, `"export_auto_halted"`, … or null | no | Only this event type. |
-| `limit` | query | integer | no | Page size. |
-| `offset` | query | integer | no | Notifications to skip. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `include_total` | query | boolean | no | Also count the matching rows. Off by default because counting reads every match; the count stops at 10,000. |
+| `offset` | query | integer | no | Rows to skip. Deprecated: page with `cursor` instead. At most 10,000. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -142,9 +146,11 @@ A page of the caller's inbox.
 | --- | --- | --- | --- |
 | `notifications` | array of `NotificationRecord` | no | Notifications, newest first. |
 | `count` | integer | yes | How many notifications this page holds. |
-| `total` | integer | yes | How many match the filters in all. |
+| `total` | integer or null | no | How many match the filters, counted up to 10,000. Present only when the request set `include_total`. |
 | `limit` | integer | yes | The page size used. |
-| `offset` | integer | yes | The offset used. |
+| `offset` | integer | yes | The offset used (deprecated; `0` when paging by cursor). |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `UnreadCount` {#schema-unreadcount}
 

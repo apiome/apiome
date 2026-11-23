@@ -39,7 +39,7 @@ from __future__ import annotations
 
 import secrets
 from datetime import date, datetime, timedelta, timezone
-from typing import Any, Iterable, List, Literal, Mapping, Optional, Tuple
+from typing import Any, Iterable, List, Literal, Mapping, Optional, Sequence, Tuple
 from uuid import UUID
 
 import bcrypt
@@ -453,6 +453,8 @@ def list_agent_keys(
     *,
     toolset_id: Optional[str] = None,
     include_revoked: bool = False,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
 ) -> List[AgentKeyOut]:
     """Describe a tenant's agent keys, newest first.
 
@@ -460,13 +462,24 @@ def list_agent_keys(
         tenant_id: The caller's tenant.
         toolset_id: When set, only keys bound to this toolset.
         include_revoked: When ``True``, revoked keys are included.
+        limit: Keys to read; ``None`` reads every one (#7196).
+        cursor: ``AGENT_KEYS_ORDER`` values of the last key already seen.
 
     Returns:
         The keys' metadata.
     """
-    rows = db.list_agent_keys(
-        tenant_id, toolset_id=toolset_id, include_revoked=include_revoked
-    )
+    if limit is None:
+        rows = db.list_agent_keys(
+            tenant_id, toolset_id=toolset_id, include_revoked=include_revoked
+        )
+    else:
+        rows = db.list_agent_keys(
+            tenant_id,
+            toolset_id=toolset_id,
+            include_revoked=include_revoked,
+            limit=limit,
+            cursor=cursor,
+        )
     return [_out(row) for row in rows]
 
 

@@ -295,25 +295,48 @@ describe('GET comment-threads/summary', () => {
     const openPages = urls.filter((url) => url.searchParams.get('limit') === '200');
     expect(openPages).toHaveLength(1);
     // The badge counts are unfiltered: no anchor_type, no mentions_me.
-    expect(openPages[0].search).toBe('?status=open&limit=200&offset=0');
+    // The first page asks for the count and sends no offset (#7196).
+    expect(openPages[0].search).toBe('?status=open&limit=200&include_total=true');
+    // Each status total is a counted one-row read.
+    for (const url of totalCalls) expect(url.searchParams.get('include_total')).toBe('true');
+  });
+
+  test('forwards a cursor and the count request, and accepts a page with no total', async () => {
+    const fetchMock = mockRest(() => ({
+      status: 200,
+      body: { threads: [restThread('a')], count: 1, total: null, limit: 50, offset: 0, has_more: true, next_cursor: 'next-1' },
+    }));
+    const res = await listThreads(request('', '?status=open&limit=50&cursor=abc&include_total=true&offset=50'), context());
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as Record<string, unknown>;
+    expect(json).toMatchObject({ success: true, total: null, has_more: true, next_cursor: 'next-1' });
+    // The cursor wins: the deprecated offset is not sent beside it.
+    expect(upstreamUrls(fetchMock)[0].search).toBe('?status=open&limit=50&cursor=abc&include_total=true');
   });
 
   test('reads every open page, and says when the cap cut the count short', async () => {
-    const pageOf = (offset: number, size: number, total: number) => ({
-      status: 200,
-      body: {
-        threads: Array.from({ length: size }, (_, i) => restThread(`t${offset + i}`, { anchor_id: 'x' })),
-        count: size,
-        total,
-        limit: 200,
-        offset,
-      },
-    });
+    // apiome-rest's cursor contract: `has_more` + `next_cursor`, and a total only when asked.
+    const pageOf = (url: URL, all: number) => {
+      const start = Number((url.searchParams.get('cursor') ?? 'after-0').replace('after-', ''));
+      const size = Math.min(200, all - start);
+      const hasMore = start + size < all;
+      return {
+        status: 200,
+        body: {
+          threads: Array.from({ length: size }, (_, i) => restThread(`t${start + i}`, { anchor_id: 'x' })),
+          count: size,
+          total: url.searchParams.get('include_total') === 'true' ? all : null,
+          limit: 200,
+          offset: 0,
+          has_more: hasMore,
+          next_cursor: hasMore ? `after-${start + size}` : null,
+        },
+      };
+    };
 
     let fetchMock = mockRest((url) => {
       if (url.searchParams.get('limit') === '1') return { status: 200, body: { threads: [], count: 0, total: 0, limit: 1, offset: 0 } };
-      const offset = Number(url.searchParams.get('offset'));
-      return offset === 0 ? pageOf(0, 200, 250) : pageOf(offset, 50, 250);
+      return pageOf(url, 250);
     });
     let json = (await (await summarizeThreads(request('/summary'), context())).json()) as Record<string, unknown>;
     expect(json.unresolvedByAnchor).toEqual({ 'class:x': 250 });
@@ -321,12 +344,15 @@ describe('GET comment-threads/summary', () => {
     expect(
       upstreamUrls(fetchMock)
         .filter((url) => url.searchParams.get('limit') === '200')
-        .map((url) => url.searchParams.get('offset'))
-    ).toEqual(['0', '200']);
+        .map((url) => [url.searchParams.get('cursor'), url.searchParams.get('include_total')])
+    ).toEqual([
+      [null, 'true'],
+      ['after-200', null],
+    ]);
 
     fetchMock = mockRest((url) => {
       if (url.searchParams.get('limit') === '1') return { status: 200, body: { threads: [], count: 0, total: 0, limit: 1, offset: 0 } };
-      return pageOf(Number(url.searchParams.get('offset')), 200, 5000);
+      return pageOf(url, 5000);
     });
     json = (await (await summarizeThreads(request('/summary'), context())).json()) as Record<string, unknown>;
     expect(json.unresolvedTotal).toBe(5000);

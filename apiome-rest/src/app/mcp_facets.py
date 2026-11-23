@@ -27,6 +27,8 @@ import re
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple
 
+from .keyset_columns import SortColumn
+
 # --- Vocabulary -------------------------------------------------------------------------------
 
 #: The A-F letter grades a scored snapshot can carry (see ``mcp_version_scores.grade``).
@@ -266,3 +268,59 @@ def normalize_catalog_facet_filters(
         health=_normalize_enum("health", health, HEALTH_VALUES),
         tags=tags,
     )
+
+
+# --- Capability directory ordering (#7196) -------------------------------------------------
+
+#: The catalog-browse ordering of faceted search: ``e.name ASC, e.id ASC``.
+FACETED_SEARCH_SORT_COLUMNS: Tuple[SortColumn, ...] = (
+    SortColumn("e.name", "text", ("name",)),
+    SortColumn("e.id", "uuid", ("id",)),
+)
+
+
+def capability_directory_sort_columns(sort: str, direction: str) -> Tuple[SortColumn, ...]:
+    """The ordering of the capability directory for one ``sort`` / ``direction``.
+
+    ``direction`` flips only the primary column; the tie-breakers stay ascending. Every ordering
+    ends in the item id, so it is total and a cursor can continue it.
+
+    Args:
+        sort: ``server``, ``name`` or ``type``; anything else is ``server``.
+        direction: ``asc`` or ``desc``; anything else is ``asc``.
+
+    Returns:
+        The columns, in ``ORDER BY`` order, over the aliases ``ci`` (capability items) and ``e``
+        (endpoints) and the row keys of the directory query.
+    """
+    descending = str(direction).lower() == "desc"
+    item_name = SortColumn("ci.name", "text", ("item_name",))
+    item_type = SortColumn("ci.item_type", "text", ("kind",))
+    server = SortColumn("e.name", "text", ("endpoint_name",))
+    item_id = SortColumn("ci.id", "uuid", ("item_id",))
+    if sort == "name":
+        primary = SortColumn("ci.name", "text", ("item_name",), descending=descending)
+        return (primary, item_type, server, item_id)
+    if sort == "type":
+        primary = SortColumn("ci.item_type", "text", ("kind",), descending=descending)
+        return (primary, item_name, server, item_id)
+    return (
+        SortColumn("e.name", "text", ("endpoint_name",), descending=descending),
+        SortColumn("e.id", "uuid", ("endpoint_id",)),
+        SortColumn("ci.ordinal", "int", ("ordinal",)),
+        item_id,
+    )
+
+
+def capability_directory_sort_tag(sort: str, direction: str) -> str:
+    """The cursor tag of one capability-directory ordering.
+
+    Args:
+        sort: The sort key.
+        direction: The sort direction.
+
+    Returns:
+        A tag such as ``name:desc``; a cursor is only accepted for the ordering that issued it.
+    """
+    key = sort if sort in ("name", "type") else "server"
+    return f"{key}:{'desc' if str(direction).lower() == 'desc' else 'asc'}"

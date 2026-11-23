@@ -334,7 +334,7 @@ def test_sync_returns_the_finished_run_and_fills_the_inventory(store, audits, so
     run = response.json()
     assert run["status"] == "succeeded" and run["refreshSource"] == "connector" and run["trigger"] == "manual"
     assert run["pullCount"] == 1 and run["summary"]["imported"] == 1
-    items = client.get(f"{_BASE}/{created['id']}/items").json()
+    items = client.get(f"{_BASE}/{created['id']}/items?include_total=true").json()
     assert items["total"] == 1
     assert items["items"][0] | {} == {
         **items["items"][0],
@@ -343,8 +343,11 @@ def test_sync_returns_the_finished_run_and_fills_the_inventory(store, audits, so
         "catalogItemId": "proj-orders",
         "hosts": ["orders.example.com"],
     }
-    runs = client.get(f"{_BASE}/{created['id']}/runs").json()
+    runs = client.get(f"{_BASE}/{created['id']}/runs?include_total=true").json()
     assert runs["total"] == 1 and runs["runs"][0]["id"] == run["id"]
+    # Nothing is counted unless the request asks (#7196).
+    plain = client.get(f"{_BASE}/{created['id']}/runs").json()
+    assert plain["total"] is None and plain["hasMore"] is False and plain["nextCursor"] is None
 
 
 def test_a_failed_sync_is_a_200_carrying_the_provider_failure(store, audits, source):
@@ -365,8 +368,10 @@ def test_sync_of_a_kind_without_a_source_is_a_409(store, audits):
 def test_items_filter_by_status_and_reject_unknown_ones(store, audits, source):
     created = _create()
     client.post(f"{_BASE}/{created['id']}/sync")
-    assert client.get(f"{_BASE}/{created['id']}/items?status=missing").json()["total"] == 0
-    assert client.get(f"{_BASE}/{created['id']}/items?status=imported").json()["total"] == 1
+    counted = "&include_total=true"
+    assert client.get(f"{_BASE}/{created['id']}/items?status=missing{counted}").json()["total"] == 0
+    assert client.get(f"{_BASE}/{created['id']}/items?status=imported{counted}").json()["total"] == 1
+    assert client.get(f"{_BASE}/{created['id']}/items?status=imported").json()["total"] is None
     assert client.get(f"{_BASE}/{created['id']}/items?status=gone").status_code == 400
 
 
@@ -437,3 +442,36 @@ def test_an_aws_connector_refuses_stored_credentials(store, audits, aws_check):
     assert response.status_code == 422
     assert response.json()["detail"]["code"] == "connector-credentials-refused"
     assert _SECRET not in response.text and store.credentials == {}
+
+
+# --- keyset paging of the inventory (#7196) ---------------------------------------------------
+
+
+def test_the_inventory_pages_by_cursor_to_the_end(store, audits, monkeypatch):
+    from app.refresh_source import RefreshCandidate
+    from tests.keyset_paging_fakes import walk
+
+    created = _create()
+    # Two APIs share a display name, so the remote id has to break the tie across pages.
+    for remote_id, name in [("b-2", "Orders"), ("a-1", "orders"), ("c-3", None), ("d-4", "Billing")]:
+        store.upsert_seen_item(None, created["id"], RefreshCandidate(remote_id=remote_id, name=name))
+    monkeypatch.setattr(
+        store, "count_items", lambda *a, **k: pytest.fail("counted without include_total")
+    )
+    url = f"{_BASE}/{created['id']}/items"
+    seen = walk(
+        lambda params: client.get(url, params=params),
+        "items",
+        has_more_key="hasMore",
+        next_cursor_key="nextCursor",
+    )
+    assert [item["remoteId"] for item in seen] == ["d-4", "c-3", "a-1", "b-2"]
+
+
+def test_the_inventory_and_runs_refuse_bad_cursors_and_oversized_pages(store, audits):
+    created = _create()
+    for path in ("items", "runs"):
+        url = f"{_BASE}/{created['id']}/{path}"
+        assert client.get(url, params={"cursor": "not-a-cursor"}).status_code == 400
+        assert client.get(url, params={"limit": 201}).status_code == 422
+        assert client.get(url, params={"offset": 10_001}).status_code == 422

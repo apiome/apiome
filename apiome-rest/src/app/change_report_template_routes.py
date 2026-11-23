@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .change_report_render import validate_change_report_templates, validate_template_semver
@@ -20,6 +20,13 @@ from .change_report_audit import (
     record_change_report_audit,
 )
 from .database import db
+from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    set_page_headers,
+)
+from .tenant_list_orders import CHANGE_REPORT_TEMPLATE_VERSIONS_ORDER
 from .permissions import enforce_permission, Resource, Action
 from .models import (
     ChangeReportTemplateDefaultPut,
@@ -70,12 +77,28 @@ def _assert_template_assignable(tenant_id: str, template_version_id: Optional[st
 @router.get("/{tenant_slug}/change-report-template-versions", response_model=list[ChangeReportTemplateVersionSummary])
 def list_change_report_template_versions(
     tenant_slug: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> list[ChangeReportTemplateVersionSummary]:
-    """List system templates and templates owned by this tenant (ids + semver; not full bodies)."""
+    """List system templates and templates owned by this tenant (ids + semver; not full bodies).
+
+    The body is a JSON array of at most ``limit`` templates (1,000 at most). ``X-Has-More`` says
+    whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the next page (#7196).
+    """
     _ = tenant_slug
     tenant_id = auth_data["tenant_id"]
-    rows = db.list_change_report_template_version_summaries(tenant_id)
+    page = CHANGE_REPORT_TEMPLATE_VERSIONS_ORDER.page(
+        db.list_change_report_template_version_summaries(
+            tenant_id,
+            limit=limit + 1,
+            cursor=CHANGE_REPORT_TEMPLATE_VERSIONS_ORDER.parse(cursor),
+        ),
+        limit,
+    )
+    set_page_headers(response, page)
+    rows = page.items
     return [
         ChangeReportTemplateVersionSummary(
             id=_str_id(r["id"]) or "",

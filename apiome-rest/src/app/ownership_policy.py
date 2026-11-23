@@ -377,7 +377,8 @@ def ownership_drift(tenant_id: str) -> Dict[str, Any]:
               )
         ),
         ranked AS (
-            SELECT drift.*, row_number() OVER (PARTITION BY reason ORDER BY since, entity_id) AS rn,
+            SELECT reason, entity_kind, entity_id, entity_name, team_slug, team_name, since,
+                   row_number() OVER (PARTITION BY reason ORDER BY since, entity_id) AS rn,
                    count(*) OVER (PARTITION BY reason) AS reason_total
             FROM drift
         )

@@ -37,6 +37,8 @@ from __future__ import annotations
 import uuid as _uuid
 from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Tuple
 
+from .keyset_pagination import encode_key_cursor
+
 __all__ = [
     "CLASS_COLUMNS",
     "DEFAULT_PAGE_SIZE",
@@ -104,13 +106,17 @@ class ScopedPage(NamedTuple):
             listing. This is what lets the tree show "12 of 40" before hydrating anything else.
         missing_ids: Ids the caller named that resolved to nothing in this version. Always empty
             for a domain listing, which names no ids.
-        next_offset: Where a following page starts, or None when this page is the last.
+        next_offset: Where a following page starts, for a caller still paging by offset; None
+            when this page is the last, and always None for a keyset-paged domain listing.
+        next_cursor: The keyset cursor of the following page of a domain listing (#7196), or
+            None when this page is the last.
     """
 
     items: List[Dict[str, Any]]
     total: int
     missing_ids: List[str]
     next_offset: Optional[int]
+    next_cursor: Optional[str] = None
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -379,6 +385,7 @@ def load_classes_by_domain(
     domain_id: Optional[str],
     limit: int,
     offset: int = 0,
+    after: Optional[Tuple[str, str]] = None,
 ) -> ScopedPage:
     """Load one page of a domain folder's classes, with their properties and tags.
 
@@ -388,14 +395,17 @@ def load_classes_by_domain(
         domain_id: The folder, or None for the derived ``shared/`` bucket — the classes with no
             domain, which is a filter (``domain_id IS NULL``) rather than a value.
         limit: Page size, already clamped by :func:`clamp_page_size`.
-        offset: Where this page starts.
+        offset: Where this page starts, for a caller holding an old offset cursor (deprecated;
+            ignored when ``after`` is given).
+        after: ``(name, id)`` of the last class already seen; the page continues after it.
 
     Returns:
         A page whose ``total`` is the folder's whole membership, so a client can size the selection
-        before hydrating it, and whose ``next_offset`` is None once the page reaches the end.
+        before hydrating it, and whose ``next_cursor`` is None once the page reaches the end.
     """
     predicate = "domain_id IS NULL" if domain_id is None else "domain_id = %s::uuid"
     scope: Tuple[Any, ...] = (version_id,) if domain_id is None else (version_id, domain_id)
+    after_sql, after_params = _after("name", after)
 
     conn = db.connect()
     try:
@@ -409,29 +419,35 @@ def load_classes_by_domain(
                 """,
                 scope,
             )
+            # One row past the page answers "is there more?"; the row after a cursor is found by
+            # the (sort key, id) comparison, not by skipping `offset` rows (#7196).
             classes = _fetch_all(
                 cursor,
                 f"""
                 SELECT {CLASS_COLUMNS}
                   FROM apiome.classes
-                 WHERE version_id = %s::uuid AND deleted_at IS NULL AND {predicate}
+                 WHERE version_id = %s::uuid AND deleted_at IS NULL AND {predicate}{after_sql}
                  ORDER BY name ASC, id ASC
                  LIMIT %s OFFSET %s
                 """,
-                scope + (limit, offset),
+                scope + after_params + (limit + 1, 0 if after is not None else offset),
             )
+            has_more = len(classes) > limit
+            classes = classes[:limit]
             items = _hydrate_classes(cursor, classes)
         conn.commit()
     except Exception:
         conn.rollback()
         raise
 
-    total = int((counted or {}).get("n") or 0)
     return ScopedPage(
         items=items,
-        total=total,
+        total=int((counted or {}).get("n") or 0),
         missing_ids=[],
-        next_offset=_next_offset(offset=offset, returned=len(items), total=total),
+        next_offset=None,
+        next_cursor=(
+            encode_key_cursor([classes[-1]["name"], classes[-1]["id"]]) if has_more and classes else None
+        ),
     )
 
 
@@ -565,6 +581,7 @@ def load_paths_by_domain(
     domain_id: Optional[str],
     limit: int,
     offset: int = 0,
+    after: Optional[Tuple[str, str]] = None,
 ) -> ScopedPage:
     """Load one page of a domain folder's paths, with their operations.
 
@@ -576,13 +593,16 @@ def load_paths_by_domain(
         version_id: The version.
         domain_id: The folder, or None for the derived ``shared/`` bucket.
         limit: Page size, already clamped by :func:`clamp_page_size`.
-        offset: Where this page starts.
+        offset: Where this page starts, for a caller holding an old offset cursor (deprecated;
+            ignored when ``after`` is given).
+        after: ``(pathname, id)`` of the last path already seen; the page continues after it.
 
     Returns:
         A page whose ``total`` is the folder's whole path membership.
     """
     predicate = "domain_id IS NULL" if domain_id is None else "domain_id = %s::uuid"
     scope: Tuple[Any, ...] = (version_id,) if domain_id is None else (version_id, domain_id)
+    after_sql, after_params = _after("pathname", after)
 
     conn = db.connect()
     try:
@@ -596,47 +616,48 @@ def load_paths_by_domain(
                 """,
                 scope,
             )
+            # One row past the page answers "is there more?"; the row after a cursor is found by
+            # the (sort key, id) comparison, not by skipping `offset` rows (#7196).
             paths = _fetch_all(
                 cursor,
                 f"""
                 SELECT {PATH_COLUMNS}
                   FROM apiome.version_path
-                 WHERE version_id = %s::uuid AND {predicate}
+                 WHERE version_id = %s::uuid AND {predicate}{after_sql}
                  ORDER BY pathname ASC, id ASC
                  LIMIT %s OFFSET %s
                 """,
-                scope + (limit, offset),
+                scope + after_params + (limit + 1, 0 if after is not None else offset),
             )
+            has_more = len(paths) > limit
+            paths = paths[:limit]
             items = _hydrate_paths(cursor, paths)
         conn.commit()
     except Exception:
         conn.rollback()
         raise
 
-    total = int((counted or {}).get("n") or 0)
     return ScopedPage(
         items=items,
-        total=total,
+        total=int((counted or {}).get("n") or 0),
         missing_ids=[],
-        next_offset=_next_offset(offset=offset, returned=len(items), total=total),
+        next_offset=None,
+        next_cursor=(
+            encode_key_cursor([paths[-1]["pathname"], paths[-1]["id"]]) if has_more and paths else None
+        ),
     )
 
 
-def _next_offset(*, offset: int, returned: int, total: int) -> Optional[int]:
-    """Where the following page starts, or None when there is no following page.
-
-    Guards on ``returned`` as well as the arithmetic: a page that came back empty because the
-    caller paged past the end must not hand out a cursor that would return empty forever.
+def _after(sort_column: str, after: Optional[Tuple[str, str]]) -> Tuple[str, Tuple[Any, ...]]:
+    """The predicate that continues a ``<sort_column> ASC, id ASC`` listing after a cursor.
 
     Args:
-        offset: Where this page started.
-        returned: How many items it contained.
-        total: The selection's full size.
+        sort_column: ``name`` or ``pathname`` — the listing's sort column. Trusted SQL.
+        after: ``(sort value, id)`` of the last row already seen, or None for the first page.
 
     Returns:
-        The next offset, or None.
+        ``(sql, params)``: an ``AND`` row-value comparison with its parameters, or ``("", ())``.
     """
-    if returned == 0:
-        return None
-    following = offset + returned
-    return following if following < total else None
+    if after is None:
+        return "", ()
+    return f" AND ({sort_column}, id) > (%s, %s::uuid)", (after[0], after[1])

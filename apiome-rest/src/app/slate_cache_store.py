@@ -94,6 +94,34 @@ class SlateCachePolicyConflictError(Exception):
         )
 
 
+#: Every ``slate_cache_policies`` column — policy rows are returned whole to the service layer.
+_POLICY_COLUMNS = (
+    "id, tenant_id, site_id, environment_id, preset, preset_expires_at, preset_overrides, "
+    "policy_version, edge_attached, edge_provider, created_at, updated_at, "
+    "updated_by_actor_id, updated_by_actor_name"
+)
+
+#: Every ``slate_cache_rules`` column — rule rows are returned whole to the service layer.
+_RULE_COLUMNS = (
+    "id, tenant_id, environment_id, ordinal, enabled, label, matcher_kind, matcher_value, "
+    "matcher_methods, matcher_hosts, eligibility, browser_ttl_seconds, edge_ttl_seconds, "
+    "stale_while_revalidate_seconds, stale_if_error_seconds, cache_key_base, vary_query_mode, "
+    "vary_query_keys, vary_headers, vary_cookies, bypass_conditions, expires_at, "
+    "acknowledged_warnings, created_at, updated_at, created_by_actor_id, "
+    "created_by_actor_name, created_by_actor_kind"
+)
+
+#: :data:`_RULE_COLUMNS` qualified with the ``r`` alias, for the reads that join the tag table.
+_RULE_COLUMNS_R = ", ".join(f"r.{column}" for column in _RULE_COLUMNS.split(", "))
+
+#: Every ``slate_cache_purges`` column — a purge is recorded and listed whole.
+_PURGE_COLUMNS = (
+    "id, tenant_id, environment_id, at, actor_id, actor_name, actor_kind, scope_kind, "
+    "scope_value, release_id, reason, estimated_objects, estimate_basis, sample_routes, "
+    "dry_run, outcome, refusal_reason, edge_attached"
+)
+
+
 def _as_dict(row: Any) -> Optional[Dict[str, Any]]:
     """Normalize a cursor row to a plain dict, preserving None."""
     return None if row is None else dict(row)
@@ -141,8 +169,8 @@ def get_policy(
     with db_cursor(db) as cursor:
         return _fetch_one(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_POLICY_COLUMNS}
               FROM apiome.slate_cache_policies
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
             """,
@@ -185,13 +213,13 @@ def ensure_policy(
         with conn.cursor() as cursor:
             created = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_cache_policies
                     (tenant_id, site_id, environment_id, preset, updated_by_actor_id,
                      updated_by_actor_name)
                 VALUES (%s::uuid, %s::uuid, %s::uuid, 'standard', %s, %s)
                 ON CONFLICT (environment_id) DO NOTHING
-                RETURNING *
+                RETURNING {_POLICY_COLUMNS}
                 """,
                 (tenant_id, site_id, environment_id, actor_id, actor_name),
             )
@@ -299,7 +327,7 @@ def set_preset(
             )
             updated = _fetch_one(
                 cursor,
-                """
+                f"""
                 UPDATE apiome.slate_cache_policies
                    SET preset = %s,
                        preset_expires_at = %s,
@@ -307,7 +335,7 @@ def set_preset(
                        updated_by_actor_id = %s,
                        updated_by_actor_name = %s
                  WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
-                RETURNING *
+                RETURNING {_POLICY_COLUMNS}
                 """,
                 (
                     preset,
@@ -348,8 +376,8 @@ def list_rules(db: _DbLike, *, tenant_id: str, environment_id: str) -> List[Dict
     with db_cursor(db) as cursor:
         rules = _fetch_all(
             cursor,
-            """
-            SELECT r.*,
+            f"""
+            SELECT {_RULE_COLUMNS_R},
                    COALESCE(
                        ARRAY(
                            SELECT t.tag
@@ -448,7 +476,7 @@ def upsert_rule(
                            bypass_conditions = %s::jsonb,
                            updated_at = CURRENT_TIMESTAMP
                      WHERE id = %s::uuid AND environment_id = %s::uuid AND tenant_id = %s::uuid
-                    RETURNING *
+                    RETURNING {_RULE_COLUMNS}
                     """,
                     (
                         *payload,
@@ -471,7 +499,7 @@ def upsert_rule(
                         (tenant_id, environment_id, {", ".join(columns)}, bypass_conditions,
                          created_by_actor_id, created_by_actor_name, created_by_actor_kind)
                     VALUES (%s::uuid, %s::uuid, {placeholders}, %s::jsonb, %s, %s, %s)
-                    RETURNING *
+                    RETURNING {_RULE_COLUMNS}
                     """,
                     (
                         tenant_id,
@@ -580,8 +608,8 @@ def rules_for_tag(
     with db_cursor(db) as cursor:
         return _fetch_all(
             cursor,
-            """
-            SELECT r.*
+            f"""
+            SELECT {_RULE_COLUMNS_R}
               FROM apiome.slate_cache_rules r
               JOIN apiome.slate_cache_rule_tags t ON t.rule_id = r.id
              WHERE r.environment_id = %s::uuid
@@ -706,7 +734,9 @@ def record_trace(
                     (tenant_id, environment_id, actor_id, actor_name, actor_kind, release_id,
                      request, policy_version, rules_digest, winning_rule_id, verdict)
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s::jsonb)
-                RETURNING *
+                RETURNING id, tenant_id, environment_id, at, actor_id, actor_name, actor_kind,
+                          release_id, request, policy_version, rules_digest, winning_rule_id,
+                          verdict
                 """,
                 (
                     tenant_id,
@@ -784,13 +814,13 @@ def record_purge(
         with conn.cursor() as cursor:
             written = _fetch_one(
                 cursor,
-                """
+                f"""
                 INSERT INTO apiome.slate_cache_purges
                     (tenant_id, environment_id, actor_id, actor_name, actor_kind, scope_kind,
                      scope_value, release_id, reason, estimated_objects, estimate_basis,
                      sample_routes, dry_run, outcome, refusal_reason, edge_attached)
                 VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
+                RETURNING {_PURGE_COLUMNS}
                 """,
                 (
                     tenant_id,
@@ -842,8 +872,8 @@ def list_purges(
         if scope_kind:
             return _fetch_all(
                 cursor,
-                """
-                SELECT *
+                f"""
+                SELECT {_PURGE_COLUMNS}
                   FROM apiome.slate_cache_purges
                  WHERE environment_id = %s::uuid AND tenant_id = %s::uuid AND scope_kind = %s
                  ORDER BY at DESC
@@ -853,8 +883,8 @@ def list_purges(
             )
         return _fetch_all(
             cursor,
-            """
-            SELECT *
+            f"""
+            SELECT {_PURGE_COLUMNS}
               FROM apiome.slate_cache_purges
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY at DESC
@@ -941,7 +971,8 @@ def list_audit(
         return _fetch_all(
             cursor,
             """
-            SELECT *
+            SELECT id, tenant_id, environment_id, at, actor_id, actor_name, actor_kind,
+                   subject_kind, subject_id, summary, detail
               FROM apiome.slate_cache_audit
              WHERE environment_id = %s::uuid AND tenant_id = %s::uuid
              ORDER BY at DESC

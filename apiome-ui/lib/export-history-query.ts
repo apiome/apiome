@@ -17,6 +17,8 @@ export const EXPORT_RUN_FILTERS = [
   'finished_after',
   'finished_before',
   'limit',
+  'cursor',
+  'include_total',
   'offset',
 ] as const;
 

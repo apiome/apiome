@@ -143,7 +143,7 @@ def test_list_is_readable_by_non_admin_members():
     ):
         r = client.get("/v1/style-guides/acme")
     assert r.status_code == 200
-    assert r.json() == {"guides": [], "count": 0}
+    assert r.json() == {"guides": [], "count": 0, "hasMore": False, "nextCursor": None}
 
 
 # ---------------------------------------------------------------------------
@@ -921,7 +921,7 @@ def test_list_revisions_returns_history_with_rollups(governance):
     assert "rules" not in newest
     # Reading self-heals a guide that has no history yet.
     governance.ensure.assert_called_once_with(GUIDE_ID, "t1")
-    listed.assert_called_once_with(GUIDE_ID, "t1", limit=100)
+    listed.assert_called_once_with(GUIDE_ID, "t1", limit=101, cursor=None)
 
 
 def test_list_revisions_is_readable_by_non_admin_members():
@@ -934,15 +934,15 @@ def test_list_revisions_is_readable_by_non_admin_members():
     assert r.status_code == 200
 
 
-def test_list_revisions_clamps_the_limit():
+def test_list_revisions_refuses_a_limit_over_the_maximum():
     with patch(
         "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
     ), patch(
         "app.style_guide_routes.db.list_style_guide_revisions", return_value=[]
     ) as listed:
-        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/revisions?limit=99999")
-    assert r.status_code == 200
-    assert listed.call_args.kwargs["limit"] == 500
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/revisions?limit=501")
+    assert r.status_code == 422
+    listed.assert_not_called()
 
 
 def test_list_revisions_missing_guide_404s():

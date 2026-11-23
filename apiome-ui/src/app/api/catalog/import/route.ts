@@ -23,7 +23,15 @@ export const dynamic = 'force-dynamic';
 
 function forwardListQuery(request: NextRequest): string {
   const params = new URLSearchParams();
-  for (const key of ['limit', 'offset', 'state', 'created_after', 'created_before'] as const) {
+  for (const key of [
+    'limit',
+    'cursor',
+    'include_total',
+    'offset',
+    'state',
+    'created_after',
+    'created_before',
+  ] as const) {
     const value = request.nextUrl.searchParams.get(key);
     if (value != null && value !== '') {
       params.set(key, value);

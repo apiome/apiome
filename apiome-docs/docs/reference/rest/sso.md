@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `sso` · 17 operations
 
@@ -17,7 +17,10 @@ Tag: `sso` · 17 operations
 
 **List Sso Providers**
 
-List every SSO provider with its domains, newest first. Secrets are never included.
+List SSO providers with their domains, newest first. Secrets are never included.
+
+One page of at most ``limit`` providers (1,000 at most); pass ``next_cursor`` as ``cursor``
+until ``has_more`` is false (#7196).
 
 Operation id: `list_sso_providers_v1_admin_sso_providers_get`
 
@@ -25,6 +28,8 @@ Operation id: `list_sso_providers_v1_admin_sso_providers_get`
 
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `X-Admin-Session` | header | string or null | no | Header parameter: X Admin Session. |
 | `admin_session` | cookie | string or null | no | Cookie parameter: admin session. |
 
@@ -274,6 +279,8 @@ Operation id: `list_tenant_sso_providers_v1_tenants__tenant_slug__sso_providers_
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -614,6 +621,8 @@ Payload of ``GET /v1/admin/sso/providers``.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `providers` | array of [`SsoProviderView`](#schema-ssoproviderview) | no | Providers. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `SsoProviderUpdateRequest` {#schema-ssoproviderupdaterequest}
 
@@ -720,6 +729,8 @@ Payload of ``GET /v1/tenants/{t}/sso/providers``.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `providers` | array of [`TenantSsoProviderView`](#schema-tenantssoproviderview) | no | Providers. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `TenantSsoProviderUpdateRequest` {#schema-tenantssoproviderupdaterequest}
 

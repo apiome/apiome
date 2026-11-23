@@ -16,7 +16,7 @@ Credentials are only ever written sealed (:func:`put_credentials`) and only ever
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import psycopg2
 import psycopg2.errors
@@ -30,8 +30,12 @@ from .catalog_connectors import (
     STATUS_PAUSED,
     ConnectorError,
 )
+from .keyset_lists import by_name
+from .keyset_pagination import capped_count_sql, keyset_after, keyset_before
 from .refresh_source import RefreshCandidate
 
+#: Functions only: the test double replaces every name listed here (``CONNECTORS_ORDER`` is a
+#: constant routes read from this module directly).
 __all__ = [
     "count_items",
     "count_refresh_runs",
@@ -101,16 +105,30 @@ def _name_taken(exc: Exception) -> bool:
 # ---------------------------------------------------------------------------------------
 
 
-def list_connectors(db: Any, tenant_id: str) -> List[Dict[str, Any]]:
-    """The tenant's live connectors, by name."""
+#: The order of the connector list: by name (#7196).
+CONNECTORS_ORDER = by_name("catalog-connectors", "lower(c.name)", "c.id", name_field="name_key")
+
+
+def list_connectors(
+    db: Any, tenant_id: str, *, limit: Optional[int] = None, cursor: Optional[Sequence[Any]] = None
+) -> List[Dict[str, Any]]:
+    """The tenant's live connectors, by name.
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        limit: Rows to read; ``None`` reads every connector (#7196).
+        cursor: :data:`CONNECTORS_ORDER` values of the last connector already seen.
+    """
+    after_sql, after_params, limit_sql, limit_params = CONNECTORS_ORDER.window(limit, cursor)
     return db.execute_query(
         f"""
-        SELECT {_CONNECTOR_COLUMNS}
+        SELECT {_CONNECTOR_COLUMNS}, lower(c.name) AS name_key
         FROM apiome.catalog_connectors c
-        WHERE c.tenant_id = %s::uuid AND c.deleted_at IS NULL
-        ORDER BY lower(c.name), c.id
+        WHERE c.tenant_id = %s::uuid AND c.deleted_at IS NULL{after_sql}
+        ORDER BY {CONNECTORS_ORDER.order_by}{limit_sql}
         """,
-        (tenant_id,),
+        (tenant_id, *after_params, *limit_params),
     )
 
 
@@ -376,31 +394,67 @@ def list_item_rows(db: Any, connector_id: str) -> List[Dict[str, Any]]:
     )
 
 
+#: What the inventory sorts by first: the remote name, case-insensitively, else the remote id.
+#: Projected as ``sort_key`` so a cursor carries PostgreSQL's own ``lower()`` of it.
+_ITEM_SORT_SQL = "lower(COALESCE(i.remote_name, i.remote_id))"
+
+
 def list_items(
-    db: Any, connector_id: str, *, status: Optional[str], limit: int, offset: int
+    db: Any,
+    connector_id: str,
+    *,
+    status: Optional[str],
+    limit: int,
+    offset: int,
+    cursor: Optional[Sequence[Any]] = None,
 ) -> List[Dict[str, Any]]:
-    """A page of a connector's inventory, by remote name."""
+    """A page of a connector's inventory, by remote name.
+
+    Args:
+        db: Database handle.
+        connector_id: The connector.
+        status: Only items in this status.
+        limit: Rows to read.
+        offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``[sort_key, remote_id]`` of the last row already seen; the page continues after
+            it (#7196).
+
+    Returns:
+        The rows, each with its ``sort_key``, ordered by ``(sort_key, remote_id)``.
+    """
     clause, params = ("AND i.status = %s", (status,)) if status else ("", ())
+    after_sql, after_params = keyset_after([_ITEM_SORT_SQL, "i.remote_id"], cursor)
     return db.execute_query(
         f"""
-        SELECT {_ITEM_COLUMNS}
+        SELECT {_ITEM_COLUMNS}, {_ITEM_SORT_SQL} AS sort_key
         FROM apiome.catalog_connector_items i
-        WHERE i.connector_id = %s::uuid {clause}
-        ORDER BY lower(COALESCE(i.remote_name, i.remote_id)), i.remote_id
+        WHERE i.connector_id = %s::uuid {clause}{after_sql}
+        ORDER BY {_ITEM_SORT_SQL}, i.remote_id
         LIMIT %s OFFSET %s
         """,
-        (connector_id,) + params + (int(limit), int(offset)),
+        (connector_id,) + params + tuple(after_params) + (int(limit), 0 if cursor else int(offset)),
     )
 
 
 def count_items(db: Any, connector_id: str, *, status: Optional[str]) -> int:
-    """How many inventory rows :func:`list_items` pages over."""
+    """How many inventory rows :func:`list_items` pages over, counted up to ``TOTAL_CAP`` (#7196).
+
+    Args:
+        db: Database handle.
+        connector_id: The connector.
+        status: Only items in this status.
+
+    Returns:
+        The number of matching rows, never more than the cap.
+    """
     clause, params = ("AND status = %s", (status,)) if status else ("", ())
     rows = db.execute_query(
-        f"SELECT COUNT(*) AS n FROM apiome.catalog_connector_items WHERE connector_id = %s::uuid {clause}",
+        capped_count_sql(
+            f"FROM apiome.catalog_connector_items WHERE connector_id = %s::uuid {clause}"
+        ),
         (connector_id,) + params,
     )
-    return int(rows[0]["n"]) if rows else 0
+    return int(rows[0]["total"]) if rows else 0
 
 
 def upsert_seen_item(db: Any, connector_id: str, candidate: RefreshCandidate) -> Dict[str, Any]:
@@ -632,30 +686,61 @@ def finish_run(
     )
 
 
-def list_runs(db: Any, tenant_id: str, connector_id: str, *, limit: int, offset: int) -> List[Dict[str, Any]]:
-    """A page of a connector's runs, newest first."""
+def list_runs(
+    db: Any,
+    tenant_id: str,
+    connector_id: str,
+    *,
+    limit: int,
+    offset: int,
+    cursor: Optional[Tuple[Any, str]] = None,
+) -> List[Dict[str, Any]]:
+    """A page of a connector's runs, newest first.
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        connector_id: The connector.
+        limit: Rows to read.
+        offset: Rows to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(created_at, id)`` of the last run already seen; the page continues after it
+            (#7196).
+
+    Returns:
+        The runs, newest first.
+    """
+    after_sql, after_params = keyset_before("j.created_at", "j.id", cursor)
     return db.execute_query(
         f"""
         SELECT {_RUN_COLUMNS}
         FROM apiome.tenant_repository_refresh_jobs j
-        WHERE j.tenant_id = %s::uuid AND j.connector_id = %s::uuid AND j.refresh_source = 'connector'
+        WHERE j.tenant_id = %s::uuid AND j.connector_id = %s::uuid AND j.refresh_source = 'connector'{after_sql}
         ORDER BY j.created_at DESC, j.id DESC
         LIMIT %s OFFSET %s
         """,
-        (tenant_id, connector_id, int(limit), int(offset)),
+        (tenant_id, connector_id, *after_params, int(limit), 0 if cursor else int(offset)),
     )
 
 
 def count_runs(db: Any, tenant_id: str, connector_id: str) -> int:
-    """How many runs :func:`list_runs` pages over."""
+    """How many runs :func:`list_runs` pages over, counted up to ``TOTAL_CAP`` (#7196).
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        connector_id: The connector.
+
+    Returns:
+        The number of runs, never more than the cap.
+    """
     rows = db.execute_query(
-        """
-        SELECT COUNT(*) AS n FROM apiome.tenant_repository_refresh_jobs
-        WHERE tenant_id = %s::uuid AND connector_id = %s::uuid AND refresh_source = 'connector'
-        """,
+        capped_count_sql(
+            "FROM apiome.tenant_repository_refresh_jobs "
+            "WHERE tenant_id = %s::uuid AND connector_id = %s::uuid AND refresh_source = 'connector'"
+        ),
         (tenant_id, connector_id),
     )
-    return int(rows[0]["n"]) if rows else 0
+    return int(rows[0]["total"]) if rows else 0
 
 
 # ---------------------------------------------------------------------------------------
@@ -677,6 +762,7 @@ def list_refresh_runs(
     source: Optional[str],
     limit: int,
     offset: int,
+    cursor: Optional[Tuple[Any, str]] = None,
 ) -> List[Dict[str, Any]]:
     """Git refresh jobs and connector runs of a tenant, interleaved newest first (CDG-1.7).
 
@@ -688,9 +774,15 @@ def list_refresh_runs(
         tenant_id: The tenant.
         connector_id: Only this connector's runs (implies ``source = 'connector'``).
         source: ``git`` or ``connector``, or ``None`` for both.
-        limit: Page size.
-        offset: Page start.
+        limit: Rows to read.
+        offset: Page start (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(created_at, id)`` of the last run already seen; the page continues after it
+            (#7196).
+
+    Returns:
+        The runs, newest first.
     """
+    after_sql, after_params = keyset_before("j.created_at", "j.id", cursor)
     return db.execute_query(
         f"""
         SELECT j.id, j.refresh_source, j.status, j.refresh_reason, j.error_class, j.http_status,
@@ -700,18 +792,37 @@ def list_refresh_runs(
         FROM apiome.tenant_repository_refresh_jobs j
         LEFT JOIN apiome.catalog_connectors c ON c.id = j.connector_id
         LEFT JOIN apiome.tenant_repositories r ON r.id = j.repository_id
-        {_LEDGER_FILTER}
+        {_LEDGER_FILTER}{after_sql}
         ORDER BY j.created_at DESC, j.id DESC
         LIMIT %s OFFSET %s
         """,
-        (tenant_id, connector_id, connector_id, source, source, int(limit), int(offset)),
+        (
+            tenant_id,
+            connector_id,
+            connector_id,
+            source,
+            source,
+            *after_params,
+            int(limit),
+            0 if cursor else int(offset),
+        ),
     )
 
 
 def count_refresh_runs(db: Any, tenant_id: str, *, connector_id: Optional[str], source: Optional[str]) -> int:
-    """How many rows :func:`list_refresh_runs` would page through."""
+    """How many rows :func:`list_refresh_runs` would page through, up to ``TOTAL_CAP`` (#7196).
+
+    Args:
+        db: Database handle.
+        tenant_id: The tenant.
+        connector_id: Only this connector's runs.
+        source: ``git`` or ``connector``, or ``None`` for both.
+
+    Returns:
+        The number of runs, never more than the cap.
+    """
     rows = db.execute_query(
-        f"SELECT count(*) AS n FROM apiome.tenant_repository_refresh_jobs j {_LEDGER_FILTER}",
+        capped_count_sql(f"FROM apiome.tenant_repository_refresh_jobs j {_LEDGER_FILTER}"),
         (tenant_id, connector_id, connector_id, source, source),
     )
-    return int(rows[0]["n"]) if rows else 0
+    return int(rows[0]["total"]) if rows else 0

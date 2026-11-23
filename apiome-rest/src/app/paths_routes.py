@@ -5,10 +5,19 @@ Provides CRUD endpoints for managing OpenAPI paths and operations.
 All endpoints are tenant-scoped and require authentication via JWT token or API key.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Dict, Any
+from fastapi import APIRouter, HTTPException, Depends, Response
+from typing import List, Dict, Any, Optional
 
 from .database import db
+from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    encode_key_cursor,
+    limit_query,
+    page_of,
+    parse_key_cursor,
+    set_page_headers,
+)
 from .models import (
     PathSchema,
     PathCreateRequest,
@@ -42,18 +51,31 @@ router = APIRouter(prefix="/v1/paths", tags=["paths"])
 def list_paths(
     tenant_slug: str,
     version_id: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication)
 ) -> List[PathSchema]:
     """
-    List all paths for a version.
+    List a version's paths, by pathname, one page at a time.
+
+    The body is a JSON array of at most ``limit`` paths (1,000 at most). The ``X-Has-More``
+    response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
 
     Args:
         tenant_slug: The tenant slug
         version_id: The version ID (UUID)
+        response: The outgoing response (paging headers are set on it).
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
         auth_data: Authentication data (injected by dependency)
 
     Returns:
-        List of paths for the version
+        One page of the version's paths
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 for an unknown version.
     """
     # Verify version belongs to tenant
     version = db.get_version_for_tenant(auth_data['tenant_id'], version_id)
@@ -63,8 +85,15 @@ def list_paths(
             detail=f"Version not found: {version_id}"
         )
 
-    paths = db.get_paths_for_version_with_tenant(version_id, auth_data['tenant_id'])
-    return [PathSchema(**p) for p in paths]
+    paths = db.get_paths_for_version_with_tenant(
+        version_id,
+        auth_data['tenant_id'],
+        limit=limit + 1,
+        cursor=parse_key_cursor(cursor, 2),
+    )
+    page = page_of(paths, limit, lambda row: encode_key_cursor([row["pathname"], row["id"]]))
+    set_page_headers(response, page)
+    return [PathSchema(**p) for p in page.items]
 
 
 @router.get("/{tenant_slug}/{version_id}/{path_id}")

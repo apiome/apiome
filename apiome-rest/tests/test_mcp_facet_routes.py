@@ -258,7 +258,9 @@ def test_facets_route_dispatches_with_token_tenant_and_defaults():
     assert kwargs["grades"] == []
     assert kwargs["safety"] == []
     assert kwargs["visibility"] is None
-    assert kwargs["limit"] == 100 and kwargs["offset"] == 0
+    # One row past the page: `has_more` without relying on the total (#7196).
+    assert kwargs["limit"] == 101 and kwargs["offset"] == 0
+    assert kwargs["cursor"] is None
 
 
 def test_facets_route_normalizes_and_passes_every_filter():
@@ -282,7 +284,7 @@ def test_facets_route_normalizes_and_passes_every_filter():
     assert kwargs["protocols"] == ["2025-06-18", "unknown"]
     assert kwargs["health"] == ["healthy"]
     assert kwargs["visibility"] == "private"
-    assert kwargs["limit"] == 25 and kwargs["offset"] == 5
+    assert kwargs["limit"] == 26 and kwargs["offset"] == 5
 
 
 def test_facets_route_projects_endpoints_and_counts():
@@ -349,3 +351,47 @@ def test_facets_route_requires_authentication():
     app.dependency_overrides.pop(validate_authentication, None)
     res = client.get("/v1/mcp/acme/facets")
     assert res.status_code in (401, 403)
+
+
+# ===========================================================================
+# Keyset paging (#7196)
+# ===========================================================================
+
+
+def _faceted_of(rows):
+    """A DAO stand-in paging ``rows`` by ``(name, id)`` and honouring the decoded cursor."""
+    ordered = sorted(rows, key=lambda row: [row["name"], row["id"]])
+
+    def dao(_tenant, *, limit=100, offset=0, cursor=None, **_):
+        matching = [
+            row for row in ordered if cursor is None or [row["name"], row["id"]] > list(cursor)
+        ]
+        offset = 0 if cursor is not None else offset
+        return {**_bundle(), "endpoints": matching[offset : offset + limit], "total": len(ordered)}
+
+    return dao
+
+
+def test_facets_route_pages_by_cursor_to_the_end():
+    from tests.keyset_paging_fakes import walk
+
+    rows = [
+        _endpoint_row(id=f"990e8400-e29b-41d4-a716-{index:012d}", name=f"Server {index // 2}")
+        for index in range(5)
+    ]
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.search_mcp_catalog_faceted.side_effect = _faceted_of(rows)
+        seen = walk(lambda params: client.get("/v1/mcp/acme/facets", params=params), "endpoints")
+        body = client.get("/v1/mcp/acme/facets", params={"limit": 2}).json()
+    ids = [endpoint["id"] for endpoint in seen]
+    assert len(ids) == len(set(ids)) == 5 and ids == sorted(ids)
+    # The total and the facet counts describe the whole match, not the page.
+    assert body["total"] == 5 and body["count"] == 2 and body["has_more"] is True
+
+
+def test_facets_route_refuses_a_malformed_cursor_and_oversized_pages():
+    with patch("app.mcp_catalog_routes.db") as mdb:
+        assert client.get("/v1/mcp/acme/facets", params={"cursor": "nope"}).status_code == 400
+        assert client.get("/v1/mcp/acme/facets", params={"limit": 201}).status_code == 422
+        assert client.get("/v1/mcp/acme/facets", params={"offset": 10_001}).status_code == 422
+        assert not mdb.search_mcp_catalog_faceted.called

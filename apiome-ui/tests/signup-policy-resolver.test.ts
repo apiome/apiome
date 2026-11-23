@@ -115,11 +115,28 @@ describe('the default database read', () => {
     expect(mockQuery.mock.calls[0][0]).toContain('FROM apiome.signup_policy');
   });
 
-  test('reads the blocklist once V317 is applied, and none before it (SGN-1.5)', async () => {
-    // `SELECT *`: a pre-V317 row simply has no blocked_email_domains column.
-    mockQuery.mockResolvedValue({ rowCount: 1, rows: [{ mode: 'open', allowed_email_domains: [] }] });
-    expect((await resolveSignupPolicy({ env: {} })).blockedEmailDomains).toEqual([]);
-    expect(mockQuery.mock.calls[0][0]).toContain('SELECT *');
+  test('reads the blocklist once V317 is applied (SGN-1.5), by name (DBP-1.13)', async () => {
+    mockQuery.mockResolvedValue({
+      rowCount: 1,
+      rows: [{ mode: 'open', allowed_email_domains: [], blocked_email_domains: ['spam.test'] }],
+    });
+    expect((await resolveSignupPolicy({ env: {} })).blockedEmailDomains).toEqual(['spam.test']);
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+    expect(mockQuery.mock.calls[0][0]).toBe(
+      'SELECT mode, allowed_email_domains, blocked_email_domains FROM apiome.signup_policy WHERE singleton',
+    );
+  });
+
+  test('a database before V317 has no blocklist column: the read is repeated without it', async () => {
+    mockQuery
+      .mockRejectedValueOnce(Object.assign(new Error('column does not exist'), { code: '42703' }))
+      .mockResolvedValueOnce({ rowCount: 1, rows: [{ mode: 'open', allowed_email_domains: [] }] });
+    const policy = await resolveSignupPolicy({ env: {} });
+    expect(policy.source).toBe('db');
+    expect(policy.blockedEmailDomains).toEqual([]);
+    expect(mockQuery.mock.calls[1][0]).toBe(
+      'SELECT mode, allowed_email_domains FROM apiome.signup_policy WHERE singleton',
+    );
   });
 
   test('no row falls back to env', async () => {

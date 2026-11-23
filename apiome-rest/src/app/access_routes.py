@@ -24,7 +24,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -32,6 +32,12 @@ from pydantic import BaseModel, Field
 from .auth import validate_authentication, validate_session_credentials
 from .config import settings
 from .database import db, normalize_email
+from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    set_page_headers,
+)
 from .license_capacity import (
     assert_member_seat_available,
     member_seats_free,
@@ -56,6 +62,7 @@ from .permissions import (
     enforce_platform_admin,
     is_valid_permission,
 )
+from .tenant_list_orders import MEMBERS_ORDER, ROLES_ORDER
 
 router = APIRouter(prefix="/v1/access", tags=["access"])
 platform_router = APIRouter(prefix="/v1/platform", tags=["platform-admin"])
@@ -202,13 +209,23 @@ def get_my_permissions(
 @router.get("/{tenant_slug}/roles")
 def list_roles(
     tenant_slug: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[Dict[str, Any]]:
-    """List the tenant's roles (built-in first) with member counts and permission grids."""
+    """List the tenant's roles (built-in first) with member counts and permission grids.
+
+    The body is a JSON array of at most ``limit`` roles (1,000 at most). ``X-Has-More`` says
+    whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the next page (#7196).
+    """
     enforce_permission(db, auth_data, Resource.MEMBERS, Action.VIEW)
+    after = ROLES_ORDER.parse(cursor)
     tenant_id = auth_data["tenant_id"]
     db.ensure_builtin_roles(tenant_id)
-    return [_role_to_response(r) for r in db.list_roles(tenant_id)]
+    page = ROLES_ORDER.page(db.list_roles(tenant_id, limit=limit + 1, cursor=after), limit)
+    set_page_headers(response, page)
+    return [_role_to_response(r) for r in page.items]
 
 
 @router.get("/{tenant_slug}/roles/{role_id}")
@@ -367,13 +384,24 @@ def delete_role(
 @router.get("/{tenant_slug}/members")
 def list_members(
     tenant_slug: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[Dict[str, Any]]:
-    """List tenant members with their role, lifecycle status, and admin flag."""
+    """List tenant members with their role, lifecycle status, and admin flag.
+
+    The body is a JSON array of at most ``limit`` members (1,000 at most), by display name.
+    ``X-Has-More`` says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
+    """
     enforce_permission(db, auth_data, Resource.MEMBERS, Action.VIEW)
+    after = MEMBERS_ORDER.parse(cursor)
     tenant_id = auth_data["tenant_id"]
     db.ensure_builtin_roles(tenant_id)
-    return db.list_members(tenant_id)
+    page = MEMBERS_ORDER.page(db.list_members(tenant_id, limit=limit + 1, cursor=after), limit)
+    set_page_headers(response, page)
+    return page.items
 
 
 @router.get("/{tenant_slug}/members/export")

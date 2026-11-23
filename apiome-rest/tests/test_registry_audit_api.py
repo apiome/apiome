@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
 from app.main import app
+from tests.keyset_paging_fakes import keyset_rows, stamps
 
 client = TestClient(app)
 
@@ -52,9 +53,9 @@ def _sample_row():
 def test_registry_audit_offset_mode():
     with patch("app.registry_audit_routes.db") as mdb:
         mdb.count_registry_audit_filtered.return_value = 2
-        mdb.search_registry_audit.return_value = [_sample_row()]
+        mdb.search_registry_audit.return_value = [_sample_row(), _sample_row()]
         r = client.get(
-            f"/v1/primitives/t/audit?limit=1&offset=0&primitiveId={_PRIMITIVE_ID}"
+            f"/v1/primitives/t/audit?limit=1&offset=0&include_total=true&primitiveId={_PRIMITIVE_ID}"
         )
     assert r.status_code == 200
     data = r.json()
@@ -73,7 +74,8 @@ def test_registry_audit_offset_mode():
     # Filters are threaded through to the DB layer.
     mdb.search_registry_audit.assert_called_once()
     kw = mdb.search_registry_audit.call_args[1]
-    assert kw["limit"] == 1
+    # One row past the page: hasMore without a count (#7196).
+    assert kw["limit"] == 2
     assert kw["offset"] == 0
     assert kw["primitive_id"] == _PRIMITIVE_ID
 
@@ -151,3 +153,67 @@ def test_registry_audit_route_not_shadowed_by_primitive_lookup():
         r = client.get("/v1/primitives/t/audit")
     assert r.status_code == 200
     assert r.json()["items"] == []
+
+
+# --- Keyset paging (#7196) ---------------------------------------------------
+
+
+def _ledger(rows):
+    """A ``search_*`` stand-in paging ``rows`` by the accessor's own cursor arguments."""
+    page = keyset_rows(rows)
+
+    def search(*_, limit=50, offset=0, cursor_created_at=None, cursor_id=None, **__):
+        cursor = (cursor_created_at, cursor_id) if cursor_created_at is not None else None
+        return page(limit=limit, offset=offset, cursor=cursor)
+
+    return search
+
+
+def _many(count):
+    return [
+        dict(_sample_row(), id=f"aaaaaaaa-bbbb-cccc-dddd-{index:012d}", created_at=stamp)
+        for index, stamp in enumerate(stamps(count))
+    ]
+
+
+def test_registry_audit_pages_by_cursor_to_the_end():
+    rows = _many(5)
+    with patch("app.registry_audit_routes.db") as mdb:
+        mdb.search_registry_audit.side_effect = _ledger(rows)
+        seen, cursor = [], None
+        for _ in range(10):
+            params = {"limit": 2, **({"cursor": cursor} if cursor else {})}
+            body = client.get("/v1/primitives/t/audit", params=params).json()
+            seen += body["items"]
+            cursor = body["pagination"]["nextCursor"]
+            if not body["pagination"]["hasMore"]:
+                break
+        assert cursor is None
+        mdb.count_registry_audit_filtered.assert_not_called()
+    ids = [row["id"] for row in seen]
+    assert len(ids) == len(set(ids)) == 5
+    assert ids == sorted(ids, reverse=True)
+
+
+def test_registry_audit_total_is_not_counted_unless_asked():
+    with patch("app.registry_audit_routes.db") as mdb:
+        mdb.search_registry_audit.return_value = [_sample_row()]
+        body = client.get("/v1/primitives/t/audit").json()
+        mdb.count_registry_audit_filtered.assert_not_called()
+    assert body["pagination"]["total"] is None
+    assert body["pagination"]["hasMore"] is False
+    assert body["pagination"]["nextCursor"] is None
+
+
+def test_registry_audit_cursor_with_a_non_uuid_id_is_400():
+    from app.keyset_pagination import encode_time_id_cursor
+
+    token = encode_time_id_cursor("2026-06-01T12:00:00+00:00", "not-a-uuid")
+    with patch("app.registry_audit_routes.db"):
+        assert client.get("/v1/primitives/t/audit", params={"cursor": token}).status_code == 400
+
+
+def test_registry_audit_page_size_and_offset_have_hard_maximums():
+    with patch("app.registry_audit_routes.db"):
+        assert client.get("/v1/primitives/t/audit", params={"limit": 201}).status_code == 422
+        assert client.get("/v1/primitives/t/audit", params={"offset": 10_001}).status_code == 422

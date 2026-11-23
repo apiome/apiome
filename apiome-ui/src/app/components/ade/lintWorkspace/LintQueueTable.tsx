@@ -11,6 +11,7 @@ import {
   DataTableCellPrimary,
   DataTableCellSub,
   DataTableFilterChip,
+  DataTableCursorPager,
   DataTableFoot,
   DataTablePager,
   DataTableSearch,
@@ -89,8 +90,10 @@ import {
 export interface LintQueueTableProps {
   /** The findings of the current page. */
   findings: readonly LintWorkspaceFinding[];
-  /** How many findings matched in total. */
-  total: number;
+  /** How many findings matched in total; null when the server did not count them. */
+  total: number | null;
+  /** Whether a page follows this one — only consulted when there is no total to page by. */
+  hasMore?: boolean;
   /** The current offset. */
   offset: number;
   /** Facet counts from the findings response. */
@@ -202,6 +205,7 @@ function SubjectCell({ finding }: { finding: LintWorkspaceFinding }) {
 export default function LintQueueTable({
   findings,
   total,
+  hasMore = false,
   offset,
   facets,
   filters,
@@ -228,7 +232,7 @@ export default function LintQueueTable({
   const scanners = Object.keys(facets.scannerId ?? {}).filter((scanner) => scanner !== 'none');
   const url = shareableUrl(pathname, filters, sort, offset);
   const page = queuePageNumber(offset, LINT_QUEUE_PAGE_SIZE);
-  const pageCount = queuePageCount(total, LINT_QUEUE_PAGE_SIZE);
+  const pageCount = queuePageCount(total ?? 0, LINT_QUEUE_PAGE_SIZE);
   const narrowed = clearable > 0;
 
   const columns = React.useMemo<DataTableColumn<LintWorkspaceFinding>[]>(
@@ -541,14 +545,25 @@ export default function LintQueueTable({
       footer={
         <DataTableFoot>
           <span data-testid="queue-pagination-summary">
-            {queueRangeLabel(offset, LINT_QUEUE_PAGE_SIZE, total)}
+            {queueRangeLabel(offset, LINT_QUEUE_PAGE_SIZE, total, findings.length)}
           </span>
-          <DataTablePager
-            page={page}
-            pageCount={pageCount}
-            label="Findings pages"
-            onPageChange={(next) => onOffsetChange(queueOffsetForPage(next, LINT_QUEUE_PAGE_SIZE))}
-          />
+          {total === null ? (
+            // No count to number pages by: step to the neighbouring page instead.
+            <DataTableCursorPager
+              hasPrevious={offset > 0}
+              hasNext={hasMore}
+              label="Findings pages"
+              onPrevious={() => onOffsetChange(Math.max(0, offset - LINT_QUEUE_PAGE_SIZE))}
+              onNext={() => onOffsetChange(offset + LINT_QUEUE_PAGE_SIZE)}
+            />
+          ) : (
+            <DataTablePager
+              page={page}
+              pageCount={pageCount}
+              label="Findings pages"
+              onPageChange={(next) => onOffsetChange(queueOffsetForPage(next, LINT_QUEUE_PAGE_SIZE))}
+            />
+          )}
         </DataTableFoot>
       }
     />

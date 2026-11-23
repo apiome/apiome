@@ -35,8 +35,10 @@ from .database import db
 from .export_auto import AutoExportSubscriptionCreate, AutoExportSubscriptionUpdate
 from .export_auto_worker import release_halted_run
 from .export_git_delivery_routes import _check_tenant
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .sdk_publish_routes import tenant_id_of, write_audit
+from .tenant_config_list_orders import EXPORT_AUTO_SUBSCRIPTIONS_ORDER
 
 router = APIRouter(prefix="/v1/export", tags=["export-auto"])
 
@@ -71,6 +73,8 @@ class AutoExportSubscriptionListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     subscriptions: List[AutoExportSubscriptionModel] = Field(default_factory=list)
+    has_more: bool = Field(default=False, serialization_alias="hasMore")
+    next_cursor: Optional[str] = Field(default=None, serialization_alias="nextCursor")
 
 
 class AutoExportRunModel(BaseModel):
@@ -229,16 +233,20 @@ async def create_auto_export(
     response_model_by_alias=True,
     summary="List auto-export subscriptions",
     description="Every export preset run on publish, by project. `projectId` or `preset` (id or name) narrow. "
+    "At most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore` is false. "
     "Requires `projects:view`.",
 )
 async def list_auto_exports(
     tenant_slug: str,
     project_id: Optional[str] = Query(default=None, alias="projectId"),
     preset: Optional[str] = Query(default=None),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> AutoExportSubscriptionListResponse:
-    """List auto-export subscriptions."""
+    """List one page of auto-export subscriptions (400 for a malformed cursor)."""
     await run_in_threadpool(enforce_permission, db, auth_data, Resource.PROJECTS, Action.VIEW)
+    after = EXPORT_AUTO_SUBSCRIPTIONS_ORDER.parse(cursor)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
     preset_id = None
@@ -247,9 +255,20 @@ async def list_auto_exports(
         if not found:
             return AutoExportSubscriptionListResponse()
         preset_id = str(found["id"])
-    rows = await asyncio.to_thread(db.list_export_auto_subscriptions, tenant_id, project_id=project_id,
-                                   preset_id=preset_id)
-    return AutoExportSubscriptionListResponse(subscriptions=[subscription_model(row) for row in rows])
+    rows = await asyncio.to_thread(
+        db.list_export_auto_subscriptions,
+        tenant_id,
+        project_id=project_id,
+        preset_id=preset_id,
+        limit=limit + 1,
+        cursor=after,
+    )
+    page = EXPORT_AUTO_SUBSCRIPTIONS_ORDER.page(rows, limit)
+    return AutoExportSubscriptionListResponse(
+        subscriptions=[subscription_model(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.patch(

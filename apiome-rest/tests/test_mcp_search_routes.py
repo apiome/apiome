@@ -253,3 +253,8 @@ def test_search_requires_authentication():
     app.dependency_overrides.pop(validate_authentication, None)
     r = client.get("/v1/mcp/acme/search", params={"q": "x"})
     assert r.status_code == 401
+
+
+def test_search_offset_has_a_hard_maximum():
+    """Relevance order has no cursor, so the list stays on a bounded offset (#7196)."""
+    assert client.get("/v1/mcp/acme/search", params={"q": "x", "offset": 10_001}).status_code == 422

@@ -30,12 +30,13 @@ from __future__ import annotations
 import logging
 import posixpath
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from . import schema_suite_store as store
 from .config import settings
+from .keyset_pagination import Page, page_of, time_id_key
 from .schema_instance_service import (
     MEDIA_TYPE_JSON,
     MEDIA_TYPE_XML,
@@ -621,7 +622,11 @@ def create_suite(
 
 
 def list_suites(
-    tenant_id: str, *, ref: Optional[str] = None
+    tenant_id: str,
+    *,
+    ref: Optional[str] = None,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
 ) -> List[SchemaTestSuiteModel]:
     """Suites for the tenant, optionally narrowed to one stable reference's artifact.
 
@@ -630,6 +635,8 @@ def list_suites(
         ref: A suite reference in the create-form grammar; when given, only suites attached
             to its ``kind``/``artifact`` are returned (the type segment does not narrow,
             since one artifact's suites all feed the same surfaces).
+        limit: Suites to read; ``None`` reads them all.
+        cursor: Where the page starts (``SCHEMA_SUITES_ORDER``, #7196).
 
     Returns:
         The suites, each with its newest run summary.
@@ -637,7 +644,9 @@ def list_suites(
     ref_kind = ref_artifact = None
     if ref:
         ref_kind, ref_artifact, _ = parse_suite_reference(ref)
-    rows = store.list_suites(tenant_id, ref_kind=ref_kind, ref_artifact=ref_artifact)
+    rows = store.list_suites(
+        tenant_id, ref_kind=ref_kind, ref_artifact=ref_artifact, limit=limit, cursor=cursor
+    )
     return [
         _suite_model(
             row,
@@ -900,13 +909,36 @@ def _result_model(row: Dict[str, Any]) -> SuiteRunResultModel:
 
 
 def list_runs(
-    tenant_id: str, suite_id: str, *, limit: int = 20, offset: int = 0
-) -> Optional[List[SuiteRunSummaryModel]]:
-    """A suite's run history, newest first; ``None`` when the suite is not visible."""
+    tenant_id: str,
+    suite_id: str,
+    *,
+    limit: int = 20,
+    offset: int = 0,
+    cursor: Optional[Tuple[Any, str]] = None,
+) -> Optional[Page[SuiteRunSummaryModel]]:
+    """A page of a suite's run history, newest first.
+
+    Reads one row more than the page to learn whether another page exists (#7196).
+
+    Args:
+        tenant_id: Tenant scope.
+        suite_id: The suite whose history is read.
+        limit: Page size.
+        offset: Runs to skip (deprecated; ignored when ``cursor`` is given).
+        cursor: ``(created_at, id)`` of the last run already seen.
+
+    Returns:
+        The page; ``None`` when the suite is not visible.
+    """
     if store.get_suite(tenant_id, suite_id) is None:
         return None
-    rows = store.list_runs(tenant_id, suite_id, limit=limit, offset=offset)
-    return [_run_summary_from_row(row) for row in rows]
+    rows = store.list_runs(tenant_id, suite_id, limit=limit + 1, offset=offset, cursor=cursor)
+    page = page_of(rows, limit, time_id_key())
+    return Page(
+        items=[_run_summary_from_row(row) for row in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 def get_run_detail(

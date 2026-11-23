@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from . import notification_store
-from .comment_mentions import MentionCandidate, resolve_mentions
+from .comment_mentions import MentionCandidate, extract_mention_handles, resolve_mentions
 from .comments import (
     ANCHOR_VERSION,
     CODE_ANCHOR_NOT_FOUND,
@@ -57,6 +57,7 @@ from .comments import (
     CommentValidationError,
 )
 from .database import db
+from .keyset_pagination import Page, page_of, time_id_key
 from .revision_deprecation import is_uuid_string
 
 __all__ = [
@@ -95,7 +96,9 @@ class ThreadFilters:
         mentions_me: Only threads with a comment mentioning the viewer.
         origin: Only ``internal`` or only ``consumer`` threads (COL-4.4, #4528).
         limit: Page size.
-        offset: Threads to skip.
+        offset: Threads to skip (deprecated; ignored when ``cursor`` is set).
+        cursor: ``(last_activity_at, id)`` of the last thread already seen (#7196).
+        include_total: Also count the matches (capped); off by default.
     """
 
     version: Optional[str] = None
@@ -106,6 +109,8 @@ class ThreadFilters:
     origin: Optional[str] = None
     limit: int = 50
     offset: int = 0
+    cursor: Optional[Tuple[Any, str]] = None
+    include_total: bool = False
 
 
 # ---------------------------------------------------------------------------------------------
@@ -258,6 +263,11 @@ def _require_body(body: str) -> str:
     return body
 
 
+#: The most distinct handles one narrow member lookup carries; a body with more falls back to
+#: reading the member list.
+MAX_MENTION_LOOKUP_HANDLES = 100
+
+
 def resolve_body_mentions(tenant_id: str, body: str) -> List[str]:
     """Resolve a body's ``@name`` tokens to tenant member ids.
 
@@ -266,18 +276,28 @@ def resolve_body_mentions(tenant_id: str, body: str) -> List[str]:
         body: The Markdown body.
 
     Returns:
-        The mentioned member ids, in order of first mention. The member list is only read when the
-        body contains a mention token at all.
+        The mentioned member ids, in order of first mention. Members are only read when the body
+        contains a mention token at all, and then only those a handle in the body could name —
+        never the tenant's whole member list (#7196).
     """
     if "@" not in (body or ""):
         return []
+    handles = extract_mention_handles(body)
+    if not handles:
+        return []
+    if len(handles) > MAX_MENTION_LOOKUP_HANDLES:
+        # More distinct handles than a narrow lookup should carry in one predicate; a body like
+        # that is rare enough to read the member list for.
+        rows = db.list_comment_mention_candidates(tenant_id)
+    else:
+        rows = db.find_comment_mention_candidates(tenant_id, handles)
     members = [
         MentionCandidate(
             user_id=str(row.get("user_id") or ""),
             name=row.get("name"),
             email=row.get("email"),
         )
-        for row in db.list_comment_mention_candidates(tenant_id)
+        for row in rows
     ]
     return resolve_mentions(body, members).user_ids
 
@@ -437,17 +457,20 @@ def _mention_notifier(
 
 def list_threads(
     tenant_id: str, project_ref: str, filters: ThreadFilters, viewer_id: str
-) -> Tuple[List[CommentThreadSummary], int]:
+) -> Tuple[Page[CommentThreadSummary], Optional[int]]:
     """List a project's threads, most recently active first.
+
+    Reads one row more than the page to learn whether another page exists, so nothing is counted
+    unless the caller asks for a total (#7196).
 
     Args:
         tenant_id: The caller's tenant.
         project_ref: Project slug or id.
-        filters: What to narrow to.
+        filters: What to narrow to, and where the page starts.
         viewer_id: The caller, for ``mentions_me``.
 
     Returns:
-        The page of summaries and the total matching the filters.
+        The page, and the capped total when ``filters.include_total`` (else ``None``).
 
     Raises:
         CommentValidationError: For an unknown project or version, or a malformed ``anchor_id``.
@@ -473,9 +496,19 @@ def list_threads(
         "mentioned_user_id": viewer_id if filters.mentions_me else None,
         "origin": filters.origin,
     }
-    rows = db.list_comment_threads(**scope, limit=filters.limit, offset=filters.offset)
-    total = db.count_comment_threads(**scope)
-    return [_summary(row) for row in rows], total
+    rows = db.list_comment_threads(
+        **scope, limit=filters.limit + 1, offset=filters.offset, cursor=filters.cursor
+    )
+    page = page_of(rows, filters.limit, time_id_key("last_activity_at"))
+    total = db.count_comment_threads(**scope) if filters.include_total else None
+    return (
+        Page(
+            items=[_summary(row) for row in page.items],
+            has_more=page.has_more,
+            next_cursor=page.next_cursor,
+        ),
+        total,
+    )
 
 
 def get_thread(tenant_id: str, project_ref: str, thread_id: str) -> CommentThreadDetail:

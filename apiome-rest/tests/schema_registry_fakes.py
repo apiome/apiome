@@ -103,11 +103,14 @@ class FakeStore:
     def get_subject(self, db, tenant_id, name):
         return next((s for s in self.subjects if s["name"] == name and not s["deleted_at"]), None)
 
-    def list_versions(self, db, subject_id):
-        return sorted(
+    def list_versions(self, db, subject_id, *, limit=None, cursor=None):
+        rows = sorted(
             (v for v in self.versions if v["subject_id"] == subject_id and not v["deleted_at"]),
             key=lambda v: v["version"],
         )
+        if cursor is not None:
+            rows = [v for v in rows if v["version"] > cursor[0]]
+        return rows if limit is None else rows[:limit]
 
     def get_version(self, db, subject_id, version):
         return next((v for v in self.list_versions(db, subject_id) if v["version"] == int(version)), None)

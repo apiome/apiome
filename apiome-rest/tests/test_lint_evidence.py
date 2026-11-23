@@ -484,7 +484,7 @@ def test_revision_evidence_lists_runs_and_coverage():
     assert body["coverage"][0]["scannerId"] == NATIVE_SCANNER_ID
     assert body["coverage"][0]["runId"] == _RUN
     # Tenant scoping flows into the evidence query.
-    mdb.list_lint_evidence_runs_for_version.assert_called_once_with(_REV, "t1")
+    mdb.list_lint_evidence_runs_for_version.assert_called_once_with(_REV, "t1", limit=200)
 
 
 def test_revision_evidence_redacts_raw_artifact_reference():

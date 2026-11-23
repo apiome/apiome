@@ -11,6 +11,7 @@ The SQL text itself was exercised against a scratch database built from the real
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 import pytest
@@ -198,6 +199,21 @@ def test_a_versions_evaluations_narrow_by_commit_and_by_whether_they_judged_anyt
     sql, params = conn.statements[0]
     assert "s.commit_sha = %s" in sql and "s.evaluated = %s" in sql
     assert params == (VERSION, TENANT, COMMIT, False, 1, 0)
+
+
+def test_the_run_list_continues_after_a_cursor_without_an_offset(monkeypatch):
+    conn = ScriptedConnection([[]])
+    database = database_with(monkeypatch, conn)
+    stamp = datetime(2026, 11, 22, tzinfo=timezone.utc)
+
+    database.list_check_suite_runs(
+        tenant_id=TENANT, version_id=VERSION, limit=10, offset=20, cursor=(stamp, RUN)
+    )
+
+    sql, params = conn.statements[0]
+    assert "(s.created_at, s.id) < (%s, %s::uuid)" in sql
+    assert "ORDER BY s.created_at DESC, s.id DESC" in sql
+    assert params == (VERSION, TENANT, stamp, RUN, 10, 0)
 
 
 def test_reads_join_the_version_label_and_the_evaluators_name(monkeypatch):

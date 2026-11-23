@@ -46,9 +46,24 @@ describe('mcpCapabilityDirectoryFromPayload', () => {
       ],
     });
     expect(page.total).toBe(1);
+    // No `has_more` in the answer: the page says nothing about what follows.
+    expect(page.page).toMatchObject({ hasMore: false, nextCursor: null, reported: false });
     expect(page.items).toHaveLength(1);
     expect(page.items[0]?.endpointSlug).toBe('acme-geo');
     expect(page.items[0]?.itemName).toBe('geocode');
+  });
+
+  it('reads the cursor envelope, and an uncounted total as unknown rather than zero (#7196)', () => {
+    const page = mcpCapabilityDirectoryFromPayload({
+      success: true,
+      total: null,
+      has_more: true,
+      next_cursor: 'abc',
+      items: [],
+    });
+    expect(page.total).toBeNull();
+    expect(page.page).toMatchObject({ hasMore: true, nextCursor: 'abc', reported: true });
+    expect(mcpCapabilityDirectoryFromPayload(null).total).toBeNull();
   });
 });
 
@@ -64,7 +79,7 @@ describe('mcpCapabilityDirectoryQueryParams', () => {
       },
       'name',
       'desc',
-      50,
+      { offset: 50 },
       25,
     );
     expect(params.get('name')).toBe('geo');
@@ -75,6 +90,23 @@ describe('mcpCapabilityDirectoryQueryParams', () => {
     expect(params.get('direction')).toBe('desc');
     expect(params.get('offset')).toBe('50');
     expect(params.get('limit')).toBe('25');
+  });
+
+  it('pages by cursor and asks for the count only when told to (#7196)', () => {
+    const first = mcpCapabilityDirectoryQueryParams(MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS, 'server', 'asc', {
+      includeTotal: true,
+    });
+    expect(first.get('include_total')).toBe('true');
+    expect(first.has('offset')).toBe(false);
+    expect(first.has('cursor')).toBe(false);
+
+    const later = mcpCapabilityDirectoryQueryParams(MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS, 'server', 'asc', {
+      cursor: 'abc',
+      offset: 50,
+    });
+    expect(later.get('cursor')).toBe('abc');
+    expect(later.has('offset')).toBe(false);
+    expect(later.has('include_total')).toBe(false);
   });
 });
 
@@ -173,7 +205,9 @@ describe('the preset tiles', () => {
     const params = mcpCapabilityDirectoryPresetCountParams(preset('public'));
     expect(params.get('visibility')).toBe('public');
     expect(params.get('limit')).toBe('1');
-    expect(params.get('offset')).toBe('0');
+    // The count is the point of the read, so it is asked for.
+    expect(params.get('include_total')).toBe('true');
+    expect(params.has('offset')).toBe(false);
   });
 });
 
@@ -193,6 +227,12 @@ describe('mcpCapabilityDirectoryRange', () => {
 
   it('clamps the end to the total when the last page is short', () => {
     expect(mcpCapabilityDirectoryRange(100, 20, 120)).toBe('101–120 of 120');
+  });
+
+  it('gives only the range when the total was not counted, and 10,000+ at the cap (#7196)', () => {
+    expect(mcpCapabilityDirectoryRange(50, 50, null)).toBe('51–100');
+    expect(mcpCapabilityDirectoryRange(0, 0, null)).toBe('No capabilities');
+    expect(mcpCapabilityDirectoryRange(0, 50, 10000)).toBe('1–50 of 10,000+');
   });
 });
 
@@ -217,6 +257,23 @@ describe('mcpCapabilityDirectoryFootLine', () => {
         'desc',
       ),
     ).toBe('1 capability · page size 50 · sorted by capability descending');
+  });
+
+  it('prints no number it was not given (#7196)', () => {
+    expect(
+      mcpCapabilityDirectoryFootLine(null, MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS, 'server', 'asc'),
+    ).toBe('page size 50 · sorted by server ascending');
+    expect(
+      mcpCapabilityDirectoryFootLine(
+        null,
+        { ...MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS, name: 'search' },
+        'server',
+        'asc',
+      ),
+    ).toBe('Matching “search” · page size 50 · sorted by server ascending');
+    expect(
+      mcpCapabilityDirectoryFootLine(10000, MCP_CAPABILITY_DIRECTORY_DEFAULT_FILTERS, 'server', 'asc'),
+    ).toBe('10,000+ capabilities · page size 50 · sorted by server ascending');
   });
 
   it('states the direction in words, so the sentence stands without the chevron', () => {

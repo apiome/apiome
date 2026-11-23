@@ -207,9 +207,9 @@ def test_the_team_sees_the_thread_tagged_consumer(fake, ada, team):
     client.post(TEAM, json={"version": "1.0.0", "anchor_type": "version", "body": "internal note"})
     listing = client.get(TEAM).json()
     assert {t["origin"] for t in listing["threads"]} == {"consumer", "internal"}
-    consumer = client.get(TEAM, params={"origin": "consumer"}).json()
+    consumer = client.get(TEAM, params={"origin": "consumer", "include_total": "true"}).json()
     assert consumer["total"] == 1 and consumer["threads"][0]["origin"] == "consumer"
-    internal = client.get(TEAM, params={"origin": "internal"}).json()
+    internal = client.get(TEAM, params={"origin": "internal", "include_total": "true"}).json()
     assert internal["total"] == 1 and internal["threads"][0]["root_comment"]["body"] == "internal note"
 
 

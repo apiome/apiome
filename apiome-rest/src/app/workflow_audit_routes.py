@@ -6,9 +6,6 @@ GET /v1/versions/{tenant_slug}/workflow-audit
 
 from __future__ import annotations
 
-import base64
-import binascii
-import json
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -17,6 +14,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    InvalidCursor,
+    cursor_query,
+    decode_time_id_cursor,
+    encode_time_id_cursor,
+    include_total_query,
+    limit_query,
+    offset_query,
+    page_of,
+    time_id_key,
+)
 from .models import (
     WorkflowAuditEntryOut,
     WorkflowAuditPageResponse,
@@ -25,7 +34,7 @@ from .models import (
 
 router = APIRouter(prefix="/v1/versions", tags=["workflow-audit"])
 
-_MAX_LIMIT = 500
+_MAX_LIMIT = MAX_PAGE_LIMIT
 _DEFAULT_LIMIT = 50
 
 
@@ -76,47 +85,32 @@ def _normalize_outcome(raw: Optional[str]) -> Optional[str]:
     return o
 
 
-def _encode_cursor(created_at: Any, row_id: str) -> str:
-    if hasattr(created_at, "isoformat"):
-        ts = created_at.isoformat()
-    else:
-        ts = str(created_at)
-    payload = json.dumps({"t": ts, "i": str(row_id)}, separators=(",", ":"))
-    raw = base64.urlsafe_b64encode(payload.encode()).decode("ascii")
-    return raw.rstrip("=")
+#: Sibling ledgers import the codec under its old private names; both are the shared
+#: ``{"t", "i"}`` token (#7196). ``InvalidCursor`` is a ``ValueError``, as before.
+_encode_cursor = encode_time_id_cursor
 
 
 def _decode_cursor(token: str) -> Tuple[datetime, str]:
-    s = str(token).strip()
-    if not s:
-        raise ValueError("empty cursor")
-    pad = "=" * (-len(s) % 4)
+    """Read a ``(created_at, id)`` cursor of this ledger.
+
+    The token is the shared ``{"t", "i"}`` form (#7196); this ledger's ids are UUIDs, so anything
+    else is refused before it reaches SQL.
+
+    Args:
+        token: The ``cursor`` query parameter.
+
+    Returns:
+        ``(created_at, id)`` of the last row the caller saw.
+
+    Raises:
+        InvalidCursor: The token is malformed or its id is not a UUID.
+    """
+    stamp, row_id = decode_time_id_cursor(token)
     try:
-        data = base64.urlsafe_b64decode(s + pad)
-    except (binascii.Error, ValueError) as e:
-        raise ValueError("invalid base64") from e
-    try:
-        obj = json.loads(data.decode("utf-8"))
-    except json.JSONDecodeError as e:
-        raise ValueError("invalid json") from e
-    if not isinstance(obj, dict):
-        raise ValueError("cursor must be a JSON object")
-    ts = obj.get("t")
-    rid = obj.get("i")
-    if not isinstance(ts, str) or not isinstance(rid, str):
-        raise ValueError("cursor missing t or i")
-    ts_norm = ts.replace("Z", "+00:00")
-    try:
-        dt = datetime.fromisoformat(ts_norm)
-    except ValueError as e:
-        raise ValueError("bad timestamp") from e
-    if dt.tzinfo is None:
-        raise ValueError("cursor timestamp missing timezone info")
-    try:
-        uuid.UUID(rid)
-    except ValueError as e:
-        raise ValueError("bad id") from e
-    return dt, rid
+        uuid.UUID(row_id)
+    except ValueError as exc:
+        raise InvalidCursor("bad id") from exc
+    return stamp, row_id
 
 
 def _row_to_entry(row: Dict[str, Any]) -> WorkflowAuditEntryOut:
@@ -147,6 +141,12 @@ def _row_to_entry(row: Dict[str, Any]) -> WorkflowAuditEntryOut:
     "/{tenant_slug}/workflow-audit",
     response_model=WorkflowAuditPageResponse,
     response_model_by_alias=True,
+    description=(
+        "List workflow audit events for the tenant, newest first.\n\n"
+        "Pages by `cursor`: pass `pagination.nextCursor` until `pagination.hasMore` is false. "
+        "`offset` is deprecated and cannot be combined with `cursor`. `pagination.total` is "
+        "counted (up to 10,000) only when `include_total` is set."
+    ),
 )
 def list_workflow_audit(
     tenant_slug: str,
@@ -182,18 +182,37 @@ def list_workflow_audit(
         None,
         description="Inclusive upper bound on createdAt (ISO 8601).",
     ),
-    limit: int = Query(_DEFAULT_LIMIT, ge=1, le=_MAX_LIMIT),
-    offset: int = Query(0, ge=0),
-    cursor: Optional[str] = Query(
-        None,
-        description="Opaque next-page token from pagination.nextCursor (cursor mode).",
-    ),
+    limit: int = limit_query(_DEFAULT_LIMIT, maximum=_MAX_LIMIT),
+    offset: int = offset_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
 ) -> WorkflowAuditPageResponse:
-    """
-    List workflow audit events for the tenant (newest first).
+    """List workflow audit events for the tenant, newest first.
 
-    Pagination: use **offset** + **limit**, or **cursor** + **limit**. Do not combine
-    **cursor** with a non-zero **offset**.
+    ``hasMore`` comes from reading one row past the page, so nothing is counted unless
+    ``include_total`` is set (#7196).
+
+    Args:
+        tenant_slug: The tenant in the path.
+        auth_data: The authenticated principal.
+        action: Only these actions.
+        actor_id: Only this actor.
+        outcome: Only ``success`` or ``failure``.
+        version_id: Only this revision.
+        project_id: Only this project.
+        since: Inclusive lower bound on ``created_at``.
+        until: Inclusive upper bound on ``created_at``.
+        limit: Page size.
+        offset: Rows to skip (deprecated).
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        include_total: Also count the matches, up to the cap.
+
+    Returns:
+        The page and its pagination facts.
+
+    Raises:
+        HTTPException: 400 for a malformed filter or cursor, or a cursor combined with a non-zero
+            offset; 404 for an unknown project.
     """
     tid = auth_data["tenant_id"]
 
@@ -216,16 +235,14 @@ def list_workflow_audit(
         if not proj:
             raise HTTPException(status_code=404, detail=f"Project not found: {pid}")
 
-    cur_ts: Optional[datetime] = None
-    cur_id: Optional[str] = None
+    cur: Optional[Tuple[datetime, str]] = None
     if cursor:
         try:
-            cur_ts, cur_id = _decode_cursor(cursor)
-        except ValueError as e:
+            cur = _decode_cursor(cursor)
+        except InvalidCursor as e:
             raise HTTPException(status_code=400, detail=f"Invalid cursor: {e}") from e
 
-    total = db.count_workflow_audit_filtered(
-        tid,
+    filters: Dict[str, Any] = dict(
         project_id=pid,
         actions=actions,
         actor_id=aid,
@@ -234,65 +251,25 @@ def list_workflow_audit(
         since=since_dt,
         until=until_dt,
     )
-
-    if cur_ts is not None:
-        rows = db.search_workflow_audit(
-            tid,
-            project_id=pid,
-            actions=actions,
-            actor_id=aid,
-            outcome=out_f,
-            version_id=vid,
-            since=since_dt,
-            until=until_dt,
-            limit=limit + 1,
-            offset=0,
-            cursor_created_at=cur_ts,
-            cursor_id=cur_id,
-        )
-        has_more = len(rows) > limit
-        rows = rows[:limit]
-        next_cur = None
-        if has_more and rows:
-            last = rows[-1]
-            next_cur = _encode_cursor(last.get("created_at"), str(last["id"]))
-        pag = WorkflowAuditPaginationOut(
-            limit=limit,
-            total=total,
-            has_more=has_more,
-            offset=None,
-            next_offset=None,
-            next_cursor=next_cur,
-        )
-    else:
-        rows = db.search_workflow_audit(
-            tid,
-            project_id=pid,
-            actions=actions,
-            actor_id=aid,
-            outcome=out_f,
-            version_id=vid,
-            since=since_dt,
-            until=until_dt,
-            limit=limit,
-            offset=offset,
-            cursor_created_at=None,
-            cursor_id=None,
-        )
-        has_more = offset + len(rows) < total
-        next_off = (offset + len(rows)) if has_more else None
-        next_cur_off = None
-        if has_more and rows:
-            last = rows[-1]
-            next_cur_off = _encode_cursor(last.get("created_at"), str(last["id"]))
-        pag = WorkflowAuditPaginationOut(
-            limit=limit,
-            total=total,
-            has_more=has_more,
-            offset=offset,
-            next_offset=next_off,
-            next_cursor=next_cur_off,
-        )
+    total = db.count_workflow_audit_filtered(tid, **filters) if include_total else None
+    rows = db.search_workflow_audit(
+        tid,
+        **filters,
+        limit=limit + 1,
+        offset=0 if cur else offset,
+        cursor_created_at=cur[0] if cur else None,
+        cursor_id=cur[1] if cur else None,
+    )
+    page = page_of(rows, limit, time_id_key())
+    rows = page.items
+    pag = WorkflowAuditPaginationOut(
+        limit=limit,
+        total=total,
+        has_more=page.has_more,
+        offset=None if cur else offset,
+        next_offset=(offset + len(rows)) if page.has_more and not cur else None,
+        next_cursor=page.next_cursor,
+    )
 
     items = [_row_to_entry(r) for r in rows]
 

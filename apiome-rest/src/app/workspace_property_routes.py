@@ -99,8 +99,19 @@ def search_workspace_properties(
     tenant_slug: str,
     version_id: str,
     q: Optional[str] = Query(None, description=_QUERY_DESCRIPTION),
-    limit: Optional[int] = Query(None, ge=0, description=_LIMIT_DESCRIPTION),
-    owner_limit: Optional[int] = Query(None, ge=0, description=_OWNER_LIMIT_DESCRIPTION),
+    # A larger value is clamped, not refused; the schema documents the ceiling (#7196).
+    limit: Optional[int] = Query(
+        None,
+        ge=0,
+        description=_LIMIT_DESCRIPTION,
+        json_schema_extra={"maximum": store.MAX_PROPERTY_LIMIT},
+    ),
+    owner_limit: Optional[int] = Query(
+        None,
+        ge=0,
+        description=_OWNER_LIMIT_DESCRIPTION,
+        json_schema_extra={"maximum": store.MAX_OWNER_LIMIT},
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> WorkspacePropertySearch:
     """Which properties of this version a query names, and how many classes carry each.

@@ -118,7 +118,9 @@ describe('the enforcement read', () => {
       { tenantName: 'Acme', dueAt: '2026-10-25T12:00:00.000Z' },
     ]);
     const [sql, params] = pool.query.mock.calls[0];
-    expect(params).toEqual(['u-1']);
+    // Capped, earliest deadline first, so the deadline that matters is never cut (DBP-1.13).
+    expect(params).toEqual(['u-1', 1000]);
+    expect(String(sql)).toMatch(/ORDER BY due_at ASC\s+LIMIT \$2$/);
     for (const clause of [
       "tu.status = 'active'",
       'tn.deleted_at IS NULL',

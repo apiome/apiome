@@ -104,27 +104,36 @@ describe('filters', () => {
 
   it('spells the list query in apiome-rest vocabulary', () => {
     expect(discussionListParams(DEFAULT_DISCUSSION_FILTERS)).toBe(
-      `?status=open&limit=${DISCUSSION_PAGE_SIZE}&offset=0`
+      `?status=open&limit=${DISCUSSION_PAGE_SIZE}`
     );
     expect(
       discussionListParams({ status: 'resolved', mentionsMe: true, elementType: 'operation', origin: 'all' }, { limit: 10, offset: 20 })
     ).toBe('?status=resolved&mentions_me=true&anchor_type=operation&limit=10&offset=20');
   });
 
+  it('pages by cursor, asks for the count only when told to, and never sends an offset beside a cursor', () => {
+    expect(discussionListParams(DEFAULT_DISCUSSION_FILTERS, { limit: 10, includeTotal: true })).toBe(
+      '?status=open&limit=10&include_total=true'
+    );
+    expect(discussionListParams(DEFAULT_DISCUSSION_FILTERS, { limit: 10, cursor: 'abc', offset: 20 })).toBe(
+      '?status=open&limit=10&cursor=abc'
+    );
+  });
+
   it('omits the facets set to all', () => {
     expect(discussionListParams({ status: 'all', mentionsMe: false, elementType: 'all', origin: 'all' }, { limit: 1 })).toBe(
-      '?limit=1&offset=0'
+      '?limit=1'
     );
   });
 
   it('narrows the list and the summary to one version when given its revision id (COL-2.2)', () => {
     const revision = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     expect(discussionListParams(DEFAULT_DISCUSSION_FILTERS, { limit: 5 }, revision)).toBe(
-      `?status=open&version=${revision}&limit=5&offset=0`
+      `?status=open&version=${revision}&limit=5`
     );
     expect(discussionSummaryParams(DEFAULT_DISCUSSION_FILTERS, revision)).toBe(`?version=${revision}`);
     expect(discussionListParams(DEFAULT_DISCUSSION_FILTERS, {}, null)).toBe(
-      `?status=open&limit=${DISCUSSION_PAGE_SIZE}&offset=0`
+      `?status=open&limit=${DISCUSSION_PAGE_SIZE}`
     );
   });
 
@@ -147,7 +156,7 @@ describe('origin (COL-4.4)', () => {
 
   it('sends the origin facet to the list and the summary', () => {
     const filters = { status: 'open', mentionsMe: false, elementType: 'all', origin: 'consumer' } as const;
-    expect(discussionListParams(filters, { limit: 5 })).toBe('?status=open&origin=consumer&limit=5&offset=0');
+    expect(discussionListParams(filters, { limit: 5 })).toBe('?status=open&origin=consumer&limit=5');
     expect(discussionSummaryParams(filters)).toBe('?origin=consumer');
   });
 
@@ -208,6 +217,13 @@ describe('sanitizeThreadListParams', () => {
     expect(sanitizeThreadListParams(new URLSearchParams()).toString()).toBe(
       `limit=${DISCUSSION_PAGE_SIZE}&offset=0`
     );
+  });
+
+  it('forwards a cursor and the count request, dropping the offset beside a cursor', () => {
+    expect(
+      sanitizeThreadListParams(new URLSearchParams('status=open&cursor=abc&include_total=true&offset=50')).toString()
+    ).toBe(`status=open&limit=${DISCUSSION_PAGE_SIZE}&cursor=abc&include_total=true`);
+    expect(sanitizeThreadListParams(new URLSearchParams('include_total=yes')).has('include_total')).toBe(false);
   });
 });
 

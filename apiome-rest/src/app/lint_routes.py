@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.concurrency import run_in_threadpool
 
 from .auth import validate_authentication, validate_session_credentials
+from .authoring_list_orders import LINT_DECISION_EVENTS_ORDER, LINT_DECISIONS_ORDER
 from .axis_score import catalog_axis_evaluation
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .config import settings
@@ -24,6 +25,13 @@ from .custom_rule_dsl import CustomRuleValidationError, parse_style_guide_yaml
 from .database import db
 from .gate_report_emit import GATE_FORMAT_JSON, GATE_FORMAT_MARKDOWN, normalize_gate_format
 from .import_routing import PUBLISHABLE_FORMATS
+from .keyset_pagination import (
+    MAX_PAGE_LIMIT,
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    set_page_headers,
+)
 from .lint_evidence import SUBJECT_CATALOG_REVISION
 from .lint_gate import evaluate_lint_gate, gate_payload
 from .lint_gate_emit import serialize_lint_gate
@@ -903,14 +911,16 @@ async def lint_revision_evidence(
     tenant_slug: str,
     project_id: str,
     version_record_id: str,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintEvidenceResponse:
     """
     Return the immutable lint evidence recorded for a schema revision (CLX-1.1, #4848).
 
-    Lists every evidence run captured for the revision — provenance (scanner, adapter,
-    profile, fingerprints), outcome, normalized findings, and coverage — plus a per-scanner
-    coverage summary in which a scanner that never ran reads as ``not_run`` (never as clean).
+    Lists the newest ``limit`` evidence runs captured for the revision (200 at most, #7196) —
+    provenance (scanner, adapter, profile, fingerprints), outcome, normalized findings, and
+    coverage — plus a per-scanner coverage summary, computed over those runs, in which a
+    scanner that never ran reads as ``not_run`` (never as clean).
     Raw output artifacts are access-controlled: responses expose only their availability,
     never the storage reference or command metadata. Evidence is read-only by design; rows
     are written at score-capture time and are immutable.
@@ -950,7 +960,9 @@ async def lint_revision_evidence(
     except Exception:  # noqa: BLE001 — evidence must never break the read path
         pass
 
-    rows = await run_in_threadpool(db.list_lint_evidence_runs_for_version, version_record_id, tenant_id)
+    rows = await run_in_threadpool(
+        db.list_lint_evidence_runs_for_version, version_record_id, tenant_id, limit=limit
+    )
     return lint_evidence_response_from_rows(
         SUBJECT_CATALOG_REVISION,
         version_record_id,
@@ -1277,13 +1289,42 @@ async def lint_revision_gate(
 @decisions_router.get("", response_model=LintFindingDecisionListResponse)
 def list_lint_finding_decisions(
     project_id: Optional[str] = Query(default=None, alias="projectId"),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> LintFindingDecisionListResponse:
-    """List finding remediation / waiver decisions for the tenant (CLX-1.3, #4850)."""
+    """List finding remediation / waiver decisions for the tenant (CLX-1.3, #4850).
+
+    Most recently changed first, one page of at most ``limit`` decisions (1,000 at most); pass
+    the page's ``nextCursor`` as ``cursor`` while ``hasMore`` is true (#7196).
+
+    Args:
+        project_id: Narrow to one project's decisions plus the tenant-wide ones.
+        limit: Page size.
+        cursor: Where the page starts (``nextCursor`` of the previous page).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The page of decisions and whether another follows.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
+    """
     tenant_id = auth_data["tenant_id"]
-    rows = db.list_lint_finding_decisions(tenant_id, project_id=project_id)
-    decisions = [lint_finding_decision_out_from_row(r) for r in rows]
-    return LintFindingDecisionListResponse(decisions=decisions, count=len(decisions))
+    rows = db.list_lint_finding_decisions(
+        tenant_id,
+        project_id=project_id,
+        limit=limit + 1,
+        cursor=LINT_DECISIONS_ORDER.parse(cursor),
+    )
+    page = LINT_DECISIONS_ORDER.page(rows, limit)
+    decisions = [lint_finding_decision_out_from_row(r) for r in page.items]
+    return LintFindingDecisionListResponse(
+        decisions=decisions,
+        count=len(decisions),
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @decisions_router.get("/{decision_id}", response_model=LintFindingDecisionOut)
@@ -1364,16 +1405,42 @@ def upsert_lint_finding_decision(
 )
 def list_lint_finding_decision_events(
     decision_id: str,
+    response: Response,
+    limit: int = limit_query(MAX_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> list[LintFindingDecisionEventOut]:
-    """Audit history for a finding decision (CLX-1.3, #4850)."""
+    """Audit history for a finding decision, oldest first (CLX-1.3, #4850).
+
+    The body is a JSON array of at most ``limit`` events (200 at most). The ``X-Has-More``
+    response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
+
+    Args:
+        decision_id: The decision whose history is read.
+        response: The outgoing response (paging headers are set on it).
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+        auth_data: The authenticated principal.
+
+    Returns:
+        One page of events.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the decision is unknown.
+    """
     tenant_id = auth_data["tenant_id"]
+    after = LINT_DECISION_EVENTS_ORDER.parse(cursor)
     decision = db.get_lint_finding_decision(decision_id, tenant_id)
     if not decision:
         raise HTTPException(status_code=404, detail="Decision not found")
-    rows = db.list_lint_finding_decision_events(decision_id, tenant_id)
+    rows = db.list_lint_finding_decision_events(
+        decision_id, tenant_id, limit=limit + 1, cursor=after
+    )
+    page = LINT_DECISION_EVENTS_ORDER.page(rows, limit)
+    set_page_headers(response, page)
     out: list[LintFindingDecisionEventOut] = []
-    for row in rows:
+    for row in page.items:
         out.append(
             LintFindingDecisionEventOut(
                 id=str(row["id"]),

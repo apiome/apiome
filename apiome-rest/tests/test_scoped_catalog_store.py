@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import pytest
 
+from app.keyset_pagination import decode_key_cursor
 from app.scoped_catalog_store import (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
@@ -332,7 +333,12 @@ class TestLoadClassesByDomain:
         conn = FakeConnection(
             [
                 {"n": 40},
-                [class_row(CLASS_A, "Address"), class_row(CLASS_B, "Customer")],
+                # One row past the page of two is what says another page exists (#7196).
+                [
+                    class_row(CLASS_A, "Address"),
+                    class_row(CLASS_B, "Customer"),
+                    class_row(CLASS_C, "Order"),
+                ],
                 [],
                 [],
             ]
@@ -341,10 +347,12 @@ class TestLoadClassesByDomain:
             FakeDb(conn), version_id=VERSION, domain_id=DOMAIN, limit=2, offset=0
         )
 
-        assert len(page.items) == 2
+        assert [item["name"] for item in page.items] == ["Address", "Customer"]
         # `total` is the folder, not the page — that is what the node-budget notice is sized on.
         assert page.total == 40
-        assert page.next_offset == 2
+        # The cursor names the last item served, so the next page is a range scan, not a skip.
+        assert decode_key_cursor(page.next_cursor, 2) == ["Customer", CLASS_B]
+        assert page.next_offset is None
         assert len(conn.statements) == 4
 
     def test_the_last_page_offers_no_cursor(self):
@@ -353,7 +361,7 @@ class TestLoadClassesByDomain:
             FakeDb(conn), version_id=VERSION, domain_id=DOMAIN, limit=2, offset=2
         )
 
-        assert page.next_offset is None
+        assert page.next_offset is None and page.next_cursor is None
 
     def test_paging_past_the_end_terminates(self):
         # Without the empty-page guard a client that paged too far would be handed a cursor
@@ -364,7 +372,26 @@ class TestLoadClassesByDomain:
         )
 
         assert page.items == []
-        assert page.next_offset is None
+        assert page.next_offset is None and page.next_cursor is None
+
+    def test_a_cursor_continues_by_key_and_never_skips_rows(self):
+        conn = FakeConnection([{"n": 40}, [class_row(CLASS_C, "Order")], [], []])
+        load_classes_by_domain(
+            FakeDb(conn),
+            version_id=VERSION,
+            domain_id=DOMAIN,
+            limit=25,
+            offset=75,
+            after=("Customer", CLASS_B),
+        )
+
+        count_query, _ = conn.statements[0]
+        page_query, page_params = conn.statements[1]
+        # The total stays the whole folder: the cursor narrows the page, not the count.
+        assert "(name, id) >" not in count_query
+        assert "AND (name, id) > (%s, %s::uuid)" in page_query
+        assert "ORDER BY name ASC, id ASC" in page_query
+        assert page_params == (VERSION, DOMAIN, "Customer", CLASS_B, 26, 0)
 
     def test_the_shared_bucket_is_a_null_predicate_not_a_value(self):
         conn = FakeConnection([{"n": 8}, [class_row(CLASS_A, "Address", domain_id=None)], [], []])
@@ -391,7 +418,8 @@ class TestLoadClassesByDomain:
 
         page_query, page_params = conn.statements[1]
         assert "LIMIT %s OFFSET %s" in page_query
-        assert page_params[-2:] == (25, 75)
+        # limit + 1: the extra row is the has-more probe.
+        assert page_params[-2:] == (26, 75)
 
     def test_a_domain_listing_reports_no_missing_ids(self):
         conn = FakeConnection([{"n": 1}, [class_row(CLASS_A, "Address")], [], []])
@@ -504,15 +532,32 @@ class TestLoadPathsByIds:
 
 class TestLoadPathsByDomain:
     def test_it_pages_and_reports_the_whole_membership(self):
-        conn = FakeConnection([{"n": 218}, [path_row(PATH_A, "/a"), path_row(PATH_B, "/b")], []])
+        conn = FakeConnection(
+            [
+                {"n": 218},
+                [path_row(PATH_A, "/a"), path_row(PATH_B, "/b"), path_row(PATH_A, "/c")],
+                [],
+            ]
+        )
         page = load_paths_by_domain(
             FakeDb(conn), version_id=VERSION, domain_id=DOMAIN, limit=2, offset=0
         )
 
-        assert len(page.items) == 2
+        assert [item["pathname"] for item in page.items] == ["/a", "/b"]
         assert page.total == 218
-        assert page.next_offset == 2
+        assert decode_key_cursor(page.next_cursor, 2) == ["/b", PATH_B]
+        assert page.next_offset is None
         assert len(conn.statements) == 3
+
+    def test_a_cursor_continues_by_pathname_and_id(self):
+        conn = FakeConnection([{"n": 218}, [], []])
+        load_paths_by_domain(
+            FakeDb(conn), version_id=VERSION, domain_id=DOMAIN, limit=2, after=("/b", PATH_B)
+        )
+
+        page_query, page_params = conn.statements[1]
+        assert "AND (pathname, id) > (%s, %s::uuid)" in page_query
+        assert page_params == (VERSION, DOMAIN, "/b", PATH_B, 3, 0)
 
     def test_the_shared_bucket_is_a_null_predicate(self):
         conn = FakeConnection([{"n": 4}, [path_row(PATH_A, "/a", domain_id=None)], []])

@@ -54,6 +54,13 @@ from .export_job_engine import (
 )
 from .export_preset_routes import expand_job_preset
 from .export_service import ExportError
+from .keyset_pagination import (
+    cursor_query,
+    include_total_query,
+    limit_query,
+    offset_query,
+    parse_time_id_cursor,
+)
 from .permissions import Action, Resource, enforce_permission
 
 router = APIRouter(prefix="/v1/export", tags=["export-jobs"])
@@ -185,14 +192,17 @@ async def start_export_job(
     description=(
         "Paginated tenant export jobs from the shared store (IXH-6.3), newest first. "
         "Supports ``state`` and ``created_after`` / ``created_before`` filters. "
-        "Default page size is 50 (max 200)."
+        "Default page size is 50 (max 200). Pages by `cursor`: pass the previous page's `next_cursor` "
+        "until `has_more` is false; the `total` is counted only when `include_total` is set."
     ),
 )
 async def list_export_jobs(
     tenant_slug: str,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
-    limit: int = Query(50, ge=1, le=200, description="Page size (default 50, max 200)."),
-    offset: int = Query(0, ge=0, description="Number of matching jobs to skip."),
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    include_total: bool = include_total_query(),
+    offset: int = offset_query(),
     state: Optional[str] = Query(
         None, description="Exact job state filter (e.g. completed, failed, running)."
     ),
@@ -209,14 +219,19 @@ async def list_export_jobs(
         tenant_slug: The tenant slug the jobs were submitted under.
         auth_data: Authenticated tenant context (JWT or API key).
         limit: Page size.
-        offset: Rows to skip.
+        cursor: Where the page starts (``next_cursor`` of the previous page).
+        include_total: Also count the matches.
+        offset: Rows to skip (deprecated).
         state: Optional exact state filter.
         created_after: Optional created_at lower bound.
         created_before: Optional created_at upper bound.
 
     Returns:
         Summary rows (state, percent, progress) without event logs or fidelity envelopes,
-        plus ``total`` / ``limit`` / ``offset`` for pagination.
+        plus ``has_more`` / ``next_cursor`` for paging and ``total`` when asked for.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
     """
     _ = auth_data
     return await engine_list_export_jobs(
@@ -226,6 +241,8 @@ async def list_export_jobs(
         state=state,
         created_after=created_after,
         created_before=created_before,
+        cursor=parse_time_id_cursor(cursor),
+        include_total=include_total,
     )
 
 

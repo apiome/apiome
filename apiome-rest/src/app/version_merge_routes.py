@@ -14,6 +14,13 @@ from typing import Any, Callable, Dict, List, Optional, Set
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from .auth import validate_authentication, get_authenticated_user_id
+from .authoring_list_orders import VERSION_BRANCHES_ORDER
+from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    set_page_headers,
+)
 from .compatibility_engine import (
     CompatibilityCheckEngine,
     compat_audit_detail,
@@ -420,14 +427,42 @@ def _merge_session_conflict_json(r: Dict[str, Any]) -> Dict[str, Any]:
 def list_version_branches(
     tenant_slug: str,
     project_id: str,
+    response: Response,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> List[Dict[str, Any]]:
-    """List named version branches for a project (Studio BFF / git menu)."""
+    """List named version branches for a project, by name (Studio BFF / git menu).
+
+    The body is a JSON array of at most ``limit`` branches (1,000 at most). The ``X-Has-More``
+    response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        project_id: The project whose branches are listed.
+        response: The outgoing response (paging headers are set on it).
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
+        auth_data: The authenticated principal.
+
+    Returns:
+        One page of branches.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor; 404 when the project is unknown.
+    """
     tenant_id = auth_data["tenant_id"]
+    after = VERSION_BRANCHES_ORDER.parse(cursor)
     project = db.get_project_core(project_id, tenant_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    return db.list_version_branches_detailed_for_project(project_id, tenant_id)
+    rows = db.list_version_branches_detailed_for_project(
+        project_id, tenant_id, limit=limit + 1, cursor=after
+    )
+    page = VERSION_BRANCHES_ORDER.page(rows, limit)
+    set_page_headers(response, page)
+    return page.items
 
 
 @router.post("/{tenant_slug}/{project_id}/version-branches")

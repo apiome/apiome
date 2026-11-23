@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.646.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.647.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `gateway-configs` · 2 operations
 
@@ -20,6 +20,9 @@ Tag: `gateway-configs` · 2 operations
 Every live gateway config: one per (connector, environment), with its API count, auth and
 rate-limit posture, declared losses and push-back target (`imports:view`).
 
+By name, at most 1,000 a page: pass the previous page's `nextCursor` as `cursor` until `hasMore`
+is false. A malformed cursor is a 400.
+
 Operation id: `list_tenant_gateway_configs_v1_tenants__tenant_slug__gateway_configs_get`
 
 **Parameters**
@@ -28,6 +31,8 @@ Operation id: `list_tenant_gateway_configs_v1_tenants__tenant_slug__gateway_conf
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `connector` | query | string or null | no | Only this connector's environments. |
+| `limit` | query | integer | no | Page size. At most 1000. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -74,6 +79,8 @@ The tenant's live gateway configs.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `gatewayConfigs` | array of [`GatewayConfigOut`](#schema-gatewayconfigout) | yes | Gateway Configs. |
+| `hasMore` | boolean | no | Whether another page exists. |
+| `nextCursor` | string or null | no | Pass as `cursor` to read the next page. |
 
 ### `GatewayConfigOut` {#schema-gatewayconfigout}
 

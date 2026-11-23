@@ -16,10 +16,17 @@ Scope rules (ROADMAP_TYPE_REGISTRY_GOVERNANCE.md §7 Issue 2.2):
 import re
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from .auth import get_authenticated_user_id
+from .authoring_list_orders import TYPE_NAMESPACES_ORDER
 from .database import db
+from .keyset_pagination import (
+    MAX_REVISION_PAGE_LIMIT,
+    cursor_query,
+    limit_query,
+    set_page_headers,
+)
 from .feature_gating import require_primitives_registry
 from .permissions import enforce_permission, Resource, Action
 from .models import (
@@ -135,10 +142,13 @@ def get_registry_coverage_stats(
 @router.get("/{tenant_slug}/namespaces")
 def list_namespaces(
     tenant_slug: str,
+    response: Response,
     root_status: Optional[RootStatus] = Query(
         default=None,
         description="Only namespaces whose version root has this status: stable or draft.",
     ),
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
 ) -> List[TypeNamespaceSchema]:
     """List namespaces visible to the tenant: system-core (``std/*``) plus the tenant's own.
@@ -147,16 +157,33 @@ def list_namespaces(
     ``root_status=draft`` to list the draft roots apart from the stable ones, or
     ``root_status=stable`` for the reverse.
 
+    The body is a JSON array of at most ``limit`` namespaces (1,000 at most). The ``X-Has-More``
+    response header says whether more exist and ``X-Next-Cursor`` carries the ``cursor`` of the
+    next page (#7196).
+
     Args:
         tenant_slug: The tenant slug (caller scope comes from the authenticated token).
+        response: The outgoing response (paging headers are set on it).
         root_status: Optional filter — ``stable`` or ``draft``.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``X-Next-Cursor``).
         auth_data: Authentication data (injected by dependency).
 
     Returns:
         Namespaces (system-core first, then alphabetical), each with its tenant-scoped type count.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor.
     """
-    rows = db.list_type_namespaces(auth_data["tenant_id"], root_status=root_status)
-    return [_to_schema(r) for r in rows]
+    rows = db.list_type_namespaces(
+        auth_data["tenant_id"],
+        root_status=root_status,
+        limit=limit + 1,
+        cursor=TYPE_NAMESPACES_ORDER.parse(cursor),
+    )
+    page = TYPE_NAMESPACES_ORDER.page(rows, limit)
+    set_page_headers(response, page)
+    return [_to_schema(r) for r in page.items]
 
 
 @router.post("/{tenant_slug}/namespaces")

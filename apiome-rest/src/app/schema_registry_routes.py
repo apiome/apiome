@@ -29,6 +29,7 @@ from pydantic.alias_generators import to_camel
 from . import schema_registry_store as store
 from .auth import validate_authentication
 from .database import db
+from .keyset_pagination import MAX_REVISION_PAGE_LIMIT, cursor_query, limit_query
 from .permissions import Action, Resource, enforce_permission
 from .schema_registry import (
     COMPATIBILITY_LEVELS,
@@ -39,6 +40,7 @@ from .schema_registry import (
     validate_subject_name,
 )
 from .schema_registry_service import attach_catalog_item, register_schema, schema_text
+from .schema_registry_store import SUBJECT_VERSIONS_ORDER, SUBJECTS_ORDER
 
 router = APIRouter(prefix="/v1/tenants", tags=["schema-registry"])
 
@@ -102,6 +104,10 @@ class SubjectList(_CamelModel):
     """The tenant's live subjects, by name."""
 
     subjects: List[SubjectOut]
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class SubjectVersionOut(_CamelModel):
@@ -132,6 +138,10 @@ class SubjectVersionList(_CamelModel):
 
     subject: str
     versions: List[SubjectVersionOut]
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class RegisterRequest(_CamelModel):
@@ -273,14 +283,27 @@ def put_registry_config(
 
 @router.get(_BASE + "/subjects", response_model=SubjectList, response_model_by_alias=True)
 def list_schema_subjects(
-    tenant_slug: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
+    tenant_slug: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SubjectList:
-    """List the tenant's live subjects (``imports:view``); deleted subjects are left out."""
+    """List the tenant's live subjects (``imports:view``); deleted subjects are left out.
+
+    One page of at most ``limit`` subjects (1,000 at most), by name; pass ``nextCursor`` as
+    ``cursor`` until ``hasMore`` is false (#7196).
+    """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target="schema-registry")
+    after = SUBJECTS_ORDER.parse(cursor)
     level = store.get_config(db, tenant_id)["compatibility_level"]
-    return SubjectList(subjects=[_subject_out(r, level) for r in store.list_subjects(db, tenant_id)])
+    page = SUBJECTS_ORDER.page(store.list_subjects(db, tenant_id, limit=limit + 1, cursor=after), limit)
+    return SubjectList(
+        subjects=[_subject_out(r, level) for r in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
+    )
 
 
 @router.get(_BASE + "/subjects/{subject}", response_model=SubjectOut, response_model_by_alias=True)
@@ -345,16 +368,30 @@ def delete_schema_subject(
     _BASE + "/subjects/{subject}/versions", response_model=SubjectVersionList, response_model_by_alias=True
 )
 def list_schema_subject_versions(
-    tenant_slug: str, subject: str, auth_data: Dict[str, Any] = Depends(validate_authentication)
+    tenant_slug: str,
+    subject: str,
+    limit: int = limit_query(MAX_REVISION_PAGE_LIMIT, maximum=MAX_REVISION_PAGE_LIMIT),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> SubjectVersionList:
-    """List a subject's live versions, oldest first (``imports:view``)."""
+    """List a subject's live versions, oldest first (``imports:view``).
+
+    One page of at most ``limit`` versions (1,000 at most); pass ``nextCursor`` as ``cursor``
+    until ``hasMore`` is false (#7196).
+    """
     _ = tenant_slug
     tenant_id = _tenant_id(auth_data)
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW, target=f"subject:{subject}")
+    after = SUBJECT_VERSIONS_ORDER.parse(cursor)
     row = _require_subject(tenant_id, subject)
+    page = SUBJECT_VERSIONS_ORDER.page(
+        store.list_versions(db, str(row["id"]), limit=limit + 1, cursor=after), limit
+    )
     return SubjectVersionList(
         subject=subject,
-        versions=[SubjectVersionOut(**_version_out(subject, v)) for v in store.list_versions(db, str(row["id"]))],
+        versions=[SubjectVersionOut(**_version_out(subject, v)) for v in page.items],
+        has_more=page.has_more,
+        next_cursor=page.next_cursor,
     )
 
 

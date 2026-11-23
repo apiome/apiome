@@ -171,7 +171,7 @@ beforeEach(() => {
 describe('the list', () => {
   it('reads the open threads of the project first', async () => {
     await renderPanel();
-    expect(listCalls()).toEqual([`/api/projects/${PROJECT_ID}/comment-threads?status=open&limit=50&offset=0`]);
+    expect(listCalls()).toEqual([`/api/projects/${PROJECT_ID}/comment-threads?status=open&limit=50&include_total=true`]);
     expect(summaryCalls()).toEqual([`/api/projects/${PROJECT_ID}/comment-threads/summary`]);
     expect(screen.getByTestId('discussion-status-open')).toHaveAttribute('aria-pressed', 'true');
   });
@@ -179,7 +179,7 @@ describe('the list', () => {
   it("narrows the list and the counts to one version for the review page's Discussion tab (COL-2.2)", async () => {
     await renderPanel({ versionId: REV_2 });
     expect(listCalls()).toEqual([
-      `/api/projects/${PROJECT_ID}/comment-threads?status=open&version=${REV_2}&limit=50&offset=0`,
+      `/api/projects/${PROJECT_ID}/comment-threads?status=open&version=${REV_2}&limit=50&include_total=true`,
     ]);
     expect(summaryCalls()).toEqual([`/api/projects/${PROJECT_ID}/comment-threads/summary?version=${REV_2}`]);
   });
@@ -341,14 +341,14 @@ describe('filters', () => {
     await waitFor(() => expect(summaryCalls()).toHaveLength(1));
     fireEvent.click(screen.getByTestId('discussion-status-resolved'));
     await waitFor(() =>
-      expect(listCalls()).toContain(`/api/projects/${PROJECT_ID}/comment-threads?status=resolved&limit=50&offset=0`)
+      expect(listCalls()).toContain(`/api/projects/${PROJECT_ID}/comment-threads?status=resolved&limit=50&include_total=true`)
     );
     expect(screen.getByTestId('discussion-status-resolved')).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByTestId('discussion-status-open')).toHaveAttribute('aria-pressed', 'false');
     expect(summaryCalls()).toHaveLength(1);
 
     fireEvent.click(screen.getByTestId('discussion-status-all'));
-    await waitFor(() => expect(listCalls()).toContain(`/api/projects/${PROJECT_ID}/comment-threads?limit=50&offset=0`));
+    await waitFor(() => expect(listCalls()).toContain(`/api/projects/${PROJECT_ID}/comment-threads?limit=50&include_total=true`));
   });
 
   it('narrows to threads that mention the viewer, list and counts alike', async () => {
@@ -356,7 +356,7 @@ describe('filters', () => {
     fireEvent.click(screen.getByTestId('discussion-mentions-me'));
     await waitFor(() =>
       expect(listCalls()).toContain(
-        `/api/projects/${PROJECT_ID}/comment-threads?status=open&mentions_me=true&limit=50&offset=0`
+        `/api/projects/${PROJECT_ID}/comment-threads?status=open&mentions_me=true&limit=50&include_total=true`
       )
     );
     await waitFor(() =>
@@ -373,7 +373,7 @@ describe('filters', () => {
     fireEvent.click(screen.getByTestId('discussion-element-operation'));
     await waitFor(() =>
       expect(listCalls()).toContain(
-        `/api/projects/${PROJECT_ID}/comment-threads?status=open&anchor_type=operation&limit=50&offset=0`
+        `/api/projects/${PROJECT_ID}/comment-threads?status=open&anchor_type=operation&limit=50&include_total=true`
       )
     );
     await waitFor(() =>
@@ -388,7 +388,7 @@ describe('filters', () => {
     fireEvent.click(screen.getByTestId('discussion-origin-consumer'));
     await waitFor(() =>
       expect(listCalls()).toContain(
-        `/api/projects/${PROJECT_ID}/comment-threads?status=open&origin=consumer&limit=50&offset=0`
+        `/api/projects/${PROJECT_ID}/comment-threads?status=open&origin=consumer&limit=50&include_total=true`
       )
     );
     await waitFor(() =>
@@ -449,9 +449,21 @@ describe('load more', () => {
       {
         test: /\/comment-threads\?/,
         reply: (url) =>
-          url.includes('offset=0')
-            ? { success: true, total: 4, threads: [CLASS_THREAD, OPERATION_THREAD, ORPHANED_THREAD] }
-            : { success: true, total: 4, threads: [ORPHANED_THREAD, thread({ id: 'thread-late' })] },
+          url.includes('cursor=')
+            ? {
+                success: true,
+                total: null,
+                has_more: false,
+                next_cursor: null,
+                threads: [ORPHANED_THREAD, thread({ id: 'thread-late' })],
+              }
+            : {
+                success: true,
+                total: 4,
+                has_more: true,
+                next_cursor: 'after-3',
+                threads: [CLASS_THREAD, OPERATION_THREAD, ORPHANED_THREAD],
+              },
       },
     ]);
     await renderPanel();
@@ -459,7 +471,10 @@ describe('load more', () => {
 
     fireEvent.click(screen.getByTestId('discussion-load-more'));
     await screen.findByTestId('discussion-thread-thread-late');
-    expect(listCalls()).toContain(`/api/projects/${PROJECT_ID}/comment-threads?status=open&limit=50&offset=3`);
+    // The next page continues from the first page's cursor: no offset, and no second count.
+    expect(listCalls()).toContain(
+      `/api/projects/${PROJECT_ID}/comment-threads?status=open&limit=50&cursor=after-3`
+    );
     // The repeated row is not drawn twice.
     expect(screen.getAllByTestId('discussion-thread-thread-orphaned')).toHaveLength(1);
     expect(screen.queryByTestId('discussion-load-more')).toBeNull();
@@ -470,9 +485,9 @@ describe('load more', () => {
       {
         test: /\/comment-threads\?/,
         reply: (url) =>
-          url.includes('offset=0')
-            ? { success: true, total: 9, threads: [CLASS_THREAD] }
-            : { success: false, error: 'Rate limited' },
+          url.includes('cursor=')
+            ? { success: false, error: 'Rate limited' }
+            : { success: true, total: 9, has_more: true, next_cursor: 'after-1', threads: [CLASS_THREAD] },
       },
     ]);
     await renderPanel();
@@ -480,6 +495,54 @@ describe('load more', () => {
     expect(await screen.findByTestId('discussion-more-error')).toHaveTextContent('Rate limited');
     expect(screen.getByTestId('discussion-thread-thread-class')).toBeInTheDocument();
     expect(screen.getByTestId('discussion-load-more')).not.toBeDisabled();
+  });
+});
+
+describe('paging without a count (#7196)', () => {
+  it('offers more from has_more alone and shows no total it was not given', async () => {
+    installFetch([
+      {
+        test: /\/comment-threads\?/,
+        reply: () => ({
+          success: true,
+          total: null,
+          has_more: true,
+          next_cursor: 'after-1',
+          threads: [CLASS_THREAD],
+        }),
+      },
+    ]);
+    await renderPanel();
+    expect(screen.getByTestId('discussion-shown')).toHaveTextContent(/^Showing 1$/);
+    expect(screen.getByTestId('discussion-load-more')).toBeInTheDocument();
+  });
+
+  it('writes a capped count as 10,000+', async () => {
+    installFetch([
+      {
+        test: /\/comment-threads\?/,
+        reply: () => ({
+          success: true,
+          total: 10000,
+          has_more: true,
+          next_cursor: 'after-1',
+          threads: [CLASS_THREAD],
+        }),
+      },
+    ]);
+    await renderPanel();
+    expect(screen.getByTestId('discussion-shown')).toHaveTextContent('Showing 1 of 10,000+');
+  });
+
+  it('offers nothing more when has_more is false, whatever the total says', async () => {
+    installFetch([
+      {
+        test: /\/comment-threads\?/,
+        reply: () => ({ success: true, total: 40, has_more: false, next_cursor: null, threads: [CLASS_THREAD] }),
+      },
+    ]);
+    await renderPanel();
+    expect(screen.queryByTestId('discussion-load-more')).toBeNull();
   });
 });
 

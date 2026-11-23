@@ -29,6 +29,7 @@ import {
   PULSE_WEEKS,
   RECENTLY_VIEWED_LIMIT,
   TIME_SPENT_CANDIDATES,
+  weekStartOf,
 } from '@lib/db/dashboard-home-model';
 
 /** Every `connectionPool.query` call the module makes, in order. */
@@ -60,7 +61,7 @@ const SECTION = {
   sunset: "v.metadata->>'sunsetAt'",
   lint: "quality_report->'severity_counts'",
   keys: 'FROM apiome.api_keys ak',
-  pulse: 'SELECT v.published_at',
+  pulse: "date_trunc('week', v.published_at AT TIME ZONE 'UTC')",
 } as const;
 
 /** A session for a signed-in reader with a current workspace. */
@@ -563,9 +564,36 @@ describe('the publishing pulse section', () => {
   });
 
   it('counts a publish into this week', async () => {
-    answer(SECTION.pulse, [{ published_at: new Date() }]);
+    answer(SECTION.pulse, [{ week_start: weekStartOf(new Date()), publish_count: 1 }]);
     const home = await getDashboardHomeForSession();
     expect(home.pulse[home.pulse.length - 1].count).toBe(1);
+  });
+
+  it('counts in SQL: one row per UTC week, never one per publish (DBP-1.13)', async () => {
+    await getDashboardHomeForSession();
+    const entry = queries.find((candidate) => candidate.sql.includes(SECTION.pulse));
+    expect(entry?.sql).toContain(
+      "to_char(date_trunc('week', v.published_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS week_start",
+    );
+    expect(entry?.sql).toContain('COUNT(*)::int AS publish_count');
+    expect(entry?.sql).toContain('GROUP BY 1');
+    expect(entry?.sql).not.toMatch(/SELECT\s+v\.published_at/);
+  });
+
+  it('lays the weekly counts onto the window, dropping a week outside it', async () => {
+    const thisWeek = weekStartOf(new Date());
+    const lastWeek = weekStartOf(new Date(Date.now() - 7 * 86_400_000));
+    answer(SECTION.pulse, [
+      { week_start: lastWeek, publish_count: 4 },
+      { week_start: thisWeek, publish_count: '2' },
+      { week_start: '1999-01-04', publish_count: 9 },
+      { week_start: null, publish_count: 3 },
+    ]);
+    const home = await getDashboardHomeForSession();
+    expect(home.pulse).toHaveLength(PULSE_WEEKS);
+    expect(home.pulse[home.pulse.length - 1]).toEqual({ weekStart: thisWeek, count: 2 });
+    expect(home.pulse[home.pulse.length - 2]).toEqual({ weekStart: lastWeek, count: 4 });
+    expect(home.pulse.reduce((total, week) => total + week.count, 0)).toBe(6);
   });
 
   it('bounds the window in SQL as well as in the model', async () => {
@@ -584,7 +612,7 @@ describe('failing soft', () => {
   it('costs a failed section its own panel and nothing else', async () => {
     answer(SECTION.workspace, [{ name: 'Acme Corp' }]);
     answer(SECTION.continueProjects, [projectRow()]);
-    answer(SECTION.pulse, [{ published_at: new Date() }]);
+    answer(SECTION.pulse, [{ week_start: weekStartOf(new Date()), publish_count: 1 }]);
     fail(SECTION.sunset);
     fail(SECTION.lint);
     fail(SECTION.keys);

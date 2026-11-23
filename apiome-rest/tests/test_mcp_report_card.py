@@ -630,7 +630,7 @@ def _mock_full_endpoint(mdb, *, score_report=True):
     mdb.get_mcp_endpoint_credentials.return_value = {"auth_type": "bearer"}
     mdb.get_mcp_evolution_series.return_value = [_version_row(_V1, 1), _version_row(_V2, 2)]
     mdb.get_mcp_version_changes_for_endpoint.return_value = []
-    mdb.list_mcp_invocation_stats.return_value = []
+    mdb.get_mcp_invocation_reliability.return_value = {}
     mdb.get_mcp_version_changes.return_value = [
         {"change_type": "added", "item_type": "tool", "item_name": "wipe"},
     ]

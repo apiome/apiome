@@ -27,6 +27,9 @@ __all__ = [
     "unignore_item",
 ]
 
+#: The most inventory rows one shadow report reads (#7196).
+REPORT_ITEM_CAP = 20_000
+
 #: The push-webhook event type of a new-shadow-API notification (and the throttle row's key).
 SHADOW_EVENT_TYPE = "catalog.connector.shadow_api_detected"
 
@@ -68,6 +71,9 @@ def load_report_connectors(db: Any, tenant_id: str, connector_id: Optional[str] 
 def load_report_items(db: Any, connector_ids: List[str], environment: Optional[str] = None) -> List[Dict[str, Any]]:
     """Every inventory row of ``connector_ids`` that is still served (not ``missing``).
 
+    The report is computed in memory over the whole inventory, so the read stops at
+    :data:`REPORT_ITEM_CAP` rows (#7196); narrow by connector or environment beyond that.
+
     Args:
         db: Database handle.
         connector_ids: The connectors in scope (already tenant-checked).
@@ -82,6 +88,7 @@ def load_report_items(db: Any, connector_ids: List[str], environment: Optional[s
         WHERE i.connector_id = ANY(%s::uuid[]) AND i.status <> 'missing'
           AND (%s::text IS NULL OR i.environment = %s)
         ORDER BY i.remote_name NULLS LAST, i.remote_id
+        LIMIT {REPORT_ITEM_CAP}
         """,
         (connector_ids, environment, environment),
     )

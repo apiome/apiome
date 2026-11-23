@@ -63,6 +63,7 @@ import {
 import { EmptyState, GatedState } from '@/app/components/ui/EmptyState';
 import { ErrorState } from '@/app/components/ui/ErrorState';
 import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
+import { hasMoreAfter, readPage } from '@lib/cursor-pages';
 import { repositorySpecReviewHref } from '@/app/components/ade/dashboard/repositories/RepositorySpecsTab';
 import {
   ADD_REPOSITORY_HREF,
@@ -256,6 +257,27 @@ export function DiscoveredSpecsClient() {
     router.replace(`${CATALOG_ROUTE}${query ? `?${query}` : ''}`, { scroll: false });
   }, [filters, router]);
 
+  // The catalog pages by cursor (#7196). The address bar still carries the page's `offset` — it
+  // is what makes a view shareable — so each page's cursor is remembered against the offset it
+  // starts at, and a page is asked for by cursor whenever one is known. Only a shared link opened
+  // on a later page falls back to the (deprecated) offset. A cursor belongs to one view, so the
+  // memory is dropped when anything but the offset changes.
+  const viewKey = React.useMemo(
+    () => `${currentTenantId ?? ''}?${specCatalogApiQuery({ ...filters, offset: 0 })}`,
+    [currentTenantId, filters]
+  );
+  const cursors = React.useRef<{ key: string; byOffset: Map<number, string> }>({
+    key: '',
+    byOffset: new Map(),
+  });
+  // The counts are asked for once per view (its first read) and kept across its pages.
+  const [counts, setCounts] = React.useState<{
+    key: string;
+    catalogTotal: number | null;
+    matchCount: number | null;
+  } | null>(null);
+  const countsKey = React.useRef('');
+
   // Requests are keyed so a slow early response cannot overwrite a faster later one. Typing in
   // the search box is exactly where that happens: the two-character query outlives the
   // five-character one often enough to matter.
@@ -273,7 +295,13 @@ export function DiscoveredSpecsClient() {
     setLoading(true);
     setError(null);
     try {
-      const query = specCatalogApiQuery(filters, { includeFacets: wantFacets });
+      if (cursors.current.key !== viewKey) cursors.current = { key: viewKey, byOffset: new Map() };
+      const wantCounts = countsKey.current !== viewKey;
+      const query = specCatalogApiQuery(filters, {
+        includeFacets: wantFacets,
+        cursor: cursors.current.byOffset.get(filters.offset) ?? null,
+        includeTotal: wantCounts,
+      });
       const response = await fetch(`/api/repositories/catalog?${query}`, {
         credentials: 'include',
       });
@@ -284,7 +312,19 @@ export function DiscoveredSpecsClient() {
           typeof payload.error === 'string' ? payload.error : response.statusText
         );
       }
-      setData(payload);
+      // A page read by cursor reports `offset: 0`; the page's place is the one that was asked for.
+      setData({ ...payload, offset: filters.offset });
+      if (typeof payload.next_cursor === 'string' && payload.next_cursor) {
+        cursors.current.byOffset.set(filters.offset + SPEC_CATALOG_PAGE_SIZE, payload.next_cursor);
+      }
+      if (wantCounts) {
+        countsKey.current = viewKey;
+        setCounts({
+          key: viewKey,
+          catalogTotal: typeof payload.catalog_total === 'number' ? payload.catalog_total : null,
+          matchCount: typeof payload.match_count === 'number' ? payload.match_count : null,
+        });
+      }
       if (payload.facets) {
         setFacets(payload.facets);
         facetsRequested.current = true;
@@ -298,7 +338,7 @@ export function DiscoveredSpecsClient() {
     } finally {
       if (isCurrent()) setLoading(false);
     }
-  }, [currentTenantId, filters]);
+  }, [currentTenantId, filters, viewKey]);
 
   React.useEffect(() => {
     void load();
@@ -306,9 +346,15 @@ export function DiscoveredSpecsClient() {
 
   const specs = data?.specs ?? [];
   const offset = data?.offset ?? 0;
-  const matchCount = data?.match_count ?? 0;
+  const viewCounts = counts?.key === viewKey ? counts : null;
+  const matchCount = viewCounts?.matchCount ?? null;
+  const catalogTotal = viewCounts?.catalogTotal ?? null;
   const canPrev = offset > 0;
-  const canNext = offset + specs.length < matchCount;
+  // Whether a page follows is the server's `has_more`; the match count only stands in for it on
+  // an answer that carries none.
+  const canNext = data
+    ? hasMoreAfter({ ...readPage(data), total: matchCount }, offset + specs.length)
+    : false;
   const narrowed = React.useMemo(() => specCatalogHasActiveFilters(filters), [filters]);
 
   const clearFilters = React.useCallback(() => {
@@ -438,11 +484,15 @@ export function DiscoveredSpecsClient() {
           { label: 'Discovered specs' },
         ]}
         title="Discovered specs"
-        description={specCatalogSummaryLine(data?.catalog_total)}
+        description={specCatalogSummaryLine(catalogTotal)}
         actions={
           <Button
             variant="outline"
-            onClick={() => void load()}
+            onClick={() => {
+              // A refresh re-counts: the counts are otherwise read once per view.
+              countsKey.current = '';
+              void load();
+            }}
             disabled={loading || !currentTenantId}
             data-testid="spec-catalog-refresh"
           >
@@ -453,7 +503,7 @@ export function DiscoveredSpecsClient() {
         tabs={
           <RepositoriesSubNav
             active="catalog"
-            counts={data ? { catalog: data.catalog_total } : undefined}
+            counts={catalogTotal !== null ? { catalog: catalogTotal } : undefined}
           />
         }
       />
