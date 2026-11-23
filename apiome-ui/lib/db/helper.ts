@@ -11,6 +11,7 @@ import { normalizeApiKeyScopes } from '@/app/utils/apiKeyScopes';
 import { AUTH_ERROR_CODES } from '../auth/account-resolution';
 import { upsertCredentialAccountPassword } from './credential-account';
 import { withTransaction } from './with-transaction';
+import { bulkInsert } from './import-bulk';
 import {
   KEYS_SETTING as TOKEN_KEYS_SETTING,
   sealToken,
@@ -545,7 +546,9 @@ export async function restoreProject(projectId: string) {
     const access = await authorizeProjectAction('edit', projectId);
     if (!access.ok) return errorResponse(access.error);
     const result = await connectionPool.query(
-      `UPDATE apiome.projects SET deleted_at = NULL, enabled = COALESCE(pre_delete_enabled, TRUE), pre_delete_enabled = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NOT NULL`,
+      // A project staged by an import awaiting approval also has deleted_at set (DBP-1.9, #7192):
+      // only accepting the import may make it visible, so it is not a project to restore.
+      `UPDATE apiome.projects p SET deleted_at = NULL, enabled = COALESCE(pre_delete_enabled, TRUE), pre_delete_enabled = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM apiome.versions sv WHERE sv.project_id = p.id AND sv.import_pending_at IS NOT NULL)`,
       [projectId, access.tenantId]
     );
     if (!result.rowCount) {
@@ -2399,17 +2402,25 @@ export async function importProjectFromOpenAPI(
     const version = versionResult.rows[0];
 
     // 2b. Import servers (OpenAPI 3.1 servers array) - #425
+    // One statement per table from here on (DBP-1.9, #7192): rows carry their own ids.
     if (options?.servers?.length) {
-      for (let i = 0; i < options.servers.length; i++) {
-        const s = options.servers[i];
-        if (!s?.url) continue;
-        const variablesJson = s.variables && Object.keys(s.variables).length > 0 ? JSON.stringify(s.variables) : null;
-        await client.query(
-          `INSERT INTO apiome.version_server (version_id, name, url, description, sort_order, variables)
-           VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
-          [version.id, null, s.url.trim(), s.description?.trim() || null, i, variablesJson || '{}']
-        );
-      }
+      const serverRows = options.servers
+        .map((s, i) => ({ s, i }))
+        .filter(({ s }) => Boolean(s?.url))
+        .map(({ s, i }) => ({
+          version_id: version.id,
+          name: null,
+          url: s.url.trim(),
+          description: s.description?.trim() || null,
+          sort_order: i,
+          variables: s.variables && Object.keys(s.variables).length > 0 ? s.variables : {},
+        }));
+      await bulkInsert(
+        client,
+        'version_server',
+        ['version_id', 'name', 'url', 'description', 'sort_order', 'variables'],
+        serverRows,
+      );
     }
 
     // 3. Flatten properties (include nested)
@@ -2492,18 +2503,24 @@ export async function importProjectFromOpenAPI(
 
     // 5. Insert project-level properties (reuse by computed alphanumeric name)
     const propertyIdByProjectName = new Map<string, string>();
+    const propertyRows: Record<string, unknown>[] = [];
     for (const [propName, payload] of projectNameToData.entries()) {
-      const insertRes = await client.query(
-        `INSERT INTO apiome.properties (project_id, name, description, data)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id`,
-        [project.id, propName, payload.description?.trim() || null, JSON.stringify(payload.canonical)]
-      );
-      propertyIdByProjectName.set(propName, insertRes.rows[0].id);
+      const id = crypto.randomUUID();
+      propertyIdByProjectName.set(propName, id);
+      propertyRows.push({
+        id,
+        project_id: project.id,
+        name: propName,
+        description: payload.description?.trim() || null,
+        data: payload.canonical,
+      });
     }
+    await bulkInsert(client, 'properties', ['id', 'project_id', 'name', 'description', 'data'], propertyRows);
 
     // 6. Create classes and link properties (preserve original class property names)
-    const linkProperties = async (classId: string, props: any[], parentId: string | null = null) => {
+    const classRows: Record<string, unknown>[] = [];
+    const classPropertyRows: Record<string, unknown>[] = [];
+    const linkProperties = (classId: string, props: any[], parentId: string | null = null) => {
       for (const p of props || []) {
         let propertyId: string | null = null;
 
@@ -2523,40 +2540,55 @@ export async function importProjectFromOpenAPI(
           propertyId = pid;
         }
 
-        const classPropRes = await client.query(
-          `INSERT INTO apiome.class_properties (class_id, property_id, name, description, data, parent_id)
-           VALUES ($1, $2, $3, $4, $5, $6)
-           RETURNING id`,
-          [classId, propertyId, p.name.trim(), p.description?.trim() || null, JSON.stringify(p.data), parentId]
-        );
+        // A parent is listed before its children, so it is inserted first.
+        const classPropertyId = crypto.randomUUID();
+        classPropertyRows.push({
+          id: classPropertyId,
+          class_id: classId,
+          property_id: propertyId,
+          name: p.name.trim(),
+          description: p.description?.trim() || null,
+          data: p.data,
+          parent_id: parentId,
+        });
 
         if (p.children && p.children.length) {
-          await linkProperties(classId, p.children, classPropRes.rows[0].id);
+          linkProperties(classId, p.children, classPropertyId);
         }
       }
     };
 
     for (const cls of classes) {
       // Use the schema from the class if available, otherwise default to { type: 'object' }
-      const schema = cls.schema || { type: 'object' };
-      const classRes = await client.query(
-        `INSERT INTO apiome.classes (version_id, name, description, schema)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id`,
-        [version.id, cls.name.trim(), cls.description?.trim() || null, JSON.stringify(schema)]
-      );
-      await linkProperties(classRes.rows[0].id, cls.properties || [], null);
+      const classId = crypto.randomUUID();
+      classRows.push({
+        id: classId,
+        version_id: version.id,
+        name: cls.name.trim(),
+        description: cls.description?.trim() || null,
+        schema: cls.schema || { type: 'object' },
+      });
+      linkProperties(classId, cls.properties || [], null);
     }
+    await bulkInsert(client, 'classes', ['id', 'version_id', 'name', 'description', 'schema'], classRows);
+    await bulkInsert(
+      client,
+      'class_properties',
+      ['id', 'class_id', 'property_id', 'name', 'description', 'data', 'parent_id'],
+      classPropertyRows,
+    );
 
     await client.query('COMMIT');
 
     // Import paths and security schemes (OpenAPI 3.1 pathing + components.securitySchemes) - #425
     if (options?.paths?.length || options?.securitySchemes?.length) {
       const { importOpenAPIPathsAndSecurity } = await import('./import-openapi-paths-security');
+      // On the same client: this import never holds two (DBP-1.9, #7192).
       const pathResult = await importOpenAPIPathsAndSecurity(
         version.id,
         options.paths ?? [],
-        options.securitySchemes ?? []
+        options.securitySchemes ?? [],
+        client,
       );
       if (!pathResult.success) {
         return JSON.stringify({ success: false, error: pathResult.error || 'Failed to import paths or security schemes' });

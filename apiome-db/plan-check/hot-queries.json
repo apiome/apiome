@@ -168,15 +168,28 @@
     },
     {
       "name": "ui.import_class_lookup",
-      "source": "apiome-ui/lib/db/import-openapi-paths-security.ts (import paths and security)",
-      "sql": "SELECT id, name FROM apiome.classes WHERE version_id = $1",
+      "source": "apiome-ui/lib/db/import-openapi-paths-security.ts CLASS_LOOKUP_SQL (import paths and security; live classes only since DBP-1.9 #7192). Reads the 20,000-class version, so it returns every row by design: the budget is what the partial (version_id, name) index allows.",
+      "sql": "SELECT id, name FROM apiome.classes WHERE version_id = $1 AND deleted_at IS NULL",
       "params": [
         "scale:version:0"
-      ],
-      "known": {
-        "issue": "#7193",
-        "reason": "no deleted_at IS NULL, so the partial (version_id, name) index does not apply (DBP-1.10)"
-      }
+      ]
+    },
+    {
+      "name": "ui.plan_versions_at_limit",
+      "source": "apiome-ui/lib/db/plan-entitlements.ts VERSIONS_AT_LIMIT_SQL (every project version create and import: is the plan full? DBP-1.9 #7192)",
+      "sql": "SELECT 1 FROM apiome.versions v INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL INNER JOIN apiome.tenant_users tu ON tu.tenant_id = p.tenant_id AND tu.user_id = $1 WHERE v.deleted_at IS NULL OFFSET $2 LIMIT 1",
+      "params": [
+        "scale:user:0",
+        49
+      ]
+    },
+    {
+      "name": "ui.import_pending_sweep",
+      "source": "apiome-ui/lib/db/import-staging.ts sweepAbandonedImports (staged imports past their time-to-live, every few minutes per UI instance; DBP-1.9 #7192)",
+      "sql": "SELECT id::text AS id FROM apiome.versions WHERE import_pending_at IS NOT NULL AND import_pending_at <= CURRENT_TIMESTAMP - make_interval(secs => $1) ORDER BY import_pending_at LIMIT 100",
+      "params": [
+        3600
+      ]
     },
     {
       "name": "mcp.capability_items_for_version",

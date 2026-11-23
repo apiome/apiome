@@ -75,6 +75,15 @@ const mockNormalizeResult = {
   warnings: [] as string[],
 };
 
+// The staged-import store (DBP-1.9, #7192) is database work of its own; `tests/import-staging.test.ts`
+// covers it. Here every staged import is accepted or discarded without touching a database.
+jest.mock('../lib/db/import-staging', () => ({
+  acceptStagedImportTx: jest.fn(async () => ({ ok: true, projectId: 'proj-1', projectCreated: false })),
+  discardStagedImport: jest.fn(async () => true),
+  listRepositorySourcesTx: jest.fn(async () => []),
+  writeStagedManifestTx: jest.fn(async () => undefined),
+}));
+
 jest.mock('../lib/importers', () => ({
   getImporter: jest.fn(() => ({
     kind: 'openapi',

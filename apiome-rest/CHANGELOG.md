@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.819.0] - 2026-11-22
+
+### Performance
+- **UI import pipeline: bulk statements and no transaction held for user approval (DBP-1.9, #7192).** OpenAPI
+  1.643.0 (version only; no schema change). The work is in `apiome-ui`; the REST API changes one predicate so a
+  staged import never reads as a deleted project. Needs `apiome-db` V411.
+  - **One statement per table:** the **Import specification** wizard, the path designer's paths import and
+    `importProjectFromOpenAPI` assign every row's id in the importer and write each table with one
+    `INSERT … SELECT FROM jsonb_populate_recordset(…)` per 5,000 rows. An import of 1,000 operations and 2,000
+    classes is staged in about 30 statements and accepted in 7 to 9 (was about 19,500); the paths-and-security
+    step alone is 15 (was 10 to 20 per operation). The classes are written in one statement; if PostgreSQL rejects
+    it (a duplicate class name, a duplicate nested property name) the importer writes class by class as before,
+    so one bad class is skipped and reported.
+  - **No connection held during review:** an import awaiting **“Accept & commit”** used to keep its transaction
+    open on one of the web app's ten pooled connections, and PostgreSQL ended a review longer than
+    `idle_in_transaction_session_timeout` (60 s). The import now commits *staged*: the version has `deleted_at`
+    and the new `import_pending_at` set, and so does the project when the import created it, so no reader shows
+    it. Accept clears both in one short transaction; Reject deletes the staged rows, the library properties the
+    import added and the repository source rows it added or moved (listed in `versions.import_pending`). The
+    paths are staged with the classes, on the same connection. One connection per import job.
+  - **Abandoned imports are swept:** a staged import nobody decided on — the browser was closed, or the web app
+    restarted and lost the job — is deleted once it is older than `IMPORT_PENDING_TTL_MINUTES` (web app, default
+    `60`). Each web app instance checks at startup and then every quarter of the limit; a version an Accept or
+    Reject holds is skipped. Accepting an import that was swept answers *This import is no longer awaiting
+    approval* and changes nothing.
+  - **Reads that include deleted projects skip staged ones:** `GET /v1/projects/{tenant}?include_deleted=true`,
+    the catalog list, counts and item reads, and the project lookups behind restore and permanent delete leave
+    out a project whose version carries `import_pending_at`. The default reads are unchanged.
+  - **Verification in the database:** instead of reading back every class, property and tag it wrote, the import
+    sends its expected property count per class and gets back only the classes that differ. The rows are read
+    only to explain a difference.
+  - **Smaller fixes on the same path:** the class lookup for `$ref`s filters on `deleted_at IS NULL`, so the
+    partial `(version_id, name)` index applies and a `$ref` cannot resolve to a soft-deleted class; a new library
+    property never takes the name of a soft-deleted one (`properties_project_name_unique` covers both), and a
+    name collision is skipped by `ON CONFLICT DO NOTHING` instead of a per-row savepoint retry; the plan check
+    for a new project or version is `SELECT 1 … OFFSET $max - 1 LIMIT 1` instead of a count of every row.
+  - **Measured** on a local PostgreSQL 18, `main` → this change, the same rows written in both (compared table
+    by table for the 46 importable OpenAPI files of the import corpus): 1,000 operations and 2,000 classes,
+    19,519 → 41 statements and 1.56 s → 0.66 s; the corpus's largest file (`24-advanced-combined-composition.yaml`),
+    153 → 37 statements and 120 → 90 ms. Connections held while an import awaits approval: 1 → 0.
+  - **Behaviour to know:** the spec's `info` is merged into an existing project when the import is accepted, not
+    while it waits. A staged project or version does not count toward the plan until accepted, and the plan is
+    checked again at Accept. During a rolling deploy, a web app still on the old code keeps its transaction open
+    as before; apply V411 before starting the new one.
+
 ## [1.818.0] - 2026-11-22
 
 ### Performance

@@ -46,6 +46,15 @@ jest.mock('../lib/db/import-transaction', () => ({
 }));
 
 let mockClassNames = ['Invoice'];
+// The staged-import store (DBP-1.9, #7192) is database work of its own; `tests/import-staging.test.ts`
+// covers it. Here every staged import is accepted or discarded without touching a database.
+jest.mock('../lib/db/import-staging', () => ({
+  acceptStagedImportTx: jest.fn(async () => ({ ok: true, projectId: 'proj-1', projectCreated: false })),
+  discardStagedImport: jest.fn(async () => true),
+  listRepositorySourcesTx: jest.fn(async () => []),
+  writeStagedManifestTx: jest.fn(async () => undefined),
+}));
+
 jest.mock('../lib/importers', () => ({
   getImporter: jest.fn(() => ({
     kind: 'openapi',
@@ -212,7 +221,7 @@ describe('startImport — multi-repository merge (REPO-5.7)', () => {
     expect(mockApply).not.toHaveBeenCalled();
   });
 
-  test('a merge writes carried content in the transaction and the carried paths after commit', async () => {
+  test('a merge writes carried content and the carried paths before the import awaits approval', async () => {
     const helper = await import('../lib/db/import-helper');
     const { jobId } = await helper.startImport(input());
     const pending = await settle(helper, jobId, terminal);
@@ -232,12 +241,16 @@ describe('startImport — multi-repository merge (REPO-5.7)', () => {
     expect(applied.plan.mode).toBe('multi-source');
     expect(applied.plan.carried.map((e: any) => e.key)).toEqual(['User', '/users']);
 
+    // The paths are staged with the classes (DBP-1.9, #7192), on the import's own client.
+    const [versionId, paths, , pathsClient] = mockImportPaths.mock.calls[0] as any[];
+    expect(versionId).toBe('ver-2');
+    expect(paths.map((p: any) => p.path)).toEqual(['/invoices', '/users']);
+    expect(pathsClient).toBeDefined();
+
     await helper.commitImport(jobId);
     const done = await settle(helper, jobId, (s) => s === 'completed' || s === 'failed');
     expect(done.state).toBe('completed');
-    const [versionId, paths] = mockImportPaths.mock.calls[0] as any[];
-    expect(versionId).toBe('ver-2');
-    expect(paths.map((p: any) => p.path)).toEqual(['/invoices', '/users']);
+    expect(mockImportPaths).toHaveBeenCalledTimes(1);
     expect(done.events.find((e: any) => e.code === 'IMPORTING_PATHS')?.message).toBe(
       'Importing 2 path(s) (1 carried forward from other repository files) and 0 security scheme(s)...',
     );
@@ -248,6 +261,9 @@ describe('startImport — multi-repository merge (REPO-5.7)', () => {
     const helper = await import('../lib/db/import-helper');
     const { jobId } = await helper.startImport(input({ projectMetadata: { contact: { name: 'Billing team' } } }));
     await settle(helper, jobId, terminal);
+    // An existing project is not changed until the import is accepted (DBP-1.9, #7192).
+    expect(mockMergeProjectFields).not.toHaveBeenCalled();
+    await helper.commitImport(jobId);
     expect(mockMergeProjectFields).toHaveBeenCalledTimes(1);
     expect((mockMergeProjectFields.mock.calls[0] as any[])[2]).toMatchObject({
       metadataPatch: { contact: { name: 'Billing team' } },
@@ -265,6 +281,7 @@ describe('startImport — multi-repository merge (REPO-5.7)', () => {
     mockClassNames = ['User'];
     const { jobId } = await helper.startImport(input({ projectMetadata: { contact: { name: 'Users team' } } }));
     await settle(helper, jobId, terminal);
+    await helper.commitImport(jobId);
     expect((mockMergeProjectFields.mock.calls[0] as any[])[2]).toMatchObject({ metadataFillOnly: false });
   });
 

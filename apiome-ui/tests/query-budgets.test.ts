@@ -8,7 +8,8 @@
  * - `getClassesForVersion` — a guarded server action (`lib/db/helper-actions.ts`) with the real
  *   guard: the version's workspace, the caller's membership, then the read.
  * - `importOpenAPIPathsAndSecurity` — the paths-and-security step every OpenAPI import server
- *   action runs (DBP-1.9 replaces its per-row statements).
+ *   action runs: one statement per table since DBP-1.9 (#7192), where it was one per row. The
+ *   whole pipeline's budget is in `tests/import-pipeline-budget.test.ts`.
  * - `loadPathsForOpenAPIExport` — a version's paths for export and repository merges: six
  *   statements at 10 and at 1,000 operations (DBP-1.6, #7189).
  */

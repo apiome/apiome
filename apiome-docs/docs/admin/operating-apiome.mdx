@@ -268,6 +268,45 @@ To raise the cap, set `APIOME_SERVER_ACTION_BODY_LIMIT` (for example `50mb`) in 
 **before building** apiome-ui. The value is baked into the build, so rebuild the image after
 changing it. **Import to catalog** uploads through the REST API instead and is not affected.
 
+### Imports waiting for review
+
+The **Import specification** wizard writes an import and then waits for the reviewer to click
+**“Accept & commit”** or **“Reject & rollback”**. While it waits, the import is saved in the
+database but hidden, and it holds no database connection. Any number of imports can wait at once
+without using the web app's connection pool.
+
+| Setting | Service | Default | What it does |
+| --- | --- | --- | --- |
+| `IMPORT_PENDING_TTL_MINUTES` | Web app | `60` | How long an import waits for a decision. After that the web app deletes it, and the reviewer has to run the import again. |
+
+Set it in `apiome-ui/.env` and restart the web app. `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` no longer
+limits a review: before, a review that took longer than that setting (60 seconds by default) lost
+the import.
+
+The web app looks for imports past the limit when it starts, and then every quarter of the limit
+(at least every minute, at most every 15 minutes). An import whose reviewer closed the browser, or
+that was waiting when the web app restarted, is removed the same way, once it is older than the
+limit. Each web app instance runs the check, and they do not get in each other's way.
+
+To see what is waiting:
+
+```sql
+SELECT v.id, p.slug AS project, v.version_id, v.import_pending_at,
+       now() - v.import_pending_at AS waiting_for
+  FROM apiome.versions v
+  JOIN apiome.projects p ON p.id = v.project_id
+ WHERE v.import_pending_at IS NOT NULL
+ ORDER BY v.import_pending_at;
+```
+
+A waiting import has `deleted_at` set on its version, and on its project when the import created
+the project. That is what hides it. It is not a deleted project: **Show deleted** does not list it,
+and it cannot be restored or permanently deleted. Do not clear `deleted_at` by hand; let the
+reviewer accept the import, or let the limit pass.
+
+This needs migration `V411`. Apply it before you start the new web app: the import fails with
+*column "import_pending_at" does not exist* otherwise.
+
 ### Document store
 
 The REST API keeps unchanging files — the original document of every import, and export
@@ -507,6 +546,34 @@ over a network saves more, because each statement that is no longer sent is a ro
 To link a class property to the project property with the same definition, a source apply looks the
 definition up by `properties.data_digest`. PostgreSQL keeps that column itself (migration `V409`),
 so no backfill is needed. The lookup is in the plan check as `rest.property_by_digest`.
+
+#### The import wizard
+
+The **Import specification** wizard, and the paths import in the path designer, write each table
+with one statement too. A statement carries up to 5,000 rows, so a table with more takes one
+statement per 5,000.
+
+| Step | Statements |
+| --- | --- |
+| Write and verify an import of 1,000 operations and 2,000 classes | about 30 |
+| **“Accept & commit”** | 7 to 9 |
+| **“Reject & rollback”** | 8 |
+| Paths and security schemes alone | 15 |
+
+Before, the same import sent about 19,500 statements. On a local PostgreSQL 18 it took about 1.6 s
+and now takes about 0.7 s; the largest OpenAPI file of the import corpus
+(`24-advanced-combined-composition.yaml`) went from 153 statements to 37, and from about 120 ms to
+about 90 ms. A database reached over a network saves more.
+
+The import no longer reads back what it wrote to verify it. One statement compares, for each
+class, the number of properties the database holds with the number the import expected, and
+returns only the classes that differ. The rows are read only to explain a difference in the
+import log.
+
+Whether the plan has room for another project or version is one probe that stops at the limit. It
+used to count every project or version of the workspace. Both reads are in the plan check, as
+`ui.plan_versions_at_limit` and `ui.import_class_lookup`, with the sweep for imports past their
+limit as `ui.import_pending_sweep`.
 
 #### Usage ingest
 
