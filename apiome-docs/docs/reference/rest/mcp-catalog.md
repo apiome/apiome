@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.650.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.651.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `mcp-catalog` · 98 operations
 
@@ -1486,7 +1486,8 @@ Return "servers like this one" from capability overlap + optional semantic embed
 Ranks the caller's other live endpoints against this one by two independent signals. **overlap** —
 always present — is the capability-name Jaccard overlap: peers sharing this server's tool / resource /
 prompt names, ranked by set-overlap, with the shared names surfaced (a server with nothing in common
-is not returned). **semantic** is a cosine nearest-neighbour over a per-snapshot capability embedding
+is not returned). Both rankings are computed in the database (DBP-1.17). **semantic** is a cosine
+nearest-neighbour over a per-snapshot capability embedding
 and is populated only when ``embeddings_enabled`` — the feature flag is on *and* both this endpoint
 and at least one peer carry a backfilled embedding. When embeddings are disabled or unbackfilled,
 ``semantic`` is empty and the endpoint page falls back to overlap-only (the "gracefully no-ops if
@@ -2978,6 +2979,10 @@ the per-kind capability ``type_counts`` summed across each endpoint's current su
 average quality score, and the A-F ``grade_distribution``. Like every catalog route, scoping
 comes from the token's ``tenant_id`` — never the URL slug — so the aggregate only ever spans the
 caller's own catalog (an empty catalog returns zeroes, not a ``404``).
+
+The roll-up is kept per tenant for ``MCP_CATALOG_INSIGHT_CACHE_TTL_SECONDS`` (default 30 s)
+on each API instance, so a discovery, publish or delete shows here within that interval
+(DBP-1.17, #7200).
 
 Operation id: `get_mcp_catalog_insight_v1_mcp__tenant_slug__insight_catalog_get`
 

@@ -503,6 +503,23 @@ def _fresh_browse_public_cache():
 
 
 @pytest.fixture(autouse=True)
+def _fresh_mcp_catalog_insight_cache():
+    """Start every test with an empty MCP catalog insight cache (DBP-1.17, #7200).
+
+    The cache is process-wide and keyed by tenant id, so an insight read in one test would
+    otherwise be served to a later test that patches the database with another catalog.
+    """
+    try:
+        from app import mcp_catalog_insight_cache
+    except Exception:
+        yield
+        return
+    mcp_catalog_insight_cache.invalidate_all()
+    yield
+    mcp_catalog_insight_cache.invalidate_all()
+
+
+@pytest.fixture(autouse=True)
 def _fresh_canonical_model_cache():
     """Start every test with an empty canonical-model cache (COA-5.4, #7080).
 

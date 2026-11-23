@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.827.0] - 2026-11-23
+
+### Performance
+- **MCP catalog: persist per-version derived facts; facets and insight in one query (DBP-1.17,
+  #7200).** OpenAPI 1.651.0 (version and two operation descriptions; no schema change). Measured on
+  the scale database with one tenant of 2,000 endpoints, 3 snapshots each, 50 tools per snapshot.
+  - **Facts stored on the snapshot.** Migration `V425` adds `tool_count`, `resource_count`,
+    `resource_template_count`, `prompt_count`, `has_destructive`, `read_only_only`, `max_tool_props`
+    and `change_count` to `mcp_endpoint_versions`. `record_mcp_discovery_version` computes them
+    (`app/mcp_version_facts.py`) and stores them in the snapshot's own `INSERT`; the table stays
+    write-once. A snapshot without facts yet (`tool_count IS NULL`) is recomputed in the same
+    statement by five `apiome.mcp_version_*` functions, so a read is never wrong.
+  - **Backfill.** `apiome.backfill_mcp_version_facts(limit)` derives a bounded batch and
+    `apiome-db migrate` calls it until nothing is pending, one transaction per batch (resumable;
+    15,880 snapshots in 5.5 s). `apiome.verify_mcp_version_facts()` compares stored facts with the
+    recomputed ones (`apiome-db backfill mcp-version-facts --verify`). The table's write-once guard
+    allows exactly this update: facts for a row that has none, nothing else changed.
+  - **Catalog grid.** `browse_mcp_endpoints` joins no capability item and groups nothing: 7.9 s →
+    45 ms for the whole catalog, 10 ms for a page of 100.
+  - **Faceted search: 2 statements, was 10.** One for the page, one that counts every facet with
+    `GROUPING SETS` over a materialized filtered CTE: 873 ms → 12 ms unfiltered, 7.5 s → 8 ms with
+    safety, complexity and grade filters.
+  - **Insight: 2 statements, was 9**, and kept per tenant for
+    `MCP_CATALOG_INSIGHT_CACHE_TTL_SECONDS` (default `30`, at most `300`, `0` = off) by
+    `app/mcp_catalog_insight_cache.py`: 177 ms → 137 ms cold, no statement when cached.
+  - **Evolution series.** Per-kind counts from the stored facts and one pass over the change rows,
+    in place of seven correlated sub-selects per snapshot.
+  - **Similar servers in SQL.** `get_mcp_similar_servers` replaces `get_mcp_similar_candidates`:
+    capability-name Jaccard computed in SQL and `ORDER BY embedding <=> target LIMIT k` over the
+    tenant's current snapshots; the floor, rounding and tie-breaks stay in Python
+    (`overlap_neighbors_from_rows`, `embedding_neighbors_from_rows`). 1.4 s → 0.19 s; no embedding
+    is read as text any more.
+  - **Duplicate hints.** `list_published_mcp_duplicate_hints` returns only the published endpoints
+    of other tenants that share a surface fingerprint or a URL key with one of the caller's, through
+    two new indexes, instead of every published endpoint: 46 ms → 23 ms.
+  - **Semantic capability search.** The similarity floor is applied to the nearest `limit` items
+    after they are picked, not as an expression on the distance in the `WHERE`.
+  - Every read returns the same values as before: checked against the previous statements on the
+    scale database, and by `tests/test_mcp_version_facts_db.py`, which runs each read on snapshots
+    without facts and again after the backfill.
+
 ## [1.826.0] - 2026-11-23
 
 ### Performance

@@ -90,6 +90,13 @@ class Settings(BaseSettings):
     browse_public_cache_ttl_seconds: float = 120.0
     #: Most directory answers (one per distinct query) kept before the oldest is dropped.
     browse_public_cache_max_entries: int = 512
+    #: Seconds an API instance reuses a tenant's MCP catalog insight
+    #: (``GET /v1/mcp/{tenant}/insight/catalog``). ``0`` reads on every request; values above
+    #: 300 are treated as 300. A discovery or publish shows on the dashboard within this
+    #: interval (DBP-1.17, #7200).
+    mcp_catalog_insight_cache_ttl_seconds: float = 30.0
+    #: Most tenants whose insight is kept at once before the oldest is dropped.
+    mcp_catalog_insight_cache_max_entries: int = 1000
 
     host: str = "0.0.0.0"
     port: int = 8000

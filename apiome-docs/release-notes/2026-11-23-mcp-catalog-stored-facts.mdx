@@ -1,0 +1,48 @@
+---
+slug: mcp-catalog-stored-facts
+title: "MCP catalog: persist per-version derived facts; facets and insight in one query"
+description: "The MCP Catalog grid, filters and Analytics load in milliseconds on large catalogs."
+authors: [apiome]
+---
+
+The **MCP Catalog** no longer works out each server's tool counts, safety flags and complexity on
+every page load. They are stored once, when a server is discovered, and the grid, its filters and
+**Analytics** read them.
+
+{/* truncate */}
+
+## Performance
+
+Measured on the scale benchmark database, in a workspace with 2,000 MCP servers, three snapshots
+each and 50 tools per snapshot:
+
+| | Before | After |
+| --- | ---: | ---: |
+| **Servers** grid, whole catalog | 7.9 s | 45 ms |
+| **Servers** grid, one page of 100 | 7.7 s | 10 ms |
+| Filter counts, no filter | 0.87 s in 10 statements | 12 ms in 2 |
+| Filter counts with safety, complexity and grade filters | 7.5 s | 8 ms |
+| **Analytics** | 177 ms in 9 statements | 137 ms in 2, then cached |
+| **Similar servers** on a server page | 1.4 s | 0.19 s |
+| Cross-workspace duplicate hints | 46 ms | 23 ms |
+
+Every number the catalog shows is the same as before.
+
+- **Analytics refreshes every 30 seconds.** After a discovery, a publish or a delete, the
+  **Analytics** tab can take up to half a minute to show it. The grid and the filter counts show it
+  at once. See [Analytics](/bring-in/mcp-servers#analytics).
+- **Similar servers** are ranked in the database. The list is the same; it no longer loads every
+  server's tool names to build it.
+
+## For operators
+
+- **Upgrade:** migration `V425` adds eight columns to MCP server snapshots without rewriting the
+  table. `apiome-db migrate` then fills them for existing snapshots in small batches. If it is
+  interrupted, the next run continues. Until a snapshot is filled, the catalog computes its numbers
+  as before, so nothing is wrong in between.
+- **Check it:** `apiome-db backfill mcp-version-facts --verify` reports snapshots still to fill and
+  any whose stored numbers are wrong. Both should be `0`.
+- **New settings:** `MCP_CATALOG_INSIGHT_CACHE_TTL_SECONDS` (default `30`; `0` turns the cache off)
+  and `MCP_CATALOG_INSIGHT_CACHE_MAX_ENTRIES` on the REST API.
+
+See [What the MCP catalog stores and caches](/admin/operating-apiome#what-the-mcp-catalog-stores-and-caches).

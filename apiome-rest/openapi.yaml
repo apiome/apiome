@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.650.0
+  version: 1.651.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -92198,40 +92198,42 @@ paths:
       tags:
       - mcp-catalog
       summary: Get Mcp Endpoint Similar
-      description: 'Return "servers like this one" from capability overlap + optional
-        semantic embeddings (MCAT-18.4).
-
-
-        Ranks the caller''s other live endpoints against this one by two independent
-        signals. **overlap** —
-
-        always present — is the capability-name Jaccard overlap: peers sharing this
-        server''s tool / resource /
-
-        prompt names, ranked by set-overlap, with the shared names surfaced (a server
-        with nothing in common
-
-        is not returned). **semantic** is a cosine nearest-neighbour over a per-snapshot
-        capability embedding
-
-        and is populated only when ``embeddings_enabled`` — the feature flag is on
-        *and* both this endpoint
-
+      description: 'Return "servers like this one" from capability overlap + optional semantic
+        embeddings (MCAT-18.4).
+      
+      
+        Ranks the caller''s other live endpoints against this one by two independent signals.
+        **overlap** —
+      
+        always present — is the capability-name Jaccard overlap: peers sharing this server''s
+        tool / resource /
+      
+        prompt names, ranked by set-overlap, with the shared names surfaced (a server with
+        nothing in common
+      
+        is not returned). Both rankings are computed in the database (DBP-1.17). **semantic**
+        is a cosine
+      
+        nearest-neighbour over a per-snapshot capability embedding
+      
+        and is populated only when ``embeddings_enabled`` — the feature flag is on *and*
+        both this endpoint
+      
         and at least one peer carry a backfilled embedding. When embeddings are disabled
         or unbackfilled,
-
-        ``semantic`` is empty and the endpoint page falls back to overlap-only (the
-        "gracefully no-ops if
-
-        embeddings are disabled" acceptance criterion). A never-discovered endpoint
-        has no capabilities, so
-
-        both lists are empty (a ``200``, never a ``500``). Scoping comes from the
-        token''s tenant, so neighbours
-
-        never span another tenant''s catalog; returns ``404`` when the endpoint is
-        not the caller''s tenant''s. A
-
+      
+        ``semantic`` is empty and the endpoint page falls back to overlap-only (the "gracefully
+        no-ops if
+      
+        embeddings are disabled" acceptance criterion). A never-discovered endpoint has
+        no capabilities, so
+      
+        both lists are empty (a ``200``, never a ``500``). Scoping comes from the token''s
+        tenant, so neighbours
+      
+        never span another tenant''s catalog; returns ``404`` when the endpoint is not the
+        caller''s tenant''s. A
+      
         GET stays read-only, recomputed live as the catalog grows.'
       operationId: get_mcp_endpoint_similar_v1_mcp__tenant_slug__endpoints__endpoint_id__insight_similar_get
       parameters:
@@ -92583,23 +92585,31 @@ paths:
       tags:
       - mcp-catalog
       summary: Get Mcp Catalog Insight
-      description: 'Return a tenant-wide roll-up of the caller''s live MCP catalog
-        (feeds 18.1).
-
-
-        Aggregates every live endpoint the caller''s tenant owns: total / published
-        / discovered counts,
-
-        the per-kind capability ``type_counts`` summed across each endpoint''s current
-        surface, the
-
-        average quality score, and the A-F ``grade_distribution``. Like every catalog
-        route, scoping
-
-        comes from the token''s ``tenant_id`` — never the URL slug — so the aggregate
-        only ever spans the
-
-        caller''s own catalog (an empty catalog returns zeroes, not a ``404``).'
+      description: 'Return a tenant-wide roll-up of the caller''s live MCP catalog (feeds
+        18.1).
+      
+      
+        Aggregates every live endpoint the caller''s tenant owns: total / published / discovered
+        counts,
+      
+        the per-kind capability ``type_counts`` summed across each endpoint''s current surface,
+        the
+      
+        average quality score, and the A-F ``grade_distribution``. Like every catalog route,
+        scoping
+      
+        comes from the token''s ``tenant_id`` — never the URL slug — so the aggregate only
+        ever spans the
+      
+        caller''s own catalog (an empty catalog returns zeroes, not a ``404``).
+      
+      
+        The roll-up is kept per tenant for ``MCP_CATALOG_INSIGHT_CACHE_TTL_SECONDS`` (default
+        30 s)
+      
+        on each API instance, so a discovery, publish or delete shows here within that interval
+      
+        (DBP-1.17, #7200).'
       operationId: get_mcp_catalog_insight_v1_mcp__tenant_slug__insight_catalog_get
       parameters:
       - name: tenant_slug

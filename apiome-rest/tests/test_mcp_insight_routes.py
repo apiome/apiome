@@ -971,29 +971,53 @@ def test_percentile_cross_tenant_endpoint_is_404():
 # ===========================================================================
 
 
-def _similar_candidate(endpoint_id, *, name, capability_names, embedding=None, category="weather"):
-    """A row shaped like one entry of ``get_mcp_similar_candidates``."""
+def _overlap_row(endpoint_id, *, name, shared, candidate_count, category="weather"):
+    """A peer row of ``get_mcp_similar_servers``'s ``overlap_rows`` (the set arithmetic is SQL's)."""
     return {
         "endpoint_id": endpoint_id,
         "name": name,
         "slug": name.lower().replace(" ", "-"),
         "category": category,
-        "current_version_id": f"ver-{endpoint_id}",
-        "capability_names": capability_names,
-        "embedding": embedding,
+        "shared_count": len(shared),
+        "candidate_capability_count": candidate_count,
+        "shared_capabilities": sorted(shared),
+    }
+
+
+def _embedding_row(endpoint_id, *, name, similarity, category="weather"):
+    """A peer row of ``get_mcp_similar_servers``'s ``embedding_rows`` (nearest first)."""
+    return {
+        "endpoint_id": endpoint_id,
+        "name": name,
+        "slug": name.lower().replace(" ", "-"),
+        "category": category,
+        "similarity": similarity,
+    }
+
+
+def _similar(target_count, overlap_rows=(), embedding_rows=()):
+    """What ``Database.get_mcp_similar_servers`` returns."""
+    return {
+        "target_capability_count": target_count,
+        "overlap_rows": list(overlap_rows),
+        "embedding_rows": list(embedding_rows),
     }
 
 
 def test_similar_overlap_ranks_peers_by_capability_overlap():
-    # Target shares 2/3 tools with EP_B and 1/3 with EP_C; EP_C's finance server shares nothing.
-    candidates = [
-        _similar_candidate(_EP, name="Acme Weather", capability_names=["get_weather", "get_forecast", "list_cities"]),
-        _similar_candidate(_EP_B, name="Near Weather", capability_names=["get_weather", "get_forecast", "get_alerts"]),
-        _similar_candidate(_EP_C, name="Mid Weather", capability_names=["get_weather", "a", "b", "c"]),
-    ]
+    # The target has 3 tools; it shares 2 of EP_B's 3 (Jaccard 2/4) and 1 of EP_C's 4 (1/6).
+    # The database returned them in the other order: the route's own ordering decides.
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
-        mdb.get_mcp_similar_candidates.return_value = candidates
+        mdb.get_mcp_similar_servers.return_value = _similar(
+            3,
+            [
+                _overlap_row(_EP_C, name="Mid Weather", shared=["get_weather"], candidate_count=4),
+                _overlap_row(
+                    _EP_B, name="Near Weather", shared=["get_weather", "get_forecast"], candidate_count=3
+                ),
+            ],
+        )
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
     assert r.status_code == 200
     body = r.json()
@@ -1004,24 +1028,38 @@ def test_similar_overlap_ranks_peers_by_capability_overlap():
     near = body["overlap"][0]
     assert near["similarity"] == pytest.approx(0.5)
     assert near["shared_count"] == 2
+    assert near["target_capability_count"] == 3
+    assert near["candidate_capability_count"] == 3
     assert near["shared_capabilities"] == ["get_forecast", "get_weather"]
-    # Embeddings off by default → semantic is an empty no-op.
+    assert body["overlap"][1]["similarity"] == pytest.approx(0.1667)
+    # Embeddings off by default → semantic is an empty no-op, and the embedding statement is not run.
     assert body["embeddings_enabled"] is False
     assert body["semantic"] == []
-    mdb.get_mcp_similar_candidates.assert_called_once_with("t1")
+    mdb.get_mcp_similar_servers.assert_called_once_with("t1", _EP, limit=10, with_embeddings=False)
+
+
+def test_similar_passes_the_limit_and_the_embedding_flag_to_the_database():
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
+    ):
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_similar_servers.return_value = _similar(0)
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar", params={"limit": 4})
+    assert r.status_code == 200
+    mdb.get_mcp_similar_servers.assert_called_once_with("t1", _EP, limit=4, with_embeddings=True)
 
 
 def test_similar_no_op_semantic_when_embeddings_disabled_even_with_vectors():
-    # Vectors are present on both sides, but the feature flag is off → semantic stays empty.
-    candidates = [
-        _similar_candidate(_EP, name="Acme", capability_names=["a", "b"], embedding=[1.0, 0.0]),
-        _similar_candidate(_EP_B, name="Peer", capability_names=["a", "c"], embedding=[0.9, 0.1]),
-    ]
+    # Even if rows came back, the feature flag being off keeps semantic empty.
     with patch("app.mcp_catalog_routes.db") as mdb, patch(
         "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", False
     ):
         mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
-        mdb.get_mcp_similar_candidates.return_value = candidates
+        mdb.get_mcp_similar_servers.return_value = _similar(
+            2,
+            [_overlap_row(_EP_B, name="Peer", shared=["a"], candidate_count=2)],
+            [_embedding_row(_EP_B, name="Peer", similarity=0.99)],
+        )
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
     assert r.status_code == 200
     body = r.json()
@@ -1032,36 +1070,58 @@ def test_similar_no_op_semantic_when_embeddings_disabled_even_with_vectors():
 
 
 def test_similar_semantic_neighbors_returned_when_enabled_and_backfilled():
-    candidates = [
-        _similar_candidate(_EP, name="Acme", capability_names=["a"], embedding=[1.0, 0.0, 0.0]),
-        _similar_candidate(_EP_B, name="Near", capability_names=["a"], embedding=[0.99, 0.14, 0.0]),
-        _similar_candidate(_EP_C, name="Mid", capability_names=["a"], embedding=[0.6, 0.8, 0.0]),
-    ]
     with patch("app.mcp_catalog_routes.db") as mdb, patch(
         "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
     ):
         mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
-        mdb.get_mcp_similar_candidates.return_value = candidates
+        mdb.get_mcp_similar_servers.return_value = _similar(
+            1,
+            [],
+            [
+                _embedding_row(_EP_B, name="Near", similarity=0.99014),
+                _embedding_row(_EP_C, name="Mid", similarity=0.6),
+            ],
+        )
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
     assert r.status_code == 200
     body = r.json()
     assert body["embeddings_enabled"] is True
-    # Cosine nearest-first: Near (~0.99) before Mid (0.6).
+    # Cosine nearest-first: Near (~0.99) before Mid (0.6); similarities rounded to 4 places.
     assert [n["endpoint_id"] for n in body["semantic"]] == [_EP_B, _EP_C]
-    assert body["semantic"][0]["similarity"] == pytest.approx(0.99, abs=0.005)
+    assert body["semantic"][0]["similarity"] == 0.9901
 
 
-def test_similar_enabled_but_no_peer_vectors_is_no_op():
-    # Flag on and the target has a vector, but no peer is backfilled → embeddings_enabled False, empty.
-    candidates = [
-        _similar_candidate(_EP, name="Acme", capability_names=["a", "b"], embedding=[1.0, 0.0]),
-        _similar_candidate(_EP_B, name="Peer", capability_names=["a", "c"], embedding=None),
-    ]
+def test_similar_applies_the_floor_and_drops_undefined_similarities_outside_the_query():
+    # A negative cosine is below the floor of 0; a zero vector has no similarity (NULL / NaN).
     with patch("app.mcp_catalog_routes.db") as mdb, patch(
         "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
     ):
         mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
-        mdb.get_mcp_similar_candidates.return_value = candidates
+        mdb.get_mcp_similar_servers.return_value = _similar(
+            1,
+            [],
+            [
+                _embedding_row(_EP_B, name="Near", similarity=0.4),
+                _embedding_row(_EP_C, name="Opposite", similarity=-0.2),
+                _embedding_row("66666666-6666-6666-6666-666666666666", name="Zero", similarity=None),
+            ],
+        )
+        r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
+    body = r.json()
+    assert body["embeddings_enabled"] is True
+    assert [n["endpoint_id"] for n in body["semantic"]] == [_EP_B]
+
+
+def test_similar_enabled_but_no_peer_vectors_is_no_op():
+    # Flag on, but the embedding statement found no peer to compare (or the target has no vector)
+    # → embeddings_enabled False, empty.
+    with patch("app.mcp_catalog_routes.db") as mdb, patch(
+        "app.mcp_catalog_routes.settings.mcp_similarity_embeddings_enabled", True
+    ):
+        mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
+        mdb.get_mcp_similar_servers.return_value = _similar(
+            2, [_overlap_row(_EP_B, name="Peer", shared=["a"], candidate_count=2)], []
+        )
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
     assert r.status_code == 200
     body = r.json()
@@ -1071,13 +1131,9 @@ def test_similar_enabled_but_no_peer_vectors_is_no_op():
 
 def test_similar_never_discovered_target_is_empty_not_500():
     # Target carries no capabilities and no vector → both lists empty, count 0, a 200.
-    candidates = [
-        _similar_candidate(_EP, name="Acme", capability_names=[], embedding=None),
-        _similar_candidate(_EP_B, name="Peer", capability_names=["a", "b"], embedding=None),
-    ]
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.get_mcp_endpoint.return_value = _WEATHER_ENDPOINT
-        mdb.get_mcp_similar_candidates.return_value = candidates
+        mdb.get_mcp_similar_servers.return_value = _similar(0)
         r = client.get(f"/v1/mcp/acme/endpoints/{_EP}/insight/similar")
     assert r.status_code == 200
     body = r.json()

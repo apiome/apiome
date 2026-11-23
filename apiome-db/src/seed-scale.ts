@@ -28,6 +28,7 @@
  * | workflow_audit / access_audit | 500,000 / 200,000 |                                       |
  * | version_content_counts      | 200,000   | Home's count rollup (V423), one row per version |
  * | versions (publish counts)   | 180,000   | operation_count / schema_count (V424), updated  |
+ * | mcp_endpoint_versions (facts) | 10,000  | derived facts (V425), updated                   |
  *
  * Every tenant slug starts with `scale-`, every email ends in `@scale.apiome.test`, and users get a
  * password value that is not a bcrypt hash, so no seeded account can sign in.
@@ -438,6 +439,17 @@ export function buildScaleSteps(params: ScaleParams): ScaleStep[] {
       doneSql:
         "SELECT NOT EXISTS (SELECT 1 FROM apiome.versions WHERE published AND deleted_at IS NULL " +
         "AND (operation_count IS NULL OR schema_count IS NULL)) AS done",
+    },
+    // The derived facts of every MCP endpoint version (V425, DBP-1.17 #7200). apiome-rest stores
+    // them when it records a snapshot; the seed inserts snapshots directly, so it derives them
+    // here with the migration's own backfill function. Without it the catalog queries in the plan
+    // check would measure the recomputation, not the stored columns. Triggers stay on: the
+    // write-once guard of mcp_endpoint_versions is what lets exactly this update through.
+    {
+      ...step("mcp_version_facts", "apiome.mcp_endpoint_versions", mcpVersions, "", `
+      SELECT apiome.backfill_mcp_version_facts(${mcpVersions})`),
+      doneSql:
+        "SELECT NOT EXISTS (SELECT 1 FROM apiome.mcp_endpoint_versions WHERE tool_count IS NULL) AS done",
     },
   ];
 }

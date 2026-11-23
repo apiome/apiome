@@ -1665,6 +1665,99 @@ def rank_embedding_neighbors(
     return neighbors[: max(0, limit)]
 
 
+def overlap_neighbors_from_rows(
+    target_capability_count: int,
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    limit: int = 10,
+) -> List[OverlapNeighbor]:
+    """Build the overlap list from rows the database already ranked (DBP-1.17, #7200).
+
+    :meth:`app.database.Database.get_mcp_similar_servers` computes the set arithmetic in SQL and
+    returns, per peer, how many names it shares with the target and how many it has. This turns
+    those counts into :class:`OverlapNeighbor` values exactly as :func:`compute_capability_overlap`
+    does from raw name lists — same Jaccard value, same rounding, same final ordering — so the two
+    paths agree on any input.
+
+    Args:
+        target_capability_count: The target's distinct capability names.
+        rows: One mapping per peer with ``endpoint_id``, ``name``, optional ``slug`` /
+            ``category``, ``shared_count``, ``candidate_capability_count`` and
+            ``shared_capabilities`` (the shared names, sorted).
+        limit: Maximum neighbours to return.
+
+    Returns:
+        The ranked list (at most ``limit``); empty when the target has no capabilities.
+    """
+    if target_capability_count <= 0:
+        return []
+    neighbors: List[OverlapNeighbor] = []
+    for row in rows:
+        shared_count = int(row.get("shared_count") or 0)
+        candidate_count = int(row.get("candidate_capability_count") or 0)
+        union = target_capability_count + candidate_count - shared_count
+        if shared_count <= 0 or union <= 0:
+            continue
+        neighbors.append(
+            OverlapNeighbor(
+                endpoint_id=str(row["endpoint_id"]),
+                name=str(row.get("name") or ""),
+                slug=row.get("slug"),
+                category=row.get("category"),
+                similarity=round(shared_count / union, 4),
+                shared_count=shared_count,
+                target_capability_count=target_capability_count,
+                candidate_capability_count=candidate_count,
+                shared_capabilities=list(row.get("shared_capabilities") or []),
+            )
+        )
+    neighbors.sort(key=lambda n: (-n.similarity, -n.shared_count, n.name.lower()))
+    return neighbors[: max(0, limit)]
+
+
+def embedding_neighbors_from_rows(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    limit: int = 10,
+    min_similarity: float = 0.0,
+) -> List[EmbeddingNeighbor]:
+    """Build the semantic list from the nearest neighbours the database returned (DBP-1.17, #7200).
+
+    The database orders peers by cosine distance and returns the nearest few; the similarity floor
+    and the tie-breaks are applied here, outside the query, as :func:`rank_embedding_neighbors`
+    applies them: a peer below ``min_similarity`` or with an undefined similarity (a zero vector
+    gives ``NaN``) is dropped, and the rest are ordered by rounded similarity, then name.
+
+    Args:
+        rows: One mapping per peer with ``endpoint_id``, ``name``, optional ``slug`` /
+            ``category`` and ``similarity`` (cosine similarity, or ``None`` / ``NaN``).
+        limit: Maximum neighbours to return.
+        min_similarity: Drop neighbours whose cosine similarity is strictly below this floor.
+
+    Returns:
+        The ranked list (at most ``limit``), possibly empty.
+    """
+    neighbors: List[EmbeddingNeighbor] = []
+    for row in rows:
+        similarity = row.get("similarity")
+        if similarity is None:
+            continue
+        similarity = float(similarity)
+        if math.isnan(similarity) or similarity < min_similarity:
+            continue
+        neighbors.append(
+            EmbeddingNeighbor(
+                endpoint_id=str(row["endpoint_id"]),
+                name=str(row.get("name") or ""),
+                slug=row.get("slug"),
+                category=row.get("category"),
+                similarity=round(similarity, 4),
+            )
+        )
+    neighbors.sort(key=lambda n: (-n.similarity, n.name.lower()))
+    return neighbors[: max(0, limit)]
+
+
 # --- Cross-server capability search (V2-MCP-35.2 / MCAT-21.2, #4661) ------------------------------
 
 #: Letter-grade ordering for MCAT-9.7 tie-breaks (A first, ungraded last).

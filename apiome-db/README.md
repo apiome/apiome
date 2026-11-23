@@ -65,8 +65,8 @@ database (migrate it first): 200 tenants, 20,000 projects (5,000 in the skewed t
 `scale-large`), 200,000 versions, 1,000,000 classes (20,000 in one version), 3,100,000 class
 properties, 600,000 paths, 1,200,000 operations, MCP endpoints, versions and capability items,
 usage rows and audit rows, then fills Home's per-revision count rollup (`version_content_counts`,
-V423) and the publish counts Browse cards read (`versions.operation_count` / `schema_count`, V424)
-the way a busy deployment has them. `--scale-factor <n>` multiplies every count. Each table is filled by one
+V423), the publish counts Browse cards read (`versions.operation_count` / `schema_count`, V424)
+and the derived facts of every MCP endpoint version (V425) the way a busy deployment has them. `--scale-factor <n>` multiplies every count. Each table is filled by one
 `INSERT … SELECT generate_series(…)` statement ([`src/seed-scale.ts`](./src/seed-scale.ts)); ids are
 `md5('apiome-scale:<kind>:<n>')::uuid`, so a run is reproducible, and a re-run skips every step whose
 last row exists. The bulk revision-content steps insert with `session_replication_role = replica`
@@ -84,6 +84,23 @@ design (a scan that stops at a `LIMIT`, a catalog-wide count that runs once per 
 An allowed scan is reported with its reason and is not a violation; the time budget still applies.
 [`plan-check/broken-query.json`](./plan-check/broken-query.json) is a deliberately broken query that
 the check must fail. Both run nightly in `.github/workflows/apiome-db-scale.yml`.
+
+### Resumable backfills (DBP-1.17)
+
+A migration is one transaction, so a large backfill inside it would hold its locks until the last
+row and start over if interrupted. A backfill that can be large is instead a SQL function that does
+one bounded batch, added by its migration, and `apiome-db` calls it in a loop, each call its own
+transaction ([`src/backfill.ts`](./src/backfill.ts)):
+
+- `apiome-db migrate` runs every backfill after applying the migrations — on every run, so one that
+  was interrupted is finished by the next. With nothing pending it costs one index probe.
+- `apiome-db backfill <name>` runs one on demand; `--verify` checks it and exits `1` on a mismatch.
+
+Readers must stay correct while a backfill is pending: they recompute a value that is not stored yet.
+
+| Backfill | Migration | What it fills |
+| --- | --- | --- |
+| `mcp-version-facts` | `V425` | Per-kind counts, safety flags, widest tool and change count of each `mcp_endpoint_versions` row recorded before the columns existed. `mcp_endpoint_versions` is write-once; its guard lets through only this update. |
 
 ## Admin CLI
 
@@ -145,6 +162,9 @@ seed [--dir <path>] [--dry-run] [--force]   Load dev seed data (development only
 seed --profile scale [--scale-factor <n>]   Build the scale benchmark database (scratch databases only)
 plan-check [--queries <file>] [--row-threshold <n>] [--runs <n>] [--only <names>] [--markdown <file>]
                                             EXPLAIN ANALYZE the hot queries; fail on large seq scans / slow plans
+backfill mcp-version-facts [--batch <n>] [--verify]
+                                            Derive the stored facts of MCP endpoint versions that have none
+                                            (V425); --verify compares stored facts with recomputed ones
 
 users create   --name --email (--password | --password-stdin | --random-password)
                                             [--unverified] [--disabled]
