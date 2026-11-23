@@ -486,6 +486,23 @@ def _fresh_authz_cache():
 
 
 @pytest.fixture(autouse=True)
+def _fresh_browse_public_cache():
+    """Start every test with an empty public Browse directory cache (DBP-1.16, #7199).
+
+    The cache is process-wide and keyed by the query's parameters, so a directory answer read in
+    one test would otherwise be served to a later test that patches the database with other rows.
+    """
+    try:
+        from app import browse_public_cache
+    except Exception:
+        yield
+        return
+    browse_public_cache.invalidate_all()
+    yield
+    browse_public_cache.invalidate_all()
+
+
+@pytest.fixture(autouse=True)
 def _fresh_canonical_model_cache():
     """Start every test with an empty canonical-model cache (COA-5.4, #7080).
 

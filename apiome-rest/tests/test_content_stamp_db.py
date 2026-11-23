@@ -344,6 +344,141 @@ def test_bookkeeping_on_a_revision_with_generated_values_does_not_bump(env) -> N
     assert _stamp(env) == after_metadata
 
 
+# ───────────────────────────── publish counts (V424) ─────────────────────────────
+
+
+def _counts(ctx: Dict[str, Any]) -> tuple:
+    """The stored ``(operation_count, schema_count)`` of the seeded revision."""
+    row = _one(ctx, "SELECT operation_count, schema_count FROM apiome.versions WHERE id = %s", (ctx["version"],))
+    return row["operation_count"], row["schema_count"]
+
+
+def _content(ctx: Dict[str, Any]) -> None:
+    """Give the seeded revision two live classes, one deleted class and three operations."""
+    db, version = ctx["db"], ctx["version"]
+    for name in ("Order", "Customer", "Gone"):
+        ctx[name] = str(db.create_class(version, name, {"type": "object"})["id"])
+    db.delete_class(ctx["Gone"], ctx["tenant"])
+    orders = str(db.create_path(version, "/orders")["id"])
+    for method in ("get", "post"):
+        db.create_operation(orders, method)
+    db.create_operation(str(db.create_path(version, "/customers")["id"]), "get")
+
+
+def _publish(ctx: Dict[str, Any]) -> None:
+    """Publish the seeded revision with the statement shape both writers use."""
+    _one(
+        ctx,
+        "UPDATE apiome.versions SET published = true, published_at = CURRENT_TIMESTAMP, "
+        "visibility = 'public' WHERE id = %s",
+        (ctx["version"],),
+    )
+
+
+def _requires_v424(ctx: Dict[str, Any]) -> None:
+    found = _one(ctx, "SELECT to_regproc('apiome.set_version_publish_counts') AS f")
+    if not found["f"]:
+        pytest.skip("V424 not applied")
+
+
+def test_a_draft_has_no_stored_counts(env) -> None:
+    """Counts are recorded at publish (DBP-1.16, #7199); a draft's are NULL and readers count."""
+    _requires_v424(env)
+    _content(env)
+    assert _counts(env) == (None, None)
+
+
+def test_publishing_records_the_operation_and_live_schema_counts(env) -> None:
+    _requires_v424(env)
+    _content(env)
+    _publish(env)
+    # Three operations; two live classes (the deleted one is not counted).
+    assert _counts(env) == (3, 2)
+
+
+def test_publishing_an_empty_revision_records_zeros_not_nulls(env) -> None:
+    _requires_v424(env)
+    _publish(env)
+    assert _counts(env) == (0, 0)
+
+
+def test_recording_the_counts_is_not_a_content_change(env) -> None:
+    """The two columns are in the stamp function's non-content list, so a backfill cannot bump."""
+    _requires_v424(env)
+    before = _stamp(env)
+    _one(env, "UPDATE apiome.versions SET operation_count = 7, schema_count = 9 WHERE id = %s", (env["version"],))
+    assert _stamp(env) == before
+    _one(env, "UPDATE apiome.versions SET operation_count = NULL, schema_count = NULL WHERE id = %s", (env["version"],))
+    assert _stamp(env) == before
+
+
+def test_a_class_path_or_operation_write_clears_the_counts(env) -> None:
+    """A published revision edited afterwards is counted by readers again, never shown stale."""
+    _requires_v424(env)
+    db, version = env["db"], env["version"]
+    _content(env)
+    writes = [
+        ("create class", lambda: db.create_class(version, "Invoice", {"type": "object"})),
+        ("delete class", lambda: db.delete_class(env["Order"], env["tenant"])),
+        ("create path", lambda: env.setdefault("extra", str(db.create_path(version, "/invoices")["id"]))),
+        ("create operation", lambda: db.create_operation(env["extra"], "get")),
+    ]
+    for label, write in writes:
+        _publish(env)
+        assert None not in _counts(env), label
+        write()
+        assert _counts(env) == (None, None), label
+
+
+def test_other_content_writes_keep_the_counts(env) -> None:
+    """Only the three counted tables clear them: a schema capture or a property edit does not."""
+    _requires_v424(env)
+    db = env["db"]
+    _content(env)
+    prop = _library_property(env)
+    _publish(env)
+    recorded = _counts(env)
+    stamp = _stamp(env)
+
+    db.add_property_to_class(env["Order"], prop, "id", None, {"type": "string"})
+    _one(
+        env,
+        "INSERT INTO apiome.class_schema (version_id, class_id, schema) VALUES (%s, %s, '{}'::jsonb)",
+        (env["version"], env["Customer"]),
+    )
+    _one(env, "UPDATE apiome.versions SET description = 'Orders API' WHERE id = %s", (env["version"],))
+    assert _stamp(env) > stamp, "these are content writes: the stamp moves"
+    assert _counts(env) == recorded, "but the operation and schema counts are unchanged"
+
+
+def test_republishing_fills_cleared_counts_and_unpublishing_clears_them(env) -> None:
+    _requires_v424(env)
+    db, version = env["db"], env["version"]
+    _content(env)
+    _publish(env)
+    db.create_class(version, "Invoice", {"type": "object"})
+    assert _counts(env) == (None, None)
+    _publish(env)  # published → published, with the counts missing
+    assert _counts(env) == (3, 3)
+    _one(env, "UPDATE apiome.versions SET published = false, published_at = NULL WHERE id = %s", (version,))
+    assert _counts(env) == (None, None)
+
+
+def test_a_write_after_publish_in_the_same_transaction_clears_the_counts(env) -> None:
+    """Publish then edit in one transaction: the edit still clears what the publish recorded."""
+    _requires_v424(env)
+    _content(env)
+    conn = env["conn"]
+    with conn.cursor() as cur:
+        cur.execute("UPDATE apiome.versions SET published = true WHERE id = %s", (env["version"],))
+        cur.execute(
+            "INSERT INTO apiome.classes (version_id, name, schema) VALUES (%s, 'Late', '{}'::jsonb)",
+            (env["version"],),
+        )
+    conn.commit()
+    assert _counts(env) == (None, None)
+
+
 def test_writes_to_unrendered_tables_do_not_bump(env) -> None:
     _one(
         env,

@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.826.0] - 2026-11-23
+
+### Performance
+- **Public Browse: cached directory statistics, supporting indexes and an indexed search (DBP-1.16,
+  #7199).** OpenAPI 1.650.0 (version and the description of `GET /v1/browse/tenants`; no schema change).
+  - **`GET /v1/browse/tenants` is cached.** The route is anonymous and counted the whole public catalog
+    on every call. Each API instance now reuses the directory statistics, each tenant-list window (by
+    `search`, `sort`, `protocol`, `format`, `limit`, `offset`) and each facet count for
+    `BROWSE_PUBLIC_CACHE_TTL_SECONDS` (default `120`, at most `300`; `0` turns it off), in the new
+    `app/browse_public_cache.py`. A publish, unpublish or delete shows up within one interval. Only
+    successful reads are stored. `BROWSE_PUBLIC_CACHE_MAX_ENTRIES` (default `512`) bounds the cache.
+  - **Cache headers.** The response carries `Cache-Control: public, max-age=<the interval>`, or
+    `no-store` when the cache is off, so a proxy in front of the API may reuse it for as long as the
+    instance would. The member-aware project and version lists are not cached.
+  - **MCP change feeds pick the newest snapshots first.** `get_public_catalog_changes` and
+    `get_public_mcp_endpoint_changes` choose the newest `limit` snapshots that recorded a change and
+    join only their changes, instead of joining and sorting the whole change history for `LIMIT 50`.
+    The rows are the same (checked against the old statements on the scale database). Catalog feed of a
+    tenant with 3,050 snapshots and 91,500 changes: 51 ms → 5.5 ms. The single-endpoint feed was
+    already index-driven there (0.5 ms → 0.7 ms); its plan no longer depends on the planner's choice.
+  - **Migration `V424`.** `versions.operation_count` and `versions.schema_count` are recorded by a
+    trigger when a revision is published (covering this API's `publish_version` and the web app's)
+    and cleared when it is unpublished or a class, path or operation row of it is written; Browse
+    cards read them and fall back to counting when they are NULL. The V403 / V422 content-stamp
+    trigger function is re-created with both columns in its non-content list, so recording them does
+    not bump `content_stamp`. `V424` also adds five trigram indexes on name columns (projects,
+    classes, class properties, paths, operation summaries and ids) for the Browse search palette:
+    +15 % on an import-shaped insert of 116,000 rows, measured on the scale database.
+
 ## [1.825.0] - 2026-11-23
 
 ### Performance

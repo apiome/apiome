@@ -9,11 +9,22 @@
  * match predicate and a relevance rank. The tail of the statement counts, facets and pages those
  * rows in SQL, and returns everything as one row of JSON columns.
  *
- * Why not Postgres full-text search: the tsvector/GIN index over the normalized model is the REST
- * side's MFI-6.2 (#3754), which has not landed. Until it does this is substring matching (`ILIKE`)
- * on a bounded public corpus, the same contract the previous search had — but ranked, filtered,
- * faceted and paged. The builder is pure so the shape of the statement is unit-tested without a
- * database; `lib/db/search.ts` runs it.
+ * Why not Postgres full-text search: the tsvector/GIN index over the normalized model is BDX-1.1
+ * (#6285), which has not landed. Until it does this is substring matching (`ILIKE`) on a bounded
+ * public corpus, the same contract the previous search had — but ranked, filtered, faceted and
+ * paged. The builder is pure so the shape of the statement is unit-tested without a database;
+ * `lib/db/search.ts` runs it.
+ *
+ * Interim limits until that index exists (DBP-1.16, #7199):
+ *
+ * - **Words match names, summaries and descriptions — not stored JSON.** The haystacks used to cast
+ *   JSONB columns (`schema`, `data`, `metadata`, inline schemas, examples) to text for every row in
+ *   scope, which detoasted and re-serialized each document per search. They are no longer searched;
+ *   a snippet may still *show* a schema when a row has no description.
+ * - **Facets are computed when asked for** ({@link CatalogSearchSqlOptions.facets}). The runner
+ *   asks on the first page and reuses those counts for the following pages of the same search.
+ * - **The palette's suggestions use a different statement** (`./suggestSql.ts`): names only,
+ *   index-driven, capped per kind.
  */
 
 import { cardFactsJoinSql } from '../cardFacts';
@@ -31,7 +42,8 @@ export interface SqlStatement {
 /** Rows past this many are not counted or paged; the UI says "more than N" and asks for a narrower query. */
 export const SEARCH_HIT_CAP = 5000;
 
-const PUBLIC_VERSION_GATES = `v.published = true
+/** The public gate, for a version `v` of a project `p` of a tenant `t`. */
+export const PUBLIC_VERSION_GATES = `v.published = true
       AND v.visibility = 'public'
       AND t.deleted_at IS NULL
       AND p.deleted_at IS NULL
@@ -58,7 +70,7 @@ const SEVERITY_KINDS: readonly HitKind[] = ['change'];
 const UNVERSIONED_KINDS: readonly HitKind[] = ['product'];
 
 /** Whether a request narrows by something only a project version carries. */
-function hasVersionFilters(request: SearchRequest): boolean {
+export function hasVersionFilters(request: SearchRequest): boolean {
   return (
     request.projects.length > 0 ||
     request.versions.length > 0 ||
@@ -74,7 +86,7 @@ function hasVersionFilters(request: SearchRequest): boolean {
  * A small parameter registry: every value becomes `$n`, and repeated values reuse their slot so
  * the ten union members do not bind the same pattern ten times.
  */
-class Params {
+export class Params {
   readonly values: unknown[] = [];
   private readonly index = new Map<string, string>();
 
@@ -110,7 +122,7 @@ function textPredicate(haystack: string, request: SearchRequest, params: Params)
  *
  * @returns The SQL expression, or null when the query has no words or phrases to score by.
  */
-function textScoreExpr(exprs: string[], request: SearchRequest, params: Params): string | null {
+export function textScoreExpr(exprs: string[], request: SearchRequest, params: Params): string | null {
   const needles = [...request.parsed.phrases, ...request.parsed.terms];
   if (needles.length === 0) return null;
   const full = needles.join(' ').toLowerCase();
@@ -133,7 +145,7 @@ function textScoreExpr(exprs: string[], request: SearchRequest, params: Params):
  * The relevance rank for a member: its text score (see {@link textScoreExpr}) plus the kind's
  * weight. With no text to rank by, the weight alone orders.
  */
-function rankExpr(kind: HitKind, exprs: string[], request: SearchRequest, params: Params): string {
+export function rankExpr(kind: HitKind, exprs: string[], request: SearchRequest, params: Params): string {
   const weight = HIT_KIND_WEIGHT[kind];
   const score = textScoreExpr(exprs, request, params);
   return score ? `(${score} + ${weight})` : `${weight}`;
@@ -145,7 +157,7 @@ function haystack(...columns: string[]): string {
 }
 
 /** The common SELECT list every member must produce, in this order. */
-const HIT_COLUMNS = [
+export const HIT_COLUMNS = [
   'hit_id',
   'hit_type',
   'tenant_slug',
@@ -274,7 +286,7 @@ const tagMember: MemberBuilder = ({ request, params }) => `
       WHERE ${textPredicate(haystack('vt.name', 'vt.message'), request, params)}`;
 
 /** The method / path filters an operation-ish member applies, or `TRUE`. */
-function pathFilters(request: SearchRequest, params: Params, withMethod: boolean): string {
+export function pathFilters(request: SearchRequest, params: Params, withMethod: boolean): string {
   const clauses: string[] = [];
   if (withMethod && request.methods.length > 0) {
     clauses.push(`UPPER(po.operation) = ANY(${params.add(request.methods)}::text[])`);
@@ -303,7 +315,7 @@ const operationMember: MemberBuilder = ({ request, params }) => `
       JOIN apiome.path_operation po ON po.version_path_id = vp.id
       LEFT JOIN apiome.path_operation_description pod ON pod.path_operation_id = po.id
       WHERE ${pathFilters(request, params, true)}
-        AND ${textPredicate(haystack('vp.pathname', 'po.operation', 'pod.summary', 'pod.description', 'pod.operation_id', 'pod.metadata', 'po.metadata'), request, params)}`;
+        AND ${textPredicate(haystack('vp.pathname', 'po.operation', 'pod.summary', 'pod.description', 'pod.operation_id'), request, params)}`;
 
 const parameterMember: MemberBuilder = ({ request, params }) => `
       SELECT 'param:' || spp.id::text AS hit_id,
@@ -322,7 +334,7 @@ const parameterMember: MemberBuilder = ({ request, params }) => `
       JOIN apiome.version_path vp ON vp.version_id = sv.version_pk
       JOIN apiome.shared_path_parameter spp ON spp.version_path_id = vp.id
       WHERE ${pathFilters(request, params, false)}
-        AND ${textPredicate(haystack('spp.name', 'spp.summary', 'spp.description', 'spp.data'), request, params)}`;
+        AND ${textPredicate(haystack('spp.name', 'spp.summary', 'spp.description'), request, params)}`;
 
 const requestBodyMember: MemberBuilder = ({ request, params }) => `
       SELECT 'body:' || sprb.id::text AS hit_id,
@@ -342,7 +354,7 @@ const requestBodyMember: MemberBuilder = ({ request, params }) => `
       JOIN apiome.shared_path_request_body sprb ON sprb.version_path_id = vp.id
       LEFT JOIN apiome.shared_path_request_body_content sprbc ON sprbc.shared_path_request_body_id = sprb.id
       WHERE ${pathFilters(request, params, false)}
-        AND ${textPredicate(haystack('sprb.name', 'sprb.description', 'sprbc.media_type', 'sprbc.inline_schema', 'sprbc.examples'), request, params)}
+        AND ${textPredicate(haystack('sprb.name', 'sprb.description', 'sprbc.media_type'), request, params)}
       GROUP BY sprb.id, sprb.name, sprb.description, vp.pathname,
                sv.tenant_slug, sv.tenant_name, sv.project_slug, sv.project_name, sv.version_slug,
                sv.published_at, sv.source_format, sv.paradigm`;
@@ -365,7 +377,7 @@ const responseMember: MemberBuilder = ({ request, params }) => `
       JOIN apiome.shared_path_response spr ON spr.version_path_id = vp.id
       LEFT JOIN apiome.shared_path_response_content sprc ON sprc.shared_path_response_id = spr.id
       WHERE ${pathFilters(request, params, false)}
-        AND ${textPredicate(haystack('spr.status_code', 'spr.description', 'spr.inline_schema', 'spr.data', 'sprc.media_type', 'sprc.inline_schema', 'sprc.examples'), request, params)}
+        AND ${textPredicate(haystack('spr.status_code', 'spr.description', 'sprc.media_type'), request, params)}
       GROUP BY spr.id, spr.status_code, spr.description, vp.pathname,
                sv.tenant_slug, sv.tenant_name, sv.project_slug, sv.project_name, sv.version_slug,
                sv.published_at, sv.source_format, sv.paradigm`;
@@ -385,7 +397,7 @@ const schemaMember: MemberBuilder = ({ request, params }) => `
              NULL::text AS severity
       FROM sv
       JOIN apiome.classes c ON c.version_id = sv.version_pk AND c.deleted_at IS NULL
-      WHERE ${textPredicate(haystack('c.name', 'c.description', 'c.schema'), request, params)}`;
+      WHERE ${textPredicate(haystack('c.name', 'c.description'), request, params)}`;
 
 const propertyMember: MemberBuilder = ({ request, params }) => `
       SELECT 'prop:' || cp.id::text AS hit_id,
@@ -403,7 +415,7 @@ const propertyMember: MemberBuilder = ({ request, params }) => `
       FROM sv
       JOIN apiome.classes c ON c.version_id = sv.version_pk AND c.deleted_at IS NULL
       JOIN apiome.class_properties cp ON cp.class_id = c.id
-      WHERE ${textPredicate(haystack('cp.name', 'cp.description', 'cp.data'), request, params)}`;
+      WHERE ${textPredicate(haystack('cp.name', 'cp.description'), request, params)}`;
 
 /**
  * A JSON Pointer with its `~1` / `~0` escapes undone, so `path`-style words (`/orders`) match
@@ -496,35 +508,81 @@ export function applicableKinds(request: SearchRequest): HitKind[] {
   return [...kinds];
 }
 
-/** The version-scope filters (everything that narrows which versions are searched). */
-function scopeFilters(request: SearchRequest, params: Params): string {
+/** The SQL expressions {@link scopeFilters} filters on, so one filter list serves two statements. */
+export interface ScopeColumns {
+  /** The version's primary key. */
+  versionPk: string;
+  /** The version label (`1.2.0`). */
+  versionSlug: string;
+  publishedAt: string;
+  tenantSlug: string;
+  tenantName: string;
+  projectSlug: string;
+  projectName: string;
+  /** The source format, lower-cased and trimmed (`''` when unknown). */
+  sourceFormat: string;
+  /** The paradigm, lower-cased and trimmed (`''` when unknown). */
+  paradigm: string;
+}
+
+/** The columns of the `scope` CTE row aliased `sc`. */
+const SCOPE_CTE_COLUMNS: ScopeColumns = {
+  versionPk: 'sc.version_pk',
+  versionSlug: 'sc.version_slug',
+  publishedAt: 'sc.published_at',
+  tenantSlug: 'sc.tenant_slug',
+  tenantName: 'sc.tenant_name',
+  projectSlug: 'sc.project_slug',
+  projectName: 'sc.project_name',
+  sourceFormat: 'sc.source_format',
+  paradigm: 'sc.paradigm',
+};
+
+/**
+ * The version-scope filters (everything that narrows which versions are searched), as a list of
+ * predicates over the given columns. "Latest version only" is not in the list: each statement has
+ * its own way to say it.
+ *
+ * @param request - The resolved request.
+ * @param params - The statement's parameter registry.
+ * @param cols - The expressions to filter on.
+ * @returns The predicates, to be joined with `AND`; empty when the request narrows nothing.
+ */
+export function scopeFilterClauses(request: SearchRequest, params: Params, cols: ScopeColumns): string[] {
   const clauses: string[] = [];
-  if (!request.allVersions) clauses.push('sc.version_rank = 1');
   if (request.orgs.length > 0) {
     const slot = params.add(request.orgs);
-    clauses.push(`(sc.tenant_slug = ANY(${slot}::text[]) OR LOWER(sc.tenant_name) = ANY(${slot}::text[]))`);
+    clauses.push(`(${cols.tenantSlug} = ANY(${slot}::text[]) OR LOWER(${cols.tenantName}) = ANY(${slot}::text[]))`);
   }
   if (request.projects.length > 0) {
     const slot = params.add(request.projects);
-    clauses.push(`(sc.project_slug = ANY(${slot}::text[]) OR LOWER(sc.project_name) = ANY(${slot}::text[]))`);
+    clauses.push(`(${cols.projectSlug} = ANY(${slot}::text[]) OR LOWER(${cols.projectName}) = ANY(${slot}::text[]))`);
   }
   for (const fragment of request.versions) {
-    clauses.push(`sc.version_slug ILIKE ${params.add(`%${escapeLikePattern(fragment)}%`)} ESCAPE '\\'`);
+    clauses.push(`${cols.versionSlug} ILIKE ${params.add(`%${escapeLikePattern(fragment)}%`)} ESCAPE '\\'`);
   }
   if (request.formats.length > 0) {
     const exact = params.add(request.formats);
     const family = params.add(request.formats.map((f) => `${escapeLikePattern(f)}-%`));
-    clauses.push(`(sc.source_format = ANY(${exact}::text[]) OR sc.source_format LIKE ANY(${family}::text[]))`);
+    clauses.push(`(${cols.sourceFormat} = ANY(${exact}::text[]) OR ${cols.sourceFormat} LIKE ANY(${family}::text[]))`);
   }
   if (request.paradigms.length > 0) {
-    clauses.push(`sc.paradigm = ANY(${params.add(request.paradigms)}::text[])`);
+    clauses.push(`${cols.paradigm} = ANY(${params.add(request.paradigms)}::text[])`);
   }
   if (request.tags.length > 0) {
     clauses.push(`EXISTS (SELECT 1 FROM apiome.version_tags vt
-                    WHERE vt.version_id = sc.version_pk AND LOWER(vt.name) = ANY(${params.add(request.tags)}::text[]))`);
+                    WHERE vt.version_id = ${cols.versionPk} AND LOWER(vt.name) = ANY(${params.add(request.tags)}::text[]))`);
   }
-  if (request.after) clauses.push(`sc.published_at >= ${params.add(request.after)}::date`);
-  if (request.before) clauses.push(`sc.published_at < ${params.add(request.before)}::date`);
+  if (request.after) clauses.push(`${cols.publishedAt} >= ${params.add(request.after)}::date`);
+  if (request.before) clauses.push(`${cols.publishedAt} < ${params.add(request.before)}::date`);
+  return clauses;
+}
+
+/** The `sv` filter of the search statement: latest version per project unless asked otherwise, then the scope filters. */
+function scopeFilters(request: SearchRequest, params: Params): string {
+  const clauses: string[] = [];
+  if (!request.allVersions) clauses.push('sc.version_rank = 1');
+  clauses.push(...scopeFilterClauses(request, params, SCOPE_CTE_COLUMNS));
   return clauses.length > 0 ? clauses.join('\n      AND ') : 'TRUE';
 }
 
@@ -543,13 +601,54 @@ export function orderBySql(sort: SearchRequest['sort']): string {
   }
 }
 
+/** An empty JSON array, for a facet column that was not asked for. */
+const NO_FACET = `'[]'::json`;
+
+/** The filter-facet columns of the search statement, aggregated over the `hits` CTE. */
+const FILTER_FACETS_SQL = `      COALESCE((SELECT json_agg(json_build_object('value', x.tenant_slug, 'label', x.tenant_name, 'count', x.c) ORDER BY x.c DESC, x.tenant_name)
+                FROM (SELECT tenant_slug, tenant_name, COUNT(*)::int AS c FROM hits GROUP BY 1, 2) x), '[]'::json) AS org_facets,
+      COALESCE((SELECT json_agg(json_build_object('value', x.method, 'count', x.c) ORDER BY x.c DESC, x.method)
+                FROM (SELECT method, COUNT(*)::int AS c FROM hits WHERE method IS NOT NULL GROUP BY 1) x), '[]'::json) AS method_facets,
+      COALESCE((SELECT json_agg(json_build_object('value', x.source_format, 'count', x.c) ORDER BY x.c DESC, x.source_format)
+                FROM (SELECT source_format, COUNT(*)::int AS c FROM hits WHERE source_format IS NOT NULL GROUP BY 1) x), '[]'::json) AS format_facets,
+      COALESCE((SELECT json_agg(json_build_object('value', x.paradigm, 'count', x.c) ORDER BY x.c DESC, x.paradigm)
+                FROM (SELECT paradigm, COUNT(*)::int AS c FROM hits WHERE paradigm IS NOT NULL GROUP BY 1) x), '[]'::json) AS paradigm_facets,
+      COALESCE((SELECT json_agg(json_build_object('value', x.severity, 'count', x.c) ORDER BY x.c DESC, x.severity)
+                FROM (SELECT severity, COUNT(*)::int AS c FROM hits WHERE severity IS NOT NULL GROUP BY 1) x), '[]'::json) AS severity_facets,
+      COALESCE((SELECT json_agg(json_build_object('tenant_slug', x.tenant_slug, 'tenant_name', x.tenant_name,
+                                                  'project_slug', x.project_slug, 'project_name', x.project_name, 'count', x.c)
+                                ORDER BY x.c DESC, x.project_name)
+                FROM (SELECT tenant_slug, tenant_name, project_slug, project_name, COUNT(*)::int AS c
+                      FROM hits WHERE project_slug IS NOT NULL
+                      GROUP BY 1, 2, 3, 4 ORDER BY c DESC, project_name LIMIT 8) x), '[]'::json) AS project_facets,`;
+
+/** The same columns, empty: what the statement returns when the facets were not asked for. */
+const NO_FILTER_FACETS_SQL = `      ${NO_FACET} AS org_facets,
+      ${NO_FACET} AS method_facets,
+      ${NO_FACET} AS format_facets,
+      ${NO_FACET} AS paradigm_facets,
+      ${NO_FACET} AS severity_facets,
+      ${NO_FACET} AS project_facets,`;
+
+/** Options for {@link buildCatalogSearchSql}. */
+export interface CatalogSearchSqlOptions {
+  /**
+   * Whether to compute the filter facets (organizations, methods, formats, paradigms, severities,
+   * top projects). Default true. With false those columns come back as empty arrays; the totals,
+   * the per-kind counts (the scope tabs need them on every page) and the rows are unaffected.
+   */
+  facets?: boolean;
+}
+
 /**
  * Build the statement.
  *
  * @param request The resolved request (see `resolveSearchRequest`).
+ * @param options See {@link CatalogSearchSqlOptions}.
  * @returns The statement, or `null` when no member can run (e.g. `scope=schemas method:GET`).
  */
-export function buildCatalogSearchSql(request: SearchRequest): SqlStatement | null {
+export function buildCatalogSearchSql(request: SearchRequest, options: CatalogSearchSqlOptions = {}): SqlStatement | null {
+  const withFacets = options.facets !== false;
   const params = new Params();
   const runnable = applicableKinds(request);
   if (runnable.length === 0 || !request.kinds.some((kind) => runnable.includes(kind))) return null;
@@ -620,22 +719,7 @@ ${members.join('\n      UNION ALL\n')}
       (SELECT COUNT(*)::int FROM hits_all) AS total_all_kinds,
       COALESCE((SELECT json_agg(json_build_object('value', x.hit_type, 'count', x.c) ORDER BY x.c DESC, x.hit_type)
                 FROM (SELECT hit_type, COUNT(*)::int AS c FROM hits_all GROUP BY 1) x), '[]'::json) AS kind_facets,
-      COALESCE((SELECT json_agg(json_build_object('value', x.tenant_slug, 'label', x.tenant_name, 'count', x.c) ORDER BY x.c DESC, x.tenant_name)
-                FROM (SELECT tenant_slug, tenant_name, COUNT(*)::int AS c FROM hits GROUP BY 1, 2) x), '[]'::json) AS org_facets,
-      COALESCE((SELECT json_agg(json_build_object('value', x.method, 'count', x.c) ORDER BY x.c DESC, x.method)
-                FROM (SELECT method, COUNT(*)::int AS c FROM hits WHERE method IS NOT NULL GROUP BY 1) x), '[]'::json) AS method_facets,
-      COALESCE((SELECT json_agg(json_build_object('value', x.source_format, 'count', x.c) ORDER BY x.c DESC, x.source_format)
-                FROM (SELECT source_format, COUNT(*)::int AS c FROM hits WHERE source_format IS NOT NULL GROUP BY 1) x), '[]'::json) AS format_facets,
-      COALESCE((SELECT json_agg(json_build_object('value', x.paradigm, 'count', x.c) ORDER BY x.c DESC, x.paradigm)
-                FROM (SELECT paradigm, COUNT(*)::int AS c FROM hits WHERE paradigm IS NOT NULL GROUP BY 1) x), '[]'::json) AS paradigm_facets,
-      COALESCE((SELECT json_agg(json_build_object('value', x.severity, 'count', x.c) ORDER BY x.c DESC, x.severity)
-                FROM (SELECT severity, COUNT(*)::int AS c FROM hits WHERE severity IS NOT NULL GROUP BY 1) x), '[]'::json) AS severity_facets,
-      COALESCE((SELECT json_agg(json_build_object('tenant_slug', x.tenant_slug, 'tenant_name', x.tenant_name,
-                                                  'project_slug', x.project_slug, 'project_name', x.project_name, 'count', x.c)
-                                ORDER BY x.c DESC, x.project_name)
-                FROM (SELECT tenant_slug, tenant_name, project_slug, project_name, COUNT(*)::int AS c
-                      FROM hits WHERE project_slug IS NOT NULL
-                      GROUP BY 1, 2, 3, 4 ORDER BY c DESC, project_name LIMIT 8) x), '[]'::json) AS project_facets,
+${withFacets ? FILTER_FACETS_SQL : NO_FILTER_FACETS_SQL}
       COALESCE((SELECT json_agg(to_jsonb(pf) - 'ord' ORDER BY pf.ord) FROM page_facts pf), '[]'::json) AS rows
   `;
 

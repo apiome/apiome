@@ -14,6 +14,14 @@
  * A query the audit already found slow carries `known` (the ticket that fixes it). Its violations
  * are reported but do not fail the check, so the nightly job is green on `main` and a fix shows
  * up as "known issue no longer reproduces" in the report.
+ *
+ * Two per-query fields describe how the application really runs a statement (DBP-1.16, #7199):
+ *
+ * - `settings` — session settings the application's pool applies (apiome-browse runs with
+ *   `jit = off`), set for the query's transaction only.
+ * - `allowSeqScan` — relations the statement scans sequentially *by design*, each with the reason
+ *   (a scan that stops at a LIMIT, a catalog-wide count that runs once per cache interval). Such a
+ *   scan is reported but is not a violation; the time budget still applies.
  */
 
 import fs from "node:fs/promises";
@@ -42,6 +50,13 @@ export type HotQuery = {
   budgetMs?: number;
   /** The query is a known problem: violations are reported, not failed. */
   known?: { issue: string; reason: string };
+  /**
+   * Session settings to apply for this query (`SET LOCAL`), as the application's pool does —
+   * for example `{ "jit": "off" }`. Names are plain setting names; values are bound, not spliced.
+   */
+  settings?: Record<string, string>;
+  /** Relations (`schema.relation`) whose sequential scan is intended, each with the reason. */
+  allowSeqScan?: { relation: string; reason: string }[];
 };
 
 /** A query list file. */
@@ -68,6 +83,8 @@ export type QueryResult = {
   sharedHitBlocks: number;
   sharedReadBlocks: number;
   seqScans: SeqScan[];
+  /** Sequential scans above the threshold that the query declares as intended, with the reason. */
+  allowedSeqScans: string[];
   violations: string[];
   /** `pass`, `fail`, `known` (violations on a known query) or `fixed` (known, no violations). */
   status: "pass" | "fail" | "known" | "fixed";
@@ -129,6 +146,14 @@ export function validateSpec(spec: PlanCheckSpec, file = "query list"): void {
     seen.add(q.name);
     if (q.budgetMs !== undefined && !(q.budgetMs > 0)) fail(`${q.name}: budgetMs must be > 0`);
     if (q.known && (!q.known.issue || !q.known.reason)) fail(`${q.name}: known needs an issue and a reason`);
+    for (const [setting, value] of Object.entries(q.settings ?? {})) {
+      if (!/^[a-z_][a-z0-9_.]*$/.test(setting) || typeof value !== "string") {
+        fail(`${q.name}: settings must map a setting name to a string value (got ${JSON.stringify(setting)})`);
+      }
+    }
+    for (const allowed of q.allowSeqScan ?? []) {
+      if (!allowed?.relation || !allowed.reason) fail(`${q.name}: allowSeqScan needs a relation and a reason`);
+    }
   }
 }
 
@@ -221,9 +246,16 @@ export function judgePlan(
       const relation = relationOf(n) ?? "?";
       return { relation, estimatedRows: Math.round(estimatedRows[relation] ?? 0) };
     });
+  const allowed = new Map((query.allowSeqScan ?? []).map((a) => [a.relation, a.reason]));
+  const allowedSeqScans: string[] = [];
   const violations: string[] = [];
   for (const scan of seqScans) {
-    if (scan.estimatedRows > spec.rowThreshold) {
+    if (scan.estimatedRows <= spec.rowThreshold) continue;
+    const reason = allowed.get(scan.relation);
+    if (reason !== undefined) {
+      const note = `sequential scan of ${scan.relation} by design: ${reason}`;
+      if (!allowedSeqScans.includes(note)) allowedSeqScans.push(note);
+    } else {
       violations.push(
         `sequential scan of ${scan.relation} (~${scan.estimatedRows.toLocaleString("en-US")} rows > ${spec.rowThreshold.toLocaleString("en-US")})`,
       );
@@ -248,6 +280,7 @@ export function judgePlan(
     sharedHitBlocks: explain.Plan["Shared Hit Blocks"] ?? 0,
     sharedReadBlocks: explain.Plan["Shared Read Blocks"] ?? 0,
     seqScans,
+    allowedSeqScans,
     violations,
     status,
     ...(query.known ? { known: query.known } : {}),
@@ -295,6 +328,9 @@ async function explainOnce(
   await client.query("BEGIN");
   try {
     await client.query(`SET LOCAL statement_timeout = ${timeoutMs}`);
+    for (const [setting, value] of Object.entries(query.settings ?? {})) {
+      await client.query("SELECT set_config($1, $2, true)", [setting, value]);
+    }
     const res = await client.query(`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query.sql}`, params);
     const plan = (res.rows[0] as Record<string, unknown>)["QUERY PLAN"];
     const parsed = (typeof plan === "string" ? JSON.parse(plan) : plan) as ExplainOutput[];
@@ -338,6 +374,7 @@ export function reportMarkdown(report: PlanCheckReport): string {
   for (const r of report.results) {
     const notes = [
       ...r.violations,
+      ...r.allowedSeqScans,
       ...(r.known ? [`${r.known.issue}: ${r.known.reason}`] : []),
       ...(r.status === "fixed" ? ["known issue no longer reproduces — drop `known`"] : []),
     ].join("; ");

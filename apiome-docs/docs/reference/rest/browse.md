@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.649.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.650.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `browse` · 12 operations
 
@@ -22,6 +22,12 @@ The public tenant directory, one window at a time.
 Two of the three sorts are aggregates (project count, latest activity), so the directory
 pages by ``limit`` + ``offset`` rather than by cursor; ``has_more`` says whether another
 window follows (#7196).
+
+The directory is the same for every caller, so its statistics, each window and each facet
+count are reused for ``BROWSE_PUBLIC_CACHE_TTL_SECONDS`` (default 120 s) per API instance, and
+the response says so: ``Cache-Control: public, max-age=<that interval>``. A publish therefore
+shows up within one interval. With the setting at ``0`` every request reads the database and
+the response is ``no-store`` (DBP-1.16, #7199).
 
 Operation id: `list_public_browse_tenants_v1_browse_tenants_get`
 

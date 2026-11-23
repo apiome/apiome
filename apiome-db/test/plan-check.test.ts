@@ -91,6 +91,21 @@ describe("judgePlan", () => {
     expect(result.violations).toEqual(["0.40 ms > budget 0.2 ms"]);
   });
 
+  it("accepts a sequential scan the query declares as intended, and still applies the budget", () => {
+    const allowSeqScan = [{ relation: "apiome.versions", reason: "stops at a LIMIT" }];
+    const roomy = { ...THRESHOLDS, defaultBudgetMs: 1_000 };
+    const result = judgePlan(query({ allowSeqScan }), SEQ_SCAN, ROWS, roomy);
+    expect(result.status).toBe("pass");
+    expect(result.violations).toEqual([]);
+    expect(result.allowedSeqScans).toEqual(["sequential scan of apiome.versions by design: stops at a LIMIT"]);
+    // The scan is still listed, and a slow plan still fails.
+    expect(result.seqScans).toContainEqual({ relation: "apiome.versions", estimatedRows: 200_000 });
+    expect(judgePlan(query({ allowSeqScan, budgetMs: 1 }), SEQ_SCAN, ROWS, THRESHOLDS).status).toBe("fail");
+    // Allowing one relation does not allow another.
+    const other = [{ relation: "apiome.classes", reason: "x" }];
+    expect(judgePlan(query({ allowSeqScan: other }), SEQ_SCAN, ROWS, roomy).status).toBe("fail");
+  });
+
   it("reports a known query's violations without failing, and flags it once it is fixed", () => {
     const known = { issue: "#7193", reason: "uuid cast" };
     expect(judgePlan(query({ known }), SEQ_SCAN, ROWS, THRESHOLDS).status).toBe("known");
@@ -116,6 +131,11 @@ describe("plan helpers", () => {
     const md = reportMarkdown(report);
     expect(md).toContain("1 queries, 1 failed");
     expect(md).toContain("| broken | **FAIL** | 21.40 | 50 |");
+    const allowSeqScan = [{ relation: "apiome.versions", reason: "stops at a LIMIT" }];
+    const allowed = judgePlan(query({ name: "bounded", allowSeqScan }), SEQ_SCAN, ROWS, { ...THRESHOLDS, defaultBudgetMs: 1_000 });
+    expect(reportMarkdown({ rowThreshold: 10_000, failed: 0, results: [allowed] })).toContain(
+      "sequential scan of apiome.versions by design: stops at a LIMIT",
+    );
   });
 });
 
@@ -143,6 +163,18 @@ describe("query lists", () => {
     expect(() => validateSpec({ ...base, queries: [query({ sql: " " })] })).toThrow(/needs a name and sql/);
     expect(() => validateSpec({ ...base, queries: [query({ budgetMs: 0 })] })).toThrow(/budgetMs/);
     expect(() => validateSpec({ ...base, queries: [] })).toThrow(/non-empty/);
+  });
+
+  it("rejects malformed settings and seq-scan allowances", () => {
+    const base = { ...THRESHOLDS, queries: [query()] };
+    expect(() => validateSpec({ ...base, queries: [query({ settings: { jit: "off" } })] })).not.toThrow();
+    expect(() => validateSpec({ ...base, queries: [query({ settings: { "jit; drop": "off" } })] })).toThrow(/settings/);
+    expect(() =>
+      validateSpec({ ...base, queries: [query({ settings: { jit: 0 as unknown as string } })] }),
+    ).toThrow(/settings/);
+    expect(() =>
+      validateSpec({ ...base, queries: [query({ allowSeqScan: [{ relation: "apiome.versions", reason: "" }] })] }),
+    ).toThrow(/allowSeqScan/);
   });
 
   it("reports an unreadable or malformed file", async () => {

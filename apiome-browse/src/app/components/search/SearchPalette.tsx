@@ -23,6 +23,8 @@ interface SuggestResponse {
   rows: CatalogSearchHit[];
   total: number;
   totalAllKinds: number;
+  /** True when a kind reached its cap: the totals are then floors, shown with a "+". */
+  truncated?: boolean;
   kinds: FacetBucket[];
   tookMs: number;
 }
@@ -31,7 +33,7 @@ interface SuggestResponse {
 type PaletteItem =
   | { id: string; kind: 'search'; label: string; href: string }
   | { id: string; kind: 'hit'; hit: CatalogSearchHit; href: string }
-  | { id: string; kind: 'more'; label: string; count: number; href: string }
+  | { id: string; kind: 'more'; label: string; count: number; capped?: boolean; href: string }
   | { id: string; kind: 'recent'; query: string; href: string }
   | { id: string; kind: 'link'; label: string; hint?: string; href: string };
 
@@ -181,6 +183,7 @@ export function SearchPalette() {
         kind: 'more',
         label: HIT_KIND_LABELS[kind].many,
         count: bucket.count,
+        capped: bucket.capped,
         href: `/search?${toSearchParams({ q, scope: scopeOfKind(kind), type: kind })}`,
       });
     }
@@ -318,7 +321,8 @@ export function SearchPalette() {
                       </span>
                       {result && !loading && (
                         <span className="shrink-0 text-[11px] tabular-nums text-zinc-400">
-                          {result.totalAllKinds.toLocaleString()} {result.totalAllKinds === 1 ? 'match' : 'matches'}
+                          {result.total.toLocaleString()}
+                          {result.truncated ? '+' : ''} {result.total === 1 && !result.truncated ? 'name match' : 'name matches'}
                         </span>
                       )}
                     </>
@@ -329,7 +333,10 @@ export function SearchPalette() {
                       <span className="min-w-0 flex-1 truncate">
                         All <span className="font-medium">{item.label.toLowerCase()}</span> matching &ldquo;{q}&rdquo;
                       </span>
-                      <span className="shrink-0 font-mono text-[11px] tabular-nums text-zinc-400">{item.count.toLocaleString()}</span>
+                      <span className="shrink-0 font-mono text-[11px] tabular-nums text-zinc-400">
+                        {item.count.toLocaleString()}
+                        {item.capped ? '+' : ''}
+                      </span>
                     </>
                   )}
                   {item.kind === 'recent' && (

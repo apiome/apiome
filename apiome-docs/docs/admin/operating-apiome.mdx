@@ -81,16 +81,18 @@ The log line names the setting.
 To size it, keep this sum below PostgreSQL's `max_connections`, minus what other clients and
 superuser sessions need:
 
-`DB_POOL_MAX_IN_USE` × REST API instances + `DB_POOL_MAX` × web app instances + 10 × browse
-site instances
+`DB_POOL_MAX_IN_USE` × REST API instances + `DB_POOL_MAX` × web app instances + `DB_POOL_MAX` ×
+browse site instances
 
 With the defaults, two API instances and one of each app need 80 × 2 + 10 + 10 = 180 connections,
 which is more than PostgreSQL's default of `100`. Raise `max_connections` or lower
 `DB_POOL_MAX_IN_USE`.
 
-The web app keeps its own pool of up to `DB_POOL_MAX` connections (default `10`), and the public
-browse site keeps 10 more. Add those to the total. The web app's **Home** page uses at most three
-of its connections at once, so other people's pages keep loading while it does.
+The web app keeps its own pool of up to `DB_POOL_MAX` connections (default `10`). The public
+browse site keeps a pool of its own, sized by the `DB_POOL_MAX` set on the browse service (default
+`10` as well). The two are separate settings on separate services, so you can size them apart. Add
+both to the total. The web app's **Home** page uses at most three of its connections at once, so
+other people's pages keep loading while it does.
 
 #### Request threads
 
@@ -127,7 +129,7 @@ site set limits on every connection they open, so a stuck session ends with an e
 | `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` | Web app | `60000` | The same, for the web app's connections. |
 | `DB_CONNECT_TIMEOUT_SECONDS` | REST API | `10` | How long to wait for a new connection to PostgreSQL. |
 | `DB_STATEMENT_TIMEOUT_MS` | REST API | `30000` | How long one statement may run on a request. A statement that runs longer fails, and the request answers `503` with error type `statement_timeout`. |
-| `DB_STATEMENT_TIMEOUT_MS` | Web app, browse site | `30000` | The same limit for the web app's and the browse site's statements. A statement that runs longer fails, and the page section or action that ran it shows an error. |
+| `DB_STATEMENT_TIMEOUT_MS` | Web app, browse site | `30000` | The same limit for the web app's and the browse site's statements. A statement that runs longer fails, and the page section or action that ran it shows an error. On the browse site a search that runs longer shows the page **This search did not finish.** with a **Try again** button, and the search palette's suggestion request answers `503` with `Retry-After`. |
 | `DB_LONG_STATEMENT_TIMEOUT_MS` | REST API | `1800000` | How long one statement may run in an import, an export, a document migration or a background job. |
 | `DB_POOL_CONNECTION_TIMEOUT_MS` | Web app | `10000` | How long a request waits for a free connection when all of the pool's are in use. |
 
@@ -464,6 +466,48 @@ no usable index. The only exceptions are the references to `users` listed in
 `apiome-db/test/foreign-key-index-allowlist.json`. Users are hard-deleted only by `apiome-db users delete`,
 which accepts the scan.
 
+### What the browse site and the public directory API cache
+
+The public directory is the same for every visitor, and counting it means a pass over every
+published public version. The browse site and the REST API therefore keep those answers in memory
+for a short interval instead of reading them for each page view or request.
+
+| Setting | Service | Default | What it sets |
+| --- | --- | --- | --- |
+| `BROWSE_CACHE_TTL_SECONDS` | Browse site | `120` | Seconds the browse site reuses the directory counts in its top bar and the lists on its home page. `0` reads them on every page view. Values above `300` are treated as `300`. |
+| `BROWSE_PUBLIC_CACHE_TTL_SECONDS` | REST API | `120` | Seconds an API instance reuses the answers of `GET /v1/browse/tenants`. The response's `Cache-Control: public, max-age` carries the same number. `0` reads the database on every request and answers `no-store`. Values above `300` are treated as `300`. |
+| `BROWSE_PUBLIC_CACHE_MAX_ENTRIES` | REST API | `512` | Most `GET /v1/browse/tenants` answers kept at once, one per distinct combination of `search`, `sort`, `protocol`, `format`, `limit` and `offset`. |
+| `DB_POOL_MAX` | Browse site | `10` | Connections one browse site process may hold. See [Database connections](#database-connections). |
+
+**What is cached on the browse site:** the **organizations**, **projects** and **versions** counts
+in the top bar, and the home page's organization list, **Recently published**, the project rail in
+each of its three orders, and **New organizations**. Each browse process refreshes them on its own
+clock, so two processes can show different counts for up to one interval. Everything else — an
+organization's page, a project, a version, search results — is read on each view.
+
+**What a visitor sees:** a version published a moment ago can take up to the interval to be counted
+and to appear on the home page. Its own page, and search, show it at once.
+
+**When a refresh fails:** the browse site keeps showing the previous counts and lists and tries
+again on the next page view. A failed read is never kept. The REST API returns the error and reads
+again on the next request.
+
+**Filter facets in search:** the browse site computes the counts in the search page's filters rail
+with the first page of a search and reuses them for that search's following pages, for the same
+interval.
+
+Two more things keep the browse site's statements short:
+
+- **Card counts are stored.** The *N operations · M schemas* on a project card are read from
+  `versions.operation_count` and `versions.schema_count`. The database records them when a version
+  is published, and clears them when it is unpublished or when one of its classes, paths or
+  operations is written — a version published as editable, or a published version an administrator
+  edits. While they are empty the card counts the rows itself, so the numbers are always right; a
+  version gets its stored counts back the next time it is published.
+- **The JIT compiler is off for the browse site's sessions** (`jit = off`). Every statement the
+  site runs is a short read, and PostgreSQL's compiler added about 200 ms to some of them. The
+  setting applies to connections named `apiome-browse` only.
+
 ## Upgrade a large database without blocking writes
 
 Each `apiome-db` migration runs in one transaction, so an index it creates blocks writes to that
@@ -494,6 +538,21 @@ the sunset timeline filter on). Adding a stored column rewrites the table, and r
 `versions` wait while it does. That took about a second for 200,000 versions on the scale
 database. Schedule the upgrade for a quiet time. Its two indexes are on the new columns, so they
 cannot be built ahead of the upgrade.
+
+`V424` (DBP-1.16) adds `versions.operation_count` and `versions.schema_count`, and five trigram
+indexes that the browse site's search palette matches names with. The two columns are nullable, so
+`versions` is not rewritten. On the scale database:
+
+- **Backfill:** it counts every published version once: 10 seconds for 180,000 published versions.
+  Writes to those rows wait for it.
+- **Indexes:** `projects` 0.1 s (20,000 rows), `classes` 1.2 s (1,000,000), `class_properties`
+  1.6 s (3,100,000), `version_path` 1.0 s (600,000), `path_operation_description` 3.8 s
+  (1,200,000). Build them concurrently as above to avoid blocking imports while they build.
+- **Write cost afterwards:** an import-sized insert (20,000 classes, 60,000 properties, 12,000
+  paths, operations and descriptions) took 7.9 s with the indexes and 6.8 s without: about 15 %
+  more. If imports matter more to you than property suggestions in the palette, drop
+  `idx_class_properties_name_trgm`, the largest of the five on the import path; property
+  suggestions then come only from the most recently published versions.
 
 A migration that adds a stored generated column cannot be prepared this way. `V409` adds
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of
@@ -790,7 +849,9 @@ live one:
    `apiome-db/plan-check/hot-queries.json` with `EXPLAIN (ANALYZE, BUFFERS)` and prints each query's
    time and plan. It fails when a plan scans a table of more than 10,000 rows sequentially, or when
    a query runs over its time budget. A query already known to be slow is listed with the ticket
-   that fixes it and does not fail the check.
+   that fixes it and does not fail the check. A query can state the session settings its service
+   runs with (the browse site's `jit = off`) and name a sequential scan that is intended, with the
+   reason; the report prints the reason, and the time budget still applies.
 
 The same database runs every night in CI (`Apiome DB Scale Plan Check`). The job also holds the
 REST API's hot endpoints to their recorded statement counts.

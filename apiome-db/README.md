@@ -65,7 +65,8 @@ database (migrate it first): 200 tenants, 20,000 projects (5,000 in the skewed t
 `scale-large`), 200,000 versions, 1,000,000 classes (20,000 in one version), 3,100,000 class
 properties, 600,000 paths, 1,200,000 operations, MCP endpoints, versions and capability items,
 usage rows and audit rows, then fills Home's per-revision count rollup (`version_content_counts`,
-V423) the way a busy deployment has it. `--scale-factor <n>` multiplies every count. Each table is filled by one
+V423) and the publish counts Browse cards read (`versions.operation_count` / `schema_count`, V424)
+the way a busy deployment has them. `--scale-factor <n>` multiplies every count. Each table is filled by one
 `INSERT … SELECT generate_series(…)` statement ([`src/seed-scale.ts`](./src/seed-scale.ts)); ids are
 `md5('apiome-scale:<kind>:<n>')::uuid`, so a run is reproducible, and a re-run skips every step whose
 last row exists. The bulk revision-content steps insert with `session_replication_role = replica`
@@ -76,7 +77,11 @@ factor 1 on a laptop.
 with `EXPLAIN (ANALYZE, BUFFERS)` in a rolled-back transaction and fails when a plan sequentially
 scans a table above `rowThreshold` estimated rows or exceeds its `budgetMs`. Parameters written
 `scale:<kind>:<n>` resolve to seeded ids. A query the audit found slow carries `known` (the ticket that
-fixes it) and is reported without failing; remove `known` in the fixing PR.
+fixes it) and is reported without failing; remove `known` in the fixing PR. A query can also carry
+`settings` — session settings its application's pool applies, such as `{ "jit": "off" }` for
+apiome-browse — and `allowSeqScan`, a list of `{ relation, reason }` for sequential scans that are by
+design (a scan that stops at a `LIMIT`, a catalog-wide count that runs once per cache interval).
+An allowed scan is reported with its reason and is not a violation; the time budget still applies.
 [`plan-check/broken-query.json`](./plan-check/broken-query.json) is a deliberately broken query that
 the check must fail. Both run nightly in `.github/workflows/apiome-db-scale.yml`.
 

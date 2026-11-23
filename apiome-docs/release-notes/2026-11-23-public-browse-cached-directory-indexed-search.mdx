@@ -1,0 +1,59 @@
+---
+slug: public-browse-cached-directory-indexed-search
+title: "Public Browse: cached directory statistics, supporting indexes and an indexed search"
+description: "Search suggestions in milliseconds, a cached public directory, stored card counts."
+authors: [apiome]
+---
+
+The browse site's search palette now answers in tens of milliseconds at any catalog size, and the
+public directory's counts and home page lists no longer recount the catalog on every page view.
+
+{/* truncate */}
+
+## Performance
+
+Measured on the scale benchmark database: 20,000 projects, 200,000 versions of which 45,000 are
+published and public, 1,000,000 schemas, 3,100,000 properties and 1,200,000 operations.
+
+- **Search palette suggestions:** from 0.2–1.2 seconds per keystroke to 18–40 ms. The palette now
+  matches *names* — organizations, API products, projects, operations, schemas and properties —
+  through new indexes, and reads a bounded number of matches per kind. A kind that has more shows
+  its count as `40+`. It no longer suggests tags, parameters, request bodies, responses, version
+  notes or changelog entries; press <kbd>↵</kbd> on the first row to run the full search, which
+  still covers them. See
+  [What the palette suggests](/ship/browse-published-specs#what-the-palette-suggests).
+- **Directory counts and home page lists:** the counts in the browse site's top bar and the lists
+  on its home page are read once every 2 minutes per browse process instead of on every page view.
+  That removes about 40 ms of database time from each page, and about 150 ms from the home page. A newly published version
+  can therefore take up to 2 minutes to be counted; its own page and search show it at once. See
+  [How current the directory is](/ship/browse-published-specs#how-current-the-directory-is).
+- **Home project rail by operations or grade:** from about 700 ms to about 50 ms when it is read.
+  Ranking uses operation counts stored when a version is published, and PostgreSQL's JIT compiler,
+  which accounted for most of the old time, is off for the browse site's sessions.
+- **New organizations:** from 37 ms to under 1 ms.
+- **`GET /v1/browse/tenants`:** each API instance reuses the directory statistics, the tenant list
+  and the facet counts for 2 minutes, and the response carries `Cache-Control: public, max-age=120`.
+- **MCP catalog change feed:** from 51 ms to 5.5 ms for a tenant with 91,500 recorded changes. The
+  feed's content is unchanged.
+
+**Search results are not faster yet.** The full search on `/search` still reads every matching item
+of every public version in scope: 0.2 to 1.2 seconds on this database, before and after. What
+changed is what it reads. It no longer searches the raw JSON stored behind schemas, properties,
+parameters and examples, so a word that appears only inside that JSON no longer matches; names,
+summaries, descriptions and notes are searched as before. It computes the filter counts once per
+search instead of on every page. A search that runs past the site's time limit now shows **This
+search did not finish.** with a **Try again** button, instead of an empty result. The index that
+makes the full search fast is tracked separately.
+
+## For operators
+
+- **New settings:** `BROWSE_CACHE_TTL_SECONDS` and `DB_POOL_MAX` on the browse site, and
+  `BROWSE_PUBLIC_CACHE_TTL_SECONDS` and `BROWSE_PUBLIC_CACHE_MAX_ENTRIES` on the REST API. Set an
+  interval to `0` to read on every request. See
+  [What the browse site and the public directory API cache](/admin/operating-apiome#what-the-browse-site-and-the-public-directory-api-cache).
+- **Connection budget:** the browse site's pool size is now a setting (`DB_POOL_MAX`, default `10`,
+  the number it used before). See [Database connections](/admin/operating-apiome#database-connections).
+- **Upgrade:** migration `V424` counts every published version once (10 seconds for 180,000) and
+  builds five indexes (under 4 seconds each on the scale database). Imports write about 15 % more
+  slowly afterwards. See
+  [Upgrade a large database without blocking writes](/admin/operating-apiome#upgrade-a-large-database-without-blocking-writes).

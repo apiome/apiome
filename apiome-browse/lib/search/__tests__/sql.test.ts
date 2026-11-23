@@ -240,3 +240,59 @@ describe('API product hits (APX-1.3)', () => {
     expect(resolveSearchRequest({ q: 'type:products x' }).kinds).toEqual(['product']);
   });
 });
+
+describe('interim limits until the full-text index exists (DBP-1.16)', () => {
+  it('never casts a stored JSON document to text to search it', () => {
+    const { text } = build({ q: 'order' });
+    // Every haystack is a concat_ws(...) of COALESCE(<column>::text, '') pieces.
+    const haystacks = text.match(/concat_ws\(' ', [^\n]*/g) ?? [];
+    expect(haystacks.length).toBeGreaterThan(0);
+    for (const haystack of haystacks) {
+      for (const column of [
+        'c.schema',
+        'cp.data',
+        'spp.data',
+        'spr.data',
+        'spr.inline_schema',
+        'sprc.inline_schema',
+        'sprc.examples',
+        'sprbc.inline_schema',
+        'sprbc.examples',
+        'pod.metadata',
+        'po.metadata',
+      ]) {
+        expect(haystack).not.toContain(`COALESCE(${column}::text`);
+      }
+    }
+  });
+
+  it('still searches names, summaries and descriptions', () => {
+    const { text } = build({ q: 'order' });
+    expect(text).toContain("COALESCE(c.name::text, ''), COALESCE(c.description::text, '')");
+    expect(text).toContain("COALESCE(pod.summary::text, ''), COALESCE(pod.description::text, ''), COALESCE(pod.operation_id::text, '')");
+    expect(text).toContain("COALESCE(cp.name::text, ''), COALESCE(cp.description::text, '')");
+  });
+
+  it('computes the filter facets by default', () => {
+    const { text } = build({ q: 'order' });
+    expect(text).toContain('FROM hits GROUP BY 1, 2) x), \'[]\'::json) AS org_facets');
+    expect(text).toContain('AS project_facets');
+  });
+
+  it('skips the filter facet aggregates when asked, and keeps the totals, kind counts and rows', () => {
+    const request = resolveSearchRequest({ q: 'order', page: '2' });
+    const withFacets = buildCatalogSearchSql(request);
+    const without = buildCatalogSearchSql(request, { facets: false });
+    if (!withFacets || !without) throw new Error('expected statements');
+    for (const column of ['org_facets', 'method_facets', 'format_facets', 'paradigm_facets', 'severity_facets', 'project_facets']) {
+      expect(without.text).toContain(`'[]'::json AS ${column}`);
+    }
+    expect(without.text).not.toContain('FROM hits GROUP BY 1, 2');
+    expect(without.text).toContain('AS total,');
+    expect(without.text).toContain('AS total_all_kinds,');
+    expect(without.text).toContain('AS kind_facets');
+    expect(without.text).toContain('AS rows');
+    // The same parameters either way: skipping facets changes no bound value.
+    expect(without.values).toEqual(withFacets.values);
+  });
+});

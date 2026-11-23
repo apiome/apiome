@@ -74,9 +74,11 @@ export function cardFactsSelectSql(alias = 'cf'): string {
 /**
  * A `LEFT JOIN LATERAL` that computes the facts of one version, for the row it is joined to.
  *
- * The counts are correlated sub-selects, so they run once per *returned* row inside the same
- * statement — a card list of 8 or a search page of 25 pays for 8 or 25 small index lookups, never
- * another round trip.
+ * The counts are read from `versions.operation_count` / `versions.schema_count`, which the database
+ * records when a version is published (V424, DBP-1.16). A version whose counts are not recorded —
+ * NULL: it was edited after publishing, or inserted already published — is counted by a correlated
+ * sub-select instead, which `COALESCE` only runs for that row. So a stored count costs nothing, and
+ * a missing one costs a small index lookup, never another round trip and never a wrong number.
  *
  * The SDK flag mirrors `app.sdk_generation_settings_store.public_sdk_enabled_from` in apiome-rest:
  * the tenant-wide row and the project's row are merged key by key, the most specific row that
@@ -92,13 +94,15 @@ export function cardFactsSelectSql(alias = 'cf'): string {
 export function cardFactsJoinSql(versionPkExpr: string, alias = 'cf'): string {
   return `LEFT JOIN LATERAL (
          SELECT
-           (SELECT COUNT(*)::int
-              FROM apiome.version_path f_vp
-              JOIN apiome.path_operation f_po ON f_po.version_path_id = f_vp.id
-             WHERE f_vp.version_id = f_v.id) AS operation_count,
-           (SELECT COUNT(*)::int
-              FROM apiome.classes f_c
-             WHERE f_c.version_id = f_v.id AND f_c.deleted_at IS NULL) AS schema_count,
+           COALESCE(f_v.operation_count,
+             (SELECT COUNT(*)::int
+                FROM apiome.version_path f_vp
+                JOIN apiome.path_operation f_po ON f_po.version_path_id = f_vp.id
+               WHERE f_vp.version_id = f_v.id)) AS operation_count,
+           COALESCE(f_v.schema_count,
+             (SELECT COUNT(*)::int
+                FROM apiome.classes f_c
+               WHERE f_c.version_id = f_v.id AND f_c.deleted_at IS NULL)) AS schema_count,
            NULLIF(TRIM(f_v.quality_grade), '') AS quality_grade,
            f_v.quality_score::int AS quality_score,
            COALESCE(f_v.mock_enabled, false) AS mock_enabled,

@@ -2,6 +2,7 @@
 
 import { unstable_noStore as noStore } from 'next/cache';
 import connectionPool from './db';
+import { cachedRead } from './ttlCache';
 import { mcpSortOrderSql, type McpSortMode } from '../mcpSort';
 import {
   cardFactsJoinSql,
@@ -91,25 +92,35 @@ const FACET_ROLLUP_SQL = `COALESCE(
  *
  * Each row also carries the distinct protocols/formats the organization publishes, so the
  * directory can be filtered by facet without a second round trip.
+ *
+ * The list is the same for every visitor, so it is read through the directory cache
+ * (`lib/db/ttlCache.ts`, DBP-1.16): a publish shows up here within one refresh interval. The
+ * versions are rolled up by tenant id before the tenant rows are joined, so the pass over the
+ * public catalog groups on one uuid, not on names and descriptions.
  */
 export async function getPublicTenants() {
   noStore();
   try {
-    const result = await connectionPool.query(
-      `SELECT t.id, t.name, t.slug, t.description, t.created_at,
-              ${FACET_ROLLUP_SQL}
-       FROM apiome.tenants t
-       JOIN apiome.projects p ON t.id = p.tenant_id
-       JOIN apiome.versions v ON p.id = v.project_id
-       WHERE v.published = true
-         AND v.visibility = 'public'
-         AND t.deleted_at IS NULL
-         AND p.deleted_at IS NULL
-         AND v.deleted_at IS NULL
-       GROUP BY t.id, t.name, t.slug, t.description, t.created_at
-       ORDER BY t.name ASC`
-    );
-    return result.rows;
+    return await cachedRead('public-tenants', async () => {
+      const result = await connectionPool.query(
+        `SELECT t.id, t.name, t.slug, t.description, t.created_at, a.protocols, a.formats
+         FROM (
+           SELECT p.tenant_id,
+                  ${FACET_ROLLUP_SQL}
+           FROM apiome.projects p
+           JOIN apiome.versions v ON p.id = v.project_id
+           WHERE v.published = true
+             AND v.visibility = 'public'
+             AND p.deleted_at IS NULL
+             AND v.deleted_at IS NULL
+           GROUP BY p.tenant_id
+         ) a
+         JOIN apiome.tenants t ON t.id = a.tenant_id
+         WHERE t.deleted_at IS NULL
+         ORDER BY t.name ASC`
+      );
+      return result.rows;
+    });
   } catch (err) {
     logError('getPublicTenants', err);
     return [];
@@ -417,38 +428,40 @@ export async function getPublicProjectBySlug(tenantSlug: string, projectSlug: st
 
 /**
  * Recently published public versions across all tenants/projects, each with its card facts
- * (BDX-2.2). Used by the discovery home page.
+ * (BDX-2.2). Used by the discovery home page; read through the directory cache (DBP-1.16).
  */
 export async function getRecentlyPublishedVersions(limit = 8) {
   noStore();
   try {
-    const result = await queryPrepared(
-      'browse-home-recent-versions-v1',
-      // The facts join runs on the limited page only, so the counts cost `limit` lookups.
-      `WITH recent AS (
-         SELECT v.id, v.version_id, v.description, v.published_at, v.created_at,
-                p.name as project_name, p.slug as project_slug, p.description as project_description,
-                t.name as tenant_name, t.slug as tenant_slug
-         FROM apiome.versions v
-         JOIN apiome.projects p ON v.project_id = p.id
-         JOIN apiome.tenants t ON p.tenant_id = t.id
-         WHERE v.published = true
-           AND v.visibility = 'public'
-           AND t.deleted_at IS NULL
-           AND p.deleted_at IS NULL
-           AND v.deleted_at IS NULL
-         ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
-         LIMIT $1
-       )
-       SELECT r.id, r.version_id, r.description, r.published_at,
-              r.project_name, r.project_slug, r.project_description, r.tenant_name, r.tenant_slug,
-              ${cardFactsSelectSql('cf')}
-       FROM recent r
-       ${cardFactsJoinSql('r.id', 'cf')}
-       ORDER BY r.published_at DESC NULLS LAST, r.created_at DESC`,
-      [limit]
-    );
-    return result.rows;
+    return await cachedRead(`home-recent-versions:${limit}`, async () => {
+      const result = await queryPrepared(
+        'browse-home-recent-versions-v1',
+        // The facts join runs on the limited page only, so the counts cost `limit` lookups.
+        `WITH recent AS (
+           SELECT v.id, v.version_id, v.description, v.published_at, v.created_at,
+                  p.name as project_name, p.slug as project_slug, p.description as project_description,
+                  t.name as tenant_name, t.slug as tenant_slug
+           FROM apiome.versions v
+           JOIN apiome.projects p ON v.project_id = p.id
+           JOIN apiome.tenants t ON p.tenant_id = t.id
+           WHERE v.published = true
+             AND v.visibility = 'public'
+             AND t.deleted_at IS NULL
+             AND p.deleted_at IS NULL
+             AND v.deleted_at IS NULL
+           ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
+           LIMIT $1
+         )
+         SELECT r.id, r.version_id, r.description, r.published_at,
+                r.project_name, r.project_slug, r.project_description, r.tenant_name, r.tenant_slug,
+                ${cardFactsSelectSql('cf')}
+         FROM recent r
+         ${cardFactsJoinSql('r.id', 'cf')}
+         ORDER BY r.published_at DESC NULLS LAST, r.created_at DESC`,
+        [limit]
+      );
+      return result.rows;
+    });
   } catch (err) {
     logError('getRecentlyPublishedVersions', err);
     return [];
@@ -460,9 +473,14 @@ export async function getRecentlyPublishedVersions(limit = 8) {
  * published public version (BDX-2.2).
  *
  * `sort` picks the rail: most versions (a proxy for "active" projects, the default), most
- * operations, or best grade. In the default order the facts are joined after the LIMIT, so they
- * cost `limit` lookups; the other two orders need the facts of every public project to rank them,
- * and pay for that only when a visitor asks for them.
+ * operations, or best grade.
+ *
+ * The statement (DBP-1.16) counts public versions per project id first — one narrow aggregate —
+ * and only then joins project and tenant rows. In the default order it keeps `limit` projects
+ * before it looks at any version's facts. The other two orders have to rank every public project,
+ * so they first read the *ranking* columns of each project's latest version (the stored
+ * `operation_count`, or the grade) and compute the full facts for the `limit` winners only. Each
+ * rail is read through the directory cache.
  *
  * @param limit - How many projects the rail shows.
  * @param sort - The rail order (validated by `parseProjectRailSort`).
@@ -470,35 +488,60 @@ export async function getRecentlyPublishedVersions(limit = 8) {
 export async function getMostVersionedProjects(limit = 8, sort: ProjectRailSort = 'versions') {
   noStore();
   const rankByFacts = sort !== 'versions';
+  // The columns `projectRailOrderSql` ranks by, read from the latest version without the facts
+  // join. A version whose operation count is not stored ranks by a per-version count.
+  const rankColumnsSql = `(SELECT COALESCE(r_v.operation_count,
+                     (SELECT COUNT(*)::int
+                        FROM apiome.version_path r_vp
+                        JOIN apiome.path_operation r_po ON r_po.version_path_id = r_vp.id
+                       WHERE r_vp.version_id = r_v.id)) AS operation_count,
+                   NULLIF(TRIM(r_v.quality_grade), '') AS quality_grade,
+                   r_v.quality_score::int AS quality_score
+              FROM apiome.versions r_v WHERE r_v.id = lv.id)`;
   try {
-    const result = await queryPrepared(
-      `browse-home-project-rail-${sort}-v1`,
-      `WITH project_versions AS (
-         SELECT p.id, p.name, p.slug, p.description,
-                t.name as tenant_name, t.slug as tenant_slug,
-                COUNT(v.id)::int as version_count,
-                MAX(v.published_at) as latest_published_at
-         FROM apiome.projects p
-         JOIN apiome.tenants t ON p.tenant_id = t.id
-         JOIN apiome.versions v ON p.id = v.project_id
-         WHERE v.published = true
-           AND v.visibility = 'public'
-           AND t.deleted_at IS NULL
-           AND p.deleted_at IS NULL
-           AND v.deleted_at IS NULL
-         GROUP BY p.id, p.name, p.slug, p.description, t.name, t.slug
-         ${rankByFacts ? '' : `ORDER BY ${projectRailOrderSql('versions')}
-         LIMIT $1`}
-       )
-       SELECT pv.*, ${cardFactsSelectSql('cf')}
-       FROM project_versions pv
-       ${latestPublicVersionJoinSql('pv.id', 'lv')}
-       ${cardFactsJoinSql('lv.id', 'cf')}
-       ORDER BY ${projectRailOrderSql(sort)}
-       ${rankByFacts ? 'LIMIT $1' : ''}`,
-      [limit]
-    );
-    return result.rows;
+    return await cachedRead(`home-project-rail:${sort}:${limit}`, async () => {
+      const result = await queryPrepared(
+        `browse-home-project-rail-${sort}-v2`,
+        `WITH counted AS (
+           SELECT v.project_id,
+                  COUNT(*)::int as version_count,
+                  MAX(v.published_at) as latest_published_at
+           FROM apiome.versions v
+           WHERE v.published = true
+             AND v.visibility = 'public'
+             AND v.deleted_at IS NULL
+           GROUP BY v.project_id
+         ),
+         project_versions AS (
+           SELECT p.id, p.name, p.slug, p.description,
+                  t.name as tenant_name, t.slug as tenant_slug,
+                  c.version_count, c.latest_published_at
+           FROM counted c
+           JOIN apiome.projects p ON p.id = c.project_id
+           JOIN apiome.tenants t ON p.tenant_id = t.id
+           WHERE t.deleted_at IS NULL
+             AND p.deleted_at IS NULL
+           ${rankByFacts ? '' : `ORDER BY ${projectRailOrderSql('versions')}
+           LIMIT $1`}
+         ),
+         ranked AS (
+           SELECT pv.*, lv.id AS latest_version_pk
+           FROM project_versions pv
+           ${latestPublicVersionJoinSql('pv.id', 'lv')}
+           ${rankByFacts ? `LEFT JOIN LATERAL ${rankColumnsSql} cf ON TRUE
+           ORDER BY ${projectRailOrderSql(sort)}
+           LIMIT $1` : ''}
+         )
+         SELECT rk.id, rk.name, rk.slug, rk.description, rk.tenant_name, rk.tenant_slug,
+                rk.version_count, rk.latest_published_at,
+                ${cardFactsSelectSql('cf')}
+         FROM ranked rk
+         ${cardFactsJoinSql('rk.latest_version_pk', 'cf')}
+         ORDER BY ${projectRailOrderSql(sort)}`,
+        [limit]
+      );
+      return result.rows;
+    });
   } catch (err) {
     logError('getMostVersionedProjects', err);
     return [];
@@ -507,52 +550,78 @@ export async function getMostVersionedProjects(limit = 8, sort: ProjectRailSort 
 
 /**
  * Newest public organizations (those with at least one published public version).
+ *
+ * Walks tenants newest first and stops at `limit`, probing each for one public version (`EXISTS`),
+ * instead of joining every public version to find the distinct tenants (DBP-1.16). Read through
+ * the directory cache.
  */
 export async function getNewestTenants(limit = 8) {
   noStore();
   try {
-    const result = await connectionPool.query(
-      `SELECT DISTINCT t.id, t.name, t.slug, t.description, t.created_at
-       FROM apiome.tenants t
-       JOIN apiome.projects p ON t.id = p.tenant_id
-       JOIN apiome.versions v ON p.id = v.project_id
-       WHERE v.published = true
-         AND v.visibility = 'public'
-         AND t.deleted_at IS NULL
-         AND p.deleted_at IS NULL
-         AND v.deleted_at IS NULL
-       ORDER BY t.created_at DESC
-       LIMIT $1`,
-      [limit]
-    );
-    return result.rows;
+    return await cachedRead(`home-newest-tenants:${limit}`, async () => {
+      const result = await connectionPool.query(
+        `SELECT t.id, t.name, t.slug, t.description, t.created_at
+         FROM apiome.tenants t
+         WHERE t.deleted_at IS NULL
+           AND EXISTS (
+             SELECT 1
+             FROM apiome.projects p
+             JOIN apiome.versions v ON p.id = v.project_id
+             WHERE p.tenant_id = t.id
+               AND p.deleted_at IS NULL
+               AND v.published = true
+               AND v.visibility = 'public'
+               AND v.deleted_at IS NULL
+           )
+         ORDER BY t.created_at DESC
+         LIMIT $1`,
+        [limit]
+      );
+      return result.rows;
+    });
   } catch (err) {
     logError('getNewestTenants', err);
     return [];
   }
 }
 
+/** The directory counters, as the navbar and the home hero strip read them. */
+interface DirectoryStatsRow {
+  tenant_count: number;
+  project_count: number;
+  version_count: number;
+}
+
 /**
- * Aggregate counts for the home hero strip.
+ * Aggregate counts for the navbar and the home hero strip: organizations, projects and versions
+ * that are published and public.
+ *
+ * The root layout awaits this on every page, so it is read through the directory cache
+ * (DBP-1.16): one count per refresh interval and Browse process, not one per page view. The counts
+ * can therefore trail a publish by up to that interval (`BROWSE_CACHE_TTL_SECONDS`, 120 s by
+ * default). When a refresh fails the previous counts stay up; with none to show, zeros.
  */
-export async function getDirectoryStats() {
+export async function getDirectoryStats(): Promise<DirectoryStatsRow> {
   noStore();
   try {
-    const result = await connectionPool.query(
-      `SELECT
-         COUNT(DISTINCT t.id)::int as tenant_count,
-         COUNT(DISTINCT p.id)::int as project_count,
-         COUNT(DISTINCT v.id)::int as version_count
-       FROM apiome.tenants t
-       JOIN apiome.projects p ON t.id = p.tenant_id
-       JOIN apiome.versions v ON p.id = v.project_id
-       WHERE v.published = true
-         AND v.visibility = 'public'
-         AND t.deleted_at IS NULL
-         AND p.deleted_at IS NULL
-         AND v.deleted_at IS NULL`
-    );
-    return result.rows[0] ?? { tenant_count: 0, project_count: 0, version_count: 0 };
+    return await cachedRead<DirectoryStatsRow>('directory-stats', async () => {
+      const result = await connectionPool.query<DirectoryStatsRow>(
+        // One row per public version, so COUNT(*) is the version count.
+        `SELECT
+           COUNT(DISTINCT p.tenant_id)::int as tenant_count,
+           COUNT(DISTINCT p.id)::int as project_count,
+           COUNT(*)::int as version_count
+         FROM apiome.versions v
+         JOIN apiome.projects p ON p.id = v.project_id
+         JOIN apiome.tenants t ON t.id = p.tenant_id
+         WHERE v.published = true
+           AND v.visibility = 'public'
+           AND t.deleted_at IS NULL
+           AND p.deleted_at IS NULL
+           AND v.deleted_at IS NULL`
+      );
+      return result.rows[0] ?? { tenant_count: 0, project_count: 0, version_count: 0 };
+    });
   } catch (err) {
     logError('getDirectoryStats', err);
     return { tenant_count: 0, project_count: 0, version_count: 0 };

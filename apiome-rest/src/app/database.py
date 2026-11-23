@@ -26146,6 +26146,12 @@ class Database:
         (:meth:`get_public_mcp_endpoint_feed_head`), so this read is not itself gated — it is only
         ever handed a published, public endpoint's id.
 
+        The newest ``limit`` snapshots that recorded a change are picked first, through the
+        ``(endpoint_id, version_seq)`` index, and only their changes are joined and sorted
+        (DBP-1.16, #7199). Every such snapshot contributes at least one row, so the first ``limit``
+        rows of the feed always lie inside them: the result is the one the full sort gave, without
+        sorting an endpoint's whole change history for each request.
+
         Args:
             endpoint_id: The public endpoint whose change history to read.
             limit: Maximum change rows to return (the feed's entry cap).
@@ -26155,17 +26161,26 @@ class Database:
             recorded changes.
         """
         q = f"""
+            WITH newest AS (
+                SELECT v.id, v.version_seq, v.version_tag, v.discovered_at, v.created_at
+                FROM apiome.mcp_endpoint_versions v
+                WHERE v.endpoint_id = %s::uuid
+                  AND EXISTS (
+                      SELECT 1 FROM apiome.mcp_version_changes x WHERE x.version_id = v.id
+                  )
+                ORDER BY v.version_seq DESC
+                LIMIT %s
+            )
             SELECT c.version_id, c.change_type, c.item_type, c.item_name, c.detail,
                    c.created_at,
                    v.version_seq, v.version_tag, v.discovered_at,
                    v.created_at AS version_created_at
-            FROM apiome.mcp_version_changes c
-            JOIN apiome.mcp_endpoint_versions v ON v.id = c.version_id
-            WHERE v.endpoint_id = %s::uuid
+            FROM newest v
+            JOIN apiome.mcp_version_changes c ON c.version_id = v.id
             ORDER BY v.version_seq DESC, {self._MCP_CHANGE_ITEM_ORDER}
             LIMIT %s
         """
-        return self.execute_query(q, (endpoint_id, int(limit)))
+        return self.execute_query(q, (endpoint_id, int(limit), int(limit)))
 
     def get_public_catalog_changes(
         self, tenant_slug: str, *, limit: int = 50
@@ -26183,6 +26198,13 @@ class Database:
         desc — so the feed reads as a catalog-wide activity stream, with endpoint slug and snapshot
         sequence as deterministic tie-breakers.
 
+        The newest ``limit`` snapshots that recorded a change — in that same order, which is total
+        over snapshots (a slug is unique in a tenant, a sequence in an endpoint) — are picked first,
+        and only their changes are joined and sorted (DBP-1.16, #7199). Every such snapshot
+        contributes at least one row, so the first ``limit`` rows of the feed always lie inside
+        them: the result is the one the full sort gave, without sorting the tenant's whole change
+        history for each request.
+
         Args:
             tenant_slug: The catalog's tenant slug.
             limit: Maximum change rows to return (the feed's entry cap).
@@ -26192,22 +26214,33 @@ class Database:
             when the tenant is unknown, fully private, or has no recorded changes.
         """
         q = f"""
-            SELECT e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
+            WITH newest AS (
+                SELECT e.id AS endpoint_id, e.name AS endpoint_name, e.slug AS endpoint_slug,
+                       v.id, v.version_seq, v.version_tag, v.discovered_at, v.created_at
+                FROM apiome.mcp_endpoint_versions v
+                JOIN apiome.mcp_endpoints e ON e.id = v.endpoint_id
+                JOIN apiome.tenants t ON t.id = e.tenant_id
+                WHERE {self._MCP_PUBLIC_ENDPOINT_PREDICATE}
+                  AND t.slug = %s
+                  AND EXISTS (
+                      SELECT 1 FROM apiome.mcp_version_changes x WHERE x.version_id = v.id
+                  )
+                ORDER BY COALESCE(v.discovered_at, v.created_at) DESC,
+                         e.slug ASC, v.version_seq DESC
+                LIMIT %s
+            )
+            SELECT v.endpoint_id, v.endpoint_name, v.endpoint_slug,
                    c.version_id, c.change_type, c.item_type, c.item_name, c.detail,
                    c.created_at,
                    v.version_seq, v.version_tag, v.discovered_at,
                    v.created_at AS version_created_at
-            FROM apiome.mcp_version_changes c
-            JOIN apiome.mcp_endpoint_versions v ON v.id = c.version_id
-            JOIN apiome.mcp_endpoints e ON e.id = v.endpoint_id
-            JOIN apiome.tenants t ON t.id = e.tenant_id
-            WHERE {self._MCP_PUBLIC_ENDPOINT_PREDICATE}
-              AND t.slug = %s
+            FROM newest v
+            JOIN apiome.mcp_version_changes c ON c.version_id = v.id
             ORDER BY COALESCE(v.discovered_at, v.created_at) DESC,
-                     e.slug ASC, v.version_seq DESC, {self._MCP_CHANGE_ITEM_ORDER}
+                     v.endpoint_slug ASC, v.version_seq DESC, {self._MCP_CHANGE_ITEM_ORDER}
             LIMIT %s
         """
-        return self.execute_query(q, (tenant_slug, int(limit)))
+        return self.execute_query(q, (tenant_slug, int(limit), int(limit)))
 
     # --- Scheduled catalog digest (MCAT-19.5, #4654) -------------------------------------------
 
