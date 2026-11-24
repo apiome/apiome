@@ -710,6 +710,36 @@ token under the newest version. Remove the old version once the command reports
 | Backup and disaster recovery (`docs/runbooks/BACKUP_AND_DR.md`) | Take, verify and restore backups, and run DR drills |
 | Private beta triage (`docs/runbooks/BETA_TRIAGE.md`) | Triage feedback and incidents from beta and dogfood users |
 
+## Database performance
+
+Apiome stores specifications as rows, so its tables reach millions of rows quickly. The services
+are built to stay fast at that size: each request runs a small, fixed number of statements, lists
+read one page at a time, and queries use their indexes. Four things are yours to set and watch.
+
+| What | Settings | Where it is described |
+| --- | --- | --- |
+| **Pool sizing.** Keep the connections every service may open below PostgreSQL's `max_connections`. | `DB_POOL_MAX_IN_USE`, `DB_POOL_MAX`, `REQUEST_THREAD_POOL_SIZE`, the MCP and mock pool sizes | [Database connections](#database-connections) |
+| **Statement timeout.** A statement that runs too long fails instead of holding its connection. | `DB_STATEMENT_TIMEOUT_MS` (`30000`), `DB_LONG_STATEMENT_TIMEOUT_MS`, `DB_LOCK_TIMEOUT_MS`, `DB_IDLE_IN_TRANSACTION_TIMEOUT_MS` | [Limits on a stuck session](#limits-on-a-stuck-session) |
+| **Slow-query visibility.** See which statements cost the most, and the plans of slow ones. | `pg_stat_statements`, `POSTGRES_AUTO_EXPLAIN_MIN_DURATION`, `APIOME_DB_STATEMENT_WARN_THRESHOLD` | [Find slow queries](#find-slow-queries) |
+| **The scale seed profile.** Check a change against a large database before it reaches yours. | `apiome-db seed --profile scale`, `apiome-db plan-check` | [Benchmark against a large database](#benchmark-against-a-large-database) |
+
+When the app slows down:
+
+1. **Look at the sessions** with the `pg_stat_activity` query under
+   [Limits on a stuck session](#limits-on-a-stuck-session). A session `idle in transaction` that
+   blocks others is the usual cause.
+2. **Find the costly statements** in `pg_stat_statements`, and the heavy requests by
+   `db_statements` in the REST API's access log. See [Find slow queries](#find-slow-queries).
+3. **Check the pool sum** against `max_connections`. A `503` with error type `database_busy` means
+   one API instance reached `DB_POOL_MAX_IN_USE`; `statement_timeout` means one statement ran past
+   `DB_STATEMENT_TIMEOUT_MS`.
+
+Some answers are cached for a short time so they are not read again on every request: sign-in
+and permissions, the public directory, the MCP catalog and the mock runtime's specs. Each cache,
+and how long a change takes to show, is described in its own section above and below. Upgrades
+that build indexes or rewrite a large table are covered in
+[Upgrade a large database without blocking writes](#upgrade-a-large-database-without-blocking-writes).
+
 ## Keep queries able to use their indexes
 
 Compare a uuid column to a uuid parameter (`id = $1::uuid`, `id = ANY($1::uuid[])`); never cast the column to
