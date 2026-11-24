@@ -184,10 +184,71 @@ def test_consumer_narrows_a_selector_by_name_or_handle() -> None:
         {"deployed": True, "environment": "production"},
     ],
 )
-def test_environment_selectors_are_accepted_and_select_nothing_until_environments_exist(
+def test_environment_selectors_select_nothing_when_nothing_is_deployed_or_released(
     selector: Dict[str, Any],
 ) -> None:
     assert _select(selector) == []
+
+
+# Where the versions run (PFX-1.5): b1 is deployed to production, b4 and c2 to test, and c1 is
+# released (and supported) in production.
+DEPLOYED = [
+    PactCandidate(**{**FIXTURE[0].__dict__, "deployed_to": ("production",)}),
+    FIXTURE[1],
+    FIXTURE[2],
+    PactCandidate(**{**FIXTURE[3].__dict__, "deployed_to": ("test",)}),
+    PactCandidate(**{**FIXTURE[4].__dict__, "released_in": ("production",)}),
+    PactCandidate(**{**FIXTURE[5].__dict__, "deployed_to": ("test",)}),
+]
+
+
+def _select_deployed(*selectors: Dict[str, Any]) -> List[VerifiablePact]:
+    query = parse_for_verification_request({"consumerVersionSelectors": list(selectors)})
+    return select_verifiable_pacts(DEPLOYED, query)
+
+
+def test_deployed_selects_every_version_currently_deployed_and_names_where() -> None:
+    pacts = _select_deployed({"deployed": True})
+    assert _versions(pacts) == ["b1", "b4", "c2"]
+    assert [selected.environment for pact in pacts for selected in pact.selected_by] == [
+        "production",
+        "test",
+        "test",
+    ]
+    assert short_description(pacts[0]) == "deployed to production"
+    assert "consumer version(s) currently deployed to production (b1)" in inclusion_reason(pacts[0], URL, PROVIDER)
+
+
+def test_deployed_to_one_environment_and_one_consumer() -> None:
+    assert _versions(_select_deployed({"deployed": True, "environment": "test"})) == ["b4", "c2"]
+    assert _versions(_select_deployed({"deployed": True, "environment": "test", "consumer": "Checkout"})) == ["c2"]
+    assert _select_deployed({"deployed": True, "environment": "staging"}) == []
+
+
+def test_released_selects_supported_releases_only() -> None:
+    pacts = _select_deployed({"released": True})
+    assert _versions(pacts) == ["c1"]
+    assert short_description(pacts[0]) == "released in production"
+    assert "released and supported in production (c1)" in inclusion_reason(pacts[0], URL, PROVIDER)
+
+
+def test_environment_alone_selects_deployed_or_released_there() -> None:
+    assert _versions(_select_deployed({"environment": "production"})) == ["b1", "c1"]
+    assert _versions(_select_deployed({"deployedOrReleased": True, "environment": "production"})) == ["b1", "c1"]
+
+
+def test_the_environment_found_goes_into_the_url_metadata() -> None:
+    pacts = _select_deployed({"deployed": True, "consumer": "Billing", "environment": "production"})
+    assert verification_metadata(pacts[0])["s"][0]["e"] == "production"
+    pacts = _select_deployed({"deployed": True, "consumer": "Billing"})
+    assert verification_metadata(pacts[0])["s"][0]["e"] == "production"
+
+
+def test_the_defaults_include_what_is_deployed_and_released() -> None:
+    query = parse_for_verification_request({})
+    versions = _versions(select_verifiable_pacts(DEPLOYED, query))
+    # The latest per consumer from its main branch (b4, c1), plus what runs somewhere (b1, c2).
+    assert versions == ["b1", "b4", "c1", "c2"]
 
 
 def test_deployed_or_released_is_split_into_a_deployed_and_a_released_selector() -> None:

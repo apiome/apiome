@@ -459,7 +459,19 @@ _CANDIDATE_SELECT = """
                (SELECT array_agg(t.name ORDER BY t.name)
                 FROM apiome.pacticipant_version_tag t
                 WHERE t.version_id = v.id AND t.pacticipant_id = v.pacticipant_id),
-               ARRAY[]::text[]) AS tags
+               ARRAY[]::text[]) AS tags,
+           COALESCE(
+               (SELECT array_agg(DISTINCT e.name::text ORDER BY e.name::text)
+                FROM apiome.deployed_version d
+                JOIN apiome.pact_environment e ON e.id = d.environment_id AND e.tenant_id = d.tenant_id
+                WHERE d.version_id = v.id AND d.pacticipant_id = v.pacticipant_id AND d.currently_deployed),
+               ARRAY[]::text[]) AS deployed_to,
+           COALESCE(
+               (SELECT array_agg(e.name::text ORDER BY e.name::text)
+                FROM apiome.released_version r
+                JOIN apiome.pact_environment e ON e.id = r.environment_id AND e.tenant_id = r.tenant_id
+                WHERE r.version_id = v.id AND r.pacticipant_id = v.pacticipant_id AND r.currently_supported),
+               ARRAY[]::text[]) AS released_in
     FROM apiome.pact_publication p
     JOIN apiome.pact_version pv ON pv.id = p.pact_version_id
     JOIN apiome.pacticipant_version v ON v.id = p.consumer_version_id
@@ -473,8 +485,8 @@ def list_pact_candidates(db: Any, tenant_id: str, provider_ref: str) -> Tuple[Pa
     """Read every publication of a pact for a provider, for selectors to choose from.
 
     One row per consumer version that published a pact for the provider, with the version's
-    branches and tags and the pact's content address — not the content, which a for-verification
-    response links to rather than carries.
+    branches and tags, the environments it is deployed or released to, and the pact's content
+    address — not the content, which a for-verification response links to rather than carries.
 
     Args:
         db: The database.
@@ -501,6 +513,8 @@ def list_pact_candidates(db: Any, tenant_id: str, provider_ref: str) -> Tuple[Pa
             sha=row["sha"],
             branches=tuple(row.get("branches") or ()),
             tags=tuple(row.get("tags") or ()),
+            deployed_to=tuple(row.get("deployed_to") or ()),
+            released_in=tuple(row.get("released_in") or ()),
         )
         for row in rows
     ]

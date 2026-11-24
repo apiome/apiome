@@ -25,6 +25,10 @@ The base URL a client is given is ``https://<api>/v1/tenants/<tenant>/pact-broke
 operator configured it — the tenant-host alias ``https://<tenant>.<suffix>``
 (:mod:`app.pact_broker_host`). Links in a response lead back to whichever the client used.
 
+PFX-1.5 (#6918) adds environments and deployment records (:mod:`app.pact_broker_environment_routes`);
+the index links them (``pb:environments``, ``pb:environment``) and a version's document carries one
+``pb:record-deployment`` and one ``pb:record-release`` link per environment.
+
 Reads need ``pacts:view`` and publishing needs ``pacts:create``. A workspace API key may be sent
 as ``Authorization: Bearer <key>`` here (:mod:`app.pact_broker_auth`), because that is the only
 credential Pact tooling sends.
@@ -37,7 +41,7 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Sequence
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request
@@ -49,6 +53,16 @@ from .consumer_contract_store import actor_from_auth
 from .database import db
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_host import alias_base_url
+from .pact_environment import (
+    CODE_DEPLOYED_VERSION_NOT_FOUND,
+    CODE_DEPLOYMENT_INVALID,
+    CODE_ENVIRONMENT_INVALID,
+    CODE_ENVIRONMENT_NAME_TAKEN,
+    CODE_ENVIRONMENT_NOT_FOUND,
+    CODE_RELEASED_VERSION_NOT_FOUND,
+    EnvironmentRecord,
+)
+from .pact_environment_store import list_environments
 from .pact_publication import (
     CODE_PACT_CONFLICT,
     CODE_PACT_INVALID,
@@ -119,6 +133,12 @@ _STATUS_BY_CODE = {
     CODE_VERIFICATION_INVALID: 422,
     CODE_REPORT_NOT_FOUND: 422,
     CODE_VERIFICATION_NOT_FOUND: 404,
+    CODE_ENVIRONMENT_INVALID: 422,
+    CODE_ENVIRONMENT_NAME_TAKEN: 409,
+    CODE_ENVIRONMENT_NOT_FOUND: 404,
+    CODE_DEPLOYMENT_INVALID: 422,
+    CODE_DEPLOYED_VERSION_NOT_FOUND: 404,
+    CODE_RELEASED_VERSION_NOT_FOUND: 404,
 }
 
 _publish_limiter = FixedWindowRateLimiter()
@@ -344,18 +364,64 @@ def _pacticipant_document(base: str, pacticipant: PacticipantRecord) -> Dict[str
     }
 
 
-def _version_document(base: str, pacticipant: PacticipantRecord, version: PacticipantVersionRecord) -> Dict[str, Any]:
+def _environment_links(
+    base: str, slug: str, number: str, environments: Sequence[EnvironmentRecord]
+) -> Dict[str, List[Dict[str, str]]]:
+    """The ``pb:record-deployment`` and ``pb:record-release`` links of a version, one per environment.
+
+    ``pact-broker record-deployment --environment production`` picks the link whose ``name`` is
+    ``production``, so every environment of the workspace is offered.
+
+    Args:
+        base: The broker base URL.
+        slug: The pacticipant's handle.
+        number: The version number.
+        environments: The workspace's environments.
+
+    Returns:
+        The two link arrays (empty when the workspace has no environment).
+    """
+    version = _version_url(base, slug, number)
+    return {
+        "pb:record-deployment": [
+            {
+                "title": f"Record deployment to {environment.display_name}",
+                "name": environment.name,
+                "href": f"{version}/deployed-versions/environment/{environment.id}",
+            }
+            for environment in environments
+        ],
+        "pb:record-release": [
+            {
+                "title": f"Record release to {environment.display_name}",
+                "name": environment.name,
+                "href": f"{version}/released-versions/environment/{environment.id}",
+            }
+            for environment in environments
+        ],
+    }
+
+
+def _version_document(
+    base: str,
+    pacticipant: PacticipantRecord,
+    version: PacticipantVersionRecord,
+    environments: Optional[Sequence[EnvironmentRecord]] = None,
+) -> Dict[str, Any]:
     """Render a pacticipant version the way a Pact Broker returns one.
 
     Args:
         base: The broker base URL.
         pacticipant: The owning pacticipant.
         version: The version.
+        environments: The workspace's environments, for the ``pb:record-deployment`` and
+            ``pb:record-release`` links; ``None`` leaves those links out.
 
     Returns:
-        Its number and build URL, its branches and tags embedded, and links to itself and its owner.
+        Its number and build URL, its branches and tags embedded, and links to itself, its owner
+        and — when ``environments`` is given — recording a deployment or release of it.
     """
-    return {
+    document: Dict[str, Any] = {
         "number": version.number,
         "buildUrl": version.build_url,
         "createdAt": version.created_at,
@@ -376,6 +442,9 @@ def _version_document(base: str, pacticipant: PacticipantRecord, version: Pactic
             },
         },
     }
+    if environments is not None:
+        document["_links"].update(_environment_links(base, pacticipant.slug, version.number, environments))
+    return document
 
 
 def _pair_url(base: str, provider_slug: str, consumer_slug: str) -> str:
@@ -719,7 +788,8 @@ def _read(
         "`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; "
         "`pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version "
         "selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, "
-        "`pb:latest-provider-pacts` and the others are URI templates.\n\n"
+        "`pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the "
+        "environments `pact-broker record-deployment` looks an environment up in.\n\n"
         "A workspace API key may be sent as `Authorization: Bearer <key>` on every route under "
         "`/pact-broker`. Requires `pacts:view`."
     ),
@@ -799,6 +869,16 @@ def pact_broker_index(
                 "pb:latest-provider-pacts-with-tag": {
                     "href": base + "/pacts/provider/{provider}/latest/{tag}",
                     "title": "Latest pacts for provider with the specified tag",
+                    "templated": True,
+                },
+                "pb:environments": {
+                    "href": base + "/environments",
+                    "title": "Environments",
+                    "templated": False,
+                },
+                "pb:environment": {
+                    "href": base + "/environments/{uuid}",
+                    "title": "Environment",
                     "templated": True,
                 },
             }
@@ -1628,7 +1708,9 @@ def read_broker_pacticipant(
     description=(
         "One version of a pacticipant in the Pact Broker's shape: `number`, `buildUrl`, and its "
         "branches and tags under `_embedded` — what the `pb:consumer-version` and "
-        "`pb:pacticipant-version` links of this API lead to.\n\n"
+        "`pb:pacticipant-version` links of this API lead to. `pb:record-deployment` and "
+        "`pb:record-release` list one link per environment of the workspace, named after it — what "
+        "`pact-broker record-deployment` and `record-release` post to.\n\n"
         "`{pacticipant}` is its handle, id or name. Requires `pacts:view`."
     ),
 )
@@ -1656,8 +1738,10 @@ def read_broker_pacticipant_version(
     """
     enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
     try:
-        record = get_pacticipant(db, _tenant_id(auth_data), pacticipant)
+        tenant_id = _tenant_id(auth_data)
+        record = get_pacticipant(db, tenant_id, pacticipant)
         version = get_version(db, record, number)
     except PacticipantValidationError as exc:
         raise _http_error(exc) from exc
-    return HalJSONResponse(_version_document(_base_url(request, tenant_slug), record, version))
+    environments = list_environments(db, tenant_id)
+    return HalJSONResponse(_version_document(_base_url(request, tenant_slug), record, version, environments))

@@ -1,0 +1,42 @@
+---
+slug: pact-broker-environments
+title: "Pact Broker: environments and deployments"
+description: "Record which version of each application runs in each environment, with the pact-broker CLI."
+authors: [apiome]
+---
+
+Apiome now knows what runs where. Create your environments once, then let your deploy jobs record
+every deployment or release with the `pact-broker` CLI, unchanged. Can-i-deploy will answer "is it
+safe to deploy to production?" from these records.
+
+{/* truncate */}
+
+**Set it up** with the same broker base URL and token you publish pacts with:
+
+```bash
+pact-broker create-environment --name production --display-name Production --production
+pact-broker record-deployment --pacticipant "Ledger API" --version "$GIT_COMMIT" --environment production
+```
+
+The token needs **Pacts** → **Create**, which the **Editor** role has.
+
+**What you get**, through the [Pact Broker API](/reference/rest/pact-broker):
+
+- **A deployment replaces the one before it.** The version deployed to that environment before is
+  marked as no longer deployed, and stays in the history.
+- **Application instances.** With `--application-instance eu-1`, a deployment replaces only the
+  version on that copy; other regions keep running theirs.
+- **Releases for apps with several live versions.** `record-release` keeps every released version
+  supported until `record-support-ended`.
+- **Undeployments.** `record-undeployment` takes an application out of an environment.
+- **Environment selectors work.** A provider's verifier that asks for `{ deployed: true }` or
+  `{ environment: "production" }` now gets the pacts of the consumer versions recorded there.
+- **Contract required.** An Apiome-only `contractRequired` flag on an environment, for
+  can-i-deploy to enforce.
+
+**Not yet available:** can-i-deploy, and a screen for environments.
+
+**For operators.** Run `apiome-db migrate` to apply `V435` (three new tables).
+
+Read [Environments and deployments](/ship/pact-broker/environments) for the steps and the error
+codes.

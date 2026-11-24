@@ -27,10 +27,11 @@ Selectors, as a verifier sends them:
                       consumer (``fallbackTag`` when a consumer has none).
 ``latest: true``      Alone: the latest version of each consumer that has a pact with the provider.
 ``consumer: "name"``  Narrows any of the above to one consumer.
-``deployed``,         Versions deployed or released to an environment. Environments arrive with
-``released``,         PFX-1.5 (#6918); until then these selectors are accepted and select nothing.
-``deployedOrReleased``,
-``environment``
+``deployed: true``    Every version currently deployed (to ``environment`` when given, else to
+                      any environment), recorded with ``record-deployment`` (PFX-1.5, #6918).
+``released: true``    Every version released and still supported (in ``environment``, or any).
+``deployedOrReleased`` Both of the above.
+``environment: "x"``  Alone: every version currently deployed or supported in ``x``.
 ====================  ==========================================================================
 
 **Pending.** A pact is *pending* for a provider until a verification of it from that provider (on
@@ -458,6 +459,8 @@ class PactCandidate:
         sha: The content address of the pact it published.
         branches: The branches the version was recorded on.
         tags: The tags of the version.
+        deployed_to: The environments the version is currently deployed to, by name.
+        released_in: The environments the version is released and supported in, by name.
     """
 
     consumer_id: str
@@ -470,6 +473,8 @@ class PactCandidate:
     sha: str
     branches: Tuple[str, ...] = ()
     tags: Tuple[str, ...] = ()
+    deployed_to: Tuple[str, ...] = ()
+    released_in: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -480,11 +485,13 @@ class SelectedBy:
         selector: The selector.
         candidate: The publication it matched.
         fallback: ``True`` when the selector's fallback (tag, branch or main branch) matched.
+        environment: For an environment selector, the environment the version was found in.
     """
 
     selector: ConsumerVersionSelector
     candidate: PactCandidate
     fallback: bool = False
+    environment: Optional[str] = None
 
     @property
     def branch(self) -> Optional[str]:
@@ -552,21 +559,35 @@ def latest_per_consumer(
     return list(best.values())
 
 
-def _environment_matches(selector: ConsumerVersionSelector, candidates: Sequence[PactCandidate]) -> List[PactCandidate]:
+def _environment_matches(selector: ConsumerVersionSelector, candidates: Sequence[PactCandidate]) -> List[SelectedBy]:
     """The publications of consumer versions deployed or released to an environment.
 
-    Environments and deployment records are PFX-1.5 (#6918). Until they exist no version is
-    deployed anywhere, so the environment selectors select nothing.
+    Every matching version is selected, not only the latest: two application instances, or two
+    supported releases, run different versions at once and both must stay compatible. A version
+    found in two environments is selected once per environment, so the notice names both.
 
     Args:
         selector: A ``deployed``, ``released`` or ``environment`` selector.
-        candidates: The provider's publications.
+        candidates: The provider's publications, each with where its version runs.
 
     Returns:
-        An empty list.
+        One :class:`SelectedBy` per publication and environment, carrying the environment's name.
     """
-    del selector, candidates
-    return []
+    for_consumer = _consumer_filter(selector)
+    kind = selector.kind
+    selected: List[SelectedBy] = []
+    for candidate in candidates:
+        if not for_consumer(candidate):
+            continue
+        places: List[str] = []
+        if kind in (KIND_DEPLOYED, KIND_ENVIRONMENT):
+            places.extend(candidate.deployed_to)
+        if kind in (KIND_RELEASED, KIND_ENVIRONMENT):
+            places.extend(candidate.released_in)
+        for environment in dict.fromkeys(places):
+            if selector.environment is None or environment == selector.environment:
+                selected.append(SelectedBy(selector, candidate, environment=environment))
+    return selected
 
 
 def _on_main_branch(candidate: PactCandidate) -> bool:
@@ -612,7 +633,7 @@ def _apply_selector(selector: ConsumerVersionSelector, candidates: Sequence[Pact
     if kind == KIND_ALL_TAG:
         return [SelectedBy(selector, c) for c in candidates if for_consumer(c) and selector.tag in c.tags]
     if kind in (KIND_DEPLOYED, KIND_RELEASED, KIND_ENVIRONMENT):
-        return [SelectedBy(selector, c) for c in _environment_matches(selector, candidates)]
+        return _environment_matches(selector, candidates)
 
     fallback_test: Optional[Callable[[PactCandidate], bool]] = None
     if kind == KIND_BRANCH:
@@ -638,8 +659,8 @@ def _default_selectors(candidates: Sequence[PactCandidate]) -> List[ConsumerVers
     """The selectors the broker uses when a request sends none.
 
     For each consumer: its main branch when it has a pact from there, else the latest version
-    tagged with the main branch's name, else its overall latest; then whatever is deployed or
-    released (nothing until PFX-1.5).
+    tagged with the main branch's name, else its overall latest; then every version deployed or
+    released anywhere.
 
     Args:
         candidates: The provider's publications.
@@ -669,7 +690,7 @@ def _selection_order(selected: SelectedBy) -> Tuple[int, str, int]:
     """Sort key of a reason within a pact: the broker's selector order, then version order."""
     return (
         _KIND_ORDER.index(selected.selector.kind),
-        selected.branch or selected.tag or "",
+        selected.branch or selected.tag or selected.environment or "",
         selected.candidate.version_seq,
     )
 
@@ -780,7 +801,8 @@ def _selector_description(selected: SelectedBy, provider_name: str) -> str:
             else f"all consumer versions tagged '{selector.tag}'"
         )
     else:
-        text = f"{selector.consumer or 'a consumer'} version in environment {selector.environment}"
+        environment = selected.environment or selector.environment
+        text = f"{selector.consumer or 'a consumer'} version in environment {environment}"
     return f"{text} ({selected.candidate.version_number})"
 
 
@@ -793,7 +815,8 @@ def _environment_description(group: Sequence[SelectedBy], verb: str) -> List[str
     for consumer, entries in by_consumer.items():
         label = f"version(s) of {consumer}" if consumer else "consumer version(s)"
         places = [
-            f"{entry.selector.environment or 'any environment'} ({entry.candidate.version_number})" for entry in entries
+            f"{entry.environment or entry.selector.environment or 'any environment'} ({entry.candidate.version_number})"
+            for entry in entries
         ]
         lines.append(f"{label} {verb} {_join(places)}")
     return lines
@@ -948,11 +971,12 @@ def _short(selected: SelectedBy) -> str:
         return f"latest from branch {selected.branch}"
     if kind == KIND_ALL_TAG:
         return f"one of {selector.consumer} {selector.tag}" if selector.consumer else f"one of {selector.tag}"
+    environment = selected.environment or selector.environment
     if kind == KIND_DEPLOYED:
-        return f"deployed to {selector.environment}"
+        return f"deployed to {environment}"
     if kind == KIND_RELEASED:
-        return f"released in {selector.environment}"
-    return f"in environment {selector.environment}"
+        return f"released in {environment}"
+    return f"in environment {environment}"
 
 
 def short_description(pact: VerifiablePact) -> str:
@@ -986,7 +1010,7 @@ def verification_metadata(pact: VerifiablePact) -> Dict[str, Any]:
             "b": selected.branch,
             "t": selected.tag,
             "l": selected.selector.latest,
-            "e": selected.selector.environment,
+            "e": selected.environment or selected.selector.environment,
             "cv": selected.candidate.version_id,
         }
         entries.append({key: value for key, value in entry.items() if value is not None})

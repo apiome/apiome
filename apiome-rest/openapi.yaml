@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.657.0
+  version: 1.658.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -28995,6 +28995,8 @@ paths:
         post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts
         its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`,
         `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates.
+        `pb:environments` lists the environments `pact-broker record-deployment` looks
+        an environment up in.
 
 
         A workspace API key may be sent as `Authorization: Bearer <key>` on every route
@@ -30329,7 +30331,9 @@ paths:
       summary: Read a pacticipant version (Pact Broker shape)
       description: 'One version of a pacticipant in the Pact Broker''s shape: `number`,
         `buildUrl`, and its branches and tags under `_embedded` — what the `pb:consumer-version`
-        and `pb:pacticipant-version` links of this API lead to.
+        and `pb:pacticipant-version` links of this API lead to. `pb:record-deployment`
+        and `pb:record-release` list one link per environment of the workspace, named
+        after it — what `pact-broker record-deployment` and `record-release` post to.
 
 
         `{pacticipant}` is its handle, id or name. Requires `pacts:view`.'
@@ -31129,6 +31133,1320 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readaverificationresultresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/environments:
+    get:
+      tags:
+      - pact-broker
+      summary: List environments
+      description: 'The workspace''s environments — what `pact-broker list-environments`
+        prints and what `record-deployment`, `record-undeployment` and `record-support-ended`
+        look an environment up in (`_links.pb:environments`, each named after its environment).
+        `?name=` narrows the list to the environment with exactly that name.
+
+
+        Requires `pacts:view`.'
+      operationId: read_environments_v1_tenants__tenant_slug__pact_broker_environments_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listenvironmentsname schema.
+          - type: 'null'
+            description: Listenvironmentsname schema.
+          description: Only the environment with exactly this name.
+          title: Name
+        description: Only the environment with exactly this name.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listenvironmentsauthorization schema.
+          - type: 'null'
+            description: Listenvironmentsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listenvironments Xapikey schema.
+          - type: 'null'
+            description: Listenvironments Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list environments.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listenvironmentsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listenvironmentsresponse422.
+    post:
+      tags:
+      - pact-broker
+      summary: Create an environment
+      description: 'Create an environment — what `pact-broker create-environment --name
+        production --production` posts. `name` is one word (no spaces) and unique in
+        the workspace; `displayName` defaults to the name; `production` defaults to
+        `false`. Apiome adds `contractRequired`: can-i-deploy to the environment refuses
+        a pacticipant without a contract.
+
+
+        Answers `201` with the environment and its URL in `Location`. Requires `pacts:create`.'
+      operationId: post_environment_v1_tenants__tenant_slug__pact_broker_environments_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createanenvironmentauthorization schema.
+          - type: 'null'
+            description: Createanenvironmentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createanenvironment Xapikey schema.
+          - type: 'null'
+            description: Createanenvironment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for create an environment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for createanenvironmentresponse201.
+        '409':
+          description: '`pact-environment-name-taken`: another environment has this
+            name.'
+        '422':
+          description: '`pact-environment-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: 'The name tooling uses: one word, no spaces.'
+                  example: Pet
+                displayName:
+                  type: string
+                  description: The name people read; the name when omitted.
+                  example: Example
+                production:
+                  type: boolean
+                  default: false
+                  description: Production.
+                  example: false
+                contractRequired:
+                  type: boolean
+                  default: false
+                  description: 'Apiome only: can-i-deploy to this environment refuses
+                    a pacticipant that has no contract.'
+                  example: false
+                contacts:
+                  type: array
+                  maxItems: 50
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        description: Human-readable name.
+                        example: Pet
+                      details:
+                        type: object
+                        additionalProperties: true
+                        description: Details.
+                  description: Contacts.
+              description: Request body for createanenvironmentrequest.
+            example:
+              name: production
+              displayName: Production
+              production: true
+              contractRequired: true
+              contacts:
+              - name: Team Ledger
+                details:
+                  emailAddress: ledger@example.com
+        description: Request body for create an environment.
+  /v1/tenants/{tenant_slug}/pact-broker/environments/{uuid}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read an environment
+      description: One environment by its `uuid` — the index's `pb:environment` template,
+        and what `pact-broker describe-environment` reads. Requires `pacts:view`.
+      operationId: read_environment_v1_tenants__tenant_slug__pact_broker_environments__uuid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readanenvironmentauthorization schema.
+          - type: 'null'
+            description: Readanenvironmentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readanenvironment Xapikey schema.
+          - type: 'null'
+            description: Readanenvironment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read an environment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readanenvironmentresponse200.
+        '404':
+          description: '`pact-environment-not-found`: no such environment in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readanenvironmentresponse422.
+    put:
+      tags:
+      - pact-broker
+      summary: Replace an environment
+      description: 'Replace every field of an environment — what `pact-broker update-environment`
+        sends. The body is the same as for creating one; a field left out returns to
+        its default. Renaming is allowed: deployments refer to the environment by `uuid`.
+
+
+        Requires `pacts:edit`.'
+      operationId: put_environment_v1_tenants__tenant_slug__pact_broker_environments__uuid__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceanenvironmentauthorization schema.
+          - type: 'null'
+            description: Replaceanenvironmentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceanenvironment Xapikey schema.
+          - type: 'null'
+            description: Replaceanenvironment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for replace an environment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for replaceanenvironmentresponse200.
+        '404':
+          description: '`pact-environment-not-found`: no such environment in this workspace.'
+        '409':
+          description: '`pact-environment-name-taken`: another environment has this
+            name.'
+        '422':
+          description: '`pact-environment-invalid`: the body is malformed.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: 'The name tooling uses: one word, no spaces.'
+                  example: Pet
+                displayName:
+                  type: string
+                  description: The name people read; the name when omitted.
+                  example: Example
+                production:
+                  type: boolean
+                  default: false
+                  description: Production.
+                  example: false
+                contractRequired:
+                  type: boolean
+                  default: false
+                  description: 'Apiome only: can-i-deploy to this environment refuses
+                    a pacticipant that has no contract.'
+                  example: false
+                contacts:
+                  type: array
+                  maxItems: 50
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        description: Human-readable name.
+                        example: Pet
+                      details:
+                        type: object
+                        additionalProperties: true
+                        description: Details.
+                  description: Contacts.
+              description: Request body for replaceanenvironmentrequest.
+            example:
+              name: production
+              displayName: Production
+              production: true
+              contractRequired: true
+              contacts:
+              - name: Team Ledger
+                details:
+                  emailAddress: ledger@example.com
+        description: Request body for replace an environment.
+    delete:
+      tags:
+      - pact-broker
+      summary: Delete an environment
+      description: Delete an environment and every deployment and release recorded to
+        it — what `pact-broker delete-environment` calls. can-i-deploy can no longer
+        be asked about it. Answers `204`. Requires `pacts:delete`.
+      operationId: remove_environment_v1_tenants__tenant_slug__pact_broker_environments__uuid__delete
+      parameters:
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteanenvironmentauthorization schema.
+          - type: 'null'
+            description: Deleteanenvironmentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteanenvironment Xapikey schema.
+          - type: 'null'
+            description: Deleteanenvironment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete an environment.
+        '404':
+          description: '`pact-environment-not-found`: no such environment in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteanenvironmentresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/environments/{uuid}/deployed-versions/currently-deployed:
+    get:
+      tags:
+      - pact-broker
+      summary: List the versions currently deployed to an environment
+      description: 'What is deployed to the environment now, newest first, under `_embedded.deployedVersions`
+        — what `pact-broker record-undeployment` reads before it patches each match.
+
+
+        - `pacticipant` narrows to one pacticipant (handle or name; an unknown one lists
+        nothing).
+
+        - `applicationInstance` narrows to one instance; sent empty, to the unnamed
+        instance. `target` is its deprecated name.
+
+
+        Requires `pacts:view`.'
+      operationId: read_currently_deployed_v1_tenants__tenant_slug__pact_broker_environments__uuid__deployed_versions_currently_deployed_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: pacticipant
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheversionscurrentlydeployedtoanenvipacticipant schema.
+          - type: 'null'
+            description: Listtheversionscurrentlydeployedtoanenvipacticipant schema.
+          description: Only this pacticipant (handle or name).
+          title: Pacticipant
+        description: Only this pacticipant (handle or name).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheversionscurrentlydeployedtoanenviauthorization schema.
+          - type: 'null'
+            description: Listtheversionscurrentlydeployedtoanenviauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheversionscurrentlydeployedtoanenvi Xapikey schema.
+          - type: 'null'
+            description: Listtheversionscurrentlydeployedtoanenvi Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the versions currently deployed
+            to an environment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listtheversionscurrentlydeployedtoanenviresponse200.
+        '404':
+          description: '`pact-environment-not-found`: no such environment in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listtheversionscurrentlydeployedtoanenviresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/environments/{uuid}/released-versions/currently-supported:
+    get:
+      tags:
+      - pact-broker
+      summary: List the versions released and supported in an environment
+      description: 'The releases still supported in the environment, newest first, under
+        `_embedded.releasedVersions` — what `pact-broker record-support-ended` reads.
+        `pacticipant` and `version` narrow the list.
+
+
+        Requires `pacts:view`.'
+      operationId: read_currently_supported_v1_tenants__tenant_slug__pact_broker_environments__uuid__released_versions_currently_supported_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: pacticipant
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheversionsreleasedandsupportedinanepacticipant schema.
+          - type: 'null'
+            description: Listtheversionsreleasedandsupportedinanepacticipant schema.
+          description: Only this pacticipant (handle or name).
+          title: Pacticipant
+        description: Only this pacticipant (handle or name).
+      - name: version
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheversionsreleasedandsupportedinaneversion schema.
+          - type: 'null'
+            description: Listtheversionsreleasedandsupportedinaneversion schema.
+          description: Only this version number.
+          title: Version
+        description: Only this version number.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheversionsreleasedandsupportedinaneauthorization schema.
+          - type: 'null'
+            description: Listtheversionsreleasedandsupportedinaneauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheversionsreleasedandsupportedinane Xapikey schema.
+          - type: 'null'
+            description: Listtheversionsreleasedandsupportedinane Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the versions released and supported
+            in an environment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listtheversionsreleasedandsupportedinaneresponse200.
+        '404':
+          description: '`pact-environment-not-found`: no such environment in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listtheversionsreleasedandsupportedinaneresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/deployed-versions/environment/{uuid}:
+    post:
+      tags:
+      - pact-broker
+      summary: Record a deployment
+      description: 'Record that this version is now deployed to the environment — the
+        version''s `pb:record-deployment` link, which `pact-broker record-deployment
+        --pacticipant Ledger --version 4f1e2d0 --environment production` posts to.
+
+
+        - The pacticipant''s previous deployment to the same environment and application
+        instance is marked undeployed; it stays in the history.
+
+        - Deployments to other application instances are not touched.
+
+        - Recording the version that is already deployed there returns that deployment,
+        `200`.
+
+
+        Answers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.'
+      operationId: post_deployment_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The pacticipant's handle, id or name.
+          title: Pacticipant
+        description: The pacticipant's handle, id or name.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The version number, exactly as recorded.
+          title: Version
+        description: The version number, exactly as recorded.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordadeploymentauthorization schema.
+          - type: 'null'
+            description: Recordadeploymentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordadeployment Xapikey schema.
+          - type: 'null'
+            description: Recordadeployment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for record a deployment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for recordadeploymentresponse201.
+        '200':
+          description: This version was already the current deployment; it is returned.
+        '404':
+          description: '`pacticipant-not-found`, `pacticipant-version-not-found` or
+            `pact-environment-not-found`: the version must have been recorded (published
+            a pact, or verified one) first.'
+        '422':
+          description: '`pact-deployment-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                applicationInstance:
+                  type: string
+                  description: The instance of the environment deployed to (a region,
+                    a customer). Omit it when the environment has one instance.
+                  example: example
+                target:
+                  type: string
+                  description: Deprecated name of `applicationInstance`.
+                  example: example
+              description: Request body for recordadeploymentrequest.
+            example:
+              applicationInstance: eu-1
+        description: Request body for record a deployment.
+    get:
+      tags:
+      - pact-broker
+      summary: List the deployments of a version to an environment
+      description: Every deployment of this version to the environment, current or not,
+        newest first. Requires `pacts:view`.
+      operationId: read_deployments_of_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The pacticipant's handle, id or name.
+          title: Pacticipant
+        description: The pacticipant's handle, id or name.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The version number, exactly as recorded.
+          title: Version
+        description: The version number, exactly as recorded.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthedeploymentsofaversiontoanenvironmauthorization schema.
+          - type: 'null'
+            description: Listthedeploymentsofaversiontoanenvironmauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthedeploymentsofaversiontoanenvironm Xapikey schema.
+          - type: 'null'
+            description: Listthedeploymentsofaversiontoanenvironm Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the deployments of a version to
+            an environment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listthedeploymentsofaversiontoanenvironmresponse200.
+        '404':
+          description: '`pacticipant-not-found`, `pacticipant-version-not-found` or
+            `pact-environment-not-found`: the version must have been recorded (published
+            a pact, or verified one) first.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthedeploymentsofaversiontoanenvironmresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{uuid}:
+    post:
+      tags:
+      - pact-broker
+      summary: Record a release
+      description: 'Record that this version is released to the environment — the version''s
+        `pb:record-release` link, which `pact-broker record-release` posts to. Releases
+        do not replace each other: every released version stays supported until `record-support-ended`.
+        Recording a release again starts supporting it again and answers `200`.
+
+
+        The body is ignored. Requires `pacts:create`.'
+      operationId: post_release_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__released_versions_environment__uuid__post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The pacticipant's handle, id or name.
+          title: Pacticipant
+        description: The pacticipant's handle, id or name.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The version number, exactly as recorded.
+          title: Version
+        description: The version number, exactly as recorded.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordareleaseauthorization schema.
+          - type: 'null'
+            description: Recordareleaseauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordarelease Xapikey schema.
+          - type: 'null'
+            description: Recordarelease Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for record a release.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for recordareleaseresponse201.
+        '200':
+          description: The version was already released there; it is supported again.
+        '404':
+          description: '`pacticipant-not-found`, `pacticipant-version-not-found` or
+            `pact-environment-not-found`: the version must have been recorded (published
+            a pact, or verified one) first.'
+        '422':
+          description: '`pact-deployment-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
+    get:
+      tags:
+      - pact-broker
+      summary: Read the release of a version to an environment
+      description: The release of this version to the environment, if any, under `_embedded.releasedVersions`.
+        Requires `pacts:view`.
+      operationId: read_releases_of_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__released_versions_environment__uuid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The pacticipant's handle, id or name.
+          title: Pacticipant
+        description: The pacticipant's handle, id or name.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The version number, exactly as recorded.
+          title: Version
+        description: The version number, exactly as recorded.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The environment's `uuid`, as `GET …/environments` lists it.
+          title: Uuid
+        description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthereleaseofaversiontoanenvironmentauthorization schema.
+          - type: 'null'
+            description: Readthereleaseofaversiontoanenvironmentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthereleaseofaversiontoanenvironment Xapikey schema.
+          - type: 'null'
+            description: Readthereleaseofaversiontoanenvironment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the release of a version to an environment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readthereleaseofaversiontoanenvironmentresponse200.
+        '404':
+          description: '`pacticipant-not-found`, `pacticipant-version-not-found` or
+            `pact-environment-not-found`: the version must have been recorded (published
+            a pact, or verified one) first.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthereleaseofaversiontoanenvironmentresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/deployed-versions/{uuid}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a deployment
+      description: One deployment, current or not. Requires `pacts:view`.
+      operationId: read_deployed_version_v1_tenants__tenant_slug__pact_broker_deployed_versions__uuid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The deployment's `uuid`.
+          title: Uuid
+        description: The deployment's `uuid`.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readadeploymentauthorization schema.
+          - type: 'null'
+            description: Readadeploymentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readadeployment Xapikey schema.
+          - type: 'null'
+            description: Readadeployment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a deployment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readadeploymentresponse200.
+        '404':
+          description: '`pact-deployed-version-not-found`: no such deployment in this
+            workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readadeploymentresponse422.
+    patch:
+      tags:
+      - pact-broker
+      summary: Record an undeployment
+      description: '`{"currentlyDeployed": false}` records that the version is no longer
+        deployed — what `pact-broker record-undeployment` sends to each matching deployment''s
+        `self` link. The deployment stays in the history. Patching an undeployed deployment
+        changes nothing; `true` is refused (record the deployment again instead).
+
+
+        Requires `pacts:edit`.'
+      operationId: patch_deployed_version_v1_tenants__tenant_slug__pact_broker_deployed_versions__uuid__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The deployment's `uuid`.
+          title: Uuid
+        description: The deployment's `uuid`.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordanundeploymentauthorization schema.
+          - type: 'null'
+            description: Recordanundeploymentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordanundeployment Xapikey schema.
+          - type: 'null'
+            description: Recordanundeployment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for record an undeployment.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for recordanundeploymentresponse200.
+        '404':
+          description: '`pact-deployed-version-not-found`: no such deployment in this
+            workspace.'
+        '422':
+          description: '`pact-deployment-invalid`: `currentlyDeployed` is not `false`.'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              properties:
+                currentlyDeployed:
+                  type: boolean
+                  enum:
+                  - false
+                  description: Currently Deployed.
+                  example: false
+              description: Request body for recordanundeploymentrequest.
+            example:
+              currentlyDeployed: false
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentlyDeployed:
+                  type: boolean
+                  enum:
+                  - false
+                  description: Currently Deployed.
+                  example: false
+              description: Request body for recordanundeploymentrequest.
+            example:
+              currentlyDeployed: false
+        description: Request body for record an undeployment.
+  /v1/tenants/{tenant_slug}/pact-broker/released-versions/{uuid}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a release
+      description: One release, supported or not. Requires `pacts:view`.
+      operationId: read_released_version_v1_tenants__tenant_slug__pact_broker_released_versions__uuid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The release's `uuid`.
+          title: Uuid
+        description: The release's `uuid`.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readareleaseauthorization schema.
+          - type: 'null'
+            description: Readareleaseauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readarelease Xapikey schema.
+          - type: 'null'
+            description: Readarelease Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a release.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readareleaseresponse200.
+        '404':
+          description: '`pact-released-version-not-found`: no such release in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readareleaseresponse422.
+    patch:
+      tags:
+      - pact-broker
+      summary: Record the end of support for a release
+      description: '`{"currentlySupported": false}` records that the release is no longer
+        supported — what `pact-broker record-support-ended` sends. The release stays
+        in the history; `true` is refused (record the release again instead).
+
+
+        Requires `pacts:edit`.'
+      operationId: patch_released_version_v1_tenants__tenant_slug__pact_broker_released_versions__uuid__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The release's `uuid`.
+          title: Uuid
+        description: The release's `uuid`.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordtheendofsupportforareleaseauthorization schema.
+          - type: 'null'
+            description: Recordtheendofsupportforareleaseauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordtheendofsupportforarelease Xapikey schema.
+          - type: 'null'
+            description: Recordtheendofsupportforarelease Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for record the end of support for a release.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for recordtheendofsupportforareleaseresponse200.
+        '404':
+          description: '`pact-released-version-not-found`: no such release in this workspace.'
+        '422':
+          description: '`pact-deployment-invalid`: `currentlySupported` is not `false`.'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+              properties:
+                currentlySupported:
+                  type: boolean
+                  enum:
+                  - false
+                  description: Currently Supported.
+                  example: false
+              description: Request body for recordtheendofsupportforareleaserequest.
+            example:
+              currentlySupported: false
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentlySupported:
+                  type: boolean
+                  enum:
+                  - false
+                  description: Currently Supported.
+                  example: false
+              description: Request body for recordtheendofsupportforareleaserequest.
+            example:
+              currentlySupported: false
+        description: Request body for record the end of support for a release.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings:
     get:
       tags:

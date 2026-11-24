@@ -1293,6 +1293,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['publishVerificationResult', 'provider version', 'pact verifier', 'test results', 'provider branch', 'can-i-deploy', 'provider verification report'],
   },
   {
+    id: 'environments',
+    title: 'Environments and deployments',
+    summary: 'Record which version of each application runs in each environment.',
+    page: 'apiome-docs/docs/ship/pact-broker/environments.mdx',
+    section: 'reference',
+    keywords: ['record-deployment', 'record-release', 'record-undeployment', 'support ended', 'application instance', 'production', 'can-i-deploy'],
+  },
+  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',
