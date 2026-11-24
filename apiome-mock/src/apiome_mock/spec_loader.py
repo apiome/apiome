@@ -24,20 +24,29 @@ from apiome_mock.correlation import (
 )
 from apiome_mock.fixture_packs import FixturePack, merged_template_data, parse_fixture_packs
 from apiome_mock.scenarios import Scenario, parse_active_scenario, parse_scenarios
+from apiome_mock.ttl_cache import TtlCache
 
 MockAccessStatus = Literal["ok", "disabled", "missing"]
 
+#: The access decision's inputs, and nothing else (#7207, DBP-1.24): the mode is read out of
+#: ``mock_settings`` in SQL instead of shipping the whole JSONB (scenarios, fixtures, callbacks, …),
+#: and "is a public spec" is the ``mcp_v_public_specs`` predicate written inline rather than a join
+#: of the view (``v.deleted_at`` / ``p.deleted_at`` are already filtered by the joins below).
 _RESOLVE_MOCK_ACCESS = """
     SELECT
       v.mock_enabled,
       v.published,
-      v.mock_settings,
+      v.mock_settings->>'mode' AS mock_mode,
       v.source_format,
-      s.id IS NOT NULL AS is_public_spec
+      (
+        v.published IS TRUE
+        AND v.enabled IS TRUE
+        AND p.enabled IS TRUE
+        AND v.visibility = 'public'::apiome.visibility_type
+      ) AS is_public_spec
     FROM apiome.versions v
     INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
     INNER JOIN apiome.tenants t ON t.id = p.tenant_id AND t.deleted_at IS NULL AND t.enabled IS TRUE
-    LEFT JOIN apiome.mcp_v_public_specs s ON s.id = v.id
     WHERE t.slug = %(tenant)s
       AND p.slug = %(project)s
       AND v.version_id = %(version)s
@@ -53,7 +62,8 @@ _RESOLVE_PUBLISHED_SPEC = """
       p.slug AS project_slug,
       v.version_id AS version_label,
       p.description AS project_description,
-      v.metadata
+      v.metadata,
+      v.mock_settings
     FROM apiome.mcp_v_public_specs s
     INNER JOIN apiome.versions v ON v.id = s.id AND v.deleted_at IS NULL
     INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
@@ -73,7 +83,8 @@ _RESOLVE_DRAFT_SPEC = """
       p.slug AS project_slug,
       v.version_id AS version_label,
       p.description AS project_description,
-      v.metadata
+      v.metadata,
+      v.mock_settings
     FROM apiome.versions v
     INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
     INNER JOIN apiome.tenants t ON t.id = p.tenant_id AND t.deleted_at IS NULL AND t.enabled IS TRUE
@@ -135,7 +146,31 @@ class CompiledSpec:
         return (self.tenant_slug, self.project_slug, self.version_label)
 
 
-async def _fetch_access_row(
+DEFAULT_ACCESS_CACHE_TTL_SECONDS = 5.0
+"""Access-decision TTL until :func:`configure_access_cache` runs at startup."""
+
+_ACCESS_CACHE: TtlCache[dict[str, Any]] = TtlCache(ttl_seconds=DEFAULT_ACCESS_CACHE_TTL_SECONDS)
+"""Access rows by ``(tenant, project, version)``; ``None`` entries remember missing versions."""
+
+
+def configure_access_cache(ttl_seconds: float) -> None:
+    """Set the access-decision TTL (``APIOME_MOCK_ACCESS_CACHE_TTL_SECONDS``) and empty the cache."""
+    _ACCESS_CACHE.ttl_seconds = ttl_seconds
+    _ACCESS_CACHE.negative_ttl_seconds = ttl_seconds
+    _ACCESS_CACHE.clear()
+
+
+def invalidate_access(tenant: str, project: str, version: str) -> None:
+    """Forget one version's cached access decision (publish / settings NOTIFY)."""
+    _ACCESS_CACHE.invalidate((tenant, project, version))
+
+
+def clear_access_cache() -> None:
+    """Forget every cached access decision (NOTIFY listener reconnect, tests)."""
+    _ACCESS_CACHE.clear()
+
+
+async def _query_access_row(
     pool: AsyncConnectionPool,
     *,
     tenant: str,
@@ -148,7 +183,78 @@ async def _fetch_access_row(
                 _RESOLVE_MOCK_ACCESS,
                 {"tenant": tenant, "project": project, "version": version},
             )
-            return await cur.fetchone()
+            row = await cur.fetchone()
+    return dict(row) if row is not None else None
+
+
+async def _fetch_access_row(
+    pool: AsyncConnectionPool,
+    *,
+    tenant: str,
+    project: str,
+    version: str,
+) -> dict[str, Any] | None:
+    """Return the version's access row, from the access cache when it is fresh.
+
+    The row does not depend on the caller's API key (the key is checked against it per request in
+    :func:`access_status_from_row`), so one cached row serves every caller of a version. A missing
+    version is cached as well, so repeated 404s do not repeat the query.
+
+    Args:
+        pool: Database pool used on a miss.
+        tenant: Tenant slug.
+        project: Project slug.
+        version: Version label.
+
+    Returns:
+        ``mock_enabled``, ``published``, ``mock_mode``, ``source_format``, ``is_public_spec``, or
+        ``None`` when the coordinates name no live version.
+    """
+    return await _ACCESS_CACHE.get_or_load(
+        (tenant, project, version),
+        lambda: _query_access_row(pool, tenant=tenant, project=project, version=version),
+    )
+
+
+def row_is_private_mode(row: Mapping[str, Any]) -> bool:
+    """True when an unpublished access row is configured as a key-gated draft mock.
+
+    Accepts the narrow ``mock_mode`` column, and the full ``mock_settings`` document older callers
+    (and tests) still hand over.
+    """
+    if "mock_mode" in row:
+        return row.get("mock_mode") == "private"
+    return is_private_mock_mode(row.get("mock_settings"), published=False)
+
+
+def access_status_from_row(
+    row: Mapping[str, Any] | None,
+    *,
+    tenant: str,
+    api_key: ValidatedApiKey | None,
+) -> MockAccessStatus:
+    """Decide whether a version's mock may be served to this caller.
+
+    Args:
+        row: The access row (``None`` when the version does not exist).
+        tenant: Tenant slug from the URL.
+        api_key: The caller's validated key, if any.
+
+    Returns:
+        ``ok``, ``disabled`` (mock switched off), or ``missing`` (not found, not public, or a
+        private draft without a key of its tenant).
+    """
+    if row is None:
+        return "missing"
+    if not row.get("mock_enabled"):
+        return "disabled"
+    if bool(row.get("published")):
+        return "ok" if row.get("is_public_spec") else "missing"
+    if not row_is_private_mode(row):
+        return "missing"
+    if api_key is None or api_key.tenant_slug != tenant:
+        return "missing"
+    return "ok"
 
 
 async def get_mock_access_status(
@@ -159,24 +265,9 @@ async def get_mock_access_status(
     version: str,
     api_key: ValidatedApiKey | None = None,
 ) -> MockAccessStatus:
-    """Return whether mock serving is allowed for the slug coordinates."""
+    """Return whether mock serving is allowed for the slug coordinates (cached access row)."""
     row = await _fetch_access_row(pool, tenant=tenant, project=project, version=version)
-    if row is None:
-        return "missing"
-    if not row.get("mock_enabled"):
-        return "disabled"
-
-    published = bool(row.get("published"))
-    if published:
-        if not row.get("is_public_spec"):
-            return "missing"
-        return "ok"
-
-    if not is_private_mock_mode(row.get("mock_settings"), published=False):
-        return "missing"
-    if api_key is None or api_key.tenant_slug != tenant:
-        return "missing"
-    return "ok"
+    return access_status_from_row(row, tenant=tenant, api_key=api_key)
 
 
 async def _compile_from_row(
@@ -245,7 +336,7 @@ async def load_compiled_spec(
     if published:
         query = _RESOLVE_PUBLISHED_SPEC
     else:
-        if api_key is None or not is_private_mock_mode(access_row.get("mock_settings"), published=False):
+        if api_key is None or not row_is_private_mode(access_row):
             return None
         query = _RESOLVE_DRAFT_SPEC
 
@@ -255,4 +346,5 @@ async def load_compiled_spec(
             row = await cur.fetchone()
             if row is None:
                 return None
-            return await _compile_from_row(conn, row, mock_settings=access_row.get("mock_settings"))
+            mock_settings = row.get("mock_settings", access_row.get("mock_settings"))
+            return await _compile_from_row(conn, row, mock_settings=mock_settings)

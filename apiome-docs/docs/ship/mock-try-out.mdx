@@ -40,7 +40,13 @@ curl https://mock.apiome.dev/acme/payments-api/2.3.1/payments
 curl -H 'X-Mock-Scenario: quota-exceeded' https://mock.apiome.dev/acme/payments-api/2.3.1/payments
 ```
 
-The **Mock** cell's sparkline counts the requests over 30 days.
+The **Mock** cell's sparkline counts the requests over 30 days. Counts reach it within a few
+seconds, because the mock writes them in batches.
+
+After you turn a mock off, it can keep answering for up to 5 seconds. After you revoke an API key,
+private mocks can keep accepting it for up to 30 seconds. Both are the default cache times. Your
+administrator can change them: see
+[The mock runtime's database work per request](../admin/operating-apiome.mdx#the-mock-runtimes-database-work-per-request).
 
 A mock starts from the version's [stored OpenAPI
 document](../admin/document-store.mdx#rendered-documents): the same bytes `GET /v1/schema` serves.

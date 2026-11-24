@@ -1,0 +1,39 @@
+---
+slug: mock-data-plane-no-database-per-request
+title: "Mock data plane: no database work per request"
+description: "A cached hosted mock answers without touching the database."
+authors: [apiome]
+---
+
+**Performance.** A hosted mock that has already been served now answers REST, GraphQL and gRPC
+requests, and streams SSE and WebSocket messages, without running a database statement.
+
+{/* truncate */}
+
+- **Access is cached.** Whether a version's mock is on, its visibility and its mode are kept for
+  5 seconds (`APIOME_MOCK_ACCESS_CACHE_TTL_SECONDS`). A publish or a settings change clears them at
+  once. The check reads the mode, not the whole mock settings document.
+- **Usage counts are batched.** Requests and streamed messages are added up in memory and written
+  every 2 seconds (`APIOME_MOCK_USAGE_FLUSH_INTERVAL_SECONDS`), one multi-row write per table,
+  plus a last write on shutdown. Before, every request and every message updated the same counter
+  row on a connection of its own.
+- **Keys are cached.** A key that passed is reused for 30 seconds, and one that failed is refused
+  without a lookup for 10. bcrypt runs off the request loop, and each request checks its key once.
+- **Unknown workspaces are cheap.** A slug that does not exist is remembered, and each client
+  address may send 5 such requests per second (`APIOME_MOCK_UNKNOWN_TENANT_RPS`).
+- **Leaner pool.** Connections are autocommit, carry a 30-second statement timeout, and are
+  named `apiome-mock` in `pg_stat_activity`. At most 100 requests wait for a connection.
+- **Capture, audit and Kafka.** A capture is one transaction on one connection. Audit rows are
+  appended one at a time per workspace, so the hash chain never forks. The Kafka producer runs one
+  statement per publishing round and reuses its broker connection.
+- **Cache invalidation recovers.** When the invalidation listener loses its connection, it
+  reconnects with backoff and empties the caches, without a restart.
+
+On a scratch PostgreSQL 18 database, one hot public version served 11,410–12,560 requests per
+second, up from 4,680–4,810, with 16 concurrent clients. The usage totals matched the requests
+served.
+
+**What changes for you.** Turning a mock off takes effect within 5 seconds, and revoking a key
+within 30 seconds, at the default cache times. Usage counts reach the **Mock** cell's sparkline a
+few seconds after the requests. See
+[The mock runtime's database work per request](/admin/operating-apiome#the-mock-runtimes-database-work-per-request).

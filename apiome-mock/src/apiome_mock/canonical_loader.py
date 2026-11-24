@@ -14,8 +14,8 @@ from app.conversion_job import ConversionError
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
-from apiome_mock.api_key import ValidatedApiKey, is_private_mock_mode
-from apiome_mock.spec_loader import MockAccessStatus, _fetch_access_row
+from apiome_mock.api_key import ValidatedApiKey
+from apiome_mock.spec_loader import MockAccessStatus, _fetch_access_row, row_is_private_mode
 
 _RESOLVE_PUBLISHED_SOURCE = """
     SELECT
@@ -29,6 +29,7 @@ _RESOLVE_PUBLISHED_SOURCE = """
       v.format_metadata,
       v.source_tool_versions AS tool_versions,
       p.metadata,
+      v.mock_settings,
       t.slug AS tenant_slug
     FROM apiome.versions v
     INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
@@ -54,6 +55,7 @@ _RESOLVE_DRAFT_SOURCE = """
       v.format_metadata,
       v.source_tool_versions AS tool_versions,
       p.metadata,
+      v.mock_settings,
       t.slug AS tenant_slug
     FROM apiome.versions v
     INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
@@ -123,7 +125,7 @@ async def load_canonical_spec(
     if published:
         query = _RESOLVE_PUBLISHED_SOURCE
     else:
-        if api_key is None or not is_private_mock_mode(access_row.get("mock_settings"), published=False):
+        if api_key is None or not row_is_private_mode(access_row):
             return None
         query = _RESOLVE_DRAFT_SOURCE
 
@@ -151,7 +153,7 @@ async def load_canonical_spec(
         updated_at=updated_at,
         api=api,
         source_format=row.get("source_format"),
-        mock_settings=access_row.get("mock_settings"),
+        mock_settings=row.get("mock_settings", access_row.get("mock_settings")),
     )
 
 

@@ -1,8 +1,13 @@
-"""Resolve mock rate/quota limits from the tenant license tier (#4420, SIM-1.5)."""
+"""Resolve mock rate/quota limits from the tenant license tier (#4420, SIM-1.5).
+
+Both lookups are cached in process with **single flight** (#7207, DBP-1.24): when a cache entry
+expires under load, one request reloads it and the rest wait for that load instead of each taking a
+pooled connection. An unknown tenant slug is cached too (a negative entry), so a stream of 404s for
+a tenant that does not exist costs one query per TTL, not one per request.
+"""
 
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -10,6 +15,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.settings import Settings
+from apiome_mock.ttl_cache import TtlCache
 
 _RESOLVE_TENANT_LIMITS = """
     SELECT
@@ -66,19 +72,14 @@ class TenantLimits:
 
 
 @dataclass
-class _CachedLimits:
-    limits: TenantLimits
-    expires_at: float
+class _MonthlyCount:
+    """A cached monthly total, bumped in place as requests are served."""
 
-
-@dataclass
-class _CachedMonthly:
     count: int
-    expires_at: float
 
 
-_limits_cache: dict[str, _CachedLimits] = {}
-_monthly_cache: dict[str, _CachedMonthly] = {}
+_limits_cache: TtlCache[TenantLimits] = TtlCache(ttl_seconds=60.0)
+_monthly_cache: TtlCache[_MonthlyCount] = TtlCache(ttl_seconds=30.0)
 
 
 def _int_from_seats(seats: object, key: str, default: int) -> int:
@@ -128,30 +129,29 @@ async def resolve_tenant_limits(
     tenant_slug: str,
     settings: Settings,
 ) -> TenantLimits | None:
-    """Return license-tier mock limits for ``tenant_slug``, or ``None`` when unknown."""
-    now = time.monotonic()
-    cached = _limits_cache.get(tenant_slug)
-    if cached is not None and now < cached.expires_at:
-        return cached.limits
+    """Return license-tier mock limits for ``tenant_slug``, or ``None`` when unknown.
 
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(_RESOLVE_TENANT_LIMITS, {"tenant": tenant_slug})
-            row = await cur.fetchone()
+    Args:
+        pool: Database pool used on a cache miss.
+        tenant_slug: Tenant slug from the URL.
+        settings: Mock settings (defaults and ``limits_cache_ttl_seconds``).
 
-    if row is None:
-        return None
+    Returns:
+        The tenant's limits; ``None`` (also cached) when no enabled tenant has the slug.
+    """
+    _limits_cache.ttl_seconds = settings.limits_cache_ttl_seconds
+    _limits_cache.negative_ttl_seconds = settings.limits_cache_ttl_seconds
 
-    limits = limits_from_seats(
-        tenant_id=row["tenant_id"],
-        seats=row.get("seats"),
-        settings=settings,
-    )
-    _limits_cache[tenant_slug] = _CachedLimits(
-        limits=limits,
-        expires_at=now + settings.limits_cache_ttl_seconds,
-    )
-    return limits
+    async def _load() -> TenantLimits | None:
+        async with pool.connection() as conn:
+            async with conn.cursor(row_factory=dict_row) as cur:
+                await cur.execute(_RESOLVE_TENANT_LIMITS, {"tenant": tenant_slug})
+                row = await cur.fetchone()
+        if row is None:
+            return None
+        return limits_from_seats(tenant_id=row["tenant_id"], seats=row.get("seats"), settings=settings)
+
+    return await _limits_cache.get_or_load(tenant_slug, _load)
 
 
 async def resolve_monthly_usage(
@@ -160,31 +160,33 @@ async def resolve_monthly_usage(
     tenant_id: UUID,
     settings: Settings,
 ) -> int:
-    """Return the tenant's mock request count for the current UTC calendar month."""
-    cache_key = str(tenant_id)
-    now = time.monotonic()
-    cached = _monthly_cache.get(cache_key)
-    if cached is not None and now < cached.expires_at:
-        return cached.count
+    """Return the tenant's mock request count for the current UTC calendar month.
 
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(_MONTHLY_USAGE, {"tenant_id": tenant_id})
-            row = await cur.fetchone()
+    Args:
+        pool: Database pool used on a cache miss.
+        tenant_id: Tenant id.
+        settings: Mock settings (``monthly_usage_cache_ttl_seconds``).
 
-    count = int(row["monthly_count"]) if row else 0
-    _monthly_cache[cache_key] = _CachedMonthly(
-        count=count,
-        expires_at=now + settings.monthly_usage_cache_ttl_seconds,
-    )
-    return count
+    Returns:
+        The stored monthly total plus the requests this process served since it was read.
+    """
+    _monthly_cache.ttl_seconds = settings.monthly_usage_cache_ttl_seconds
+
+    async def _load() -> _MonthlyCount:
+        async with pool.connection() as conn:
+            async with conn.cursor(row_factory=dict_row) as cur:
+                await cur.execute(_MONTHLY_USAGE, {"tenant_id": tenant_id})
+                row = await cur.fetchone()
+        return _MonthlyCount(count=int(row["monthly_count"]) if row else 0)
+
+    cached = await _monthly_cache.get_or_load(str(tenant_id), _load)
+    return cached.count if cached is not None else 0
 
 
 def bump_monthly_usage_cache(tenant_id: UUID, *, delta: int = 1) -> None:
     """Optimistically bump the in-process monthly counter after a served request."""
-    cache_key = str(tenant_id)
-    cached = _monthly_cache.get(cache_key)
-    if cached is None:
+    hit, cached = _monthly_cache.peek(str(tenant_id))
+    if not hit or cached is None:
         return
     cached.count = max(0, cached.count + delta)
 

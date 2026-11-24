@@ -515,6 +515,7 @@ async def handle_mock_request(
             instance=instance,
             api_key=api_key,
             pool=pool,
+            version_id=compiled.revision_id,
         )
 
     return await serve_compiled_request(

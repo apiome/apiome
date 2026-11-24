@@ -42,6 +42,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping, Protocol, Sequence
+from uuid import UUID
 
 import httpx
 import structlog
@@ -66,7 +67,7 @@ from fastapi.responses import Response
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import ValidatedApiKey
-from apiome_mock.capture_store import count_pending_captures, insert_capture_exchange
+from apiome_mock.capture_store import QUEUE_FULL, store_capture_exchange
 from apiome_mock.problems import (
     capture_not_authorized,
     capture_upstream_not_allowed,
@@ -422,6 +423,7 @@ class CaptureProxy:
         instance: str,
         api_key: ValidatedApiKey | None,
         pool: AsyncConnectionPool,
+        version_id: UUID | None = None,
     ) -> Response:
         """Proxy one opt-in request upstream and record the redacted exchange.
 
@@ -437,6 +439,8 @@ class CaptureProxy:
             instance: Problem ``instance`` path for error bodies.
             api_key: The validated tenant API key that attributes the capture.
             pool: Database pool for the review queue and the audit ledger.
+            version_id: ``versions.id`` of the mocked revision (``CompiledSpec.revision_id``), so
+                the store does not resolve the slugs again; ``None`` records nothing.
 
         Returns:
             The upstream's response, annotated with the capture headers — or a problem response
@@ -513,6 +517,7 @@ class CaptureProxy:
             request_body=request_body,
             api_key=api_key,
             pool=pool,
+            version_id=version_id,
         )
         response.headers[CAPTURE_HEADER] = "recorded" if recorded else "not-recorded"
         response.headers[CAPTURE_REDACTIONS_HEADER] = str(redaction_count)
@@ -559,6 +564,7 @@ class CaptureProxy:
         request_body: bytes,
         api_key: ValidatedApiKey,
         pool: AsyncConnectionPool,
+        version_id: UUID | None = None,
     ) -> tuple[bool, str | None, str | None, int]:
         """Redact, validate, re-scan, and persist one exchange.
 
@@ -638,17 +644,15 @@ class CaptureProxy:
             return False, "credential-scan-failed", None, redaction_count
 
         try:
-            pending = await count_pending_captures(
-                pool, tenant_id=api_key.tenant_id, tenant=tenant, project=project, version=version
-            )
-            if pending >= MAX_PENDING_CAPTURES:
-                return False, "review-queue-full", None, redaction_count
-            capture_id = await insert_capture_exchange(
+            if version_id is None:
+                return False, "store-unavailable", None, redaction_count
+            capture_id, refused = await store_capture_exchange(
                 pool,
                 tenant_id=api_key.tenant_id,
-                tenant=tenant,
+                version_id=version_id,
                 project=project,
                 version=version,
+                max_pending=MAX_PENDING_CAPTURES,
                 upstream=target.logged_url,
                 allowlist_entry=target.allowlist_entry,
                 policy_digest=policy.digest,
@@ -675,7 +679,7 @@ class CaptureProxy:
             return False, "store-unavailable", None, redaction_count
 
         if capture_id is None:
-            return False, "store-unavailable", None, redaction_count
+            return False, refused if refused == QUEUE_FULL else "store-unavailable", None, redaction_count
 
         _log.info(
             "mock_capture_recorded",

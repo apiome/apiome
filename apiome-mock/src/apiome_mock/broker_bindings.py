@@ -24,7 +24,9 @@ __all__ = [
     "BoundVersion",
     "connection_from_row",
     "list_bound_versions",
+    "binding_state_key",
     "load_kafka_binding",
+    "load_tick_state",
     "version_mock_enabled",
 ]
 
@@ -59,6 +61,33 @@ _MOCK_ENABLED = """
     SELECT v.mock_enabled IS TRUE AND v.deleted_at IS NULL AS enabled
     FROM apiome.versions v WHERE v.id = %(version_id)s
 """
+
+
+#: What the periodic producer reads once per tick (#7207, DBP-1.24): whether the mock is still on,
+#: and the binding's *state* — no ciphertext. The adapter is rebuilt (and the full binding read)
+#: only when that state differs from the adapter's.
+_TICK_STATE = """
+    SELECT (v.mock_enabled IS TRUE AND v.deleted_at IS NULL) AS enabled,
+           b.id::text AS id, b.rotated_at, b.key_version, b.bootstrap, b.tls_enabled, b.tls_verify
+    FROM apiome.versions v
+    LEFT JOIN apiome.mock_broker_bindings b ON b.version_id = v.id AND b.protocol = 'kafka'
+    WHERE v.id = %(version_id)s
+"""
+
+
+def binding_state_key(row: dict[str, Any]) -> tuple[Any, ...]:
+    """The binding fields that, when any changes, mean the adapter must be rebuilt.
+
+    Accepts a full binding row or a :func:`load_tick_state` row (same column names).
+    """
+    return (
+        str(row.get("id")),
+        str(row.get("rotated_at") or ""),
+        row.get("key_version"),
+        tuple(row.get("bootstrap") or ()),
+        bool(row.get("tls_enabled")),
+        bool(row.get("tls_verify", True)),
+    )
 
 
 class BindingUnavailableError(RuntimeError):
@@ -121,6 +150,19 @@ async def list_bound_versions(pool: AsyncConnectionPool) -> list[BoundVersion]:
             await cur.execute(_LIST_BOUND_VERSIONS)
             rows = await cur.fetchall()
     return [BoundVersion(row) for row in rows]
+
+
+async def load_tick_state(pool: AsyncConnectionPool, version_id: UUID | str) -> dict[str, Any] | None:
+    """Return ``enabled`` plus the binding state columns (``id`` is ``None`` when unbound).
+
+    Returns:
+        The row, or ``None`` when the version no longer exists.
+    """
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(_TICK_STATE, {"version_id": str(version_id)})
+            row = await cur.fetchone()
+    return dict(row) if row else None
 
 
 async def version_mock_enabled(pool: AsyncConnectionPool, version_id: UUID | str) -> bool:

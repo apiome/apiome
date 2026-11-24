@@ -32,6 +32,73 @@ class Settings(BaseSettings):
     database_pool_min_size: int = Field(default=1, ge=1, le=256)
     database_pool_max_size: int = Field(default=10, ge=1, le=256)
     database_pool_timeout: float = Field(default=30.0, gt=0, le=600.0)
+    database_pool_max_waiting: int = Field(
+        default=100,
+        ge=0,
+        le=100_000,
+        description=(
+            "Requests allowed to queue for a pooled connection before new ones fail fast (0 = unbounded) (#7207)."
+        ),
+    )
+    database_statement_timeout_ms: int = Field(
+        default=30_000,
+        ge=0,
+        le=600_000,
+        description="Server-side statement_timeout for pooled connections in ms (0 disables) (#7207).",
+    )
+    database_application_name: str = Field(
+        default="apiome-mock",
+        min_length=1,
+        max_length=63,
+        description="application_name reported to PostgreSQL by pooled connections (#7207).",
+    )
+    access_cache_ttl_seconds: float = Field(
+        default=5.0,
+        ge=0,
+        le=600.0,
+        description=(
+            "TTL for cached per-version access decisions (mock on/off, visibility, mode). A disabled "
+            "mock stops being served within this window; 0 disables the cache (#7207)."
+        ),
+    )
+    api_key_cache_ttl_seconds: float = Field(
+        default=30.0,
+        ge=0,
+        le=3600.0,
+        description=(
+            "TTL for a verified API key. A revoked or expired key stops opening private mocks "
+            "within this window; 0 disables the cache (#7207)."
+        ),
+    )
+    api_key_negative_cache_ttl_seconds: float = Field(
+        default=10.0,
+        ge=0,
+        le=3600.0,
+        description="TTL for a rejected API key, so repeated bad keys skip the lookup (#7207).",
+    )
+    usage_flush_interval_seconds: float = Field(
+        default=2.0,
+        ge=0.1,
+        le=60.0,
+        description=(
+            "How often in-process mock usage counters are written to the database in one "
+            "multi-row upsert; counters are also flushed on shutdown (#7207)."
+        ),
+    )
+    unknown_tenant_rps: float = Field(
+        default=5.0,
+        gt=0,
+        description=(
+            "Per-client-address request rate allowed for tenant slugs that do not exist, so 404 "
+            "probing is bounded (#7207)."
+        ),
+    )
+    broker_producer_db_concurrency: int = Field(
+        default=2,
+        ge=1,
+        le=64,
+        description="Concurrent database operations the periodic Kafka producer may run (#7207).",
+    )
     spec_cache_max_entries: int = Field(
         default=128,
         ge=1,

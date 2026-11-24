@@ -19,7 +19,7 @@ import pytest
 from starlette.requests import Request
 
 from apiome_mock import broker_producer as producer_module
-from apiome_mock import channel_routes
+from apiome_mock import channel_routes, event_transport
 from apiome_mock.broker_adapter import BrokerError, PublishReceipt
 from apiome_mock.broker_bindings import BoundVersion
 from apiome_mock.broker_producer import (
@@ -105,15 +105,26 @@ def env(monkeypatch, mock_pool):
         state.setdefault("limit_calls", []).append(kwargs["client_host"])
         return MagicMock() if state["blocked"] else None
 
-    async def enabled(pool, version_id):
-        return state["enabled"]
+    async def tick_state(pool, version_id):
+        state["tick_reads"] = state.get("tick_reads", 0) + 1
+        return {**state["binding"], "enabled": state["enabled"]}
 
-    monkeypatch.setattr(producer_module, "load_kafka_binding", load_binding)
+    async def counting_load_binding(pool, version_id):
+        state["binding_reads"] = state.get("binding_reads", 0) + 1
+        return state["binding"]
+
+    monkeypatch.setattr(producer_module, "load_kafka_binding", counting_load_binding)
     monkeypatch.setattr(channel_routes, "load_kafka_binding", load_binding)
     monkeypatch.setattr(producer_module, "resolve_limits_for_tenant", limits)
     monkeypatch.setattr(producer_module, "enforce_mock_limits_for_context", enforce)
     monkeypatch.setattr(producer_module, "record_mock_transport_event", lambda **kw: state["events"].append(kw))
-    monkeypatch.setattr(producer_module, "version_mock_enabled", enabled)
+    monkeypatch.setattr(producer_module, "load_tick_state", tick_state)
+
+    async def access_ok(*_args, **_kwargs):
+        return "ok"
+
+    # The channel routes check access before the compiled cache (#7207); these specs are cached.
+    monkeypatch.setattr(event_transport, "get_canonical_access_status", access_ok)
     monkeypatch.setattr(
         BrokerPublisher,
         "_count",

@@ -38,3 +38,24 @@ def mock_pool() -> MagicMock:
     pool.open = AsyncMock()
     pool.close = AsyncMock()
     return pool
+
+
+@pytest.fixture(autouse=True)
+def reset_request_path_caches() -> None:
+    """Empty the process-wide request-path caches and usage/audit writers (#7207, DBP-1.24)."""
+    from apiome_mock import audit
+    from apiome_mock.api_key import clear_api_key_cache
+    from apiome_mock.spec_loader import clear_access_cache
+    from apiome_mock.tenant_limits import clear_limits_caches_for_tests
+    from apiome_mock.usage import reset_usage_recorders_for_tests
+
+    def _reset() -> None:
+        clear_access_cache()
+        clear_api_key_cache()
+        clear_limits_caches_for_tests()
+        reset_usage_recorders_for_tests()
+        audit._WRITERS.clear()
+
+    _reset()
+    yield
+    _reset()

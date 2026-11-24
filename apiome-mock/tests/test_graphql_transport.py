@@ -486,7 +486,14 @@ def hosted(monkeypatch: pytest.MonkeyPatch, mock_pool: MagicMock) -> Iterator[An
             patch("apiome_mock.server.handle_mock_request", new=rest),
             patch(
                 "apiome_mock.graphql_transport._fetch_access_row",
-                new=AsyncMock(return_value={"source_format": source_format, "mock_enabled": True}),
+                new=AsyncMock(
+                    return_value={
+                        "source_format": source_format,
+                        "mock_enabled": True,
+                        "published": True,
+                        "is_public_spec": True,
+                    }
+                ),
             ),
             patch("apiome_mock.graphql_transport.load_canonical_spec", new=AsyncMock(return_value=loaded)),
             patch("apiome_mock.graphql_transport.enforce_mock_limits", new=AsyncMock(return_value=None)),

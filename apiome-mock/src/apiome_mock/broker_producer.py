@@ -33,10 +33,11 @@ from apiome_mock.broker_adapter import BrokerAdapter, BrokerConnection, BrokerEr
 from apiome_mock.broker_bindings import (
     BindingUnavailableError,
     BoundVersion,
+    binding_state_key,
     connection_from_row,
     list_bound_versions,
     load_kafka_binding,
-    version_mock_enabled,
+    load_tick_state,
 )
 from apiome_mock.canonical_compiler import CompiledCanonicalSpec, EventChannelRoute
 from apiome_mock.event_payloads import NO_PAYLOAD, EncodedEvent, EventRejectedError, build_event, encoding_for
@@ -45,6 +46,7 @@ from apiome_mock.guard import enforce_mock_limits_for_context, record_mock_trans
 from apiome_mock.kafka_adapter import KafkaAdapter
 from apiome_mock.scenarios import Scenario, parse_active_scenario, parse_scenarios
 from apiome_mock.settings import Settings, get_settings
+from apiome_mock.usage import usage_recorder_for
 
 __all__ = [
     "STATUS_NO_BROKER",
@@ -143,10 +145,21 @@ class BrokerPublisher:
     settings: Settings = field(default_factory=get_settings)
     adapter_factory: Callable[[BrokerConnection], BrokerAdapter] = KafkaAdapter
     _adapters: dict[str, _AdapterEntry] = field(default_factory=dict)
-    _usage_tasks: set[asyncio.Task[None]] = field(default_factory=set)
 
-    async def adapter_for(self, version_id: UUID | str) -> BrokerAdapter | None:
+    db_slots: asyncio.Semaphore | None = None
+    """Caps concurrent binding reads (the periodic producer shares its semaphore; #7207)."""
+
+    async def adapter_for(
+        self, version_id: UUID | str, *, binding_state: tuple[Any, ...] | None = None
+    ) -> BrokerAdapter | None:
         """The adapter for a version's Kafka binding, rebuilt when the binding changed.
+
+        Args:
+            version_id: The version record id.
+            binding_state: The binding's current :func:`binding_state_key`, when the caller has
+                already read it (the periodic producer, once per tick). When it matches the cached
+                adapter's state the adapter is reused with no query; otherwise (or when omitted, as
+                on demand) the binding row is read.
 
         Returns:
             The adapter, or ``None`` when the version has no binding.
@@ -155,18 +168,18 @@ class BrokerPublisher:
             BindingUnavailableError: The binding's credential cannot be opened.
         """
         key = str(version_id)
-        row = await load_kafka_binding(self.pool, key)
+        entry = self._adapters.get(key)
+        if binding_state is not None and entry is not None and entry.state_key == binding_state:
+            return entry.adapter
+        if self.db_slots is not None:
+            async with self.db_slots:
+                row = await load_kafka_binding(self.pool, key)
+        else:
+            row = await load_kafka_binding(self.pool, key)
         if row is None:
             await self.drop(key)
             return None
-        state = (
-            str(row.get("id")),
-            str(row.get("rotated_at") or ""),
-            row.get("key_version"),
-            tuple(row.get("bootstrap") or ()),
-            bool(row.get("tls_enabled")),
-            bool(row.get("tls_verify", True)),
-        )
+        state = binding_state_key(row)
         entry = self._adapters.get(key)
         if entry is not None and entry.state_key == state:
             return entry.adapter
@@ -195,32 +208,18 @@ class BrokerPublisher:
         trigger: str,
         published: bool,
     ) -> None:
-        """Count one outcome in ``mock_event_publish_usage`` (fire-and-forget, best-effort)."""
+        """Count one outcome in ``mock_event_publish_usage`` (batched with the next usage flush)."""
         if tenant_id is None:
             return
-
-        async def _run() -> None:
-            try:
-                async with self.pool.connection() as conn:
-                    await conn.execute(
-                        "SELECT apiome.record_mock_event_publish(%s::uuid, %s, %s, %s, %s, %s, %s)",
-                        (
-                            tenant_id,
-                            compiled.loaded.project_slug,
-                            compiled.loaded.version_label,
-                            channel,
-                            encoding,
-                            trigger,
-                            published,
-                        ),
-                    )
-                    await conn.commit()
-            except Exception:  # noqa: BLE001 - usage never fails a publish
-                _log.warning("mock_event_publish_usage_failed", channel=channel, exc_info=True)
-
-        task = asyncio.get_running_loop().create_task(_run())
-        self._usage_tasks.add(task)
-        task.add_done_callback(self._usage_tasks.discard)
+        usage_recorder_for(self.pool).add_event_publish(
+            tenant_id=tenant_id,
+            project_slug=compiled.loaded.project_slug,
+            version_label=compiled.loaded.version_label,
+            channel_key=channel,
+            encoding=encoding,
+            trigger=trigger,
+            published=published,
+        )
 
     async def publish_channel(
         self,
@@ -233,6 +232,7 @@ class BrokerPublisher:
         message_name: str | None = None,
         seed: int = 0,
         api_key_id: UUID | None = None,
+        binding_state: tuple[Any, ...] | None = None,
     ) -> list[PublishOutcome]:
         """Publish the channel's outbound message(s) once.
 
@@ -246,6 +246,8 @@ class BrokerPublisher:
                 (periodic) or the first (on demand).
             seed: Synthesis seed.
             api_key_id: The calling key, for the audit sample (on demand).
+            binding_state: The binding state the caller read this tick (periodic), so a current
+                adapter is reused without re-reading the binding.
 
         Returns:
             One outcome per message attempted.
@@ -269,7 +271,7 @@ class BrokerPublisher:
             ]
 
         try:
-            adapter = await self.adapter_for(compiled.loaded.revision_id)
+            adapter = await self.adapter_for(compiled.loaded.revision_id, binding_state=binding_state)
         except BindingUnavailableError:
             return [
                 PublishOutcome(
@@ -389,24 +391,47 @@ class PeriodicBrokerProducer:
     settings: Settings = field(default_factory=get_settings)
     _tasks: dict[str, tuple[tuple[Any, ...], asyncio.Task[None]]] = field(default_factory=dict)
     _stop: asyncio.Event = field(default_factory=asyncio.Event)
+    _db_slots: asyncio.Semaphore | None = None
+
+    def _slots(self) -> asyncio.Semaphore:
+        """The producer's database semaphore (``APIOME_MOCK_BROKER_PRODUCER_DB_CONCURRENCY``).
+
+        Every version loop shares the request pool with served traffic; capping the producer's
+        concurrent statements keeps a large number of bound versions from crowding requests out.
+        The publisher's binding reads take the same slots.
+        """
+        if self._db_slots is None:
+            self._db_slots = asyncio.Semaphore(self.settings.broker_producer_db_concurrency)
+            self.publisher.db_slots = self._db_slots
+        return self._db_slots
 
     async def _version_loop(self, bound: BoundVersion) -> None:
-        """Publish one version's channels every interval until its mock is off or it is unbound."""
+        """Publish one version's channels every interval until its mock is off or it is unbound.
+
+        One tick costs one query (#7207, DBP-1.24): :func:`load_tick_state` says whether the mock
+        is still on and what the binding looks like, and every channel of the tick reuses the
+        version's adapter unless that binding state changed.
+        """
         version_id = str(bound["version_id"])
         pool = self.publisher.pool
+        slots = self._slots()
         while not self._stop.is_set():
-            if not await version_mock_enabled(pool, version_id):
+            async with slots:
+                tick = await load_tick_state(pool, version_id)
+            if tick is None or not tick.get("enabled"):
                 _log.info("broker_producer_stopped_mock_disabled", version_id=version_id)
                 await self.publisher.drop(version_id)
                 return
-            compiled = await self.load_spec(bound["tenant_slug"], bound["project_slug"], bound["version_label"])
+            binding_state = binding_state_key(tick) if tick.get("id") else None
+            async with slots:
+                compiled = await self.load_spec(bound["tenant_slug"], bound["project_slug"], bound["version_label"])
             routes = [r for r in getattr(compiled, "event_channels", ()) if r.kafka.publishable]
             if not routes:
                 return
             scenario = scenario_for(compiled, None)
             for route in routes:
                 outcomes = await self.publisher.publish_channel(
-                    compiled, route, trigger=TRIGGER_PERIODIC, scenario=scenario
+                    compiled, route, trigger=TRIGGER_PERIODIC, scenario=scenario, binding_state=binding_state
                 )
                 for outcome in outcomes:
                     if outcome.status != STATUS_PUBLISHED:
@@ -420,7 +445,8 @@ class PeriodicBrokerProducer:
     async def refresh(self) -> None:
         """Start loops for newly bound versions; stop loops for unbound or disabled ones."""
         try:
-            bound = await list_bound_versions(self.publisher.pool)
+            async with self._slots():
+                bound = await list_bound_versions(self.publisher.pool)
         except Exception:  # noqa: BLE001 - a failed refresh keeps the current loops
             _log.warning("broker_producer_refresh_failed", exc_info=True)
             return

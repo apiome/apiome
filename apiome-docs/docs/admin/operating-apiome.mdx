@@ -93,6 +93,10 @@ Add the MCP server too: each `apiome-mcp` instance serving HTTP keeps two pools,
 (`10` + `10` by default). See
 [The MCP server's database work per call](#the-mcp-servers-database-work-per-call).
 
+The mock runtime keeps one pool of up to `APIOME_MOCK_DATABASE_POOL_MAX_SIZE` connections
+(default `10`) per instance. Add it too. See
+[The mock runtime's database work per request](#the-mock-runtimes-database-work-per-request).
+
 The web app keeps its own pool of up to `DB_POOL_MAX` connections (default `10`). The public
 browse site keeps a pool of its own, sized by the `DB_POOL_MAX` set on the browse service (default
 `10` as well). The two are separate settings on separate services, so you can size them apart. Add
@@ -308,6 +312,84 @@ with one over public specs only. Two things cost more afterwards:
 Creating or editing a draft costs less than before. On a large database, read
 [Upgrade a large database without blocking writes](#upgrade-a-large-database-without-blocking-writes)
 before you apply `V428`.
+
+### The mock runtime's database work per request
+
+`apiome-mock` serves every hosted mock: REST, GraphQL, gRPC, SSE, WebSocket and Kafka. Its pool is
+named `apiome-mock` in `pg_stat_activity`. Every connection runs in autocommit mode, so a read is
+one round trip with no `BEGIN` or `COMMIT`. Writes that must happen together run in their own
+transaction.
+
+**What one request costs.** Once a version has been served, a REST, GraphQL or gRPC request to it
+runs no statement and takes no connection. Everything the request needs is cached in the process:
+whether the mock is on, the compiled spec, the API key, the tenant's limits and the month's usage.
+A streamed SSE or WebSocket message runs no statement either. Mocks that are already cached keep
+answering even when every connection in the pool is busy with slow queries.
+
+**Mock on or off, visibility and mode.** These are cached per version for
+`APIOME_MOCK_ACCESS_CACHE_TTL_SECONDS`. A publish or a change to the mock's settings clears the
+version at once. Turning a mock off is picked up within the cache time: requests then get a
+`404` with problem type `mock-disabled`. A missing version is cached too, so repeated `404`s do not
+repeat the query.
+
+**API keys.** A key that passed is reused for `APIOME_MOCK_API_KEY_CACHE_TTL_SECONDS`, and a key that
+failed is refused without a lookup for `APIOME_MOCK_API_KEY_NEGATIVE_CACHE_TTL_SECONDS`. A revoked or
+expired key stops opening private mocks within the first of those times. The cache holds a SHA-256
+of the key, never the key. bcrypt runs in a worker thread, so a key being checked never holds up
+other requests. A request's key is checked once, even when a `/graphql` call falls through to a
+REST mock.
+
+**Usage counts.** The **Mock** cell's sparkline and the monthly quota read `mock_usage`. The runtime
+adds up its counts in memory and writes them every `APIOME_MOCK_USAGE_FLUSH_INTERVAL_SECONDS` as
+one multi-row `INSERT` per table, however many requests it served. Kafka publish counts
+(`mock_event_publish_usage`) go out with the same write. A graceful shutdown writes what is
+waiting before the pool closes. If a write fails, its counts are kept and sent with the next one.
+Only a crash loses counts, at most one interval's worth.
+
+**Unknown workspaces.** A request for a workspace slug that does not exist is cached for
+`APIOME_MOCK_LIMITS_CACHE_TTL_SECONDS`. Each client address may send
+`APIOME_MOCK_UNKNOWN_TENANT_RPS` such requests per second, whatever slug it tries. Past that it
+gets `429`.
+
+**Audit rows.** Sampled `mock.request` rows (`APIOME_MOCK_AUDIT_SAMPLE_RATE`) go through one writer
+per process, one row at a time. Each append takes a per-workspace lock, so two writers, on one
+instance or several, never link to the same previous row in the hash chain. A stored capture, its
+review-queue count and its `mock.capture` audit row are written on one connection, in one
+transaction.
+
+**Kafka producer.** Each publishing round of a version runs one statement. It checks that the mock
+is still on and reads the broker binding's state, without the credential. The adapter is reused
+for every channel until the binding changes. The producer runs at most
+`APIOME_MOCK_BROKER_PRODUCER_DB_CONCURRENCY` statements at once.
+
+**Cache invalidation.** The runtime listens on `APIOME_MOCK_SPEC_NOTIFY_CHANNEL`. When that
+connection drops, it reconnects with backoff, from 0.5 seconds up to 30 seconds, without a restart.
+Every time it connects, it empties its caches, because changes made while it was disconnected were
+never heard.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `APIOME_MOCK_DATABASE_POOL_MIN_SIZE` / `_MAX_SIZE` | `1` / `10` | Connections the pool keeps open and may open |
+| `APIOME_MOCK_DATABASE_POOL_TIMEOUT` | `30` | Seconds a request waits for a connection |
+| `APIOME_MOCK_DATABASE_POOL_MAX_WAITING` | `100` | Requests that may wait for a connection; past it a new one fails at once. `0` means no limit |
+| `APIOME_MOCK_DATABASE_STATEMENT_TIMEOUT_MS` | `30000` | How long one statement may run. `0` turns it off |
+| `APIOME_MOCK_DATABASE_APPLICATION_NAME` | `apiome-mock` | The pool's name in `pg_stat_activity` |
+| `APIOME_MOCK_ACCESS_CACHE_TTL_SECONDS` | `5` | Seconds a version's on/off, visibility and mode are reused. `0` reads them on every request |
+| `APIOME_MOCK_API_KEY_CACHE_TTL_SECONDS` | `30` | Seconds a key that passed skips the lookup and bcrypt. `0` checks on every request |
+| `APIOME_MOCK_API_KEY_NEGATIVE_CACHE_TTL_SECONDS` | `10` | Seconds a key that failed is refused without a lookup |
+| `APIOME_MOCK_USAGE_FLUSH_INTERVAL_SECONDS` | `2` | Seconds between usage writes |
+| `APIOME_MOCK_LIMITS_CACHE_TTL_SECONDS` | `60` | Seconds a workspace's limits, or the fact that it does not exist, are reused |
+| `APIOME_MOCK_MONTHLY_USAGE_CACHE_TTL_SECONDS` | `30` | Seconds the month's usage total is reused between reads |
+| `APIOME_MOCK_UNKNOWN_TENANT_RPS` | `5` | Requests per second one client address may make to workspaces that do not exist |
+| `APIOME_MOCK_BROKER_PRODUCER_DB_CONCURRENCY` | `2` | Statements the Kafka producer runs at once |
+
+Measured on a scratch PostgreSQL 18 database, one hot public version, `GET` with 16 concurrent
+clients and 15,000 requests, before and after these changes. The usage totals matched the requests
+served both times:
+
+| Request | Before | After |
+| --- | --- | --- |
+| Hosted REST mock, cached, no key | 2 statements and 2 checkouts per request; 4,680–4,810 requests/s | 0 statements and 0 checkouts per request (1 batched usage write every 2 s); 11,410–12,560 requests/s |
 
 ### What the web app reuses within a request and on Home
 

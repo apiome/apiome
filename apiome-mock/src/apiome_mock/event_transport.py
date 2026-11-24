@@ -34,10 +34,9 @@ async def _resolve_canonical_spec(
     version: str,
     api_key: ValidatedApiKey | None,
 ) -> CompiledCanonicalSpec | Response:
-    cached = cache.get(tenant, project, version)
-    if cached is not None:
-        return cached
-
+    # Access first, even on a cache hit (#7207, DBP-1.24): the decision is cached for a few seconds
+    # on its own, so this costs no statement, and a disabled mock or a private draft without its
+    # key stops being served within that TTL rather than whenever the compiled spec expires.
     access = await get_canonical_access_status(
         pool,
         tenant=tenant,
@@ -49,6 +48,10 @@ async def _resolve_canonical_spec(
         return not_found("Mock endpoint not found.", instance=f"/{tenant}/{project}/{version}")
     if access == "disabled":
         return not_found("Mock is disabled for this version.", instance=f"/{tenant}/{project}/{version}")
+
+    cached = cache.get(tenant, project, version)
+    if cached is not None:
+        return cached
 
     loaded = await load_canonical_spec(
         pool,

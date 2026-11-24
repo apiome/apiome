@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import asyncio
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import AsyncIterator, cast
 
 import structlog
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
 
-from apiome_mock.api_key import validate_api_key_for_tenant
+from apiome_mock.api_key import ValidatedApiKey, configure_api_key_cache, validate_api_key_for_tenant
+from apiome_mock.audit import close_audit_writer
 from apiome_mock.broker_health import DevBrokerHealth
 from apiome_mock.broker_producer import BrokerPublisher, PeriodicBrokerProducer
 from apiome_mock.callback_dispatch import build_dispatcher
@@ -34,6 +35,8 @@ from apiome_mock.sandbox_routes import create_sandbox_router
 from apiome_mock.session_store_factory import create_session_store
 from apiome_mock.settings import get_settings
 from apiome_mock.spec_cache import SpecCache, run_notify_listener
+from apiome_mock.spec_loader import clear_access_cache, configure_access_cache, invalidate_access
+from apiome_mock.usage import close_usage_recorder, configure_usage_recorder
 
 _log = structlog.get_logger(__name__)
 
@@ -62,6 +65,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
     listener_task: asyncio.Task[None] | None = None
     grpc_runtime = GrpcMockRuntime(pool=pool, cache=canonical_cache, settings=settings)
 
+    # Request-path caches and the batched usage writer (#7207, DBP-1.24).
+    configure_access_cache(settings.access_cache_ttl_seconds)
+    configure_api_key_cache(
+        ttl_seconds=settings.api_key_cache_ttl_seconds,
+        negative_ttl_seconds=settings.api_key_negative_cache_ttl_seconds,
+    )
+    configure_usage_recorder(pool, flush_interval_seconds=settings.usage_flush_interval_seconds)
+
     _log.info("database_pool_opening")
     await pool.open()
     try:
@@ -73,6 +84,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
     def _invalidate_both(tenant: str, project: str, version: str) -> None:
         cache.invalidate(tenant, project, version)
         canonical_cache.invalidate(tenant, project, version)
+        invalidate_access(tenant, project, version)
+
+    def _flush_all() -> None:
+        # (Re)connected: anything published while the listener was down was never heard.
+        cache.clear()
+        canonical_cache.clear()
+        clear_access_cache()
 
     listener_task = asyncio.create_task(
         run_notify_listener(
@@ -81,6 +99,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
             cache,
             stop_event=stop_event,
             on_invalidate=_invalidate_both,
+            on_connected=_flush_all,
         )
     )
     await grpc_runtime.start()
@@ -155,6 +174,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
             await listener_task
         except asyncio.CancelledError:
             pass
+    await close_usage_recorder(pool)
+    await close_audit_writer(pool)
     _log.info("database_pool_closing")
     await pool.close()
 
@@ -242,20 +263,35 @@ def create_app() -> FastAPI:
             settings=settings,
         )
 
-    async def serve_rest(request: Request, tenant: str, project: str, version: str, path: str) -> Response:
-        """Serve one request through the REST (OpenAPI) mock path: limits, resolution, usage."""
+    _unvalidated = object()
+
+    async def serve_rest(
+        request: Request,
+        tenant: str,
+        project: str,
+        version: str,
+        path: str,
+        validated_key: ValidatedApiKey | None | object = _unvalidated,
+    ) -> Response:
+        """Serve one request through the REST (OpenAPI) mock path: limits, resolution, usage.
+
+        ``validated_key`` is the key a caller already validated for this request (the GraphQL
+        route falling through to REST), so a request's key is checked once (#7207).
+        """
         pool: AsyncConnectionPool = app.state.db_pool
         cache: SpecCache = app.state.spec_cache
         session_store = getattr(app.state, "session_store", None)
         callback_dispatcher = getattr(app.state, "callback_dispatcher", None)
         capture_proxy = getattr(app.state, "capture_proxy", None)
         settings = get_settings()
-        raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
-        validated_key = await validate_api_key_for_tenant(
-            pool,
-            api_key=raw_api_key,
-            tenant_slug=tenant,
-        )
+        if validated_key is _unvalidated:
+            raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
+            validated_key = await validate_api_key_for_tenant(
+                pool,
+                api_key=raw_api_key,
+                tenant_slug=tenant,
+            )
+        api_key = cast("ValidatedApiKey | None", validated_key)
 
         blocked = await enforce_mock_limits(
             request,
@@ -277,7 +313,7 @@ def create_app() -> FastAPI:
             path=path,
             pool=pool,
             cache=cache,
-            api_key=validated_key,
+            api_key=api_key,
             session_store=session_store,
             callback_dispatcher=callback_dispatcher,
             capture_proxy=capture_proxy,
@@ -292,7 +328,7 @@ def create_app() -> FastAPI:
                 path=path,
                 status_code=response.status_code,
                 tenant_id=limits.tenant_id,
-                api_key_id=validated_key.id if validated_key is not None else None,
+                api_key_id=api_key.id if api_key is not None else None,
                 settings=settings,
             )
         return response
@@ -357,7 +393,7 @@ def create_app() -> FastAPI:
         )
         if response is not None:
             return response
-        return await serve_rest(request, tenant, project, version, "graphql")
+        return await serve_rest(request, tenant, project, version, "graphql", validated_key)
 
     @app.api_route(
         "/{tenant}/{project}/{version}",
