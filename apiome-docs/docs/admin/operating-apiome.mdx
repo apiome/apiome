@@ -968,7 +968,16 @@ cannot be built ahead of the upgrade.
 
 `V424` (DBP-1.16) adds `versions.operation_count` and `versions.schema_count`, and five trigram
 indexes that the browse site's search palette matches names with. The two columns are nullable, so
-`versions` is not rewritten. On the scale database:
+`versions` is not rewritten.
+
+If an upgrade stopped at `V424` with `operator class "gin_trgm_ops" does not exist for access
+method "gin"`, update `apiome-db` and run `apiome-db migrate` again. The first release of `V424`
+did not set its own search path, so it failed on a database upgraded from `V418` or later. A
+failed migration is rolled back and not recorded, so the run continues from `V424`. A database
+where the first release of `V424` succeeded needs nothing: its recorded checksum is still
+accepted, and `apiome-db repair` is not needed.
+
+On the scale database:
 
 - **Backfill:** it counts every published version once: 10 seconds for 180,000 published versions.
   Writes to those rows wait for it.

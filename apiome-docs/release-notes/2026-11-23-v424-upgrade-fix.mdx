@@ -1,0 +1,25 @@
+---
+slug: v424-upgrade-fix
+title: "Upgrades no longer stop at V424"
+description: "V424 sets its own search path; rerun apiome-db migrate after updating."
+authors: [apiome]
+---
+
+An upgrade could stop at migration `V424` with `operator class "gin_trgm_ops" does not exist for
+access method "gin"`. It happened on databases upgraded from `V418` or later. Fresh installs were
+not affected.
+
+{/* truncate */}
+
+**What to do.** Update `apiome-db` and run `apiome-db migrate` again. The failed migration was
+rolled back and not recorded, so the run continues from `V424`.
+
+**Why it happened.** `V424` builds trigram indexes with `gin_trgm_ops`, which `pg_trgm` installs
+in the `apiome` schema. The script did not set its own search path. It only worked when an earlier
+migration in the same run had set one. `V424` now sets `search_path TO apiome, public` itself, and
+an `apiome-db` test fails any migration that uses a `pg_trgm` or `uuid-ossp` object before setting
+its search path.
+
+**Databases where V424 already succeeded** need nothing. Their recorded checksum of the first
+`V424` is still accepted, so `apiome-db migrate` does not ask for `apiome-db repair`. See
+[Upgrade a large database without blocking writes](/admin/operating-apiome#upgrade-a-large-database-without-blocking-writes).

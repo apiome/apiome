@@ -259,6 +259,31 @@ function isUndefinedRelation(err: unknown): boolean {
 
 // ──────────────────────────────── status ────────────────────────────────
 
+/**
+ * Earlier checksums of migrations that were corrected after release, keyed by script filename.
+ *
+ * A database that applied the earlier text recorded its checksum. Validation accepts it as well
+ * as the current one, so a correction does not force `apiome-db repair` on every such database.
+ * List a script here only when the correction leaves a database that ran either text in the same
+ * state, and say why next to the entry.
+ */
+export const SUPERSEDED_CHECKSUMS: Readonly<Record<string, readonly number[]>> = {
+  // Missing `SET search_path TO apiome, public`: the trigram indexes failed on a database upgraded
+  // from V418 or later. Where it succeeded, the search path carried over from V417 was that one.
+  "V424__public_browse_counts_and_name_search_7199.sql": [-1622066416],
+};
+
+/**
+ * Whether `checksum` is an accepted earlier checksum of the migration `file`.
+ *
+ * @param file - Migration script filename, e.g. `V424__public_browse_counts_and_name_search_7199.sql`.
+ * @param checksum - The checksum recorded in the history table.
+ * @returns True when the recorded checksum is listed in {@link SUPERSEDED_CHECKSUMS} for `file`.
+ */
+export function isSupersededChecksum(file: string, checksum: number): boolean {
+  return SUPERSEDED_CHECKSUMS[file]?.includes(checksum) ?? false;
+}
+
 export type MigrationStatus = {
   scriptsDir: string;
   applied: string[];
@@ -292,7 +317,7 @@ export async function getMigrationStatus(
     }
     applied.push(file);
     const checksum = computeChecksum(await fs.readFile(path.join(scriptsDir, file), "utf8"));
-    if (row.checksum !== null && row.checksum !== checksum) {
+    if (row.checksum !== null && row.checksum !== checksum && !isSupersededChecksum(file, row.checksum)) {
       throw new CliError(
         `Checksum mismatch for applied migration ${file} ` +
           `(recorded ${row.checksum}, current ${checksum}).`,

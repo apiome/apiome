@@ -53,7 +53,10 @@
 --   * idx_version_path_pathname_trgm            — path names
 --   * idx_path_operation_description_name_trgm  — (summary || ' ' || operation_id) of an operation
 --
--- pg_trgm lives in the apiome schema (V230); gin_trgm_ops resolves through the search path. The
+-- pg_trgm lives in the apiome schema (V230); gin_trgm_ops resolves through the search path, which
+-- this script sets itself: a database upgraded from V418 or later starts a new migrator session
+-- without V417's SET, and the index builds failed there ("operator class gin_trgm_ops does not
+-- exist"). The checksum this script had before that line is accepted (apiome-db src/migrate.ts). The
 -- expressions here must stay identical to the ones in suggestSql.ts (a test there reads this
 -- file), or the planner will not use the index. A word shorter than three characters has no
 -- trigram; the suggestion statement does not run a name scan of these tables for such a query.
@@ -90,6 +93,8 @@
 --     apiome.idx_path_operation_description_name_trgm;
 --   (and restore bump_version_content_stamp from V422; the readers fall back to counting as soon
 --    as the columns are NULL, but they name the columns, so restore apiome-browse first).
+
+SET search_path TO apiome, public;
 
 ALTER TABLE apiome.versions
     ADD COLUMN IF NOT EXISTS operation_count integer
