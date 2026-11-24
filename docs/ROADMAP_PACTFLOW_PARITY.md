@@ -6,6 +6,7 @@ _Status: **issues filed 2026-11-19** (numbers in the tables below). Companion ro
 **Umbrella:** [#6906](https://github.com/apiome/apiome/issues/6906). **Issue ID prefix:** `PFX`. Epics `PFX-EPIC-n`, issues `PFX-n.m`.
 **GitHub title format:** `apiome: [PFX-<epic>.<issue>] <title>`.
 **Recommended labels:** `contracts`, `pact`, `rest`, `ui`, `cli`, `devex`, `automation`, `mvp`, `v2`, `epic`, `documentation`.
+**Visibility (decided 2026-11-24):** PFX work is **not feature-flagged**. Everything ships visible on the beta build as it merges — no `UNRELEASED_FEATURE_IDS` entry, no `UnreleasedFeatureGate`, no preview env var, no server-side enable switch, and docs pages go under `apiome-docs/docs/` (not `apiome-docs/unreleased/`).
 
 ---
 
@@ -337,7 +338,7 @@ Design references: `mockups/pact/*` and `mockups/contracts/{matrix,verification,
 | PFX-5.7 · [#6951](https://github.com/apiome/apiome/issues/6951) | Environments and deployments dashboard | Deployed versions, history, deploy simulator | `ui`,`pact` | Y | N | L | apiome-ui, apiome-rest |
 | PFX-5.8 · [#6952](https://github.com/apiome/apiome/issues/6952) | Publish pacts from the Pact import dialog | Existing dialog publishes to the broker, not just the registry | `ui`,`pact` | Y | N | S | apiome-ui |
 
-**PFX-5.1…5.8** share: server-component pages with the BFF proxies under `/api/pact/*`, empty states with the CLI snippet, keyboard accessible tables, `UNRELEASED_FEATURE_IDS` gating until RC10 ships, fixtures for the fixture-dump renderer, Help-guide articles with keywords, and per-screen screenshot ids (`pact-pacticipants`, `pact-detail`, `pact-matrix`, `pact-can-i-deploy`, `pact-verification`, `pact-webhooks`, `pact-environments`) in light and dark. **Acceptance:** each page renders from fixtures and live stack; a11y pass (axe) with no serious violations; docs page per screen. **Dependencies:** matching API issue in Epic 1/3. 5.5 absorbs private-suite 10.1; 5.7 absorbs 10.3.
+**PFX-5.1…5.8** share: server-component pages with the BFF proxies under `/api/pact/*`, empty states with the CLI snippet, keyboard accessible tables, **no feature gating** — every screen is visible (rail, command palette, routes) as soon as its PR merges: do not add an id to `UNRELEASED_FEATURE_IDS`, do not add an `UnreleasedFeatureGate` layout, and nothing may depend on `NEXT_PUBLIC_APIOME_PREVIEW_FEATURES`, fixtures for the fixture-dump renderer, Help-guide articles with keywords, and per-screen screenshot ids (`pact-pacticipants`, `pact-detail`, `pact-matrix`, `pact-can-i-deploy`, `pact-verification`, `pact-webhooks`, `pact-environments`) in light and dark. **Acceptance:** each page renders from fixtures and live stack; a11y pass (axe) with no serious violations; docs page per screen. **Dependencies:** matching API issue in Epic 1/3. 5.5 absorbs private-suite 10.1; 5.7 absorbs 10.3.
 
 ### PFX-EPIC-6 · [#6912](https://github.com/apiome/apiome/issues/6912) — Operations, governance and migration
 
