@@ -30,6 +30,7 @@ from apiome_mock.guard import (
 )
 from apiome_mock.handler import handle_mock_request
 from apiome_mock.logging_config import configure_logging
+from apiome_mock.postgres_session_store import PostgresSessionStore, run_session_expiry_sweeper
 from apiome_mock.preview_routes import create_preview_router
 from apiome_mock.sandbox_routes import create_sandbox_router
 from apiome_mock.session_store_factory import create_session_store
@@ -105,6 +106,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
     await grpc_runtime.start()
 
     session_store = create_session_store(settings, pool)
+    # Expired Postgres sessions are deleted here, in batches, never on the request path (#7209).
+    session_sweeper_task: asyncio.Task[None] | None = None
+    if isinstance(session_store, PostgresSessionStore):
+        session_sweeper_task = asyncio.create_task(
+            run_session_expiry_sweeper(
+                session_store,
+                stop_event,
+                interval_seconds=settings.session_purge_interval_seconds,
+                batch_size=settings.session_purge_batch_size,
+            )
+        )
     callback_dispatcher = build_dispatcher(
         enabled=settings.callbacks_enabled,
         allow_private_destinations=settings.callback_allow_private,
@@ -160,6 +172,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
         producer_task.cancel()
         try:
             await producer_task
+        except asyncio.CancelledError:
+            pass
+    if session_sweeper_task is not None:
+        session_sweeper_task.cancel()
+        try:
+            await session_sweeper_task
         except asyncio.CancelledError:
             pass
     await broker_publisher.close()
