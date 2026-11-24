@@ -288,6 +288,11 @@ published, turn on **pending pacts** (`enablePending: true`) in the provider's v
 **work-in-progress pacts** (`includeWipPactsSince`) to verify feature-branch pacts early. See
 [Pending and work-in-progress pacts](./pact-broker/pending-and-wip.mdx).
 
+To start the provider's verification build when a pact needs verifying, and to report the result
+back to the consumer's commit, create **contract webhooks**: `pact-broker create-webhook` works
+unchanged, and a GitHub Actions workflow can be started directly. See
+[Contract webhooks](./pact-broker/webhooks.mdx).
+
 ## How the pieces fit
 
 - **One classifier.** The CLI, the GitHub Action, the changelog, the webhook, the guardrail and the

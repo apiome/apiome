@@ -142,7 +142,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.9 | Contract webhooks | Pact events, templating, HMAC, execution log | `contracts`,`pact`,`rest`,`mvp` | Y | Y | L | apiome-rest, apiome-db |
 | PFX-1.10 · [#6923](https://github.com/apiome/apiome/issues/6923) | Badges and public status endpoints | SVG badges, shields JSON, browse-page hooks | `contracts`,`pact`,`rest` | Y | N | S | apiome-rest, apiome-browse |
 | PFX-1.11 · [#6924](https://github.com/apiome/apiome/issues/6924) | Pacticipant labels, version delete and cleanup | Labels, soft delete, selector-based retention | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest |
 
@@ -212,7 +211,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 - **Technical Stack:** GitHub Actions, Docker, scripts/.
 - **Documentation:** `…/pact-broker/compatibility.mdx` (generated table).
 
-**PFX-1.9 · #6922 Contract webhooks**
+**✅ PFX-1.9 · #6922 Contract webhooks — Complete**
 - **Problem:** CI needs to be told "a pact needs verifying" and "a verification finished".
 - **Solution/Scope:** Webhook CRUD in the broker shape (event types `contract_content_changed`, `contract_published`, `contract_requiring_verification_published`, `provider_verification_published`, `provider_verification_succeeded`, `provider_verification_failed`, `consumer_version_branch_created`…) with templated bodies (`${pactbroker.pactUrl}` etc.), GitHub Actions `repository_dispatch` and a generic HTTP target, HMAC signing, retries and dead-letter reusing the existing push-webhook machinery (CTG-3.3), a per-delivery execution log, SSRF guard (ECA-1.2 policy), secrets via the credential vault.
 - **Acceptance Criteria:** A published pact fires `contract_requiring_verification_published` once per provider branch; failed delivery retried then dead-lettered; template variables covered by tests; secrets never in logs.

@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 38 operations."
+description: "REST endpoints tagged pact-broker: 57 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.661.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.662.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 38 operations
+Tag: `pact-broker` · 57 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -19,7 +19,7 @@ Tag: `pact-broker` · 38 operations
 
 The entry point of the Pact Broker–compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.
 
-`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in. `pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` answer whether a version can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`.
+`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in. `pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` answer whether a version can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`. `pb:webhooks` and `pb:webhook` are what `pact-broker create-webhook` and `create-or-update-webhook` use.
 
 A workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.
 
@@ -1007,6 +1007,34 @@ Operation id: `read_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__
 | 404 | `pact-verification-not-found`: no result with that number. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}/triggered-webhooks` {#read-verification-triggered-webhooks-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-verification-results-number-triggered-webhooks-get}
+
+**Webhooks a verification result triggered**
+
+The webhooks fired by the publication of this verification result, newest first, each with its status and a `pb:logs` link. Requires `pacts:view`.
+
+Operation id: `read_verification_triggered_webhooks_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__verification_results__number__triggered_webhooks_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | Path parameter identifying the sha segment. |
+| `number` | path | integer | yes | Path parameter identifying the number segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for webhooks a verification result triggered. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{consumer_version}` {#read-pact-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-version-consumer-version-get}
 
 **Read the pact of a consumer version**
@@ -1076,6 +1104,126 @@ The Pact document (specification 1.x to 4.x), exactly as the consumer's tests wr
 | 413 | `pact-too-large`: the document or the request is over the size limit. | — |
 | 422 | `pact-invalid`: the document is not a pact. `detail.pointer` is the JSON Pointer of the first problem in the document (for example `/interactions/2/request/method`) and `detail.message` says what is wrong there. | — |
 | 429 | `pact-publish-rate-limited`: over the workspace's publish budget; see `Retry-After`. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{consumer_version}/triggered-webhooks` {#read-pact-triggered-webhooks-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-version-consumer-version-triggered-webhooks-get}
+
+**Webhooks a publication triggered**
+
+The webhooks fired by this consumer version's publication of its pact for the provider, newest first, each with its status and a `pb:logs` link. Requires `pacts:view`.
+
+Operation id: `read_pact_triggered_webhooks_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__version__consumer_version__triggered_webhooks_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `consumer_version` | path | string | yes | Path parameter identifying the consumer version segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for webhooks a publication triggered. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/webhooks` {#read-scoped-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-webhooks-get}
+
+**List the webhooks of a pact**
+
+The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+
+Operation id: `read_scoped_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__webhooks_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the webhooks of a pact. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/webhooks` {#post-scoped-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-webhooks-post}
+
+**Create a webhook for a pact**
+
+Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.
+
+Operation id: `post_scoped_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__webhooks_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create a webhook for a pact.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `description` | string | no | Free-text description. |
+| `consumer` | object | no | Only pacts of this consumer. Omit for any. |
+| `provider` | object | no | Only pacts of this provider. Omit for any. |
+| `enabled` | boolean | no | Whether the resource is active. |
+| `events` | array of object | no | Default: `contract_content_changed`. |
+| `request` | object | no | The HTTP request to send. Send this or `target`. |
+| `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create a webhook for a pact. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 409 | `pact-webhook-limit-reached`: the workspace already has 200 webhooks. | — |
+| 422 | `pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 503 | `pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/webhooks/status` {#read-pact-webhooks-status-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-webhooks-status-get}
+
+**Webhook status of a pact**
+
+The latest firing of each webhook and event for the pacts between a consumer and a provider, with a `summary` (`successful`, `failed`, `retrying`, `notRun`) and a `pb:error-logs` link per firing that failed or is being retried. `failed` means dead-lettered: every attempt was used. Requires `pacts:view`.
+
+Operation id: `read_pact_webhooks_status_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__webhooks_status_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for webhook status of a pact. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/for-verification` {#pacts-for-verification-by-query-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-for-verification-get}
 
@@ -1275,6 +1423,482 @@ Request body for record the end of support for a release.
 | 200 | Successful response for record the end of support for a release. | `application/hal+json` any |
 | 404 | `pact-released-version-not-found`: no such release in this workspace. | — |
 | 422 | `pact-deployment-invalid`: `currentlySupported` is not `false`. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/triggered-webhooks/{uuid}/logs` {#read-triggered-webhook-logs-v1-tenants-tenant-slug-pact-broker-triggered-webhooks-uuid-logs-get}
+
+**Execution log of a triggered webhook**
+
+What each attempt of one firing sent and received — a triggered webhook's `pb:logs` link. As `text/plain` (the default, as a Pact Broker answers) the logs of every attempt, in order; with `Accept: application/hal+json`, one entry per attempt under `executions` (`attempt`, `success`, `status`, `logs`, `createdAt`).
+
+Secret header values read `**********`, and every secret value of the webhook is removed from the whole log, the receiver's response included. Requires `pacts:view`.
+
+Operation id: `read_triggered_webhook_logs_v1_tenants__tenant_slug__pact_broker_triggered_webhooks__uuid__logs_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | Path parameter identifying the uuid segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for execution log of a triggered webhook. | `application/json` any; `text/plain` any; `application/hal+json` any |
+| 404 | `pact-triggered-webhook-not-found`: no such triggered webhook. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/webhooks` {#read-webhooks-v1-tenants-tenant-slug-pact-broker-webhooks-get}
+
+**List webhooks**
+
+Every webhook of the workspace — the index's `pb:webhooks` link. Each is linked under `_links.pb:webhooks` and embedded under `_embedded.webhooks`. Secrets are never returned: a password and a secret header read `**********`, a signing secret reads `signed: true`.
+
+Requires `pacts:view`.
+
+Operation id: `read_webhooks_v1_tenants__tenant_slug__pact_broker_webhooks_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list webhooks. | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/webhooks` {#post-webhook-v1-tenants-tenant-slug-pact-broker-webhooks-post}
+
+**Create a webhook**
+
+Create a webhook — what `pact-broker create-webhook` posts. The body is the Pact Broker's: `events` (default `contract_content_changed`), an optional `consumer` and `provider` (omit both for every pact of the workspace) and the `request` to send.
+
+- **Events:** `contract_published`, `contract_content_changed`, `contract_requiring_verification_published` (once per provider version that has not verified the pact: the head of the provider's main branch and what is deployed or released), `provider_verification_published`, `provider_verification_succeeded`, `provider_verification_failed`, and Apiome's `consumer_version_branch_created`.
+- **Templates:** `${pactbroker.*}` parameters are substituted in the URL's path and query, the headers, the credentials and the body when the webhook fires. Template parameters: `${pactbroker.consumerName}`, `${pactbroker.providerName}`, `${pactbroker.consumerVersionNumber}`, `${pactbroker.providerVersionNumber}`, `${pactbroker.providerVersionTags}`, `${pactbroker.providerVersionDescriptions}`, `${pactbroker.providerVersionBranch}`, `${pactbroker.consumerVersionTags}`, `${pactbroker.consumerVersionBranch}`, `${pactbroker.pactUrl}`, `${pactbroker.verificationResultUrl}`, `${pactbroker.githubVerificationStatus}`, `${pactbroker.bitbucketVerificationStatus}`, `${pactbroker.azureDevOpsVerificationStatus}`, `${pactbroker.gitlabVerificationStatus}`, `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}`, `${pactbroker.eventName}`, `${pactbroker.buildUrl}`, `${pactbroker.currentlyDeployedProviderVersionNumber}`.
+- **Target:** send `request` for any HTTP endpoint (POST, PUT or PATCH), or Apiome's `target` of type `github_repository_dispatch` to start a GitHub Actions workflow.
+- **Where it may go:** http or https, to a public address. Loopback, private and link-local addresses are refused when the webhook is saved and again on every send; redirects are not followed.
+- **Secrets:** `password`, the `target` token, secret headers (`Authorization`, anything naming a token, secret, API key or cookie) and `signingSecret` are sealed in the credential vault and never returned or logged.
+- **Signing:** with `signingSecret`, each delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body.
+- **Limit:** 200 webhooks per workspace.
+- **Delivery:** up to 4 attempts (after 10 s, 60 s and 5 min; `Retry-After` is honoured), then the firing is dead-lettered.
+
+Answers `201` with the webhook and its URL in `Location`. Requires `pacts:create`.
+
+Operation id: `post_webhook_v1_tenants__tenant_slug__pact_broker_webhooks_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create a webhook.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `description` | string | no | Free-text description. |
+| `consumer` | object | no | Only pacts of this consumer. Omit for any. |
+| `provider` | object | no | Only pacts of this provider. Omit for any. |
+| `enabled` | boolean | no | Whether the resource is active. |
+| `events` | array of object | no | Default: `contract_content_changed`. |
+| `request` | object | no | The HTTP request to send. Send this or `target`. |
+| `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create a webhook. | `application/hal+json` any |
+| 409 | `pact-webhook-limit-reached`: the workspace already has 200 webhooks. | — |
+| 422 | `pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 503 | `pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/webhooks/consumer/{consumer}` {#read-scoped-v1-tenants-tenant-slug-pact-broker-webhooks-consumer-consumer-get}
+
+**List the webhooks of a consumer**
+
+The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+
+Operation id: `read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_consumer__consumer__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the webhooks of a consumer. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/webhooks/consumer/{consumer}` {#post-scoped-v1-tenants-tenant-slug-pact-broker-webhooks-consumer-consumer-post}
+
+**Create a webhook for a consumer**
+
+Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.
+
+Operation id: `post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_consumer__consumer__post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create a webhook for a consumer.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `description` | string | no | Free-text description. |
+| `consumer` | object | no | Only pacts of this consumer. Omit for any. |
+| `provider` | object | no | Only pacts of this provider. Omit for any. |
+| `enabled` | boolean | no | Whether the resource is active. |
+| `events` | array of object | no | Default: `contract_content_changed`. |
+| `request` | object | no | The HTTP request to send. Send this or `target`. |
+| `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create a webhook for a consumer. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 409 | `pact-webhook-limit-reached`: the workspace already has 200 webhooks. | — |
+| 422 | `pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 503 | `pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/webhooks/execute` {#execute-unsaved-webhook-v1-tenants-tenant-slug-pact-broker-webhooks-execute-post}
+
+**Run an unsaved webhook**
+
+Send the webhook in the body once, now, without saving it — to try a request before creating the webhook. Parameters are filled from the latest pact of the named consumer and provider, or with placeholders. The answer shows the request (secrets redacted), the response and the execution log. A workspace may make 30 test runs per rate-limit window. Requires `pacts:create`.
+
+Operation id: `execute_unsaved_webhook_v1_tenants__tenant_slug__pact_broker_webhooks_execute_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for run an unsaved webhook.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `description` | string | no | Free-text description. |
+| `consumer` | object | no | Only pacts of this consumer. Omit for any. |
+| `provider` | object | no | Only pacts of this provider. Omit for any. |
+| `enabled` | boolean | no | Whether the resource is active. |
+| `events` | array of object | no | Default: `contract_content_changed`. |
+| `request` | object | no | The HTTP request to send. Send this or `target`. |
+| `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for run an unsaved webhook. | `application/hal+json` any |
+| 409 | `pact-webhook-limit-reached`: the workspace already has 200 webhooks. | — |
+| 422 | `pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 429 | `pact-webhook-test-rate-limited`: too many test runs; `Retry-After` says when to retry. | — |
+| 503 | `pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/webhooks/provider/{provider}` {#read-scoped-v1-tenants-tenant-slug-pact-broker-webhooks-provider-provider-get}
+
+**List the webhooks of a provider**
+
+The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+
+Operation id: `read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the webhooks of a provider. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/webhooks/provider/{provider}` {#post-scoped-v1-tenants-tenant-slug-pact-broker-webhooks-provider-provider-post}
+
+**Create a webhook for a provider**
+
+Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.
+
+Operation id: `post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create a webhook for a provider.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `description` | string | no | Free-text description. |
+| `consumer` | object | no | Only pacts of this consumer. Omit for any. |
+| `provider` | object | no | Only pacts of this provider. Omit for any. |
+| `enabled` | boolean | no | Whether the resource is active. |
+| `events` | array of object | no | Default: `contract_content_changed`. |
+| `request` | object | no | The HTTP request to send. Send this or `target`. |
+| `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create a webhook for a provider. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 409 | `pact-webhook-limit-reached`: the workspace already has 200 webhooks. | — |
+| 422 | `pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 503 | `pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/webhooks/provider/{provider}/consumer/{consumer}` {#read-scoped-v1-tenants-tenant-slug-pact-broker-webhooks-provider-provider-consumer-consumer-get}
+
+**List the webhooks of an integration**
+
+The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+
+Operation id: `read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__consumer__consumer__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the webhooks of an integration. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/webhooks/provider/{provider}/consumer/{consumer}` {#post-scoped-v1-tenants-tenant-slug-pact-broker-webhooks-provider-provider-consumer-consumer-post}
+
+**Create a webhook for an integration**
+
+Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.
+
+Operation id: `post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__consumer__consumer__post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create a webhook for an integration.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `description` | string | no | Free-text description. |
+| `consumer` | object | no | Only pacts of this consumer. Omit for any. |
+| `provider` | object | no | Only pacts of this provider. Omit for any. |
+| `enabled` | boolean | no | Whether the resource is active. |
+| `events` | array of object | no | Default: `contract_content_changed`. |
+| `request` | object | no | The HTTP request to send. Send this or `target`. |
+| `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create a webhook for an integration. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`: no such consumer or provider. | — |
+| 409 | `pact-webhook-limit-reached`: the workspace already has 200 webhooks. | — |
+| 422 | `pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 503 | `pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/webhooks/{uuid}` {#read-webhook-v1-tenants-tenant-slug-pact-broker-webhooks-uuid-get}
+
+**Read a webhook**
+
+One webhook by its `uuid` — the index's `pb:webhook` template. Requires `pacts:view`.
+
+Operation id: `read_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | Path parameter identifying the uuid segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a webhook. | `application/hal+json` any |
+| 404 | `pact-webhook-not-found`: no such webhook in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-broker/webhooks/{uuid}` {#put-webhook-v1-tenants-tenant-slug-pact-broker-webhooks-uuid-put}
+
+**Create or replace a webhook**
+
+Replace the webhook with this `uuid`, or create it when the workspace has none — what `pact-broker create-or-update-webhook --uuid …` puts, so a pipeline can declare its webhook on every run. The body is the same as for creating one, and replaces the whole webhook.
+
+A secret sent back as `**********` keeps the stored value; a secret left out is removed.
+
+Answers `200` for a replacement and `201` for a new webhook. Requires `pacts:edit` (`pacts:create` when it creates).
+
+Operation id: `put_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | Path parameter identifying the uuid segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create or replace a webhook.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `description` | string | no | Free-text description. |
+| `consumer` | object | no | Only pacts of this consumer. Omit for any. |
+| `provider` | object | no | Only pacts of this provider. Omit for any. |
+| `enabled` | boolean | no | Whether the resource is active. |
+| `events` | array of object | no | Default: `contract_content_changed`. |
+| `request` | object | no | The HTTP request to send. Send this or `target`. |
+| `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for create or replace a webhook. | `application/hal+json` any |
+| 201 | The webhook did not exist and was created. | — |
+| 409 | `pact-webhook-limit-reached`: the workspace already has 200 webhooks. | — |
+| 422 | `pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 503 | `pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with. | — |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-broker/webhooks/{uuid}` {#remove-webhook-v1-tenants-tenant-slug-pact-broker-webhooks-uuid-delete}
+
+**Delete a webhook**
+
+Delete a webhook. Its queued deliveries, its triggered-webhook history and their logs go with it. Requires `pacts:delete`.
+
+Operation id: `remove_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | Path parameter identifying the uuid segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a webhook. | — |
+| 404 | `pact-webhook-not-found`: no such webhook in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/webhooks/{uuid}/execute` {#execute-saved-webhook-v1-tenants-tenant-slug-pact-broker-webhooks-uuid-execute-post}
+
+**Run a webhook now**
+
+Send a saved webhook once, now — a webhook's `pb:execute` link and what `pact-broker test-webhook` posts. Parameters are filled from the latest pact of the webhook's consumer and provider, or with placeholders; `${pactbroker.eventName}` is `test`. Nothing is queued or retried. The answer shows the request (secrets redacted), the response and `logs`. A workspace may make 30 test runs per rate-limit window.
+
+Requires `pacts:edit`.
+
+Operation id: `execute_saved_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__execute_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | Path parameter identifying the uuid segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for run a webhook now. | `application/hal+json` any |
+| 404 | `pact-webhook-not-found`: no such webhook in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 429 | `pact-webhook-test-rate-limited`: too many test runs; `Retry-After` says when to retry. | — |
+| 503 | `pact-webhook-secrets-unavailable`: the webhook's secrets cannot be opened. | — |
 
 ## Schemas used {#schemas-used}
 

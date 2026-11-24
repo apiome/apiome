@@ -44,6 +44,7 @@ from .pact_broker_routes import (
 )
 from .pact_publication import PactPublicationError
 from .pact_selectors import decode_metadata
+from .pact_webhook_events import fire_verification_events
 from .pacticipant import PacticipantValidationError
 from .permissions import Action, Resource, enforce_permission
 from .verification_result import VerificationResultRecord, parse_verification_request
@@ -211,6 +212,10 @@ def _result_document(request: Request, tenant_slug: str, base: str, result: Veri
             "title": "Pact",
             "name": _pact_name(result),
             "href": f"{pair}/pact-version/{result.sha}",
+        },
+        "pb:triggered-webhooks": {
+            "title": "Webhooks triggered by the publication of this verification result",
+            "href": f"{_result_url(base, result)}/triggered-webhooks",
         },
     }
     if result.report_id:
@@ -403,6 +408,7 @@ def _publish(
     except (PactPublicationError, PacticipantValidationError) as exc:
         raise _http_error(exc) from exc
     base = _base_url(request, tenant_slug)
+    fire_verification_events(db, _tenant_id(auth_data), base, result)
     return HalJSONResponse(
         _result_document(request, tenant_slug, base, result),
         status_code=201,

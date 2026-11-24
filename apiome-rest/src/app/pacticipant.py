@@ -472,6 +472,7 @@ class RecordedPacticipantVersion(BaseModel):
         version: The version as stored, with every branch and tag it now has.
         created: Whether this request created the version (false: it already existed, unchanged).
         head_moved: Whether the named branch's head moved to this version.
+        branch_created: Whether the named branch did not exist before this request.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -480,6 +481,9 @@ class RecordedPacticipantVersion(BaseModel):
     created: bool = Field(description="False when the version already existed; it is returned unchanged.")
     head_moved: bool = Field(
         default=False, description="Whether the branch named in the request now has this version as its head."
+    )
+    branch_created: bool = Field(
+        default=False, description="Whether this request recorded the first version on the named branch."
     )
 
 

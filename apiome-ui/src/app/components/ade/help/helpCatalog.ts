@@ -1317,6 +1317,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['matrix', 'retry-while-unknown', 'to-environment', 'ignore', 'verdict', 'contract required', 'pending pact', 'exit code'],
   },
   {
+    id: 'webhooks',
+    title: 'Contract webhooks',
+    summary: 'Tell your CI when a pact needs verifying and when a verification finishes.',
+    page: 'apiome-docs/docs/ship/pact-broker/webhooks.mdx',
+    section: 'reference',
+    keywords: ['create-webhook', 'repository_dispatch', 'GitHub Actions', 'pactbroker.pactUrl', 'signing secret', 'HMAC', 'dead-letter', 'retry', 'triggered'],
+  },
+  {
     id: 'compatibility',
     title: 'Pact Broker compatibility',
     summary: 'Every Pact Broker endpoint and whether Apiome serves it, tested in CI.',

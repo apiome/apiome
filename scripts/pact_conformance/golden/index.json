@@ -77,6 +77,16 @@
           "templated": true,
           "title": "Publish a pact"
         },
+        "pb:webhook": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/webhooks/{uuid}",
+          "templated": true,
+          "title": "Webhook"
+        },
+        "pb:webhooks": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/webhooks",
+          "templated": false,
+          "title": "Webhooks"
+        },
         "self": {
           "href": "{rest}/v1/tenants/acme-corp/pact-broker",
           "templated": false,

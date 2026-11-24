@@ -94,7 +94,6 @@ GROUPS = (
 _ISSUES = "https://github.com/apiome/apiome/issues/"
 
 # Tracking issues (docs/ROADMAP_PACTFLOW_PARITY.md).
-_WEBHOOKS = "#6922"  # PFX-1.9 Contract webhooks
 _BADGES = "#6923"  # PFX-1.10 Badges and public status endpoints
 _CLEANUP = "#6924"  # PFX-1.11 Pacticipant labels, version delete and cleanup
 
@@ -468,7 +467,7 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         _SHA + "/verification-results/{number}/triggered-webhooks",
         "Webhooks a result triggered",
         "GET",
-        tracking=_WEBHOOKS,
+        "GET",
     ),
     _e(
         _G_RESULTS,
@@ -730,45 +729,45 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "/webhooks",
         "List or create webhooks",
         "GET POST",
+        "GET POST",
         used_by="`pact-broker create-webhook`",
-        tracking=_WEBHOOKS,
     ),
     _e(
         _G_WEBHOOKS,
         "/webhooks/{uuid}",
         "A webhook",
         "GET PUT DELETE",
+        "GET PUT DELETE",
         used_by="`pact-broker create-or-update-webhook`",
-        tracking=_WEBHOOKS,
     ),
     _e(
         _G_WEBHOOKS,
         "/webhooks/{uuid}/execute",
         "Run a webhook now",
         "POST",
+        "POST",
         used_by="`pact-broker test-webhook`",
-        tracking=_WEBHOOKS,
     ),
-    _e(_G_WEBHOOKS, "/webhooks/execute", "Run an unsaved webhook", "POST", tracking=_WEBHOOKS),
+    _e(_G_WEBHOOKS, "/webhooks/execute", "Run an unsaved webhook", "POST", "POST"),
     _e(
         _G_WEBHOOKS,
         "/webhooks/provider/{provider}/consumer/{consumer}",
         "Webhooks of an integration",
         "GET POST",
-        tracking=_WEBHOOKS,
+        "GET POST",
     ),
-    _e(_G_WEBHOOKS, "/webhooks/provider/{provider}", "Webhooks of a provider", "GET POST", tracking=_WEBHOOKS),
-    _e(_G_WEBHOOKS, "/webhooks/consumer/{consumer}", "Webhooks of a consumer", "GET POST", tracking=_WEBHOOKS),
-    _e(_G_WEBHOOKS, _PAIR + "/webhooks", "Webhooks of a pact", "GET POST", tracking=_WEBHOOKS),
-    _e(_G_WEBHOOKS, _PAIR + "/webhooks/status", "Webhook status of a pact", "GET", tracking=_WEBHOOKS),
+    _e(_G_WEBHOOKS, "/webhooks/provider/{provider}", "Webhooks of a provider", "GET POST", "GET POST"),
+    _e(_G_WEBHOOKS, "/webhooks/consumer/{consumer}", "Webhooks of a consumer", "GET POST", "GET POST"),
+    _e(_G_WEBHOOKS, _PAIR + "/webhooks", "Webhooks of a pact", "GET POST", "GET POST"),
+    _e(_G_WEBHOOKS, _PAIR + "/webhooks/status", "Webhook status of a pact", "GET", "GET"),
     _e(
         _G_WEBHOOKS,
         _PAIR + "/version/{consumerVersion}/triggered-webhooks",
         "Webhooks a publication triggered",
         "GET",
-        tracking=_WEBHOOKS,
+        "GET",
     ),
-    _e(_G_WEBHOOKS, "/triggered-webhooks/{uuid}/logs", "Execution log of a webhook run", "GET", tracking=_WEBHOOKS),
+    _e(_G_WEBHOOKS, "/triggered-webhooks/{uuid}/logs", "Execution log of a webhook run", "GET", "GET"),
     # Badges -----------------------------------------------------------------------------------------
     _e(_G_BADGES, _PAIR + "/latest/badge", "Badge of the latest pact", "GET", tracking=_BADGES),
     _e(_G_BADGES, _PAIR + "/latest/{tag}/badge", "Badge of the latest tagged pact", "GET", tracking=_BADGES),

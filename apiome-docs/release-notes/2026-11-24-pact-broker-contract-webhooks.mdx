@@ -1,0 +1,53 @@
+---
+slug: pact-broker-contract-webhooks
+title: "Pact Broker: contract webhooks"
+description: "Apiome tells your CI when a pact needs verifying and when a verification finishes."
+authors: [apiome]
+---
+
+Apiome can now tell your pipelines what happened to a pact. A **contract webhook** sends an HTTP
+request when a pact is published, when it needs verifying, and when a verification finishes — in
+the Pact Broker's shape, so the Pact CLI creates them unchanged.
+
+{/* truncate */}
+
+**Create one** with the broker base URL and token you already use:
+
+```bash
+pact-broker create-webhook https://ci.example.com/hooks/verify-pact \
+  --request POST --provider "Ledger API" \
+  --contract-requiring-verification-published \
+  --header "Authorization: Bearer $CI_TOKEN" \
+  --data '{"pactUrl": "${pactbroker.pactUrl}", "providerVersion": "${pactbroker.providerVersionNumber}"}'
+```
+
+**What you get**, through the [Pact Broker API](/reference/rest/pact-broker):
+
+- **The Pact Broker's events.** `contract_published`, `contract_content_changed`,
+  `contract_requiring_verification_published`, `provider_verification_published`,
+  `provider_verification_succeeded` and `provider_verification_failed`, plus Apiome's
+  `consumer_version_branch_created`.
+- **One firing per provider version that has to verify.** `contract_requiring_verification_published`
+  fires once for the head of the provider's main branch and once for each version deployed or
+  released, and skips the ones that already verified the pact. Each firing carries the version and
+  its branch, so the build knows what to check out.
+- **Template parameters.** `${pactbroker.pactUrl}`, `${pactbroker.githubVerificationStatus}` and
+  the other Pact Broker parameters are filled into the URL, the headers and the body.
+- **GitHub Actions.** A `github_repository_dispatch` target starts a workflow with a
+  `repository_dispatch` event. Any other endpoint takes a plain HTTP request.
+- **Signed requests.** With a `signingSecret`, each request carries `X-Apiome-Signature`, the
+  HMAC-SHA256 of its body.
+- **Retries and a log.** A failed delivery is retried after 10 seconds, 60 seconds and 5 minutes,
+  then marked failed. The request and response of every attempt can be read back.
+- **Secrets stay secret.** Passwords, tokens and secret headers are sealed in the credential
+  vault. They read `**********` and never appear in a log.
+- **Safe destinations.** A webhook can only be sent to a public `http` or `https` address.
+
+**Not yet available:** a screen for webhooks, and choosing pacticipants by label.
+
+**For operators.** Migration `V436` adds two tables and two nullable columns; nothing existing is
+rewritten. A webhook that carries a secret needs `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`.
+Webhooks are sent by the existing push-webhook delivery worker.
+
+Read [Contract webhooks](/ship/pact-broker/webhooks) for the events, every template parameter,
+signing, the execution log and troubleshooting.

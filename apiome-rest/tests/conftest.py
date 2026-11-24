@@ -468,6 +468,22 @@ def _no_stored_overlay_chain_by_default(request, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _no_contract_webhook_events_by_default(request, monkeypatch):
+    """
+    Keep Pact Broker route tests off the database: after a publish or a verification result the
+    routes queue contract webhooks (PFX-1.9, ``app.pact_webhook_events``), which reads the webhook
+    tables. Default that to "nothing queued" so route tests with a faked store stay hermetic.
+    ``requires_db`` tests run the real thing, and tests of the hook patch it themselves.
+    """
+    if request.node.get_closest_marker("requires_db") is not None:
+        return
+    monkeypatch.setattr("app.pact_broker_routes.fire_publish_events", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        "app.pact_broker_verification_routes.fire_verification_events", lambda *_args, **_kwargs: []
+    )
+
+
+@pytest.fixture(autouse=True)
 def _fresh_authz_cache():
     """Start every test with empty authorization and API-key caches (DBP-1.3, #7186).
 

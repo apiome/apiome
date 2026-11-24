@@ -13,8 +13,8 @@ pact publication, verification results and can-i-deploy are built on.
 This release has the registry, [publishing and fetching pacts](./publish-pacts.mdx) with the
 Pact CLI and libraries, [choosing the pacts a provider verifies](./selectors.mdx) with
 consumer-version selectors, [publishing verification results](./verification-results.mdx),
-[environments and deployments](./environments.mdx), and [can-i-deploy](./can-i-deploy.mdx) with the
-matrix. There is no screen for the registry yet: use the
+[environments and deployments](./environments.mdx), [can-i-deploy](./can-i-deploy.mdx) with the
+matrix, and [contract webhooks](./webhooks.mdx). There is no screen for the registry yet: use the
 [Pacticipants API](../../reference/rest/pacticipants.md).
 
 ## Terms
@@ -45,6 +45,11 @@ matrix. There is no screen for the registry yet: use the
 | **Can-i-deploy** | The question "is this version compatible with what runs in that environment?", answered from the matrix: yes, no or unknown, with reasons. See [Can I deploy?](./can-i-deploy.mdx). |
 | **Pact Broker compatibility** | Which Pact Broker endpoints Apiome serves (supported, partial, planned or not planned), checked in CI against the official tools. An endpoint Apiome does not serve answers `501` with a pointer, never a bare `404`. See [Pact Broker compatibility](./compatibility.mdx). |
 | **Integration** | A consumer and a provider that have a pact between them. A consumer needs its provider to be deployed; a provider does not need its consumers. |
+| **Contract webhook** | An HTTP request Apiome sends when something happens to a pact: it was published, its content changed, it needs verifying, or a verification finished. See [Contract webhooks](./webhooks.mdx). |
+| **Event** | What a webhook fires on, such as `contract_requiring_verification_published` or `provider_verification_failed`. |
+| **Template parameter** | A `${pactbroker.…}` name in a webhook's URL, headers or body that is replaced when the webhook fires — the pact URL, a version number, a branch. |
+| **Triggered webhook** | One firing of a webhook for one event, with its status (`not_run`, `retrying`, `success`, `failure`) and its execution log. |
+| **Dead-lettered** | A webhook delivery that failed on every attempt and is not sent again. Its status is `failure`. |
 
 ## How a pacticipant relates to projects and consumers
 

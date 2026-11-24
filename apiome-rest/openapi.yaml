@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.661.0
+  version: 1.662.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -28986,23 +28986,13 @@ paths:
       tags:
       - pact-broker
       summary: Pact Broker index
-      description: 'The entry point of the Pact Broker–compatible API: the links a
-        Pact client discovers the other routes from. Give a Pact client this URL as
-        its **broker base URL** and a workspace API key as its **token**.
-
-
-        `pb:publish-contracts` is what `pact-broker publish` and the Pact libraries
-        post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts
-        its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`,
-        `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates.
-        `pb:environments` lists the environments `pact-broker record-deployment` looks
-        an environment up in. `pb:can-i-deploy-pacticipant-version-to-environment`
-        and `…-to-tag` answer whether a version can be deployed; `pact-broker can-i-deploy`
-        asks `…/pact-broker/matrix`.
-
-
-        A workspace API key may be sent as `Authorization: Bearer <key>` on every
-        route under `/pact-broker`. Requires `pacts:view`.'
+      description: 'The entry point of the Pact Broker–compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.
+      
+      
+        `pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in. `pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` answer whether a version can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`. `pb:webhooks` and `pb:webhook` are what `pact-broker create-webhook` and `create-or-update-webhook` use.
+      
+      
+        A workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.'
       operationId: pact_broker_index_v1_tenants__tenant_slug__pact_broker_get
       parameters:
       - name: tenant_slug
@@ -32967,6 +32957,2377 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for can ideployresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/webhooks:
+    get:
+      tags:
+      - pact-broker
+      summary: List webhooks
+      description: 'Every webhook of the workspace — the index''s `pb:webhooks` link. Each is linked under `_links.pb:webhooks` and embedded under `_embedded.webhooks`. Secrets are never returned: a password and a secret header read `**********`, a signing secret reads `signed: true`.
+
+
+        Requires `pacts:view`.'
+      operationId: read_webhooks_v1_tenants__tenant_slug__pact_broker_webhooks_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listwebhooksauthorization schema.
+          - type: 'null'
+            description: Listwebhooksauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listwebhooks Xapikey schema.
+          - type: 'null'
+            description: Listwebhooks Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list webhooks.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listwebhooksresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listwebhooksresponse422.
+    post:
+      tags:
+      - pact-broker
+      summary: Create a webhook
+      description: 'Create a webhook — what `pact-broker create-webhook` posts. The body is the Pact Broker''s: `events` (default `contract_content_changed`), an optional `consumer` and `provider` (omit both for every pact of the workspace) and the `request` to send.
+
+
+        - **Events:** `contract_published`, `contract_content_changed`, `contract_requiring_verification_published` (once per provider version that has not verified the pact: the head of the provider''s main branch and what is deployed or released), `provider_verification_published`, `provider_verification_succeeded`, `provider_verification_failed`, and Apiome''s `consumer_version_branch_created`.
+
+        - **Templates:** `${pactbroker.*}` parameters are substituted in the URL''s path and query, the headers, the credentials and the body when the webhook fires. Template parameters: `${pactbroker.consumerName}`, `${pactbroker.providerName}`, `${pactbroker.consumerVersionNumber}`, `${pactbroker.providerVersionNumber}`, `${pactbroker.providerVersionTags}`, `${pactbroker.providerVersionDescriptions}`, `${pactbroker.providerVersionBranch}`, `${pactbroker.consumerVersionTags}`, `${pactbroker.consumerVersionBranch}`, `${pactbroker.pactUrl}`, `${pactbroker.verificationResultUrl}`, `${pactbroker.githubVerificationStatus}`, `${pactbroker.bitbucketVerificationStatus}`, `${pactbroker.azureDevOpsVerificationStatus}`, `${pactbroker.gitlabVerificationStatus}`, `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}`, `${pactbroker.eventName}`, `${pactbroker.buildUrl}`, `${pactbroker.currentlyDeployedProviderVersionNumber}`.
+
+        - **Target:** send `request` for any HTTP endpoint (POST, PUT or PATCH), or Apiome''s `target` of type `github_repository_dispatch` to start a GitHub Actions workflow.
+
+        - **Where it may go:** http or https, to a public address. Loopback, private and link-local addresses are refused when the webhook is saved and again on every send; redirects are not followed.
+
+        - **Secrets:** `password`, the `target` token, secret headers (`Authorization`, anything naming a token, secret, API key or cookie) and `signingSecret` are sealed in the credential vault and never returned or logged.
+
+        - **Signing:** with `signingSecret`, each delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body.
+
+        - **Limit:** 200 webhooks per workspace.
+
+        - **Delivery:** up to 4 attempts (after 10 s, 60 s and 5 min; `Retry-After` is honoured), then the firing is dead-lettered.
+
+
+        Answers `201` with the webhook and its URL in `Location`. Requires `pacts:create`.'
+      operationId: post_webhook_v1_tenants__tenant_slug__pact_broker_webhooks_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookauthorization schema.
+          - type: 'null'
+            description: Createawebhookauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhook Xapikey schema.
+          - type: 'null'
+            description: Createawebhook Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for create a webhook.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for createawebhookresponse201.
+        '409':
+          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+        '422':
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+        '503':
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Free-text description.
+                  example: A pet available for adoption in the store.
+                consumer:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this consumer. Omit for any.
+                provider:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this provider. Omit for any.
+                enabled:
+                  type: boolean
+                  default: true
+                  description: Whether the resource is active.
+                  example: true
+                events:
+                  type: array
+                  minItems: 1
+                  description: 'Default: `contract_content_changed`.'
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        enum:
+                        - contract_published
+                        - contract_content_changed
+                        - contract_requiring_verification_published
+                        - provider_verification_published
+                        - provider_verification_succeeded
+                        - provider_verification_failed
+                        - consumer_version_branch_created
+                        description: Human-readable name.
+                        example: contract_published
+                  maxItems: 1000
+                request:
+                  type: object
+                  required:
+                  - method
+                  - url
+                  description: The HTTP request to send. Send this or `target`.
+                  properties:
+                    method:
+                      type: string
+                      enum:
+                      - POST
+                      - PUT
+                      - PATCH
+                      description: Method.
+                      example: POST
+                    url:
+                      type: string
+                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      example: https://example.com/resource
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Headers.
+                    body:
+                      description: A JSON value (sent as JSON) or a string (sent as text).
+                    username:
+                      type: string
+                      description: Username.
+                      example: Example
+                    password:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: example
+                target:
+                  type: object
+                  required:
+                  - type
+                  - repository
+                  - token
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - github_repository_dispatch
+                      description: Type.
+                      example: github_repository_dispatch
+                    repository:
+                      type: string
+                      description: '`owner/name`.'
+                      example: example
+                    eventType:
+                      type: string
+                      default: ${pactbroker.eventName}
+                      description: Event Type.
+                      example: example
+                    clientPayload:
+                      type: object
+                      maxProperties: 10
+                      description: Client Payload.
+                    apiUrl:
+                      type: string
+                      description: GitHub Enterprise Server API root.
+                      example: example
+                    token:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+                signingSecret:
+                  type: string
+                  minLength: 16
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  example: exampleexampleex
+              description: Request body for createawebhookrequest.
+            examples:
+              http:
+                summary: A generic HTTP webhook
+                value:
+                  description: Verify Ledger API when a pact changes
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  request:
+                    method: POST
+                    url: https://ci.example.com/hooks/verify-pact
+                    headers:
+                      Content-Type: application/json
+                      Authorization: Bearer ci-token
+                    body:
+                      pactUrl: ${pactbroker.pactUrl}
+                      providerVersion: ${pactbroker.providerVersionNumber}
+                      providerBranch: ${pactbroker.providerVersionBranch}
+                  signingSecret: a-shared-secret-of-16-chars-or-more
+              github:
+                summary: A GitHub Actions repository_dispatch
+                value:
+                  description: Run the provider's pact verification workflow
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  target:
+                    type: github_repository_dispatch
+                    repository: acme/ledger-api
+                    eventType: pact_requires_verification
+                    token: github-token-with-contents-write
+        description: Request body for create a webhook.
+  /v1/tenants/{tenant_slug}/pact-broker/webhooks/execute:
+    post:
+      tags:
+      - pact-broker
+      summary: Run an unsaved webhook
+      description: Send the webhook in the body once, now, without saving it — to try a request before creating the webhook. Parameters are filled from the latest pact of the named consumer and provider, or with placeholders. The answer shows the request (secrets redacted), the response and the execution log. A workspace may make 30 test runs per rate-limit window. Requires `pacts:create`.
+      operationId: execute_unsaved_webhook_v1_tenants__tenant_slug__pact_broker_webhooks_execute_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runanunsavedwebhookauthorization schema.
+          - type: 'null'
+            description: Runanunsavedwebhookauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runanunsavedwebhook Xapikey schema.
+          - type: 'null'
+            description: Runanunsavedwebhook Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for run an unsaved webhook.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for runanunsavedwebhookresponse200.
+        '409':
+          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+        '422':
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+        '503':
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+        '429':
+          description: '`pact-webhook-test-rate-limited`: too many test runs; `Retry-After` says when to retry.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Free-text description.
+                  example: A pet available for adoption in the store.
+                consumer:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this consumer. Omit for any.
+                provider:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this provider. Omit for any.
+                enabled:
+                  type: boolean
+                  default: true
+                  description: Whether the resource is active.
+                  example: true
+                events:
+                  type: array
+                  minItems: 1
+                  description: 'Default: `contract_content_changed`.'
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        enum:
+                        - contract_published
+                        - contract_content_changed
+                        - contract_requiring_verification_published
+                        - provider_verification_published
+                        - provider_verification_succeeded
+                        - provider_verification_failed
+                        - consumer_version_branch_created
+                        description: Human-readable name.
+                        example: contract_published
+                  maxItems: 1000
+                request:
+                  type: object
+                  required:
+                  - method
+                  - url
+                  description: The HTTP request to send. Send this or `target`.
+                  properties:
+                    method:
+                      type: string
+                      enum:
+                      - POST
+                      - PUT
+                      - PATCH
+                      description: Method.
+                      example: POST
+                    url:
+                      type: string
+                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      example: https://example.com/resource
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Headers.
+                    body:
+                      description: A JSON value (sent as JSON) or a string (sent as text).
+                    username:
+                      type: string
+                      description: Username.
+                      example: Example
+                    password:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: example
+                target:
+                  type: object
+                  required:
+                  - type
+                  - repository
+                  - token
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - github_repository_dispatch
+                      description: Type.
+                      example: github_repository_dispatch
+                    repository:
+                      type: string
+                      description: '`owner/name`.'
+                      example: example
+                    eventType:
+                      type: string
+                      default: ${pactbroker.eventName}
+                      description: Event Type.
+                      example: example
+                    clientPayload:
+                      type: object
+                      maxProperties: 10
+                      description: Client Payload.
+                    apiUrl:
+                      type: string
+                      description: GitHub Enterprise Server API root.
+                      example: example
+                    token:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+                signingSecret:
+                  type: string
+                  minLength: 16
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  example: exampleexampleex
+              description: Request body for runanunsavedwebhookrequest.
+            examples:
+              http:
+                summary: A generic HTTP webhook
+                value:
+                  description: Verify Ledger API when a pact changes
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  request:
+                    method: POST
+                    url: https://ci.example.com/hooks/verify-pact
+                    headers:
+                      Content-Type: application/json
+                      Authorization: Bearer ci-token
+                    body:
+                      pactUrl: ${pactbroker.pactUrl}
+                      providerVersion: ${pactbroker.providerVersionNumber}
+                      providerBranch: ${pactbroker.providerVersionBranch}
+                  signingSecret: a-shared-secret-of-16-chars-or-more
+              github:
+                summary: A GitHub Actions repository_dispatch
+                value:
+                  description: Run the provider's pact verification workflow
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  target:
+                    type: github_repository_dispatch
+                    repository: acme/ledger-api
+                    eventType: pact_requires_verification
+                    token: github-token-with-contents-write
+        description: Request body for run an unsaved webhook.
+  /v1/tenants/{tenant_slug}/pact-broker/webhooks/{uuid}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a webhook
+      description: One webhook by its `uuid` — the index's `pb:webhook` template. Requires `pacts:view`.
+      operationId: read_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Uuid
+          description: Uuid schema.
+        description: Path parameter identifying the uuid segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readawebhookauthorization schema.
+          - type: 'null'
+            description: Readawebhookauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readawebhook Xapikey schema.
+          - type: 'null'
+            description: Readawebhook Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a webhook.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readawebhookresponse200.
+        '404':
+          description: '`pact-webhook-not-found`: no such webhook in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readawebhookresponse422.
+    put:
+      tags:
+      - pact-broker
+      summary: Create or replace a webhook
+      description: 'Replace the webhook with this `uuid`, or create it when the workspace has none — what `pact-broker create-or-update-webhook --uuid …` puts, so a pipeline can declare its webhook on every run. The body is the same as for creating one, and replaces the whole webhook.
+
+
+        A secret sent back as `**********` keeps the stored value; a secret left out is removed.
+
+
+        Answers `200` for a replacement and `201` for a new webhook. Requires `pacts:edit` (`pacts:create` when it creates).'
+      operationId: put_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Uuid
+          description: Uuid schema.
+        description: Path parameter identifying the uuid segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createorreplaceawebhookauthorization schema.
+          - type: 'null'
+            description: Createorreplaceawebhookauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createorreplaceawebhook Xapikey schema.
+          - type: 'null'
+            description: Createorreplaceawebhook Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for create or replace a webhook.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for createorreplaceawebhookresponse200.
+        '201':
+          description: The webhook did not exist and was created.
+        '409':
+          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+        '422':
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+        '503':
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Free-text description.
+                  example: A pet available for adoption in the store.
+                consumer:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this consumer. Omit for any.
+                provider:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this provider. Omit for any.
+                enabled:
+                  type: boolean
+                  default: true
+                  description: Whether the resource is active.
+                  example: true
+                events:
+                  type: array
+                  minItems: 1
+                  description: 'Default: `contract_content_changed`.'
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        enum:
+                        - contract_published
+                        - contract_content_changed
+                        - contract_requiring_verification_published
+                        - provider_verification_published
+                        - provider_verification_succeeded
+                        - provider_verification_failed
+                        - consumer_version_branch_created
+                        description: Human-readable name.
+                        example: contract_published
+                  maxItems: 1000
+                request:
+                  type: object
+                  required:
+                  - method
+                  - url
+                  description: The HTTP request to send. Send this or `target`.
+                  properties:
+                    method:
+                      type: string
+                      enum:
+                      - POST
+                      - PUT
+                      - PATCH
+                      description: Method.
+                      example: POST
+                    url:
+                      type: string
+                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      example: https://example.com/resource
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Headers.
+                    body:
+                      description: A JSON value (sent as JSON) or a string (sent as text).
+                    username:
+                      type: string
+                      description: Username.
+                      example: Example
+                    password:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: example
+                target:
+                  type: object
+                  required:
+                  - type
+                  - repository
+                  - token
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - github_repository_dispatch
+                      description: Type.
+                      example: github_repository_dispatch
+                    repository:
+                      type: string
+                      description: '`owner/name`.'
+                      example: example
+                    eventType:
+                      type: string
+                      default: ${pactbroker.eventName}
+                      description: Event Type.
+                      example: example
+                    clientPayload:
+                      type: object
+                      maxProperties: 10
+                      description: Client Payload.
+                    apiUrl:
+                      type: string
+                      description: GitHub Enterprise Server API root.
+                      example: example
+                    token:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+                signingSecret:
+                  type: string
+                  minLength: 16
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  example: exampleexampleex
+              description: Request body for createorreplaceawebhookrequest.
+            examples:
+              http:
+                summary: A generic HTTP webhook
+                value:
+                  description: Verify Ledger API when a pact changes
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  request:
+                    method: POST
+                    url: https://ci.example.com/hooks/verify-pact
+                    headers:
+                      Content-Type: application/json
+                      Authorization: Bearer ci-token
+                    body:
+                      pactUrl: ${pactbroker.pactUrl}
+                      providerVersion: ${pactbroker.providerVersionNumber}
+                      providerBranch: ${pactbroker.providerVersionBranch}
+                  signingSecret: a-shared-secret-of-16-chars-or-more
+              github:
+                summary: A GitHub Actions repository_dispatch
+                value:
+                  description: Run the provider's pact verification workflow
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  target:
+                    type: github_repository_dispatch
+                    repository: acme/ledger-api
+                    eventType: pact_requires_verification
+                    token: github-token-with-contents-write
+        description: Request body for create or replace a webhook.
+    delete:
+      tags:
+      - pact-broker
+      summary: Delete a webhook
+      description: Delete a webhook. Its queued deliveries, its triggered-webhook history and their logs go with it. Requires `pacts:delete`.
+      operationId: remove_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Uuid
+          description: Uuid schema.
+        description: Path parameter identifying the uuid segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteawebhookauthorization schema.
+          - type: 'null'
+            description: Deleteawebhookauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteawebhook Xapikey schema.
+          - type: 'null'
+            description: Deleteawebhook Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete a webhook.
+        '404':
+          description: '`pact-webhook-not-found`: no such webhook in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteawebhookresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/webhooks/{uuid}/execute:
+    post:
+      tags:
+      - pact-broker
+      summary: Run a webhook now
+      description: 'Send a saved webhook once, now — a webhook''s `pb:execute` link and what `pact-broker test-webhook` posts. Parameters are filled from the latest pact of the webhook''s consumer and provider, or with placeholders; `${pactbroker.eventName}` is `test`. Nothing is queued or retried. The answer shows the request (secrets redacted), the response and `logs`. A workspace may make 30 test runs per rate-limit window.
+
+
+        Requires `pacts:edit`.'
+      operationId: execute_saved_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__execute_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Uuid
+          description: Uuid schema.
+        description: Path parameter identifying the uuid segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runawebhooknowauthorization schema.
+          - type: 'null'
+            description: Runawebhooknowauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runawebhooknow Xapikey schema.
+          - type: 'null'
+            description: Runawebhooknow Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for run a webhook now.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for runawebhooknowresponse200.
+        '404':
+          description: '`pact-webhook-not-found`: no such webhook in this workspace.'
+        '429':
+          description: '`pact-webhook-test-rate-limited`: too many test runs; `Retry-After` says when to retry.'
+        '503':
+          description: '`pact-webhook-secrets-unavailable`: the webhook''s secrets cannot be opened.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for runawebhooknowresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/webhooks/provider/{provider}/consumer/{consumer}:
+    get:
+      tags:
+      - pact-broker
+      summary: List the webhooks of an integration
+      description: The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+      operationId: read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__consumer__consumer__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthewebhooksofanintegrationauthorization schema.
+          - type: 'null'
+            description: Listthewebhooksofanintegrationauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthewebhooksofanintegration Xapikey schema.
+          - type: 'null'
+            description: Listthewebhooksofanintegration Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the webhooks of an integration.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listthewebhooksofanintegrationresponse200.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthewebhooksofanintegrationresponse422.
+    post:
+      tags:
+      - pact-broker
+      summary: Create a webhook for an integration
+      description: 'Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
+      operationId: post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__consumer__consumer__post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookforanintegrationauthorization schema.
+          - type: 'null'
+            description: Createawebhookforanintegrationauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookforanintegration Xapikey schema.
+          - type: 'null'
+            description: Createawebhookforanintegration Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for create a webhook for an integration.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for createawebhookforanintegrationresponse201.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '409':
+          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+        '422':
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+        '503':
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Free-text description.
+                  example: A pet available for adoption in the store.
+                consumer:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this consumer. Omit for any.
+                provider:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this provider. Omit for any.
+                enabled:
+                  type: boolean
+                  default: true
+                  description: Whether the resource is active.
+                  example: true
+                events:
+                  type: array
+                  minItems: 1
+                  description: 'Default: `contract_content_changed`.'
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        enum:
+                        - contract_published
+                        - contract_content_changed
+                        - contract_requiring_verification_published
+                        - provider_verification_published
+                        - provider_verification_succeeded
+                        - provider_verification_failed
+                        - consumer_version_branch_created
+                        description: Human-readable name.
+                        example: contract_published
+                  maxItems: 1000
+                request:
+                  type: object
+                  required:
+                  - method
+                  - url
+                  description: The HTTP request to send. Send this or `target`.
+                  properties:
+                    method:
+                      type: string
+                      enum:
+                      - POST
+                      - PUT
+                      - PATCH
+                      description: Method.
+                      example: POST
+                    url:
+                      type: string
+                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      example: https://example.com/resource
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Headers.
+                    body:
+                      description: A JSON value (sent as JSON) or a string (sent as text).
+                    username:
+                      type: string
+                      description: Username.
+                      example: Example
+                    password:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: example
+                target:
+                  type: object
+                  required:
+                  - type
+                  - repository
+                  - token
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - github_repository_dispatch
+                      description: Type.
+                      example: github_repository_dispatch
+                    repository:
+                      type: string
+                      description: '`owner/name`.'
+                      example: example
+                    eventType:
+                      type: string
+                      default: ${pactbroker.eventName}
+                      description: Event Type.
+                      example: example
+                    clientPayload:
+                      type: object
+                      maxProperties: 10
+                      description: Client Payload.
+                    apiUrl:
+                      type: string
+                      description: GitHub Enterprise Server API root.
+                      example: example
+                    token:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+                signingSecret:
+                  type: string
+                  minLength: 16
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  example: exampleexampleex
+              description: Request body for createawebhookforanintegrationrequest.
+            examples:
+              http:
+                summary: A generic HTTP webhook
+                value:
+                  description: Verify Ledger API when a pact changes
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  request:
+                    method: POST
+                    url: https://ci.example.com/hooks/verify-pact
+                    headers:
+                      Content-Type: application/json
+                      Authorization: Bearer ci-token
+                    body:
+                      pactUrl: ${pactbroker.pactUrl}
+                      providerVersion: ${pactbroker.providerVersionNumber}
+                      providerBranch: ${pactbroker.providerVersionBranch}
+                  signingSecret: a-shared-secret-of-16-chars-or-more
+              github:
+                summary: A GitHub Actions repository_dispatch
+                value:
+                  description: Run the provider's pact verification workflow
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  target:
+                    type: github_repository_dispatch
+                    repository: acme/ledger-api
+                    eventType: pact_requires_verification
+                    token: github-token-with-contents-write
+        description: Request body for create a webhook for an integration.
+  /v1/tenants/{tenant_slug}/pact-broker/webhooks/provider/{provider}:
+    get:
+      tags:
+      - pact-broker
+      summary: List the webhooks of a provider
+      description: The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+      operationId: read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthewebhooksofaproviderauthorization schema.
+          - type: 'null'
+            description: Listthewebhooksofaproviderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthewebhooksofaprovider Xapikey schema.
+          - type: 'null'
+            description: Listthewebhooksofaprovider Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the webhooks of a provider.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listthewebhooksofaproviderresponse200.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthewebhooksofaproviderresponse422.
+    post:
+      tags:
+      - pact-broker
+      summary: Create a webhook for a provider
+      description: 'Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
+      operationId: post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookforaproviderauthorization schema.
+          - type: 'null'
+            description: Createawebhookforaproviderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookforaprovider Xapikey schema.
+          - type: 'null'
+            description: Createawebhookforaprovider Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for create a webhook for a provider.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for createawebhookforaproviderresponse201.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '409':
+          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+        '422':
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+        '503':
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Free-text description.
+                  example: A pet available for adoption in the store.
+                consumer:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this consumer. Omit for any.
+                provider:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this provider. Omit for any.
+                enabled:
+                  type: boolean
+                  default: true
+                  description: Whether the resource is active.
+                  example: true
+                events:
+                  type: array
+                  minItems: 1
+                  description: 'Default: `contract_content_changed`.'
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        enum:
+                        - contract_published
+                        - contract_content_changed
+                        - contract_requiring_verification_published
+                        - provider_verification_published
+                        - provider_verification_succeeded
+                        - provider_verification_failed
+                        - consumer_version_branch_created
+                        description: Human-readable name.
+                        example: contract_published
+                  maxItems: 1000
+                request:
+                  type: object
+                  required:
+                  - method
+                  - url
+                  description: The HTTP request to send. Send this or `target`.
+                  properties:
+                    method:
+                      type: string
+                      enum:
+                      - POST
+                      - PUT
+                      - PATCH
+                      description: Method.
+                      example: POST
+                    url:
+                      type: string
+                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      example: https://example.com/resource
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Headers.
+                    body:
+                      description: A JSON value (sent as JSON) or a string (sent as text).
+                    username:
+                      type: string
+                      description: Username.
+                      example: Example
+                    password:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: example
+                target:
+                  type: object
+                  required:
+                  - type
+                  - repository
+                  - token
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - github_repository_dispatch
+                      description: Type.
+                      example: github_repository_dispatch
+                    repository:
+                      type: string
+                      description: '`owner/name`.'
+                      example: example
+                    eventType:
+                      type: string
+                      default: ${pactbroker.eventName}
+                      description: Event Type.
+                      example: example
+                    clientPayload:
+                      type: object
+                      maxProperties: 10
+                      description: Client Payload.
+                    apiUrl:
+                      type: string
+                      description: GitHub Enterprise Server API root.
+                      example: example
+                    token:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+                signingSecret:
+                  type: string
+                  minLength: 16
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  example: exampleexampleex
+              description: Request body for createawebhookforaproviderrequest.
+            examples:
+              http:
+                summary: A generic HTTP webhook
+                value:
+                  description: Verify Ledger API when a pact changes
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  request:
+                    method: POST
+                    url: https://ci.example.com/hooks/verify-pact
+                    headers:
+                      Content-Type: application/json
+                      Authorization: Bearer ci-token
+                    body:
+                      pactUrl: ${pactbroker.pactUrl}
+                      providerVersion: ${pactbroker.providerVersionNumber}
+                      providerBranch: ${pactbroker.providerVersionBranch}
+                  signingSecret: a-shared-secret-of-16-chars-or-more
+              github:
+                summary: A GitHub Actions repository_dispatch
+                value:
+                  description: Run the provider's pact verification workflow
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  target:
+                    type: github_repository_dispatch
+                    repository: acme/ledger-api
+                    eventType: pact_requires_verification
+                    token: github-token-with-contents-write
+        description: Request body for create a webhook for a provider.
+  /v1/tenants/{tenant_slug}/pact-broker/webhooks/consumer/{consumer}:
+    get:
+      tags:
+      - pact-broker
+      summary: List the webhooks of a consumer
+      description: The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+      operationId: read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_consumer__consumer__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthewebhooksofaconsumerauthorization schema.
+          - type: 'null'
+            description: Listthewebhooksofaconsumerauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthewebhooksofaconsumer Xapikey schema.
+          - type: 'null'
+            description: Listthewebhooksofaconsumer Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the webhooks of a consumer.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listthewebhooksofaconsumerresponse200.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthewebhooksofaconsumerresponse422.
+    post:
+      tags:
+      - pact-broker
+      summary: Create a webhook for a consumer
+      description: 'Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
+      operationId: post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_consumer__consumer__post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookforaconsumerauthorization schema.
+          - type: 'null'
+            description: Createawebhookforaconsumerauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookforaconsumer Xapikey schema.
+          - type: 'null'
+            description: Createawebhookforaconsumer Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for create a webhook for a consumer.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for createawebhookforaconsumerresponse201.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '409':
+          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+        '422':
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+        '503':
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Free-text description.
+                  example: A pet available for adoption in the store.
+                consumer:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this consumer. Omit for any.
+                provider:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this provider. Omit for any.
+                enabled:
+                  type: boolean
+                  default: true
+                  description: Whether the resource is active.
+                  example: true
+                events:
+                  type: array
+                  minItems: 1
+                  description: 'Default: `contract_content_changed`.'
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        enum:
+                        - contract_published
+                        - contract_content_changed
+                        - contract_requiring_verification_published
+                        - provider_verification_published
+                        - provider_verification_succeeded
+                        - provider_verification_failed
+                        - consumer_version_branch_created
+                        description: Human-readable name.
+                        example: contract_published
+                  maxItems: 1000
+                request:
+                  type: object
+                  required:
+                  - method
+                  - url
+                  description: The HTTP request to send. Send this or `target`.
+                  properties:
+                    method:
+                      type: string
+                      enum:
+                      - POST
+                      - PUT
+                      - PATCH
+                      description: Method.
+                      example: POST
+                    url:
+                      type: string
+                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      example: https://example.com/resource
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Headers.
+                    body:
+                      description: A JSON value (sent as JSON) or a string (sent as text).
+                    username:
+                      type: string
+                      description: Username.
+                      example: Example
+                    password:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: example
+                target:
+                  type: object
+                  required:
+                  - type
+                  - repository
+                  - token
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - github_repository_dispatch
+                      description: Type.
+                      example: github_repository_dispatch
+                    repository:
+                      type: string
+                      description: '`owner/name`.'
+                      example: example
+                    eventType:
+                      type: string
+                      default: ${pactbroker.eventName}
+                      description: Event Type.
+                      example: example
+                    clientPayload:
+                      type: object
+                      maxProperties: 10
+                      description: Client Payload.
+                    apiUrl:
+                      type: string
+                      description: GitHub Enterprise Server API root.
+                      example: example
+                    token:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+                signingSecret:
+                  type: string
+                  minLength: 16
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  example: exampleexampleex
+              description: Request body for createawebhookforaconsumerrequest.
+            examples:
+              http:
+                summary: A generic HTTP webhook
+                value:
+                  description: Verify Ledger API when a pact changes
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  request:
+                    method: POST
+                    url: https://ci.example.com/hooks/verify-pact
+                    headers:
+                      Content-Type: application/json
+                      Authorization: Bearer ci-token
+                    body:
+                      pactUrl: ${pactbroker.pactUrl}
+                      providerVersion: ${pactbroker.providerVersionNumber}
+                      providerBranch: ${pactbroker.providerVersionBranch}
+                  signingSecret: a-shared-secret-of-16-chars-or-more
+              github:
+                summary: A GitHub Actions repository_dispatch
+                value:
+                  description: Run the provider's pact verification workflow
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  target:
+                    type: github_repository_dispatch
+                    repository: acme/ledger-api
+                    eventType: pact_requires_verification
+                    token: github-token-with-contents-write
+        description: Request body for create a webhook for a consumer.
+  /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/webhooks:
+    get:
+      tags:
+      - pact-broker
+      summary: List the webhooks of a pact
+      description: The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+      operationId: read_scoped_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__webhooks_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthewebhooksofapactauthorization schema.
+          - type: 'null'
+            description: Listthewebhooksofapactauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthewebhooksofapact Xapikey schema.
+          - type: 'null'
+            description: Listthewebhooksofapact Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the webhooks of a pact.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listthewebhooksofapactresponse200.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthewebhooksofapactresponse422.
+    post:
+      tags:
+      - pact-broker
+      summary: Create a webhook for a pact
+      description: 'Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
+      operationId: post_scoped_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__webhooks_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookforapactauthorization schema.
+          - type: 'null'
+            description: Createawebhookforapactauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createawebhookforapact Xapikey schema.
+          - type: 'null'
+            description: Createawebhookforapact Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for create a webhook for a pact.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for createawebhookforapactresponse201.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '409':
+          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+        '422':
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+        '503':
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Free-text description.
+                  example: A pet available for adoption in the store.
+                consumer:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this consumer. Omit for any.
+                provider:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                      description: A pacticipant of the workspace.
+                      example: Pet
+                  description: Only pacts of this provider. Omit for any.
+                enabled:
+                  type: boolean
+                  default: true
+                  description: Whether the resource is active.
+                  example: true
+                events:
+                  type: array
+                  minItems: 1
+                  description: 'Default: `contract_content_changed`.'
+                  items:
+                    type: object
+                    required:
+                    - name
+                    properties:
+                      name:
+                        type: string
+                        enum:
+                        - contract_published
+                        - contract_content_changed
+                        - contract_requiring_verification_published
+                        - provider_verification_published
+                        - provider_verification_succeeded
+                        - provider_verification_failed
+                        - consumer_version_branch_created
+                        description: Human-readable name.
+                        example: contract_published
+                  maxItems: 1000
+                request:
+                  type: object
+                  required:
+                  - method
+                  - url
+                  description: The HTTP request to send. Send this or `target`.
+                  properties:
+                    method:
+                      type: string
+                      enum:
+                      - POST
+                      - PUT
+                      - PATCH
+                      description: Method.
+                      example: POST
+                    url:
+                      type: string
+                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      example: https://example.com/resource
+                    headers:
+                      type: object
+                      additionalProperties:
+                        type: string
+                      description: Headers.
+                    body:
+                      description: A JSON value (sent as JSON) or a string (sent as text).
+                    username:
+                      type: string
+                      description: Username.
+                      example: Example
+                    password:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: example
+                target:
+                  type: object
+                  required:
+                  - type
+                  - repository
+                  - token
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - github_repository_dispatch
+                      description: Type.
+                      example: github_repository_dispatch
+                    repository:
+                      type: string
+                      description: '`owner/name`.'
+                      example: example
+                    eventType:
+                      type: string
+                      default: ${pactbroker.eventName}
+                      description: Event Type.
+                      example: example
+                    clientPayload:
+                      type: object
+                      maxProperties: 10
+                      description: Client Payload.
+                    apiUrl:
+                      type: string
+                      description: GitHub Enterprise Server API root.
+                      example: example
+                    token:
+                      type: string
+                      description: Sealed; reads as `**********`.
+                      example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+                signingSecret:
+                  type: string
+                  minLength: 16
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  example: exampleexampleex
+              description: Request body for createawebhookforapactrequest.
+            examples:
+              http:
+                summary: A generic HTTP webhook
+                value:
+                  description: Verify Ledger API when a pact changes
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  request:
+                    method: POST
+                    url: https://ci.example.com/hooks/verify-pact
+                    headers:
+                      Content-Type: application/json
+                      Authorization: Bearer ci-token
+                    body:
+                      pactUrl: ${pactbroker.pactUrl}
+                      providerVersion: ${pactbroker.providerVersionNumber}
+                      providerBranch: ${pactbroker.providerVersionBranch}
+                  signingSecret: a-shared-secret-of-16-chars-or-more
+              github:
+                summary: A GitHub Actions repository_dispatch
+                value:
+                  description: Run the provider's pact verification workflow
+                  provider:
+                    name: Ledger API
+                  events:
+                  - name: contract_requiring_verification_published
+                  target:
+                    type: github_repository_dispatch
+                    repository: acme/ledger-api
+                    eventType: pact_requires_verification
+                    token: github-token-with-contents-write
+        description: Request body for create a webhook for a pact.
+  /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/webhooks/status:
+    get:
+      tags:
+      - pact-broker
+      summary: Webhook status of a pact
+      description: 'The latest firing of each webhook and event for the pacts between a consumer and a provider, with a `summary` (`successful`, `failed`, `retrying`, `notRun`) and a `pb:error-logs` link per firing that failed or is being retried. `failed` means dead-lettered: every attempt was used. Requires `pacts:view`.'
+      operationId: read_pact_webhooks_status_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__webhooks_status_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Webhookstatusofapactauthorization schema.
+          - type: 'null'
+            description: Webhookstatusofapactauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Webhookstatusofapact Xapikey schema.
+          - type: 'null'
+            description: Webhookstatusofapact Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for webhook status of a pact.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for webhookstatusofapactresponse200.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for webhookstatusofapactresponse422.
+  ? /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{consumer_version}/triggered-webhooks
+  : get:
+      tags:
+      - pact-broker
+      summary: Webhooks a publication triggered
+      description: The webhooks fired by this consumer version's publication of its pact for the provider, newest first, each with its status and a `pb:logs` link. Requires `pacts:view`.
+      operationId: read_pact_triggered_webhooks_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__version__consumer_version__triggered_webhooks_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: consumer_version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Version
+          description: Consumer Version schema.
+        description: Path parameter identifying the consumer version segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Webhooksapublicationtriggeredauthorization schema.
+          - type: 'null'
+            description: Webhooksapublicationtriggeredauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Webhooksapublicationtriggered Xapikey schema.
+          - type: 'null'
+            description: Webhooksapublicationtriggered Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for webhooks a publication triggered.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for webhooksapublicationtriggeredresponse200.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for webhooksapublicationtriggeredresponse422.
+  ? /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}/triggered-webhooks
+  : get:
+      tags:
+      - pact-broker
+      summary: Webhooks a verification result triggered
+      description: The webhooks fired by the publication of this verification result, newest first, each with its status and a `pb:logs` link. Requires `pacts:view`.
+      operationId: read_verification_triggered_webhooks_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__verification_results__number__triggered_webhooks_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sha
+          description: Sha schema.
+        description: Path parameter identifying the sha segment.
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Number
+          description: Number schema.
+        description: Path parameter identifying the number segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Webhooksaverificationresulttriggeredauthorization schema.
+          - type: 'null'
+            description: Webhooksaverificationresulttriggeredauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Webhooksaverificationresulttriggered Xapikey schema.
+          - type: 'null'
+            description: Webhooksaverificationresulttriggered Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for webhooks a verification result triggered.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for webhooksaverificationresulttriggeredresponse200.
+        '404':
+          description: '`pacticipant-not-found`: no such consumer or provider.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for webhooksaverificationresulttriggeredresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/triggered-webhooks/{uuid}/logs:
+    get:
+      tags:
+      - pact-broker
+      summary: Execution log of a triggered webhook
+      description: 'What each attempt of one firing sent and received — a triggered webhook''s `pb:logs` link. As `text/plain` (the default, as a Pact Broker answers) the logs of every attempt, in order; with `Accept: application/hal+json`, one entry per attempt under `executions` (`attempt`, `success`, `status`, `logs`, `createdAt`).
+
+
+        Secret header values read `**********`, and every secret value of the webhook is removed from the whole log, the receiver''s response included. Requires `pacts:view`.'
+      operationId: read_triggered_webhook_logs_v1_tenants__tenant_slug__pact_broker_triggered_webhooks__uuid__logs_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Uuid
+          description: Uuid schema.
+        description: Path parameter identifying the uuid segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Executionlogofatriggeredwebhookauthorization schema.
+          - type: 'null'
+            description: Executionlogofatriggeredwebhookauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Executionlogofatriggeredwebhook Xapikey schema.
+          - type: 'null'
+            description: Executionlogofatriggeredwebhook Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for execution log of a triggered webhook.
+          content:
+            application/json:
+              schema:
+                description: Response payload for executionlogofatriggeredwebhookresponse200.
+            text/plain: {}
+            application/hal+json: {}
+        '404':
+          description: '`pact-triggered-webhook-not-found`: no such triggered webhook.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for executionlogofatriggeredwebhookresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings:
     get:
       tags:
@@ -171494,16 +173855,19 @@ components:
             its head.
           default: false
           example: false
+        branch_created:
+          type: boolean
+          title: Branch Created
+          description: Whether this request recorded the first version on the named branch.
+          default: false
+          example: false
       additionalProperties: false
       type: object
       required:
       - version
       - created
       title: RecordedPacticipantVersion
-      description: "The outcome of recording a version.\n\nAttributes:\n    version: The\
-        \ version as stored, with every branch and tag it now has.\n    created: Whether\
-        \ this request created the version (false: it already existed, unchanged).\n \
-        \   head_moved: Whether the named branch's head moved to this version."
+      description: "The outcome of recording a version.\n\nAttributes:\n    version: The version as stored, with every branch and tag it now has.\n    created: Whether this request created the version (false: it already existed, unchanged).\n    head_moved: Whether the named branch's head moved to this version.\n    branch_created: Whether the named branch did not exist before this request."
     RedactionInfo:
       properties:
         valueVisibility:
