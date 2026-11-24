@@ -211,7 +211,19 @@ class Settings(BaseSettings):
         default=10_000,
         ge=1,
         le=1_000_000,
-        description="AGX-3.3: most rows each retention purge deletes per sweep tick.",
+        description=(
+            "AGX-3.3: most rows one retention purge batch deletes. DBP-1.23: each purge repeats, one "
+            "committed batch at a time, until a batch comes back short or the time budget runs out."
+        ),
+    )
+    agent_usage_sweep_time_budget_seconds: int = Field(
+        default=300,
+        ge=1,
+        le=86_400,
+        description=(
+            "DBP-1.23: seconds one sweep tick may keep purging. Every purge still runs at least one "
+            "batch; whatever is left goes on the next tick."
+        ),
     )
     agent_usage_finalize_grace_hours: int = Field(
         default=6,
@@ -227,6 +239,24 @@ class Settings(BaseSettings):
         ge=1,
         le=3650,
         description="AGX-2.2 upstream credential-use ledger retention, applied by the AGX-3.3 sweep.",
+    )
+    access_audit_retention_days: int = Field(
+        default=365,
+        ge=1,
+        le=3650,
+        description=(
+            "DBP-1.23: days rows of mcp_access_audit (private-revision reads) are kept; the usage sweep "
+            "deletes older ones."
+        ),
+    )
+    capability_denial_retention_days: int = Field(
+        default=90,
+        ge=1,
+        le=3650,
+        description=(
+            "DBP-1.23: days rows of mcp_capability_denials (refused tools/call) are kept; the usage "
+            "sweep deletes older ones."
+        ),
     )
     agent_quota_limits_cache_seconds: float = Field(
         default=60.0,

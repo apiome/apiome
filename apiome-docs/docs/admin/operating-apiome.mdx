@@ -1370,6 +1370,54 @@ Slate request data — logs, traces and their spans, live-tail sessions, synthet
 security events and function invocations — is written with the date its lane's retention policy
 ends, and is deleted after that date. The Slate audit log has no retention.
 
+### Agent usage and MCP audit retention
+
+`apiome-mcp` runs its own sweep, once an hour by default, for the agent invocation log, its daily
+rollups and the MCP audit tables. With several `apiome-mcp` instances only one runs each tick; the
+others skip it. It can also run from cron with `apiome-mcp agent-usage sweep`.
+
+Each tick first brings the daily usage rollups up to date, one day at a time, and then deletes
+rows past their retention:
+
+| Rows | Kept for | Set by |
+| --- | --- | --- |
+| Agent invocations (one per agent `tools/call`) | 7 days on Free, 30 on Paid, 90 on Sponsor | the license's `agent_invocation_retention_days` |
+| Daily agent usage rollups | 90 days on Free, 395 on Paid, 730 on Sponsor | the license's `agent_usage_rollup_retention_days` |
+| Body samples of agent calls | 7 days | fixed |
+| Upstream credential uses | 90 days | `APIOME_MCP_AGENT_UPSTREAM_USE_RETENTION_DAYS` |
+| MCP reads of private revisions (`mcp_access_audit`) | 365 days | `APIOME_MCP_ACCESS_AUDIT_RETENTION_DAYS` |
+| Refused MCP tool calls (`mcp_capability_denials`) | 90 days | `APIOME_MCP_CAPABILITY_DENIAL_RETENTION_DAYS` |
+
+A negative license value keeps a workspace's rows forever. An invocation is deleted only after its
+day's rollup is final, so usage charts never lose a call.
+
+| Setting | Default | Means |
+| --- | --- | --- |
+| `APIOME_MCP_AGENT_USAGE_SWEEP_INTERVAL_SECONDS` | `3600` | Seconds between ticks. `0` turns the in-process sweep off (run the CLI from cron instead) |
+| `APIOME_MCP_AGENT_USAGE_SWEEP_BATCH_SIZE` | `10000` | Rows one delete removes. Each kind of row is deleted batch after batch, each committed on its own, until less than a batch is left |
+| `APIOME_MCP_AGENT_USAGE_SWEEP_TIME_BUDGET_SECONDS` | `300` | How long one tick keeps deleting. Every kind of row still gets one batch; the rest waits for the next tick |
+| `APIOME_MCP_AGENT_USAGE_FINALIZE_GRACE_HOURS` | `6` | Hours after a UTC day ends before its rollup is final. Must be longer than the longest agent call |
+
+The rollup for today recomputes only the agent keys and tools that were called since the previous
+tick (less the grace period), so a quiet tick costs little however many calls the day holds. A
+tick with nothing to delete reads a few index pages per table.
+
+On the scale database, one workspace sending 1,000,000 agent calls a day with a 2-day retention
+kept its invocation log at 2.0 million rows, two days of calls, over five simulated days of hourly
+ticks. Each tick took about a second and deleted the hour's 41,666 expired rows. Before migration
+`V429`, a tick deleted at most 10,000 rows, 240,000 a day, so that log grew by about 760,000 rows a
+day. Credential uses are deleted at about 590,000 rows a second.
+
+The invocation log isn't partitioned. Each workspace keeps it for its own tier's retention, so
+dropping a whole day's partition would only work for days past the longest retention of any
+workspace. Heavy deletes leave dead rows behind, so check that autovacuum keeps up on
+`agent_invocations` (`n_dead_tup` in `pg_stat_user_tables`).
+
+**Upgrading.** Migration `V429` adds an index to each of `agent_invocations`,
+`upstream_credential_uses`, `mcp_access_audit` and `mcp_capability_denials`. The builds block writes
+to those tables while they run. On a large database, create them first with
+`CREATE INDEX CONCURRENTLY` (the names and definitions are in the migration's header).
+
 Retention settings elsewhere: MCP uptime checks are kept 30 days ([MCP uptime
 checks](#mcp-uptime-checks)), discovery sweep ticks 30 days ([Watch MCP
 re-discovery](#watch-mcp-re-discovery)), and async jobs, quality-rank observations and schema test

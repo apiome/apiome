@@ -1,0 +1,33 @@
+---
+slug: mcp-usage-sweep-batched-retention
+title: "MCP usage sweep: retention that keeps up"
+description: "The agent usage sweep deletes as fast as calls arrive and prunes MCP audit rows."
+authors: [apiome]
+---
+
+**Performance.** The `apiome-mcp` usage sweep now deletes expired agent invocations as fast as
+they arrive, rolls up today's usage incrementally, and gives the MCP audit tables a retention
+period.
+
+{/* truncate */}
+
+- **Deletes keep up.** Each kind of expired row is deleted 10,000 at a time, each batch committed
+  on its own, until none are left or the tick's time budget
+  (`APIOME_MCP_AGENT_USAGE_SWEEP_TIME_BUDGET_SECONDS`, 5 minutes) runs out. Before, a tick deleted
+  one batch per table, at most 240,000 invocations a day.
+- **Incremental rollups.** Today's usage rollup recomputes only the agent keys and tools called
+  since the previous tick. Each tick finds its days from the rollup bookkeeping instead of scanning
+  every retained invocation. The rollup values are unchanged.
+- **Idle ticks are cheap.** Every delete reads its oldest rows from an index, so a tick with
+  nothing to do reads a few index pages per table.
+- **MCP audit retention.** MCP reads of private revisions are kept 365 days
+  (`APIOME_MCP_ACCESS_AUDIT_RETENTION_DAYS`) and refused MCP tool calls 90 days
+  (`APIOME_MCP_CAPABILITY_DENIAL_RETENTION_DAYS`). Until now they were never deleted.
+
+On the scale database, one workspace sending 1,000,000 agent calls a day with a 2-day retention
+kept its invocation log at two days of calls (2.0 million rows) over five simulated days. Each
+hourly tick took about a second.
+
+**Upgrading.** Migration `V429` adds four indexes, and their builds block writes to those tables.
+On a large database, build them first with `CREATE INDEX CONCURRENTLY`. See
+[Agent usage and MCP audit retention](/admin/operating-apiome#agent-usage-and-mcp-audit-retention).

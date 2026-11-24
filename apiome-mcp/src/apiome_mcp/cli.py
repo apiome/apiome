@@ -41,7 +41,7 @@ async def _run_keys_revoke(prefix: str) -> int:
 
 
 async def _run_agent_usage_sweep() -> int:
-    """Run one AGX-3.3 agent usage sweep tick (rollups + per-tier retention) and print what it did."""
+    """Run one agent usage sweep tick (rollups, per-tier and MCP audit retention) and print what it did."""
     import structlog
 
     from apiome_mcp.agent_usage_sweep import run_agent_usage_sweep_with_settings
@@ -65,8 +65,11 @@ async def _run_agent_usage_sweep() -> int:
     print(
         f"Rolled up {result.days_rolled_up} day(s); purged {result.invocations_purged} invocation(s), "
         f"{result.samples_purged} sample(s), {result.rollups_purged} rollup row(s), "
-        f"{result.credential_uses_purged} credential use(s)."
+        f"{result.credential_uses_purged} credential use(s), {result.access_audit_purged} access audit "
+        f"row(s), {result.capability_denials_purged} capability denial(s)."
     )
+    if result.budget_exhausted:
+        print("Time budget reached; the rest is purged on the next sweep.")
     return 0
 
 
@@ -151,7 +154,7 @@ def main() -> None:
     usage_sub = usage_parser.add_subparsers(dest="usage_command", required=True)
     usage_sub.add_parser(
         "sweep",
-        help="Run one sweep now: roll up agent invocations by day and apply per-tier retention.",
+        help=("Run one sweep now: roll up agent invocations by day and apply per-tier and MCP audit retention."),
     )
 
     args = parser.parse_args()
