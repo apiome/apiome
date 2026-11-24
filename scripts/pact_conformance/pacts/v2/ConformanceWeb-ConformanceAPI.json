@@ -1,0 +1,27 @@
+{
+  "consumer": { "name": "ConformanceWeb" },
+  "provider": { "name": "ConformanceAPI" },
+  "interactions": [
+    {
+      "description": "a request for the health of the service",
+      "providerState": "the service is up",
+      "request": { "method": "GET", "path": "/health" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "body": { "status": "ok" }
+      }
+    },
+    {
+      "description": "a request for order 1",
+      "providerState": "order 1 exists",
+      "request": { "method": "GET", "path": "/orders/1" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "body": { "id": 1, "status": "open", "total": 12.5 }
+      }
+    }
+  ],
+  "metadata": { "pactSpecification": { "version": "2.0.0" } }
+}

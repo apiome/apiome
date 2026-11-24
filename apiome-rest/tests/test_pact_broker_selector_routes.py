@@ -118,6 +118,7 @@ def _for_verification(body: Any = None, **kwargs: Any):
         ("get", f"{_PAIR}/latest/prod"),
         ("get", f"{_PAIR}/branch/main/latest"),
         ("get", f"{_PAIR}/pact-version/{'a' * 64}/metadata/czpbXQ"),
+        ("get", f"{_PROVIDER_PATH}/for-verification"),
     ],
 )
 def test_every_new_route_is_gated_on_pacts_view(method: str, path: str) -> None:
@@ -364,3 +365,36 @@ def test_wip_pacts_follow_the_selected_ones(allowed: MagicMock, evidence: MagicM
     # The link records the pact as WIP, so the result the verifier publishes says so.
     metadata = wip["_links"]["self"]["href"].rsplit("/metadata/", 1)[1]
     assert decode_metadata(metadata) == {"pending": True, "wip": True}
+
+
+# --- GET for-verification (PFX-1.8, #6921) ----------------------------------------------------
+
+
+def test_get_for_verification_answers_as_the_post_does(allowed: MagicMock, candidates: MagicMock) -> None:
+    """The Rust verifier fetches the resource with GET before it posts its selectors."""
+    query = (
+        "provider_version_branch=main&include_pending_status=true"
+        "&consumer_version_selectors[0][tag]=prod&consumer_version_selectors[0][latest]=true"
+        "&consumer_version_selectors[1][main_branch]=true"
+    )
+    by_get = client.get(f"{_PROVIDER_PATH}/for-verification?{query}")
+    by_post = _for_verification(
+        {
+            "providerVersionBranch": "main",
+            "includePendingStatus": True,
+            "consumerVersionSelectors": [{"tag": "prod", "latest": True}, {"mainBranch": True}],
+        }
+    )
+    assert by_get.status_code == 200 and by_get.headers["content-type"].startswith("application/hal+json")
+    assert by_get.json() == by_post.json()
+
+
+def test_get_for_verification_without_parameters_uses_the_defaults(allowed: MagicMock, candidates: MagicMock) -> None:
+    assert client.get(f"{_PROVIDER_PATH}/for-verification").json() == _for_verification().json()
+
+
+def test_get_for_verification_refuses_an_ambiguous_selector(allowed: MagicMock, candidates: MagicMock) -> None:
+    query = "consumer_version_selectors[][tag]=x&consumer_version_selectors[][branch]=y"
+    response = client.get(f"{_PROVIDER_PATH}/for-verification?{query}")
+    assert response.status_code == 400
+    assert response.json()["detail"]["pointer"] == "/consumerVersionSelectors/0"

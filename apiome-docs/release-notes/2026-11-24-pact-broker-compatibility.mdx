@@ -1,0 +1,44 @@
+---
+slug: pact-broker-compatibility
+title: "Pact Broker: compatibility tested in CI"
+description: "The official Pact tools run against Apiome on every Pact Broker change."
+authors: [apiome]
+---
+
+"Change the broker base URL and token, and your Pact tooling works" is now something CI checks.
+A conformance suite runs the official `pact-broker` CLI, pact-js and pact-jvm against Apiome, and
+a new page lists every Pact Broker endpoint and whether Apiome serves it.
+
+{/* truncate */}
+
+**What the suite runs**, on a fresh Apiome, for every pull request that touches the Pact Broker:
+
+- **The `pact-broker` CLI**: `publish`, the Ruby verifier publishing results, `create-environment`,
+  `record-deployment`, `can-i-deploy` (yes, then no for an unverified version), tags, releases and
+  undeployment.
+- **pact-js**: a consumer test, then the `Verifier` fetching pacts with selectors and publishing
+  its result.
+- **pact-jvm**: a consumer test, the Gradle plugin's `pactPublish`, then a JUnit 5 provider test.
+
+The HAL documents the clients read are compared with checked-in golden transcripts, so a change
+to what a Pact client sees shows up in review.
+
+**Fixed along the way.** The suite found three places where Apiome behaved differently from the
+Pact Broker, and they now match:
+
+- **Main branch detection.** The first version published on `develop`, `main` or `master` sets the
+  pacticipant's main branch, as on the Pact Broker. `{"mainBranch": true}` selectors now work
+  without setting it by hand.
+- **The Ruby verifier's results.** Results from `pact-provider-verifier` (the `pact-cli` image) were
+  refused because they send `testResults` as an object. They are now accepted.
+- **`GET …/for-verification`.** The Rust verifier inside pact-js, pact-python and pact-go reads this
+  resource with `GET` before it posts its selectors. Apiome answered `405`. It now answers both forms.
+
+**Endpoints Apiome does not serve** answer `501 Not Implemented`, never a bare `404`. The answer
+names the endpoint, its status, the methods that do work, the tracking issue and the Apiome route
+to use instead, and links the [compatibility page](/ship/pact-broker/compatibility).
+
+**For operators.** No migration. Run the suite yourself with `scripts/pact_conformance/run.sh`
+(Docker and `uv`).
+
+Read [Pact Broker compatibility](/ship/pact-broker/compatibility) for the full endpoint table.

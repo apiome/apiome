@@ -22,10 +22,12 @@ Environment selectors (`deployed`, `released`, `environment`) select what your d
 
 - Your consumers have [published their pacts](./publish-pacts.mdx), with `--branch` (or tags) on
   each version.
-- For `mainBranch` selectors, each consumer has a **main branch**. Set it on the pacticipant with
-  `PATCH …/pacticipants/<consumer>` and `{"main_branch": "main"}` (see
-  [Register a pacticipant](./concepts.mdx#register-a-pacticipant)). A consumer with no main branch
-  is never selected by `mainBranch`.
+- For `mainBranch` selectors, each consumer has a **main branch**. The first version a consumer
+  publishes on `develop`, `main` or `master` sets it for you, as on the Pact Broker. For any other
+  branch, set it on the pacticipant with `PATCH …/pacticipants/<consumer>` and
+  `{"main_branch": "trunk"}` (see [Register a pacticipant](./concepts.mdx#register-a-pacticipant)).
+  A main branch you set is never replaced. A consumer with no main branch is never selected by
+  `mainBranch`.
 - The verifier's token is an API key from a member who holds **Pacts** → **View**. Every built-in
   role does.
 

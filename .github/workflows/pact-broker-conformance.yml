@@ -1,0 +1,106 @@
+name: Pact Broker Conformance
+
+# The Pact Broker API conformance suite (PFX-1.8, #6921): "drop-in Pact Broker" is a claim, and
+# this tests it. Brings up a fresh database (postgres -> migrate -> seed), starts apiome-rest from
+# source, and runs the official Pact tooling against it — the pact-broker CLI (Docker) through
+# publish -> verify -> record-deployment -> can-i-deploy, plus pact-js and pact-jvm consumer and
+# provider examples — comparing what the clients read with the golden transcripts in
+# scripts/pact_conformance/golden/. See apiome-docs/docs/ship/pact-broker/compatibility.mdx.
+#
+# After an intended change to a Pact Broker response, regenerate the transcripts locally with
+#   scripts/pact_conformance/run.sh --update-golden
+# and commit scripts/pact_conformance/golden/.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apiome-rest/src/app/pact*.py'
+      - 'apiome-rest/src/app/pacticipant*.py'
+      - 'apiome-rest/src/app/verification_result*.py'
+      - 'apiome-rest/src/app/main.py'
+      - 'apiome-db/scripts/**'
+      - 'scripts/pact_conformance/**'
+      - '.github/workflows/pact-broker-conformance.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apiome-rest/src/app/pact*.py'
+      - 'apiome-rest/src/app/pacticipant*.py'
+      - 'apiome-rest/src/app/verification_result*.py'
+      - 'apiome-rest/src/app/main.py'
+      - 'apiome-db/scripts/**'
+      - 'scripts/pact_conformance/**'
+      - '.github/workflows/pact-broker-conformance.yml'
+  workflow_dispatch:
+    inputs:
+      clients:
+        description: 'Clients to run (comma-separated: cli, pact-js, pact-jvm)'
+        required: false
+        default: 'cli,pact-js,pact-jvm'
+
+concurrency:
+  group: pact-broker-conformance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance:
+    name: Pact Broker conformance suite
+    runs-on: self-hosted
+    timeout-minutes: 45
+    env:
+      # One compose project per run, so a dev stack (or another run) on the shared runner is untouched.
+      COMPOSE_PROJECT_NAME: pact-conformance-${{ github.run_id }}
+      PACT_CONFORMANCE_LOG_DIR: ${{ github.workspace }}/pact-conformance-logs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      # uv-managed Python: setup-python's Ubuntu 26.04 builds need an x86-64-v3 CPU the
+      # self-hosted runner does not have (see apiome-rest-test.yml).
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install apiome-rest dependencies
+        working-directory: apiome-rest
+        run: uv sync --frozen
+
+      # The runner is shared with local dev, so the defaults (5442 / 8041 / 8790) may be taken.
+      - name: Pick free host ports
+        run: |
+          set -euo pipefail
+          read -r pg rest provider < <(uv run --no-project python -c 'import socket
+          socks = [socket.socket() for _ in range(3)]
+          for s in socks: s.bind(("127.0.0.1", 0))
+          print(*[s.getsockname()[1] for s in socks])')
+          {
+            echo "POSTGRES_PUBLISH_PORT=$pg"
+            echo "APIOME_REST_PORT=$rest"
+            echo "PACT_PROVIDER_PORT=$provider"
+          } >> "$GITHUB_ENV"
+          mkdir -p "$PACT_CONFORMANCE_LOG_DIR"
+
+      - name: Run the conformance suite
+        run: scripts/pact_conformance/run.sh --clients "${{ github.event.inputs.clients || 'cli,pact-js,pact-jvm' }}"
+
+      - name: Upload logs and drifted transcripts on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pact-broker-conformance
+          path: |
+            pact-conformance-logs/
+            scripts/pact_conformance/golden/*.actual
+          if-no-files-found: ignore
+        continue-on-error: true
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v || true

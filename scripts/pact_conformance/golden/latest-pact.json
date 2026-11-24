@@ -1,0 +1,86 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/pacts/provider/ConformanceAPI/consumer/ConformanceWeb/latest"
+  },
+  "response": {
+    "body": {
+      "_links": {
+        "pb:consumer": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb",
+          "name": "ConformanceWeb",
+          "title": "Consumer"
+        },
+        "pb:consumer-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/versions/1.0.0",
+          "name": "1.0.0",
+          "title": "Consumer version"
+        },
+        "pb:latest-pact-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/latest",
+          "title": "Latest version of this pact"
+        },
+        "pb:latest-tagged-pact-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/latest/{tag}",
+          "templated": true,
+          "title": "Latest version of this pact for a tag"
+        },
+        "pb:latest-verification-results": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results/latest",
+          "title": "Latest verification results"
+        },
+        "pb:pact-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5",
+          "name": "ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5",
+          "title": "Pact content version permalink"
+        },
+        "pb:provider": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi",
+          "name": "ConformanceAPI",
+          "title": "Provider"
+        },
+        "pb:publish-verification-results": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results",
+          "title": "Publish verification results"
+        },
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/version/1.0.0",
+          "name": "Pact between ConformanceWeb (1.0.0) and ConformanceAPI",
+          "title": "Pact"
+        }
+      },
+      "consumer": {
+        "name": "ConformanceWeb"
+      },
+      "createdAt": "{timestamp}",
+      "interactions": [
+        {
+          "description": "a request for the health of the service",
+          "providerState": "the service is up",
+          "request": {
+            "method": "GET",
+            "path": "/health"
+          },
+          "response": {
+            "body": {
+              "status": "ok"
+            },
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "status": 200
+          }
+        }
+      ],
+      "metadata": {
+        "pactSpecification": {
+          "version": "2.0.0"
+        }
+      },
+      "provider": {
+        "name": "ConformanceAPI"
+      }
+    },
+    "status": 200
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "request": {
+    "method": "GET",
+    "path": ""
+  },
+  "response": {
+    "body": {
+      "_links": {
+        "beta:provider-pacts-for-verification": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/{provider}/for-verification",
+          "name": "beta",
+          "templated": true,
+          "title": "DEPRECATED - please use pb:provider-pacts-for-verification"
+        },
+        "pb:can-i-deploy-pacticipant-version-to-environment": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/can-i-deploy?pacticipant={pacticipant}&version={version}&environment={environment}",
+          "templated": true,
+          "title": "Determine if an application version can be safely deployed to an environment"
+        },
+        "pb:can-i-deploy-pacticipant-version-to-tag": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/can-i-deploy?pacticipant={pacticipant}&version={version}&to={tag}",
+          "templated": true,
+          "title": "Determine if an application version can be safely deployed to an environment identified by the given tag"
+        },
+        "pb:environment": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}",
+          "templated": true,
+          "title": "Environment"
+        },
+        "pb:environments": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments",
+          "templated": false,
+          "title": "Environments"
+        },
+        "pb:latest-pact-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/{provider}/consumer/{consumer}/latest",
+          "templated": true,
+          "title": "Latest pact between a consumer and a provider"
+        },
+        "pb:latest-provider-pacts": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/{provider}/latest",
+          "templated": true,
+          "title": "Latest pacts by provider"
+        },
+        "pb:latest-provider-pacts-with-tag": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/{provider}/latest/{tag}",
+          "templated": true,
+          "title": "Latest pacts for provider with the specified tag"
+        },
+        "pb:pact-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{pactVersion}",
+          "templated": true,
+          "title": "A pact by its content version"
+        },
+        "pb:pacticipant": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/{pacticipant}",
+          "templated": true,
+          "title": "A pacticipant"
+        },
+        "pb:pacticipant-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/{pacticipant}/versions/{version}",
+          "templated": true,
+          "title": "A version of a pacticipant"
+        },
+        "pb:provider-pacts-for-verification": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/{provider}/for-verification",
+          "templated": true,
+          "title": "Pact versions to be verified for the specified provider"
+        },
+        "pb:publish-contracts": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/contracts/publish",
+          "templated": false,
+          "title": "Publish contracts"
+        },
+        "pb:publish-pact": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{consumerApplicationVersion}",
+          "templated": true,
+          "title": "Publish a pact"
+        },
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker",
+          "templated": false,
+          "title": "Index"
+        }
+      }
+    },
+    "status": 200
+  }
+}

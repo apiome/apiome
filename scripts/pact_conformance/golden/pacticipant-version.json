@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/pacticipants/ConformanceWeb/versions/1.0.0"
+  },
+  "response": {
+    "body": {
+      "_embedded": {
+        "branchVersions": [
+          {
+            "name": "main"
+          }
+        ],
+        "tags": []
+      },
+      "_links": {
+        "pb:pacticipant": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb",
+          "name": "ConformanceWeb",
+          "title": "Pacticipant"
+        },
+        "pb:record-deployment": [
+          {
+            "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/versions/1.0.0/deployed-versions/environment/{uuid}",
+            "name": "conformance-production",
+            "title": "Record deployment to Production"
+          }
+        ],
+        "pb:record-release": [
+          {
+            "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/versions/1.0.0/released-versions/environment/{uuid}",
+            "name": "conformance-production",
+            "title": "Record release to Production"
+          }
+        ],
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/versions/1.0.0",
+          "name": "1.0.0",
+          "title": "Version"
+        }
+      },
+      "buildUrl": "https://ci.example.com/web/1",
+      "createdAt": "{timestamp}",
+      "number": "1.0.0"
+    },
+    "status": 200
+  }
+}

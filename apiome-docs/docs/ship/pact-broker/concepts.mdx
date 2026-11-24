@@ -26,7 +26,7 @@ matrix. There is no screen for the registry yet: use the
 | **Version** | One build of a pacticipant, named by a **version number** — usually a commit SHA or a semantic version. A version is recorded once and never changes. |
 | **Branch** | A branch of the pacticipant's repository (`main`, `feat/new-invoice`). A version is recorded *on* a branch. |
 | **Head** | The latest version recorded on a branch. |
-| **Main branch** | The branch a query reads when it names none. Set it on the pacticipant. |
+| **Main branch** | The branch a query reads when it names none. The first version published on `develop`, `main` or `master` sets it, as on the Pact Broker; set it on the pacticipant to choose another. |
 | **Tag** | A label on a version (`prod`). Tags are Pact's older way to name a branch or a stage; branches are preferred for new setups. |
 | **Binding** | A link from a pacticipant to what Apiome already knows about that application: the **project** that describes a provider, or the **consumer** registered on a project. |
 | **Pact** | The contract between one consumer and one provider: the requests the consumer makes and the responses it expects, written by the consumer's tests. |
@@ -43,6 +43,7 @@ matrix. There is no screen for the registry yet: use the
 | **Released version** | A version released to an environment where several versions are in use at once, such as a mobile app. It stays supported until support is recorded as ended. |
 | **Matrix** | The table of consumer versions against provider versions, with the verification result between each pair. |
 | **Can-i-deploy** | The question "is this version compatible with what runs in that environment?", answered from the matrix: yes, no or unknown, with reasons. See [Can I deploy?](./can-i-deploy.mdx). |
+| **Pact Broker compatibility** | Which Pact Broker endpoints Apiome serves (supported, partial, planned or not planned), checked in CI against the official tools. An endpoint Apiome does not serve answers `501` with a pointer, never a bare `404`. See [Pact Broker compatibility](./compatibility.mdx). |
 | **Integration** | A consumer and a provider that have a pact between them. A consumer needs its provider to be deployed; a provider does not need its consumers. |
 
 ## How a pacticipant relates to projects and consumers

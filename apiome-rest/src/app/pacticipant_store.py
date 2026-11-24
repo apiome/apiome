@@ -62,6 +62,7 @@ from .revision_deprecation import is_uuid_string
 
 __all__ = [
     "BRANCHES_ORDER",
+    "MAIN_BRANCH_CANDIDATES",
     "PACTICIPANTS_ORDER",
     "VERSIONS_ORDER",
     "add_tag",
@@ -107,6 +108,13 @@ VERSIONS_ORDER = ListOrder(
 
 #: The order of :func:`list_branches`: by name.
 BRANCHES_ORDER = by_name("pacticipant-branches", "b.name", "b.id")
+
+
+#: Branch names that become a pacticipant's main branch when it has none yet — the Pact Broker's
+#: ``auto_detect_main_branch`` with its default ``main_branch_candidates`` (PFX-1.8, #6921). Without
+#: it a consumer that only ever publishes with ``--branch main`` is never chosen by a
+#: ``{"mainBranch": true}`` selector, which the official verifiers send by default.
+MAIN_BRANCH_CANDIDATES = ("develop", "main", "master")
 
 
 def _user_id(actor: ConsumerActor) -> Optional[str]:
@@ -520,6 +528,9 @@ def record_version_tx(
 
     Returns:
         The version as stored, whether this call created it, and whether the branch head moved.
+
+    When ``branch`` is one of :data:`MAIN_BRANCH_CANDIDATES` and the pacticipant has no main branch
+    yet, the branch becomes its main branch.
     """
     cursor.execute(
         """
@@ -569,6 +580,16 @@ def record_version_tx(
             """,
             (version_id, pacticipant.id, branch),
         )
+        if branch in MAIN_BRANCH_CANDIDATES:
+            # As the Pact Broker does: the first candidate branch a version is recorded on becomes
+            # the main branch. A main branch already set (by hand or earlier) is never replaced.
+            cursor.execute(
+                """
+                UPDATE apiome.pacticipant SET main_branch = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s::uuid AND main_branch IS NULL
+                """,
+                (branch, pacticipant.id),
+            )
     _insert_tags(cursor, pacticipant.id, version_id, tags)
 
     row = _read_version(cursor, pacticipant.id, version_number)

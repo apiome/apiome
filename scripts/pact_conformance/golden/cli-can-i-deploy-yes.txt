@@ -1,0 +1,11 @@
+Computer says yes \o/ 
+
+CONSUMER       | C.VERSION | PROVIDER       | P.VERSION | SUCCESS? | RESULT#
+---------------|-----------|----------------|-----------|----------|--------
+ConformanceWeb | 1.0.0     | ConformanceAPI | 1.0.0     | true     | 1      
+
+VERIFICATION RESULTS
+--------------------
+1. {rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results/1 (success)
+
+All required verification results are published and successful

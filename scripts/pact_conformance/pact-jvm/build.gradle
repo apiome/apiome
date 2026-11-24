@@ -1,0 +1,72 @@
+// pact-jvm half of the Pact Broker conformance suite (PFX-1.8, #6921).
+//
+//   gradle conformance  =  consumerTest  →  pactPublish  →  providerTest
+//
+// consumerTest writes build/pacts/ConformanceJvmWeb-ConformanceJvmAPI.json, the plugin's pactPublish
+// sends it to Apiome with pact-jvm's own broker client, and providerTest fetches it back with
+// consumer-version selectors, replays it against the stub ../conformance.py serves and publishes the
+// verification result. PACT_BROKER_BASE_URL, PACT_BROKER_TOKEN and PROVIDER_PORT come from the caller.
+plugins {
+    id 'java'
+    id 'au.com.dius.pact' version '4.7.7'
+}
+
+repositories {
+    mavenCentral()
+}
+
+def pactJvm = '4.7.7'
+def brokerUrl = System.getenv('PACT_BROKER_BASE_URL') ?: 'http://localhost:8000/v1/tenants/acme-corp/pact-broker'
+def brokerToken = System.getenv('PACT_BROKER_TOKEN') ?: ''
+def pactDir = layout.buildDirectory.dir('pacts').get().asFile
+
+dependencies {
+    testImplementation "au.com.dius.pact.consumer:junit5:${pactJvm}"
+    testImplementation "au.com.dius.pact.provider:junit5:${pactJvm}"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.16'
+}
+
+pact {
+    publish {
+        pactDirectory = pactDir.path
+        pactBrokerUrl = brokerUrl
+        pactBrokerToken = brokerToken
+        consumerVersion = '1.0.0'
+        consumerBranch = 'main'
+    }
+}
+
+// The default `test` task would run both tests at once; the suite needs them in order.
+test { enabled = false }
+
+def pactTest(String name, String className, Map<String, String> properties) {
+    tasks.register(name, Test) {
+        useJUnitPlatform()
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+        filter { includeTestsMatching className }
+        properties.each { key, value -> systemProperty key, value }
+        environment 'PROVIDER_PORT', System.getenv('PROVIDER_PORT') ?: '8790'
+        testLogging { events 'passed', 'failed'; exceptionFormat 'full'; showStandardStreams = true }
+        outputs.upToDateWhen { false }
+    }
+}
+
+pactTest('consumerTest', 'conformance.ConsumerPactTest', ['pact.rootDir': pactDir.path])
+pactTest('providerTest', 'conformance.ProviderPactTest', [
+    'pactbroker.url'               : brokerUrl,
+    'pactbroker.auth.token'        : brokerToken,
+    'pact.verifier.publishResults' : 'true',
+    'pact.provider.version'        : '1.0.0',
+    'pact.provider.branch'         : 'main',
+])
+
+tasks.named('pactPublish') { mustRunAfter 'consumerTest' }
+tasks.named('providerTest') { mustRunAfter 'pactPublish' }
+
+tasks.register('conformance') {
+    description = 'consumerTest → pactPublish → providerTest against Apiome'
+    dependsOn 'consumerTest', 'pactPublish', 'providerTest'
+}

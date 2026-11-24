@@ -1,0 +1,34 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/pacticipants/ConformanceWeb"
+  },
+  "response": {
+    "body": {
+      "_links": {
+        "pb:branch-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/branches/{branch}/versions/{version}",
+          "templated": true,
+          "title": "Get or add/create a version for a branch of this pacticipant"
+        },
+        "pb:version-tag": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/versions/{version}/tags/{tag}",
+          "templated": true,
+          "title": "Get, create or delete a tag for a version of this pacticipant"
+        },
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb",
+          "name": "ConformanceWeb",
+          "title": "Pacticipant"
+        }
+      },
+      "createdAt": "{timestamp}",
+      "displayName": "ConformanceWeb",
+      "mainBranch": "main",
+      "name": "ConformanceWeb",
+      "repositoryUrl": null,
+      "updatedAt": "{timestamp}"
+    },
+    "status": 200
+  }
+}

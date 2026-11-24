@@ -1,0 +1,1 @@
+PactBroker::Client::Hal::RelationNotFoundError - Could not find relation 'pb:webhooks' in resource at {rest}/v1/tenants/acme-corp/pact-broker. The most likely reason for this is that you are on an old version of the Pact Broker and you need to upgrade, or you are using PactFlow and you don't have the permissions required for this action.

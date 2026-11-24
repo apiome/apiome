@@ -1,0 +1,17 @@
+{
+  "consumer": { "name": "ConformanceWeb" },
+  "provider": { "name": "ConformanceAPI" },
+  "interactions": [
+    {
+      "description": "a request for the health of the service",
+      "providerState": "the service is up",
+      "request": { "method": "GET", "path": "/health" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "body": { "status": "ok" }
+      }
+    }
+  ],
+  "metadata": { "pactSpecification": { "version": "2.0.0" } }
+}

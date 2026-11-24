@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.660.0
+  version: 1.661.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -29907,6 +29907,83 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readthelatestpactforaconsumerbranchresponse422.
   /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/for-verification:
+    get:
+      tags:
+      - pact-broker
+      summary: The pacts a provider must verify (query-string form)
+      description: 'The `GET` form of `POST …/for-verification`, which the Pact Broker
+        keeps for its first clients — and which the Rust verifier inside pact-js, pact-python
+        and pact-go fetches before it posts its selectors. Same answer as the `POST`;
+        the parameters are the broker''s snake-case Rack query parameters: `provider_version_branch`,
+        `provider_version_tags[]`, `include_pending_status`, `include_wip_pacts_since`
+        and `consumer_version_selectors[][<field>]` (`main_branch`, `branch`, `matching_branch`,
+        `fallback_branch`, `fallback_to_main_branch`, `tag`, `fallback_tag`, `latest`,
+        `consumer`, `deployed`, `released`, `deployed_or_released`, `environment`). A
+        field that repeats starts the next selector. Without parameters, the broker''s
+        default selectors apply. Prefer the `POST`. Requires `pacts:view`.'
+      operationId: pacts_for_verification_by_query_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__for_verification_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thepactsaprovidermustverifyquerystringfoauthorization schema.
+          - type: 'null'
+            description: Thepactsaprovidermustverifyquerystringfoauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thepactsaprovidermustverifyquerystringfo Xapikey schema.
+          - type: 'null'
+            description: Thepactsaprovidermustverifyquerystringfo Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for the pacts a provider must verify (query-string
+            form).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for thepactsaprovidermustverifyquerystringforesponse200.
+        '400':
+          description: '`pact-selector-invalid`: a selector is ambiguous or malformed;
+            see `detail.pointer`.'
+        '404':
+          description: '`pacticipant-not-found`: the workspace has no such provider.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for thepactsaprovidermustverifyquerystringforesponse422.
     post:
       tags:
       - pact-broker

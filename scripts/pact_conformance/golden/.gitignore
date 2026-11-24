@@ -1,0 +1,2 @@
+# Written by conformance.py when a transcript drifts (compare, then --update-golden).
+*.actual

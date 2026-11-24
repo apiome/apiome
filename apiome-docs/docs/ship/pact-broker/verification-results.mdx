@@ -56,7 +56,7 @@ Apiome registers the provider version if it does not have it yet.
 | `success` | `true` when every interaction passed. Required. |
 | `providerApplicationVersion` | The provider version that verified. Required. |
 | `buildUrl` | The CI build that ran the verification. |
-| `testResults` | One entry per interaction, as the verifier sent it. A failed result keeps every mismatch. |
+| `testResults` | One entry per interaction, as the verifier sent it. A failed result keeps every mismatch. The Ruby verifier in the `pact-cli` image sends an object instead (`{"tests": [...], "summary": ...}`); Apiome keeps its `tests` list. |
 | `verifiedBy` | The verifier and the library around it (`Pact-Rust` 1.2.0 in pact-js 13). |
 | `providerVersionBranch` | Shown in the answer: the branch the provider version was recorded on last — the one the verifier recorded just before publishing. |
 

@@ -20,7 +20,9 @@ The body, as pact-js / pact-core and the other verifiers send it::
     }
 
 ``success`` and ``providerApplicationVersion`` are required, as the broker requires them.
-``testResults`` is stored as sent, so a failed result keeps every mismatch. Apiome adds one optional
+``testResults`` is stored as sent, so a failed result keeps every mismatch. Pact-Ruby's verifier sends
+an object instead (``{"tests": [...], "summary": …, "metadata": …}``); its ``tests`` array is what is
+stored (PFX-1.8, #6921). Apiome adds one optional
 field, ``providerVerificationReportId``: the CTG-4.3 conformance report the result was produced
 with, linked rather than copied.
 """
@@ -165,8 +167,13 @@ def parse_verification_request(raw: bytes) -> VerificationRequest:
     test_results = body.get("testResults")
     if test_results is None:
         test_results = []
+    if isinstance(test_results, dict) and isinstance(test_results.get("tests"), list):
+        # Pact-Ruby (pact-provider-verifier, the pact-cli image) sends its beta format —
+        # {"tests": [...], "summary": {...}, "metadata": {...}} — found by the conformance suite
+        # (PFX-1.8, #6921). The per-interaction results are `tests`; the summary is derivable.
+        test_results = test_results["tests"]
     if not isinstance(test_results, list):
-        raise _invalid("/testResults", "testResults must be an array")
+        raise _invalid("/testResults", "testResults must be an array, or an object with a tests array")
     if len(test_results) > MAX_TEST_RESULTS:
         raise _invalid("/testResults", f"send at most {MAX_TEST_RESULTS} test results")
 

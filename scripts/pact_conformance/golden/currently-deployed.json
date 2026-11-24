@@ -1,0 +1,147 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/environments/{uuid}/deployed-versions/currently-deployed"
+  },
+  "response": {
+    "body": {
+      "_embedded": {
+        "deployedVersions": [
+          {
+            "_embedded": {
+              "environment": {
+                "_links": {
+                  "pb:currently-deployed-deployed-versions": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}/deployed-versions/currently-deployed",
+                    "title": "Versions currently deployed to Production environment"
+                  },
+                  "pb:currently-supported-released-versions": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}/released-versions/currently-supported",
+                    "title": "Versions released and supported in Production environment"
+                  },
+                  "pb:environments": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments",
+                    "title": "Environments"
+                  },
+                  "self": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}",
+                    "name": "conformance-production",
+                    "title": "Environment"
+                  }
+                },
+                "contacts": [],
+                "contractRequired": false,
+                "createdAt": "{timestamp}",
+                "displayName": "Production",
+                "name": "conformance-production",
+                "production": true,
+                "uuid": "{uuid}"
+              },
+              "pacticipant": {
+                "_links": {
+                  "self": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb",
+                    "name": "ConformanceWeb",
+                    "title": "Pacticipant"
+                  }
+                },
+                "name": "ConformanceWeb"
+              },
+              "version": {
+                "_links": {
+                  "self": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/versions/1.0.0",
+                    "name": "1.0.0",
+                    "title": "Version"
+                  }
+                },
+                "number": "1.0.0"
+              }
+            },
+            "_links": {
+              "self": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/deployed-versions/{uuid}"
+              }
+            },
+            "applicationInstance": null,
+            "createdAt": "{timestamp}",
+            "currentlyDeployed": true,
+            "target": null,
+            "undeployedAt": null,
+            "uuid": "{uuid}"
+          },
+          {
+            "_embedded": {
+              "environment": {
+                "_links": {
+                  "pb:currently-deployed-deployed-versions": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}/deployed-versions/currently-deployed",
+                    "title": "Versions currently deployed to Production environment"
+                  },
+                  "pb:currently-supported-released-versions": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}/released-versions/currently-supported",
+                    "title": "Versions released and supported in Production environment"
+                  },
+                  "pb:environments": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments",
+                    "title": "Environments"
+                  },
+                  "self": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}",
+                    "name": "conformance-production",
+                    "title": "Environment"
+                  }
+                },
+                "contacts": [],
+                "contractRequired": false,
+                "createdAt": "{timestamp}",
+                "displayName": "Production",
+                "name": "conformance-production",
+                "production": true,
+                "uuid": "{uuid}"
+              },
+              "pacticipant": {
+                "_links": {
+                  "self": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi",
+                    "name": "ConformanceAPI",
+                    "title": "Pacticipant"
+                  }
+                },
+                "name": "ConformanceAPI"
+              },
+              "version": {
+                "_links": {
+                  "self": {
+                    "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi/versions/1.0.0",
+                    "name": "1.0.0",
+                    "title": "Version"
+                  }
+                },
+                "number": "1.0.0"
+              }
+            },
+            "_links": {
+              "self": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/deployed-versions/{uuid}"
+              }
+            },
+            "applicationInstance": null,
+            "createdAt": "{timestamp}",
+            "currentlyDeployed": true,
+            "target": null,
+            "undeployedAt": null,
+            "uuid": "{uuid}"
+          }
+        ]
+      },
+      "_links": {
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}/deployed-versions/currently-deployed",
+          "title": "Currently deployed versions for Production"
+        }
+      }
+    },
+    "status": 200
+  }
+}

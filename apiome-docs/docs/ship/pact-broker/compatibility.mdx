@@ -1,0 +1,271 @@
+---
+title: Pact Broker compatibility
+description: Every Pact Broker endpoint and whether Apiome serves it, tested in CI.
+sidebar_position: 7
+tags: [contracts, pact, ci, rest]
+---
+
+Apiome speaks the Pact Broker's API, so the `pact-broker` CLI and the Pact libraries work against it
+after you change only their **broker base URL** and **token**. This page lists every endpoint of
+the Pact Broker's API and how much of it Apiome serves. A conformance suite runs the official tools
+against Apiome in CI to keep the list true.
+
+## What the statuses mean
+
+| Status | Meaning |
+| --- | --- |
+| ✅ **Supported** | Every method the Pact Broker allows works, in the Pact Broker's shape. |
+| ◐ **Partial** | Some methods work. The others answer `501`. |
+| 🗓 **Planned** | Not served yet. The linked issue schedules it. |
+| — **Not planned** | Not served, and nothing is scheduled. The notes say what to use instead. |
+
+## When you reach an endpoint Apiome does not serve
+
+The `pact-broker` CLI finds every endpoint through the links on the broker's index. Apiome's index
+links only what it serves. So a command for a missing feature stops before it sends a request, and
+names the link it could not find:
+
+```text
+$ pact-broker create-webhook https://ci.example.com/hooks/pact --request POST --contract-content-changed
+Could not find relation 'pb:webhooks' in resource at https://api.apiome.dev/v1/tenants/acme/pact-broker …
+```
+
+A client or script that builds the URL itself never gets a bare `404` for a missing endpoint.
+It gets `501 Not Implemented` with a `Link` header to this page, and a body that names the endpoint,
+its status, the methods that do work, the tracking issue and the Apiome route to use instead:
+
+```json
+{
+  "detail": {
+    "code": "pact-broker-not-implemented",
+    "message": "DELETE is not supported on “A pacticipant” (partial). Supported: GET. …",
+    "pointer": "/v1/tenants/acme/pact-broker/pacticipants/checkout-web",
+    "endpoint": "/pacticipants/{pacticipant}",
+    "status": "partial",
+    "supported_methods": ["GET"],
+    "tracking": "https://github.com/apiome/apiome/issues/6924",
+    "alternative": "/v1/tenants/{tenant}/pacticipants/{pacticipant}",
+    "documentation": "https://docs.apiome.dev/ship/pact-broker/compatibility",
+    "pact_broker_version": "2.124.0"
+  }
+}
+```
+
+A path that is not part of the Pact Broker's API at all gets the same `501`, without the
+endpoint fields. A `404` from a supported endpoint still means what it means on the Pact Broker:
+that pact, version or pacticipant does not exist.
+
+## Behaviour that matches the Pact Broker
+
+- **Main branch detection.** The first time a version of a pacticipant is published on `develop`,
+  `main` or `master`, that branch becomes its **main branch**, unless one is already set. This is
+  the Pact Broker's `auto_detect_main_branch`. It means `{"mainBranch": true}` selectors work
+  without any set-up. See [Choose pacts to verify with selectors](./selectors.mdx).
+- **Pact-Ruby verification results.** The verifier in the `pact-cli` image sends `testResults` as
+  an object (`{"tests": [...], "summary": ...}`). Apiome keeps its `tests` list. See
+  [Publish verification results](./verification-results.mdx).
+- **`GET …/for-verification`.** The Rust verifier inside pact-js, pact-python and pact-go reads this
+  resource with `GET` before it posts its selectors. Apiome answers both forms.
+
+## Endpoints
+
+{/* pact-broker-compat:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_pact_broker_compat_doc.py */}
+
+Checked against Pact Broker **2.124.0**: 102 endpoints — **23** supported, **6** partial, **25** planned, **48** not planned.
+
+### Index
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/` — Index (HAL entry point) | `GET` | — | ✅ Supported | Used by every client. |
+
+### Publishing and fetching pacts
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/contracts/publish` — Publish the pacts of a consumer version | `POST` | — | ✅ Supported | Used by `pact-broker publish`, pact-js `publishPacts`, pact-jvm `pactPublish`. |
+| `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}` — A pact of a consumer version | `GET` `PUT` | `DELETE` `PATCH` | ◐ Partial ([#6924](https://github.com/apiome/apiome/issues/6924)) | Used by older `pact-broker publish`, pact-jvm publisher. `PATCH` (merging interactions into a published pact) is not planned: a pact is immutable. |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest` — Latest pact of a consumer and provider | `GET` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest/{tag}` — Latest pact with a tag | `GET` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/branch/{branch}/latest` — Latest pact from a branch | `GET` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest-untagged` — Latest untagged pact | — | `GET` | — Not planned | Tags are legacy in the Pact Broker; use branches, or `…/latest`. |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}` — A pact by its content version | `GET` | — | ✅ Supported | Used by every verifier. |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}` — A pact as a for-verification link names it | `GET` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/for-verification` — Pacts a provider must verify (consumer-version selectors) | `GET` `POST` | — | ✅ Supported | Used by pact-js, pact-jvm, pact-go, pact-python, the Rust and Ruby verifiers. The Rust verifier `GET`s the resource before it `POST`s its selectors. |
+| `/pacts/provider/{provider}/latest` — Latest pact of every consumer | `GET` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/latest/{tag}` — Latest tagged pact of every consumer | `GET` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}` — Every pact of a provider | — | `GET` | — Not planned | Use `…/latest` or `for-verification`. |
+| `/pacts/provider/{provider}/tag/{tag}` — Every pact of a provider with a tag | — | `GET` | — Not planned | Use `…/latest/{tag}` or a `tag` selector. |
+| `/pacts/provider/{provider}/branch` — Pacts from each consumer's main branch | — | `GET` | — Not planned | Use a `mainBranch` selector on `for-verification`. |
+| `/pacts/provider/{provider}/branch/{branch}` — Pacts from a consumer branch | — | `GET` | — Not planned | Use a `branch` selector on `for-verification`. |
+| `/pacts/provider/{provider}/branch/latest` — Latest pacts from each consumer's main branch | — | `GET` | — Not planned | Use a `mainBranch` selector on `for-verification`. |
+| `/pacts/provider/{provider}/branch/{branch}/latest` — Latest pacts from a consumer branch | — | `GET` | — Not planned | Use a `branch` selector on `for-verification`. |
+| `/pacts/latest` — Latest pact of every integration | — | `GET` | — Not planned | Used by `pact-broker list-latest-pact-versions`. Not planned in the broker shape. Use the `GET …/matrix` query. |
+| `/pacts/provider/{provider}/provider-states` — Provider states the consumers use | — | `GET` | — Not planned | Provider states are declared in Apiome's own registry (PFX-3.3, #6933). |
+| `/pacts/provider/{provider}/provider-states/branch/{branch}` — Provider states from a consumer branch | — | `GET` | — Not planned | See PFX-3.3 (#6933). |
+| `/pacts/provider/{provider}/provider-states/environment/{uuid}` — Provider states of what is deployed in an environment | — | `GET` | — Not planned | See PFX-3.3 (#6933). |
+| `/pact/provider/{provider}/consumer/{consumer}/version/{consumerVersion}` — Deprecated singular `/pact/…` path | — | `GET` `PUT` `DELETE` `PATCH` | — Not planned | Deprecated in the Pact Broker; use `/pacts/…`. |
+| `/pact/provider/{provider}/consumer/{consumer}/latest` — Deprecated singular `/pact/…/latest` path | — | `GET` | — Not planned | Deprecated in the Pact Broker; use `/pacts/…/latest`. |
+
+### Pact history and diffs
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/pacts/provider/{provider}/consumer/{consumer}/versions` — Every published pact of an integration | — | `GET` `DELETE` | 🗓 Planned ([#6924](https://github.com/apiome/apiome/issues/6924)) | Deleting a whole history is part of version cleanup. |
+| `/pacts/provider/{provider}/consumer/{consumer}/versions/{consumerVersion}` — Deprecated alias of `…/version/{v}` | — | `GET` `PUT` `DELETE` `PATCH` | — Not planned | Deprecated in the Pact Broker; use `…/version/{v}`. |
+| `/pacts/provider/{provider}/consumer/{consumer}/tag/{tag}` — Every pact with a tag | — | `GET` `DELETE` | — Not planned | Tags are legacy in the Pact Broker; use branches. |
+| `/pacts/provider/{provider}/consumer/{consumer}/branch/versions` — Pacts from the main branch | — | `GET` `DELETE` | — Not planned | Not planned. |
+| `/pacts/provider/{provider}/consumer/{consumer}/branch/{branch}` — Pacts from a branch | — | `GET` `DELETE` | — Not planned | Not planned. |
+| `/pacts/provider/{provider}/consumer/{consumer}/branch/latest/versions` — Latest pacts from the main branch | — | `GET` `DELETE` | — Not planned | Not planned. |
+| `/pacts/provider/{provider}/consumer/{consumer}/branch/{branch}/latest/versions` — Latest pacts from a branch | — | `GET` `DELETE` | — Not planned | Not planned. |
+| `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}/previous-distinct` — The previous different pact | — | `GET` | — Not planned | The pact viewer shows the difference (PFX-5.2, #6946). |
+| `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}/diff/previous-distinct` — Diff with the previous different pact | — | `GET` | — Not planned | The pact viewer shows the difference (PFX-5.2, #6946). |
+| `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}/diff/version/{otherVersion}` — Diff with another consumer version's pact | — | `GET` | — Not planned | The pact viewer shows the difference (PFX-5.2, #6946). |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/diff/pact-version/{otherSha}` — Diff with another pact version | — | `GET` | — Not planned | The pact viewer shows the difference (PFX-5.2, #6946). |
+
+### Verification results
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results` — Publish a verification result | `POST` | — | ✅ Supported | Used by every verifier with result publishing on. |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}/verification-results` — Publish a result (for-verification link form) | `POST` | — | ✅ Supported | Used by verifiers that follow `pb:publish-verification-results`. |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/latest` — Latest result of a pact version | `GET` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}` — One verification result | `GET` | `DELETE` | ◐ Partial ([#6924](https://github.com/apiome/apiome/issues/6924)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}/verification-results/{number}` — One result (for-verification link form) | — | `GET` `DELETE` | — Not planned | Use `…/pact-version/{sha}/verification-results/{n}`. |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}/triggered-webhooks` — Webhooks a result triggered | — | `GET` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}/verification-results/latest` — Latest result of a consumer version's pact | — | `GET` | — Not planned | Use `…/pact-version/{sha}/verification-results/latest`. |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest/verification-results/latest` — Latest result of the latest pact | — | `GET` | — Not planned | Use the matrix. |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest/{tag}/verification-results/latest` — Latest result of the latest tagged pact | — | `GET` | — Not planned | Use the matrix. |
+| `/verification-results/consumer/{consumer}/version/{consumerVersion}/latest` — Latest results for a consumer version | — | `GET` | — Not planned | Use the matrix (`q[][pacticipant]=…&q[][version]=…`). |
+
+### Pacticipants and versions
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/pacticipants` — List or create pacticipants | — | `GET` `POST` | — Not planned | Used by `pact-broker list-pacticipants`, `create-or-update-pacticipant`. Not planned in the broker shape. Use `/v1/tenants/{tenant}/pacticipants`. |
+| `/pacticipants/{pacticipant}` — A pacticipant | `GET` | `PUT` `PATCH` `DELETE` | ◐ Partial ([#6924](https://github.com/apiome/apiome/issues/6924)) | Used by `pact-broker describe-pacticipant`, `create-or-update-pacticipant`. To create or update one (main branch, repository URL) use Apiome's pacticipant API. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}`. |
+| `/pacticipants/{pacticipant}/versions` — Versions of a pacticipant | — | `GET` | — Not planned | Not planned in the broker shape. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions`. |
+| `/pacticipants/{pacticipant}/versions/{version}` — A pacticipant version | `GET` | `PUT` `PATCH` `DELETE` | ◐ Partial ([#6924](https://github.com/apiome/apiome/issues/6924)) | Used by `pact-broker describe-version`, `record-deployment`, `create-or-update-version`. To record a version without publishing a pact use Apiome's pacticipant API. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{version}`. |
+| `/pacticipants/{pacticipant}/latest-version` — Latest version of a pacticipant | — | `GET` | — Not planned | Used by `pact-broker describe-version --latest`. Not planned in the broker shape. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions`. |
+| `/pacticipants/{pacticipant}/latest-version/{tag}` — Latest version with a tag | — | `GET` | — Not planned | Not planned in the broker shape. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions?tag={tag}`. |
+| `/pacticipants/{pacticipant}/deployed-or-released/versions` — Versions deployed or released anywhere | — | `GET` | — Not planned | Use the environment's `currently-deployed` and `currently-supported` lists. |
+| `/pacticipants/{pacticipant}/environments/{uuid}/versions` — Versions in an environment | — | `GET` | — Not planned | Use the environment's `currently-deployed` and `currently-supported` lists. |
+
+### Branches and tags
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/pacticipants/{pacticipant}/branches` — Branches of a pacticipant | — | `GET` `DELETE` | — Not planned | Not planned in the broker shape. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}/branches`. |
+| `/pacticipants/{pacticipant}/branches/{branch}` — A branch | — | `GET` `DELETE` | 🗓 Planned ([#6924](https://github.com/apiome/apiome/issues/6924)) | Used by `pact-broker delete-branch`. |
+| `/pacticipants/{pacticipant}/branches/{branch}/versions` — Versions on a branch | — | `GET` | — Not planned | Not planned in the broker shape. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions?branch={branch}`. |
+| `/pacticipants/{pacticipant}/branches/{branch}/versions/{version}` — Add a version to a branch | `PUT` | `GET` `DELETE` | ◐ Partial ([#6924](https://github.com/apiome/apiome/issues/6924)) | Used by `pact-broker create-version-tag --auto-create-version`, pact-jvm. |
+| `/pacticipants/{pacticipant}/branches/{branch}/latest-version` — Latest version on a branch | — | `GET` | — Not planned | Not planned in the broker shape. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}/branches`. |
+| `/pacticipants/{pacticipant}/versions/{version}/tags/{tag}` — A tag on a version | `PUT` | `GET` `DELETE` | ◐ Partial ([#6924](https://github.com/apiome/apiome/issues/6924)) | Used by `pact-broker create-version-tag`, `publish --tag`. |
+| `/pacticipants/{pacticipant}/tags/{tag}/versions` — Versions with a tag | — | `GET` | — Not planned | Not planned in the broker shape. Use `/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions?tag={tag}`. |
+
+### Environments and deployments
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/environments` — List or create environments | `GET` `POST` | — | ✅ Supported | Used by `pact-broker list-environments`, `create-environment`. |
+| `/environments/{uuid}` — An environment | `GET` `PUT` `DELETE` | — | ✅ Supported | Used by `pact-broker describe-environment`, `update-environment`, `delete-environment`. |
+| `/environments/{uuid}/deployed-versions/currently-deployed` — What is deployed in an environment | `GET` | — | ✅ Supported | Used by `pact-broker record-undeployment`. |
+| `/environments/{uuid}/released-versions/currently-supported` — What is released and supported | `GET` | — | ✅ Supported | Used by `pact-broker record-support-ended`. |
+| `/pacticipants/{pacticipant}/versions/{version}/deployed-versions/environment/{uuid}` — Record a deployment | `GET` `POST` | — | ✅ Supported | Used by `pact-broker record-deployment`. |
+| `/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{uuid}` — Record a release | `GET` `POST` | — | ✅ Supported | Used by `pact-broker record-release`. |
+| `/deployed-versions/{uuid}` — A deployment (mark it undeployed) | `GET` `PATCH` | — | ✅ Supported | Used by `pact-broker record-undeployment`. |
+| `/released-versions/{uuid}` — A release (end its support) | `GET` `PATCH` | — | ✅ Supported | Used by `pact-broker record-support-ended`. |
+
+### Matrix and can-i-deploy
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/matrix` — The compatibility matrix | `GET` | — | ✅ Supported | Used by `pact-broker can-i-deploy`. |
+| `/can-i-deploy` — Can a version be deployed to an environment | `GET` | — | ✅ Supported | — |
+| `/matrix/provider/{provider}/consumer/{consumer}` — The matrix of one integration | — | `GET` | — Not planned | Use `GET …/matrix` with two `q[]` selectors. |
+| `/pacticipants/{pacticipant}/latest-version/{tag}/can-i-deploy/to/{to}` — Can the latest tagged version be deployed to a tag | — | `GET` | — Not planned | Tags are legacy; use `GET …/can-i-deploy`. |
+| `/pacticipants/{pacticipant}/branches/{branch}/latest-version/can-i-deploy/to-environment/{environment}` — Can a branch's latest version be deployed | — | `GET` | — Not planned | Use `GET …/can-i-deploy` with the version. |
+
+### Webhooks
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/webhooks` — List or create webhooks | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | Used by `pact-broker create-webhook`. |
+| `/webhooks/{uuid}` — A webhook | — | `GET` `PUT` `DELETE` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | Used by `pact-broker create-or-update-webhook`. |
+| `/webhooks/{uuid}/execute` — Run a webhook now | — | `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | Used by `pact-broker test-webhook`. |
+| `/webhooks/execute` — Run an unsaved webhook | — | `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/webhooks/provider/{provider}/consumer/{consumer}` — Webhooks of an integration | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/webhooks/provider/{provider}` — Webhooks of a provider | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/webhooks/consumer/{consumer}` — Webhooks of a consumer | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/webhooks` — Webhooks of a pact | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/webhooks/status` — Webhook status of a pact | — | `GET` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}/triggered-webhooks` — Webhooks a publication triggered | — | `GET` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/triggered-webhooks/{uuid}/logs` — Execution log of a webhook run | — | `GET` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+
+### Badges
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest/badge` — Badge of the latest pact | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest/{tag}/badge` — Badge of the latest tagged pact | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest-untagged/badge` — Badge of the latest untagged pact | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
+| `/matrix/provider/{provider}/latest/{providerTag}/consumer/{consumer}/latest/{tag}/badge` — Badge of a tagged matrix row | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
+| `/pacticipants/{pacticipant}/latest-version/{tag}/can-i-deploy/to/{to}/badge` — can-i-deploy badge (tag to tag) | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
+| `/pacticipants/{pacticipant}/branches/{branch}/latest-version/can-i-deploy/to-environment/{environment}/badge` — can-i-deploy badge (branch to environment) | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
+| `/pacticipants/{pacticipant}/main-branch/can-i-merge/badge` — can-i-merge badge | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
+
+### Labels
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/labels` — Every label | — | `GET` | 🗓 Planned ([#6924](https://github.com/apiome/apiome/issues/6924)) | — |
+| `/pacticipants/label/{label}` — Pacticipants with a label | — | `GET` | 🗓 Planned ([#6924](https://github.com/apiome/apiome/issues/6924)) | — |
+| `/pacticipants/{pacticipant}/labels/{label}` — A label on a pacticipant | — | `GET` `PUT` `DELETE` | 🗓 Planned ([#6924](https://github.com/apiome/apiome/issues/6924)) | — |
+
+### Other
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/integrations` — Every integration | — | `GET` `DELETE` | — Not planned | The Contracts workspace UI lists integrations (PFX-5.3, #6947). |
+| `/integrations/provider/{provider}/consumer/{consumer}` — Delete an integration | — | `DELETE` | 🗓 Planned ([#6924](https://github.com/apiome/apiome/issues/6924)) | — |
+| `/dashboard` — Dashboard data | — | `GET` | — Not planned | The Pact Broker's own UI; Apiome has its own. |
+| `/dashboard/provider/{provider}/consumer/{consumer}` — Dashboard data of an integration | — | `GET` | — Not planned | The Pact Broker's own UI; Apiome has its own. |
+| `/relationships` — Integrations as CSV | — | `GET` | — Not planned | The Pact Broker's own UI. |
+| `/groups/{pacticipant}` — Network graph data | — | `GET` | — Not planned | See PFX-5.3 (#6947). |
+| `/metrics` — Row counts | — | `GET` | — Not planned | Apiome reports usage under `/v1/ops`. |
+| `/test/error` — Error test | — | `GET` `POST` | — Not planned | A Pact Broker diagnostic. |
+
+{/* pact-broker-compat:end */}
+
+## The conformance suite
+
+The suite runs the real tools against a fresh Apiome. It drives three clients through
+publish → verify → record-deployment → can-i-deploy:
+
+| Client | What it exercises |
+| --- | --- |
+| **`pact-broker` CLI** (`pactfoundation/pact-cli`) | `create-environment`, `publish`, `pact-provider-verifier` with result publishing, `record-deployment`, `can-i-deploy` (yes, then no for an unverified version), `create-version-tag`, `record-release`, `record-support-ended`, `record-undeployment`, `describe-environment`, `list-environments`. |
+| **pact-js** | A PactV3 consumer test, then the `Verifier` (the Rust core) fetching pacts with selectors and publishing its result. |
+| **pact-jvm** | A JUnit 5 consumer test, the Gradle plugin's `pactPublish`, then a JUnit 5 provider test that verifies from the broker and publishes its result. |
+
+The suite also compares the HAL documents the clients read (the index, the pacticipant, the pact,
+for-verification, the verification result, environments, the matrix, can-i-deploy and a `501`)
+with checked-in **golden transcripts**. Any change to what a Pact client sees therefore shows up in
+review.
+
+Run it on your machine with Docker and `uv`:
+
+```bash
+scripts/pact_conformance/run.sh                         # every client
+scripts/pact_conformance/run.sh --clients cli           # the CLI only
+scripts/pact_conformance/run.sh --update-golden         # after an intended change to a response
+```
+
+CI runs the **Pact Broker conformance** workflow on every pull request that changes the Pact
+Broker routes or the suite. You can also start it from the **Actions** tab.
+
+## Related
+
+- [Pact Broker concepts](./concepts.mdx)
+- [Publish and fetch pacts](./publish-pacts.mdx)
+- [Can I deploy?](./can-i-deploy.mdx)

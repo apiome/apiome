@@ -544,3 +544,66 @@ def test_metadata_of_a_tag_selector_and_of_a_wip_pact() -> None:
     pact.wip = True
     assert verification_metadata(pact) == {"w": True}
     assert _decode(encode_metadata({"w": True})) == [("w", "true")]
+
+
+# --- The GET query string (PFX-1.8, #6921) ----------------------------------------------------
+
+
+def test_the_get_query_string_reads_as_the_post_body() -> None:
+    from app.pact_selectors import for_verification_body_from_query
+
+    items = [
+        ("provider_version_branch", "main"),
+        ("provider_version_tags[]", "prod"),
+        ("provider_version_tags[]", "test"),
+        ("include_pending_status", "true"),
+        ("include_wip_pacts_since", "2026-11-01"),
+        ("consumer_version_selectors[][tag]", "prod"),
+        ("consumer_version_selectors[][latest]", "true"),
+        ("consumer_version_selectors[][tag]", "test"),
+        ("consumer_version_selectors[][main_branch]", "true"),
+        ("consumer_version_selectors[][deployed_or_released]", "true"),
+        ("consumer_version_selectors[][unknown]", "x"),
+        ("ignored", "1"),
+    ]
+    assert for_verification_body_from_query(items) == {
+        "providerVersionBranch": "main",
+        "providerVersionTags": ["prod", "test"],
+        "includePendingStatus": True,
+        "includeWipPactsSince": "2026-11-01",
+        "consumerVersionSelectors": [
+            {"tag": "prod", "latest": True},
+            # A repeated field (`tag`) starts the next selector, as Rack reads `[][…]`.
+            {"tag": "test", "mainBranch": True, "deployedOrReleased": True},
+        ],
+    }
+
+
+def test_indexed_selectors_stay_apart() -> None:
+    from app.pact_selectors import for_verification_body_from_query
+
+    items = [
+        ("consumer_version_selectors[1][main_branch]", "true"),
+        ("consumer_version_selectors[0][tag]", "prod"),
+        ("consumer_version_selectors[0][latest]", "true"),
+    ]
+    assert for_verification_body_from_query(items)["consumerVersionSelectors"] == [
+        {"tag": "prod", "latest": True},
+        {"mainBranch": True},
+    ]
+
+
+def test_an_empty_query_string_is_an_empty_body() -> None:
+    from app.pact_selectors import for_verification_body_from_query, parse_for_verification_request
+
+    assert for_verification_body_from_query([]) == {}
+    assert parse_for_verification_request({}) == parse_for_verification_request(None)
+
+
+def test_a_flag_that_is_not_true_or_false_is_left_for_the_validator() -> None:
+    from app.pact_selectors import for_verification_body_from_query, parse_for_verification_request
+
+    body = for_verification_body_from_query([("consumer_version_selectors[][latest]", "yes")])
+    assert body == {"consumerVersionSelectors": [{"latest": "yes"}]}
+    with pytest.raises(Exception, match="latest"):
+        parse_for_verification_request(body)

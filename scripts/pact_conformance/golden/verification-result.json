@@ -1,0 +1,62 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/pacts/provider/ConformanceAPI/consumer/ConformanceWeb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results/latest"
+  },
+  "response": {
+    "body": {
+      "_links": {
+        "pb:pact-version": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5",
+          "name": "Pact between ConformanceWeb (1.0.0) and ConformanceAPI",
+          "title": "Pact"
+        },
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results/1",
+          "name": "Verification result 1 for Pact between ConformanceWeb (1.0.0) and ConformanceAPI",
+          "title": "Verification result"
+        }
+      },
+      "providerApplicationVersion": "1.0.0",
+      "providerName": "ConformanceAPI",
+      "providerVersionBranch": "main",
+      "success": true,
+      "testResults": [
+        {
+          "actualStatus": 200,
+          "interactionDescription": "a request for the health of the service",
+          "interactionProviderState": "the service is up",
+          "status": "passed",
+          "testDescription": "has status code 200",
+          "testFullDescription": "Verifying a pact between ConformanceWeb and ConformanceAPI [PENDING] Given the service is up a request for the health of the service with GET /health returns a response which has status code 200"
+        },
+        {
+          "actualBody": {
+            "status": "ok"
+          },
+          "interactionDescription": "a request for the health of the service",
+          "interactionProviderState": "the service is up",
+          "status": "passed",
+          "testDescription": "has a matching body",
+          "testFullDescription": "Verifying a pact between ConformanceWeb and ConformanceAPI [PENDING] Given the service is up a request for the health of the service with GET /health returns a response which has a matching body"
+        },
+        {
+          "actualHeaders": {
+            "content-length": "16",
+            "content-type": "application/json",
+            "date": "{http-date}",
+            "server": "BaseHTTP/0.6 Python/3.11.16"
+          },
+          "interactionDescription": "a request for the health of the service",
+          "interactionProviderState": "the service is up",
+          "status": "passed",
+          "testDescription": "\"Content-Type\" which equals \"application/json\"",
+          "testFullDescription": "Verifying a pact between ConformanceWeb and ConformanceAPI [PENDING] Given the service is up a request for the health of the service with GET /health returns a response which includes headers \"Content-Type\" which equals \"application/json\""
+        }
+      ],
+      "verificationDate": "{timestamp}",
+      "verifiedBy": {}
+    },
+    "status": 200
+  }
+}
