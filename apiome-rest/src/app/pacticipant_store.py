@@ -67,12 +67,14 @@ __all__ = [
     "add_tag",
     "create_pacticipant",
     "delete_pacticipant",
+    "ensure_pacticipant_tx",
     "get_pacticipant",
     "get_version",
     "list_branches",
     "list_pacticipants",
     "list_versions",
     "record_version",
+    "record_version_tx",
     "update_pacticipant",
 ]
 
@@ -492,6 +494,133 @@ def _insert_tags(cursor: Any, pacticipant_id: str, version_id: str, tags: Sequen
     )
 
 
+def record_version_tx(
+    cursor: Any,
+    pacticipant: PacticipantRecord,
+    version_number: str,
+    *,
+    build_url: Optional[str],
+    branch: Optional[str],
+    tags: Sequence[str],
+    actor: ConsumerActor,
+) -> RecordedPacticipantVersion:
+    """Record a version inside the caller's transaction — the statements of :func:`record_version`.
+
+    A pact publication (:mod:`app.pact_publication_store`) records the consumer version and stores
+    its pacts in one transaction, so it calls this with its own cursor.
+
+    Args:
+        cursor: The open transaction's cursor.
+        pacticipant: The pacticipant, already resolved in the caller's tenant.
+        version_number: The version number, already validated.
+        build_url: The build URL, already validated, or ``None``.
+        branch: The branch, already validated, or ``None``.
+        tags: The tags, already validated and distinct.
+        actor: Who is recording it.
+
+    Returns:
+        The version as stored, whether this call created it, and whether the branch head moved.
+    """
+    cursor.execute(
+        """
+        INSERT INTO apiome.pacticipant_version (pacticipant_id, number, build_url, created_by, actor_label)
+        VALUES (%s::uuid, %s, %s, %s::uuid, %s)
+        ON CONFLICT (pacticipant_id, number) DO NOTHING
+        RETURNING id::text AS id, seq
+        """,
+        (pacticipant.id, version_number, build_url, _user_id(actor), actor.label),
+    )
+    inserted = cursor.fetchone()
+    created = inserted is not None
+    if inserted is None:
+        cursor.execute(
+            """
+            SELECT id::text AS id, seq FROM apiome.pacticipant_version
+            WHERE pacticipant_id = %s::uuid AND number = %s
+            """,
+            (pacticipant.id, version_number),
+        )
+        inserted = cursor.fetchone()
+    version_id, seq = inserted["id"], inserted["seq"]
+
+    head_moved = False
+    if branch:
+        # One statement creates the branch or moves its head, and the WHERE is the rule: the
+        # head moves only to a version recorded later than the one it points at.
+        cursor.execute(
+            """
+            INSERT INTO apiome.pacticipant_branch AS b (pacticipant_id, name, head_version_id)
+            VALUES (%s::uuid, %s, %s::uuid)
+            ON CONFLICT (pacticipant_id, name) DO UPDATE
+                SET head_version_id = EXCLUDED.head_version_id, updated_at = CURRENT_TIMESTAMP
+                WHERE (SELECT h.seq FROM apiome.pacticipant_version h WHERE h.id = b.head_version_id) < %s
+            RETURNING b.id::text AS id
+            """,
+            (pacticipant.id, branch, version_id, seq),
+        )
+        head_moved = cursor.fetchone() is not None
+        cursor.execute(
+            """
+            INSERT INTO apiome.pacticipant_branch_version (branch_id, pacticipant_id, version_id)
+            SELECT b.id, b.pacticipant_id, %s::uuid
+            FROM apiome.pacticipant_branch b
+            WHERE b.pacticipant_id = %s::uuid AND b.name = %s
+            ON CONFLICT (branch_id, pacticipant_id, version_id) DO NOTHING
+            """,
+            (version_id, pacticipant.id, branch),
+        )
+    _insert_tags(cursor, pacticipant.id, version_id, tags)
+
+    row = _read_version(cursor, pacticipant.id, version_number)
+    return RecordedPacticipantVersion(
+        version=version_record_from_row(row or {}), created=created, head_moved=head_moved
+    )
+
+
+def ensure_pacticipant_tx(
+    cursor: Any, tenant_id: str, name: str, *, actor: ConsumerActor
+) -> PacticipantRecord:
+    """Return the tenant's pacticipant of this name, registering it when it does not exist yet.
+
+    A Pact publication names its consumer and provider; the first one to name an application
+    registers it, as a Pact Broker does. The handle is derived from the name, so ``Billing
+    Service`` and ``billing-service`` are the same pacticipant.
+
+    Args:
+        cursor: The open transaction's cursor.
+        tenant_id: The caller's tenant.
+        name: The pacticipant name, as the Pact file or the URL carries it.
+        actor: Who is publishing.
+
+    Returns:
+        The stored record — the existing one, unchanged, when the handle was already registered.
+
+    Raises:
+        PacticipantValidationError: ``pacticipant-invalid-name`` or ``pacticipant-invalid-slug``
+            when no handle can be derived from the name.
+    """
+    display_name = validate_name(name)
+    slug = validate_slug(slugify_pacticipant_name(display_name))
+    user_id = _user_id(actor)
+    cursor.execute(
+        """
+        INSERT INTO apiome.pacticipant (tenant_id, slug, name, created_by, updated_by)
+        VALUES (%s::uuid, %s, %s, %s::uuid, %s::uuid)
+        ON CONFLICT (tenant_id, slug) DO NOTHING
+        """,
+        (tenant_id, slug, display_name, user_id, user_id),
+    )
+    cursor.execute(
+        f"""
+        SELECT {_PACTICIPANT_COLUMNS}
+        FROM apiome.pacticipant
+        WHERE tenant_id = %s::uuid AND slug = %s
+        """,
+        (tenant_id, slug),
+    )
+    return pacticipant_record_from_row(dict(cursor.fetchone()))
+
+
 def record_version(
     db: Any,
     pacticipant: PacticipantRecord,
@@ -526,59 +655,8 @@ def record_version(
     tags = validate_tags(details.tags)
 
     def work(cursor: Any) -> RecordedPacticipantVersion:
-        cursor.execute(
-            """
-            INSERT INTO apiome.pacticipant_version (pacticipant_id, number, build_url, created_by, actor_label)
-            VALUES (%s::uuid, %s, %s, %s::uuid, %s)
-            ON CONFLICT (pacticipant_id, number) DO NOTHING
-            RETURNING id::text AS id, seq
-            """,
-            (pacticipant.id, version_number, build_url, _user_id(actor), actor.label),
-        )
-        inserted = cursor.fetchone()
-        created = inserted is not None
-        if inserted is None:
-            cursor.execute(
-                """
-                SELECT id::text AS id, seq FROM apiome.pacticipant_version
-                WHERE pacticipant_id = %s::uuid AND number = %s
-                """,
-                (pacticipant.id, version_number),
-            )
-            inserted = cursor.fetchone()
-        version_id, seq = inserted["id"], inserted["seq"]
-
-        head_moved = False
-        if branch:
-            # One statement creates the branch or moves its head, and the WHERE is the rule: the
-            # head moves only to a version recorded later than the one it points at.
-            cursor.execute(
-                """
-                INSERT INTO apiome.pacticipant_branch AS b (pacticipant_id, name, head_version_id)
-                VALUES (%s::uuid, %s, %s::uuid)
-                ON CONFLICT (pacticipant_id, name) DO UPDATE
-                    SET head_version_id = EXCLUDED.head_version_id, updated_at = CURRENT_TIMESTAMP
-                    WHERE (SELECT h.seq FROM apiome.pacticipant_version h WHERE h.id = b.head_version_id) < %s
-                RETURNING b.id::text AS id
-                """,
-                (pacticipant.id, branch, version_id, seq),
-            )
-            head_moved = cursor.fetchone() is not None
-            cursor.execute(
-                """
-                INSERT INTO apiome.pacticipant_branch_version (branch_id, pacticipant_id, version_id)
-                SELECT b.id, b.pacticipant_id, %s::uuid
-                FROM apiome.pacticipant_branch b
-                WHERE b.pacticipant_id = %s::uuid AND b.name = %s
-                ON CONFLICT (branch_id, pacticipant_id, version_id) DO NOTHING
-                """,
-                (version_id, pacticipant.id, branch),
-            )
-        _insert_tags(cursor, pacticipant.id, version_id, tags)
-
-        row = _read_version(cursor, pacticipant.id, version_number)
-        return RecordedPacticipantVersion(
-            version=version_record_from_row(row or {}), created=created, head_moved=head_moved
+        return record_version_tx(
+            cursor, pacticipant, version_number, build_url=build_url, branch=branch, tags=tags, actor=actor
         )
 
     try:

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.654.0
+  version: 1.655.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -28981,6 +28981,789 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for listapacticipantsbranchesresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker:
+    get:
+      tags:
+      - pact-broker
+      summary: Pact Broker index
+      description: 'The entry point of the Pact Broker–compatible API: the links a Pact
+        client discovers the other routes from. Give a Pact client this URL as its **broker
+        base URL** and a workspace API key as its **token**.
+
+
+        `pb:publish-contracts` is what `pact-broker publish` and the Pact libraries
+        post to; `pb:publish-pact`, `pb:latest-pact-version` and `pb:pact-version` are
+        URI templates.
+
+
+        A workspace API key may be sent as `Authorization: Bearer <key>` on every route
+        under `/pact-broker`. Requires `pacts:view`.'
+      operationId: pact_broker_index_v1_tenants__tenant_slug__pact_broker_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Pact Brokerindexauthorization schema.
+          - type: 'null'
+            description: Pact Brokerindexauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Pact Brokerindex Xapikey schema.
+          - type: 'null'
+            description: Pact Brokerindex Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for pact broker index.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for pact brokerindexresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for pact brokerindexresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/contracts/publish:
+    post:
+      tags:
+      - pact-broker
+      summary: Publish the pacts of a consumer version
+      description: 'Publish every pact one build of a consumer produced, in one request
+        — what `pact-broker publish` and pact-js `publishPacts` call. The body is the
+        Pact Broker''s: the consumer (`pacticipantName`), its version, optional `branch`,
+        `tags` and `buildUrl`, and `contracts`, each with the provider''s name and the
+        Pact document base64-encoded in `content`.
+
+
+        - **Applications are registered on first use.** A consumer or provider the workspace
+        does not have yet becomes a pacticipant.
+
+        - **The version is recorded with its branch and tags**, exactly as `PUT …/pacticipants/{ref}/versions/{number}`
+        does.
+
+        - **Content is stored once.** A pact identical to one an earlier consumer version
+        published reuses that pact version (`pactVersionSha`), so the provider has one
+        thing to verify.
+
+        - **All or nothing.** If any contract is refused, nothing of the request is
+        stored.
+
+        - **Safe to repeat.** Publishing the same pacts for the same version again changes
+        nothing. Publishing a *different* pact for a version that already has one is
+        `409`.
+
+
+        Pact specification 1.x to 4.x is accepted and stored as published. `merge` conflict
+        handling and non-Pact specifications are refused with `422 pact-publish-unsupported`.
+
+
+        The response carries `notices` (the lines the CLI prints) and a `pb:contracts`
+        link per pact. Requires `pacts:create`.'
+      operationId: publish_contracts_v1_tenants__tenant_slug__pact_broker_contracts_publish_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishthepactsofaconsumerversionauthorization schema.
+          - type: 'null'
+            description: Publishthepactsofaconsumerversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishthepactsofaconsumerversion Xapikey schema.
+          - type: 'null'
+            description: Publishthepactsofaconsumerversion Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for publish the pacts of a consumer version.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for publishthepactsofaconsumerversionresponse200.
+        '409':
+          description: '`pact-content-conflict`: this consumer version already published
+            a different pact for the provider. Nothing of the request was stored. Publish
+            under a new consumer version number.'
+        '413':
+          description: '`pact-too-large`: the document or the request is over the size
+            limit.'
+        '422':
+          description: '`pact-invalid`: the document is not a pact. `detail.pointer`
+            is the JSON Pointer of the first problem in the document (for example `/interactions/2/request/method`)
+            and `detail.message` says what is wrong there.'
+        '429':
+          description: '`pact-publish-rate-limited`: over the workspace''s publish budget;
+            see `Retry-After`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - pacticipantName
+              - pacticipantVersionNumber
+              - contracts
+              properties:
+                pacticipantName:
+                  type: string
+                  description: The consumer publishing.
+                  example: Example
+                pacticipantVersionNumber:
+                  type: string
+                  description: Its application version, as the build reports it (a commit
+                    SHA).
+                  example: 1.0.0
+                branch:
+                  type: string
+                  description: The repository branch the version was built from.
+                  example: example
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: Tags for the version (at most 50).
+                  maxItems: 1000
+                buildUrl:
+                  type: string
+                  description: http(s) URL of the CI build.
+                  example: example
+                contracts:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: object
+                    required:
+                    - consumerName
+                    - providerName
+                    - content
+                    properties:
+                      consumerName:
+                        type: string
+                        description: Must equal `pacticipantName`.
+                        example: Example
+                      providerName:
+                        type: string
+                        description: The provider the pact is with.
+                        example: Example
+                      specification:
+                        type: string
+                        enum:
+                        - pact
+                        default: pact
+                        description: Specification.
+                        example: pact
+                      contentType:
+                        type: string
+                        enum:
+                        - application/json
+                        default: application/json
+                        description: Content Type.
+                        example: application/json
+                      content:
+                        type: string
+                        description: The Pact document, base64-encoded.
+                        example: example
+                      onConflict:
+                        type: string
+                        enum:
+                        - overwrite
+                        description: '`merge` is not supported and is refused.'
+                        example: overwrite
+                  description: Contracts.
+              description: Request body for publishthepactsofaconsumerversionrequest.
+            example:
+              pacticipantName: Billing Service
+              pacticipantVersionNumber: 2f4c1a9
+              branch: main
+              tags: []
+              buildUrl: https://ci.example.com/builds/4812
+              contracts:
+              - consumerName: Billing Service
+                providerName: Ledger API
+                specification: pact
+                contentType: application/json
+                content: eyJjb25zdW1lciI6eyJuYW1lIjoiQmlsbGluZyBTZXJ2aWNlIn0sIC4uLn0=
+        description: Request body for publish the pacts of a consumer version.
+  /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{consumer_version}:
+    put:
+      tags:
+      - pact-broker
+      summary: Publish one pact
+      description: 'Publish the pact between a consumer version and a provider. The
+        body is the Pact document itself (specification 1.x to 4.x), stored as published.
+        Both applications are registered as pacticipants if the workspace does not have
+        them, and the consumer version is recorded.
+
+
+        Answers `201` when this consumer version had no pact for the provider, `200`
+        when it published the same pact before (nothing changes), and `409` when it
+        published a different one. If the document names a consumer or provider, the
+        names must match the URL.
+
+
+        To record a branch, tags or a build URL with the pact, use `POST …/pact-broker/contracts/publish`
+        instead. Requires `pacts:create`.'
+      operationId: publish_pact_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__version__consumer_version__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: consumer_version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Version
+          description: Consumer Version schema.
+        description: Path parameter identifying the consumer version segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishonepactauthorization schema.
+          - type: 'null'
+            description: Publishonepactauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishonepact Xapikey schema.
+          - type: 'null'
+            description: Publishonepact Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for publish one pact.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for publishonepactresponse200.
+        '201':
+          description: The pact was published for this consumer version.
+        '409':
+          description: '`pact-content-conflict`: this consumer version already published
+            a different pact for the provider. Nothing of the request was stored. Publish
+            under a new consumer version number.'
+        '413':
+          description: '`pact-too-large`: the document or the request is over the size
+            limit.'
+        '422':
+          description: '`pact-invalid`: the document is not a pact. `detail.pointer`
+            is the JSON Pointer of the first problem in the document (for example `/interactions/2/request/method`)
+            and `detail.message` says what is wrong there.'
+        '429':
+          description: '`pact-publish-rate-limited`: over the workspace''s publish budget;
+            see `Retry-After`.'
+      requestBody:
+        required: true
+        description: The Pact document (specification 1.x to 4.x), exactly as the consumer's
+          tests wrote it.
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Request body for publishonepactrequest.
+            example:
+              consumer:
+                name: Billing Service
+              provider:
+                name: Ledger API
+              interactions:
+              - description: a request for an invoice
+                request:
+                  method: GET
+                  path: /invoices/42
+                response:
+                  status: 200
+                  body:
+                    id: 42
+                    total: 1999
+              metadata:
+                pactSpecification:
+                  version: 2.0.0
+    get:
+      tags:
+      - pact-broker
+      summary: Read the pact of a consumer version
+      description: 'The pact one consumer version published for a provider.
+
+
+        The body is the Pact document as published, plus `createdAt` and `_links`: `self`,
+        `pb:pact-version` (the content address — the same for every consumer version
+        that published this pact) and `pb:latest-pact-version`.
+
+
+        `{provider}` and `{consumer}` are a pacticipant''s handle, id or name. Requires
+        `pacts:view`.'
+      operationId: read_pact_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__version__consumer_version__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: consumer_version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Version
+          description: Consumer Version schema.
+        description: Path parameter identifying the consumer version segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthepactofaconsumerversionauthorization schema.
+          - type: 'null'
+            description: Readthepactofaconsumerversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthepactofaconsumerversion Xapikey schema.
+          - type: 'null'
+            description: Readthepactofaconsumerversion Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the pact of a consumer version.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readthepactofaconsumerversionresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthepactofaconsumerversionresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/latest:
+    get:
+      tags:
+      - pact-broker
+      summary: Read the latest pact
+      description: 'The pact of the latest consumer version that published one for the
+        provider. Latest means recorded last, not highest version number.
+
+
+        The body is the Pact document as published, plus `createdAt` and `_links`: `self`,
+        `pb:pact-version` (the content address — the same for every consumer version
+        that published this pact) and `pb:latest-pact-version`.
+
+
+        `{provider}` and `{consumer}` are a pacticipant''s handle, id or name. Requires
+        `pacts:view`.'
+      operationId: read_latest_pact_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__latest_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthelatestpactauthorization schema.
+          - type: 'null'
+            description: Readthelatestpactauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthelatestpact Xapikey schema.
+          - type: 'null'
+            description: Readthelatestpact Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the latest pact.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readthelatestpactresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthelatestpactresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a pact by its content version
+      description: 'A pact by its content address: the SHA-256 (64 hex characters) of
+        its interactions, messages and specification version. Every consumer version
+        that published the same pact shares this URL, so it is the one target a provider
+        verifies. `self` names the latest consumer version that carries it.
+
+
+        The body is the Pact document as published, plus `createdAt` and `_links`: `self`,
+        `pb:pact-version` (the content address — the same for every consumer version
+        that published this pact) and `pb:latest-pact-version`.
+
+
+        `{provider}` and `{consumer}` are a pacticipant''s handle, id or name. Requires
+        `pacts:view`.'
+      operationId: read_pact_version_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sha
+          description: Sha schema.
+        description: Path parameter identifying the sha segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readapactbyitscontentversionauthorization schema.
+          - type: 'null'
+            description: Readapactbyitscontentversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readapactbyitscontentversion Xapikey schema.
+          - type: 'null'
+            description: Readapactbyitscontentversion Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a pact by its content version.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readapactbyitscontentversionresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readapactbyitscontentversionresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a pacticipant (Pact Broker shape)
+      description: 'A pacticipant in the Pact Broker''s shape (`name`, `repositoryUrl`,
+        `mainBranch`, `_links`) — what the `pb:consumer`, `pb:provider` and `pb:pacticipant`
+        links of this API lead to. To register or change a pacticipant, use `/v1/tenants/{tenant_slug}/pacticipants`.
+
+
+        `{pacticipant}` is its handle, id or name. Requires `pacts:view`.'
+      operationId: read_broker_pacticipant_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readapacticipant Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Readapacticipant Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readapacticipant Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Readapacticipant Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a pacticipant (pact broker shape).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readapacticipant pact brokershaperesponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readapacticipant pact brokershaperesponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{number}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a pacticipant version (Pact Broker shape)
+      description: 'One version of a pacticipant in the Pact Broker''s shape: `number`,
+        `buildUrl`, and its branches and tags under `_embedded` — what the `pb:consumer-version`
+        and `pb:pacticipant-version` links of this API lead to.
+
+
+        `{pacticipant}` is its handle, id or name. Requires `pacts:view`.'
+      operationId: read_broker_pacticipant_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__number__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Number
+          description: Number schema.
+        description: Path parameter identifying the number segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readapacticipantversion Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Readapacticipantversion Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readapacticipantversion Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Readapacticipantversion Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a pacticipant version (pact broker
+            shape).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readapacticipantversion pact brokershaperesponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readapacticipantversion pact brokershaperesponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings:
     get:
       tags:

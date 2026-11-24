@@ -1,0 +1,202 @@
+---
+title: Publish and fetch pacts
+description: Point the Pact CLI or a Pact library at Apiome to publish pacts.
+sidebar_position: 2
+tags: [contracts, pact, ci, rest]
+---
+
+Apiome speaks the Pact Broker's API for publishing and reading pacts. The `pact-broker` CLI, the
+`pact` CLI and the Pact libraries publish to it without changes: give them your workspace's
+**broker base URL** and an API key as the **token**.
+
+This release covers publication and retrieval. Verification results, consumer-version selectors,
+environments and can-i-deploy are not yet available, and there is no screen for pacts yet.
+
+## Before you start
+
+You need two things:
+
+1. **The broker base URL.** It is your API address followed by
+   `/v1/tenants/<workspace>/pact-broker` — for the workspace `acme`,
+   `https://api.apiome.dev/v1/tenants/acme/pact-broker`. If your operator set up a broker host for
+   workspaces, the shorter `https://acme.<broker host>` is the same thing (see
+   [The broker host alias](#the-broker-host-alias)).
+2. **An API key** from a member who holds **Pacts** → **Create** — the built-in **Editor** role
+   does. Create one on [API keys](../../workspace/api-keys.mdx). Pact tooling sends it as a bearer
+   token, and Apiome accepts that on every route under `/pact-broker`.
+
+You do **not** need to register the applications first. The first publication that names a
+consumer or a provider registers it as a [pacticipant](./concepts.mdx).
+
+## Publish from CI
+
+Run your consumer's Pact tests, then publish the pact files they wrote:
+
+```bash
+pact-broker publish ./pacts \
+  --consumer-app-version "$GIT_COMMIT" \
+  --branch "$GIT_BRANCH" \
+  --build-url "$CI_BUILD_URL" \
+  --broker-base-url https://api.apiome.dev/v1/tenants/acme/pact-broker \
+  --broker-token "$APIOME_API_KEY"
+```
+
+The CLI also reads `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` from the environment. With the
+newer `pact` CLI the command is `pact broker publish` with the same options.
+
+It prints what Apiome did:
+
+```text
+Created Billing Service version 2f4c1a9 with branch main
+Pact successfully published for Billing Service version 2f4c1a9 and provider Ledger API.
+  View the published pact at https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/version/2f4c1a9
+```
+
+From pact-js, `publishPacts` takes the same values:
+
+```js
+await publishPacts({
+  pactFilesOrDirs: ['./pacts'],
+  pactBroker: 'https://api.apiome.dev/v1/tenants/acme/pact-broker',
+  pactBrokerToken: process.env.APIOME_API_KEY,
+  consumerVersion: process.env.GIT_COMMIT,
+  branch: process.env.GIT_BRANCH,
+});
+```
+
+**Use the commit SHA as the consumer version.** A version's pact is fixed once published (see
+[What happens when you publish](#what-happens-when-you-publish)), so every build needs its own
+version number.
+
+## What happens when you publish
+
+One publish request carries one consumer version and its pacts, one per provider.
+
+- **Applications are registered on first use.** `Billing Service` becomes the pacticipant
+  `billing-service`. A name that already has a pacticipant reuses it.
+- **The consumer version is recorded** with its branch, tags and build URL, following the
+  [registry's rules](./concepts.mdx#the-rules-the-registry-keeps): a version never changes, and a
+  branch head only moves forward.
+- **The pact is stored as published.** Pact specification 1.x to 4.x is accepted, including message
+  pacts. No field is dropped or rewritten.
+- **Identical pacts are stored once.** Each distinct pact between a consumer and a provider is a
+  **pact version**, named by the SHA-256 of its content. When ten builds publish the same pact, there
+  are ten consumer versions and one pact version — one thing for the provider to verify.
+- **All or nothing.** If one pact of the request is refused, nothing of the request is stored.
+- **Publishing again is safe.** The same pact for the same consumer version changes nothing.
+- **A different pact for the same consumer version is refused** with `409 pact-content-conflict`.
+  Publish it under a new version number.
+
+### What makes two pacts the same
+
+The pact version is computed from the document's `interactions`, its `messages` and the Pact
+specification version it declares. Key order does not matter; the order of interactions does.
+
+The `metadata` block is **not** part of it. Pact libraries write their own name and version there,
+so upgrading the library does not turn an unchanged pact into a new one.
+
+## Publish one pact with curl
+
+To publish a single document without the CLI, `PUT` it:
+
+```bash
+curl -X PUT \
+  "https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/version/2f4c1a9" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data-binary @pacts/billing-service-ledger-api.json
+```
+
+- **`201`** — this consumer version had no pact for the provider.
+- **`200`** — it had published the same pact before. Nothing changed.
+- **`409`** — it had published a different one.
+
+The provider and consumer in the URL can be handles or names (`Ledger%20API`). If the document
+names its consumer and provider, they must match the URL. This request records no branch, tag or
+build URL; use the CLI, or `POST …/pact-broker/contracts/publish`, to send those.
+
+## Fetch a pact
+
+| To read | Request |
+| --- | --- |
+| The pact one consumer version published | `GET …/pact-broker/pacts/provider/ledger-api/consumer/billing-service/version/2f4c1a9` |
+| The latest pact between the two | `GET …/pact-broker/pacts/provider/ledger-api/consumer/billing-service/latest` |
+| A pact by its pact version | `GET …/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/<sha>` |
+| The links to all of the above | `GET …/pact-broker` |
+
+**Latest** means the consumer version that was recorded last, not the highest version number.
+
+The answer is the pact document as published, with two additions: `createdAt` and `_links`.
+
+| Link | Leads to |
+| --- | --- |
+| `self` | This pact, by consumer version. |
+| `pb:pact-version` | The pact by its content. Its `name` is the SHA-256. Every consumer version that published the same pact has the same link. |
+| `pb:latest-pact-version` | The latest pact between this consumer and provider. |
+| `pb:consumer`, `pb:provider` | The two pacticipants. |
+| `pb:consumer-version` | The consumer version, with its branches and tags. |
+
+## When a pact is refused
+
+Every refusal carries a stable `code` in `detail`. When the problem is in one place, `pointer` is
+its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901).
+
+```json
+{
+  "detail": {
+    "code": "pact-invalid",
+    "message": "/interactions/2/request/method: the request method must be a non-empty string",
+    "pointer": "/interactions/2/request/method"
+  }
+}
+```
+
+| Status | Code | What to do |
+| --- | --- | --- |
+| `422` | `pact-invalid` | The document is not a pact. `pointer` names the place **in the pact file**: fix it there. A pointer of `""` is the whole document — it is not JSON, or it has no `interactions` or `messages` array. |
+| `422` | `pact-publish-invalid` | The publish request is malformed. `pointer` names the field **in the request** — a missing version number, a contract for a different consumer, two contracts for one provider. |
+| `422` | `pact-publish-unsupported` | The request asks for something not available: merging pacts (`--merge`), or a contract that is not a Pact JSON document. |
+| `409` | `pact-content-conflict` | This consumer version already has a different pact for the provider. Publish under a new version number. |
+| `413` | `pact-too-large` | The pact is over the size limit (10 MiB unless your operator changed it). |
+| `429` | `pact-publish-rate-limited` | The workspace is over its publish budget (120 a minute unless changed). Retry after the seconds in `Retry-After`. |
+| `404` | `pact-not-found`, `pacticipant-not-found` | No such pact, or no such application in this workspace. |
+| `401` / `403` | — | The token is not a valid API key for this workspace, or its member lacks **Pacts** permission. |
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Read pacts and the index | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Publish pacts | `pacts:create` | — | ✓ | ✓ | ✓ |
+
+A restricted API key (one with scopes) cannot use these routes yet; use a full-access key from a
+member with the **Editor** role.
+
+## The broker host alias
+
+Operators can give every workspace a broker address of its own, so the base URL is a bare host:
+
+1. Point a wildcard DNS record and TLS certificate for `*.pact.example.com` at the API.
+2. Set `APIOME_PACT_BROKER_HOST_SUFFIX=pact.example.com` on the REST service.
+
+`https://acme.pact.example.com/…` is then served exactly as
+`https://<api>/v1/tenants/acme/pact-broker/…`, and the links in every answer use the host the
+client called. Only the Pact Broker routes are reachable on that host. The API key must still
+belong to the workspace the host names.
+
+## Settings for operators
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `APIOME_PACT_MAX_BYTES` | `10485760` | Largest pact document accepted. A publish request may be twice this, because its pacts are base64-encoded. |
+| `APIOME_PACT_PUBLISH_RATE_LIMIT_PER_MINUTE` | `120` | Publish requests per workspace per rate-limit window. |
+| `APIOME_PACT_ALLOW_CONTRACT_MODIFICATION` | `false` | `true` replaces a consumer version's pact instead of answering `409`. Only for teams whose version numbers are not unique per build: a provider may already have verified the pact that is replaced. |
+| `APIOME_PACT_BROKER_HOST_SUFFIX` | empty | Turns on [the broker host alias](#the-broker-host-alias). |
+| `APIOME_API_PUBLIC_URL` | empty | The public address of the API. Set it when the service runs behind a proxy, so links in answers use the public address. |
+
+## Related
+
+- [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, branches and tags.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.
+- [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — the breaking-change gates
+  and the consumer registry.

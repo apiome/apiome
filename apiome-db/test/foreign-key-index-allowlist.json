@@ -106,6 +106,7 @@
     "operational_component_revisions.operational_component_revisions_published_by_fkey": "users-reference",
     "operational_components.operational_components_created_by_fkey": "users-reference",
     "operational_components.operational_components_owner_id_fkey": "users-reference",
+    "pact_publication.pact_publication_created_by_fkey": "users-reference",
     "pacticipant.pacticipant_created_by_fkey": "users-reference",
     "pacticipant.pacticipant_updated_by_fkey": "users-reference",
     "pacticipant_version.pacticipant_version_created_by_fkey": "users-reference",

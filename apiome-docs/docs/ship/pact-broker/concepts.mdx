@@ -10,9 +10,9 @@ the applications on either side of a contract — and names each build of one by
 its **branch** and its **tags**. Apiome keeps that registry per workspace. It is the model that
 pact publication, verification results and can-i-deploy are built on.
 
-This release has the registry and its REST API. Publishing pacts, verification results and
-can-i-deploy are not yet available, and there is no screen for the registry yet: use the
-[Pacticipants API](../../reference/rest/pacticipants.md).
+This release has the registry, and [publishing and fetching pacts](./publish-pacts.mdx) with the
+Pact CLI and libraries. Verification results and can-i-deploy are not yet available, and there is
+no screen for the registry yet: use the [Pacticipants API](../../reference/rest/pacticipants.md).
 
 ## Terms
 
@@ -26,6 +26,10 @@ can-i-deploy are not yet available, and there is no screen for the registry yet:
 | **Main branch** | The branch a query reads when it names none. Set it on the pacticipant. |
 | **Tag** | A label on a version (`prod`). Tags are Pact's older way to name a branch or a stage; branches are preferred for new setups. |
 | **Binding** | A link from a pacticipant to what Apiome already knows about that application: the **project** that describes a provider, or the **consumer** registered on a project. |
+| **Pact** | The contract between one consumer and one provider: the requests the consumer makes and the responses it expects, written by the consumer's tests. |
+| **Consumer version** | The version of the consumer that published a pact. One consumer version has one pact per provider. |
+| **Pact version** | One distinct pact between a consumer and a provider, named by the SHA-256 of its content. Consumer versions that publish the same pact share one pact version. |
+| **Broker base URL** | The address a Pact client is given: `https://<api>/v1/tenants/<workspace>/pact-broker`. |
 
 ## How a pacticipant relates to projects and consumers
 
@@ -62,9 +66,13 @@ versions, branches and tags. Restoring the project does not restore the binding;
 
 ## Register a pacticipant
 
+[Publishing a pact](./publish-pacts.mdx) registers its consumer and provider for you. Register one
+yourself when you want to set its repository, main branch or bindings first. The registry takes the
+API key in the `X-API-Key` header.
+
 ```bash
 curl -X POST https://api.apiome.dev/v1/tenants/acme/pacticipants \
-  -H "Authorization: Bearer sk_live_…" \
+  -H "X-API-Key: sk_live_…" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Billing Service",
@@ -84,7 +92,7 @@ Record each build once it has a version number:
 
 ```bash
 curl -X PUT https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service/versions/3f2a9c1 \
-  -H "Authorization: Bearer sk_live_…" \
+  -H "X-API-Key: sk_live_…" \
   -H "Content-Type: application/json" \
   -d '{
     "branch": "main",
@@ -104,7 +112,7 @@ Add a tag to a version that is already recorded:
 
 ```bash
 curl -X PUT https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service/versions/3f2a9c1/tags/prod \
-  -H "Authorization: Bearer sk_live_…"
+  -H "X-API-Key: sk_live_…"
 ```
 
 ## Read versions and branch heads
@@ -125,7 +133,7 @@ Lists return 50 rows a page (at most 200 with `limit`). Pass the previous page's
 
 ```bash
 curl -X DELETE https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service \
-  -H "Authorization: Bearer sk_live_…"
+  -H "X-API-Key: sk_live_…"
 ```
 
 This deletes the pacticipant **with all of its versions, branches and tags**, and cannot be undone.
@@ -149,6 +157,7 @@ pacticipant. Custom roles do not get **Pacts** automatically — grant it in the
 
 ## Related
 
+- [Publish and fetch pacts](./publish-pacts.mdx) — point the Pact CLI or a Pact library at Apiome.
 - [Pacticipants API](../../reference/rest/pacticipants.md) — every endpoint, parameter and error code.
 - [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — the breaking-change gates
   and the consumer registry.

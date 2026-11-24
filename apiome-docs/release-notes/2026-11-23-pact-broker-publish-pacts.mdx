@@ -1,0 +1,58 @@
+---
+slug: pact-broker-publish-pacts
+title: "Pact Broker: publish and fetch pacts"
+description: "Point the Pact CLI or a Pact library at Apiome and publish your consumer pacts."
+authors: [apiome]
+---
+
+Apiome now speaks the Pact Broker's API for publishing and reading pacts. `pact-broker publish`,
+`pact broker publish` and pact-js `publishPacts` work against it by changing two values: the broker
+base URL and the token.
+
+{/* truncate */}
+
+**Point your tooling at Apiome:**
+
+```bash
+pact-broker publish ./pacts \
+  --consumer-app-version "$GIT_COMMIT" --branch "$GIT_BRANCH" \
+  --broker-base-url https://api.apiome.dev/v1/tenants/acme/pact-broker \
+  --broker-token "$APIOME_API_KEY"
+```
+
+The token is a workspace API key from a member with **Pacts** → **Create** (the **Editor** role
+has it). On the Pact Broker routes the key is accepted as a bearer token, because that is how Pact
+tooling sends it.
+
+**What you can do now**, through the [Pact Broker API](/reference/rest/pact-broker):
+
+- **Publish every pact of a build in one request**, with its branch, tags and build URL. The
+  consumer and its providers are registered as pacticipants the first time they are named.
+- **Publish one pact** with `PUT …/pacts/provider/{provider}/consumer/{consumer}/version/{version}`.
+- **Fetch a pact** by consumer version, the **latest** pact between two applications, or a pact by
+  its content.
+
+**How publication behaves:**
+
+- **Pact specification 1.x to 4.x is stored as published**, message pacts included.
+- **Identical pacts are stored once.** A pact is named by the SHA-256 of its interactions, so ten
+  builds that publish the same pact produce one **pact version** — one thing for the provider to
+  verify. Library metadata is not part of it, so upgrading pact-js does not create a new one.
+- **A published pact does not change.** Publishing the same pact again is safe. Publishing a
+  different pact for the same consumer version answers `409`; publish it under a new version
+  number. Use the commit SHA as the version.
+- **A build publishes all of its pacts or none.**
+- **An invalid pact is refused with its location**: `422` and a JSON Pointer such as
+  `/interactions/2/request/method`.
+
+**Not yet available:** verification results, consumer-version selectors, environments,
+can-i-deploy, merging pacts (`--merge`) and basic authentication. Restricted API keys cannot use
+these routes yet.
+
+**For operators.** Run `apiome-db migrate` to apply `V433` (two new tables). Optional settings:
+`APIOME_PACT_BROKER_HOST_SUFFIX` gives each workspace a broker host such as
+`https://acme.pact.example.com`; `APIOME_PACT_MAX_BYTES`,
+`APIOME_PACT_PUBLISH_RATE_LIMIT_PER_MINUTE` and `APIOME_PACT_ALLOW_CONTRACT_MODIFICATION` set the
+limits and the `409` behaviour.
+
+Read [Publish and fetch pacts](/ship/pact-broker/publish-pacts) for the steps and the error codes.
