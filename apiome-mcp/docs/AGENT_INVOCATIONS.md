@@ -85,23 +85,66 @@ There is no API or UI for this setting yet; setting it is an operator action.
 ## Rollups and retention
 
 The sweep runs every `APIOME_MCP_AGENT_USAGE_SWEEP_INTERVAL_SECONDS` (default 1 h) inside the
-server, or once via `apiome-mcp agent-usage sweep`. Each tick runs in one transaction behind
-`pg_try_advisory_xact_lock(hashtext('apiome.agent_usage_sweep'))`, so on a multi-instance
-deployment only one instance works per tick:
+server, or once via `apiome-mcp agent-usage sweep`. Each tick holds the session advisory lock
+`pg_try_advisory_lock(hashtext('apiome.agent_usage_sweep'))`, so on a multi-instance deployment
+only one instance works per tick. Since DBP-1.23 (#7206, migration V429) every step commits on its
+own, so a long tick never holds one transaction open:
 
-1. `rollup_agent_invocation_days(now, grace)` recomputes every open UTC day from the raw rows
-   (idempotent upsert). A day becomes **final** once it ended more than
-   `APIOME_MCP_AGENT_USAGE_FINALIZE_GRACE_HOURS` ago (default 6), and a final day is never
-   recomputed.
-2. `purge_agent_invocations` deletes raw rows that are past the tenant's tier retention **and**
-   on a final day. Every pruned row was therefore already counted, and rollups are never touched.
-3. `purge_agent_invocation_samples` deletes samples older than 7 days.
-4. `purge_agent_invocation_rollups` deletes rollups past the tier's rollup retention.
-5. `purge_upstream_credential_uses(APIOME_MCP_AGENT_UPSTREAM_USE_RETENTION_DAYS)` applies the
-   AGX-2.2 ledger retention, which V268 left unscheduled.
+1. **Rollups, one day per transaction.** `agent_invocation_open_days(now)` lists the open UTC days:
+   from the day after the newest final day, reaching back (by a loose scan of the distinct raw
+   days, one index descent per day) to any raw day that is not final. For each,
+   `rollup_agent_invocation_day(day, now, grace)` recomputes only the groups (tenant, key,
+   toolset, tool, target) with a call since the day's previous rollup minus the grace period,
+   each from all of its rows that day, so the percentiles are exact. A day becomes **final**
+   once it ended more than `APIOME_MCP_AGENT_USAGE_FINALIZE_GRACE_HOURS` ago (default 6), and a
+   final day is never recomputed. The grace period must exceed the longest call: the incremental
+   rollup relies on it too (a row written after a rollup started after that rollup minus the
+   grace).
+2. **Purges, one batch per transaction**, each repeated until a batch deletes fewer than
+   `APIOME_MCP_AGENT_USAGE_SWEEP_BATCH_SIZE` rows or `APIOME_MCP_AGENT_USAGE_SWEEP_TIME_BUDGET_SECONDS`
+   (default 300) have passed. Every purge runs at least one batch; what is left goes on the next
+   tick, and the CLI says so.
+   - `purge_agent_invocations` deletes raw rows that are past the tenant's tier retention **and**
+     on a final day, oldest first per tenant. Every pruned row was therefore already counted, and
+     rollups are never touched.
+   - `purge_agent_invocation_samples` deletes samples older than 7 days.
+   - `purge_agent_invocation_rollups` deletes rollups past the tier's rollup retention.
+   - `purge_upstream_credential_uses(APIOME_MCP_AGENT_UPSTREAM_USE_RETENTION_DAYS, …)` applies the
+     AGX-2.2 ledger retention.
+   - `purge_mcp_access_audit(APIOME_MCP_ACCESS_AUDIT_RETENTION_DAYS, …)` (default 365 days) and
+     `purge_mcp_capability_denials(APIOME_MCP_CAPABILITY_DENIAL_RETENTION_DAYS, …)` (default 90
+     days) apply the MCP audit retention.
 
-Each purge deletes at most `APIOME_MCP_AGENT_USAGE_SWEEP_BATCH_SIZE` rows per tick. Whatever is
-left goes on the next tick.
+Every purge reads its rows from one index range (`(tenant_id, invoked_at)`, the rollups' primary
+key, or the `(used_at)` / `(at)` indexes V429 adds), so a tick with nothing to do reads a few index
+pages whatever the table sizes. The tenant-tier purges find their tenants with a loose scan of the
+tenants that have rows, not of every tenant.
+
+### Keeping up (DBP-1.23)
+
+Before V429 each purge deleted one batch per tick: at most 240,000 raw rows a day with the
+defaults, against a top-tier key that may make 1,000,000 calls a day. Simulated on the scale
+database (one tenant at 1,000,000 calls a day, a 2-day raw retention, hourly ticks with the
+defaults), the raw table levelled off at 1,999,968 rows — 48 hours of calls — from hour 48 to
+hour 120, each tick deleting the hour's 41,666 expired rows in about a second (two open days rolled
+up). With V271's one batch per tick it would have grown by about 760,000 rows a day. A tick with
+nothing to delete reads two index-only descents (the loose scan of tenants) and one empty index
+range per tenant for the raw purge. The credential-use purge deletes about 590,000 rows a second
+(10,000-row batches of 12–26 ms).
+
+The simulation compresses 120 hours into minutes, so autovacuum fell behind (about 3 million dead
+tuples) and late ticks slowed to a few seconds; in real time, check `n_dead_tup` on
+`agent_invocations` and tune autovacuum for the table if it lags.
+
+### Partitioning (evaluated, not adopted)
+
+`agent_invocations` is retained per tenant tier (7, 30 or 90 days, or forever), so dropping a day
+or month partition would only remove days past the longest retention of any tenant; the
+per-tenant deletes would still be needed. A partitioned table's primary key must also include the
+partition key, which the `agent_invocation_samples` foreign key to `agent_invocations (id)` does
+not allow. `upstream_credential_uses` has one global retention, but it writes at most one row per
+upstream call and the batched delete through `(used_at)` keeps up without partitions to create
+ahead of time.
 
 ### Per-tier retention (`licenses.seats`)
 
@@ -125,6 +168,6 @@ rows forever. Raw retention is at least 1 day. A missing or non-numeric key fall
   a limit before the tool runs and writes their `quota_rejected` rows itself, so the AGX-2.1 call
   path audits only the calls it was given. See [`AGENT_QUOTAS.md`](AGENT_QUOTAS.md).
 - **AGX-3.4 (#4540)** charts read `agent_invocation_daily`. For today's partial day, the current
-  day's rollup is refreshed every tick.
+  day's rollup is refreshed every tick (incrementally since DBP-1.23).
 - **AGX-3.5 (#4541)** anomaly detection reads rollups for baselines and raw rows for the recent
   window.
