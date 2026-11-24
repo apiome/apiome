@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
 import httpx
-from pgvector.psycopg import Vector, register_vector_async  # type: ignore[import-untyped]
+from pgvector.psycopg import Vector  # type: ignore[import-untyped]
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
+from apiome_mcp.database_pool import ensure_vector_registered
 from apiome_mcp.settings import Settings
 from apiome_mcp.spec_search_tool import (
     DEFAULT_PAGE_SIZE,
@@ -102,7 +105,35 @@ def _row_out(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _fetch_query_embedding(settings: Settings, q: str) -> list[float]:
+#: Lifespan-context key of the shared embeddings client (DBP-1.21).
+EMBEDDING_HTTP_CLIENT_KEY = "embedding_http_client"
+
+
+@asynccontextmanager
+async def embedding_http_client(settings: Settings) -> AsyncIterator[httpx.AsyncClient]:
+    """One pooled HTTP client for query embeddings, for the life of the catalog lifespan.
+
+    Args:
+        settings: Supplies ``openai_embedding_timeout_s``.
+
+    Yields:
+        The client; closed on exit.
+    """
+    async with httpx.AsyncClient(timeout=settings.openai_embedding_timeout_s) as client:
+        yield client
+
+
+async def _post_embedding(
+    settings: Settings, client: httpx.AsyncClient | None, *, headers: dict[str, str], payload: dict[str, Any]
+) -> httpx.Response:
+    """POST the embedding request on the shared client, or a one-off client when there is none."""
+    if client is not None:
+        return await client.post(str(settings.openai_embedding_url), headers=headers, json=payload)
+    async with embedding_http_client(settings) as own:
+        return await own.post(str(settings.openai_embedding_url), headers=headers, json=payload)
+
+
+async def _fetch_query_embedding(settings: Settings, q: str, client: httpx.AsyncClient | None = None) -> list[float]:
     key = settings.openai_api_key
     if key is None:
         raise ValueError("spec.search_semantic requires APIOME_MCP_OPENAI_API_KEY for query embeddings.")
@@ -113,22 +144,22 @@ async def _fetch_query_embedding(settings: Settings, q: str) -> list[float]:
     }
     payload["dimensions"] = settings.openai_embedding_dimensions
 
-    async with httpx.AsyncClient(timeout=settings.openai_embedding_timeout_s) as client:
-        response = await client.post(
-            str(settings.openai_embedding_url),
-            headers={
-                "Authorization": f"Bearer {key.get_secret_value()}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-        )
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            detail = response.text[:500] if response.text else ""
-            raise ValueError(
-                f"Embedding HTTP {response.status_code} from {settings.openai_embedding_url}: {detail}"
-            ) from exc
+    response = await _post_embedding(
+        settings,
+        client,
+        headers={
+            "Authorization": f"Bearer {key.get_secret_value()}",
+            "Content-Type": "application/json",
+        },
+        payload=payload,
+    )
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        detail = response.text[:500] if response.text else ""
+        raise ValueError(
+            f"Embedding HTTP {response.status_code} from {settings.openai_embedding_url}: {detail}"
+        ) from exc
 
     body = response.json()
     data = body.get("data")
@@ -154,10 +185,16 @@ async def build_spec_semantic_search_response(
     q: str,
     limit: int | None = None,
     cursor: str | None = None,
+    http_client: httpx.AsyncClient | None = None,
 ) -> dict[str, Any]:
-    """Return cosine-ranked ``items``, ``has_more``, and ``next_cursor`` for embedded public specs."""
+    """Return cosine-ranked ``items``, ``has_more``, and ``next_cursor`` for embedded public specs.
+
+    ``http_client`` is the lifespan's shared embeddings client (DBP-1.21); without one a client is
+    opened for this call. pgvector is registered once per pooled connection
+    (:func:`~apiome_mcp.database_pool.ensure_vector_registered`), not once per search.
+    """
     query_text = normalize_search_query(q)
-    vec = await _fetch_query_embedding(settings, query_text)
+    vec = await _fetch_query_embedding(settings, query_text, http_client)
 
     lim = _clamp_limit(limit)
     decoded = decode_spec_search_cursor(cursor)
@@ -176,7 +213,7 @@ async def build_spec_semantic_search_response(
     }
 
     async with pool.connection() as conn:
-        await register_vector_async(conn)
+        await ensure_vector_registered(conn)
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute(_SEMANTIC_SEARCH_QUERY, params)
             rows = await cur.fetchall()

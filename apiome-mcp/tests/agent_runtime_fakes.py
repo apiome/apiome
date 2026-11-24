@@ -125,6 +125,7 @@ def manifest_row(**overrides: Any) -> dict[str, Any]:
         "exposed": list(ALL_OPERATIONS),
         "write_ops": list(WRITE_OPERATIONS),
         "accepted": [],
+        "enabled_tools": sorted(ALL_TOOLS),
     }
     row.update(overrides)
     return row

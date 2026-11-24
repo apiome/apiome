@@ -9,9 +9,13 @@ allowlist. On every MCP request (except the ``initialize`` handshake) :class:`Ag
    :func:`~apiome_mcp.mcp_auth.extract_raw_mcp_api_key`);
 2. resolves it — :func:`resolve_agent_key` — and refuses it when it is unknown, revoked, disabled
    or expired. The row is read on every request, so revocation and expiry take effect on the
-   agent's next request, and an allowlist edit is visible on its next ``tools/list``;
-3. asks the toolset for its enabled tools and computes :func:`permitted_tools`: the toolset's
-   enabled tools **intersected with** the key's allowlist;
+   agent's next request, and an allowlist edit is visible on its next ``tools/list``. A secret
+   that verified within ``key_cache_seconds`` skips bcrypt: the row is re-read by id and hash
+   instead (DBP-1.21, :mod:`apiome_mcp.key_cache`). The same statement returns the toolset's
+   target and ``updated_at``, which key the manifest cache;
+3. asks the toolset for its enabled tools — by default from the toolset's cached manifest
+   (:func:`toolset_enabled_tools`), which the served-toolset provider then reuses — and computes
+   :func:`permitted_tools`: the toolset's enabled tools **intersected with** the key's allowlist;
 4. filters ``tools/list`` to that set — an agent cannot even see a tool it may not call — and
    refuses ``tools/call`` on anything outside it with FastMCP's own unknown-tool error, so a tool
    the key may not use is indistinguishable from one that does not exist.
@@ -61,6 +65,7 @@ from psycopg_pool import AsyncConnectionPool
 
 from apiome_mcp.database_pool import get_db_pool
 from apiome_mcp.http_credential_middleware import get_http_bearer_from_context
+from apiome_mcp.key_cache import CachedKey, LastUsedThrottle, VerifiedKeyCache
 from apiome_mcp.mcp_auth import extract_raw_mcp_api_key
 
 _log = structlog.get_logger(__name__)
@@ -79,6 +84,7 @@ __all__ = [
     "EnabledToolsSource",
     "current_agent_access",
     "permitted_tools",
+    "reset_agent_key_caches",
     "resolve_agent_key",
     "resolve_agent_key_in_context",
     "load_toolset_enabled_tools",
@@ -179,6 +185,10 @@ class AgentKey:
     tenant_id: str
     toolset_id: str
     tool_allowlist: frozenset[str]
+    #: DBP-1.21: ``agent_toolsets.target`` read with the key (``None`` when not read).
+    toolset_target: str | None = None
+    #: DBP-1.21: ``agent_toolsets.updated_at`` read with the key; a change drops the cached manifest.
+    toolset_stamp: str | None = None
 
 
 @dataclass(frozen=True)
@@ -188,10 +198,13 @@ class AgentAccess:
     Attributes:
         key: The verified key.
         permitted: The tool names it may list and call (:func:`permitted_tools`).
+        manifest: The toolset manifest the enabled tools came from, when the source returned one;
+            the served-toolset provider reuses it instead of reading it again (DBP-1.21).
     """
 
     key: AgentKey
     permitted: frozenset[str]
+    manifest: Any = None
 
     def permits(self, tool_name: str) -> bool:
         """Return whether ``tool_name`` may be listed and called on this request."""
@@ -201,9 +214,10 @@ class AgentAccess:
 #: Resolves a presented secret to a usable key, or raises :class:`AgentAccessDeniedError`.
 AgentKeyResolver = Callable[[Context, str], Awaitable[AgentKey]]
 
-#: Returns a key's toolset's enabled tool names, or ``None`` when the toolset is missing or
-#: disabled. The default is :func:`toolset_enabled_tools` (AGX-1.2, #4530).
-EnabledToolsSource = Callable[[Context, AgentKey], Awaitable[Iterable[str] | None]]
+#: Returns a key's toolset's enabled tool names — or a manifest carrying them as ``enabled_tools``
+#: — or ``None`` when the toolset is missing or disabled. The default is
+#: :func:`toolset_enabled_tools` (AGX-1.2, #4530).
+EnabledToolsSource = Callable[[Context, AgentKey], Awaitable[Any]]
 
 
 def permitted_tools(enabled: Iterable[str], allowlist: Iterable[str]) -> frozenset[str]:
@@ -257,20 +271,28 @@ async def load_toolset_enabled_tools(pool: AsyncConnectionPool, tenant_id: str, 
     return [str(name) for name in row.get("tools") or []]
 
 
-async def toolset_enabled_tools(ctx: Context, key: AgentKey) -> Iterable[str] | None:
-    """The default :data:`EnabledToolsSource`: the key's toolset, read through the lifespan pool.
+async def toolset_enabled_tools(ctx: Context, key: AgentKey) -> Any:
+    """The default :data:`EnabledToolsSource`: the key's toolset manifest (DBP-1.21).
+
+    One read serves both this middleware and the served-toolset provider: the manifest carries the
+    enabled tool names (``enabled_tools``) and is cached for ``agent_toolset_manifest_cache_seconds``,
+    dropped early when the toolset row's ``updated_at`` changes.
 
     Args:
         ctx: The request's FastMCP context.
         key: The verified key.
 
     Returns:
-        :func:`load_toolset_enabled_tools` for the key's tenant and toolset.
+        The :class:`~apiome_mcp.agent_toolset_source.ToolsetManifest`, or ``None`` when the toolset
+        is missing, switched off or unpublished.
     """
-    return await load_toolset_enabled_tools(get_db_pool(ctx), key.tenant_id, key.toolset_id)
+    from apiome_mcp.agent_toolset_source import load_toolset_manifest  # circular at import time
+
+    return await load_toolset_manifest(get_db_pool(ctx), key.tenant_id, key.toolset_id, stamp=key.toolset_stamp)
 
 
-_AGENT_KEY_LOOKUP = """
+#: The key row, its tenant's state and its toolset's target / ``updated_at`` (DBP-1.21).
+_AGENT_KEY_COLUMNS = """
     SELECT ak.id::text AS id,
            ak.tenant_id::text AS tenant_id,
            ak.key_hash,
@@ -279,10 +301,31 @@ _AGENT_KEY_LOOKUP = """
            ak.enabled,
            (ak.deleted_at IS NOT NULL) AS revoked,
            (ak.expires_at IS NOT NULL AND ak.expires_at <= CURRENT_TIMESTAMP) AS expired,
-           (t.enabled AND t.deleted_at IS NULL) AS tenant_active
+           (t.enabled AND t.deleted_at IS NULL) AS tenant_active,
+           ts.target AS toolset_target,
+           ts.updated_at::text AS toolset_stamp
     FROM apiome.api_keys ak
     JOIN apiome.tenants t ON t.id = ak.tenant_id
-    WHERE ak.key_prefix = %s AND ak.kind = 'agent'
+    LEFT JOIN apiome.agent_toolsets ts ON ts.id = ak.toolset_id AND ts.tenant_id = ak.tenant_id
+"""
+
+#: Cold path: every agent key with the presented prefix (bcrypt picks the match).
+_AGENT_KEY_LOOKUP = _AGENT_KEY_COLUMNS + "    WHERE ak.key_prefix = %s AND ak.kind = 'agent'\n"
+
+#: Warm path: the key the secret verified as earlier, by id and stored hash (no bcrypt).
+_AGENT_KEY_BY_ID = _AGENT_KEY_COLUMNS + "    WHERE ak.id = %s::uuid AND ak.key_hash = %s AND ak.kind = 'agent'\n"
+
+#: ``sha256(secret)`` → verified agent key id + hash, for this process.
+AGENT_KEY_CACHE = VerifiedKeyCache()
+
+#: One ``last_used_at`` write per agent key per minute from this process.
+_LAST_USED = LastUsedThrottle()
+
+#: ``last_used_at`` writes skip a row any process wrote in the last minute.
+_TOUCH_LAST_USED = """
+    UPDATE apiome.api_keys SET last_used_at = CURRENT_TIMESTAMP
+    WHERE id = %s::uuid
+      AND (last_used_at IS NULL OR last_used_at < CURRENT_TIMESTAMP - INTERVAL '1 minute')
 """
 
 
@@ -321,10 +364,7 @@ async def _touch_last_used(pool: AsyncConnectionPool, key_id: str) -> None:
     """Record that a key authenticated (best-effort, off the request path)."""
     try:
         async with pool.connection() as conn:
-            await conn.execute(
-                "UPDATE apiome.api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = %s::uuid",
-                (key_id,),
-            )
+            await conn.execute(_TOUCH_LAST_USED, (key_id,))
             await conn.commit()
     except Exception:
         _log.warning("agent_key_last_used_update_failed", key_id=key_id, exc_info=True)
@@ -335,7 +375,8 @@ async def resolve_agent_key(pool: AsyncConnectionPool, secret: str) -> AgentKey:
 
     The hash is verified *before* any state is reported, so only the holder of the real secret
     learns that a key is revoked, disabled or expired. bcrypt runs in a worker thread to keep the
-    event loop free.
+    event loop free, and a secret verified within ``key_cache_seconds`` skips it: the row is
+    re-read by id and hash, so revocation still applies on the next call (DBP-1.21).
 
     Args:
         pool: The shared Postgres pool.
@@ -351,11 +392,16 @@ async def resolve_agent_key(pool: AsyncConnectionPool, secret: str) -> AgentKey:
     """
     if len(secret) < _MIN_SECRET_CHARS:
         raise AgentAccessDeniedError(AgentAccessReason.KEY_INVALID)
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(_AGENT_KEY_LOOKUP, (_key_prefix(secret),))
-            rows = await cur.fetchall()
 
+    cached = AGENT_KEY_CACHE.get(secret)
+    if cached is not None:
+        warm = await _key_rows(pool, _AGENT_KEY_BY_ID, (cached.key_id, cached.key_hash))
+        if warm and _usable(warm[0]):
+            return _accepted(pool, warm[0])
+        # Revoked, disabled, expired, regenerated or gone: forget it and let the full check say why.
+        AGENT_KEY_CACHE.invalidate(cached.key_id)
+
+    rows = await _key_rows(pool, _AGENT_KEY_LOOKUP, (_key_prefix(secret),))
     for row in rows:
         if not await asyncio.to_thread(_hash_matches, secret, row.get("key_hash")):
             continue
@@ -367,17 +413,53 @@ async def resolve_agent_key(pool: AsyncConnectionPool, secret: str) -> AgentKey:
             raise AgentAccessDeniedError(AgentAccessReason.KEY_DISABLED)
         if row.get("expired"):
             raise AgentAccessDeniedError(AgentAccessReason.KEY_EXPIRED)
-        key = AgentKey(
-            key_id=str(row["id"]),
-            tenant_id=str(row["tenant_id"]),
-            toolset_id=str(row["toolset_id"]),
-            tool_allowlist=_allowlist(row.get("tool_allowlist")),
-        )
+        AGENT_KEY_CACHE.put(secret, CachedKey(key_id=str(row["id"]), key_hash=row.get("key_hash")))
+        return _accepted(pool, row)
+    raise AgentAccessDeniedError(AgentAccessReason.KEY_INVALID)
+
+
+async def _key_rows(pool: AsyncConnectionPool, query: str, params: tuple[Any, ...]) -> list[dict[str, Any]]:
+    """Run one key statement on one checkout and return its rows."""
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query, params)
+            return list(await cur.fetchall())
+
+
+def _usable(row: dict[str, Any]) -> bool:
+    """Whether a key row may authenticate right now (tenant live, bound, not revoked/disabled/expired)."""
+    return bool(
+        row.get("tenant_active")
+        and row.get("toolset_id")
+        and not row.get("revoked")
+        and row.get("enabled")
+        and not row.get("expired")
+    )
+
+
+def _accepted(pool: AsyncConnectionPool, row: dict[str, Any]) -> AgentKey:
+    """The key for a usable row; stamps ``last_used_at`` off the request path when due."""
+    target = row.get("toolset_target")
+    stamp = row.get("toolset_stamp")
+    key = AgentKey(
+        key_id=str(row["id"]),
+        tenant_id=str(row["tenant_id"]),
+        toolset_id=str(row["toolset_id"]),
+        tool_allowlist=_allowlist(row.get("tool_allowlist")),
+        toolset_target=str(target) if target is not None else None,
+        toolset_stamp=str(stamp) if stamp is not None else None,
+    )
+    if _LAST_USED.due(key.key_id):
         task = asyncio.get_running_loop().create_task(_touch_last_used(pool, key.key_id))
         _BACKGROUND_TASKS.add(task)
         task.add_done_callback(_BACKGROUND_TASKS.discard)
-        return key
-    raise AgentAccessDeniedError(AgentAccessReason.KEY_INVALID)
+    return key
+
+
+def reset_agent_key_caches() -> None:
+    """Forget every verified agent key and ``last_used_at`` stamp (tests)."""
+    AGENT_KEY_CACHE.clear()
+    _LAST_USED.clear()
 
 
 async def resolve_agent_key_in_context(ctx: Context, secret: str) -> AgentKey:
@@ -458,7 +540,9 @@ class AgentAccessMiddleware(Middleware):
             if secret is None or ctx is None:
                 raise AgentAccessDeniedError(AgentAccessReason.KEY_MISSING)
             key = await self._key_resolver(ctx, secret)
-            enabled = await self._enabled_tools(ctx, key)
+            source = await self._enabled_tools(ctx, key)
+            manifest = source if hasattr(source, "enabled_tools") else None
+            enabled = manifest.enabled_tools if manifest is not None else source
             if enabled is None:
                 _log.info(
                     "agent_toolset_unavailable",
@@ -467,7 +551,7 @@ class AgentAccessMiddleware(Middleware):
                     toolset_id=key.toolset_id,
                 )
                 raise AgentAccessDeniedError(AgentAccessReason.TOOLSET_UNAVAILABLE)
-            return AgentAccess(key=key, permitted=permitted_tools(enabled, key.tool_allowlist))
+            return AgentAccess(key=key, permitted=permitted_tools(enabled, key.tool_allowlist), manifest=manifest)
         except AgentAccessDeniedError as denied:
             _log.info("agent_access_denied", reason=denied.reason.value)
             raise

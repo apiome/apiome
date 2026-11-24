@@ -53,6 +53,7 @@ or the Free caps when none are known. If the counter cannot be refreshed, the la
 
 from __future__ import annotations
 
+import asyncio
 import json
 import math
 import threading
@@ -249,6 +250,20 @@ _AGENT_KEY_QUOTA = "SELECT license_type, rps, daily_calls FROM apiome.agent_key_
 
 _AGENT_KEY_CALL_COUNT = "SELECT apiome.agent_key_call_count(%s::uuid, %s::date) AS calls"
 
+#: A finalized past day, from the AGX-3.3 rollup instead of the raw rows (DBP-1.21). The rollup
+#: holds ``calls - quota_rejections`` per tool and target, so the sum equals the raw count. A day
+#: that is not finalized yet (or never rolled up) falls back to the raw count.
+_AGENT_KEY_PAST_DAY_CALLS = """
+    SELECT CASE
+             WHEN EXISTS (SELECT 1 FROM apiome.agent_invocation_rollup_days r
+                          WHERE r.day = %(day)s::date AND r.finalized_at IS NOT NULL)
+             THEN (SELECT COALESCE(SUM(d.calls - d.quota_rejections), 0)
+                   FROM apiome.agent_invocation_daily d
+                   WHERE d.key_id = %(key)s::uuid AND d.day = %(day)s::date)
+             ELSE apiome.agent_key_call_count(%(key)s::uuid, %(day)s::date)
+           END AS calls
+"""
+
 
 def _positive_float(raw: Any) -> float | None:
     """A stored cap as a positive float, or ``None`` (unlimited) when it is missing or not positive."""
@@ -297,14 +312,19 @@ async def count_agent_key_calls(pool: AsyncConnectionPool, key_id: str, day: dat
         day: The UTC day.
 
     Returns:
-        The key's ``agent_invocations`` that day, without ``quota_rejected`` refusals.
+        The key's ``agent_invocations`` that day, without ``quota_rejected`` refusals. A finalized
+        past day is read from ``agent_invocation_daily`` (same number, far fewer rows).
 
     Raises:
         Exception: Database errors propagate; :class:`AgentQuotaGuard` catches them.
     """
+    today = datetime.now(UTC).date()
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(_AGENT_KEY_CALL_COUNT, (key_id, day.isoformat()))
+            if day < today:
+                await cur.execute(_AGENT_KEY_PAST_DAY_CALLS, {"key": key_id, "day": day.isoformat()})
+            else:
+                await cur.execute(_AGENT_KEY_CALL_COUNT, (key_id, day.isoformat()))
             row = await cur.fetchone()
     return int(row.get("calls") or 0) if row else 0
 
@@ -393,6 +413,11 @@ class _DailyUsage:
     admitted: int
     admitted_today: int
     refresh_at: float
+    #: The count in flight (DBP-1.21 single-flight): concurrent calls share it instead of each
+    #: starting their own.
+    refreshing: asyncio.Task[int] | None = None
+    #: Whether a count ever completed for this day.
+    counted_once: bool = False
 
     @property
     def used(self) -> int:
@@ -478,18 +503,33 @@ class AgentQuotaGuard:
         return limits
 
     async def _usage_for(self, pool: AsyncConnectionPool, key_id: str, today: date, now: float) -> _DailyUsage:
-        """Return a key's usage today, re-reading the database count when it is due."""
+        """Return a key's usage today, re-reading the database count when it is due.
+
+        Single-flight (DBP-1.21): ``refresh_at`` moves forward *before* the count is awaited, so
+        concurrent calls do not each start a count. A call that finds a count in flight waits for it
+        only when the key has never been counted today; otherwise it uses the last count (plus the
+        calls admitted since), exactly as between two refreshes.
+        """
         usage = self._usage.get(key_id)
         if usage is None or usage.day != today:
             usage = _DailyUsage(day=today, counted=0, admitted=0, admitted_today=0, refresh_at=0.0)
             self._usage[key_id] = usage
-        if now >= usage.refresh_at:
+        if now >= usage.refresh_at and usage.refreshing is None:
+            usage.refresh_at = now + self._usage_ttl
+            usage.refreshing = asyncio.ensure_future(self._count_calls(pool, key_id, today))
             try:
-                usage.counted = int(await self._count_calls(pool, key_id, today))
+                usage.counted = int(await asyncio.shield(usage.refreshing))
                 usage.admitted = 0
+                usage.counted_once = True
             except Exception:
                 _log.warning("agent_quota_usage_unavailable", key_id=key_id, exc_info=True)
-            usage.refresh_at = now + self._usage_ttl
+            finally:
+                usage.refreshing = None
+        elif usage.refreshing is not None and not usage.counted_once:
+            try:
+                await asyncio.shield(usage.refreshing)
+            except Exception:
+                pass  # the call that started the count logs it
         return usage
 
     async def admit(
@@ -556,7 +596,13 @@ _TOOLSET_TARGET = "SELECT target FROM apiome.agent_toolsets WHERE id = %s::uuid 
 
 
 async def _toolset_target(pool: AsyncConnectionPool, key: AgentKey) -> Target:
-    """The key's toolset target (``prod`` when unknown or unreadable)."""
+    """The key's toolset target (``prod`` when unknown or unreadable).
+
+    Read with the key since DBP-1.21 (:attr:`AgentKey.toolset_target`), so a refusal costs no
+    query; the SELECT is only the fallback for a key resolved without it.
+    """
+    if key.toolset_target is not None:
+        return "mock" if key.toolset_target == "mock" else "prod"
     try:
         async with pool.connection() as conn:
             async with conn.cursor(row_factory=dict_row) as cur:
@@ -572,6 +618,9 @@ async def record_quota_rejection(
     pool: AsyncConnectionPool, key: AgentKey, tool_name: str, refusal: QuotaRefusal, *, request_bytes: int = 0
 ) -> None:
     """Write the ``quota_rejected`` invocation row for a refused call (never raises).
+
+    With the agent lifespan's batched writer the row is only queued (DBP-1.21): a client retrying in
+    a tight loop costs memory, not a database round trip per refusal.
 
     Args:
         pool: The shared Postgres pool.

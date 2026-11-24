@@ -54,10 +54,16 @@ the version's canonical model rebuilt from its captured source, accepted descrip
 written in, compiled by `compile_mcp_tools` over the toolset's enabled operations. Both services
 call the same pure functions, so tool names match the stored `tool_name`s an allowlist holds.
 
-- Every request reads one small manifest row (target, slugs, enabled operation keys, accepted
-  descriptions, body-capture opt-in). The compile runs only when that changes, and is cached per
-  toolset (`APIOME_MCP_AGENT_TOOLSET_CACHE_SIZE`). Enabling a tool, accepting a description or
-  flipping `target` applies on the next request.
+- A request needs one small manifest row (target, slugs, enabled tool names and operation keys,
+  accepted descriptions, body-capture opt-in). The access middleware reads it and the provider
+  reuses it; it is also cached per toolset for `APIOME_MCP_AGENT_TOOLSET_MANIFEST_CACHE_SECONDS`
+  (default 5 s, DBP-1.21) and dropped early when the toolset row's `updated_at` — read with the
+  agent key — changes. The compile runs only when the manifest changes, and is cached per toolset
+  (`APIOME_MCP_AGENT_TOOLSET_CACHE_SIZE`). Switching the toolset off or flipping `target` applies on
+  the next request; enabling a tool or accepting a description within the manifest cache time.
+- The vault's credential rows (ciphertext only) are cached for the same time; each call still
+  decrypts the one credential it sends. The `upstream_credential_uses` row is queued on the batched
+  audit writer instead of being awaited on the call path.
 - A toolset that is missing, disabled, unpublished, or whose source no longer compiles fails
   closed with `agent_toolset_unavailable` (`-32011`).
 - No `outputSchema` is declared (AGX-1.1); results carry `structuredContent` anyway.

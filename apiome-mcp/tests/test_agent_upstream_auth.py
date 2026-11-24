@@ -90,3 +90,55 @@ def test_a_ledger_failure_does_not_fail_the_injection(vault_key: None) -> None:
         lambda sql, params: rows if "upstream_credentials c" in sql else None, fail_on="upstream_credential_uses"
     )
     assert _resolve(pool, "https://api.example.com/v1/pets") is not None
+
+
+def test_a_toolsets_credential_rows_are_cached_briefly_and_still_opened_per_call(vault_key: None) -> None:
+    """DBP-1.21: the second call reads no rows; each call still decrypts (no plaintext cached)."""
+    from unittest.mock import patch
+
+    from apiome_mcp import agent_upstream_auth
+
+    pool = _pool([_row("https://api.example.com/v1")])
+    opened = 0
+    real_open = agent_upstream_auth.open_bound_credential
+
+    def counting_open(row: Any) -> Any:
+        nonlocal opened
+        opened += 1
+        return real_open(row)
+
+    with patch.object(agent_upstream_auth, "open_bound_credential", side_effect=counting_open):
+        assert _resolve(pool, "https://api.example.com/v1/pets") is not None
+        assert _resolve(pool, "https://api.example.com/v1/pets") is not None
+    reads = [sql for sql, _ in pool.statements if "FROM apiome.upstream_credentials c" in sql]
+    assert len(reads) == 1
+    assert opened == 2
+    assert SECRET not in repr(agent_upstream_auth.BINDINGS_CACHE._entries)
+
+
+def test_with_the_cache_off_every_call_reads_the_rows(vault_key: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    from apiome_mcp import agent_upstream_auth
+
+    monkeypatch.setattr(agent_upstream_auth.BINDINGS_CACHE, "_ttl", lambda: 0)
+    pool = _pool([_row("https://api.example.com/v1")])
+    _resolve(pool, "https://api.example.com/v1/pets")
+    _resolve(pool, "https://api.example.com/v1/pets")
+    assert len([sql for sql, _ in pool.statements if "FROM apiome.upstream_credentials c" in sql]) == 2
+
+
+def test_a_credential_use_is_queued_on_the_audit_writer(vault_key: None) -> None:
+    """DBP-1.21: with the lifespan's writer the use row is not awaited on the call path."""
+    from apiome_mcp.audit_writer import AuditWriter, register_audit_writer, unregister_audit_writer
+
+    pool = _pool([_row("https://api.example.com/v1")])
+    writer = AuditWriter(pool)  # type: ignore[arg-type]
+    register_audit_writer(pool, writer)
+    try:
+        assert _resolve(pool, "https://api.example.com/v1/pets") is not None
+        assert _uses(pool) == []
+        assert writer.queued_rows == 1
+        asyncio.run(writer.flush())
+        [params] = _uses(pool)
+        assert params[:4] == [TENANT_ID, "55555555-5555-4555-8555-555555555555", TOOLSET_ID, "injected"]
+    finally:
+        unregister_audit_writer(pool)

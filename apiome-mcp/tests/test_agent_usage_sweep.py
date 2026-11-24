@@ -81,18 +81,19 @@ def test_tick_runs_every_step_in_order_under_the_lock() -> None:
     sqls = [sql for sql, _ in pool.statements]
     order = [
         "pg_try_advisory_xact_lock",
+        "SET LOCAL statement_timeout = 0",
         "rollup_agent_invocation_days",
         "purge_agent_invocations(",
         "purge_agent_invocation_samples",
         "purge_agent_invocation_rollups",
         "purge_upstream_credential_uses",
     ]
-    assert [next(i for i, sql in enumerate(sqls) if needle in sql) for needle in order] == list(range(6))
+    assert [next(i for i, sql in enumerate(sqls) if needle in sql) for needle in order] == list(range(7))
     params = [p for _, p in pool.statements]
     assert params[0] == (SWEEP_LOCK_KEY,)
-    assert params[1] == (timedelta(hours=2),)
-    assert params[2] == params[3] == params[4] == (500,)
-    assert params[5] == (30,)
+    assert params[2] == (timedelta(hours=2),)
+    assert params[3] == params[4] == params[5] == (500,)
+    assert params[6] == (30,)
 
 
 def test_rollup_runs_before_any_purge() -> None:
@@ -115,8 +116,17 @@ def test_batch_and_retention_are_floored_at_one() -> None:
     pool = RecordingPool(_responder())
     asyncio.run(run_agent_usage_sweep(pool, batch_size=0, credential_use_retention_days=-3))
     params = [p for _, p in pool.statements]
-    assert params[2] == (1,)
-    assert params[5] == (1,)
+    assert params[3] == (1,)
+    assert params[6] == (1,)
+
+
+def test_the_sweep_lifts_the_pooled_statement_timeout_inside_its_transaction() -> None:
+    """DBP-1.21: pooled sessions carry statement_timeout; the sweep's own transaction runs without it."""
+    pool = RecordingPool(_responder())
+    asyncio.run(run_agent_usage_sweep(pool))
+    sqls = [sql for sql, _ in pool.statements]
+    assert sqls[1] == "SET LOCAL statement_timeout = 0"
+    assert pool.transactions == 1
 
 
 def test_failed_step_rolls_back_and_raises() -> None:

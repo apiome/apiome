@@ -7,11 +7,14 @@ key_id, tenant_id, tool_id, transport, and DenyReason.
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime
 from typing import Literal
 
 import structlog
 from fastmcp.server.dependencies import get_http_request
 from psycopg_pool import AsyncConnectionPool
+
+from apiome_mcp.audit_writer import audit_writer_for
 
 _log = structlog.get_logger(__name__)
 
@@ -68,6 +71,14 @@ def schedule_mcp_capability_denial(
 ) -> None:
     """Fire-and-forget denial insert so the tools/call error path stays fast."""
     resolved_reason = (reason or "").strip() or _DEFAULT_REASON
+    writer = audit_writer_for(pool)
+    if writer is not None:
+        # DBP-1.21: queued for the batched writer instead of a task + checkout + commit per denial.
+        writer.submit(
+            "mcp_capability_denials",
+            (key_id, tenant_id, tool_id, datetime.now(UTC), transport, resolved_reason),
+        )
+        return
 
     async def _run() -> None:
         try:

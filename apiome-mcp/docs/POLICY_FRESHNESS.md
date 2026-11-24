@@ -18,6 +18,22 @@ If a future optimization adds a TTL cache or write-time invalidation via a
 version column, the lag budget must stay **≤ 30 seconds** and this document
 must be updated.
 
+## Decision (DBP-1.21 / #7204): keep `0`, fold the read into the key statement
+
+DBP-1.21 cut the per-call database work. A policy cache (TTL or LISTEN/NOTIFY
+invalidation) was considered and **not** adopted: the budget stays `0`. Instead
+the catalog reads the key row, the tenant's `tenant_mcp_policies` row and the
+**called tool's** `tenant_mcp_policy_tools` row in **one statement**
+(`mcp_auth.KEY_AND_POLICY_COLUMNS`). The capability gate uses that prefetched
+policy (`capability_policy.PrefetchedToolPolicy`) and runs no query of its own;
+the resolvers only ever read the called tool's flags, so a one-tool snapshot
+decides exactly like the full one. Fresh policy therefore costs no extra round
+trip, and no invalidation channel is needed.
+
+What *is* cached is only the bcrypt outcome of the key (`sha256(secret)` →
+key id + hash, `APIOME_MCP_KEY_CACHE_SECONDS`): the key's own row — grants,
+revocation, expiry — is still read on every call, in that same statement.
+
 ## Implementation
 
 On each authenticated `tools/call`, `CapabilityCallGateMiddleware`:

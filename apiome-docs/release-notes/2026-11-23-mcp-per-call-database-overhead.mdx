@@ -1,0 +1,37 @@
+---
+slug: mcp-per-call-database-overhead
+title: "MCP server: less database work per call"
+description: "Key checks leave the event loop and audit rows are written in batches."
+authors: [apiome]
+---
+
+**Performance.** The MCP server now does far less database work for each tool call. Key checks no
+longer hold up other requests, and audit rows are written in batches instead of one at a time while
+the caller waits.
+
+{/* truncate */}
+
+- **Key verification off the event loop.** bcrypt now runs in a worker thread on both the catalog
+  (`/mcp`) and the agent runtime (`/agent/mcp`), so a key being checked never stalls other callers.
+  A key that passed recently skips bcrypt for `APIOME_MCP_KEY_CACHE_SECONDS` (60 s). Its row is still
+  read on every call, so a revoked or expired key is refused on its very next call.
+- **One statement before the tool runs.** A catalog `tools/call` reads the key, the workspace's MCP
+  policy and the called tool's policy row in one statement. A policy change still applies on the
+  next call. `last_used_at` is written at most once a minute per key.
+- **Batched audit writes.** Agent invocations, upstream credential uses, private-spec reads and
+  capability denials are queued and written as one multi-row `INSERT` per table every 250 ms.
+  Everything still waiting is written on a graceful shutdown. The queue is bounded, and a dropped
+  row is logged as `audit_rows_dropped`.
+- **Cheaper agent calls.** The toolset manifest and its credential rows are reused for 5 s, and an
+  edit to the toolset itself applies on the next call. Quota refusals cost no query, and concurrent
+  calls by one key share one daily count.
+- **Steadier connections.** Pooled connections run in autocommit with `statement_timeout`,
+  `idle_in_transaction_session_timeout` and an `application_name` (`apiome-mcp-catalog`,
+  `apiome-mcp-agent`). The agent runtime's pool has its own size settings, and semantic search
+  shares one HTTP client.
+
+With 50 concurrent callers on a scratch database, a catalog `tools/call` went from 7 statements
+and 15.5 s p50 to 2 statements (one of them the tool's own) and 20 ms. The agent call's database
+steps went from 6 statements and 840 ms to 1 statement and 4 ms. See
+[The MCP server's database work per call](/admin/operating-apiome#the-mcp-servers-database-work-per-call)
+for every setting and the full measurements.

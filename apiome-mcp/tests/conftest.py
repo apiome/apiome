@@ -29,6 +29,25 @@ def reset_mcp_logging_state() -> None:
     reset_logging_state_for_tests()
 
 
+@pytest.fixture(autouse=True)
+def reset_dbp_process_caches() -> None:
+    """DBP-1.21 caches are process-wide; start and end every test with them empty."""
+    from apiome_mcp.agent_access import reset_agent_key_caches
+    from apiome_mcp.agent_toolset_source import MANIFEST_CACHE
+    from apiome_mcp.agent_upstream_auth import BINDINGS_CACHE
+    from apiome_mcp.mcp_auth import reset_mcp_key_caches
+
+    def reset() -> None:
+        reset_mcp_key_caches()
+        reset_agent_key_caches()
+        MANIFEST_CACHE.clear()
+        BINDINGS_CACHE.clear()
+
+    reset()
+    yield
+    reset()
+
+
 @pytest.fixture
 def mock_pool() -> MagicMock:
     """Shared mock AsyncConnectionPool for ping / lifespan tests."""

@@ -1,9 +1,15 @@
 """Call-time MCP tool enable-set gate — MTG-2.2 (#4771).
 
-Runs after the catalog key gate (:mod:`apiome_mcp.catalog_key_gate`), so every call it
-sees has a verified key (reused via ``resolve_optional_mcp_auth``). Applies the MTG-1.4
-effective policy resolver; denied calls raise :class:`~fastmcp.exceptions.ToolError` with
-stable code ``capability_disabled`` and schedule a denial audit row (MTG-2.4 / #4773).
+Applies the MTG-1.4 effective policy resolver; denied calls raise
+:class:`~fastmcp.exceptions.ToolError` with stable code ``capability_disabled`` and schedule a
+denial audit row (MTG-2.4 / #4773).
+
+**Verification order (DBP-1.21 / #7204).** FastMCP runs the first-added middleware outermost, and
+``apiome_mcp.server`` adds this gate first, so on ``tools/call`` it runs *before* the catalog key
+gate's ``on_request``. It therefore verifies the key itself — with the called tool's name, so the
+same single statement also returns that tool's tenant policy — and records the verification for
+the rest of the request (:func:`~apiome_mcp.mcp_auth.bind_current_mcp_auth`). The key gate and the
+tools' ``require_mcp_auth`` then reuse it: one key statement per call, no policy query here.
 
 A call that somehow arrives without a key is refused, never passed through: anonymous
 access was removed with the key gate (MTG-2.3's anonymous policy no longer applies).
@@ -23,6 +29,7 @@ from fastmcp.exceptions import AuthorizationError, ToolError
 from fastmcp.server.dependencies import get_http_headers
 from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 from fastmcp.tools.base import Tool
+from psycopg_pool import AsyncConnectionPool
 
 from apiome_mcp.capability_policy import (
     CAPABILITY_DISABLED_CODE,
@@ -31,7 +38,14 @@ from apiome_mcp.capability_policy import (
 )
 from apiome_mcp.database_pool import get_db_pool
 from apiome_mcp.effective_policy import resolve_tool_effective
-from apiome_mcp.mcp_auth import MCP_KEY_REQUIRED_MESSAGE, resolve_optional_mcp_auth
+from apiome_mcp.mcp_auth import (
+    MCP_KEY_REQUIRED_MESSAGE,
+    McpAuthContext,
+    bind_current_mcp_auth,
+    current_mcp_auth,
+    reset_current_mcp_auth,
+    resolve_optional_mcp_auth,
+)
 from apiome_mcp.mcp_capability_denial_audit import (
     detect_mcp_transport,
     schedule_mcp_capability_denial,
@@ -72,12 +86,35 @@ class CapabilityCallGateMiddleware(Middleware):
         pool = get_db_pool(fc)
         # Match CurrentHeaders(): include Authorization; empty when not on HTTP.
         headers = get_http_headers(include={"authorization"})
-        auth = await resolve_optional_mcp_auth(fc, pool, headers=headers)
+        already_verified = current_mcp_auth() is not None
+        auth = await resolve_optional_mcp_auth(fc, pool, headers=headers, tool_name=name)
         if auth is None:
             raise AuthorizationError(MCP_KEY_REQUIRED_MESSAGE)
+        token = None if already_verified else bind_current_mcp_auth(auth)
+        try:
+            return await self._gate(context, call_next, auth=auth, pool=pool)
+        finally:
+            if token is not None:
+                reset_current_mcp_auth(token)
+
+    async def _gate(
+        self,
+        context: MiddlewareContext[mt.CallToolRequestParams],
+        call_next: CallNext[mt.CallToolRequestParams, Any],
+        *,
+        auth: McpAuthContext,
+        pool: AsyncConnectionPool,
+    ) -> Any:
+        """Decide the call for a verified ``auth``; run it or raise ``capability_disabled``."""
+        name = context.message.name
 
         key = auth.key_capability_snapshot()
-        tenant = await load_tenant_mcp_policy_snapshot(pool, auth.tenant_id)
+        prefetched = auth.call_policy
+        if prefetched is not None and prefetched.tool_name == name:
+            # DBP-1.21: read with the key in the gate's one statement — no query here.
+            tenant = prefetched.tenant
+        else:
+            tenant = await load_tenant_mcp_policy_snapshot(pool, auth.tenant_id)
         enabled, deny_reason = resolve_tool_effective(name, key=key, tenant=tenant)
         if enabled:
             return await call_next(context)

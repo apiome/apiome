@@ -13,10 +13,14 @@ through the MCP pool and calls the same pure steps
 :func:`app.agent_tool_enrichment.served_description_overrides`,
 :func:`app.agent_tool_enrichment.apply_description_overrides`, ``compile_mcp_tools``).
 
-**Cost.** Every request reads one small *manifest* row (target, slugs, enabled operation keys,
-accepted descriptions). The compile — parsing the captured source — runs only when the manifest's
-fingerprint changes, and is cached per toolset (:class:`ServedToolsetCache`). Enabling a tool,
-accepting a description or switching target therefore applies on the next request, with no restart.
+**Cost.** A request needs one small *manifest* row (target, slugs, enabled tool names and operation
+keys, accepted descriptions). The access middleware reads it once and the provider reuses it
+(DBP-1.21); it is also cached per toolset for ``agent_toolset_manifest_cache_seconds`` (default 5 s,
+:class:`ToolsetManifestCache`), and dropped early when the toolset row's ``updated_at`` — read with
+the agent key — changes. The compile — parsing the captured source — runs only when the manifest's
+fingerprint changes, and is cached per toolset (:class:`ServedToolsetCache`). Switching the toolset
+off or changing its target therefore applies on the next request; enabling a tool or accepting a
+description within the manifest cache time; all with no restart.
 
 A toolset that cannot be served (missing, disabled, version unpublished, source unreadable, or no
 longer compiling) resolves to ``None`` or raises :class:`ToolsetSourceUnavailableError`; the agent
@@ -28,8 +32,9 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import time
 from collections import OrderedDict
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
@@ -46,6 +51,7 @@ from psycopg_pool import AsyncConnectionPool
 
 from apiome_mcp.agent_invocations import BodyCapturePolicy
 from apiome_mcp.agent_request_builder import OperationBinding, OperationNotInvocableError, binding_for
+from apiome_mcp.settings import setting_or_default
 
 _log = structlog.get_logger(__name__)
 
@@ -54,7 +60,9 @@ __all__ = [
     "ServedTool",
     "ServedToolset",
     "ServedToolsetCache",
+    "MANIFEST_CACHE",
     "ToolsetManifest",
+    "ToolsetManifestCache",
     "ToolsetSourceUnavailableError",
     "compile_served_toolset",
     "load_served_toolset",
@@ -87,6 +95,8 @@ class ToolsetManifest:
         write_ops: Enabled operation keys whose AGX-1.2 ``write_op`` flag is set (the served
             tools' MCP annotations, AGX-2.3). Not part of :meth:`fingerprint`: annotations are
             applied when tools are served, not compiled.
+        enabled_tools: Enabled tool names, sorted — what an agent key's allowlist is intersected
+            with (AGX-3.1). Read in the manifest statement since DBP-1.21.
     """
 
     toolset_id: str
@@ -100,6 +110,7 @@ class ToolsetManifest:
     overrides: Mapping[str, str] = field(default_factory=dict)
     body_capture: BodyCapturePolicy = field(default_factory=BodyCapturePolicy)
     write_ops: frozenset[str] = frozenset()
+    enabled_tools: tuple[str, ...] = ()
 
     def fingerprint(self) -> str:
         """A digest of everything the compiled tools depend on (not target or capture)."""
@@ -173,6 +184,12 @@ _MANIFEST = """
                 WHERE tt.toolset_id = ts.id AND tt.enabled AND tt.write_op),
                ARRAY[]::text[]
            ) AS write_ops,
+           COALESCE(
+               (SELECT array_agg(tt.tool_name ORDER BY tt.tool_name)
+                FROM apiome.agent_toolset_tools tt
+                WHERE tt.toolset_id = ts.id AND tt.enabled),
+               ARRAY[]::varchar[]
+           ) AS enabled_tools,
            CASE WHEN ts.description_enrichment THEN COALESCE(
                (SELECT jsonb_agg(jsonb_build_object(
                            'target_key', te.target_key,
@@ -221,22 +238,105 @@ def _accepted_rows(raw: Any) -> list[Mapping[str, Any]]:
     return [row for row in raw if isinstance(row, Mapping)] if isinstance(raw, list) else []
 
 
-async def load_toolset_manifest(pool: AsyncConnectionPool, tenant_id: str, toolset_id: str) -> ToolsetManifest | None:
-    """Read one toolset's manifest.
+class ToolsetManifestCache:
+    """Manifests per toolset for a few seconds (DBP-1.21), checked against the toolset's stamp.
+
+    An entry is used only while it is younger than ``agent_toolset_manifest_cache_seconds`` *and*,
+    when the caller knows the toolset row's current ``updated_at`` (read with the agent key), that
+    stamp still matches. ``None`` (no such toolset, switched off, unpublished) is cached too, so a
+    key bound to a disabled toolset does not reread it on every retry. ``0`` turns caching off.
+    """
+
+    def __init__(
+        self,
+        *,
+        ttl_seconds: Callable[[], float] | None = None,
+        max_entries: int = DEFAULT_CACHE_SIZE * 4,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        """Create an empty cache.
+
+        Args:
+            ttl_seconds: Returns the current lifetime (default: the
+                ``agent_toolset_manifest_cache_seconds`` setting).
+            max_entries: Most toolsets kept (least recently stored go first).
+            clock: Monotonic clock (tests).
+        """
+        self._ttl = ttl_seconds or (lambda: setting_or_default("agent_toolset_manifest_cache_seconds", 5.0))
+        self._max = max(1, max_entries)
+        self._clock = clock
+        self._entries: OrderedDict[tuple[str, str], tuple[float, str | None, ToolsetManifest | None]] = OrderedDict()
+
+    def get(self, tenant_id: str, toolset_id: str, stamp: str | None) -> tuple[bool, ToolsetManifest | None]:
+        """Return ``(hit, manifest)``; ``hit`` is ``False`` when the toolset must be read."""
+        if float(self._ttl()) <= 0:
+            return False, None
+        entry = self._entries.get((tenant_id, toolset_id))
+        if entry is None:
+            return False, None
+        expires_at, cached_stamp, manifest = entry
+        if expires_at <= self._clock() or (stamp is not None and cached_stamp != stamp):
+            self._entries.pop((tenant_id, toolset_id), None)
+            return False, None
+        return True, manifest
+
+    def put(self, tenant_id: str, toolset_id: str, stamp: str | None, manifest: ToolsetManifest | None) -> None:
+        """Remember a read (a no-op when caching is off)."""
+        ttl = float(self._ttl())
+        if ttl <= 0:
+            return
+        key = (tenant_id, toolset_id)
+        self._entries.pop(key, None)
+        self._entries[key] = (self._clock() + ttl, stamp, manifest)
+        while len(self._entries) > self._max:
+            self._entries.popitem(last=False)
+
+    def clear(self) -> None:
+        """Forget every manifest."""
+        self._entries.clear()
+
+
+#: The process's manifest cache (shared by the access middleware and the provider).
+MANIFEST_CACHE = ToolsetManifestCache()
+
+
+async def load_toolset_manifest(
+    pool: AsyncConnectionPool,
+    tenant_id: str,
+    toolset_id: str,
+    *,
+    stamp: str | None = None,
+    cache: ToolsetManifestCache | None = None,
+) -> ToolsetManifest | None:
+    """Read one toolset's manifest, through the manifest cache.
 
     Args:
         pool: The shared Postgres pool.
         tenant_id: The agent key's tenant (a toolset of another tenant is missing).
         toolset_id: The agent key's toolset.
+        stamp: The toolset row's ``updated_at`` as read with the key; a cached manifest read under
+            another stamp is not used.
+        cache: The cache (default: :data:`MANIFEST_CACHE`).
 
     Returns:
         The manifest, or ``None`` when the toolset is missing, switched off, or its version is no
         longer published.
     """
+    cache = cache if cache is not None else MANIFEST_CACHE
+    hit, cached = cache.get(tenant_id, toolset_id, stamp)
+    if hit:
+        return cached
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
             await cur.execute(_MANIFEST, (toolset_id, tenant_id))
             row = await cur.fetchone()
+    manifest = _manifest_from_row(row)
+    cache.put(tenant_id, toolset_id, stamp, manifest)
+    return manifest
+
+
+def _manifest_from_row(row: Mapping[str, Any] | None) -> ToolsetManifest | None:
+    """Build the manifest from the ``_MANIFEST`` row (``None`` when unavailable)."""
     if row is None or not row.get("available"):
         return None
     exposed = tuple(str(key) for key in row.get("exposed") or [])
@@ -252,6 +352,7 @@ async def load_toolset_manifest(pool: AsyncConnectionPool, tenant_id: str, tools
         overrides=served_description_overrides(_accepted_rows(row.get("accepted")), exposed),
         body_capture=_capture_policy(row.get("body_capture_rate"), row.get("body_capture_until")),
         write_ops=frozenset(str(key) for key in row.get("write_ops") or []),
+        enabled_tools=tuple(str(name) for name in row.get("enabled_tools") or []),
     )
 
 
@@ -325,7 +426,13 @@ class ServedToolsetCache:
 
 
 async def load_served_toolset(
-    pool: AsyncConnectionPool, cache: ServedToolsetCache, tenant_id: str, toolset_id: str
+    pool: AsyncConnectionPool,
+    cache: ServedToolsetCache,
+    tenant_id: str,
+    toolset_id: str,
+    *,
+    manifest: ToolsetManifest | None = None,
+    stamp: str | None = None,
 ) -> ServedToolset | None:
     """The served toolset of an agent key, compiled at most once per manifest change.
 
@@ -334,6 +441,9 @@ async def load_served_toolset(
         cache: The process's compile cache.
         tenant_id: The key's tenant.
         toolset_id: The key's toolset.
+        manifest: The manifest this request already read (the access middleware's); read through
+            :func:`load_toolset_manifest` when not given.
+        stamp: The toolset's ``updated_at`` read with the key (manifest cache check).
 
     Returns:
         The served toolset, or ``None`` when the toolset is missing, disabled or unpublished.
@@ -341,7 +451,8 @@ async def load_served_toolset(
     Raises:
         ToolsetSourceUnavailableError: The version's source cannot be read or compiled.
     """
-    manifest = await load_toolset_manifest(pool, tenant_id, toolset_id)
+    if manifest is None or manifest.toolset_id != toolset_id or manifest.tenant_id != tenant_id:
+        manifest = await load_toolset_manifest(pool, tenant_id, toolset_id, stamp=stamp)
     if manifest is None:
         return None
     cached = cache.get(manifest)

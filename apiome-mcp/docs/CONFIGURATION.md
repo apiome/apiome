@@ -14,7 +14,17 @@ Runtime configuration is loaded from the environment by [`Settings`](../src/apio
 | **`APIOME_MCP_HTTP_PORT`** | No | `8765` | Integer **1–65535** (CLI `--port` overrides). |
 | **`APIOME_MCP_DATABASE_POOL_MIN_SIZE`** | No | `1` | Integer **1–256**. |
 | **`APIOME_MCP_DATABASE_POOL_MAX_SIZE`** | No | `10` | Integer **1–256**; must be **≥** `DATABASE_POOL_MIN_SIZE`. |
-| **`APIOME_MCP_DATABASE_POOL_TIMEOUT`** | No | `30` | Seconds to wait for a pool connection; **> 0** and **≤ 600**. |
+| **`APIOME_MCP_DATABASE_POOL_TIMEOUT`** | No | `30` | Seconds to wait for a pool connection; **> 0** and **≤ 600**. Applies to both pools. |
+| **`APIOME_MCP_AGENT_DATABASE_POOL_MIN_SIZE`** | No | `1` | DBP-1.21: the agent runtime's (`/agent/mcp`) own pool, **1–256**. The `DATABASE_POOL_*` sizes are the catalog's (`/mcp`); an HTTP process holds both pools. |
+| **`APIOME_MCP_AGENT_DATABASE_POOL_MAX_SIZE`** | No | `10` | DBP-1.21: **1–256**; must be **≥** `AGENT_DATABASE_POOL_MIN_SIZE`. |
+| **`APIOME_MCP_DATABASE_STATEMENT_TIMEOUT_MS`** | No | `30000` | DBP-1.21: `statement_timeout` on every pooled connection (**0** = none). The usage sweep lifts it inside its own transaction. Skipped when the database URL sets `options`. |
+| **`APIOME_MCP_DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS`** | No | `60000` | DBP-1.21: `idle_in_transaction_session_timeout` on every pooled connection (**0** = none). |
+| **`APIOME_MCP_KEY_CACHE_SECONDS`** | No | `60` | DBP-1.21: seconds a verified MCP or agent key skips bcrypt (keyed by SHA-256 of the secret, **0–3600**, `0` = off). The key row is still re-read on every call, so revocation and expiry apply on the next call. |
+| **`APIOME_MCP_KEY_CACHE_MAX_ENTRIES`** | No | `10000` | DBP-1.21: most verified keys kept per process (**1–1000000**). |
+| **`APIOME_MCP_AGENT_TOOLSET_MANIFEST_CACHE_SECONDS`** | No | `5` | DBP-1.21: seconds an agent toolset's manifest and upstream credential rows (ciphertext only) are reused (**0–300**). A toolset row edit applies on the next call (its `updated_at` is read with the key); a tool switch, accepted description or credential change within this time. |
+| **`APIOME_MCP_AUDIT_FLUSH_INTERVAL_MS`** | No | `250` | DBP-1.21: milliseconds between flushes of the batched audit writer (**10–60000**). |
+| **`APIOME_MCP_AUDIT_QUEUE_MAX_ROWS`** | No | `10000` | DBP-1.21: most audit rows queued per pool (**1–1000000**). A row submitted to a full queue is dropped, counted and logged as `audit_rows_dropped`; the call is never delayed. |
+| **`APIOME_MCP_AUDIT_BATCH_MAX_ROWS`** | No | `500` | DBP-1.21: most rows in one multi-row `INSERT` (**1–10000**). |
 | **`APIOME_MCP_OPENAPI_MAX_JSON_BYTES`** | No | `2097152` | Max UTF-8 size for exported OpenAPI JSON/YAML payloads (**1024–100_000_000**). |
 | **`APIOME_MCP_OPENAI_API_KEY`** | No | — | Secret for **`spec.search_semantic`** query embeddings (`Bearer` to **`APIOME_MCP_OPENAI_EMBEDDING_URL`**). When unset, calling **`spec.search_semantic`** fails fast. |
 | **`APIOME_MCP_OPENAI_EMBEDDING_URL`** | No | `https://api.openai.com/v1/embeddings` | OpenAI-compatible embeddings endpoint (POST JSON `model`, `input`, `dimensions`). |

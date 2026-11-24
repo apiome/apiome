@@ -358,3 +358,95 @@ def test_require_mcp_auth_resolves_as_a_dependency_with_a_key() -> None:
         assert result.data == "resolved"
 
     asyncio.run(run())
+
+
+# ==================================================================================================
+# DBP-1.21 (#7204): warm path, policy columns, last_used_at throttle
+# ==================================================================================================
+def _key_row(**overrides: object) -> dict:
+    row = {
+        "id": str(uuid.uuid4()),
+        "tenant_id": str(uuid.uuid4()),
+        "label": "warm",
+        "scope_json": {},
+        "key_hash": hash_mcp_api_key_secret(_SECRET).decode("ascii"),
+        "expires_at": None,
+        "revoked_at": None,
+        "capability_mode": "inherit",
+        "enabled_tools": [],
+    }
+    row.update(overrides)
+    return row
+
+
+def test_a_second_validation_skips_bcrypt_and_rereads_the_row_by_id() -> None:
+    row = _key_row()
+    pool = _pool_mock([row])
+    cur = pool.connection.return_value.__aenter__.return_value.cursor.return_value.__aenter__.return_value
+
+    async def run() -> None:
+        with patch("apiome_mcp.mcp_auth.schedule_mcp_key_last_used_touch") as touch:
+            await validate_mcp_api_key(pool, _SECRET)
+            with patch("apiome_mcp.mcp_auth.bcrypt.checkpw", side_effect=AssertionError("bcrypt on the warm path")):
+                again = await validate_mcp_api_key(pool, _SECRET)
+        assert again.key_id == row["id"]
+        assert touch.call_count == 1  # last_used_at at most once a minute
+        warm_sql, warm_params = cur.execute.await_args_list[1].args
+        assert "WHERE k.id = %(id)s::uuid AND k.key_hash = %(hash)s" in warm_sql
+        assert warm_params == {"id": row["id"], "hash": row["key_hash"], "tool": None}
+
+    asyncio.run(run())
+
+
+def test_a_warm_miss_falls_back_to_the_full_check_and_reports_revocation() -> None:
+    row = _key_row()
+    pool = _pool_mock([row])
+
+    async def run() -> None:
+        with patch("apiome_mcp.mcp_auth.schedule_mcp_key_last_used_touch"):
+            await validate_mcp_api_key(pool, _SECRET)
+            row["revoked_at"] = datetime.now(timezone.utc)
+            with pytest.raises(AuthorizationError, match="revoked"):
+                await validate_mcp_api_key(pool, _SECRET)
+
+    asyncio.run(run())
+
+
+def test_the_called_tools_policy_comes_back_with_the_key() -> None:
+    row = _key_row(
+        has_policy=True,
+        default_mode="explicit",
+        allow_anonymous_mcp=False,
+        policy_tool_id="spec.list",
+        in_ceiling=True,
+        default_enabled=False,
+        anonymous_enabled=True,
+    )
+    pool = _pool_mock([row])
+
+    async def run() -> None:
+        with patch("apiome_mcp.mcp_auth.schedule_mcp_key_last_used_touch"):
+            auth = await validate_mcp_api_key(pool, _SECRET, tool_name="spec.list")
+        assert auth.call_policy is not None and auth.call_policy.tool_name == "spec.list"
+        tenant = auth.call_policy.tenant
+        assert tenant is not None and tenant.default_mode == "explicit" and tenant.allow_anonymous_mcp is False
+        assert set(tenant.tools) == {"spec.list"} and tenant.tools["spec.list"].default_enabled is False
+
+    asyncio.run(run())
+
+
+def test_a_tenant_without_policy_prefetches_none() -> None:
+    pool = _pool_mock([_key_row(has_policy=False, policy_tool_id=None)])
+
+    async def run() -> None:
+        with patch("apiome_mcp.mcp_auth.schedule_mcp_key_last_used_touch"):
+            auth = await validate_mcp_api_key(pool, _SECRET, tool_name="ping")
+        assert auth.call_policy is not None and auth.call_policy.tenant is None
+
+    asyncio.run(run())
+
+
+def test_the_last_used_update_skips_rows_written_in_the_last_minute() -> None:
+    from apiome_mcp.mcp_auth import _TOUCH_LAST_USED
+
+    assert "last_used_at < CURRENT_TIMESTAMP - INTERVAL '1 minute'" in _TOUCH_LAST_USED

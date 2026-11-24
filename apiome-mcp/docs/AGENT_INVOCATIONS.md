@@ -47,6 +47,14 @@ async with audit_invocation(pool, access.key, tool_name=name, target=target,
 | an exception, not classified | `internal_error` / `unhandled_exception`; the exception propagates |
 | nothing reported, no exception | `internal_error` / `outcome_not_reported` |
 
+**Batched (DBP-1.21).** Under the agent lifespan the row is not written while the agent waits: it
+is queued on the pool's `AuditWriter` (`apiome_mcp.audit_writer`), which writes queued rows as one
+multi-row INSERT per table every `APIOME_MCP_AUDIT_FLUSH_INTERVAL_MS` and everything left on a
+graceful shutdown. The row's id is generated in-process so a body sample can reference it. The
+queue is bounded (`APIOME_MCP_AUDIT_QUEUE_MAX_ROWS`); a row submitted to a full queue is dropped and
+logged as `audit_rows_dropped`. Quota refusals are queued the same way, with the toolset target read
+alongside the key, so a client retrying in a loop costs no statement per refusal.
+
 Recording never breaks a call. If the INSERT fails, the error is logged
 (`agent_invocation_record_failed`) and the call's own result or exception is unchanged.
 

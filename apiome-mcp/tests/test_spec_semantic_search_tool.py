@@ -66,7 +66,7 @@ def test_clamp_limit() -> None:
 
 
 def test_build_spec_semantic_search_response_page(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def fake_embed(_settings: Settings, _q: str) -> list[float]:
+    async def fake_embed(_settings: Settings, _q: str, _client: object = None) -> list[float]:
         return [0.0] * 1536
 
     monkeypatch.setattr(
@@ -74,7 +74,7 @@ def test_build_spec_semantic_search_response_page(monkeypatch: pytest.MonkeyPatc
         fake_embed,
     )
     monkeypatch.setattr(
-        "apiome_mcp.spec_semantic_search_tool.register_vector_async",
+        "apiome_mcp.spec_semantic_search_tool.ensure_vector_registered",
         AsyncMock(),
     )
 
@@ -121,3 +121,29 @@ def test_spec_search_semantic_tool_registered_on_mcp() -> None:
     tool = asyncio.run(load())
     assert tool is not None
     assert tool.name == "spec.search_semantic"
+
+
+def test_query_embeddings_use_the_shared_client_when_given() -> None:
+    """DBP-1.21: one pooled HTTP client for the lifespan instead of a new client per search."""
+    import httpx
+
+    from apiome_mcp.spec_semantic_search_tool import _fetch_query_embedding
+
+    settings = _settings_with_key()
+    seen: list[httpx.Request] = []
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"data": [{"embedding": [0.5] * settings.openai_embedding_dimensions}]})
+
+    async def run() -> list[float]:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+            first = await _fetch_query_embedding(settings, "pets", client)
+            await _fetch_query_embedding(settings, "stores", client)
+            assert not client.is_closed
+            return first
+
+    vector = asyncio.run(run())
+    assert len(vector) == settings.openai_embedding_dimensions
+    assert len(seen) == 2
+    assert seen[0].headers["authorization"].startswith("Bearer ")

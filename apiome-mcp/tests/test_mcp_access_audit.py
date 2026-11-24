@@ -166,3 +166,31 @@ def test_schedule_mcp_private_access_audit_batch_noop_for_empty_list() -> None:
             ins.assert_not_awaited()
 
     asyncio.run(run_inner())
+
+
+def test_with_a_writer_a_list_page_is_queued_as_one_group_and_one_insert() -> None:
+    """DBP-1.21: no task or checkout per page; the writer persists it in one multi-row INSERT."""
+    import asyncio as _asyncio
+
+    from agent_invocation_fakes import RecordingPool
+    from apiome_mcp.audit_writer import AuditWriter, register_audit_writer, unregister_audit_writer
+    from apiome_mcp.mcp_access_audit import (
+        schedule_mcp_private_access_audit,
+        schedule_mcp_private_access_audit_batch,
+    )
+
+    pool = RecordingPool()
+    writer = AuditWriter(pool)  # type: ignore[arg-type]
+    register_audit_writer(pool, writer)
+    try:
+        ids = ["11111111-1111-4111-8111-11111111111" + str(n) for n in range(3)]
+        schedule_mcp_private_access_audit_batch(pool, key_id="k", tool="spec.list", spec_ids=ids)  # type: ignore[arg-type]
+        schedule_mcp_private_access_audit(pool, key_id="k", tool="spec.describe", spec_id=ids[0])  # type: ignore[arg-type]
+        assert pool.statements == []
+        assert writer.queued_rows == 4
+        _asyncio.run(writer.flush())
+        [(sql, params)] = pool.statements
+        assert "INSERT INTO apiome.mcp_access_audit" in sql
+        assert len(params) == 4 * 6
+    finally:
+        unregister_audit_writer(pool)

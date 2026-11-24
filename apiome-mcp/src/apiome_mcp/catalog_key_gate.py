@@ -9,9 +9,13 @@ A direct in-process call (``await mcp.list_tools()`` from server code or tests) 
 request — it has no MCP request context and no HTTP request — and is not gated. An HTTP request is
 always gated, session or not.
 
-The key is verified once here and recorded for the request
-(:func:`~apiome_mcp.mcp_auth.bind_current_mcp_auth`), so the capability gate and the tools'
-:func:`~apiome_mcp.mcp_auth.require_mcp_auth` reuse it instead of checking bcrypt again.
+The key is verified once per request and recorded for it
+(:func:`~apiome_mcp.mcp_auth.bind_current_mcp_auth`), so the other gates and the tools'
+:func:`~apiome_mcp.mcp_auth.require_mcp_auth` reuse it instead of checking bcrypt again. On
+``tools/call`` the capability gate (:mod:`apiome_mcp.capability_middleware`) runs first — FastMCP
+runs the first-added middleware outermost — and has already verified the key, together with the
+called tool's tenant policy, in one statement (DBP-1.21); this gate then reuses that verification.
+On every other request this gate verifies the key.
 
 A refusal is a JSON-RPC error with code :data:`MCP_KEY_REJECTED_CODE`. A failure to verify
 (database unreachable, anything unexpected) fails closed.
@@ -56,6 +60,14 @@ def _is_in_process(fc: Any) -> bool:
     return request_context is None and not on_http_request()
 
 
+def _called_tool(context: MiddlewareContext[Any]) -> str | None:
+    """The tool a ``tools/call`` names, so its policy row is read with the key (DBP-1.21)."""
+    if context.method != "tools/call":
+        return None
+    name = getattr(context.message, "name", None)
+    return name if isinstance(name, str) and name else None
+
+
 class McpKeyRequiredError(McpError):
     """The request carried no usable MCP API key. FastMCP returns it as a JSON-RPC error."""
 
@@ -85,7 +97,7 @@ class McpKeyRequiredMiddleware(Middleware):
             secret = await presented_mcp_api_key(fc, headers=get_http_headers(include={"authorization"}))
             if secret is None or fc is None:
                 raise McpKeyRequiredError(MCP_KEY_REQUIRED_MESSAGE)
-            auth = await validate_mcp_api_key(get_db_pool(fc), secret)
+            auth = await validate_mcp_api_key(get_db_pool(fc), secret, tool_name=_called_tool(context))
         except McpKeyRequiredError:
             _log.info("mcp_key_missing", method=context.method)
             raise

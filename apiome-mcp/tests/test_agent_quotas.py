@@ -111,10 +111,22 @@ def test_caps_are_read_through_agent_key_quota(row: Any, expected: AgentQuotaLim
 @pytest.mark.parametrize(("row", "expected"), [({"calls": 41}, 41), ({"calls": None}, 0), (None, 0)])
 def test_the_daily_count_is_read_through_agent_key_call_count(row: Any, expected: int) -> None:
     pool = RecordingPool(lambda sql, params: row)
-    assert _run(count_agent_key_calls(pool, _KEY.key_id, date(2026, 10, 6))) == expected
+    today = datetime.now(UTC).date()
+    assert _run(count_agent_key_calls(pool, _KEY.key_id, today)) == expected
     [(sql, params)] = pool.statements
     assert "apiome.agent_key_call_count(%s::uuid, %s::date)" in sql
-    assert params == (_KEY.key_id, "2026-10-06")
+    assert params == (_KEY.key_id, today.isoformat())
+
+
+def test_a_past_day_is_counted_from_the_finalized_rollup() -> None:
+    """DBP-1.21: a finalized past day reads agent_invocation_daily, else falls back to the raw count."""
+    pool = RecordingPool(lambda sql, params: {"calls": 7})
+    assert _run(count_agent_key_calls(pool, _KEY.key_id, date(2026, 10, 6))) == 7
+    [(sql, params)] = pool.statements
+    assert "agent_invocation_rollup_days" in sql and "finalized_at IS NOT NULL" in sql
+    assert "SUM(d.calls - d.quota_rejections)" in sql
+    assert "ELSE apiome.agent_key_call_count" in sql
+    assert params == {"key": _KEY.key_id, "day": "2026-10-06"}
 
 
 def test_the_free_fallback_matches_the_v272_seed() -> None:
@@ -461,6 +473,63 @@ def test_a_refusal_record_defaults_to_prod_and_never_raises() -> None:
 
     broken = RecordingPool(fail_on="INSERT INTO apiome.agent_invocations")
     _run(record_quota_rejection(broken, _KEY, "listPets", _RPS))  # logged, not raised
+
+
+def test_a_refusal_with_the_target_read_with_the_key_runs_no_query_and_is_only_queued() -> None:
+    """DBP-1.21: a retry loop costs memory, not a target SELECT plus an INSERT per refusal."""
+    from dataclasses import replace
+
+    from apiome_mcp.audit_writer import AuditWriter, register_audit_writer, unregister_audit_writer
+
+    pool = RecordingPool()
+    writer = AuditWriter(pool)  # type: ignore[arg-type]
+    register_audit_writer(pool, writer)
+    try:
+        key = replace(_KEY, toolset_target="mock")
+        for _ in range(3):
+            _run(record_quota_rejection(pool, key, "listPets", _RPS))
+        assert pool.statements == []
+        assert writer.queued_rows == 3
+        _run(writer.flush())
+        [(sql, params)] = pool.sql_containing("INSERT INTO apiome.agent_invocations")
+        assert sql.count("(%s::uuid, %s::uuid, %s::uuid, %s::uuid") == 3
+        assert params[5] == "mock" and params[8] == "quota_rejected"
+    finally:
+        unregister_audit_writer(pool)
+
+
+def test_concurrent_calls_share_one_daily_count() -> None:
+    """DBP-1.21 single-flight: refresh_at moves before the await, and a first count is shared."""
+    started = 0
+    release = asyncio.Event()
+
+    async def slow_count(pool: Any, key_id: str, day: date) -> int:
+        nonlocal started
+        started += 1
+        await release.wait()
+        return 5
+
+    async def limits(pool: Any, tenant_id: str) -> AgentQuotaLimits:
+        return AgentQuotaLimits(rps=None, daily_calls=10, license_type="free")
+
+    guard = AgentQuotaGuard(usage_cache_seconds=5.0, load_limits=limits, count_calls=slow_count)
+
+    async def run() -> list[Any]:
+        calls = [
+            asyncio.create_task(guard.admit(RecordingPool(), _KEY, wall_clock=_NOON, monotonic=100.0)) for _ in range(8)
+        ]  # type: ignore[arg-type]
+        await asyncio.sleep(0.01)
+        release.set()
+        return await asyncio.gather(*calls)
+
+    results = _run(run())
+    assert started == 1
+    # Everyone waited for the one first count: 5 counted + 5 admitted reaches the cap of 10.
+    assert results.count(None) == 5
+    assert all(r.limit is QuotaLimit.DAILY_CALLS for r in results if r is not None)
+    refusal = _run(guard.admit(RecordingPool(), _KEY, wall_clock=_NOON, monotonic=101.0))  # type: ignore[arg-type]
+    assert refusal is not None and refusal.limit is QuotaLimit.DAILY_CALLS
+    assert started == 1  # still inside usage_cache_seconds
 
 
 # ============================================================================

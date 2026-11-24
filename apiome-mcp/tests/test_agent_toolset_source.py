@@ -27,6 +27,7 @@ from agent_runtime_fakes import (
     source_item,
 )
 from apiome_mcp.agent_toolset_source import (
+    MANIFEST_CACHE,
     ServedToolsetCache,
     ToolsetSourceUnavailableError,
     compile_served_toolset,
@@ -36,6 +37,8 @@ from apiome_mcp.agent_toolset_source import (
 
 
 def _load(db: AgentDb, cache: ServedToolsetCache) -> Any:
+    """One request after the manifest cache expired (DBP-1.21's cache is tested on its own)."""
+    MANIFEST_CACHE.clear()
     pool = db.pool()
     served = asyncio.run(load_served_toolset(pool, cache, TENANT_ID, TOOLSET_ID))  # type: ignore[arg-type]
     return served, pool

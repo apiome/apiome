@@ -40,9 +40,13 @@ Every request except the `initialize` handshake goes through the same steps:
    matches, it refuses the key in this order: revoked, disabled, expired. A caller without the real
    secret only ever gets `agent_key_invalid`. The row is read on every request, so a revoke, an
    expiry or an allowlist edit applies to the very next request, even within the same MCP session.
-   Nothing is cached.
-3. **Ask the toolset.** `enabled_tools(ctx, key)` returns the toolset's enabled tool names, or
-   `None` when the toolset is missing or disabled.
+   Only the bcrypt outcome is cached (DBP-1.21): a secret that verified within
+   `APIOME_MCP_KEY_CACHE_SECONDS` is re-read by id and stored hash instead of by prefix plus bcrypt,
+   and a re-read that finds the key unusable falls back to the full check, which says why.
+   `last_used_at` is written at most once a minute per key.
+3. **Ask the toolset.** `enabled_tools(ctx, key)` returns the toolset's enabled tool names — by
+   default the cached toolset manifest, which carries them as `enabled_tools` and which the
+   served-toolset provider then reuses — or `None` when the toolset is missing or disabled.
 4. **Narrow.** `tools/list` is filtered to the permitted set. `tools/call` on anything else raises
    FastMCP's own `Unknown tool: '<name>'`. A tool the key may not use therefore looks exactly like
    a tool that does not exist, so an agent cannot probe for tools.

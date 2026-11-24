@@ -56,9 +56,11 @@ from apiome_mcp.agent_toolset_source import (
     ServedTool,
     ServedToolset,
     ServedToolsetCache,
+    ToolsetManifest,
     ToolsetSourceUnavailableError,
     load_served_toolset,
 )
+from apiome_mcp.audit_writer import running_audit_writer
 from apiome_mcp.database_pool import MCP_DB_POOL_KEY, create_async_pool, get_db_pool, ping_pool
 from apiome_mcp.http_credential_middleware import StashHttpBearerInToolContextMiddleware
 from apiome_mcp.logging_config import configure_logging
@@ -97,21 +99,24 @@ def _http_client(settings: Settings) -> httpx.AsyncClient:
 async def agent_lifespan(server: Any) -> Any:
     """Open the agent runtime's Postgres pool and upstream HTTP client; close both on shutdown.
 
+    The pool is the ``agent`` pool (``agent_database_pool_*`` sizes, DBP-1.21). Invocation and
+    credential-use rows go through a batched audit writer that is flushed before the pool closes.
     The catalog server's lifespan runs the AGX-3.3 usage sweep; this one does not, so a process
     serving both runs one sweep.
     """
     settings = get_settings()
     configure_logging(settings)
     with bound_contextvars(request_id=str(uuid.uuid4()), tool_name="lifespan.agent"):
-        pool = create_async_pool(settings, open=False)
+        pool = create_async_pool(settings, open=False, role="agent")
         await pool.open()
         try:
             try:
                 await ping_pool(pool)
             except Exception as exc:
                 _log.warning("agent_database_pool_probe_failed_at_startup", error=str(exc))
-            async with _http_client(settings) as client:
-                yield {MCP_DB_POOL_KEY: pool, AGENT_HTTP_CLIENT_KEY: client}
+            async with running_audit_writer(pool, settings):
+                async with _http_client(settings) as client:
+                    yield {MCP_DB_POOL_KEY: pool, AGENT_HTTP_CLIENT_KEY: client}
         finally:
             await pool.close()
 
@@ -201,7 +206,14 @@ class AgentToolsetProvider(Provider):
             return None
         key = access.key
         try:
-            served = await load_served_toolset(get_db_pool(get_context()), self._cache, key.tenant_id, key.toolset_id)
+            served = await load_served_toolset(
+                get_db_pool(get_context()),
+                self._cache,
+                key.tenant_id,
+                key.toolset_id,
+                manifest=access.manifest if isinstance(access.manifest, ToolsetManifest) else None,
+                stamp=key.toolset_stamp,
+            )
         except ToolsetSourceUnavailableError as exc:
             _log.warning("agent_toolset_source_unavailable", toolset_id=key.toolset_id, error=str(exc))
             raise AgentAccessDeniedError(AgentAccessReason.TOOLSET_UNAVAILABLE) from None
