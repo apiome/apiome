@@ -1,0 +1,50 @@
+---
+slug: pact-broker-can-i-deploy
+title: "Pact Broker: can I deploy?"
+description: "Gate a deployment on recorded Pact results with pact-broker can-i-deploy, unchanged."
+authors: [apiome]
+---
+
+Apiome now answers the question the Pact workflow leads up to: *is this version safe to deploy?*
+`pact-broker can-i-deploy` asks Apiome unchanged, and your deploy job stops when the answer is no.
+
+{/* truncate */}
+
+**Set it up** with the same broker base URL and token you publish pacts with. Add this before the
+deployment:
+
+```bash
+pact-broker can-i-deploy --pacticipant "Billing Service" --version "$GIT_COMMIT" \
+  --to-environment production --retry-while-unknown 12 --retry-interval 10
+```
+
+The token needs **Pacts** → **View**, which every role has.
+
+**What you get**, through the [Pact Broker API](/reference/rest/pact-broker):
+
+- **Yes, no or unknown, with reasons.** The answer names each integration in the Pact Broker's
+  words: `The verification for the pact between version 2.0.0 of Billing Service and the version
+  of Ledger API currently in production (5.1.0) failed`. The CLI exits `0` only on yes.
+- **Checked against what really runs there.** The version is compared with every version your
+  deploy jobs [recorded](/ship/pact-broker/environments) in the environment. A consumer needs its
+  providers to be there; a provider does not need its consumers.
+- **Every live version counts.** When two versions of an application run in one environment, the
+  version must work with both. One without a result makes the answer unknown.
+- **Wait for a result.** `--retry-while-unknown` keeps asking while a verification result is
+  missing. An unknown answer also carries a `Retry-After` header.
+- **Leave an application out.** `--ignore "Ledger API"` lists its rows as ignored and does not
+  count them.
+- **Require a contract.** An environment marked `contractRequired` refuses a version that has no
+  pact at all.
+- **The matrix.** `GET …/pact-broker/matrix` takes the Pact Broker's `q[]` selectors and
+  `latestby`, and `GET …/pact-broker/can-i-deploy` asks the same question in one line. Each notice
+  has a `code`, and each row a `reason`: `verified`, `verification failed`, `pact is pending` or
+  `no verification result`.
+
+**Not yet available:** a screen for the matrix.
+
+**For operators.** No migration. A matrix query on a workspace with 10,000 pact versions answers
+in under 20 ms at the 95th percentile on the scratch-database benchmark
+(`apiome-rest/scripts/bench_pact_matrix.py`).
+
+Read [Can I deploy?](/ship/pact-broker/can-i-deploy) for the steps, the reasons and the parameters.

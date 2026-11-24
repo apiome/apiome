@@ -789,7 +789,9 @@ def _read(
         "`pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version "
         "selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, "
         "`pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the "
-        "environments `pact-broker record-deployment` looks an environment up in.\n\n"
+        "environments `pact-broker record-deployment` looks an environment up in. "
+        "`pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` answer whether a version "
+        "can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`.\n\n"
         "A workspace API key may be sent as `Authorization: Bearer <key>` on every route under "
         "`/pact-broker`. Requires `pacts:view`."
     ),
@@ -879,6 +881,21 @@ def pact_broker_index(
                 "pb:environment": {
                     "href": base + "/environments/{uuid}",
                     "title": "Environment",
+                    "templated": True,
+                },
+                "pb:can-i-deploy-pacticipant-version-to-tag": {
+                    "href": base + "/can-i-deploy?pacticipant={pacticipant}&version={version}&to={tag}",
+                    "title": (
+                        "Determine if an application version can be safely deployed to an environment "
+                        "identified by the given tag"
+                    ),
+                    "templated": True,
+                },
+                "pb:can-i-deploy-pacticipant-version-to-environment": {
+                    "href": (
+                        base + "/can-i-deploy?pacticipant={pacticipant}&version={version}&environment={environment}"
+                    ),
+                    "title": "Determine if an application version can be safely deployed to an environment",
                     "templated": True,
                 },
             }

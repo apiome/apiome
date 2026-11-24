@@ -1301,6 +1301,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['record-deployment', 'record-release', 'record-undeployment', 'support ended', 'application instance', 'production', 'can-i-deploy'],
   },
   {
+    id: 'can-i-deploy',
+    title: 'Can I deploy?',
+    summary: 'Ask whether a version is safe to deploy, from recorded pacts, results and deployments.',
+    page: 'apiome-docs/docs/ship/pact-broker/can-i-deploy.mdx',
+    section: 'reference',
+    keywords: ['matrix', 'retry-while-unknown', 'to-environment', 'ignore', 'verdict', 'contract required', 'pending pact', 'exit code'],
+  },
+  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',

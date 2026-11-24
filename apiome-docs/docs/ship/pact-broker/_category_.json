@@ -6,7 +6,7 @@
   "link": {
     "type": "generated-index",
     "title": "Pact Broker",
-    "description": "Consumer-driven contract testing with Pact: pacticipants, versions, publishing pacts, selecting them for verification, recording results and recording deployments.",
+    "description": "Consumer-driven contract testing with Pact: pacticipants, versions, publishing pacts, selecting them for verification, recording results and deployments, and can-i-deploy.",
     "slug": "/ship/pact-broker"
   }
 }

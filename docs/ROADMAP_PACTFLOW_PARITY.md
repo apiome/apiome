@@ -142,7 +142,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.6 · [#6919](https://github.com/apiome/apiome/issues/6919) | Matrix and can-i-deploy | Verdict with reasons, `to`/`to-environment`, retry-while-unknown | `contracts`,`pact`,`rest`,`mvp` | N | Y | L | apiome-rest |
 | PFX-1.7 · [#6920](https://github.com/apiome/apiome/issues/6920) | Pending pacts and work-in-progress pacts | Non-blocking new pacts; WIP selection | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest |
 | PFX-1.8 · [#6921](https://github.com/apiome/apiome/issues/6921) | Broker API conformance suite | Run the official `pact-broker` CLI and clients against Apiome in CI | `contracts`,`pact`,`devex`,`mvp` | Y | Y | M | apiome-rest, scripts |
 | PFX-1.9 | Contract webhooks | Pact events, templating, HMAC, execution log | `contracts`,`pact`,`rest`,`mvp` | Y | Y | L | apiome-rest, apiome-db |
@@ -191,7 +190,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 - **Technical Stack:** Postgres, FastAPI.
 - **Documentation:** `…/pact-broker/environments.mdx`.
 
-**PFX-1.6 · #6919 Matrix and can-i-deploy**
+**✅ PFX-1.6 · #6919 Matrix and can-i-deploy — Complete**
 - **Problem:** The deploy decision is the product's headline.
 - **Solution/Scope:** `GET /matrix` with the broker's `q[]` selectors and `latestby`, `GET /can-i-deploy` (`pacticipant`, `version`, `to`, `toEnvironment`, `ignore`), a verdict with per-row reasons ("no verification result", "verification failed", "pact is pending", "no pact"), summary text matching broker wording, and `retry-while-unknown` semantics via a `Retry-After` hint. Also bi-directional rows (PFX-2.3). The verdict function is pure and shared with the deploy gate (PFX-7.2).
 - **Acceptance Criteria:** Golden verdicts for the Pact Broker's documented scenarios (pass, fail, unknown, pending, ignored pacticipant, environment with no deployments); `pact-broker can-i-deploy` exit codes match; matrix query p95 < 200 ms on 10k pact versions (scratch-DB benchmark).

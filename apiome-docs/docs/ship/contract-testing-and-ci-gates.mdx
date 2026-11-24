@@ -21,6 +21,8 @@ matches what it publishes.
   blocks, a breaking change published as `1.4.1` instead of `2.0.0`.
 - **The deployment drifts from the spec.** Provider verification calls the live API and reports
   every response that does not match the published version.
+- **A deployment must not break a consumer.** `pact-broker can-i-deploy` asks whether a version is
+  compatible with what runs in the environment, from recorded Pact results.
 
 ## What counts as breaking
 
@@ -265,6 +267,21 @@ another. The same file is available from `GET …/verification-runs/{run_id}/exp
   with:
     sarif_file: contract.sarif
 ```
+
+## Gate a deployment on pacts
+
+Teams that test with [Pact](./pact-broker/concepts.mdx) can stop a deployment that would break a
+consumer or a provider already running in the environment. Ask before deploying:
+
+```bash
+pact-broker can-i-deploy --pacticipant "Billing Service" --version "$GIT_COMMIT" \
+  --to-environment production --retry-while-unknown 12 --retry-interval 10
+```
+
+The command exits `1` when a verification failed, or when a result is still missing after the
+retries, and prints the reason for each. Apiome answers from the pacts consumers published, the
+results providers published, and the deployments your deploy jobs recorded. See
+[Can I deploy?](./pact-broker/can-i-deploy.mdx).
 
 ## How the pieces fit
 

@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.835.0] - 2026-11-24
+
+### Added
+- **The matrix and can-i-deploy, Pact Broker–compatible (PFX-1.6, #6919).** OpenAPI 1.659.0. No
+  migration. Under `/v1/tenants/{tenant_slug}/pact-broker`, what `pact-broker can-i-deploy` calls,
+  unmodified (`pacts:view`):
+  - `GET …/matrix` — the broker's query: `q[][pacticipant]` selectors (`version`, `latest`, `tag`,
+    `branch`, `environment`, `mainBranch`), a destination (`environment`, `tag` + `latest`,
+    `latest`, `mainBranch`), `latestby` (`cvp`, `cvpv`, `cp`), `ignore[][pacticipant]` /
+    `ignore[][version]`, `success[]` and `limit` (1–1000, default 100).
+  - `GET …/can-i-deploy` — `pacticipant`, `version` and `to` (a tag) or `toEnvironment` (the
+    broker's `environment` is accepted), with `ignore`. The index links it as
+    `pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag`.
+  - Both answer `200` with the broker's document: `summary` (`deployable` `true` / `false` /
+    `null`, `reason`, `success` / `failed` / `unknown` and, when ignoring, `ignored`), `notices` and
+    `matrix` rows with each version's branches, tags and environments. Reasons use the broker's
+    wording. Apiome adds `code` to each notice (`verified`, `no-dependencies`,
+    `verification-failed`, `pact-pending`, `no-verification-result`, `version-not-found`,
+    `no-pact`, and the warnings `cannot-ignore`, `no-environment-specified`,
+    `no-version-specified`) and `reason` (`code`, `text`) to each row.
+  - **The verdict** follows the broker: a named version that does not exist is no; a missing
+    result is unknown (`null`); otherwise yes when every considered row succeeded. A consumer
+    requires its providers; a provider does not require its consumers. A failed result of a
+    pending pact is still a no; the row says `pact is pending`.
+  - **Retry while unknown:** an unknown verdict carries `Retry-After: 10`.
+  - **Every version in the environment is checked.** To an environment where several versions of a
+    provider are live, a version without a result gets its own row and makes the verdict unknown.
+  - **`contractRequired` is enforced:** to such an environment, a version that published no pact
+    and that no pact names as provider is refused with the notice `no-pact`.
+  - `400 pact-matrix-invalid` for a malformed query, an unknown pacticipant or an unknown
+    environment, with the parameter in `detail.pointer`.
+  - The verdict is one pure function, `app.pact_matrix.deployment_verdict`, for the deploy gate's
+    contract signal (PFX-7.2) to share. The row and version-detail statements are named
+    (prepared once per connection). `scripts/bench_pact_matrix.py` seeds 10,000 pact versions into
+    a scratch database and fails over a 200 ms p95; the worst query measured about 16 ms.
+
 ## [1.834.0] - 2026-11-24
 
 ### Added

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.658.0",
+    "version": "1.659.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -38783,7 +38783,7 @@
           "pact-broker"
         ],
         "summary": "Pact Broker index",
-        "description": "The entry point of the Pact Broker\u2013compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.\n\n`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in.\n\nA workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.",
+        "description": "The entry point of the Pact Broker\u2013compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.\n\n`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in. `pb:can-i-deploy-pacticipant-version-to-environment` and `\u2026-to-tag` answer whether a version can be deployed; `pact-broker can-i-deploy` asks `\u2026/pact-broker/matrix`.\n\nA workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.",
         "operationId": "pact_broker_index_v1_tenants__tenant_slug__pact_broker_get",
         "parameters": [
           {
@@ -43417,6 +43417,528 @@
             }
           },
           "description": "Request body for record the end of support for a release."
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/matrix": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Query the matrix",
+        "description": "The matrix: which consumer versions were verified against which provider versions, and the verdict on deploying the versions asked about. This is the Pact Broker's `GET /matrix`, and what `pact-broker can-i-deploy` calls.\n\n- **Selectors** (`q[][pacticipant]` \u2026) name the versions in question. One selector with a destination asks *can I deploy this?*; two or more ask *do these work together?*\n- **Destination**: `environment` checks against every version currently deployed to or released in that environment; `tag` with `latest=true` against the latest version with that tag; `latest=true` alone against the latest version of each other pacticipant; `mainBranch=true` (with `latest=true`) against main branches. The other pacticipants are worked out from the pacts.\n- **Verdict** (`summary.deployable`): `true` when every row that counts succeeded (or nothing depends on the version); `false` when a verification failed or a named version does not exist; `null` when a result is missing. A consumer needs its providers to be there; a provider does not need its consumers.\n- **Reasons**: `summary.reason` and `notices` use the Pact Broker's wording. Each notice has a `code` and each row a `reason` (`verified`, `verification-failed`, `pact-pending`, `no-verification-result`); `no-pact` is the notice when the environment requires a contract and the version has none.\n- **Ignore**: rows of an `ignore[][pacticipant]` are returned with `ignored: true` and do not count.\n- **Retry while unknown**: a `null` verdict comes with `Retry-After`.\n\nAlways `200` when the query is valid \u2014 read `summary.deployable`, not the status. Requires `pacts:view`.",
+        "operationId": "read_matrix_v1_tenants__tenant_slug__pact_broker_matrix_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Querythematrixauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Querythematrixauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Querythematrix Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Querythematrix Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "q[][pacticipant]",
+            "in": "query",
+            "required": false,
+            "description": "A pacticipant to put in the matrix. Repeat `q[][pacticipant]` (each followed by its own `q[][version]`, `q[][latest]`, `q[][tag]`, `q[][branch]`, `q[][environment]` or `q[][mainBranch]`) for several.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixqpacticipant schema."
+            }
+          },
+          {
+            "name": "q[][version]",
+            "in": "query",
+            "required": false,
+            "description": "Exactly this version of the pacticipant.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixqversion schema."
+            }
+          },
+          {
+            "name": "q[][latest]",
+            "in": "query",
+            "required": false,
+            "description": "`true`: only the latest of the versions described.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixqlatest schema."
+            }
+          },
+          {
+            "name": "q[][tag]",
+            "in": "query",
+            "required": false,
+            "description": "Versions with this tag.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixqtag schema."
+            }
+          },
+          {
+            "name": "q[][branch]",
+            "in": "query",
+            "required": false,
+            "description": "Versions recorded on this branch.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixqbranch schema."
+            }
+          },
+          {
+            "name": "q[][environment]",
+            "in": "query",
+            "required": false,
+            "description": "Versions currently deployed to, or released and supported in, this environment.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixqenvironment schema."
+            }
+          },
+          {
+            "name": "q[][mainBranch]",
+            "in": "query",
+            "required": false,
+            "description": "`true`: versions on the pacticipant's main branch.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixqmain Branch schema."
+            }
+          },
+          {
+            "name": "latestby",
+            "in": "query",
+            "required": false,
+            "description": "Collapse rows to the latest result per consumer version and provider (`cvp`), per consumer version and provider version (`cvpv`), or per consumer and provider (`cp`). Without it every result is a row.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "cvp",
+                "cvpv",
+                "cp"
+              ],
+              "description": "Querythematrixlatestby schema."
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "The most rows to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100,
+              "description": "Querythematrixlimit schema."
+            }
+          },
+          {
+            "name": "environment",
+            "in": "query",
+            "required": false,
+            "description": "The destination: check against every version currently in this environment (`can-i-deploy --to-environment`).",
+            "schema": {
+              "type": "string",
+              "description": "Querythematrixenvironment schema."
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "description": "The destination: check against versions with this tag (`can-i-deploy --to`, with `latest=true`).",
+            "schema": {
+              "type": "string",
+              "description": "Querythematrixtag schema."
+            }
+          },
+          {
+            "name": "latest",
+            "in": "query",
+            "required": false,
+            "description": "`true`: check against the latest version of each other pacticipant.",
+            "schema": {
+              "type": "boolean",
+              "description": "Querythematrixlatest schema."
+            }
+          },
+          {
+            "name": "mainBranch",
+            "in": "query",
+            "required": false,
+            "description": "`true`: check against each other pacticipant's main branch.",
+            "schema": {
+              "type": "boolean",
+              "description": "Querythematrixmain Branch schema."
+            }
+          },
+          {
+            "name": "ignore[][pacticipant]",
+            "in": "query",
+            "required": false,
+            "description": "A pacticipant whose rows do not count towards the verdict; `ignore[][version]` narrows it to one version.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixignorepacticipant schema."
+            }
+          },
+          {
+            "name": "success[]",
+            "in": "query",
+            "required": false,
+            "description": "Keep only rows with this result: `true`, `false`, or empty for rows without a result.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Querythematrixsuccess schema."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The verdict and the rows it was reached from. `summary.deployable` is `true`, `false`, or `null` when a verification result is missing \u2014 then `Retry-After` says when to ask again.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "description": "Response payload for querythematrixresponse200."
+                },
+                "example": {
+                  "summary": {
+                    "deployable": false,
+                    "reason": "The verification for the pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0) failed",
+                    "success": 0,
+                    "failed": 1,
+                    "unknown": 0
+                  },
+                  "notices": [
+                    {
+                      "type": "error",
+                      "code": "verification-failed",
+                      "text": "The verification for the pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0) failed"
+                    }
+                  ],
+                  "matrix": [
+                    {
+                      "consumer": {
+                        "name": "Billing Service",
+                        "version": {
+                          "number": "2.0.0",
+                          "branch": "main"
+                        }
+                      },
+                      "provider": {
+                        "name": "Ledger API",
+                        "version": {
+                          "number": "5.1.0",
+                          "branch": "main"
+                        }
+                      },
+                      "pact": {
+                        "createdAt": "2026-11-24T10:00:00+00:00"
+                      },
+                      "verificationResult": {
+                        "success": false,
+                        "verifiedAt": "2026-11-24T10:05:00+00:00"
+                      },
+                      "reason": {
+                        "code": "verification-failed",
+                        "text": "verification failed"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before asking again. Sent only while the verdict is unknown.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-matrix-invalid`: the query is malformed, or names a pacticipant or an environment that does not exist. `detail.pointer` names the parameter."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for querythematrixresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/can-i-deploy": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Can I deploy?",
+        "description": "Whether one version of a pacticipant can be deployed \u2014 the index's `pb:can-i-deploy-pacticipant-version-to-environment` and `\u2026-to-tag` links.\n\n`pacticipant` and `version` name what is being deployed. `toEnvironment` names where: the version is checked against every version of its providers and consumers currently deployed to or released in that environment. `to` names a tag instead: it is checked against the latest version of each with that tag. Give exactly one of the two. `ignore` leaves a pacticipant out of the verdict.\n\nThe answer is the matrix document of `GET \u2026/matrix`: `summary.deployable` is `true`, `false`, or `null` (a verification result is missing; `Retry-After` says when to ask again). An environment marked `contractRequired` refuses a version that has no pact at all (`no-pact`).\n\nAlways `200` when the query is valid. Requires `pacts:view`.",
+        "operationId": "read_can_i_deploy_v1_tenants__tenant_slug__pact_broker_can_i_deploy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Can Ideployauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Can Ideployauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Can Ideploy Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Can Ideploy Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "pacticipant",
+            "in": "query",
+            "required": true,
+            "description": "The pacticipant being deployed: its name or handle.",
+            "schema": {
+              "type": "string",
+              "description": "Can Ideploypacticipant schema."
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "description": "The version being deployed.",
+            "schema": {
+              "type": "string",
+              "description": "Can Ideployversion schema."
+            }
+          },
+          {
+            "name": "toEnvironment",
+            "in": "query",
+            "required": false,
+            "description": "The environment being deployed to. `environment` is accepted too.",
+            "schema": {
+              "type": "string",
+              "description": "Can Ideployto Environment schema."
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "A tag instead of an environment: check against the latest version of each other pacticipant with it.",
+            "schema": {
+              "type": "string",
+              "description": "Can Ideployto schema."
+            }
+          },
+          {
+            "name": "ignore",
+            "in": "query",
+            "required": false,
+            "description": "A pacticipant whose rows do not count towards the verdict. Repeat for several; `ignore[][pacticipant]` with `ignore[][version]` ignores one version.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Can Ideployignore schema."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The verdict and the rows it was reached from. `summary.deployable` is `true`, `false`, or `null` when a verification result is missing \u2014 then `Retry-After` says when to ask again.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "description": "Response payload for can ideployresponse200."
+                },
+                "example": {
+                  "summary": {
+                    "deployable": false,
+                    "reason": "The verification for the pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0) failed",
+                    "success": 0,
+                    "failed": 1,
+                    "unknown": 0
+                  },
+                  "notices": [
+                    {
+                      "type": "error",
+                      "code": "verification-failed",
+                      "text": "The verification for the pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0) failed"
+                    }
+                  ],
+                  "matrix": [
+                    {
+                      "consumer": {
+                        "name": "Billing Service",
+                        "version": {
+                          "number": "2.0.0",
+                          "branch": "main"
+                        }
+                      },
+                      "provider": {
+                        "name": "Ledger API",
+                        "version": {
+                          "number": "5.1.0",
+                          "branch": "main"
+                        }
+                      },
+                      "pact": {
+                        "createdAt": "2026-11-24T10:00:00+00:00"
+                      },
+                      "verificationResult": {
+                        "success": false,
+                        "verifiedAt": "2026-11-24T10:05:00+00:00"
+                      },
+                      "reason": {
+                        "code": "verification-failed",
+                        "text": "verification failed"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before asking again. Sent only while the verdict is unknown.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-matrix-invalid`: the query is malformed, or names a pacticipant or an environment that does not exist. `detail.pointer` names the parameter."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for can ideployresponse422."
+                }
+              }
+            }
+          }
         }
       }
     },
