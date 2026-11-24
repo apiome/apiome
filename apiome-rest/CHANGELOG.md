@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.833.0] - 2026-11-24
+
+### Added
+- **Verification-result publication, Pact Broker–compatible (PFX-1.4, #6917).** OpenAPI 1.657.0.
+  apiome-db V434 adds `verification_result`. Under `/v1/tenants/{tenant_slug}/pact-broker`:
+  - `POST …/pacts/provider/{p}/consumer/{c}/pact-version/{sha}/verification-results` and the
+    for-verification form `…/pact-version/{sha}/metadata/{m}/verification-results` (`pacts:create`):
+    the broker's body — `success` and `providerApplicationVersion` required, `buildUrl`,
+    `testResults` (stored as sent, at most 10,000), `verifiedBy` with `clientLanguage`. Answers
+    `201`, `Location`, and the broker's result shape (`providerName`, `providerApplicationVersion`,
+    `success`, `verificationDate`, `buildUrl`, `testResults`, `verifiedBy`, `_links.self`,
+    `_links.pb:pact-version`) plus `providerVersionBranch`. The provider version is registered on
+    first use; the stored branch is the one it was recorded on last. The metadata form records the
+    pending / WIP flags of the for-verification link.
+  - Results are immutable (trigger), numbered 1, 2, 3 … per pact version, unique per (pact
+    version, provider version, number); `success` and the ids are columns for the matrix.
+  - `providerVerificationReportId` (Apiome only) links a CTG-4.3 provider verification report of
+    the same workspace (`422 pact-verification-report-not-found` otherwise); deleting the report
+    clears the link. The answer carries `pb:provider-verification-report`.
+  - `GET …/pact-version/{sha}/verification-results/latest` and `…/verification-results/{number}`
+    (`pacts:view`); `404 pact-verification-not-found`.
+  - `PUT …/pacticipants/{p}/branches/{branch}/versions/{v}` and `…/versions/{v}/tags/{tag}`
+    (`pacts:create`): record the provider's branch and tags as Pact verifiers do before
+    publishing; the pacticipant and version are created when missing (`201`, else `200`).
+  - Links: every pact adds `pb:publish-verification-results` (carrying the for-verification
+    metadata when fetched through it) and `pb:latest-verification-results`; the broker-shaped
+    pacticipant adds `pb:branch-version` and `pb:version-tag`.
+  - `422 pact-verification-invalid` with a JSON Pointer for a malformed body.
+- `app.verification_result`, `app.verification_result_store`, `app.pact_broker_verification_routes`;
+  `pact_selectors.decode_metadata`.
+
 ## [1.832.0] - 2026-11-24
 
 ### Added

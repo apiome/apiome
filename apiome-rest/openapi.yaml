@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.656.0
+  version: 1.657.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -29627,7 +29627,9 @@ paths:
       summary: Read a pact by its content version (for-verification link)
       description: 'The same pact as `…/pact-version/{sha}`. The last segment is the
         metadata a for-verification response encodes in its links (which selectors chose
-        the pact, for which consumer version); it does not change the pact returned.
+        the pact, for which consumer version, whether it was pending); it does not change
+        the pact returned, and `pb:publish-verification-results` carries it on, so the
+        result records it.
 
 
         The body is the Pact document as published, plus `createdAt` and `_links`: `self`,
@@ -29677,10 +29679,10 @@ paths:
         schema:
           type: string
           description: The selection metadata of a for-verification link (URL-safe base64);
-            not needed to find the pact.
+            kept for the result.
           title: Metadata
         description: The selection metadata of a for-verification link (URL-safe base64);
-          not needed to find the pact.
+          kept for the result.
       - name: authorization
         in: header
         required: false
@@ -30397,6 +30399,736 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readapacticipantversion pact brokershaperesponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/branches/{branch}/versions/{version}:
+    put:
+      tags:
+      - pact-broker
+      summary: Record a version on a branch (Pact Broker shape)
+      description: 'Record a pacticipant version on a branch — the `pb:branch-version`
+        link a Pact verifier follows to record the provider''s branch before it publishes
+        a result. The pacticipant and the version are registered when the workspace
+        does not have them yet; the branch head moves only to a version recorded later.
+        The body is ignored.
+
+
+        Answers `201` when the version is new, `200` otherwise. `{branch}` may contain
+        `/`. Requires `pacts:create`.'
+      operationId: put_branch_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__branches__branch__versions__version__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: branch
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Branch
+          description: Branch schema.
+        description: Git branch name.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version
+          description: Version schema.
+        description: Endpoint or API version metadata.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordaversiononabranch Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Recordaversiononabranch Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordaversiononabranch Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Recordaversiononabranch Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for record a version on a branch (pact broker
+            shape).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for recordaversiononabranch pact brokershaperesponse200.
+        '201':
+          description: The version was created and recorded on the branch.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for recordaversiononabranch pact brokershaperesponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/tags/{tag}:
+    put:
+      tags:
+      - pact-broker
+      summary: Tag a version (Pact Broker shape)
+      description: 'Put a tag on a pacticipant version — the `pb:version-tag` link a
+        Pact verifier follows to record the provider''s tags before it publishes a result.
+        The pacticipant and the version are registered when the workspace does not have
+        them yet. The body is ignored.
+
+
+        Answers `201` when the version is new, `200` otherwise. Requires `pacts:create`.'
+      operationId: put_version_tag_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__tags__tag__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version
+          description: Version schema.
+        description: Endpoint or API version metadata.
+      - name: tag
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tag
+          description: Tag schema.
+        description: Path parameter identifying the tag segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Tagaversion Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Tagaversion Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Tagaversion Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Tagaversion Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for tag a version (pact broker shape).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for tagaversion pact brokershaperesponse200.
+        '201':
+          description: The version was created with the tag.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for tagaversion pact brokershaperesponse422.
+  ? /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results
+  : post:
+      tags:
+      - pact-broker
+      summary: Publish a verification result
+      description: 'Publish the result of verifying this pact version — what a Pact
+        verifier posts to the pact''s `pb:publish-verification-results` link when it
+        runs with `publishVerificationResult: true`.
+
+
+        - `success` and `providerApplicationVersion` are required. The provider version
+        is recorded if the workspace does not have it yet.
+
+        - `testResults` is stored as sent, so a failed result keeps every mismatch.
+
+        - The result is immutable and numbered 1, 2, 3 … per pact version; the answer
+        is `201` with its URL in `Location`.
+
+        - The provider branch recorded with it is the branch the provider version was
+        recorded on last (verifiers record it with `pb:branch-version` just before publishing).
+
+        - `providerVerificationReportId` (Apiome only) links the CTG-4.3 provider verification
+        report the result was produced with.
+
+
+        Requires `pacts:create`.'
+      operationId: publish_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__verification_results_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sha
+          description: Sha schema.
+        description: Path parameter identifying the sha segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaverificationresultauthorization schema.
+          - type: 'null'
+            description: Publishaverificationresultauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaverificationresult Xapikey schema.
+          - type: 'null'
+            description: Publishaverificationresult Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for publish a verification result.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for publishaverificationresultresponse201.
+        '404':
+          description: '`pacticipant-not-found` or `pact-not-found`: no such pair or
+            pact version.'
+        '422':
+          description: '`pact-verification-invalid`: the body is malformed (`detail.pointer`
+            names the field); `pact-verification-report-not-found`: `providerVerificationReportId`
+            is not this workspace''s.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - success
+              - providerApplicationVersion
+              properties:
+                success:
+                  type: boolean
+                  description: Whether every interaction passed.
+                  example: false
+                providerApplicationVersion:
+                  type: string
+                  description: The provider version that verified (a commit SHA).
+                  example: 1.0.0
+                buildUrl:
+                  type: string
+                  description: http(s) URL of the CI build.
+                  example: example
+                testResults:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: Per-interaction results, stored as sent (at most 10,000).
+                  maxItems: 100
+                verifiedBy:
+                  type: object
+                  properties:
+                    implementation:
+                      type: string
+                      description: Implementation.
+                      example: example
+                    version:
+                      type: string
+                      description: Version.
+                      example: 1.0.0
+                    clientLanguage:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Human-readable name.
+                          example: Pet
+                        version:
+                          type: string
+                          description: Version.
+                          example: 1.0.0
+                        testFramework:
+                          type: string
+                          description: Test Framework.
+                          example: example
+                      description: Client Language.
+                  description: Verified By.
+                providerVerificationReportId:
+                  type: string
+                  format: uuid
+                  description: 'Apiome only: the CTG-4.3 provider verification report
+                    this result was produced with. Linked, not copied.'
+                  example: example
+              description: Request body for publishaverificationresultrequest.
+            example:
+              success: false
+              providerApplicationVersion: 4f1e2d0
+              buildUrl: https://ci.example.com/builds/77
+              testResults:
+              - interactionId: a1b2c3
+                interactionDescription: a request for an invoice
+                success: false
+                mismatches:
+                - attribute: status
+                  description: expected 200 but was 404
+              verifiedBy:
+                implementation: Pact-Rust
+                version: 1.2.0
+                clientLanguage:
+                  name: pact-js
+                  version: 13.1.0
+                  testFramework: jest
+        description: Request body for publish a verification result.
+  ? /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}/verification-results
+  : post:
+      tags:
+      - pact-broker
+      summary: Publish a verification result (for-verification link)
+      description: 'Publish the result of verifying this pact version — what a Pact
+        verifier posts to the pact''s `pb:publish-verification-results` link when it
+        runs with `publishVerificationResult: true`.
+
+
+        - `success` and `providerApplicationVersion` are required. The provider version
+        is recorded if the workspace does not have it yet.
+
+        - `testResults` is stored as sent, so a failed result keeps every mismatch.
+
+        - The result is immutable and numbered 1, 2, 3 … per pact version; the answer
+        is `201` with its URL in `Location`.
+
+        - The provider branch recorded with it is the branch the provider version was
+        recorded on last (verifiers record it with `pb:branch-version` just before publishing).
+
+        - `providerVerificationReportId` (Apiome only) links the CTG-4.3 provider verification
+        report the result was produced with.
+
+
+        Requires `pacts:create`.
+
+
+        This form carries the metadata of the for-verification link the pact was fetched
+        with; the result records whether the pact was pending then.'
+      operationId: publish_result_with_metadata_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__metadata__metadata__verification_results_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sha
+          description: Sha schema.
+        description: Path parameter identifying the sha segment.
+      - name: metadata
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The selection metadata of the for-verification link (URL-safe
+            base64).
+          title: Metadata
+        description: The selection metadata of the for-verification link (URL-safe base64).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaverificationresultforverificatioauthorization schema.
+          - type: 'null'
+            description: Publishaverificationresultforverificatioauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaverificationresultforverificatio Xapikey schema.
+          - type: 'null'
+            description: Publishaverificationresultforverificatio Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for publish a verification result (for-verification
+            link).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for publishaverificationresultforverificatioresponse201.
+        '404':
+          description: '`pacticipant-not-found` or `pact-not-found`: no such pair or
+            pact version.'
+        '422':
+          description: '`pact-verification-invalid`: the body is malformed (`detail.pointer`
+            names the field); `pact-verification-report-not-found`: `providerVerificationReportId`
+            is not this workspace''s.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - success
+              - providerApplicationVersion
+              properties:
+                success:
+                  type: boolean
+                  description: Whether every interaction passed.
+                  example: false
+                providerApplicationVersion:
+                  type: string
+                  description: The provider version that verified (a commit SHA).
+                  example: 1.0.0
+                buildUrl:
+                  type: string
+                  description: http(s) URL of the CI build.
+                  example: example
+                testResults:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: Per-interaction results, stored as sent (at most 10,000).
+                  maxItems: 100
+                verifiedBy:
+                  type: object
+                  properties:
+                    implementation:
+                      type: string
+                      description: Implementation.
+                      example: example
+                    version:
+                      type: string
+                      description: Version.
+                      example: 1.0.0
+                    clientLanguage:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: Human-readable name.
+                          example: Pet
+                        version:
+                          type: string
+                          description: Version.
+                          example: 1.0.0
+                        testFramework:
+                          type: string
+                          description: Test Framework.
+                          example: example
+                      description: Client Language.
+                  description: Verified By.
+                providerVerificationReportId:
+                  type: string
+                  format: uuid
+                  description: 'Apiome only: the CTG-4.3 provider verification report
+                    this result was produced with. Linked, not copied.'
+                  example: example
+              description: Request body for publishaverificationresultforverificatiorequest.
+            example:
+              success: false
+              providerApplicationVersion: 4f1e2d0
+              buildUrl: https://ci.example.com/builds/77
+              testResults:
+              - interactionId: a1b2c3
+                interactionDescription: a request for an invoice
+                success: false
+                mismatches:
+                - attribute: status
+                  description: expected 200 but was 404
+              verifiedBy:
+                implementation: Pact-Rust
+                version: 1.2.0
+                clientLanguage:
+                  name: pact-js
+                  version: 13.1.0
+                  testFramework: jest
+        description: Request body for publish a verification result (for-verification
+          link).
+  ? /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/latest
+  : get:
+      tags:
+      - pact-broker
+      summary: Read the latest verification result of a pact version
+      description: The result published last for this pact version, by any provider
+        version. Requires `pacts:view`.
+      operationId: read_latest_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__verification_results_latest_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sha
+          description: Sha schema.
+        description: Path parameter identifying the sha segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthelatestverificationresultofapactveauthorization schema.
+          - type: 'null'
+            description: Readthelatestverificationresultofapactveauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthelatestverificationresultofapactve Xapikey schema.
+          - type: 'null'
+            description: Readthelatestverificationresultofapactve Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the latest verification result of
+            a pact version.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readthelatestverificationresultofapactveresponse200.
+        '404':
+          description: '`pact-verification-not-found`: the pact version has no results.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthelatestverificationresultofapactveresponse422.
+  ? /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}
+  : get:
+      tags:
+      - pact-broker
+      summary: Read a verification result
+      description: One result of a pact version, by its number (1, 2, 3 …). Requires
+        `pacts:view`.
+      operationId: read_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__verification_results__number__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sha
+          description: Sha schema.
+        description: Path parameter identifying the sha segment.
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          description: The result's number among the results of this pact version.
+          title: Number
+        description: The result's number among the results of this pact version.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaverificationresultauthorization schema.
+          - type: 'null'
+            description: Readaverificationresultauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaverificationresult Xapikey schema.
+          - type: 'null'
+            description: Readaverificationresult Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a verification result.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readaverificationresultresponse200.
+        '404':
+          description: '`pact-verification-not-found`: no result with that number.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readaverificationresultresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings:
     get:
       tags:

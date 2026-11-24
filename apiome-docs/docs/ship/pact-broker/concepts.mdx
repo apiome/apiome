@@ -11,9 +11,10 @@ its **branch** and its **tags**. Apiome keeps that registry per workspace. It is
 pact publication, verification results and can-i-deploy are built on.
 
 This release has the registry, [publishing and fetching pacts](./publish-pacts.mdx) with the
-Pact CLI and libraries, and [choosing the pacts a provider verifies](./selectors.mdx) with
-consumer-version selectors. Verification results and can-i-deploy are not yet available, and there
-is no screen for the registry yet: use the [Pacticipants API](../../reference/rest/pacticipants.md).
+Pact CLI and libraries, [choosing the pacts a provider verifies](./selectors.mdx) with
+consumer-version selectors, and [publishing verification results](./verification-results.mdx).
+Can-i-deploy is not yet available, and there is no screen for the registry yet: use the
+[Pacticipants API](../../reference/rest/pacticipants.md).
 
 ## Terms
 
@@ -32,6 +33,7 @@ is no screen for the registry yet: use the [Pacticipants API](../../reference/re
 | **Pact version** | One distinct pact between a consumer and a provider, named by the SHA-256 of its content. Consumer versions that publish the same pact share one pact version. |
 | **Broker base URL** | The address a Pact client is given: `https://<api>/v1/tenants/<workspace>/pact-broker`. |
 | **Consumer-version selector** | A rule a provider's verifier sends to say which pacts it must verify — `{"mainBranch": true}`, `{"tag": "prod", "latest": true}`. See [Choose pacts to verify with selectors](./selectors.mdx). |
+| **Verification result** | What a provider's verifier published after replaying a pact: whether that provider version honours that pact version, with the result of each interaction. See [Publish verification results](./verification-results.mdx). |
 | **Pending pact** | A pact the provider has not yet verified successfully. Its failure is reported but does not fail the provider's build. |
 
 ## How a pacticipant relates to projects and consumers
@@ -162,6 +164,7 @@ pacticipant. Custom roles do not get **Pacts** automatically — grant it in the
 
 - [Publish and fetch pacts](./publish-pacts.mdx) — point the Pact CLI or a Pact library at Apiome.
 - [Choose pacts to verify with selectors](./selectors.mdx) — what a provider's verifier asks for.
+- [Publish verification results](./verification-results.mdx) — what the verifier reports back.
 - [Pacticipants API](../../reference/rest/pacticipants.md) — every endpoint, parameter and error code.
 - [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — the breaking-change gates
   and the consumer registry.

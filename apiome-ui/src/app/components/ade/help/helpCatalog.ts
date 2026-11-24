@@ -1285,6 +1285,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['consumer version selectors', 'for-verification', 'main branch', 'matching branch', 'pending pacts', 'pact verifier', 'latest tag'],
   },
   {
+    id: 'verification-results',
+    title: 'Publish verification results',
+    summary: 'Pact verifiers record whether a provider version honours each pact it verified.',
+    page: 'apiome-docs/docs/ship/pact-broker/verification-results.mdx',
+    section: 'reference',
+    keywords: ['publishVerificationResult', 'provider version', 'pact verifier', 'test results', 'provider branch', 'can-i-deploy', 'provider verification report'],
+  },
+  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',

@@ -14,8 +14,8 @@ This page also covers the **latest** reads: the latest pact of a consumer from a
 and the latest pact of every consumer of a provider.
 
 Environment selectors (`deployed`, `released`, `environment`) are accepted but select nothing until
-deployments can be recorded. Verification results are not recorded yet either, so every pact is
-**pending** (see [Pending pacts](#pending-pacts)). Work-in-progress pacts are not added yet.
+deployments can be recorded. Every pact is reported **pending** for now (see
+[Pending pacts](#pending-pacts)). Work-in-progress pacts are not added yet.
 
 ## Before you start
 
@@ -166,7 +166,8 @@ A pact is **pending** until the provider has verified it successfully. A failed 
 pending pact is reported, but **does not fail the provider build**, so a consumer can publish a new
 expectation without breaking the provider's pipeline.
 
-Apiome does not record verification results yet, so **every pact is pending** for now. With
+Apiome [records verification results](./verification-results.mdx), but a successful result does
+not yet take a pact out of the pending state: **every pact is reported pending** for now. With
 `enablePending: true` in the verifier, no pact failure fails your provider build. Leave pending off
 (`includePendingStatus` not sent) if you want every failure to fail the build.
 
@@ -198,5 +199,6 @@ The [index](./publish-pacts.mdx#fetch-a-pact) (`GET …/pact-broker`) links to a
 ## Related
 
 - [Publish and fetch pacts](./publish-pacts.mdx) — how pacts get here, and the broker base URL.
+- [Publish verification results](./verification-results.mdx) — what the verifier reports back.
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, branches and tags.
 - [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

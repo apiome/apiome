@@ -1,0 +1,132 @@
+---
+title: Publish verification results
+description: Pact verifiers record whether a provider version honours each pact it verified.
+sidebar_position: 4
+tags: [contracts, pact, ci, rest]
+---
+
+When a provider build verifies a pact, its Pact verifier can publish the outcome to Apiome: did this
+provider version honour this pact? Apiome keeps every result, so can-i-deploy can answer from
+recorded results once it is available. The Pact verifiers publish to Apiome unchanged.
+
+Can-i-deploy is not yet available, and the pending state of a pact does not yet change after a
+successful result (see [Pending pacts](./selectors.mdx#pending-pacts)). There is no screen for
+results yet.
+
+## Before you start
+
+- The provider build [fetches its pacts with selectors](./selectors.mdx) from Apiome.
+- Its token is an API key from a member who holds **Pacts** → **Create**. The built-in **Editor**
+  role does. Create one on [API keys](../../workspace/api-keys.mdx).
+
+## Publish from CI
+
+Turn publishing on in the verifier and give it the provider version and branch. With pact-js:
+
+```js
+await new Verifier({
+  provider: 'Ledger API',
+  providerBaseUrl: 'http://localhost:8080',
+  pactBrokerUrl: 'https://api.apiome.dev/v1/tenants/acme/pact-broker',
+  pactBrokerToken: process.env.APIOME_API_KEY,
+  consumerVersionSelectors: [{ mainBranch: true }, { matchingBranch: true }],
+  publishVerificationResult: true,
+  providerVersion: process.env.GIT_COMMIT,
+  providerVersionBranch: process.env.GIT_BRANCH,
+  buildUrl: process.env.CI_BUILD_URL,
+}).verifyProvider();
+```
+
+**Publish only from CI.** A result says "this provider version honours this pact", so publish it
+from the build that produced the version, not from a laptop. Use the commit SHA as the provider
+version.
+
+For each pact it verified, the verifier then:
+
+1. **Records the provider's branch** on the provider version, through the provider's
+   `pb:branch-version` link (`PUT …/pacticipants/ledger-api/branches/main/versions/4f1e2d0`).
+   Provider tags, if you give any, go through `pb:version-tag` the same way.
+2. **Posts the result** to the pact's `pb:publish-verification-results` link.
+
+Apiome registers the provider version if it does not have it yet.
+
+## What a result holds
+
+| Field | What it is |
+| --- | --- |
+| `success` | `true` when every interaction passed. Required. |
+| `providerApplicationVersion` | The provider version that verified. Required. |
+| `buildUrl` | The CI build that ran the verification. |
+| `testResults` | One entry per interaction, as the verifier sent it. A failed result keeps every mismatch. |
+| `verifiedBy` | The verifier and the library around it (`Pact-Rust` 1.2.0 in pact-js 13). |
+| `providerVersionBranch` | Shown in the answer: the branch the provider version was recorded on last — the one the verifier recorded just before publishing. |
+
+- **A result never changes.** Publishing again adds a new result; it does not replace one.
+- **Results are numbered per pact version**: 1, 2, 3 … The answer is `201` with the result's URL
+  in `Location`.
+- **The pending state is kept.** When the pact was fetched with selectors, the result records
+  whether the pact was pending at that moment.
+
+### Link an Apiome provider verification report
+
+If the provider was also checked by Apiome's own [provider verification](../contract-testing-and-ci-gates.mdx)
+(a conformance report), link the report instead of copying it. Add its id to the body:
+
+```json
+{
+  "success": true,
+  "providerApplicationVersion": "4f1e2d0",
+  "providerVerificationReportId": "6a0f…"
+}
+```
+
+The answer then carries a `pb:provider-verification-report` link to the report. The report must
+belong to the same workspace; otherwise the result is refused with
+`422 pact-verification-report-not-found`. Deleting the report later keeps the result and removes the
+link. Pact verifiers do not send this field.
+
+## Publish with curl
+
+```bash
+curl -X POST \
+  "https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/<sha>/verification-results" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"success": true, "providerApplicationVersion": "4f1e2d0", "buildUrl": "https://ci.example.com/builds/77"}'
+```
+
+`<sha>` is the pact version: the `name` of the pact's `pb:pact-version` link.
+
+## Read results
+
+| To read | Request |
+| --- | --- |
+| The latest result for a pact version | `GET …/pact-version/<sha>/verification-results/latest` |
+| One result, by its number | `GET …/pact-version/<sha>/verification-results/1` |
+
+Every pact links to its latest result with `pb:latest-verification-results`. A result links back to
+its pact with `pb:pact-version`.
+
+## When a result is refused
+
+| Status | Code | What to do |
+| --- | --- | --- |
+| `422` | `pact-verification-invalid` | The body is malformed. `pointer` names the field — `/success` missing, `/testResults` not an array. |
+| `422` | `pact-verification-report-not-found` | `providerVerificationReportId` is not a report of this workspace. |
+| `400` | `pacticipant-invalid-version`, `pacticipant-invalid-url` | The provider version has a leading or trailing space, or `buildUrl` is not an http(s) URL. |
+| `404` | `pact-not-found`, `pacticipant-not-found` | No such pact version between the two applications. |
+| `404` | `pact-verification-not-found` | No result with that number, or none yet. |
+| `401` / `403` | — | The token is not a valid API key for this workspace, or its member lacks **Pacts** permission. |
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Read results | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Publish results, record a provider branch or tag | `pacts:create` | — | ✓ | ✓ | ✓ |
+
+## Related
+
+- [Choose pacts to verify with selectors](./selectors.mdx) — what the verifier fetches first.
+- [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, branches and tags.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

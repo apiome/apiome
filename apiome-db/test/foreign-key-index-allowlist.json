@@ -208,6 +208,7 @@
     "user_feature_flags.user_feature_flags_granted_by_fkey": "users-reference",
     "verification_policies.verification_policies_actor_user_id_fkey": "users-reference",
     "verification_policy_evaluations.verification_policy_evaluations_actor_user_id_fkey": "users-reference",
+    "verification_result.verification_result_created_by_fkey": "users-reference",
     "verification_run.verification_run_recorded_by_fkey": "users-reference",
     "verification_schedule.verification_schedule_created_by_fkey": "users-reference",
     "verification_schedule.verification_schedule_updated_by_fkey": "users-reference",

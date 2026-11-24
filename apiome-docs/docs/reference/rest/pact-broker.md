@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 14 operations."
+description: "REST endpoints tagged pact-broker: 20 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.656.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.657.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 14 operations
+Tag: `pact-broker` · 20 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -117,6 +117,35 @@ Operation id: `read_broker_pacticipant_v1_tenants__tenant_slug__pact_broker_pact
 | 200 | Successful response for read a pacticipant (pact broker shape). | `application/hal+json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `PUT /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/branches/{branch}/versions/{version}` {#put-branch-version-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-branches-branch-versions-version-put}
+
+**Record a version on a branch (Pact Broker shape)**
+
+Record a pacticipant version on a branch — the `pb:branch-version` link a Pact verifier follows to record the provider's branch before it publishes a result. The pacticipant and the version are registered when the workspace does not have them yet; the branch head moves only to a version recorded later. The body is ignored.
+
+Answers `201` when the version is new, `200` otherwise. `{branch}` may contain `/`. Requires `pacts:create`.
+
+Operation id: `put_branch_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__branches__branch__versions__version__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | Path parameter identifying the pacticipant segment. |
+| `branch` | path | string | yes | Git branch name. |
+| `version` | path | string | yes | Endpoint or API version metadata. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for record a version on a branch (pact broker shape). | `application/hal+json` any |
+| 201 | The version was created and recorded on the branch. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{number}` {#read-broker-pacticipant-version-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-number-get}
 
 **Read a pacticipant version (Pact Broker shape)**
@@ -142,6 +171,35 @@ Operation id: `read_broker_pacticipant_version_v1_tenants__tenant_slug__pact_bro
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for read a pacticipant version (pact broker shape). | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/tags/{tag}` {#put-version-tag-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-version-tags-tag-put}
+
+**Tag a version (Pact Broker shape)**
+
+Put a tag on a pacticipant version — the `pb:version-tag` link a Pact verifier follows to record the provider's tags before it publishes a result. The pacticipant and the version are registered when the workspace does not have them yet. The body is ignored.
+
+Answers `201` when the version is new, `200` otherwise. Requires `pacts:create`.
+
+Operation id: `put_version_tag_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__tags__tag__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | Path parameter identifying the pacticipant segment. |
+| `version` | path | string | yes | Endpoint or API version metadata. |
+| `tag` | path | string | yes | Path parameter identifying the tag segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for tag a version (pact broker shape). | `application/hal+json` any |
+| 201 | The version was created with the tag. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/branch/{branch}/latest` {#read-latest-branch-pact-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-branch-branch-latest-get}
@@ -267,7 +325,7 @@ Operation id: `read_pact_version_v1_tenants__tenant_slug__pact_broker_pacts_prov
 
 **Read a pact by its content version (for-verification link)**
 
-The same pact as `…/pact-version/{sha}`. The last segment is the metadata a for-verification response encodes in its links (which selectors chose the pact, for which consumer version); it does not change the pact returned.
+The same pact as `…/pact-version/{sha}`. The last segment is the metadata a for-verification response encodes in its links (which selectors chose the pact, for which consumer version, whether it was pending); it does not change the pact returned, and `pb:publish-verification-results` carries it on, so the result records it.
 
 The body is the Pact document as published, plus `createdAt` and `_links`: `self`, `pb:pact-version` (the content address — the same for every consumer version that published this pact) and `pb:latest-pact-version`.
 
@@ -283,7 +341,7 @@ Operation id: `read_pact_version_with_metadata_v1_tenants__tenant_slug__pact_bro
 | `provider` | path | string | yes | Path parameter identifying the provider segment. |
 | `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
 | `sha` | path | string | yes | Path parameter identifying the sha segment. |
-| `metadata` | path | string | yes | The selection metadata of a for-verification link (URL-safe base64); not needed to find the pact. |
+| `metadata` | path | string | yes | The selection metadata of a for-verification link (URL-safe base64); kept for the result. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -292,6 +350,164 @@ Operation id: `read_pact_version_with_metadata_v1_tenants__tenant_slug__pact_bro
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for read a pact by its content version (for-verification link). | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}/verification-results` {#publish-result-with-metadata-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-metadata-metadata-verification-results-post}
+
+**Publish a verification result (for-verification link)**
+
+Publish the result of verifying this pact version — what a Pact verifier posts to the pact's `pb:publish-verification-results` link when it runs with `publishVerificationResult: true`.
+
+- `success` and `providerApplicationVersion` are required. The provider version is recorded if the workspace does not have it yet.
+- `testResults` is stored as sent, so a failed result keeps every mismatch.
+- The result is immutable and numbered 1, 2, 3 … per pact version; the answer is `201` with its URL in `Location`.
+- The provider branch recorded with it is the branch the provider version was recorded on last (verifiers record it with `pb:branch-version` just before publishing).
+- `providerVerificationReportId` (Apiome only) links the CTG-4.3 provider verification report the result was produced with.
+
+Requires `pacts:create`.
+
+This form carries the metadata of the for-verification link the pact was fetched with; the result records whether the pact was pending then.
+
+Operation id: `publish_result_with_metadata_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__metadata__metadata__verification_results_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | Path parameter identifying the sha segment. |
+| `metadata` | path | string | yes | The selection metadata of the for-verification link (URL-safe base64). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for publish a verification result (for-verification link).
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | yes | Whether every interaction passed. |
+| `providerApplicationVersion` | string | yes | The provider version that verified (a commit SHA). |
+| `buildUrl` | string | no | http(s) URL of the CI build. |
+| `testResults` | array of object | no | Per-interaction results, stored as sent (at most 10,000). |
+| `verifiedBy` | object | no | Verified By. |
+| `providerVerificationReportId` | string (uuid) | no | Apiome only: the CTG-4.3 provider verification report this result was produced with. Linked, not copied. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for publish a verification result (for-verification link). | `application/hal+json` any |
+| 404 | `pacticipant-not-found` or `pact-not-found`: no such pair or pact version. | — |
+| 422 | `pact-verification-invalid`: the body is malformed (`detail.pointer` names the field); `pact-verification-report-not-found`: `providerVerificationReportId` is not this workspace's. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results` {#publish-result-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-verification-results-post}
+
+**Publish a verification result**
+
+Publish the result of verifying this pact version — what a Pact verifier posts to the pact's `pb:publish-verification-results` link when it runs with `publishVerificationResult: true`.
+
+- `success` and `providerApplicationVersion` are required. The provider version is recorded if the workspace does not have it yet.
+- `testResults` is stored as sent, so a failed result keeps every mismatch.
+- The result is immutable and numbered 1, 2, 3 … per pact version; the answer is `201` with its URL in `Location`.
+- The provider branch recorded with it is the branch the provider version was recorded on last (verifiers record it with `pb:branch-version` just before publishing).
+- `providerVerificationReportId` (Apiome only) links the CTG-4.3 provider verification report the result was produced with.
+
+Requires `pacts:create`.
+
+Operation id: `publish_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__verification_results_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | Path parameter identifying the sha segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for publish a verification result.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | yes | Whether every interaction passed. |
+| `providerApplicationVersion` | string | yes | The provider version that verified (a commit SHA). |
+| `buildUrl` | string | no | http(s) URL of the CI build. |
+| `testResults` | array of object | no | Per-interaction results, stored as sent (at most 10,000). |
+| `verifiedBy` | object | no | Verified By. |
+| `providerVerificationReportId` | string (uuid) | no | Apiome only: the CTG-4.3 provider verification report this result was produced with. Linked, not copied. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for publish a verification result. | `application/hal+json` any |
+| 404 | `pacticipant-not-found` or `pact-not-found`: no such pair or pact version. | — |
+| 422 | `pact-verification-invalid`: the body is malformed (`detail.pointer` names the field); `pact-verification-report-not-found`: `providerVerificationReportId` is not this workspace's. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/latest` {#read-latest-result-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-verification-results-latest-get}
+
+**Read the latest verification result of a pact version**
+
+The result published last for this pact version, by any provider version. Requires `pacts:view`.
+
+Operation id: `read_latest_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__verification_results_latest_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | Path parameter identifying the sha segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the latest verification result of a pact version. | `application/hal+json` any |
+| 404 | `pact-verification-not-found`: the pact version has no results. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}` {#read-result-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-verification-results-number-get}
+
+**Read a verification result**
+
+One result of a pact version, by its number (1, 2, 3 …). Requires `pacts:view`.
+
+Operation id: `read_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__verification_results__number__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | Path parameter identifying the sha segment. |
+| `number` | path | integer | yes | The result's number among the results of this pact version. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a verification result. | `application/hal+json` any |
+| 404 | `pact-verification-not-found`: no result with that number. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{consumer_version}` {#read-pact-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-version-consumer-version-get}

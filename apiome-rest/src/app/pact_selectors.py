@@ -49,7 +49,7 @@ import base64
 import datetime
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
-from urllib.parse import quote_plus
+from urllib.parse import parse_qsl, quote_plus
 
 from .pact_publication import PactPublicationError
 from .pacticipant import slugify_pacticipant_name
@@ -62,6 +62,7 @@ __all__ = [
     "SelectedBy",
     "VerifiablePact",
     "build_notices",
+    "decode_metadata",
     "encode_metadata",
     "inclusion_reason",
     "is_pending",
@@ -1019,3 +1020,32 @@ def encode_metadata(metadata: Mapping[str, Any]) -> str:
     """
     query = "&".join(_nested_query(dict(metadata), ""))
     return base64.urlsafe_b64encode(query.encode("utf-8")).decode("ascii").rstrip("=")
+
+
+def decode_metadata(segment: Optional[str]) -> Dict[str, Any]:
+    """Read back what :func:`encode_metadata` put in a URL segment — the part a result needs.
+
+    Tolerant, as the broker is: padding may be missing, and a segment that is not valid base64 or
+    not a query string reads as no metadata at all.
+
+    Args:
+        segment: The ``…/metadata/{segment}`` part of a URL, or ``None``.
+
+    Returns:
+        ``{"pending": True | False | None, "wip": bool}``: the pending flag the for-verification
+        response gave the pact (``None`` when it carried none) and whether it was a WIP pact.
+    """
+    result: Dict[str, Any] = {"pending": None, "wip": False}
+    if not segment:
+        return result
+    try:
+        padded = segment + "=" * (-len(segment) % 4)
+        text = base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
+    except (ValueError, UnicodeError):
+        return result
+    for key, value in parse_qsl(text, keep_blank_values=True):
+        if key == "p":
+            result["pending"] = value == "true"
+        elif key == "w":
+            result["wip"] = value == "true"
+    return result

@@ -141,7 +141,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.4 · [#6917](https://github.com/apiome/apiome/issues/6917) | Verification-result publication | Store verifier results per pact version × provider version | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-db |
 | PFX-1.5 · [#6918](https://github.com/apiome/apiome/issues/6918) | Environments and deployment recording | Environments, record-deployment/release/support-ended | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-db |
 | PFX-1.6 · [#6919](https://github.com/apiome/apiome/issues/6919) | Matrix and can-i-deploy | Verdict with reasons, `to`/`to-environment`, retry-while-unknown | `contracts`,`pact`,`rest`,`mvp` | N | Y | L | apiome-rest |
 | PFX-1.7 · [#6920](https://github.com/apiome/apiome/issues/6920) | Pending pacts and work-in-progress pacts | Non-blocking new pacts; WIP selection | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest |
@@ -176,7 +175,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 - **Technical Stack:** FastAPI, SQL.
 - **Documentation:** `…/pact-broker/selectors.mdx`.
 
-**PFX-1.4 · #6917 Verification-result publication**
+**✅ PFX-1.4 · #6917 Verification-result publication — Complete**
 - **Problem:** A can-i-deploy verdict needs recorded results.
 - **Solution/Scope:** `POST /pacts/provider/{p}/consumer/{c}/pact-version/{sha}/verification-results` (and the HAL-linked equivalent) storing success, provider version, build URL, per-interaction test results, verifier name/version, branch; `verification_result` immutable and unique per (pact_version, provider_version, number). Latest result per pair is an indexed lookup. Existing CTG-4.3 reports are linked, not duplicated.
 - **Acceptance Criteria:** pact-js verifier with `publishVerificationResult: true` succeeds; failed results keep test detail; the matrix (1.6) reads without parsing bodies.
