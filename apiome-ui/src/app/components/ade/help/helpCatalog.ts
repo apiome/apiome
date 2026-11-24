@@ -1301,6 +1301,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['record-deployment', 'record-release', 'record-undeployment', 'support ended', 'application instance', 'production', 'can-i-deploy'],
   },
   {
+    id: 'pending-and-wip',
+    title: 'Pending and work-in-progress pacts',
+    summary: 'Verify new consumer expectations without breaking the provider build.',
+    page: 'apiome-docs/docs/ship/pact-broker/pending-and-wip.mdx',
+    section: 'reference',
+    keywords: ['enablePending', 'includeWipPactsSince', 'includePendingStatus', 'feature branch', 'provider branch', 'notices'],
+  },
+  {
     id: 'can-i-deploy',
     title: 'Can I deploy?',
     summary: 'Ask whether a version is safe to deploy, from recorded pacts, results and deployments.',

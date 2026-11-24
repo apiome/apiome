@@ -17,8 +17,10 @@ Set ``APIOME_UPDATE_PACT_GOLDEN=1`` to rewrite the golden after a deliberate cha
 
 from __future__ import annotations
 
+import datetime
 import json
 import os
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict, Iterator, List
 from unittest.mock import MagicMock, patch
@@ -29,8 +31,9 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.pact_broker_auth import validate_broker_authentication
+from app.pact_pending import NO_EVIDENCE, PactSuccesses, PendingEvidence
 from app.pact_publication import PactRecord
-from app.pact_selectors import PactCandidate
+from app.pact_selectors import PactCandidate, decode_metadata
 from app.pacticipant import CODE_NOT_FOUND, PacticipantRecord, PacticipantValidationError
 
 client = TestClient(app)
@@ -67,6 +70,13 @@ _CANDIDATES: List[PactCandidate] = [
     _candidate("billing-service", "Billing Service", 2, "1.1.0", "b" * 64, ["main"]),
     _candidate("checkout-web", "Checkout Web", 3, "2f4c1a9", "c" * 64, ["feat/new-invoice"]),
 ]
+
+
+@pytest.fixture(autouse=True)
+def evidence() -> Iterator[MagicMock]:
+    """No verification history: every pact is pending (PFX-1.7 tests set their own)."""
+    with patch(f"{_ROUTES}.load_pending_evidence", return_value=NO_EVIDENCE) as loaded:
+        yield loaded
 
 
 @pytest.fixture(autouse=True)
@@ -301,3 +311,56 @@ def test_the_metadata_link_reads_the_pact_version(allowed: MagicMock) -> None:
     assert response.status_code == 200
     assert by_sha.call_args.args[1:] == (_TENANT, "ledger-api", "billing-service", "a" * 64)
     assert response.json()["_links"]["self"]["href"].endswith("/consumer/billing-service/version/1.0.0")
+
+
+# --- Pending and work-in-progress pacts (PFX-1.7, #6920) ----------------------------------------
+
+_NOV = datetime.datetime(2026, 11, 10, 9, 0, tzinfo=datetime.timezone.utc)
+
+
+def test_for_verification_reads_the_history_of_the_verifying_branch(
+    allowed: MagicMock, candidates: MagicMock, evidence: MagicMock
+) -> None:
+    _for_verification({"providerVersionBranch": "feat/p", "includePendingStatus": True})
+    assert evidence.call_args.args[1:] == (_TENANT, "p-1", "feat/p")
+
+
+def test_a_verified_pact_is_no_longer_pending(allowed: MagicMock, candidates: MagicMock, evidence: MagicMock) -> None:
+    evidence.return_value = PendingEvidence(
+        successes={"b" * 64: PactSuccesses(branches=frozenset({"main"}), first_success_at=_NOV)},
+        branch_created_at=_NOV - datetime.timedelta(days=1),
+    )
+    body = {"consumerVersionSelectors": [{"mainBranch": True}], "providerVersionBranch": "main"}
+    (pact,) = _for_verification({**body, "includePendingStatus": True}).json()["_embedded"]["pacts"]
+    assert pact["verificationProperties"]["pending"] is False
+    assert pact["verificationProperties"]["notices"][1]["text"].startswith("This pact has previously been")
+
+
+def test_wip_pacts_follow_the_selected_ones(allowed: MagicMock, evidence: MagicMock) -> None:
+    dated = [replace(candidate, published_at=_NOV) for candidate in _CANDIDATES]
+    with patch(f"{_ROUTES}.list_pact_candidates", return_value=(_PROVIDER, dated)):
+        response = _for_verification(
+            {
+                "consumerVersionSelectors": [{"mainBranch": True}],
+                "providerVersionBranch": "main",
+                "includeWipPactsSince": "2026-11-01",
+            }
+        )
+    assert response.status_code == 200
+    pacts = response.json()["_embedded"]["pacts"]
+    assert [pact["_links"]["self"]["name"] for pact in pacts] == [
+        "Pact between Billing Service (1.1.0) and Ledger API",
+        "Pact between Billing Service (1.0.0) and Ledger API",
+        "Pact between Checkout Web (2f4c1a9) and Ledger API",
+    ]
+    selected, tagged, wip = pacts
+    assert "wip" not in selected["verificationProperties"]
+    assert "pending" not in selected["verificationProperties"]
+    assert tagged["shortDescription"] == "latest with tag prod"
+    assert wip["verificationProperties"]["wip"] is True
+    assert wip["verificationProperties"]["pending"] is True
+    assert "'work in progress' pact" in wip["verificationProperties"]["notices"][0]["text"]
+    assert wip["shortDescription"] == "latest from branch feat/new-invoice"
+    # The link records the pact as WIP, so the result the verifier publishes says so.
+    metadata = wip["_links"]["self"]["href"].rsplit("/metadata/", 1)[1]
+    assert decode_metadata(metadata) == {"pending": True, "wip": True}

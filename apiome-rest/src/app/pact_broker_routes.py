@@ -63,6 +63,7 @@ from .pact_environment import (
     EnvironmentRecord,
 )
 from .pact_environment_store import list_environments
+from .pact_pending_store import load_pending_evidence
 from .pact_publication import (
     CODE_PACT_CONFLICT,
     CODE_PACT_INVALID,
@@ -100,6 +101,7 @@ from .pact_selectors import (
     short_description,
     verification_metadata,
 )
+from .pact_wip import select_wip_pacts
 from .pacticipant import (
     CODE_NOT_FOUND,
     CODE_VERSION_NOT_FOUND,
@@ -1376,13 +1378,13 @@ def _verifiable_pact_document(
         query: The request.
 
     Returns:
-        ``shortDescription``, ``verificationProperties`` (``pending`` when asked for, ``wip`` when
-        it is one, and ``notices``) and a ``self`` link to the pact version with its metadata.
+        ``shortDescription``, ``verificationProperties`` (``pending`` when asked for or for a WIP
+        pact, ``wip`` when it is one, and ``notices``) and a ``self`` link to the pact version with its metadata.
     """
     candidate = pact.candidate
     pact_version_url = f"{_pair_url(base, provider.slug, candidate.consumer_slug)}/pact-version/{candidate.sha}"
     properties: Dict[str, Any] = {}
-    if query.include_pending_status:
+    if query.include_pending_status or pact.wip:
         properties["pending"] = pact.pending
     if pact.wip:
         properties["wip"] = True
@@ -1443,10 +1445,14 @@ def _parse_json_body(raw: bytes) -> Any:
         "environment. Accepted; they select nothing until environments are recorded.\n\n"
         "No selectors means the broker's defaults: each consumer's main branch (or its latest "
         "version), and whatever is deployed or released.\n\n"
-        "`includePendingStatus: true` adds `pending` and the pending notices. No verification "
-        "result has been recorded yet, so every pact is pending: a failure will not fail the "
-        "provider build. `includeWipPactsSince` is accepted; work-in-progress pacts are not added "
-        "yet.\n\n"
+        "`includePendingStatus: true` adds `pending` and the pending notices. A pact is pending "
+        "until the provider has verified its content successfully — from `providerVersionBranch` "
+        "(or on any branch before that branch was created), with each of `providerVersionTags`, "
+        "or, with neither, at all. A failure of a pending pact does not fail the provider build.\n\n"
+        "`includeWipPactsSince: <date>` (with a `providerVersionBranch` or `providerVersionTags`) "
+        "adds **work-in-progress** pacts after the selected ones: the latest pact of each consumer "
+        "branch and tag, published on or after the date, that no selector chose and that is still "
+        "pending. They carry `wip: true` and `pending: true`, so they never fail the build.\n\n"
         "An ambiguous selector (for example `tag` with `branch`, or `mainBranch` with `latest: "
         "false`) is `400 pact-selector-invalid` with the pointer of the selector. Requires "
         "`pacts:view`."
@@ -1494,6 +1500,7 @@ def _parse_json_body(raw: bytes) -> Any:
                         ],
                         "providerVersionBranch": "main",
                         "includePendingStatus": True,
+                        "includeWipPactsSince": "2026-11-01",
                     },
                 }
             },
@@ -1534,7 +1541,9 @@ def pacts_for_verification(
     except (PactPublicationError, PacticipantValidationError) as exc:
         raise _http_error(exc) from exc
     base = _base_url(request, tenant_slug)
-    pacts = select_verifiable_pacts(candidates, query)
+    evidence = load_pending_evidence(db, _tenant_id(auth_data), record.id, query.provider_version_branch)
+    pacts = select_verifiable_pacts(candidates, query, evidence)
+    pacts += select_wip_pacts(candidates, pacts, query, evidence)
     return HalJSONResponse(
         {
             "_embedded": {"pacts": [_verifiable_pact_document(base, record, pact, query) for pact in pacts]},

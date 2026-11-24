@@ -262,6 +262,24 @@ def _version(base: str, slug: str, number: str, details: Optional[Dict[str, Any]
     }
 
 
+def _pending_fields(row: MatrixRow) -> Dict[str, Any]:
+    """What the verifier was told about the pact when it verified (PFX-1.7, #6920).
+
+    Args:
+        row: A row with a verification result.
+
+    Returns:
+        ``pending`` (when the verifier's link carried it) and ``wip: true`` for a work-in-progress
+        pact; empty when neither is known.
+    """
+    fields: Dict[str, Any] = {}
+    if row.pact_pending is not None:
+        fields["pending"] = row.pact_pending
+    if row.wip:
+        fields["wip"] = True
+    return fields
+
+
 def _row_document(base: str, row: MatrixRow, details: Dict[str, Dict[str, Any]], ignored: bool) -> Dict[str, Any]:
     """Render one matrix row.
 
@@ -273,7 +291,8 @@ def _row_document(base: str, row: MatrixRow, details: Dict[str, Dict[str, Any]],
 
     Returns:
         ``consumer``, ``provider`` (its ``version`` ``null`` without a result), ``pact``,
-        ``verificationResult`` (``null`` without one), Apiome's ``reason``, and ``ignored`` when set.
+        ``verificationResult`` (``null`` without one; with ``pending`` and ``wip`` when known),
+        Apiome's ``reason``, and ``ignored`` when set.
     """
     pair = _pair_url(base, row.provider_slug, row.consumer_slug)
     provider_version = None
@@ -286,6 +305,7 @@ def _row_document(base: str, row: MatrixRow, details: Dict[str, Dict[str, Any]],
         verification = {
             "success": row.success,
             "verifiedAt": row.verified_at,
+            **_pending_fields(row),
             "_links": {
                 "self": {"href": f"{pair}/pact-version/{row.pact_sha}/verification-results/{row.verification_number}"}
             },

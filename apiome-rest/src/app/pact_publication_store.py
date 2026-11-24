@@ -449,6 +449,7 @@ _CANDIDATE_SELECT = """
     SELECT c.id::text AS consumer_id, c.slug AS consumer_slug, c.name AS consumer_name,
            c.main_branch AS consumer_main_branch,
            v.id::text AS version_id, v.number AS version_number, v.seq AS version_seq, pv.sha,
+           p.created_at AS published_at,
            COALESCE(
                (SELECT array_agg(b.name ORDER BY b.name)
                 FROM apiome.pacticipant_branch_version bv
@@ -486,7 +487,8 @@ def list_pact_candidates(db: Any, tenant_id: str, provider_ref: str) -> Tuple[Pa
 
     One row per consumer version that published a pact for the provider, with the version's
     branches and tags, the environments it is deployed or released to, and the pact's content
-    address — not the content, which a for-verification response links to rather than carries.
+    address and when it was published — not the content, which a for-verification response links
+    to rather than carries.
 
     Args:
         db: The database.
@@ -515,6 +517,7 @@ def list_pact_candidates(db: Any, tenant_id: str, provider_ref: str) -> Tuple[Pa
             tags=tuple(row.get("tags") or ()),
             deployed_to=tuple(row.get("deployed_to") or ()),
             released_in=tuple(row.get("released_in") or ()),
+            published_at=row.get("published_at"),
         )
         for row in rows
     ]

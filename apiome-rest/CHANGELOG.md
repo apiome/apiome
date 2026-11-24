@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.836.0] - 2026-11-24
+
+### Added
+- **Pending and work-in-progress pacts (PFX-1.7, #6920).** OpenAPI 1.660.0. No migration.
+  `POST …/pact-broker/pacts/provider/{provider}/for-verification` now applies the Pact Broker's
+  definitions:
+  - **Pending.** A pact is pending until the provider has verified its content successfully:
+    from the request's `providerVersionBranch` — or on any branch before that branch was first
+    recorded, so a new branch inherits earlier successes and an older one does not — with each of
+    its `providerVersionTags`, or, with neither, at all. Failures never end it. `pending` and the
+    pending notices (with `includePendingStatus`) now read the recorded results instead of always
+    `true`, and the link metadata's `p` follows, so a published result records the real state.
+  - **Work in progress.** `includeWipPactsSince` (with a provider branch or tags) adds, after the
+    selected pacts, the head pact of each consumer branch and tag published on or after the date
+    that no selector chose and that is still pending. Each carries `wip: true`, `pending: true`
+    (even without `includePendingStatus`), the broker's WIP notice and `{"w": true}` metadata; a
+    result published through it is recorded as WIP and pending.
+  - **Matrix.** `GET …/pact-broker/matrix` and `…/can-i-deploy` rows carry
+    `verificationResult.pending` and `verificationResult.wip` when known. Pending still does not
+    soften the verdict.
+  - New pure modules `app.pact_pending` (the rule) and `app.pact_wip` (the selection), and
+    `app.pact_pending_store.load_pending_evidence` (one grouped read of the provider's successful
+    results per pact content, and the branch's creation time).
+
 ## [1.835.0] - 2026-11-24
 
 ### Added

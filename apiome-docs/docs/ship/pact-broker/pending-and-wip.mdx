@@ -1,0 +1,158 @@
+---
+title: Pending and work-in-progress pacts
+description: New consumer expectations are verified without breaking the provider's build.
+sidebar_position: 3.5
+tags: [contracts, pact, ci, rest]
+---
+
+A consumer publishes a new expectation before the provider supports it. If that pact failed the
+provider's build the moment it was published, every consumer change would block the provider's
+pipeline. Two Pact Broker features stop that, and Apiome implements both the way the Pact Broker
+defines them:
+
+- A **pending pact** is one the provider has not yet verified successfully. Its failures are
+  reported but **do not fail the provider build**.
+- A **work-in-progress (WIP) pact** is a pact from a consumer branch that none of the provider's
+  [selectors](./selectors.mdx) chose. The verifier gets it anyway, always as pending, so the
+  provider sees feature work early without being blocked by it.
+
+There is no screen for pending or WIP pacts. Verifiers and the REST API show them.
+
+## Before you start
+
+- The provider build [fetches its pacts with selectors](./selectors.mdx) and
+  [publishes verification results](./verification-results.mdx). Without published results, no
+  pact ever stops being pending.
+- The verifier sends a **provider version branch** (`providerVersionBranch`). The pending state is
+  worked out per provider branch. Tags (`providerVersionTags`) work too, but branches are
+  preferred.
+
+## Turn them on in the verifier
+
+With pact-js:
+
+```js
+await new Verifier({
+  provider: 'Ledger API',
+  providerBaseUrl: 'http://localhost:8080',
+  pactBrokerUrl: 'https://api.apiome.dev/v1/tenants/acme/pact-broker',
+  pactBrokerToken: process.env.APIOME_API_KEY,
+  providerVersion: process.env.GIT_COMMIT,
+  providerVersionBranch: process.env.GIT_BRANCH,
+  consumerVersionSelectors: [{ mainBranch: true }, { matchingBranch: true }, { deployedOrReleased: true }],
+  enablePending: true,
+  includeWipPactsSince: '2026-11-01',
+  publishVerificationResult: true,
+}).verifyProvider();
+```
+
+1. **Set `enablePending: true`.** The verifier sends `includePendingStatus: true`, and each pact
+   comes back with `pending: true` or `pending: false`.
+2. **Set `includeWipPactsSince`** to a date. WIP pacts published on or after that date are added.
+   Pact recommends starting with about 30 days, and no more than three months.
+3. **Publish results** (`publishVerificationResult: true`). A successful result is what takes a
+   pact out of the pending state.
+
+The other Pact verifiers (pact-jvm, pact-go, pact-python, pact-ruby, pact-net) take the same
+options under their own names.
+
+## When a pact is pending
+
+A pact is pending until the provider has verified its **content** successfully. Which successful
+results count depends on what the verifier sends:
+
+| The verifier sends | The pact stops being pending once … |
+| --- | --- |
+| `providerVersionBranch` | … a provider version **from that branch** has verified it, or a version on any branch verified it **before this branch was created**. |
+| `providerVersionTags` | … a provider version **with each of those tags** has verified it. |
+| neither | … **any** provider version has verified it. |
+
+- **Only successes count.** A failed result never ends the pending state.
+- **Changed content starts pending again.** A consumer version that republishes content that has
+  already been verified is not pending.
+- **New branches inherit what came before them.** A pact verified on `main` is not pending for a
+  `feat-x` branch you cut from `main` afterwards. It stays pending for a branch that already
+  existed when `main` verified it, until that branch verifies it too.
+
+A pending pact's notices say so before verification:
+
+```text
+This pact is in pending state for this version of Ledger API because a successful verification result for a version of Ledger API from branch 'main' has not yet been published. If this verification fails, it will not cause the overall build to fail. Read more at https://docs.pact.io/go/pending
+```
+
+Once it has been verified, the notice reads
+`This pact has previously been successfully verified by a version of Ledger API from branch 'main'. If this verification fails, it will fail the build.`
+
+### Example: a new expectation on main
+
+1. Billing Service's pact from `main` passes against Ledger API `main`.
+2. Billing Service publishes a new pact from `main` with a request Ledger API does not support yet.
+3. Ledger API's next build gets that pact with `pending: true`. The verification fails and the
+   failure is published, but the build passes.
+4. Ledger API implements the request on `main`, and a successful result is published.
+5. From the next build on, the pact is `pending: false`: a regression now fails the build.
+
+### Example: a feature branch on the provider
+
+1. Steps 1 to 3 above, on Ledger API `main` and on its existing `feat-x` branch.
+2. Ledger API implements the request on `feat-x` and publishes a successful result.
+3. `feat-x` builds now get `pending: false`. `main` builds still get `pending: true`, because `main`
+   has not verified it.
+4. `feat-x` is merged and `main` publishes a successful result. `main` builds get `pending: false`.
+
+## Which pacts are work in progress
+
+With `includeWipPactsSince` and a provider branch (or tags), Apiome adds a pact when **all** of
+these are true:
+
+1. It is a **head pact**: the pact of the latest version on one of the consumer's branches, or of
+   the latest version with one of its tags.
+2. **No selector chose it.** A pact your selectors already return is never also WIP.
+3. It was **published on or after** the `includeWipPactsSince` date.
+4. It is **still pending** for this provider build, by the rules above. A pact this branch has
+   verified drops out, and so does one verified on another branch before this branch was created.
+   A new provider branch therefore does not pull in every old feature pact.
+
+WIP pacts come after the selected pacts in the response, with `wip: true` and `pending: true`, and
+a failure never fails the build. The verifier prints why it got one:
+
+```text
+The pact at https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/7c1f0a… is being verified because it is a 'work in progress' pact (ie. it is the pact for the latest version of Billing Service from branch 'feat/new-invoice' and is still in pending state). Read more at https://docs.pact.io/go/wip
+```
+
+The result a verifier publishes for a WIP pact is recorded as WIP and pending.
+
+## Where it shows
+
+| Where | What you see |
+| --- | --- |
+| `POST …/pacts/provider/{provider}/for-verification` | `verificationProperties.pending` (with `includePendingStatus`, and always for a WIP pact), `verificationProperties.wip` and the notices. See [Choose pacts to verify with selectors](./selectors.mdx#what-the-answer-contains). |
+| [Verification results](./verification-results.mdx) | Each result records whether the pact was pending, and whether it was WIP, when the verifier fetched it. |
+| [The matrix](./can-i-deploy.mdx) | `verificationResult.pending` and `verificationResult.wip` on each row, and the reason `pact is pending` for a failed result of a pending pact. |
+
+**Pending does not soften can-i-deploy.** A failed result of a pending pact does not fail the
+provider's build, but the consumer still cannot deploy against that provider version.
+
+## If something goes wrong
+
+| What you see | Why | What to do |
+| --- | --- | --- |
+| A pact stays pending after a successful verification | The result was not published, or was published from another provider branch. | Publish results from CI (`publishVerificationResult: true`) with the right `providerVersionBranch`. |
+| Every pact is pending on a long-lived branch | The branch existed before the other branches verified those pacts. | Verify on that branch once; each success ends the pending state there. |
+| No WIP pacts come back | The request has no `providerVersionBranch` or `providerVersionTags`, or the pacts were published before the date. | Send the provider branch, and pick an earlier `includeWipPactsSince`. |
+| `400 pact-selector-invalid` on `/providerVersionBranch` | Pending or WIP was requested with an empty `providerVersionBranch` and no tags. | Send the branch name, or leave the field out. |
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Fetch pacts with their pending and WIP state | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Publish the result that ends the pending state | `pacts:create` | — | ✓ | ✓ | ✓ |
+
+## Related
+
+- [Choose pacts to verify with selectors](./selectors.mdx) — the request these options are part of.
+- [Publish verification results](./verification-results.mdx) — the successes the pending state reads.
+- [Can I deploy?](./can-i-deploy.mdx) — how pending results count before a deployment.
+- [Pact Broker concepts](./concepts.mdx) — pending pact, WIP pact and the other terms.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

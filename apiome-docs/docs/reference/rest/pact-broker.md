@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.659.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.660.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 37 operations
 
@@ -1094,7 +1094,9 @@ Selectors (`consumerVersionSelectors`, each optionally narrowed by `consumer`):
 
 No selectors means the broker's defaults: each consumer's main branch (or its latest version), and whatever is deployed or released.
 
-`includePendingStatus: true` adds `pending` and the pending notices. No verification result has been recorded yet, so every pact is pending: a failure will not fail the provider build. `includeWipPactsSince` is accepted; work-in-progress pacts are not added yet.
+`includePendingStatus: true` adds `pending` and the pending notices. A pact is pending until the provider has verified its content successfully — from `providerVersionBranch` (or on any branch before that branch was created), with each of `providerVersionTags`, or, with neither, at all. A failure of a pending pact does not fail the provider build.
+
+`includeWipPactsSince: <date>` (with a `providerVersionBranch` or `providerVersionTags`) adds **work-in-progress** pacts after the selected ones: the latest pact of each consumer branch and tag, published on or after the date, that no selector chose and that is still pending. They carry `wip: true` and `pending: true`, so they never fail the build.
 
 An ambiguous selector (for example `tag` with `branch`, or `mainBranch` with `latest: false`) is `400 pact-selector-invalid` with the pointer of the selector. Requires `pacts:view`.
 

@@ -1,0 +1,44 @@
+---
+slug: pact-broker-pending-and-wip
+title: "Pact Broker: pending and work-in-progress pacts"
+description: "New consumer expectations are verified without failing the provider's build."
+authors: [apiome]
+---
+
+A consumer can now publish a new expectation without breaking the provider's pipeline. Apiome
+works out **pending** and **work-in-progress** pacts the way the Pact Broker does, and the Pact
+verifiers use them unchanged.
+
+{/* truncate */}
+
+**Turn them on** in the provider's verifier, with the broker base URL and token it already uses:
+
+```js
+enablePending: true,
+includeWipPactsSince: '2026-11-01',
+providerVersionBranch: process.env.GIT_BRANCH,
+publishVerificationResult: true,
+```
+
+**What you get**, through the [Pact Broker API](/reference/rest/pact-broker):
+
+- **Pending pacts.** A pact the provider branch has not verified successfully comes back with
+  `pending: true`. Its failure is reported but does not fail the build. The first successful result
+  from that branch ends the pending state, and later failures fail the build.
+- **New branches inherit earlier results.** A pact verified on `main` is not pending for a branch
+  created afterwards. A branch that already existed keeps it pending until it verifies it too.
+- **Work-in-progress pacts.** With `includeWipPactsSince`, the verifier also gets the latest pact
+  of each consumer branch that your selectors did not choose and the provider has not verified,
+  published since that date. They are always pending, so feature work shows up early and never
+  blocks you.
+- **Recorded with the result.** A result published for a WIP pact is recorded as WIP and pending,
+  and the [matrix](/ship/pact-broker/can-i-deploy) shows `pending` and `wip` on each result. A failed
+  result of a pending pact still blocks can-i-deploy for the consumer.
+
+**Not yet available:** a screen for pending and work-in-progress pacts.
+
+**For operators.** No migration. Each for-verification request adds one grouped read of the
+provider's successful results and one branch lookup.
+
+Read [Pending and work-in-progress pacts](/ship/pact-broker/pending-and-wip) for the rules, two
+worked examples and troubleshooting.
