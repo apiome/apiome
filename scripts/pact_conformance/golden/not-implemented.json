@@ -1,0 +1,25 @@
+{
+  "request": {
+    "body": {
+      "description": "conformance"
+    },
+    "method": "POST",
+    "path": "/webhooks"
+  },
+  "response": {
+    "body": {
+      "detail": {
+        "code": "pact-broker-not-implemented",
+        "documentation": "https://docs.apiome.dev/ship/pact-broker/compatibility",
+        "endpoint": "/webhooks",
+        "message": "POST is not supported on “List or create webhooks” (planned). Tracked in https://github.com/apiome/apiome/issues/6922.",
+        "pact_broker_version": "2.124.0",
+        "pointer": "/v1/tenants/acme-corp/pact-broker/webhooks",
+        "status": "planned",
+        "supported_methods": [],
+        "tracking": "https://github.com/apiome/apiome/issues/6922"
+      }
+    },
+    "status": 501
+  }
+}

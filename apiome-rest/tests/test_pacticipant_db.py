@@ -371,6 +371,32 @@ def test_branch_membership_is_recorded_once(stack: Dict[str, Any]) -> None:
     assert _count(stack["cursor"], "pacticipant_branch", created["id"]) == 1
 
 
+def _main_branch(stack: Dict[str, Any], slug: str = "billing-service") -> Any:
+    response = stack["client"].get(f"{stack['base']}/{slug}")
+    assert response.status_code == 200, response.text
+    return response.json()["main_branch"]
+
+
+def test_the_first_candidate_branch_becomes_the_main_branch(stack: Dict[str, Any]) -> None:
+    """The Pact Broker's ``auto_detect_main_branch`` (PFX-1.8, #6921)."""
+    _register(stack)
+    # A branch that is not a candidate leaves the main branch unset …
+    _record(stack, "0.1.0", branch="feat/login")
+    assert _main_branch(stack) is None
+    # … the first candidate sets it …
+    _record(stack, "1.0.0", branch="main")
+    assert _main_branch(stack) == "main"
+    # … and a later candidate does not replace it.
+    _record(stack, "1.1.0", branch="develop")
+    assert _main_branch(stack) == "main"
+
+
+def test_a_main_branch_set_by_hand_is_never_replaced(stack: Dict[str, Any]) -> None:
+    _register(stack, main_branch="trunk")
+    _record(stack, "1.0.0", branch="master")
+    assert _main_branch(stack) == "trunk"
+
+
 def test_a_branch_and_a_tag_can_only_name_a_version_of_the_same_pacticipant(stack: Dict[str, Any]) -> None:
     cursor = stack["cursor"]
     billing = _register(stack)

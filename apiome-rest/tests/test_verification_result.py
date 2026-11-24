@@ -69,6 +69,17 @@ def test_a_verifier_body_is_read_with_its_test_detail() -> None:
     assert request.report_id is None
 
 
+def test_pact_ruby_test_results_object_is_read_as_its_tests() -> None:
+    """Pact-Ruby's verifier wraps the results in an object (PFX-1.8, #6921)."""
+    tests = [{"testDescription": "has status code 200", "status": "passed", "interactionDescription": "health"}]
+    body = {
+        "success": True,
+        "providerApplicationVersion": "1.0.0",
+        "testResults": {"tests": tests, "summary": {"testCount": 1, "failureCount": 0}, "metadata": {}},
+    }
+    assert _parse(body).test_results == tests
+
+
 def test_the_smallest_body_is_success_and_a_version() -> None:
     request = _parse({"success": True, "providerApplicationVersion": "1.0.0", "unknown": "ignored"})
     assert request.success is True and request.test_results == [] and request.build_url is None
@@ -91,6 +102,7 @@ def test_a_report_id_is_normalised() -> None:
         ({"success": True, "providerApplicationVersion": 7}, "/providerApplicationVersion"),
         ({"success": True, "providerApplicationVersion": "1", "buildUrl": 3}, "/buildUrl"),
         ({"success": True, "providerApplicationVersion": "1", "testResults": {}}, "/testResults"),
+        ({"success": True, "providerApplicationVersion": "1", "testResults": {"tests": {}}}, "/testResults"),
         ({"success": True, "providerApplicationVersion": "1", "verifiedBy": "rust"}, "/verifiedBy"),
         (
             {"success": True, "providerApplicationVersion": "1", "verifiedBy": {"version": 2}},

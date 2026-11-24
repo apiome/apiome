@@ -48,6 +48,7 @@ from __future__ import annotations
 
 import base64
 import datetime
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import parse_qsl, quote_plus
@@ -69,6 +70,7 @@ __all__ = [
     "inclusion_reason",
     "is_pending",
     "latest_per_consumer",
+    "for_verification_body_from_query",
     "parse_for_verification_request",
     "pending_reason",
     "select_verifiable_pacts",
@@ -365,6 +367,94 @@ def _parse_date(value: Any) -> datetime.date:
 def _parse_datetime(text: str) -> datetime.date:
     """The date of an ISO 8601 date-time (``Z`` accepted)."""
     return datetime.datetime.fromisoformat(text.replace("Z", "+00:00")).date()
+
+
+#: Selector fields the GET form spells in snake case, with the JSON name each one stands for.
+_QUERY_SELECTOR_FIELDS = {
+    "main_branch": "mainBranch",
+    "branch": "branch",
+    "matching_branch": "matchingBranch",
+    "fallback_branch": "fallbackBranch",
+    "fallback_to_main_branch": "fallbackToMainBranch",
+    "tag": "tag",
+    "fallback_tag": "fallbackTag",
+    "latest": "latest",
+    "consumer": "consumer",
+    "deployed": "deployed",
+    "released": "released",
+    "deployed_or_released": "deployedOrReleased",
+    "environment": "environment",
+}
+
+#: Selector fields whose query-string value is a boolean.
+_QUERY_BOOLEAN_FIELDS = {
+    "mainBranch",
+    "matchingBranch",
+    "fallbackToMainBranch",
+    "latest",
+    "deployed",
+    "released",
+    "deployedOrReleased",
+}
+
+_QUERY_SELECTOR_KEY = re.compile(r"^consumer_version_selectors\[(\d*)\]\[([a-z_]+)\]$")
+
+
+def _query_value(name: str, value: str) -> Any:
+    """A query-string value as the JSON body would carry it (``"true"`` → ``True`` for flags)."""
+    if name in _QUERY_BOOLEAN_FIELDS:
+        lowered = value.strip().lower()
+        return True if lowered == "true" else False if lowered == "false" else value
+    return value
+
+
+def for_verification_body_from_query(items: Sequence[Tuple[str, str]]) -> Dict[str, Any]:
+    """Read the deprecated ``GET …/for-verification`` query string into the ``POST`` body shape.
+
+    The Pact Broker still answers ``GET`` (its first Ruby clients used it, and the Rust verifier in
+    pact-js / pact-python / pact-go fetches the resource with ``GET`` before it posts its
+    selectors — found by the conformance suite, PFX-1.8 #6921). The parameters are Rack nested
+    query parameters in snake case::
+
+        provider_version_branch=main&include_pending_status=true&provider_version_tags[]=prod
+        &consumer_version_selectors[][tag]=prod&consumer_version_selectors[][latest]=true
+
+    With ``[][…]`` a field that repeats starts the next selector, as Rack reads it; with explicit
+    indices (``[0][tag]``, ``[1][main_branch]``) each index is one selector, in index order.
+
+    Args:
+        items: The query parameters, in order (``request.query_params.multi_items()``).
+
+    Returns:
+        The body :func:`parse_for_verification_request` reads; unknown parameters are ignored.
+    """
+    body: Dict[str, Any] = {}
+    selectors: List[Dict[str, Any]] = []
+    indexed: Dict[int, Dict[str, Any]] = {}
+    for key, value in items:
+        match = _QUERY_SELECTOR_KEY.match(key)
+        if match:
+            name = _QUERY_SELECTOR_FIELDS.get(match.group(2))
+            if name is None:
+                continue
+            if match.group(1):
+                indexed.setdefault(int(match.group(1)), {})[name] = _query_value(name, value)
+                continue
+            if not selectors or name in selectors[-1]:
+                selectors.append({})
+            selectors[-1][name] = _query_value(name, value)
+        elif key == "provider_version_branch":
+            body["providerVersionBranch"] = value
+        elif key in ("provider_version_tags[]", "provider_version_tags"):
+            body.setdefault("providerVersionTags", []).append(value)
+        elif key == "include_pending_status":
+            body["includePendingStatus"] = _query_value("latest", value)
+        elif key == "include_wip_pacts_since":
+            body["includeWipPactsSince"] = value
+    selectors += [indexed[index] for index in sorted(indexed)]
+    if selectors:
+        body["consumerVersionSelectors"] = selectors
+    return body
 
 
 def parse_for_verification_request(body: Any) -> ForVerificationQuery:

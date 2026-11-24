@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.837.0] - 2026-11-24
+
+### Added
+- **Pact Broker API conformance suite (PFX-1.8, #6921).** OpenAPI 1.661.0. No migration.
+  - **Compatibility catalog.** New `app.pact_broker_compat`: every endpoint of the Pact Broker
+    2.124.0 API (102), the methods the broker allows and the methods Apiome serves, with a status
+    (supported, partial, planned, not planned), tracking issue, note and Apiome alternative. Tests
+    hold it to the app's route table in both directions, so a Pact Broker route cannot ship
+    without an entry.
+  - **Documented 501, never a silent 404.** New `app.pact_broker_compat_routes`. Under
+    `…/pact-broker`, a method or path no real route serves answers `501 Not Implemented` with
+    `detail.code: pact-broker-not-implemented`, the endpoint template, its status, the supported
+    methods, the tracking issue, the Apiome alternative, the compatibility page and the broker
+    version, plus a `Link: <…/compatibility>; rel="help"` header. Authentication is still
+    required. Catalogued unsupported paths are claimed before the real routes, so `…/latest/badge`
+    is not read as the tag `badge`. A wrong method on a served path is now `501`, not `405`.
+  - **`GET …/pact-broker/pacts/provider/{provider}/for-verification`.** The broker's deprecated
+    query-string form (`provider_version_branch`, `provider_version_tags[]`,
+    `include_pending_status`, `include_wip_pacts_since`, `consumer_version_selectors[][<field>]` or
+    `[<n>][<field>]`), answering as the `POST` does. The Rust verifier (pact-js, pact-python,
+    pact-go) fetches it before posting its selectors, so it failed before.
+  - `scripts/generate_pact_broker_compat_doc.py` writes the endpoint table on
+    `apiome-docs/docs/ship/pact-broker/compatibility.mdx`; `tests/test_pact_broker_compat_doc.py`
+    fails when it drifts.
+  - The suite itself is `scripts/pact_conformance/` (the `pact-broker` CLI, pact-js and pact-jvm
+    against a fresh stack, with golden HAL transcripts) and the **Pact Broker Conformance**
+    workflow.
+
+### Changed
+- **Main branch auto-detection.** Recording a version on `develop`, `main` or `master` sets the
+  pacticipant's `main_branch` when it has none, as the Pact Broker's `auto_detect_main_branch`
+  does (`app.pacticipant_store.MAIN_BRANCH_CANDIDATES`). A main branch already set is never
+  replaced.
+- **Pact-Ruby verification results.** `testResults` sent as an object with a `tests` array (the
+  format of `pact-provider-verifier`) is accepted, and its `tests` are stored. It was a `422`.
+
 ## [1.836.0] - 2026-11-24
 
 ### Added

@@ -133,6 +133,8 @@ from .document_store_router import refresh_routing as refresh_document_store_rou
 from .document_store_routes import admin_router as document_store_admin_router
 from .document_store_routes import ops_router as document_store_ops_router
 from .ownership_policy_routes import router as ownership_policy_router
+from .pact_broker_compat_routes import fallback_router as pact_broker_fallback_router
+from .pact_broker_compat_routes import router as pact_broker_compat_router
 from .pact_broker_environment_routes import router as pact_broker_environment_router
 from .pact_broker_host import PactBrokerHostAliasMiddleware
 from .pact_broker_matrix_routes import router as pact_broker_matrix_router
@@ -554,10 +556,15 @@ app.include_router(consumer_contract_router)
 # Pact Broker registry (PFX-1.1, #6914): pacticipants, versions, branches and tags.
 app.include_router(pacticipant_router)
 # Pact Broker-compatible publication and retrieval (PFX-1.2, #6915).
+# PFX-1.8 (#6921): the catalogued unsupported endpoints first (so ``…/latest/badge`` is not read as
+# the tag ``badge``), the real Pact Broker routes, then a catch-all — every request under
+# ``…/pact-broker`` no real route serves gets a documented 501, never a bare 404.
+app.include_router(pact_broker_compat_router)
 app.include_router(pact_broker_router)
 app.include_router(pact_broker_verification_router)
 app.include_router(pact_broker_environment_router)
 app.include_router(pact_broker_matrix_router)
+app.include_router(pact_broker_fallback_router)
 # consumer_binding_router: RDG-1.8 consumer bindings + declared-vs-observed runtime edges under
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).
 app.include_router(consumer_binding_router)

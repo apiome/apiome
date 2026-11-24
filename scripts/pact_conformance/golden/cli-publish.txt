@@ -1,0 +1,3 @@
+Created ConformanceWeb version 1.0.0 with branch main
+Pact successfully published for ConformanceWeb version 1.0.0 and provider ConformanceAPI.
+  View the published pact at {rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/version/1.0.0

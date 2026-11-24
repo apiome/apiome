@@ -1,0 +1,7 @@
+Uuid: {uuid}
+Name: conformance-production
+Display Name: Production
+Production: true
+Contract Required: false
+Contacts: []
+Created At: '{timestamp}'

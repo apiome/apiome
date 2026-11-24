@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 37 operations."
+description: "REST endpoints tagged pact-broker: 38 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.660.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.661.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 37 operations
+Tag: `pact-broker` · 38 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -1076,6 +1076,32 @@ The Pact document (specification 1.x to 4.x), exactly as the consumer's tests wr
 | 413 | `pact-too-large`: the document or the request is over the size limit. | — |
 | 422 | `pact-invalid`: the document is not a pact. `detail.pointer` is the JSON Pointer of the first problem in the document (for example `/interactions/2/request/method`) and `detail.message` says what is wrong there. | — |
 | 429 | `pact-publish-rate-limited`: over the workspace's publish budget; see `Retry-After`. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/for-verification` {#pacts-for-verification-by-query-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-for-verification-get}
+
+**The pacts a provider must verify (query-string form)**
+
+The `GET` form of `POST …/for-verification`, which the Pact Broker keeps for its first clients — and which the Rust verifier inside pact-js, pact-python and pact-go fetches before it posts its selectors. Same answer as the `POST`; the parameters are the broker's snake-case Rack query parameters: `provider_version_branch`, `provider_version_tags[]`, `include_pending_status`, `include_wip_pacts_since` and `consumer_version_selectors[][<field>]` (`main_branch`, `branch`, `matching_branch`, `fallback_branch`, `fallback_to_main_branch`, `tag`, `fallback_tag`, `latest`, `consumer`, `deployed`, `released`, `deployed_or_released`, `environment`). A field that repeats starts the next selector. Without parameters, the broker's default selectors apply. Prefer the `POST`. Requires `pacts:view`.
+
+Operation id: `pacts_for_verification_by_query_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__for_verification_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for the pacts a provider must verify (query-string form). | `application/hal+json` any |
+| 400 | `pact-selector-invalid`: a selector is ambiguous or malformed; see `detail.pointer`. | — |
+| 404 | `pacticipant-not-found`: the workspace has no such provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/for-verification` {#pacts-for-verification-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-for-verification-post}
 

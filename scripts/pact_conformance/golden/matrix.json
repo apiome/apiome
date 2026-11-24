@@ -1,0 +1,153 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/matrix?q[][pacticipant]=ConformanceWeb&q[][version]=1.0.0&latestby=cvp&environment=conformance-production"
+  },
+  "response": {
+    "body": {
+      "matrix": [
+        {
+          "consumer": {
+            "_links": {
+              "self": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb"
+              }
+            },
+            "name": "ConformanceWeb",
+            "version": {
+              "_links": {
+                "self": {
+                  "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/versions/1.0.0"
+                }
+              },
+              "branch": "main",
+              "branchVersions": [
+                {
+                  "_links": {
+                    "self": {
+                      "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/branches/main/versions/1.0.0",
+                      "name": "1.0.0",
+                      "title": "Version"
+                    }
+                  },
+                  "latest": true,
+                  "name": "main"
+                }
+              ],
+              "branches": [
+                {
+                  "_links": {
+                    "self": {
+                      "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/branches/main/versions/1.0.0",
+                      "name": "1.0.0",
+                      "title": "Version"
+                    }
+                  },
+                  "latest": true,
+                  "name": "main"
+                }
+              ],
+              "environments": [],
+              "number": "1.0.0",
+              "tags": []
+            }
+          },
+          "pact": {
+            "_links": {
+              "self": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/version/1.0.0"
+              }
+            },
+            "createdAt": "{timestamp}"
+          },
+          "provider": {
+            "_links": {
+              "self": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi"
+              }
+            },
+            "name": "ConformanceAPI",
+            "version": {
+              "_links": {
+                "self": {
+                  "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi/versions/1.0.0"
+                }
+              },
+              "branch": "main",
+              "branchVersions": [
+                {
+                  "_links": {
+                    "self": {
+                      "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi/branches/main/versions/1.0.0",
+                      "name": "1.0.0",
+                      "title": "Version"
+                    }
+                  },
+                  "latest": true,
+                  "name": "main"
+                }
+              ],
+              "branches": [
+                {
+                  "_links": {
+                    "self": {
+                      "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi/branches/main/versions/1.0.0",
+                      "name": "1.0.0",
+                      "title": "Version"
+                    }
+                  },
+                  "latest": true,
+                  "name": "main"
+                }
+              ],
+              "environments": [
+                {
+                  "_links": {
+                    "self": {
+                      "href": "{rest}/v1/tenants/acme-corp/pact-broker/environments/{uuid}"
+                    }
+                  },
+                  "displayName": "Production",
+                  "name": "conformance-production",
+                  "production": true,
+                  "uuid": "{uuid}"
+                }
+              ],
+              "number": "1.0.0",
+              "tags": []
+            }
+          },
+          "reason": {
+            "code": "verified",
+            "text": "verified"
+          },
+          "verificationResult": {
+            "_links": {
+              "self": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results/1"
+              }
+            },
+            "pending": true,
+            "success": true,
+            "verifiedAt": "{timestamp}"
+          }
+        }
+      ],
+      "notices": [
+        {
+          "code": "verified",
+          "text": "All required verification results are published and successful",
+          "type": "success"
+        }
+      ],
+      "summary": {
+        "deployable": true,
+        "failed": 0,
+        "reason": "All required verification results are published and successful",
+        "success": 1,
+        "unknown": 0
+      }
+    },
+    "status": 200
+  }
+}

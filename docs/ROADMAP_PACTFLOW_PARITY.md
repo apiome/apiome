@@ -142,7 +142,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.8 · [#6921](https://github.com/apiome/apiome/issues/6921) | Broker API conformance suite | Run the official `pact-broker` CLI and clients against Apiome in CI | `contracts`,`pact`,`devex`,`mvp` | Y | Y | M | apiome-rest, scripts |
 | PFX-1.9 | Contract webhooks | Pact events, templating, HMAC, execution log | `contracts`,`pact`,`rest`,`mvp` | Y | Y | L | apiome-rest, apiome-db |
 | PFX-1.10 · [#6923](https://github.com/apiome/apiome/issues/6923) | Badges and public status endpoints | SVG badges, shields JSON, browse-page hooks | `contracts`,`pact`,`rest` | Y | N | S | apiome-rest, apiome-browse |
 | PFX-1.11 · [#6924](https://github.com/apiome/apiome/issues/6924) | Pacticipant labels, version delete and cleanup | Labels, soft delete, selector-based retention | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest |
@@ -205,7 +204,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 - **Technical Stack:** SQL, FastAPI.
 - **Documentation:** `…/pact-broker/pending-and-wip.mdx`.
 
-**PFX-1.8 · #6921 Broker API conformance suite**
+**✅ PFX-1.8 · #6921 Broker API conformance suite — Complete**
 - **Problem:** "Drop-in" is a claim that must be tested.
 - **Solution/Scope:** CI job that boots the stack, then runs the official `pact-broker` CLI (Docker) through publish → verify → record-deployment → can-i-deploy, plus pact-js and pact-jvm consumer/provider examples. Golden transcripts of HAL responses checked in. Tracks supported broker API version; unsupported endpoints return a documented 501 with a pointer, never a silent 404.
 - **Acceptance Criteria:** Suite green in CI; a compatibility table page lists every Pact Broker endpoint as supported/partial/not planned.

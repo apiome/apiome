@@ -16,7 +16,8 @@ PFX-1.3 (#6916) adds what a verifier and a person ask for without knowing a vers
 
 * ``POST …/pact-broker/pacts/provider/{p}/for-verification`` — the pacts a provider build must
   verify, chosen by consumer-version selectors, each with the notices saying why
-  (:mod:`app.pact_selectors`);
+  (:mod:`app.pact_selectors`); also as ``GET`` with the selectors in the query string, which the
+  Rust verifier fetches first (PFX-1.8, #6921);
 * ``GET  …/consumer/{c}/latest/{tag}`` and ``…/consumer/{c}/branch/{branch}/latest`` — the latest
   pact of a pair from a tag or a branch;
 * ``GET  …/pacts/provider/{p}/latest`` and ``…/latest/{tag}`` — the latest pact of every consumer.
@@ -95,6 +96,7 @@ from .pact_selectors import (
     VerifiablePact,
     build_notices,
     encode_metadata,
+    for_verification_body_from_query,
     latest_per_consumer,
     parse_for_verification_request,
     select_verifiable_pacts,
@@ -1536,7 +1538,79 @@ def pacts_for_verification(
     """
     enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
     try:
-        query = parse_for_verification_request(_parse_json_body(raw))
+        body = _parse_json_body(raw)
+    except PactPublicationError as exc:
+        raise _http_error(exc) from exc
+    return _pacts_for_verification(request, tenant_slug, provider, auth_data, body)
+
+
+@router.get(
+    "/{tenant_slug}/pact-broker/pacts/provider/{provider}/for-verification",
+    response_class=HalJSONResponse,
+    summary="The pacts a provider must verify (query-string form)",
+    description=(
+        "The `GET` form of `POST …/for-verification`, which the Pact Broker keeps for its first "
+        "clients — and which the Rust verifier inside pact-js, pact-python and pact-go fetches "
+        "before it posts its selectors. Same answer as the `POST`; the parameters are the broker's "
+        "snake-case Rack query parameters: `provider_version_branch`, `provider_version_tags[]`, "
+        "`include_pending_status`, `include_wip_pacts_since` and "
+        "`consumer_version_selectors[][<field>]` (`main_branch`, `branch`, `matching_branch`, "
+        "`fallback_branch`, `fallback_to_main_branch`, `tag`, `fallback_tag`, `latest`, `consumer`, "
+        "`deployed`, `released`, `deployed_or_released`, `environment`). A field that repeats starts "
+        "the next selector. Without parameters, the broker's default selectors apply. Prefer the "
+        "`POST`. Requires `pacts:view`."
+    ),
+    responses={
+        400: {"description": "`pact-selector-invalid`: a selector is ambiguous or malformed; see `detail.pointer`."},
+        404: {"description": "`pacticipant-not-found`: the workspace has no such provider."},
+    },
+)
+def pacts_for_verification_by_query(
+    tenant_slug: str,
+    provider: str,
+    request: Request,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> HalJSONResponse:
+    """Return the pacts a provider build must verify, with the selectors in the query string.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        request: The request (its query string carries the selectors).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The same document as :func:`pacts_for_verification`.
+
+    Raises:
+        HTTPException: 400 for an ambiguous or malformed selector, 404 for an unknown provider,
+            403 without ``pacts:view``.
+    """
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    body = for_verification_body_from_query(request.query_params.multi_items())
+    return _pacts_for_verification(request, tenant_slug, provider, auth_data, body)
+
+
+def _pacts_for_verification(
+    request: Request, tenant_slug: str, provider: str, auth_data: Dict[str, Any], body: Any
+) -> HalJSONResponse:
+    """Select the pacts to verify — the shared work of the ``POST`` and ``GET`` forms.
+
+    Args:
+        request: The request (its origin shapes the links).
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        auth_data: The authenticated principal (``pacts:view`` already enforced).
+        body: The request in the ``POST`` body shape (``None`` for none).
+
+    Returns:
+        ``_embedded.pacts`` (one entry per distinct pact) and a ``self`` link.
+
+    Raises:
+        HTTPException: 400 for an ambiguous or malformed selector, 404 for an unknown provider.
+    """
+    try:
+        query = parse_for_verification_request(body)
         record, candidates = list_pact_candidates(db, _tenant_id(auth_data), provider)
     except (PactPublicationError, PacticipantValidationError) as exc:
         raise _http_error(exc) from exc

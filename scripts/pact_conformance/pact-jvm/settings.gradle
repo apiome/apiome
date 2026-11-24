@@ -1,0 +1,2 @@
+// pact-jvm against Apiome's Pact Broker API (PFX-1.8, #6921). Run by ../conformance.py in a gradle container.
+rootProject.name = 'pact-conformance-pact-jvm'

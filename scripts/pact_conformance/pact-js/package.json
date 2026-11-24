@@ -1,0 +1,9 @@
+{
+  "name": "pact-conformance-pact-js",
+  "private": true,
+  "type": "module",
+  "description": "pact-js against Apiome's Pact Broker API (PFX-1.8, #6921). Run by ../conformance.py in a node container.",
+  "dependencies": {
+    "@pact-foundation/pact": "17.1.4"
+  }
+}

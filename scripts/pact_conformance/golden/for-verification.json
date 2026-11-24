@@ -1,0 +1,71 @@
+{
+  "request": {
+    "body": {
+      "consumerVersionSelectors": [
+        {
+          "mainBranch": true
+        },
+        {
+          "deployedOrReleased": true
+        }
+      ],
+      "includePendingStatus": true,
+      "providerVersionBranch": "main"
+    },
+    "method": "POST",
+    "path": "/pacts/provider/ConformanceAPI/for-verification"
+  },
+  "response": {
+    "body": {
+      "_embedded": {
+        "pacts": [
+          {
+            "_links": {
+              "self": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/metadata/<s[][b]=main&s[][l]=true&s[][cv]={uuid}&p=true>",
+                "name": "Pact between ConformanceWeb (1.0.0) and ConformanceAPI"
+              }
+            },
+            "shortDescription": "latest from main branch",
+            "verificationProperties": {
+              "notices": [
+                {
+                  "text": "The pact at {rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5 is being verified because the pact content belongs to the consumer version matching the following criterion:\n    * latest version from the main branch 'main' (1.0.0)",
+                  "when": "before_verification"
+                },
+                {
+                  "text": "This pact is in pending state for this version of ConformanceAPI because a successful verification result for a version of ConformanceAPI from branch 'main' has not yet been published. If this verification fails, it will not cause the overall build to fail. Read more at https://docs.pact.io/go/pending",
+                  "when": "before_verification"
+                },
+                {
+                  "text": "This pact is still in pending state for any version of ConformanceAPI from branch 'main' as the successful verification results have not yet been published.",
+                  "when": "after_verification:success_true_published_false"
+                },
+                {
+                  "text": "This pact is still in pending state for any version of ConformanceAPI from branch 'main' as a successful verification result has not yet been published",
+                  "when": "after_verification:success_false_published_false"
+                },
+                {
+                  "text": "This pact is no longer in pending state for any version of ConformanceAPI from branch 'main', as a successful verification result has been published. If a verification for a version of ConformanceAPI fails in the future, it will fail the build. Read more at https://docs.pact.io/go/pending",
+                  "when": "after_verification:success_true_published_true"
+                },
+                {
+                  "text": "This pact is still in pending state for any version of ConformanceAPI from branch 'main' as a successful verification result has not yet been published",
+                  "when": "after_verification:success_false_published_true"
+                }
+              ],
+              "pending": true
+            }
+          }
+        ]
+      },
+      "_links": {
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/for-verification",
+          "title": "Pacts to be verified"
+        }
+      }
+    },
+    "status": 200
+  }
+}

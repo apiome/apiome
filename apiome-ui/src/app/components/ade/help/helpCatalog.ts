@@ -1317,6 +1317,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['matrix', 'retry-while-unknown', 'to-environment', 'ignore', 'verdict', 'contract required', 'pending pact', 'exit code'],
   },
   {
+    id: 'compatibility',
+    title: 'Pact Broker compatibility',
+    summary: 'Every Pact Broker endpoint and whether Apiome serves it, tested in CI.',
+    page: 'apiome-docs/docs/ship/pact-broker/compatibility.mdx',
+    section: 'reference',
+    keywords: ['conformance', '501', 'not implemented', 'endpoint', 'pact-cli', 'pact-js', 'pact-jvm', 'golden transcript', 'drop-in'],
+  },
+  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',

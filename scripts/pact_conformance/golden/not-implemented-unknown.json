@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/no/such/resource"
+  },
+  "response": {
+    "body": {
+      "detail": {
+        "code": "pact-broker-not-implemented",
+        "documentation": "https://docs.apiome.dev/ship/pact-broker/compatibility",
+        "message": "This path is not part of the Pact Broker API Apiome serves. The compatibility page lists every Pact Broker endpoint and its status.",
+        "pact_broker_version": "2.124.0",
+        "pointer": "/v1/tenants/acme-corp/pact-broker/no/such/resource"
+      }
+    },
+    "status": 501
+  }
+}
