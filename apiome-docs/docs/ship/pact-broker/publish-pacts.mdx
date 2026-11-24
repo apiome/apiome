@@ -10,8 +10,8 @@ Apiome speaks the Pact Broker's API for publishing and reading pacts. The `pact-
 **broker base URL** and an API key as the **token**.
 
 This page covers publication and retrieval. A provider's verifier fetches the pacts it must verify
-with [consumer-version selectors](./selectors.mdx). Verification results, environments and
-can-i-deploy are not yet available, and there is no screen for pacts yet.
+with [consumer-version selectors](./selectors.mdx) and [publishes its results](./verification-results.mdx).
+Environments and can-i-deploy are not yet available, and there is no screen for pacts yet.
 
 ## Before you start
 
@@ -135,6 +135,8 @@ The answer is the pact document as published, with two additions: `createdAt` an
 | `self` | This pact, by consumer version. |
 | `pb:pact-version` | The pact by its content. Its `name` is the SHA-256. Every consumer version that published the same pact has the same link. |
 | `pb:latest-pact-version` | The latest pact between this consumer and provider. |
+| `pb:publish-verification-results` | Where a verifier posts its result for this pact. See [Publish verification results](./verification-results.mdx). |
+| `pb:latest-verification-results` | The latest result published for this pact version. |
 | `pb:latest-tagged-pact-version` | A template: the latest pact between them from versions with a tag (`{tag}`). |
 | `pb:consumer`, `pb:provider` | The two pacticipants. |
 | `pb:consumer-version` | The consumer version, with its branches and tags. |

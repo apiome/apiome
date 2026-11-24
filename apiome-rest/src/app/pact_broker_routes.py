@@ -97,6 +97,7 @@ from .pacticipant import (
 from .pacticipant_store import get_pacticipant, get_version
 from .permissions import Action, Resource, enforce_permission
 from .rate_limit import FixedWindowRateLimiter
+from .verification_result import CODE_REPORT_NOT_FOUND, CODE_VERIFICATION_INVALID, CODE_VERIFICATION_NOT_FOUND
 
 __all__ = ["router"]
 
@@ -115,6 +116,9 @@ _STATUS_BY_CODE = {
     CODE_NOT_FOUND: 404,
     CODE_VERSION_NOT_FOUND: 404,
     CODE_SELECTOR_INVALID: 400,
+    CODE_VERIFICATION_INVALID: 422,
+    CODE_REPORT_NOT_FOUND: 422,
+    CODE_VERIFICATION_NOT_FOUND: 404,
 }
 
 _publish_limiter = FixedWindowRateLimiter()
@@ -312,8 +316,11 @@ def _pacticipant_document(base: str, pacticipant: PacticipantRecord) -> Dict[str
         pacticipant: The pacticipant.
 
     Returns:
-        Its name, repository and main branch, with a ``self`` link.
+        Its name, repository and main branch, with a ``self`` link and the two templates a Pact
+        verifier records the provider's branch and tags with before it publishes a result
+        (``pb:branch-version``, ``pb:version-tag``).
     """
+    url = _pacticipant_url(base, pacticipant.slug)
     return {
         "name": pacticipant.name,
         "displayName": pacticipant.name,
@@ -322,7 +329,17 @@ def _pacticipant_document(base: str, pacticipant: PacticipantRecord) -> Dict[str
         "createdAt": pacticipant.created_at,
         "updatedAt": pacticipant.updated_at,
         "_links": {
-            "self": {"title": "Pacticipant", "name": pacticipant.name, "href": _pacticipant_url(base, pacticipant.slug)}
+            "self": {"title": "Pacticipant", "name": pacticipant.name, "href": url},
+            "pb:branch-version": {
+                "title": "Get or add/create a version for a branch of this pacticipant",
+                "href": url + "/branches/{branch}/versions/{version}",
+                "templated": True,
+            },
+            "pb:version-tag": {
+                "title": "Get, create or delete a tag for a version of this pacticipant",
+                "href": url + "/versions/{version}/tags/{tag}",
+                "templated": True,
+            },
         },
     }
 
@@ -376,7 +393,7 @@ def _pact_title(pact: PactRecord) -> str:
     return f"Pact between {pact.consumer_name} ({pact.consumer_version}) and {pact.provider_name}"
 
 
-def _pact_document(base: str, pact: PactRecord) -> Dict[str, Any]:
+def _pact_document(base: str, pact: PactRecord, metadata: Optional[str] = None) -> Dict[str, Any]:
     """Render a stored pact the way a Pact Broker returns one.
 
     The published document is returned as it is, with three additions a client relies on: the two
@@ -385,11 +402,15 @@ def _pact_document(base: str, pact: PactRecord) -> Dict[str, Any]:
     Args:
         base: The broker base URL.
         pact: The stored pact.
+        metadata: The for-verification metadata segment the pact was fetched with, if any; the
+            ``pb:publish-verification-results`` link carries it, so the result can be traced back.
 
     Returns:
         The response body.
     """
     pair = _pair_url(base, pact.provider_slug, pact.consumer_slug)
+    pact_version = f"{pair}/pact-version/{pact.sha}"
+    publish_at = f"{pact_version}/metadata/{quote(metadata, safe='')}" if metadata else pact_version
     body = dict(pact.content)
     body.setdefault("consumer", {"name": pact.consumer_name})
     body.setdefault("provider", {"name": pact.provider_name})
@@ -414,7 +435,15 @@ def _pact_document(base: str, pact: PactRecord) -> Dict[str, Any]:
         "pb:pact-version": {
             "title": "Pact content version permalink",
             "name": pact.sha,
-            "href": f"{pair}/pact-version/{pact.sha}",
+            "href": pact_version,
+        },
+        "pb:publish-verification-results": {
+            "title": "Publish verification results",
+            "href": f"{publish_at}/verification-results",
+        },
+        "pb:latest-verification-results": {
+            "title": "Latest verification results",
+            "href": f"{pact_version}/verification-results/latest",
         },
         "pb:latest-pact-version": {
             "title": "Latest version of this pact",
@@ -645,7 +674,11 @@ def _publish_result(base: str, outcome: PublishOutcome) -> Dict[str, Any]:
 
 
 def _read(
-    request: Request, tenant_slug: str, auth_data: Dict[str, Any], load: Callable[[str], PactRecord]
+    request: Request,
+    tenant_slug: str,
+    auth_data: Dict[str, Any],
+    load: Callable[[str], PactRecord],
+    metadata: Optional[str] = None,
 ) -> HalJSONResponse:
     """Run one pact read behind ``pacts:view`` and render it.
 
@@ -654,6 +687,7 @@ def _read(
         tenant_slug: The tenant in the URL.
         auth_data: The authenticated principal.
         load: Reads the pact for a tenant id.
+        metadata: The for-verification metadata segment of the URL, if any.
 
     Returns:
         The pact as ``application/hal+json``.
@@ -666,7 +700,7 @@ def _read(
         pact = load(_tenant_id(auth_data))
     except (PactPublicationError, PacticipantValidationError) as exc:
         raise _http_error(exc) from exc
-    return HalJSONResponse(_pact_document(_base_url(request, tenant_slug), pact))
+    return HalJSONResponse(_pact_document(_base_url(request, tenant_slug), pact, metadata))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1084,7 +1118,8 @@ def read_pact_version(
     description=(
         "The same pact as `…/pact-version/{sha}`. The last segment is the metadata a "
         "for-verification response encodes in its links (which selectors chose the pact, for which "
-        "consumer version); it does not change the pact returned.\n\n" + _READ_NOTE
+        "consumer version, whether it was pending); it does not change the pact returned, and "
+        "`pb:publish-verification-results` carries it on, so the result records it.\n\n" + _READ_NOTE
     ),
 )
 def read_pact_version_with_metadata(
@@ -1094,7 +1129,7 @@ def read_pact_version_with_metadata(
     sha: str,
     request: Request,
     metadata: str = Path(
-        description="The selection metadata of a for-verification link (URL-safe base64); not needed to find the pact."
+        description="The selection metadata of a for-verification link (URL-safe base64); kept for the result."
     ),
     auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
 ) -> HalJSONResponse:
@@ -1105,7 +1140,7 @@ def read_pact_version_with_metadata(
         provider: The provider's handle, id or name.
         consumer: The consumer's handle, id or name.
         sha: The pact version's SHA-256.
-        metadata: The encoded selection metadata; not needed to find the pact.
+        metadata: The encoded selection metadata; passed on to ``pb:publish-verification-results``.
         request: The request.
         auth_data: The authenticated principal.
 
@@ -1115,8 +1150,13 @@ def read_pact_version_with_metadata(
     Raises:
         HTTPException: 404 for an unknown pacticipant or SHA, 403 without ``pacts:view``.
     """
-    del metadata  # Read back when a verification result is published to this URL (PFX-1.4).
-    return read_pact_version(tenant_slug, provider, consumer, sha, request, auth_data)
+    return _read(
+        request,
+        tenant_slug,
+        auth_data,
+        lambda tenant_id: get_pact_by_sha(db, tenant_id, provider, consumer, sha),
+        metadata,
+    )
 
 
 @router.get(

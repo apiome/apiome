@@ -1,0 +1,51 @@
+---
+slug: pact-broker-verification-results
+title: "Pact Broker: publish verification results"
+description: "Pact verifiers report back to Apiome whether each provider version honours each pact."
+authors: [apiome]
+---
+
+A provider's Pact verifier can now publish its results to Apiome. Every verified pact gets a
+result — passed or failed, with the outcome of each interaction — recorded against the provider
+version that ran it. These are the results can-i-deploy will answer from.
+
+{/* truncate */}
+
+**Turn it on in your verifier** with the same broker base URL and token:
+
+```js
+await new Verifier({
+  provider: 'Ledger API',
+  providerBaseUrl: 'http://localhost:8080',
+  pactBrokerUrl: 'https://api.apiome.dev/v1/tenants/acme/pact-broker',
+  pactBrokerToken: process.env.APIOME_API_KEY,
+  consumerVersionSelectors: [{ mainBranch: true }, { matchingBranch: true }],
+  publishVerificationResult: true,
+  providerVersion: process.env.GIT_COMMIT,
+  providerVersionBranch: process.env.GIT_BRANCH,
+}).verifyProvider();
+```
+
+The token needs **Pacts** → **Create**, which the **Editor** role has.
+
+**What you get**, through the [Pact Broker API](/reference/rest/pact-broker):
+
+- **Results are kept as sent.** A failed result keeps every interaction's mismatches, the build
+  URL and the verifier's name and version.
+- **Results never change.** They are numbered 1, 2, 3 … per pact version; publishing again adds
+  one.
+- **The provider branch is recorded.** The verifier records the provider version on its branch
+  just before publishing, and the result names that branch. A provider version that Apiome did not
+  know yet is registered.
+- **Read them back**: the latest result of a pact version, or one by its number.
+- **Link an Apiome provider verification report** with `providerVerificationReportId`, instead of
+  copying it.
+
+**Not yet available:** can-i-deploy, and taking a pact out of the pending state after a successful
+result — every pact is still reported pending.
+
+**For operators.** Run `apiome-db migrate` to apply `V434` (one new table, and a unique index on
+`provider_verification_report (id, tenant_id)`).
+
+Read [Publish verification results](/ship/pact-broker/verification-results) for the steps and the
+error codes.
