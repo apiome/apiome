@@ -39,8 +39,15 @@ export interface SqlStatement {
   values: unknown[];
 }
 
-/** Rows past this many are not counted or paged; the UI says "more than N" and asks for a narrower query. */
-export const SEARCH_HIT_CAP = 5000;
+/**
+ * Hits of one kind past this many are not counted or paged; the UI says "more than N" and asks for
+ * a narrower query.
+ *
+ * The cap is per kind (DBP-1.27, #7210). It used to be one cap of 5,000 on the union of all twelve
+ * kinds, taken before ranking, so a broad term could fill it with properties and drop every
+ * organization, project and operation that matched. Each kind now keeps up to its own cap.
+ */
+export const SEARCH_KIND_CAP = 1000;
 
 /** The public gate, for a version `v` of a project `p` of a tenant `t`. */
 export const PUBLIC_VERSION_GATES = `v.published = true
@@ -549,6 +556,24 @@ const SCOPE_CTE_COLUMNS: ScopeColumns = {
  * @returns The predicates, to be joined with `AND`; empty when the request narrows nothing.
  */
 export function scopeFilterClauses(request: SearchRequest, params: Params, cols: ScopeColumns): string[] {
+  return [...ownerFilterClauses(request, params, cols), ...versionFilterClauses(request, params, cols)];
+}
+
+/**
+ * The scope filters that name an owner — `org:` and `project:` — as predicates over tenant and
+ * project columns. They hold for every version of a project, so a statement can apply them before
+ * it looks at any version.
+ *
+ * @param request - The resolved request.
+ * @param params - The statement's parameter registry.
+ * @param cols - The expressions to filter on (only the tenant and project ones are read).
+ * @returns The predicates, to be joined with `AND`.
+ */
+export function ownerFilterClauses(
+  request: SearchRequest,
+  params: Params,
+  cols: Pick<ScopeColumns, 'tenantSlug' | 'tenantName' | 'projectSlug' | 'projectName'>
+): string[] {
   const clauses: string[] = [];
   if (request.orgs.length > 0) {
     const slot = params.add(request.orgs);
@@ -558,6 +583,24 @@ export function scopeFilterClauses(request: SearchRequest, params: Params, cols:
     const slot = params.add(request.projects);
     clauses.push(`(${cols.projectSlug} = ANY(${slot}::text[]) OR LOWER(${cols.projectName}) = ANY(${slot}::text[]))`);
   }
+  return clauses;
+}
+
+/**
+ * The scope filters that depend on the version itself: its label, format, paradigm, tags and
+ * publish date.
+ *
+ * @param request - The resolved request.
+ * @param params - The statement's parameter registry.
+ * @param cols - The expressions to filter on (only the version ones are read).
+ * @returns The predicates, to be joined with `AND`.
+ */
+export function versionFilterClauses(
+  request: SearchRequest,
+  params: Params,
+  cols: Pick<ScopeColumns, 'versionPk' | 'versionSlug' | 'publishedAt' | 'sourceFormat' | 'paradigm'>
+): string[] {
+  const clauses: string[] = [];
   for (const fragment of request.versions) {
     clauses.push(`${cols.versionSlug} ILIKE ${params.add(`%${escapeLikePattern(fragment)}%`)} ESCAPE '\\'`);
   }
@@ -578,11 +621,60 @@ export function scopeFilterClauses(request: SearchRequest, params: Params, cols:
   return clauses;
 }
 
-/** The `sv` filter of the search statement: latest version per project unless asked otherwise, then the scope filters. */
+/** The tenant and project columns of the `scope` CTE's own FROM clause (tenant `t`, project `p`). */
+const SCOPE_OWNER_COLUMNS = {
+  tenantSlug: 't.slug',
+  tenantName: 't.name',
+  projectSlug: 'p.slug',
+  projectName: 'p.name',
+};
+
+/**
+ * The `scope` CTE: the versions a search runs over.
+ *
+ * It starts from `apiome.browse_public_projects` (V431) — one row per public project — and applies
+ * the `org:` / `project:` filters there, before any version is read (DBP-1.27). By default each
+ * project contributes its latest version, which the summary row names, so the scope is one
+ * primary-key lookup per project in range. It used to number every public version of the catalog
+ * with `ROW_NUMBER()` on every search and filter afterwards. With `all=1` every public version of
+ * the projects in range is in scope.
+ *
+ * @param request - The resolved request.
+ * @param params - The statement's parameter registry.
+ * @returns The CTE body.
+ */
+function scopeSql(request: SearchRequest, params: Params): string {
+  const owner = ownerFilterClauses(request, params, SCOPE_OWNER_COLUMNS);
+  const versionJoin = request.allVersions
+    ? `JOIN apiome.versions v ON v.project_id = b.project_id
+                             AND v.published = true
+                             AND v.visibility = 'public'
+                             AND v.deleted_at IS NULL`
+    : 'JOIN apiome.versions v ON v.id = b.latest_version_id';
+  return `SELECT v.id AS version_pk,
+             v.version_id AS version_slug,
+             v.published_at,
+             v.project_id,
+             p.slug AS project_slug,
+             p.name AS project_name,
+             p.description AS project_description,
+             t.id AS tenant_pk,
+             t.slug AS tenant_slug,
+             t.name AS tenant_name,
+             t.description AS tenant_description,
+             LOWER(TRIM(COALESCE(v.source_format, ''))) AS source_format,
+             LOWER(TRIM(COALESCE(v.protocol, ''))) AS paradigm
+      FROM apiome.browse_public_projects b
+      JOIN apiome.tenants t ON t.id = b.tenant_id
+      JOIN apiome.projects p ON p.id = b.project_id
+      ${versionJoin}
+      WHERE t.deleted_at IS NULL
+        AND p.deleted_at IS NULL${owner.map((clause) => `\n        AND ${clause}`).join('')}`;
+}
+
+/** The `sv` filter of the search statement: the scope filters that depend on the version. */
 function scopeFilters(request: SearchRequest, params: Params): string {
-  const clauses: string[] = [];
-  if (!request.allVersions) clauses.push('sc.version_rank = 1');
-  clauses.push(...scopeFilterClauses(request, params, SCOPE_CTE_COLUMNS));
+  const clauses = versionFilterClauses(request, params, SCOPE_CTE_COLUMNS);
   return clauses.length > 0 ? clauses.join('\n      AND ') : 'TRUE';
 }
 
@@ -635,9 +727,16 @@ export interface CatalogSearchSqlOptions {
   /**
    * Whether to compute the filter facets (organizations, methods, formats, paradigms, severities,
    * top projects). Default true. With false those columns come back as empty arrays; the totals,
-   * the per-kind counts (the scope tabs need them on every page) and the rows are unaffected.
+   * the per-kind counts and the rows are unaffected.
    */
   facets?: boolean;
+  /**
+   * Whether to count the hits of the kinds the request did *not* ask for (the scope tabs show a
+   * count per kind). Default true. With false only the requested kinds run at all, `kind_facets`
+   * lists those kinds only and `total_all_kinds` equals `total`: the caller already has the other
+   * counts (they are the same on every page of a search).
+   */
+  otherKindCounts?: boolean;
 }
 
 /**
@@ -653,46 +752,39 @@ export function buildCatalogSearchSql(request: SearchRequest, options: CatalogSe
   const runnable = applicableKinds(request);
   if (runnable.length === 0 || !request.kinds.some((kind) => runnable.includes(kind))) return null;
 
-  const members = runnable.map((kind) => MEMBERS[kind]({ request, params }));
-  const kindsSlot = params.add(request.kinds);
+  // DBP-1.27: only the kinds the request asks for produce rows. The others are run only to be
+  // counted (for the scope tabs), and not at all when the caller already has those counts. Every
+  // kind is capped on its own, so no kind can crowd another out.
+  const scope = scopeSql(request, params);
+  const svFilter = scopeFilters(request, params);
+  const capSlot = params.add(SEARCH_KIND_CAP);
+  const capped = (kind: HitKind) =>
+    `      (SELECT ${HIT_COLUMNS.join(', ')} FROM (\n${MEMBERS[kind]({ request, params })}\n      ) member LIMIT ${capSlot})`;
+  const wanted = runnable.filter((kind) => request.kinds.includes(kind));
+  const others = options.otherKindCounts === false ? [] : runnable.filter((kind) => !request.kinds.includes(kind));
+  const members = wanted.map(capped);
+  const otherCounts = others.map(
+    (kind) =>
+      `      SELECT '${kind}'::text AS hit_type, COUNT(*)::int AS c FROM (\n${MEMBERS[kind]({ request, params })}\n      LIMIT ${capSlot}) other`
+  );
   const perSlot = params.add(request.perPage);
   const offsetSlot = params.add((request.page - 1) * request.perPage);
-  const capSlot = params.add(SEARCH_HIT_CAP);
 
   const text = `
     WITH scope AS (
-      SELECT v.id AS version_pk,
-             v.version_id AS version_slug,
-             v.published_at,
-             v.project_id,
-             p.slug AS project_slug,
-             p.name AS project_name,
-             p.description AS project_description,
-             t.id AS tenant_pk,
-             t.slug AS tenant_slug,
-             t.name AS tenant_name,
-             t.description AS tenant_description,
-             LOWER(TRIM(COALESCE(v.source_format, ''))) AS source_format,
-             LOWER(TRIM(COALESCE(v.protocol, ''))) AS paradigm,
-             ROW_NUMBER() OVER (PARTITION BY v.project_id
-                                ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC) AS version_rank
-      FROM apiome.versions v
-      JOIN apiome.projects p ON p.id = v.project_id
-      JOIN apiome.tenants t ON t.id = p.tenant_id
-      WHERE ${PUBLIC_VERSION_GATES}
+      ${scope}
     ),
     sv AS (
       SELECT sc.* FROM scope sc
-      WHERE ${scopeFilters(request, params)}
-    ),
-    hits_all AS (
-      SELECT ${HIT_COLUMNS.join(', ')} FROM (
-${members.join('\n      UNION ALL\n')}
-      ) members
-      LIMIT ${capSlot}
+      WHERE ${svFilter}
     ),
     hits AS (
-      SELECT * FROM hits_all WHERE hit_type = ANY(${kindsSlot}::text[])
+${members.join('\n      UNION ALL\n')}
+    ),
+    kind_counts AS (
+      SELECT k.hit_type, k.c FROM (
+      SELECT hit_type, COUNT(*)::int AS c FROM hits GROUP BY 1${otherCounts.map((sql) => `\n      UNION ALL\n${sql}`).join('')}
+      ) k WHERE k.c > 0
     ),
     page AS (
       SELECT h.*, ROW_NUMBER() OVER (ORDER BY ${orderBySql(request.sort)}) AS ord
@@ -716,9 +808,9 @@ ${members.join('\n      UNION ALL\n')}
     )
     SELECT
       (SELECT COUNT(*)::int FROM hits) AS total,
-      (SELECT COUNT(*)::int FROM hits_all) AS total_all_kinds,
-      COALESCE((SELECT json_agg(json_build_object('value', x.hit_type, 'count', x.c) ORDER BY x.c DESC, x.hit_type)
-                FROM (SELECT hit_type, COUNT(*)::int AS c FROM hits_all GROUP BY 1) x), '[]'::json) AS kind_facets,
+      (SELECT COALESCE(SUM(kc.c), 0)::int FROM kind_counts kc) AS total_all_kinds,
+      COALESCE((SELECT json_agg(json_build_object('value', kc.hit_type, 'count', kc.c) ORDER BY kc.c DESC, kc.hit_type)
+                FROM kind_counts kc), '[]'::json) AS kind_facets,
 ${withFacets ? FILTER_FACETS_SQL : NO_FILTER_FACETS_SQL}
       COALESCE((SELECT json_agg(to_jsonb(pf) - 'ord' ORDER BY pf.ord) FROM page_facts pf), '[]'::json) AS rows
   `;

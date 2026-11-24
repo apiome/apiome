@@ -81,15 +81,31 @@ export const PORTAL_PRODUCT_MEMBERS_SQL = `
          AND (p.id IS NOT NULL OR e.id IS NOT NULL)
        ORDER BY (m.member_kind = 'mcp_server'), lower(COALESCE(p.name, e.name, '')), m.created_at, m.id`;
 
-/** `$1` project ids → each project's public published version labels, newest publish first. */
+/** Most versions of one project a `project_version` member's selector is matched against. */
+export const MEMBER_VERSION_SCAN_LIMIT = 200;
+
+/**
+ * `$1` project ids, `$2` how many versions each needs (same order) → each project's newest public
+ * published version labels, newest publish first.
+ *
+ * Bounded per project (DBP-1.27, #7210): a `project_latest` member needs one label and a
+ * `project_version` member the newest {@link MEMBER_VERSION_SCAN_LIMIT} to match its selector
+ * against, where the statement used to return every public version of every member project.
+ */
 export const MEMBER_PUBLIC_VERSIONS_SQL = `
-       SELECT v.project_id::text AS project_id, v.version_id AS label
-       FROM apiome.versions v
-       WHERE v.project_id = ANY($1::uuid[])
-         AND v.published = true
-         AND v.visibility = 'public'
-         AND v.deleted_at IS NULL
-       ORDER BY v.project_id, v.published_at DESC NULLS LAST, v.created_at DESC`;
+       SELECT m.project_id::text AS project_id, v.label
+       FROM unnest($1::uuid[], $2::int[]) AS m(project_id, wanted)
+       CROSS JOIN LATERAL (
+         SELECT mv.version_id AS label, mv.published_at, mv.created_at
+         FROM apiome.versions mv
+         WHERE mv.project_id = m.project_id
+           AND mv.published = true
+           AND mv.visibility = 'public'
+           AND mv.deleted_at IS NULL
+         ORDER BY mv.published_at DESC NULLS LAST, mv.created_at DESC
+         LIMIT m.wanted
+       ) v
+       ORDER BY m.project_id, v.published_at DESC NULLS LAST, v.created_at DESC`;
 
 /**
  * `$1` tenant id, `$2` product id → the portal plans, by name. Only the public columns are selected:

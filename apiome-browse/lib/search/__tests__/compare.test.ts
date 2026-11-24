@@ -9,6 +9,9 @@ import {
   toggleCompare,
   versionMenuEntries,
   type HitVersion,
+  HIT_VERSIONS_ALL_CAP,
+  HIT_VERSIONS_CAP,
+  moreVersionsCount,
 } from '../compare';
 import type { CatalogSearchHit } from '../hits';
 
@@ -178,7 +181,7 @@ describe('buildHitVersionsSql', () => {
     expect(buildHitVersionsSql([hit({ hit_type: 'project' })])).toBeNull();
   });
 
-  it('binds eligible rows as six parallel arrays behind the public gates', () => {
+  it('binds eligible rows as six parallel arrays and a per-hit limit, behind the public gates', () => {
     const schema = hit({ hit_id: 'schema:5', hit_type: 'schema', method: null, path: null, anchor_key: 'Order' });
     const versionHit = hit({ hit_id: 'version:7', hit_type: 'version', method: null, path: null });
     const statement = buildHitVersionsSql([v1, hit({ hit_id: 'p', hit_type: 'project' }), schema, versionHit]);
@@ -190,12 +193,33 @@ describe('buildHitVersionsSql', () => {
       ['operation', 'schema', 'version'],
       ['POST', null, null],
       ['/orders', 'Order', null],
+      HIT_VERSIONS_CAP,
     ]);
     expect(statement!.text).toContain("v.visibility = 'public'");
     expect(statement!.text).toContain('v.published = true');
     expect(statement!.text).toContain('v.deleted_at IS NULL');
     expect(statement!.text).toMatch(/ORDER BY pv\.published_at DESC NULLS LAST/);
-    // Only $1..$6 are bound, whatever the page size.
-    expect(statement!.text.match(/\$\d+/g)?.every((p) => Number(p.slice(1)) <= 6)).toBe(true);
+    // Only $1..$7 are bound, whatever the page size.
+    expect(statement!.text.match(/\$\d+/g)?.every((p) => Number(p.slice(1)) <= 7)).toBe(true);
+    expect(statement!.text).toContain('t.deleted_at IS NULL');
+    expect(statement!.text).toContain('p.deleted_at IS NULL');
+  });
+
+  it('reads a bounded number of versions per hit, and the project total from the summary (DBP-1.27)', () => {
+    const statement = buildHitVersionsSql([v1])!;
+    expect(statement.text).toContain('JOIN apiome.browse_public_projects b ON b.project_id = p.id');
+    expect(statement.text).toContain('SELECT w.hit_id, w.version_count,');
+    expect(statement.text).toMatch(/ORDER BY v\.published_at DESC NULLS LAST, v\.created_at DESC\s+LIMIT \$7/);
+    // The "show all" request asks for the long list of one hit.
+    expect(buildHitVersionsSql([v1], HIT_VERSIONS_ALL_CAP)!.values[6]).toBe(HIT_VERSIONS_ALL_CAP);
+    expect(HIT_VERSIONS_CAP).toBeLessThan(HIT_VERSIONS_ALL_CAP);
+  });
+
+  it('counts the versions a menu does not list', () => {
+    const listed = [{ version_slug: '2.0.0', published_at: null, has_anchor: null }];
+    expect(moreVersionsCount(listed, 1)).toBe(0);
+    expect(moreVersionsCount(listed, 45)).toBe(44);
+    expect(moreVersionsCount(undefined, undefined)).toBe(0);
+    expect(moreVersionsCount(listed, 0)).toBe(0);
   });
 });

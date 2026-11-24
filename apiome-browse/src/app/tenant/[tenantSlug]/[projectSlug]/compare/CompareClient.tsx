@@ -32,7 +32,10 @@ type ViewMode = 'side-by-side' | 'unified';
 interface CompareClientProps {
   project: Project;
   versions: Version[];
-  /** Stored publish changelog rows for the project, newest first (CTG-3.2, #4476). */
+  /**
+   * The stored publish changelog of the pair in the URL (CTG-3.2, #4476), without its entries:
+   * at most one row (DBP-1.27). Empty when no stored changelog compares exactly that pair.
+   */
   changelogs: PublicVersionChangelogRow[];
   tenantSlug: string;
   projectSlug: string;

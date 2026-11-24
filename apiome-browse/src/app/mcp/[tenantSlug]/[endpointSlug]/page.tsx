@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getPublicMcpEndpointDetail } from '../../../../../lib/db/helper';
+import { loadMcpEndpointPage } from '../../../../../lib/db/routeLoaders';
 import { McpEndpointDetailClient } from './McpEndpointDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,7 @@ export default async function McpEndpointDetailPage({
   params: Promise<{ tenantSlug: string; endpointSlug: string }>;
 }) {
   const { tenantSlug, endpointSlug } = await params;
-  const detail = await getPublicMcpEndpointDetail(tenantSlug, endpointSlug);
+  const detail = await loadMcpEndpointPage(tenantSlug, endpointSlug);
 
   if (!detail) {
     notFound();

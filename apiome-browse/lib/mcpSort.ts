@@ -37,6 +37,9 @@ export function coerceSortMode(raw: string | null | undefined, query: string): M
   return resolveDefaultSortMode(query);
 }
 
+/** Endpoints on one page of the public MCP index (DBP-1.27, #7210). */
+export const MCP_INDEX_PAGE_SIZE = 100;
+
 /**
  * The `ORDER BY` tail for a catalog query in the given mode. The grade glyph (A–F) is the lead
  * signal, so grade ascends (A first) with ungraded endpoints last; `score` then breaks ties within

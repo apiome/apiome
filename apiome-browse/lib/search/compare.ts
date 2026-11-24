@@ -143,8 +143,25 @@ export interface HitVersion {
   has_anchor: boolean | null;
 }
 
-/** The lookup result: every eligible hit on the page → its project's published versions, newest first. */
+/**
+ * The lookup result: every eligible hit on the page → its project's newest published versions,
+ * newest first (at most {@link HIT_VERSIONS_CAP}).
+ */
 export type HitVersionsMap = Record<string, HitVersion[]>;
+
+/** Every eligible hit on the page → how many published public versions its project has in all. */
+export type HitVersionCounts = Record<string, number>;
+
+/**
+ * How many more versions a hit's menu could list than it does.
+ *
+ * @param versions The versions the lookup returned for the hit.
+ * @param total The project's published public versions in all.
+ * @returns The number not listed; 0 when the menu is complete.
+ */
+export function moreVersionsCount(versions: readonly HitVersion[] | undefined, total: number | undefined): number {
+  return Math.max(0, (total ?? 0) - (versions?.length ?? 0));
+}
 
 /** One entry of a hit's version menu. */
 export interface VersionMenuEntry {
@@ -192,24 +209,32 @@ export function versionMenuEntries(hit: CatalogSearchHit, versions: readonly Hit
     });
 }
 
-const LOOKUP_GATES = `v.published = true
-        AND v.visibility = 'public'
-        AND t.deleted_at IS NULL
-        AND p.deleted_at IS NULL
-        AND v.deleted_at IS NULL`;
+/** Versions a hit's menu lists with the page; the rest load when the visitor asks (DBP-1.27). */
+export const HIT_VERSIONS_CAP = 20;
+
+/** Most versions a hit's menu ever lists. */
+export const HIT_VERSIONS_ALL_CAP = 500;
 
 /**
  * The one statement behind the version menus of a page of results: for every eligible hit, its
- * project's published public versions (newest first) and whether the hit's operation or schema
- * exists in each.
+ * project's newest published public versions (newest first), whether the hit's operation or schema
+ * exists in each, and how many public versions the project has in all.
  *
- * Parallel arrays bind the hits, so the statement has six parameters whatever the page size.
+ * Each hit's project is resolved through `apiome.browse_public_projects`, and only `limit` versions
+ * per hit are read and probed (DBP-1.27, #7210) — the statement used to return every public version
+ * of every hit's project, with an `EXISTS` probe for each.
+ *
+ * Parallel arrays bind the hits, so the statement has seven parameters whatever the page size.
  *
  * @param rows The page's rows; ineligible rows are skipped.
+ * @param limit Most versions per hit.
  * @returns The statement, or null when no row is eligible. Each result row is
- *   `{ hit_id, versions: HitVersion[] }`.
+ *   `{ hit_id, version_count, versions: HitVersion[] }`.
  */
-export function buildHitVersionsSql(rows: readonly CatalogSearchHit[]): SqlStatement | null {
+export function buildHitVersionsSql(
+  rows: readonly CatalogSearchHit[],
+  limit: number = HIT_VERSIONS_CAP
+): SqlStatement | null {
   const eligible = rows.filter(isCompareEligible);
   if (eligible.length === 0) return null;
   const values: unknown[] = [
@@ -219,37 +244,44 @@ export function buildHitVersionsSql(rows: readonly CatalogSearchHit[]): SqlState
     eligible.map((h) => h.hit_type),
     eligible.map((h) => (h.hit_type === 'operation' ? (h.method ?? '').toUpperCase() : null)),
     eligible.map((h) => (h.hit_type === 'operation' ? h.path : h.hit_type === 'schema' ? h.anchor_key : null)),
+    limit,
   ];
   const text = `
     WITH wanted AS (
       SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[])
         AS w(hit_id, tenant_slug, project_slug, hit_type, method, item_key)
     ),
-    pv AS (
-      SELECT t.slug AS tenant_slug, p.slug AS project_slug, v.id AS version_pk,
-             v.version_id AS version_slug, v.published_at, v.created_at
-      FROM apiome.versions v
-      JOIN apiome.projects p ON p.id = v.project_id
-      JOIN apiome.tenants t ON t.id = p.tenant_id
-      WHERE ${LOOKUP_GATES}
-        AND (t.slug, p.slug) IN (SELECT DISTINCT tenant_slug, project_slug FROM wanted)
+    located AS (
+      SELECT w.hit_id, w.hit_type, w.method, w.item_key, p.id AS project_id, b.version_count
+      FROM wanted w
+      JOIN apiome.tenants t ON t.slug = w.tenant_slug AND t.deleted_at IS NULL
+      JOIN apiome.projects p ON p.tenant_id = t.id AND p.slug = w.project_slug AND p.deleted_at IS NULL
+      JOIN apiome.browse_public_projects b ON b.project_id = p.id
     )
-    SELECT w.hit_id,
-           json_agg(json_build_object(
-             'version_slug', pv.version_slug,
-             'published_at', pv.published_at,
-             'has_anchor', CASE
-               WHEN w.hit_type = 'operation' THEN EXISTS (
-                 SELECT 1 FROM apiome.version_path vp
-                 JOIN apiome.path_operation po ON po.version_path_id = vp.id
-                 WHERE vp.version_id = pv.version_pk AND vp.pathname = w.item_key AND UPPER(po.operation) = w.method)
-               WHEN w.hit_type = 'schema' THEN EXISTS (
-                 SELECT 1 FROM apiome.classes c
-                 WHERE c.version_id = pv.version_pk AND c.deleted_at IS NULL AND c.name = w.item_key)
-               ELSE NULL END
-           ) ORDER BY pv.published_at DESC NULLS LAST, pv.created_at DESC) AS versions
-    FROM wanted w
-    JOIN pv ON pv.tenant_slug = w.tenant_slug AND pv.project_slug = w.project_slug
-    GROUP BY w.hit_id`;
+    SELECT w.hit_id, w.version_count,
+           (SELECT json_agg(json_build_object(
+                     'version_slug', pv.version_slug,
+                     'published_at', pv.published_at,
+                     'has_anchor', CASE
+                       WHEN w.hit_type = 'operation' THEN EXISTS (
+                         SELECT 1 FROM apiome.version_path vp
+                         JOIN apiome.path_operation po ON po.version_path_id = vp.id
+                         WHERE vp.version_id = pv.version_pk AND vp.pathname = w.item_key AND UPPER(po.operation) = w.method)
+                       WHEN w.hit_type = 'schema' THEN EXISTS (
+                         SELECT 1 FROM apiome.classes c
+                         WHERE c.version_id = pv.version_pk AND c.deleted_at IS NULL AND c.name = w.item_key)
+                       ELSE NULL END
+                   ) ORDER BY pv.published_at DESC NULLS LAST, pv.created_at DESC)
+              FROM (
+                SELECT v.id AS version_pk, v.version_id AS version_slug, v.published_at, v.created_at
+                FROM apiome.versions v
+                WHERE v.project_id = w.project_id
+                  AND v.published = true
+                  AND v.visibility = 'public'
+                  AND v.deleted_at IS NULL
+                ORDER BY v.published_at DESC NULLS LAST, v.created_at DESC
+                LIMIT $7
+              ) pv) AS versions
+    FROM located w`;
   return { text, values };
 }

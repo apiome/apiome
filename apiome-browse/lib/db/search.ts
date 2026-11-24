@@ -12,13 +12,20 @@
 
 import { unstable_noStore as noStore } from 'next/cache';
 import connectionPool, { isStatementTimeout } from './db';
+import { dbQuery } from './query';
 import { searchFacetCache } from './ttlCache';
 import { emptySearchResponse, type CatalogSearchHit, type CatalogSearchResponse, type FacetBucket, type ProjectFacet } from '../search/hits';
 import { SearchTimeoutError } from '../search/errors';
 import { isEmptyRequest, toSearchParams, toUrlState, type SearchRequest } from '../search/params';
-import { SEARCH_HIT_CAP, buildCatalogSearchSql } from '../search/sql';
+import { SEARCH_KIND_CAP, buildCatalogSearchSql } from '../search/sql';
 import { SUGGEST_MEMBER_CAP, buildSuggestSql } from '../search/suggestSql';
-import { buildHitVersionsSql, type HitVersion, type HitVersionsMap } from '../search/compare';
+import {
+  HIT_VERSIONS_ALL_CAP,
+  buildHitVersionsSql,
+  type HitVersion,
+  type HitVersionCounts,
+  type HitVersionsMap,
+} from '../search/compare';
 
 interface SearchRow {
   total: number;
@@ -35,15 +42,6 @@ interface SearchRow {
 
 type SearchFacets = CatalogSearchResponse['facets'];
 
-const NO_FILTER_FACETS: Omit<SearchFacets, 'kinds'> = {
-  orgs: [],
-  methods: [],
-  formats: [],
-  paradigms: [],
-  severities: [],
-  projects: [],
-};
-
 /** The filter facets of a result row (everything in the rail except the per-kind counts). */
 function filterFacetsOf(row: SearchRow): Omit<SearchFacets, 'kinds'> {
   return {
@@ -56,6 +54,13 @@ function filterFacetsOf(row: SearchRow): Omit<SearchFacets, 'kinds'> {
   };
 }
 
+/** What a search's first page computes for all its pages: the filter facets and the per-kind counts. */
+interface CachedSearchFacets {
+  filters: Omit<SearchFacets, 'kinds'>;
+  kinds: FacetBucket[];
+  totalAllKinds: number;
+}
+
 /** A key for "this search, whatever the page": the request's URL form without `page`. */
 function facetCacheKey(request: SearchRequest): string {
   return toSearchParams(toUrlState({ ...request, page: 1 }));
@@ -64,11 +69,12 @@ function facetCacheKey(request: SearchRequest): string {
 /**
  * Execute a search request.
  *
- * The filter facets describe the whole result set, so they are the same on every page. They are
- * computed with the first page and kept in the directory cache; a later page of the same search
- * reuses them and its statement skips the facet aggregates. A later page that arrives with nothing
- * cached (a shared deep link, another Browse instance, an expired entry) computes them itself, so
- * the rail is never empty.
+ * The filter facets and the per-kind counts (the scope tabs) describe the whole result set, so they
+ * are the same on every page. They are computed with the first page and kept in the facet cache; a
+ * later page of the same search reuses them, and its statement skips the facet aggregates and runs
+ * only the kinds it lists (DBP-1.27). A later page that arrives with nothing cached (a shared deep
+ * link, another Browse instance, an expired entry) computes them itself, so the rail and the tabs
+ * are never empty.
  *
  * @param request The resolved request.
  * @returns The response; empty (not an error) for an empty request, an un-runnable combination of
@@ -83,32 +89,36 @@ export async function runCatalogSearch(request: SearchRequest): Promise<CatalogS
   const started = performance.now();
   const key = facetCacheKey(request);
   try {
-    /** Run the statement, with or without the facet aggregates. */
+    /** Run the statement, with or without the facet aggregates and the other kinds' counts. */
     const run = async (facets: boolean): Promise<SearchRow | undefined> => {
-      const statement = buildCatalogSearchSql(request, { facets });
+      const statement = buildCatalogSearchSql(request, { facets, otherKindCounts: facets });
       if (!statement) return undefined;
       const result = await connectionPool.query<SearchRow>(statement.text, statement.values);
       return result.rows[0];
     };
 
     // Page 1 always computes the facets; a later page reuses them when this process has them.
-    const cached = request.page > 1 ? searchFacetCache.peek<Omit<SearchFacets, 'kinds'>>(key) : undefined;
+    const cached = request.page > 1 ? searchFacetCache.peek<CachedSearchFacets>(key) : undefined;
     const row = await run(!cached);
-    const filterFacets = cached?.value ?? (row ? filterFacetsOf(row) : NO_FILTER_FACETS);
-    if (row && !cached) searchFacetCache.store(key, filterFacets);
     if (!row) return emptySearchResponse(request.page, request.perPage);
+    const facets: CachedSearchFacets = cached?.value ?? {
+      filters: filterFacetsOf(row),
+      kinds: row.kind_facets ?? [],
+      totalAllKinds: Number(row.total_all_kinds) || 0,
+    };
+    if (!cached) searchFacetCache.store(key, facets);
 
     const total = Number(row.total) || 0;
-    const totalAllKinds = Number(row.total_all_kinds) || 0;
     return {
       total,
-      totalAllKinds,
-      truncated: totalAllKinds >= SEARCH_HIT_CAP,
+      totalAllKinds: facets.totalAllKinds,
+      // A kind that reached its cap has more hits than were counted.
+      truncated: facets.kinds.some((bucket) => bucket.count >= SEARCH_KIND_CAP),
       page: request.page,
       perPage: request.perPage,
       pageCount: Math.max(0, Math.ceil(total / request.perPage)),
       rows: Array.isArray(row.rows) ? row.rows : [],
-      facets: { kinds: row.kind_facets ?? [], ...filterFacets },
+      facets: { kinds: facets.kinds, ...facets.filters },
       tookMs: Math.round(performance.now() - started),
     };
   } catch (err) {
@@ -178,26 +188,66 @@ export async function runCatalogSuggest(request: SearchRequest): Promise<Catalog
   }
 }
 
+/** What {@link runHitVersionsLookup} returns for a page of hits. */
+export interface HitVersionsLookup {
+  /** hit_id → its project's newest versions, newest first. */
+  versions: HitVersionsMap;
+  /** hit_id → how many published public versions its project has in all. */
+  counts: HitVersionCounts;
+}
+
+/** One row of the hit-versions statement. */
+interface HitVersionsRow {
+  hit_id: string;
+  version_count: number;
+  versions: HitVersion[] | null;
+}
+
+/** Fold the statement's rows into the two maps. */
+function toHitVersionsLookup(rows: readonly HitVersionsRow[]): HitVersionsLookup {
+  const lookup: HitVersionsLookup = { versions: {}, counts: {} };
+  for (const row of rows) {
+    lookup.versions[row.hit_id] = Array.isArray(row.versions) ? row.versions : [];
+    lookup.counts[row.hit_id] = Number(row.version_count) || 0;
+  }
+  return lookup;
+}
+
 /**
  * Look up the version quick-switch menus for a page of hits (BDX-2.6): each eligible hit's
- * project's published versions, and whether its operation or schema exists in each.
+ * project's newest published versions (at most `HIT_VERSIONS_CAP`), whether its operation or schema
+ * exists in each, and how many versions the project has in all — so a menu can offer the rest.
  *
  * @param rows The page's rows (only version / operation / schema hits are looked up).
- * @returns hit_id → versions, newest first; an empty map when nothing is eligible or the lookup
- *   fails (the menus then simply do not render — never a 500).
+ * @returns The menus; empty when nothing is eligible or the lookup fails (the menus then simply do
+ *   not render — never a 500).
  */
-export async function runHitVersionsLookup(rows: readonly CatalogSearchHit[]): Promise<HitVersionsMap> {
+export async function runHitVersionsLookup(rows: readonly CatalogSearchHit[]): Promise<HitVersionsLookup> {
   noStore();
   const statement = buildHitVersionsSql(rows);
-  if (!statement) return {};
+  if (!statement) return { versions: {}, counts: {} };
   try {
-    const result = await connectionPool.query<{ hit_id: string; versions: HitVersion[] }>(statement.text, statement.values);
-    const map: HitVersionsMap = {};
-    for (const row of result.rows) map[row.hit_id] = Array.isArray(row.versions) ? row.versions : [];
-    return map;
+    const result = await connectionPool.query<HitVersionsRow>(statement.text, statement.values);
+    return toHitVersionsLookup(result.rows);
   } catch (err) {
     const e = err as { message?: string };
     console.error('[db] runHitVersionsLookup:', e?.message ?? err);
-    return {};
+    return { versions: {}, counts: {} };
   }
+}
+
+/**
+ * Every published public version of one hit's project (at most `HIT_VERSIONS_ALL_CAP`), for a menu
+ * whose visitor asked for the versions the page did not list (DBP-1.27).
+ *
+ * @param hit The hit, as the page has it.
+ * @returns Its versions, newest first; empty when the hit is not eligible or its project is not public.
+ * @throws DatabaseUnavailableError When the database fails.
+ */
+export async function runAllHitVersions(hit: CatalogSearchHit): Promise<HitVersion[]> {
+  noStore();
+  const statement = buildHitVersionsSql([hit], HIT_VERSIONS_ALL_CAP);
+  if (!statement) return [];
+  const result = await dbQuery<HitVersionsRow>('runAllHitVersions', statement.text, statement.values);
+  return toHitVersionsLookup(result.rows).versions[hit.hit_id] ?? [];
 }

@@ -112,6 +112,23 @@ describe('cachedRead', () => {
     expect(loader).toHaveBeenCalledTimes(3);
   });
 
+  it('raises the refresh failure instead of the previous value when asked not to serve stale', async () => {
+    let clock = 0;
+    const now = () => clock;
+    const loader = vi
+      .fn<() => Promise<number>>()
+      .mockResolvedValueOnce(1)
+      .mockRejectedValueOnce(new Error('down'))
+      .mockResolvedValueOnce(3);
+    const options = { ttlMs: 100, now, staleOnError: false };
+    expect(await cachedRead('strict', loader, options)).toBe(1);
+    expect(await cachedRead('strict', loader, options)).toBe(1); // still fresh: no load
+    clock = 200;
+    await expect(cachedRead('strict', loader, options)).rejects.toThrow('down');
+    expect(await cachedRead('strict', loader, options)).toBe(3);
+    expect(loader).toHaveBeenCalledTimes(3);
+  });
+
   it('runs the loader every time when the cache is off', async () => {
     process.env.BROWSE_CACHE_TTL_SECONDS = '0';
     const loader = vi.fn(async () => 1);

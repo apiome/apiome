@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getPublicMcpCollection } from '../../../../../../lib/db/helper';
+import { loadMcpCollectionPage } from '../../../../../../lib/db/routeLoaders';
 import { McpCollectionClient } from './McpCollectionClient';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,8 @@ export async function generateMetadata({
   params: Promise<{ tenantSlug: string; collectionSlug: string }>;
 }) {
   const { tenantSlug, collectionSlug } = await params;
-  const collection = await getPublicMcpCollection(tenantSlug, collectionSlug);
+  // Shared with the page through React's cache(): the collection is read once per request.
+  const collection = await loadMcpCollectionPage(tenantSlug, collectionSlug);
   if (!collection) {
     return { title: 'Collection not found — Apiome' };
   }
@@ -28,7 +29,7 @@ export default async function McpCollectionPage({
   params: Promise<{ tenantSlug: string; collectionSlug: string }>;
 }) {
   const { tenantSlug, collectionSlug } = await params;
-  const collection = await getPublicMcpCollection(tenantSlug, collectionSlug);
+  const collection = await loadMcpCollectionPage(tenantSlug, collectionSlug);
   if (!collection) {
     notFound();
   }

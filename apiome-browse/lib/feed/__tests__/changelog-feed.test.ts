@@ -13,6 +13,7 @@ import {
   buildProjectFeedMeta,
   feedETag,
   feedUpdatedFromRows,
+  feedValidatorETag,
   ifNoneMatchMatches,
   renderChangelogJsonFeed,
   renderChangelogRss,
@@ -193,6 +194,35 @@ describe('renderChangelogRss', () => {
     expect(body).toContain('…and 5 more');
   });
 
+  it('counts "more" from the stored total when only the printed entries were read (DBP-1.27)', () => {
+    // The feed routes read the first 20 entries of a version; `counts` still knows there are 25.
+    const entries = Array.from({ length: 20 }, (_, i) => ({
+      severity: 'breaking' as const,
+      pathGroup: '/paths/~1pets',
+      pointer: `/paths/~1pets/p${i}`,
+      ruleId: 'r',
+      changeKind: 'removed',
+      summary: `change ${i}`,
+    }));
+    const sliced = row({
+      changelog: payload({
+        entries,
+        counts: { breaking: 25, 'non-breaking': 0, 'docs-only': 0, unclassified: 0, total: 25 },
+      }),
+    });
+    const body = renderChangelogRss(META, [sliced]);
+    expect(body).toContain('change 19');
+    expect(body).toContain('…and 5 more');
+    // Nothing is promised when everything was printed.
+    const whole = row({
+      changelog: payload({
+        entries,
+        counts: { breaking: 20, 'non-breaking': 0, 'docs-only': 0, unclassified: 0, total: 20 },
+      }),
+    });
+    expect(renderChangelogRss(META, [whole])).not.toContain('more');
+  });
+
   it('escapes hostile text in titles and descriptions (no CDATA)', () => {
     const hostile = row({
       changelog: payload({
@@ -322,6 +352,31 @@ describe('feedETag', () => {
   it('is stable for equal bodies and distinct for different ones', () => {
     expect(feedETag('a')).toBe(feedETag('a'));
     expect(feedETag('a')).not.toBe(feedETag('b'));
+  });
+});
+
+describe('feedValidatorETag', () => {
+  const validator = { projectName: 'Petstore', versionCount: 3, changedAt: '2026-11-20T10:00:00.000000Z' };
+  const url = 'https://browse.example.com/tenant/acme/petstore/changelog.xml';
+
+  it('is a quoted sha256 that is stable for the same feed', () => {
+    expect(feedValidatorETag(url, validator)).toMatch(/^"[0-9a-f]{64}"$/);
+    expect(feedValidatorETag(url, { ...validator })).toBe(feedValidatorETag(url, validator));
+  });
+
+  it('changes with anything the feed is rendered from', () => {
+    const etag = feedValidatorETag(url, validator);
+    expect(feedValidatorETag(url.replace('.xml', '.json'), validator)).not.toBe(etag);
+    expect(feedValidatorETag(url, { ...validator, projectName: 'Pet Store' })).not.toBe(etag);
+    expect(feedValidatorETag(url, { ...validator, versionCount: 4 })).not.toBe(etag);
+    expect(feedValidatorETag(url, { ...validator, changedAt: '2026-11-21T10:00:00.000000Z' })).not.toBe(etag);
+    expect(feedValidatorETag(url, { ...validator, changedAt: null })).not.toBe(etag);
+  });
+
+  it('cannot be made to collide by moving text between fields', () => {
+    expect(feedValidatorETag('a', { projectName: 'b3', versionCount: 4, changedAt: null })).not.toBe(
+      feedValidatorETag('a', { projectName: 'b', versionCount: 34, changedAt: null })
+    );
   });
 });
 

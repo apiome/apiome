@@ -8,12 +8,12 @@ import {
   compareByGrade,
   factsLine,
   factsLineText,
-  latestPublicVersionJoinSql,
   parseProjectRailSort,
   parseProjectSort,
   pickCardFacts,
   projectRailOrderSql,
   sortProjectsByFacts,
+  summaryRailOrderSql,
   type CardFacts,
 } from '../cardFacts';
 
@@ -159,15 +159,25 @@ describe('SQL fragments', () => {
     expect(sql).toContain('ORDER BY f_s.project_id NULLS LAST');
     expect(sql).toMatch(/COALESCE\(\(\s*SELECT f_s\.settings -> 'publicSdkEnabled' = 'true'::jsonb[\s\S]*\), false\) AS sdk_available/);
   });
+});
 
-  it('picks the latest published public version of a project', () => {
-    const sql = latestPublicVersionJoinSql('p.id', 'lv');
-    expect(sql).toContain('l_v.project_id = p.id');
-    expect(sql).toContain("l_v.visibility = 'public'");
-    expect(sql).toContain('l_v.published = true');
-    expect(sql).toContain('l_v.deleted_at IS NULL');
-    expect(sql).toContain('ORDER BY l_v.published_at DESC NULLS LAST, l_v.created_at DESC');
-    expect(sql).toMatch(/LIMIT 1\s*\) lv ON TRUE$/);
+describe('summaryRailOrderSql', () => {
+  it('orders each rail by the column list of its summary index (DBP-1.27)', () => {
+    expect(summaryRailOrderSql('versions', 'b')).toBe('b.version_count DESC, b.latest_published_at DESC NULLS LAST');
+    expect(summaryRailOrderSql('operations', 'b')).toBe(
+      'b.operation_count DESC, b.version_count DESC, b.latest_published_at DESC NULLS LAST'
+    );
+    expect(summaryRailOrderSql('grade', 'b')).toBe(
+      'b.quality_grade ASC NULLS LAST, b.quality_score DESC NULLS LAST, b.latest_published_at DESC NULLS LAST'
+    );
+  });
+
+  it('ranks in the same order as the rail renders', () => {
+    for (const mode of ['versions', 'operations', 'grade'] as const) {
+      const stored = summaryRailOrderSql(mode, 'b').replace(/b\./g, '').replace(/ NULLS LAST/g, '');
+      const shown = projectRailOrderSql(mode).replace(/cf\./g, '').replace(/ NULLS LAST/g, '');
+      expect(stored).toBe(shown);
+    }
   });
 });
 

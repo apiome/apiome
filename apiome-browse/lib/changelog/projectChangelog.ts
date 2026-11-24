@@ -2,7 +2,7 @@
  * The public per-API changelog page model (PCX-2.1, #5896).
  *
  * Framework-free so the `/tenant/{t}/{p}/changelog` page stays a thin renderer: this module turns
- * the rows from `getPublicChangelogsForProject` (newest publish first) plus the page's shareable
+ * the rows from `getChangelogPage` (`lib/db/changelogs.ts`; newest publish first) plus the page's shareable
  * filters (`?severity=`, `?pathGroup=`, `?since=`) into one display-ready section per published
  * version. Entries keep the stored CTG-1.3 order (breaking → non-breaking → docs-only, then path
  * group) via `groupChangelogEntries` — never re-sorted — and every non-ready row is turned into an
@@ -118,6 +118,31 @@ export function parseChangelogFilters(
   const since = firstParam(params.since);
   if (since) filters.since = since;
   return filters;
+}
+
+/**
+ * The page position from Next.js `searchParams`: `?before=<version>` shows the versions older than
+ * that one (DBP-1.27). The label is looked up in SQL; an unknown one shows the first page.
+ *
+ * @param params - The page's resolved `searchParams`.
+ * @returns The version label, or undefined on the first page.
+ */
+export function parseChangelogBefore(params: Record<string, string | string[] | undefined>): string | undefined {
+  return firstParam(params.before);
+}
+
+/**
+ * The query string of one changelog page: the filters plus the page position.
+ *
+ * @param filters - The active filters.
+ * @param before - The page position (a version label), or nothing for the first page.
+ * @returns `?…`, or `''` for the unfiltered first page.
+ */
+export function changelogPageQuery(filters: ChangelogFilters, before?: string | null): string {
+  const query = new URLSearchParams(changelogFilterQuery(filters));
+  if (before) query.set('before', before);
+  const text = query.toString();
+  return text ? `?${text}` : '';
 }
 
 /**
@@ -243,21 +268,26 @@ function publishedIso(value: string | Date | null): string | null {
  * - `pathGroups` always lists every path group of the versions in range, so the filter control can
  *   switch groups without clearing first.
  *
- * @param rows - Rows from `getPublicChangelogsForProject`, newest first.
+ * @param rows - Changelog rows, newest first.
  * @param filters - Parsed filters.
  * @param tenantSlug - Tenant slug (for compare links).
  * @param projectSlug - Project slug (for compare links).
+ * @param fromDatabase - Set when `rows` is one page that the database already cut to the `since`
+ *   range and filtered (`getChangelogPage`, DBP-1.27). The rows are then taken as they are, and the
+ *   path-group list and `sinceNotFound` — which describe every version in range, not only this
+ *   page — are the ones the database computed.
  * @returns The page model.
  */
 export function buildProjectChangelog(
   rows: readonly PublicVersionChangelogRow[],
   filters: ChangelogFilters,
   tenantSlug: string,
-  projectSlug: string
+  projectSlug: string,
+  fromDatabase?: { pathGroups: readonly string[]; sinceNotFound: boolean }
 ): ProjectChangelogModel {
   let inRange: readonly PublicVersionChangelogRow[] = rows;
-  let sinceNotFound = false;
-  if (filters.since) {
+  let sinceNotFound = fromDatabase?.sinceNotFound ?? false;
+  if (filters.since && !fromDatabase) {
     const idx = rows.findIndex((r) => r.versionLabel === filters.since);
     if (idx === -1) {
       sinceNotFound = true;
@@ -266,7 +296,7 @@ export function buildProjectChangelog(
     }
   }
 
-  const pathGroupSet = new Set<string>();
+  const pathGroupSet = new Set<string>(fromDatabase?.pathGroups ?? []);
   const usedAnchors = new Set<string>();
   const sections: ChangelogPageSection[] = [];
 

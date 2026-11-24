@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { registerPool } from './availability';
 
 /**
  * The `statement_timeout` session option for the pool.
@@ -72,5 +73,9 @@ const connectionPool = new Pool({
 connectionPool.on('error', (error: Error) => {
   console.error('[apiome-browse/db] idle database client error:', error.message);
 });
+
+// The proxy (`src/proxy.ts`) refuses page views with `503` while this pool is saturated; it reads
+// the pool's gauges through `lib/db/availability.ts` (DBP-1.27, #7210).
+registerPool(connectionPool);
 
 export default connectionPool;

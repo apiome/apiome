@@ -35,8 +35,8 @@ interface Tenant {
   id: string;
   name: string;
   slug: string;
-  description?: string;
-  created_at?: string;
+  description?: string | null;
+  created_at?: string | Date;
 }
 
 /** A project row: identity, facet roll-up, and its latest version's card facts (BDX-2.2). */
@@ -169,7 +169,7 @@ export function TenantClient({ tenant, projects, products = [], tenantSlug }: Te
           variant="tenant"
           title={tenant.name}
           subtitle={`/${tenant.slug}`}
-          description={tenant.description}
+          description={tenant.description ?? undefined}
           monogram={monogram(tenant.name)}
           meta={[
             { label: 'Projects', value: projects.length },

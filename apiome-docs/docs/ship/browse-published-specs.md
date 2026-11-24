@@ -197,7 +197,9 @@ them were tagged once, so the `format:` and `paradigm:` filters find them too:
 ### Results page
 
 - **Scope tabs** — *All*, *Operations*, *Schemas*, *Projects & orgs* and *MCP servers* (the public
-  MCP catalog, searched with the same words), each with its count.
+  MCP catalog, searched with the same words). Each API tab shows its count; **MCP servers** shows
+  its count once you open it. A count ending in **+** means a kind of result has more than 1,000
+  matches: narrow the search to see the rest.
 - **Filters rail** — latest versions only or every published version, kind, HTTP method, change
   severity, organization, paradigm, format and published-date range, with counts for the current
   results.
@@ -240,7 +242,8 @@ the same version**, and a **third** pick. Remove a pick with its **×**, or **Cl
 **Switch version from a result:** the version chip on a result (for example **v2.0.0 ⌄**) opens a
 menu of the project's other published versions. Each entry opens that version **at the same
 operation or schema** when it exists there; an entry marked *not in this version* opens the version
-page instead.
+page instead. The menu lists the newest 20 versions. When the project has more, **click "Show all
+versions"** at the end of the menu to load the rest.
 
 To diff versions from a terminal or CI, see [Compare published versions](./compare-published-versions.md).
 

@@ -193,16 +193,20 @@ Compare two versions side-by-side or in unified diff mode:
 - Compare from search (BDX-2.6, `lib/search/compare.ts`): version / operation / schema hits carry a
   *Compare* tick (`c` on the cursor row); two hits of one project in two versions light up the sticky
   bar's link to `/tenant/{t}/{p}/compare?v1=<older>&v2=<newer>`. One follow-up statement
-  (`runHitVersionsLookup`) returns each such hit's project versions and whether its operation or
-  schema exists in each, for the version chip's quick-switch menu
+  (`runHitVersionsLookup`) returns each such hit's newest 20 project versions and whether its
+  operation or schema exists in each, for the version chip's quick-switch menu; the menu's
+  **Show all versions** loads the rest from `GET /api/search/hit-versions`
+- Scope and caps (DBP-1.27): `org:` / `project:` are resolved inside the statement's scope, which
+  starts from `apiome.browse_public_projects`; each kind is capped at 1,000 hits on its own; only
+  the kinds a page lists produce rows, and the MCP catalog is searched on its own tab only
 
 ### Card facts (BDX-2.2)
 
 Project cards, the project and version headers and project search hits show a facts line —
 `42 operations · 18 schemas · Grade B · Mock · SDK · OpenAPI 3.1 · updated 3d ago` — for the latest
-published public version. `lib/cardFacts.ts` holds the SQL fragments the queries in
-`lib/db/helper.ts` splice in (counts as correlated sub-selects, so they come back in the same
-statement; nothing is cached), the line's wording and order, and the sorts: the home rail's
+published public version. `lib/cardFacts.ts` holds the SQL fragment the queries in `lib/db`
+splice in (the facts come back in the same statement as the rows), the line's wording and order,
+and the sorts: the home rail's
 `?projects=versions|operations|grade` and the organization page's **Sort** menu. The SDK flag
 follows REST's public-SDK rule (`publicSdkEnabled`, project row over tenant row, default off).
 `FactsLine` renders it.
@@ -211,20 +215,52 @@ The pure modules under `lib/search/` are unit-tested; `lib/db/search.ts` runs th
 
 ## Database Functions
 
-The application uses the following database helper functions (internal only, not exposed as REST endpoints):
+Every page and route handler reads the database through **one loader**, so a route's database cost
+is one function (DBP-1.27). The loaders are internal — not exposed as REST endpoints:
 
-- `getPublicTenants()`: Get all tenants with published public versions
-- `getPublicProjectsForTenant(tenantSlug)`: Get projects for a tenant
-- `getPublicVersionsForProject(tenantSlug, projectSlug)`: Get versions for a project
-- `getPublicVersionDetails(tenantSlug, projectSlug, versionSlug)`: Get version metadata
-- `runCatalogSearch(request)` (`lib/db/search.ts`): the catalog search
-- `getPublicTenantBySlug(tenantSlug)`: Get tenant details
-- `getPublicProjectBySlug(tenantSlug, projectSlug)`: Get project details
+| Route | Loader | Statements |
+|---|---|---|
+| `/` | `lib/db/helper.ts` — `getPublicTenants`, `getRecentlyPublishedVersions`, `getMostVersionedProjects`, `getNewestTenants`, `getDirectoryStats` (cached, `BROWSE_CACHE_TTL_SECONDS`) | 5 cold, 0 warm |
+| `/tenant/{t}` | `loadTenantPage` | 3 |
+| `/tenant/{t}/{p}` | `loadProjectPage` | 2 |
+| `/tenant/{t}/{p}/{v}` | `loadVersionPage` (+ `changes.json` when the Changes tab is opened) | 1 (+1) |
+| `/tenant/{t}/{p}/changelog` | `loadChangelogPage` | 3 |
+| `/tenant/{t}/{p}/compare` | `loadComparePage` | 3 |
+| `/tenant/{t}/{p}/changelog.xml` · `.json` | `lib/feed/changelogFeedRoute.ts` — `serveChangelogFeed` | 1 unchanged, 2 otherwise |
+| `/tenant/{t}/products/{product}` | `loadProductPage` | 4 |
+| `/mcp` | `getPublicMcpEndpointsByHost(page)` | 1 |
+| `/mcp/{t}/{endpoint}` | `loadMcpEndpointPage` | 2 |
+| `/mcp/{t}/collections/{c}` | `loadMcpCollectionPage` | 2 |
+| `POST /api/try-it` | `lib/db/tryIt.ts` — `getTryItVersion` (remembered 30 s) | 1, then 0 |
+| `/search` | `lib/db/search.ts` — `runCatalogSearch`, `runHitVersionsLookup` | 2 |
 
-All functions filter to only return:
+The `load*` functions are in `lib/db/routeLoaders.ts`. The numbers are in
+`lib/db/statementBudgets.json` and enforced by `lib/__tests__/routeBudget.test.ts`, which also fails
+when a route runs the same statement twice. A page and its `generateMetadata` share a loader through
+React's `cache()`.
+
+The catalog-wide reads use `apiome.browse_public_projects` (migration V431): one row per public
+project, kept current by the database when a version is published, unpublished, changed or
+deleted.
+
+All reads filter to only return:
 - `published = true`
 - `visibility = 'public'`
-- `deleted_at IS NULL`
+- `deleted_at IS NULL` (version, project and tenant)
+
+### When the database cannot answer
+
+A loader returns `null` only when the thing is not public or does not exist (→ 404). When a
+statement fails it throws `DatabaseUnavailableError` (`lib/db/errors.ts`), so a busy database is
+never a 404:
+
+- a route handler answers `503` with `Retry-After`;
+- a page renders the error boundary (`500`);
+- `src/proxy.ts` answers `503` with `Retry-After` before rendering while the pool is saturated —
+  every client checked out and as many requests waiting — or for 5 seconds after a connection
+  failure (`lib/db/availability.ts`).
+
+Lists that only decorate a page (home rails, an organization's products) log and render empty.
 
 ## REST API Integration
 
@@ -262,9 +298,11 @@ See the archived [TROUBLESHOOTING.md](../docs/archive/apiome-browse/TROUBLESHOOT
 ## Performance
 
 - Server-side rendering with React Server Components
-- Incremental Static Regeneration (ISR) for tenant/project listings
+- A fixed number of statements per route (see [Database Functions](#database-functions))
+- The directory's global reads cached in-process (`BROWSE_CACHE_TTL_SECONDS`)
+- Long lists bounded: 20 versions per changelog page, 200 versions on a project page, 100 MCP
+  servers per index page
 - Client-side caching of specifications
-- Optimized database queries with proper indexing
 
 ## Documentation
 

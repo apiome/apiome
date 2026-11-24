@@ -5,19 +5,26 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '../components/AppShell';
 import { sanitizeSearchInput } from '../utils/searchValidation';
-import type { McpPublicHostGroup } from '../../../lib/types';
+import type { McpPublicIndexPage } from '../../../lib/types';
 import { McpEndpointCard } from './McpShared';
 
 /**
  * Public MCP catalog index (MCAT-9.6). Endpoints are grouped by host and grade-led within each
  * group (the idle, query-empty ordering). The search box hands off to /mcp/search, where results
  * switch to relevance-first ordering (MCAT-9.7).
+ *
+ * The index is paged (DBP-1.27): one page of servers at a time, with the catalog's totals in the
+ * summary line and **Previous** / **Next** links under the list.
  */
-export function McpBrowseClient({ groups }: { groups: McpPublicHostGroup[] }) {
+export function McpBrowseClient({ index }: { index: McpPublicIndexPage }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
 
-  const endpointCount = groups.reduce((n, g) => n + g.endpoints.length, 0);
+  const { groups, page, pageSize, totalEndpoints: endpointCount, totalHosts, hasNext } = index;
+  const paged = page > 1 || hasNext;
+  const firstShown = (page - 1) * pageSize + 1;
+  const lastShown = firstShown + groups.reduce((n, g) => n + g.endpoints.length, 0) - 1;
+  const pageHref = (n: number) => (n <= 1 ? '/mcp' : `/mcp?page=${n}`);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +79,17 @@ export function McpBrowseClient({ groups }: { groups: McpPublicHostGroup[] }) {
         </form>
       </header>
 
-      {groups.length === 0 ? (
+      {groups.length === 0 && page > 1 ? (
+        <div className="my-10 rounded-xl border border-dashed border-zinc-300 bg-white/50 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">No more servers</h2>
+          <p className="mx-auto mt-2 max-w-lg text-sm text-zinc-600 dark:text-zinc-400">
+            This page is past the end of the catalog.{' '}
+            <Link href="/mcp" className="font-medium text-[var(--brand)] hover:underline">
+              Back to the first page
+            </Link>
+          </p>
+        </div>
+      ) : groups.length === 0 ? (
         <div className="my-10 rounded-xl border border-dashed border-zinc-300 bg-white/50 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">No public MCP servers yet</h2>
           <p className="mx-auto mt-2 max-w-lg text-sm text-zinc-600 dark:text-zinc-400">
@@ -84,8 +101,14 @@ export function McpBrowseClient({ groups }: { groups: McpPublicHostGroup[] }) {
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             <span className="font-semibold text-zinc-900 dark:text-zinc-50">{endpointCount}</span>{' '}
             server{endpointCount === 1 ? '' : 's'} across{' '}
-            <span className="font-semibold text-zinc-900 dark:text-zinc-50">{groups.length}</span>{' '}
-            site{groups.length === 1 ? '' : 's'}
+            <span className="font-semibold text-zinc-900 dark:text-zinc-50">{totalHosts}</span>{' '}
+            site{totalHosts === 1 ? '' : 's'}
+            {paged && (
+              <>
+                {' '}
+                · showing {firstShown}–{lastShown}
+              </>
+            )}
           </p>
           {groups.map((group) => (
             <section key={group.host}>
@@ -107,6 +130,22 @@ export function McpBrowseClient({ groups }: { groups: McpPublicHostGroup[] }) {
               </ul>
             </section>
           ))}
+          {paged && (
+            <nav aria-label="MCP catalog pages" className="flex items-center justify-between gap-3">
+              {page > 1 ? (
+                <Link href={pageHref(page - 1)} className="mcp-page-link" data-testid="mcp-index-previous">
+                  ← Previous
+                </Link>
+              ) : (
+                <span />
+              )}
+              {hasNext && (
+                <Link href={pageHref(page + 1)} className="mcp-page-link" data-testid="mcp-index-next">
+                  Next →
+                </Link>
+              )}
+            </nav>
+          )}
         </div>
       )}
     </AppShell>

@@ -14,9 +14,10 @@
  *   agent (it is deployment infrastructure and often loopback in dev), and only when the hop
  *   matches that exact origin.
  * - **Allow-policy inputs** — the version's mock origin (env `APIOME_MOCK_PUBLIC_BASE_URL` +
- *   `mock_enabled`, mirroring the version page) and its declared spec `servers[]`
- *   (`getPublicVersionServers`) are looked up server-side from the request's context slugs, so
- *   the browser cannot forge the policy.
+ *   `mock_enabled`, mirroring the version page) and its declared spec `servers[]` are looked up
+ *   server-side from the request's context slugs (`getTryItVersion`: one statement, remembered
+ *   for 30 s), so the browser cannot forge the policy. When that lookup fails the relay answers
+ *   503 with `Retry-After`.
  *
  * Credential hygiene: nothing here logs URLs, headers, or bodies (query strings and headers can
  * carry credentials) — unexpected failures log the error message only. Request contents are
@@ -27,7 +28,8 @@ import { lookup } from 'node:dns';
 import type { LookupAddress, LookupOptions } from 'node:dns';
 import { Agent, request as undiciRequest } from 'undici';
 import type { Dispatcher } from 'undici';
-import { getPublicVersionDetails, getPublicVersionServers } from '../../../../lib/db/helper';
+import { DatabaseUnavailableError, unavailableProblem } from '../../../../lib/db/errors';
+import { getTryItVersion } from '../../../../lib/db/tryIt';
 import { buildMockBaseUrl } from '../../../../lib/mock/mockUrl';
 import {
   deriveAllowedSpecOrigins,
@@ -163,10 +165,15 @@ export async function POST(request: Request): Promise<Response> {
   const { tenantSlug, projectSlug, versionSlug } = relayRequest.context;
 
   // Server-side allow-policy inputs; the browser only names the version, never the policy.
-  const [version, serverRows] = await Promise.all([
-    getPublicVersionDetails(tenantSlug, projectSlug, versionSlug),
-    getPublicVersionServers(tenantSlug, projectSlug, versionSlug),
-  ]);
+  // One statement, remembered for 30 s (DBP-1.27): `lib/db/tryIt.ts`.
+  let version;
+  try {
+    version = await getTryItVersion(tenantSlug, projectSlug, versionSlug);
+  } catch (err) {
+    // The catalog could not be read: say so (503, retry) instead of refusing as "unknown version".
+    if (err instanceof DatabaseUnavailableError) return unavailableProblem();
+    throw err;
+  }
   if (!version) {
     return problem(403, 'Unknown or unpublished API version.');
   }
@@ -178,7 +185,7 @@ export async function POST(request: Request): Promise<Response> {
       projectSlug,
       version.version_id
     ),
-    specOrigins: deriveAllowedSpecOrigins(serverRows),
+    specOrigins: deriveAllowedSpecOrigins(version.servers),
   };
 
   try {

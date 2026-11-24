@@ -735,9 +735,11 @@ which accepts the scan.
 
 ### What the browse site and the public directory API cache
 
-The public directory is the same for every visitor, and counting it means a pass over every
-published public version. The browse site and the REST API therefore keep those answers in memory
-for a short interval instead of reading them for each page view or request.
+The public directory is the same for every visitor. The browse site and the REST API therefore
+keep those answers in memory for a short interval instead of reading them for each page view or
+request. On the browse site a refresh reads the public-catalog summary table (see
+[What the browse site reads for each page](#what-the-browse-site-reads-for-each-page)), so even
+a cold read is a few milliseconds.
 
 | Setting | Service | Default | What it sets |
 | --- | --- | --- | --- |
@@ -774,6 +776,99 @@ Two more things keep the browse site's statements short:
 - **The JIT compiler is off for the browse site's sessions** (`jit = off`). Every statement the
   site runs is a short read, and PostgreSQL's compiler added about 200 ms to some of them. The
   setting applies to connections named `apiome-browse` only.
+
+### What the browse site reads for each page
+
+**The public-catalog summary table.** `apiome.browse_public_projects` (migration `V431`) holds one
+row for each project that is in the public catalog: its organization, how many public versions it
+has, which one is the latest, the protocols and formats it publishes, and the latest version's
+operation count, schema count and grade. The browse site's home page, the counts in its top bar,
+an organization's project list and the scope of a search read this table. Before, each of them
+passed over every published public version.
+
+The database keeps the table current in the same transaction as the write: when a version is
+published, unpublished, made public or private, deleted or restored, when its content or grade
+changes, and when its project or organization is deleted or restored. Nothing needs to be
+scheduled. If rows were ever written with triggers off (a restore with
+`session_replication_role = replica`), rebuild the table with this statement, which is always safe
+to run:
+
+```sql
+SELECT apiome.refresh_browse_public_projects(ARRAY(SELECT id FROM apiome.projects));
+```
+
+**Statements per page.** Each page of the browse site reads through one function that runs a
+fixed number of statements, and a test holds every route to its number
+(`apiome-browse/lib/db/statementBudgets.json`):
+
+| Page or route | Statements | What changed |
+| --- | --- | --- |
+| Organization (`/tenant/<org>`) | 3 | The organization is found with one index probe. It took 32 ms for an organization with 5,000 projects. |
+| Project | 2 | The version list carries each version's severity. Before, the page read the full changelog of 50 versions for it. |
+| Version | 1 | One statement. The **Changes** tab reads its entries when it is opened, with 1 more statement. |
+| Changelog page | 3 | 20 versions a page, filtered in the database. Before, it read up to 500 full changelogs and filtered them in the page. |
+| Compare | 3 | One changelog row for the pair being compared, without its entries. |
+| Changelog feeds (`changelog.xml`, `changelog.json`) | 1 when unchanged, 2 otherwise | A reader that sends `If-None-Match` gets `304` from one small query. |
+| Try It (`POST /api/try-it`) | 1, then 0 for 30 seconds | See below. |
+| API product | 4 | Each member API reads at most 200 version labels. |
+| MCP server | 2 | The server's tools, resources and prompts are read once. |
+| MCP collection | 2 | Read once for the page and its title. |
+| MCP index (`/mcp`) | 1 | 100 servers a page. |
+
+**What a visitor sees:**
+
+- **Changelog page:** 20 versions at a time, with **Older versions →** and **← Newest versions**
+  under the list. The filters apply to every page.
+- **Project page:** the newest 200 versions. A project with more says so and points to the
+  changelog, which has them all.
+- **Search:** a result's version menu lists the project's newest 20 versions and ends with
+  **Show all versions** when there are more. The **MCP servers** tab shows its count once it is
+  opened. Each kind of result is counted up to 1,000, so a common word no longer hides
+  organizations and projects behind thousands of properties.
+- **MCP index:** **← Previous** and **Next →** under the list.
+
+**Try It and the 30 seconds.** The relay looks up whether the version is public, whether its mock
+is on and which servers its spec declares, and reuses that answer for 30 seconds. So after a
+version is unpublished, its mock is switched off or its servers change, the relay can apply the
+previous answer for up to 30 seconds. It never uses an answer older than that: if the lookup fails,
+the relay answers `503`.
+
+**When the database cannot answer.** A page whose data could not be read used to answer `404`, so
+a full connection pool told search engines that the pages they asked for were gone. Now:
+
+| Situation | What the browse site answers |
+| --- | --- |
+| Every connection in the pool is in use, and as many requests again are waiting for one | `503` with `Retry-After: 5`, before the page is rendered |
+| A statement could not get a connection (the pool timed out, PostgreSQL refused or dropped it) | `500` for that request, then `503` with `Retry-After: 5` for the next 5 seconds |
+| One statement ran past `DB_STATEMENT_TIMEOUT_MS` | `500` for that page (the error page, with **Try again**); other requests are not affected |
+| A feed, the Try It relay or a search API route could not read the database | `503` with `Retry-After: 5` |
+| The page really does not exist | `404`, as before |
+
+A `503` from the first two rows carries the header `X-Apiome-Shed` (`saturated` or `unavailable`),
+so you can tell them apart in an access log. If you see `saturated`, raise `DB_POOL_MAX` or add a
+browse site instance; see [Database connections](#database-connections).
+
+Measured on the scale database (20,000 projects, 5,000 of them public; PostgreSQL 18), one
+statement each:
+
+| Statement | Before | After |
+| --- | --- | --- |
+| Directory counts in the top bar | 13.9 ms | 0.5 ms |
+| Home page organization list | 15.1 ms | 3.1 ms |
+| Home project rail, **Most versions** | 8.4 ms | 0.5 ms |
+| Home project rail, **Most operations** | 17.0 ms | 0.4 ms |
+| Home project rail, **Best grade** | 16.4 ms | 0.4 ms |
+| Find an organization with 5,000 projects | 6.9 ms | 0.1 ms |
+| Search with an `org:` filter | 22.9 ms | 2.9 ms |
+| Search with an `org:` filter, every version | 33.1 ms | 5.1 ms |
+| MCP index, 1,000 public servers | 19.4 ms, 491 kB | 4.5 ms, 53 kB (one page) |
+| Changelogs for a changelog page, a project with 509 versions of 100 changes each | 33.1 ms, 21 MB read | 13.7 ms, 162 kB read |
+| Changelogs for a project or compare page, the same project | 4.3 ms, 2.1 MB read | 0.6 ms and 0.2 ms, 114 kB read |
+| Version menus for one search result, the same project | 1.4 ms, 45 kB | 0.6 ms, 2 kB |
+
+A search for a word that matches a great many names can take longer than before. It used to stop
+after the first 5,000 matches of any kind, which is how results went missing; it now reads every
+kind up to its own limit.
 
 ### What the MCP catalog stores and caches
 
@@ -890,6 +985,17 @@ seconds; a typical table is far smaller. Stateful requests to a mock runtime tha
 previous version fail between the migration and that runtime's restart, so upgrade `apiome-mock`
 right after the migration. Only deployments with `APIOME_MOCK_SESSION_STORE_BACKEND=postgres` use
 these tables.
+
+`V431` (DBP-1.27) adds the public-catalog summary table `browse_public_projects` and fills it (see
+[What the browse site reads for each page](#what-the-browse-site-reads-for-each-page)), and
+stores each MCP server's host in `mcp_endpoints.host`. On the scale database it took 0.4 seconds
+(45,000 public versions in 5,000 projects; 2,000 MCP servers). Storing the host rewrites
+`mcp_endpoints`, which holds one row per registered MCP server, so reads and writes of MCP servers
+wait for that moment. Afterwards a write to a published public version also updates its project's
+summary row: one small statement per write statement, and none for a draft or a private version.
+Upgrade the browse site right after the migration: the new browse site needs the table, and the
+previous one keeps working without it. To go back, follow the rollback notes at the top of the
+migration file.
 
 A migration that adds a stored generated column cannot be prepared this way. `V409` adds
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of

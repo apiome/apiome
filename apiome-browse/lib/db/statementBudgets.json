@@ -1,0 +1,17 @@
+{
+  "$comment": "Database statements each Browse route may run for one request (DBP-1.27, #7210). Enforced by lib/__tests__/routeBudget.test.ts, which also fails when a route runs the same statement twice. Lower a number when a route gets cheaper; raising one needs a reason in the PR.",
+  "tenantPage": 3,
+  "projectPage": 2,
+  "versionPage": 1,
+  "versionChanges": 1,
+  "changelogPage": 3,
+  "comparePage": 3,
+  "productPage": 4,
+  "mcpEndpointPage": 2,
+  "mcpCollectionPage": 2,
+  "mcpIndexPage": 1,
+  "changelogFeedUnchanged": 1,
+  "changelogFeed": 2,
+  "tryIt": 1,
+  "tryItRepeat": 0
+}

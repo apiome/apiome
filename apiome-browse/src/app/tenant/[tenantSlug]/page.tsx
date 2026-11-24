@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { getPublicTenantBySlug, getPublicProjectsForTenant } from "../../../../lib/db/helper";
-import { getPortalProductsForTenant } from "../../../../lib/db/products";
+import { loadTenantPage } from "../../../../lib/db/routeLoaders";
 import { TenantClient } from "./TenantClient";
 import { ReaderStatus } from "../../components/ReaderStatus";
 
@@ -10,16 +9,13 @@ export default async function TenantPage({
   params: Promise<{ tenantSlug: string }>;
 }) {
   const { tenantSlug } = await params;
-  const tenant = await getPublicTenantBySlug(tenantSlug);
+  // Three statements, run together (DBP-1.27): the organization, its projects, its products.
+  const data = await loadTenantPage(tenantSlug);
 
-  if (!tenant) {
+  if (!data) {
     notFound();
   }
-
-  const [projects, products] = await Promise.all([
-    getPublicProjectsForTenant(tenantSlug),
-    getPortalProductsForTenant(tenantSlug),
-  ]);
+  const { tenant, projects, products } = data;
 
   return (
     <>
@@ -30,4 +26,3 @@ export default async function TenantPage({
     </>
   );
 }
-

@@ -6,7 +6,7 @@
  * supplied by the caller), all interpolated text XML-escaped so a hostile summary or project name
  * can never break the document, and content-addressed ETags (`feedETag`) so a polling reader gets
  * a clean 304 until the changelog actually moves. Rows come from
- * `getPublicChangelogsForProject`, which already applies the public gate — this layer only
+ * `getFeedRows` (`lib/db/changelogs.ts`), which already applies the public gate — this layer only
  * renders what it is handed and never sees the private `error` column.
  */
 
@@ -131,7 +131,7 @@ function itemTitle(meta: ChangelogFeedMeta, row: PublicVersionChangelogRow): str
 }
 
 /** Maximum changelog entries an item description enumerates before "…and N more". */
-const DESCRIPTION_ENTRY_CAP = 20;
+export const DESCRIPTION_ENTRY_CAP = 20;
 
 /**
  * A plain-text summary of one row's changes: severity headings with `pointer — summary` lines,
@@ -168,8 +168,11 @@ function itemSummaryText(row: PublicVersionChangelogRow): string {
       if (truncated) break;
     }
   }
-  if (truncated) {
-    lines.push(`…and ${entries.length - emitted} more`);
+  // The feed routes read only the first DESCRIPTION_ENTRY_CAP entries of a version (DBP-1.27), so
+  // "how many more" comes from the stored total when it is larger than what was read.
+  const total = Math.max(entries.length, row.changelog.counts?.total ?? 0);
+  if (truncated || total > emitted) {
+    lines.push(`…and ${total - emitted} more`);
   }
   return lines.join('\n');
 }
@@ -244,6 +247,24 @@ export function renderChangelogJsonFeed(
  */
 export function feedETag(body: string): string {
   return `"${createHash('sha256').update(body, 'utf8').digest('hex')}"`;
+}
+
+/**
+ * A strong ETag for a feed derived from what the feed is rendered from, not from its rendered body
+ * (DBP-1.27, #7210): the feed's own URL, the project's name, how many versions it publishes and
+ * when any of them last changed. A conditional request is answered `304` from one small query
+ * (`getFeedValidator`), without reading or rendering a changelog.
+ *
+ * @param selfUrl - The feed's absolute URL (its format and base path are part of it).
+ * @param validator - The project's name, version count and last change.
+ * @returns A quoted sha256 hex ETag.
+ */
+export function feedValidatorETag(
+  selfUrl: string,
+  validator: { projectName: string; versionCount: number; changedAt: string | null }
+): string {
+  const parts = [selfUrl, validator.projectName, String(validator.versionCount), validator.changedAt ?? ''];
+  return `"${createHash('sha256').update(JSON.stringify(parts), 'utf8').digest('hex')}"`;
 }
 
 /**

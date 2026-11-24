@@ -15,6 +15,8 @@ import {
   parseChangelogFilters,
   sectionNote,
   versionAnchor,
+  changelogPageQuery,
+  parseChangelogBefore,
 } from '../projectChangelog';
 import type { ChangelogEntry, PublicVersionChangelogRow, Severity } from '../types';
 
@@ -189,5 +191,68 @@ describe('anchors and compare links', () => {
 
   it('returns no compare link without a baseline', () => {
     expect(compareFocusHref('a', 'b', null, '1.0.0', '/info')).toBeNull();
+  });
+});
+
+describe('a page the database already cut and filtered (DBP-1.27)', () => {
+  const page = [
+    readyRow('3.0.0', '2.0.0', [entry('breaking', '/pets', '/paths/~1pets/get')]),
+    readyRow('2.0.0', '1.0.0', []),
+  ];
+
+  it('takes the rows as they are, even when `since` names a version that is not on this page', () => {
+    const model = buildProjectChangelog(page, { since: '0.9.0' }, 'acme', 'petstore', {
+      pathGroups: ['/pets', '/users'],
+      sinceNotFound: false,
+    });
+    expect(model.sections.map((s) => s.versionLabel)).toEqual(['3.0.0', '2.0.0']);
+    expect(model.sinceNotFound).toBe(false);
+    expect(model.filtered).toBe(true);
+  });
+
+  it('lists the path groups of every version in range, not only of the page', () => {
+    const model = buildProjectChangelog(page, {}, 'acme', 'petstore', {
+      pathGroups: ['/users', '/orders'],
+      sinceNotFound: false,
+    });
+    expect(model.pathGroups).toEqual(['/orders', '/pets', '/users']);
+  });
+
+  it('reports a `since` version the database did not find', () => {
+    const model = buildProjectChangelog(page, { since: 'nope' }, 'acme', 'petstore', {
+      pathGroups: [],
+      sinceNotFound: true,
+    });
+    expect(model.sinceNotFound).toBe(true);
+    expect(model.sections).toHaveLength(2);
+  });
+
+  it('keeps the stored totals next to the filtered entries', () => {
+    const filtered = readyRow('3.0.0', '2.0.0', [entry('breaking', '/pets', '/paths/~1pets/get')]);
+    filtered.changelog!.counts = { breaking: 1, 'non-breaking': 4, 'docs-only': 0, unclassified: 0, total: 5 };
+    const model = buildProjectChangelog([filtered], { severity: 'breaking' }, 'acme', 'petstore', {
+      pathGroups: ['/pets'],
+      sinceNotFound: false,
+    });
+    expect(model.sections[0].shownCounts.total).toBe(1);
+    expect(model.sections[0].storedCounts?.total).toBe(5);
+  });
+});
+
+describe('parseChangelogBefore / changelogPageQuery', () => {
+  it('reads the page position, first value and trimmed', () => {
+    expect(parseChangelogBefore({ before: ' 2.0.0 ' })).toBe('2.0.0');
+    expect(parseChangelogBefore({ before: ['1.5.0', '1.0.0'] })).toBe('1.5.0');
+    expect(parseChangelogBefore({ before: '  ' })).toBeUndefined();
+    expect(parseChangelogBefore({})).toBeUndefined();
+  });
+
+  it('adds the position to the filters, and nothing on the first page', () => {
+    expect(changelogPageQuery({})).toBe('');
+    expect(changelogPageQuery({}, '2.0.0')).toBe('?before=2.0.0');
+    expect(changelogPageQuery({ severity: 'breaking', since: '1.0.0' }, '2.0.0-rc.1+build')).toBe(
+      '?severity=breaking&since=1.0.0&before=2.0.0-rc.1%2Bbuild'
+    );
+    expect(changelogPageQuery({ pathGroup: '/pets' }, null)).toBe('?pathGroup=%2Fpets');
   });
 });

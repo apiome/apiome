@@ -13,12 +13,14 @@
  * It holds three framework-free pieces, so each is unit-tested without React or a database
  * (`lib/__tests__/cardFacts.test.ts`):
  *
- * - **SQL fragments** ({@link cardFactsJoinSql}, {@link latestPublicVersionJoinSql}) that the
- *   queries in `lib/db/helper.ts` and `lib/search/sql.ts` splice in, so the facts come back in the
- *   *same* statement as the rows (no N+1, nothing cached).
+ * - **The SQL fragment** ({@link cardFactsJoinSql}) that the queries in `lib/db` and
+ *   `lib/search/sql.ts` splice in, so the facts come back in the *same* statement as the rows (no
+ *   N+1, nothing cached). Which version is a project's latest comes from
+ *   `apiome.browse_public_projects.latest_version_id` (V431, DBP-1.27).
  * - **The facts line** ({@link factsLine}): which facts to show, in which order, with which words.
- * - **The sorts** ({@link sortProjectsByFacts}, {@link projectRailOrderSql}): most operations and
- *   best grade, for the organization page and the home rail.
+ * - **The sorts** ({@link sortProjectsByFacts}, {@link projectRailOrderSql},
+ *   {@link summaryRailOrderSql}): most operations and best grade, for the organization page and the
+ *   home rail.
  */
 
 import { formatLabel } from './browseFacets';
@@ -120,29 +122,6 @@ export function cardFactsJoinSql(versionPkExpr: string, alias = 'cf'): string {
          FROM apiome.versions f_v
          JOIN apiome.projects f_p ON f_p.id = f_v.project_id
          WHERE f_v.id = ${versionPkExpr}
-       ) ${alias} ON TRUE`;
-}
-
-/**
- * A `LEFT JOIN LATERAL` that picks a project's latest published public version — the version the
- * project's card describes. "Latest" is the order every other Browse surface uses: newest
- * `published_at`, then newest `created_at`.
- *
- * @param projectPkExpr - A SQL expression for the project's primary key (a column reference written
- *   in code, never user input).
- * @param alias - The alias; the version's id is `alias.id`.
- * @returns The join clause.
- */
-export function latestPublicVersionJoinSql(projectPkExpr: string, alias = 'lv'): string {
-  return `LEFT JOIN LATERAL (
-         SELECT l_v.id
-         FROM apiome.versions l_v
-         WHERE l_v.project_id = ${projectPkExpr}
-           AND l_v.published = true
-           AND l_v.visibility = 'public'
-           AND l_v.deleted_at IS NULL
-         ORDER BY l_v.published_at DESC NULLS LAST, l_v.created_at DESC
-         LIMIT 1
        ) ${alias} ON TRUE`;
 }
 
@@ -402,6 +381,29 @@ export const PROJECT_RAIL_SORT_PARAM = 'projects';
 export function parseProjectRailSort(raw: string | string[] | null | undefined): ProjectRailSort {
   const value = Array.isArray(raw) ? raw[0] : raw;
   return PROJECT_RAIL_SORTS.some((o) => o.value === value) ? (value as ProjectRailSort) : 'versions';
+}
+
+/**
+ * The ORDER BY that picks the home rail's projects from `apiome.browse_public_projects` (V431,
+ * DBP-1.27), per sort. Each list is exactly the column list of one of that table's indexes
+ * (`idx_browse_public_projects_by_versions` / `_by_operations` / `_by_grade`), so the rail reads
+ * its first rows from the index instead of ranking every public project. It is the same order as
+ * {@link projectRailOrderSql}, on the stored copies of the columns that one reads from `cf`.
+ *
+ * @param mode - The sort (already validated by {@link parseProjectRailSort}).
+ * @param alias - The summary table's alias (written in code).
+ * @returns The ORDER BY expression list.
+ */
+export function summaryRailOrderSql(mode: ProjectRailSort, alias = 'b'): string {
+  switch (mode) {
+    case 'operations':
+      return `${alias}.operation_count DESC, ${alias}.version_count DESC, ${alias}.latest_published_at DESC NULLS LAST`;
+    case 'grade':
+      return `${alias}.quality_grade ASC NULLS LAST, ${alias}.quality_score DESC NULLS LAST, ${alias}.latest_published_at DESC NULLS LAST`;
+    case 'versions':
+    default:
+      return `${alias}.version_count DESC, ${alias}.latest_published_at DESC NULLS LAST`;
+  }
 }
 
 /**

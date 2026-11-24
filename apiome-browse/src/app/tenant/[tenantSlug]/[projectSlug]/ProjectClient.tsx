@@ -32,7 +32,10 @@ interface Version {
 
 interface ProjectClientProps {
   project: Project;
+  /** The newest versions (at most 200; DBP-1.27). */
   versions: Version[];
+  /** Every published public version of the project, listed here or not. */
+  versionCount?: number;
   /** Classified max severity per version label, when a changelog row exists (CTG-3.2, #4476). */
   changelogSeverities: Record<string, Severity>;
   tenantSlug: string;
@@ -42,11 +45,14 @@ interface ProjectClientProps {
 export function ProjectClient({
   project,
   versions,
+  versionCount,
   changelogSeverities,
   tenantSlug,
   projectSlug,
 }: ProjectClientProps) {
   const latest = versions[0];
+  // The list carries the newest versions only; the count is of all of them.
+  const total = Math.max(versionCount ?? 0, versions.length);
   const [copied, setCopied] = useState(false);
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
@@ -87,7 +93,7 @@ export function ProjectClient({
             </span>
           }
           meta={[
-            { label: 'Versions', value: versions.length },
+            { label: 'Versions', value: total },
             {
               label: 'Latest version',
               value: latest ? `v${latest.version_id}` : '—',
@@ -189,7 +195,9 @@ export function ProjectClient({
               <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400">
                 {versions.length === 0
                   ? 'No published versions yet.'
-                  : `${versions.length} published ${versions.length === 1 ? 'version' : 'versions'}, newest first.`}
+                  : total > versions.length
+                    ? `${total} published versions. The newest ${versions.length} are listed here; the changelog has them all.`
+                    : `${total} published ${total === 1 ? 'version' : 'versions'}, newest first.`}
               </p>
             </div>
             {versions.length > 0 && (
