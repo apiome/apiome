@@ -94,7 +94,11 @@ GROUPS = (
 _ISSUES = "https://github.com/apiome/apiome/issues/"
 
 # Tracking issues (docs/ROADMAP_PACTFLOW_PARITY.md).
-_BADGES = "#6923"  # PFX-1.10 Badges and public status endpoints
+_BADGE_NOTE = (
+    "Apiome serves public SVG and shields.io status badges for a public project instead, "
+    "not the broker's tag-aware ones."
+)
+_BADGES = "/v1/browse/tenants/{tenant}/projects/{project}/pact-badges"  # PFX-1.10 (#6923)
 _CLEANUP = "#6924"  # PFX-1.11 Pacticipant labels, version delete and cleanup
 
 _NATIVE = "/v1/tenants/{tenant}/pacticipants"
@@ -769,36 +773,54 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
     ),
     _e(_G_WEBHOOKS, "/triggered-webhooks/{uuid}/logs", "Execution log of a webhook run", "GET", "GET"),
     # Badges -----------------------------------------------------------------------------------------
-    _e(_G_BADGES, _PAIR + "/latest/badge", "Badge of the latest pact", "GET", tracking=_BADGES),
-    _e(_G_BADGES, _PAIR + "/latest/{tag}/badge", "Badge of the latest tagged pact", "GET", tracking=_BADGES),
-    _e(_G_BADGES, _PAIR + "/latest-untagged/badge", "Badge of the latest untagged pact", "GET", tracking=_BADGES),
+    _e(_G_BADGES, _PAIR + "/latest/badge", "Badge of the latest pact", "GET", note=_BADGE_NOTE, alternative=_BADGES),
+    _e(
+        _G_BADGES,
+        _PAIR + "/latest/{tag}/badge",
+        "Badge of the latest tagged pact",
+        "GET",
+        note=_BADGE_NOTE,
+        alternative=_BADGES,
+    ),
+    _e(
+        _G_BADGES,
+        _PAIR + "/latest-untagged/badge",
+        "Badge of the latest untagged pact",
+        "GET",
+        note=_BADGE_NOTE,
+        alternative=_BADGES,
+    ),
     _e(
         _G_BADGES,
         "/matrix/provider/{provider}/latest/{providerTag}/consumer/{consumer}/latest/{tag}/badge",
         "Badge of a tagged matrix row",
         "GET",
-        tracking=_BADGES,
+        note=_BADGE_NOTE,
+        alternative=_BADGES,
     ),
     _e(
         _G_BADGES,
         "/pacticipants/{pacticipant}/latest-version/{tag}/can-i-deploy/to/{to}/badge",
         "can-i-deploy badge (tag to tag)",
         "GET",
-        tracking=_BADGES,
+        note=_BADGE_NOTE,
+        alternative=_BADGES,
     ),
     _e(
         _G_BADGES,
         _BRANCH + "/latest-version/can-i-deploy/to-environment/{environment}/badge",
         "can-i-deploy badge (branch to environment)",
         "GET",
-        tracking=_BADGES,
+        note=_BADGE_NOTE,
+        alternative=_BADGES,
     ),
     _e(
         _G_BADGES,
         "/pacticipants/{pacticipant}/main-branch/can-i-merge/badge",
         "can-i-merge badge",
         "GET",
-        tracking=_BADGES,
+        note=_BADGE_NOTE,
+        alternative=_BADGES,
     ),
     # Labels -----------------------------------------------------------------------------------------
     _e(_G_LABELS, "/labels", "Every label", "GET", tracking=_CLEANUP),

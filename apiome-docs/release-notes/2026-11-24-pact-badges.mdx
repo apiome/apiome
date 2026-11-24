@@ -1,0 +1,30 @@
+---
+slug: pact-badges
+title: "Pact badges for public projects"
+description: "Show on a README or in Browse whether the pacts of an application are verified."
+authors: [apiome]
+---
+
+A public project can now show whether its pacts are **verified**, **failing** or **unknown**, as an
+SVG badge or a shields.io endpoint — no token needed.
+
+{/* truncate */}
+
+Bind a pacticipant to the project, then use its badge:
+
+```markdown
+![pact](https://api.example.com/v1/browse/tenants/acme/projects/ledger/pact-badges/pacticipants/ledger-api/badge.svg)
+```
+
+**What you get**
+
+- **A badge per application and per pact.** An application is *failing* if any of its pacts is,
+  *verified* only when it has pacts and all are verified, otherwise *unknown*.
+- **shields.io endpoint JSON** next to every badge, to style it your own way.
+- **A strip on the project page in Browse**, shown only when the project is public and has bound
+  pacticipants.
+- **Nothing exposed that is not public.** A private project or an unbound pacticipant is a plain
+  `404`.
+
+The Pact Broker's own tag-aware badge endpoints still answer `501`; the response now points to these
+badges. Read [Pact badges](/ship/pact-broker/badges).

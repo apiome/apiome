@@ -141,6 +141,7 @@ from .pact_broker_matrix_routes import router as pact_broker_matrix_router
 from .pact_broker_routes import router as pact_broker_router
 from .pact_broker_verification_routes import router as pact_broker_verification_router
 from .pact_broker_webhook_routes import router as pact_broker_webhook_router
+from .pact_badge_routes import router as pact_badge_router
 from .pacticipant_routes import router as pacticipant_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
@@ -566,6 +567,7 @@ app.include_router(pact_broker_verification_router)
 app.include_router(pact_broker_environment_router)
 app.include_router(pact_broker_matrix_router)
 app.include_router(pact_broker_webhook_router)
+app.include_router(pact_badge_router)  # PFX-1.10 (#6923): public pact badges
 app.include_router(pact_broker_fallback_router)
 # consumer_binding_router: RDG-1.8 consumer bindings + declared-vs-observed runtime edges under
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).

@@ -1,6 +1,6 @@
 ---
 title: "Browse"
-description: "REST endpoints tagged browse: 12 operations."
+description: "REST endpoints tagged browse: 17 operations."
 sidebar_position: 12
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.662.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.663.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `browse` · 12 operations
+Tag: `browse` · 17 operations
 
 ## `GET /v1/browse/tenants` {#list-public-browse-tenants-v1-browse-tenants-get}
 
@@ -164,6 +164,127 @@ Operation id: `get_public_browse_project_changelog_markdown_v1_browse_tenants__t
 | 200 | The project changelog as Markdown, one block per published version, newest first. | `text/markdown` string |
 | 304 | Not modified (``If-None-Match`` matched the ETag). | — |
 | 404 | Tenant or project not found, or the project has no public published version. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges` {#project-pact-status-v1-browse-tenants-tenant-slug-projects-project-slug-pact-badges-get}
+
+**Pact status of a public project**
+
+The state of every pacticipant bound to a public project, with badge URLs.
+
+Operation id: `project_pact_status_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for pact status of a public project. | `application/json` object |
+| 404 | No such public project, or nothing bound to it by that name. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges/pacticipants/{pacticipant_slug}/badge.svg` {#pacticipant-badge-svg-v1-browse-tenants-tenant-slug-projects-project-slug-pact-badges-pacticipants-pacticipant-slug-badge-svg-get}
+
+**SVG badge of a pacticipant**
+
+``pact: <pacticipant> | verified / failing / unknown``.
+
+Operation id: `pacticipant_badge_svg_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_pacticipants__pacticipant_slug__badge_svg_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
+| `pacticipant_slug` | path | string | yes | Path parameter identifying the pacticipant slug segment. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for svg badge of a pacticipant. | `image/svg+xml` any |
+| 404 | No such public project, or nothing bound to it by that name. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges/pacticipants/{pacticipant_slug}/shields.json` {#pacticipant-badge-shields-v1-browse-tenants-tenant-slug-projects-project-slug-pact-badges-pacticipants-pacticipant-slug-shields-json-get}
+
+**shields.io endpoint of a pacticipant**
+
+The shields.io endpoint document of a pacticipant.
+
+Operation id: `pacticipant_badge_shields_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_pacticipants__pacticipant_slug__shields_json_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
+| `pacticipant_slug` | path | string | yes | Path parameter identifying the pacticipant slug segment. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for shields.io endpoint of a pacticipant. | `application/json` any |
+| 404 | No such public project, or nothing bound to it by that name. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges/pacts/provider/{provider_slug}/consumer/{consumer_slug}/badge.svg` {#pact-badge-svg-v1-browse-tenants-tenant-slug-projects-project-slug-pact-badges-pacts-provider-provider-slug-consumer-consumer-slug-badge-svg-get}
+
+**SVG badge of one pact**
+
+``pact: <consumer> → <provider> | verified / failing / unknown``.
+
+Operation id: `pact_badge_svg_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_pacts_provider__provider_slug__consumer__consumer_slug__badge_svg_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
+| `provider_slug` | path | string | yes | Path parameter identifying the provider slug segment. |
+| `consumer_slug` | path | string | yes | Path parameter identifying the consumer slug segment. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for svg badge of one pact. | `image/svg+xml` any |
+| 404 | No such public project, or nothing bound to it by that name. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges/pacts/provider/{provider_slug}/consumer/{consumer_slug}/shields.json` {#pact-badge-shields-v1-browse-tenants-tenant-slug-projects-project-slug-pact-badges-pacts-provider-provider-slug-consumer-consumer-slug-shields-json-get}
+
+**shields.io endpoint of one pact**
+
+The shields.io endpoint document of one pact.
+
+Operation id: `pact_badge_shields_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_pacts_provider__provider_slug__consumer__consumer_slug__shields_json_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_slug` | path | string | yes | URL-safe project slug within the tenant. |
+| `provider_slug` | path | string | yes | Path parameter identifying the provider slug segment. |
+| `consumer_slug` | path | string | yes | Path parameter identifying the consumer slug segment. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for shields.io endpoint of one pact. | `application/json` any |
+| 404 | No such public project, or nothing bound to it by that name. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions` {#list-public-browse-versions-v1-browse-tenants-tenant-slug-projects-project-slug-versions-get}

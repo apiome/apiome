@@ -6,15 +6,15 @@
   "response": {
     "body": {
       "detail": {
+        "alternative": "/v1/browse/tenants/{tenant}/projects/{project}/pact-badges",
         "code": "pact-broker-not-implemented",
         "documentation": "https://docs.apiome.dev/ship/pact-broker/compatibility",
         "endpoint": "/pacts/provider/{provider}/consumer/{consumer}/latest/badge",
-        "message": "GET is not supported on “Badge of the latest pact” (planned). Tracked in https://github.com/apiome/apiome/issues/6923.",
+        "message": "GET is not supported on “Badge of the latest pact” (not planned). Apiome serves public SVG and shields.io status badges for a public project instead, not the broker's tag-aware ones. Apiome route: /v1/browse/tenants/{tenant}/projects/{project}/pact-badges.",
         "pact_broker_version": "2.124.0",
         "pointer": "/v1/tenants/acme-corp/pact-broker/pacts/provider/ConformanceAPI/consumer/ConformanceWeb/latest/badge",
-        "status": "planned",
-        "supported_methods": [],
-        "tracking": "https://github.com/apiome/apiome/issues/6923"
+        "status": "not planned",
+        "supported_methods": []
       }
     },
     "status": 501

@@ -1,0 +1,87 @@
+---
+title: Pact badges
+description: Show whether a public project's pacts are verified with an SVG badge or shields.io.
+sidebar_position: 6.7
+tags: [contracts, pact, rest, browse]
+---
+
+A **pact badge** says in one word whether the pacts of an application are **verified**, **failing**
+or **unknown**. Put it in a README, or let it appear on the project's page in Browse. Badges are
+public and need no token, so they are only served for a **public project**: one with a published,
+public version.
+
+## What the badge says
+
+Each pact is the latest one published between a consumer and a provider. Its state is the state of
+its newest [verification result](./verification-results.mdx).
+
+| Word | A pact is… | An application is… |
+| --- | --- | --- |
+| **verified** | verified successfully | in at least one pact, and every pact is verified |
+| **failing** | failing its newest verification | in any failing pact |
+| **unknown** | not verified yet | in no pact, or in a pact that has no result yet |
+
+An unverified pact never shows as verified.
+
+## Before you start
+
+- The project is public: it has a published version that anyone can see in Browse.
+- The application is a [pacticipant](./concepts.mdx) **bound to that project**. Bind it by setting
+  `project` to the project's slug when you create or update the pacticipant. A pacticipant that is
+  not bound to a public project has no badge.
+
+## Add a badge to a README
+
+Replace `acme`, `ledger` and `ledger-api` with the workspace slug, the project slug and the
+pacticipant slug.
+
+```markdown
+![pact](https://api.example.com/v1/browse/tenants/acme/projects/ledger/pact-badges/pacticipants/ledger-api/badge.svg)
+```
+
+To judge one pair of applications, use the pact's own badge:
+
+```text
+/v1/browse/tenants/acme/projects/ledger/pact-badges/pacts/provider/ledger-api/consumer/web/badge.svg
+```
+
+Either the provider or the consumer must be bound to the project.
+
+## Use shields.io
+
+Every badge has a `shields.json` twin that follows the
+[shields.io endpoint schema](https://shields.io/badges/endpoint-badge). Give shields.io its URL to
+style the badge as you like:
+
+```markdown
+![pact](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.example.com%2Fv1%2Fbrowse%2Ftenants%2Facme%2Fprojects%2Fledger%2Fpact-badges%2Fpacticipants%2Fledger-api%2Fshields.json)
+```
+
+The document it reads looks like this:
+
+```json
+{ "schemaVersion": 1, "label": "pact: ledger-api", "message": "verified", "color": "brightgreen" }
+```
+
+## On the project page in Browse
+
+When a public project has pacticipants bound to it, its Browse page shows a **Pact verification**
+strip with one badge for each. A project with none shows nothing. The strip reads
+`GET …/pact-badges`, which lists every bound pacticipant with its state and badge URLs.
+
+## What is public
+
+Only a status word and the names of pacticipants you bound to a public project are shown. A
+private project, an unbound or unknown pacticipant, and a missing pact all answer the same
+`404`, so a badge URL cannot be used to find out what exists. Answers may be cached for five
+minutes, so a badge can lag a new verification by that long.
+
+## The broker's own badge endpoints
+
+The Pact Broker has tag-aware badge endpoints (`…/latest/badge`, `…/can-i-deploy/…/badge`).
+Apiome does not serve them: they answer `501` and point to the public badges above. See
+[Pact Broker compatibility](./compatibility.mdx).
+
+## Reference
+
+[Browse REST reference](/reference/rest/browse) — the five `pact-badges` routes.

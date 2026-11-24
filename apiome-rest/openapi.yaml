@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.662.0
+  version: 1.663.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -108061,6 +108061,256 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get class jsonschema specresponse422.
+  /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges:
+    get:
+      tags:
+      - browse
+      summary: Pact status of a public project
+      description: The state of every pacticipant bound to a public project, with badge
+        URLs.
+      operationId: project_pact_status_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      responses:
+        '200':
+          description: Successful response for pact status of a public project.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Project Pact Status V1 Browse Tenants  Tenant Slug  Projects  Project
+                  Slug  Pact Badges Get
+                description: Response Project Pact Status V1 Browse Tenants  Tenant
+                  Slug  Projects  Project Slug  Pact Badges Get schema.
+        '404':
+          description: No such public project, or nothing bound to it by that name.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for pactstatusofapublicprojectresponse422.
+  /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges/pacticipants/{pacticipant_slug}/badge.svg:
+    get:
+      tags:
+      - browse
+      summary: SVG badge of a pacticipant
+      description: '``pact: <pacticipant> | verified / failing / unknown``.'
+      operationId: pacticipant_badge_svg_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_pacticipants__pacticipant_slug__badge_svg_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: pacticipant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Slug
+          description: Pacticipant Slug schema.
+        description: Path parameter identifying the pacticipant slug segment.
+      responses:
+        '200':
+          description: Successful response for svg badge of a pacticipant.
+          content:
+            image/svg+xml: {}
+        '404':
+          description: No such public project, or nothing bound to it by that name.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for svgbadgeofapacticipantresponse422.
+  /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges/pacticipants/{pacticipant_slug}/shields.json:
+    get:
+      tags:
+      - browse
+      summary: shields.io endpoint of a pacticipant
+      description: The shields.io endpoint document of a pacticipant.
+      operationId: pacticipant_badge_shields_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_pacticipants__pacticipant_slug__shields_json_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: pacticipant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Slug
+          description: Pacticipant Slug schema.
+        description: Path parameter identifying the pacticipant slug segment.
+      responses:
+        '200':
+          description: Successful response for shields.io endpoint of a pacticipant.
+          content:
+            application/json:
+              schema:
+                description: Response payload for shieldsioendpointofapacticipantresponse200.
+        '404':
+          description: No such public project, or nothing bound to it by that name.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for shieldsioendpointofapacticipantresponse422.
+  ? /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges/pacts/provider/{provider_slug}/consumer/{consumer_slug}/badge.svg
+  : get:
+      tags:
+      - browse
+      summary: SVG badge of one pact
+      description: '``pact: <consumer> → <provider> | verified / failing / unknown``.'
+      operationId: pact_badge_svg_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_pacts_provider__provider_slug__consumer__consumer_slug__badge_svg_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: provider_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Slug
+          description: Provider Slug schema.
+        description: Path parameter identifying the provider slug segment.
+      - name: consumer_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Slug
+          description: Consumer Slug schema.
+        description: Path parameter identifying the consumer slug segment.
+      responses:
+        '200':
+          description: Successful response for svg badge of one pact.
+          content:
+            image/svg+xml: {}
+        '404':
+          description: No such public project, or nothing bound to it by that name.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for svgbadgeofonepactresponse422.
+  ? /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/pact-badges/pacts/provider/{provider_slug}/consumer/{consumer_slug}/shields.json
+  : get:
+      tags:
+      - browse
+      summary: shields.io endpoint of one pact
+      description: The shields.io endpoint document of one pact.
+      operationId: pact_badge_shields_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_pacts_provider__provider_slug__consumer__consumer_slug__shields_json_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Slug
+          description: Project Slug schema.
+        description: URL-safe project slug within the tenant.
+      - name: provider_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Slug
+          description: Provider Slug schema.
+        description: Path parameter identifying the provider slug segment.
+      - name: consumer_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Slug
+          description: Consumer Slug schema.
+        description: Path parameter identifying the consumer slug segment.
+      responses:
+        '200':
+          description: Successful response for shields.io endpoint of one pact.
+          content:
+            application/json:
+              schema:
+                description: Response payload for shieldsioendpointofonepactresponse200.
+        '404':
+          description: No such public project, or nothing bound to it by that name.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for shieldsioendpointofonepactresponse422.
 components:
   schemas:
     AbsenceCategory:
