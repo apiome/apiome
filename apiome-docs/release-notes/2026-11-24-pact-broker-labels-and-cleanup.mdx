@@ -1,0 +1,49 @@
+---
+slug: pact-broker-labels-and-cleanup
+title: "Pact Broker: labels, deletes and retention"
+description: "Group pacticipants with labels, undo a delete, and clean up old versions safely."
+authors: [apiome]
+---
+
+A pipeline that records a version per build fills the registry fast. You can now group
+pacticipants with **labels**, **delete** a version or a pacticipant and change your mind for 30
+days, and run a **retention** cleanup that shows you what it will delete before it deletes anything.
+
+{/* truncate */}
+
+**Clean up in two calls.** Ask for the plan, then apply its digest:
+
+```bash
+curl -X POST https://api.apiome.dev/v1/tenants/acme/pact-retention \
+  -H "X-API-Key: $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"keep": {"latest_per_branch": 10, "created_within_days": 30}}'
+# …check the plan, then send the same body with "dry_run": false and its "plan_digest"
+```
+
+**What you get**, through the [Pacticipants API](/reference/rest/pacticipants) and the
+[Pact Broker API](/reference/rest/pact-broker):
+
+- **Labels.** Put `team-billing` or `tier-1` on a pacticipant, list the pacticipants with a label,
+  and list every label in the workspace. The Pact Broker's label routes work unchanged, and contract
+  webhooks now fill `${pactbroker.consumerLabels}` and `${pactbroker.providerLabels}`.
+- **Deletes you can undo.** Deleting a version or a pacticipant hides it from every read at once,
+  with its pacts, verification results and deployments. `?state=deleted` lists what you deleted,
+  and `POST …/restore` brings it back for 30 days.
+- **Deployed versions are protected.** A version that is deployed or released is not deleted
+  unless you add `force=true`.
+- **Retention that cannot surprise you.** Keep the newest versions of each branch, anything
+  deployed or released, and anything recent. Each pacticipant's latest version is always kept.
+  Every run starts as a dry run. Applying needs the plan's digest and is refused if anything changed
+  in between.
+- **An audit trail.** Every delete, restore, label change, retention run and purge is recorded in
+  the workspace audit log, with who did it and why.
+
+**Not yet available:** a screen for labels, deletes and retention, and choosing a webhook's
+pacticipants by label.
+
+**For operators.** Migration `V437` adds nullable deletion columns and a `pacticipant_label` table;
+no existing row is rewritten. `APIOME_PACT_DELETION_GRACE_DAYS` (default 30) sets how long a delete
+can be undone. Deleted data is purged on the async-job retention tick after that.
+
+Read [Labels, deletes and retention](/ship/pact-broker/retention) for every step, the keep rules
+and what each refusal means.

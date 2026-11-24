@@ -142,6 +142,8 @@ from .pact_broker_routes import router as pact_broker_router
 from .pact_broker_verification_routes import router as pact_broker_verification_router
 from .pact_broker_webhook_routes import router as pact_broker_webhook_router
 from .pact_badge_routes import router as pact_badge_router
+from .pact_broker_cleanup_routes import router as pact_broker_cleanup_router
+from .pact_retention_routes import router as pact_retention_router
 from .pacticipant_routes import router as pacticipant_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
@@ -557,6 +559,8 @@ app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
 # Pact Broker registry (PFX-1.1, #6914): pacticipants, versions, branches and tags.
 app.include_router(pacticipant_router)
+# PFX-1.11 (#6924): selector-based cleanup of pacticipant versions (dry run first).
+app.include_router(pact_retention_router)
 # Pact Broker-compatible publication and retrieval (PFX-1.2, #6915).
 # PFX-1.8 (#6921): the catalogued unsupported endpoints first (so ``…/latest/badge`` is not read as
 # the tag ``badge``), the real Pact Broker routes, then a catch-all — every request under
@@ -568,6 +572,7 @@ app.include_router(pact_broker_environment_router)
 app.include_router(pact_broker_matrix_router)
 app.include_router(pact_broker_webhook_router)
 app.include_router(pact_badge_router)  # PFX-1.10 (#6923): public pact badges
+app.include_router(pact_broker_cleanup_router)  # PFX-1.11 (#6924): labels and deletes
 app.include_router(pact_broker_fallback_router)
 # consumer_binding_router: RDG-1.8 consumer bindings + declared-vs-observed runtime edges under
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).
@@ -1288,6 +1293,14 @@ async def startup_event():
                             process_operational_retention_sweep(thread_db)
                         except Exception:
                             log.exception("operational retention sweep")
+                        # Pacticipants and versions deleted longer ago than the grace period
+                        # (PFX-1.11, #6924) are purged on the same tick.
+                        try:
+                            from .pact_cleanup_store import purge_deleted
+
+                            purge_deleted(thread_db)
+                        except Exception:
+                            log.exception("pact deletion purge")
                         return counts
 
                 await asyncio.to_thread(_run_retention)

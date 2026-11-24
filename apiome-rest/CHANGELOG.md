@@ -6,6 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.840.0] - 2026-11-24
+
+### Added
+- **Pacticipant labels, version delete and cleanup (PFX-1.11, #6924).** OpenAPI 1.664.0. Migration `V437`.
+  - **Labels:** `GET /v1/tenants/{t}/pacticipant-labels`, `GET …/pacticipants/{p}/labels`,
+    `GET|PUT|DELETE …/pacticipants/{p}/labels/{label}` (`PUT` answers `201` when new, `200` after),
+    and `?label=` on `GET …/pacticipants`. The Pact Broker shape: `GET …/pact-broker/labels`,
+    `GET …/pact-broker/pacticipants/label/{label}`, `GET|PUT|DELETE …/pact-broker/pacticipants/{p}/labels/{label}`;
+    a pacticipant's broker document embeds its labels and links `pb:label`. Contract webhooks fill
+    `${pactbroker.consumerLabels}` and `${pactbroker.providerLabels}`.
+  - **Soft delete with restore:** `DELETE …/pacticipants/{p}/versions/{v}` (and the broker's
+    `DELETE …/pact-broker/pacticipants/{p}` and `…/versions/{v}`) stamp the row instead of removing
+    it; every read — pacts, verification results, the matrix, can-i-deploy, environments, webhooks,
+    badges — ignores it at once. `?reason=` is stored. `POST …/pacticipants/{p}/restore` and
+    `POST …/versions/{v}/restore` undo a delete during the grace period; `?state=deleted` on the two
+    lists shows what is waiting, with `purge_after`. A deleted handle or version number can be used
+    again immediately.
+  - **Deployed versions are protected:** deleting a version that is currently deployed or released,
+    or a pacticipant with one, is `409 pacticipant-version-in-use` unless `?force=true`.
+  - **Selector-based retention, dry run first:** `POST /v1/tenants/{t}/pact-retention` keeps each
+    pacticipant's latest version, `keep.latest_per_branch`, `keep.deployed_or_released` (default on)
+    and `keep.created_within_days`, and deletes the rest. `dry_run` defaults to `true` and answers the
+    plan with a `plan_digest`; applying needs that digest and is `409 pact-retention-plan-changed`
+    (with the fresh plan) when anything moved in between. At most 5,000 deletions per run, oldest
+    first; `remaining` counts the rest.
+  - **Purge:** rows deleted longer ago than `APIOME_PACT_DELETION_GRACE_DAYS` (default 30) are
+    removed for good on the async-job retention tick, in bounded batches.
+  - **Audit:** every delete, restore, label change, applied run and purge appends an `access_audit`
+    row (`pacts.*`) in the same transaction.
+  - New refusal codes: `pacticipant-invalid-label`, `pacticipant-label-not-found`,
+    `pacticipant-invalid-reason`, `pacticipant-not-deleted`, `pacticipant-restore-conflict`,
+    `pacticipant-version-in-use`, `pact-retention-no-selector`,
+    `pact-retention-plan-digest-required`, `pact-retention-plan-changed`,
+    `pact-retention-too-many-pacticipants`, `pact-retention-too-many-versions`.
+
+### Changed
+- **`DELETE /v1/tenants/{t}/pacticipants/{p}` is now a soft delete** — restorable for the grace
+  period, refused while a version is deployed (unless `force=true`) — instead of an immediate
+  cascade. Its status (`204`) is unchanged.
+- `PacticipantRecord` gains `labels`, `deleted_at`, `deleted_by_label`, `delete_reason` and
+  `purge_after`; `PacticipantVersionRecord` gains the same plus `delete_cause`.
+- The Pact Broker compatibility catalog: labels and `DELETE` of a pacticipant and a version are
+  served; the other endpoints that were "planned #6924" (pact, branch, tag, verification-result and
+  integration deletes, pact-history delete) are **not planned**, and their `501` names the
+  version delete or a retention run instead. No endpoint is "planned" any more.
+
 ## [1.839.0] - 2026-11-24
 
 ### Added

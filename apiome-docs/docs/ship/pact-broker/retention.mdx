@@ -1,0 +1,250 @@
+---
+title: Labels, deletes and retention
+description: Group pacticipants with labels, delete and restore versions, and clean up old ones.
+sidebar_position: 6.8
+tags: [contracts, pact, ci, rest]
+---
+
+A CI pipeline records a version for every build, so a busy pacticipant collects thousands of
+versions nobody will deploy again. This page covers three things you can do about that, and one
+way to keep pacticipants organised:
+
+- **Labels** group pacticipants (`team-billing`, `tier-1`).
+- **Delete** removes a version or a whole pacticipant. A delete can be undone for 30 days.
+- **Retention** deletes every version you no longer need in one run. You always see what it will
+  delete before it deletes anything.
+- **Purge** removes deleted data for good once the 30 days have passed.
+
+There is no screen for these yet: use the [Pacticipants API](../../reference/rest/pacticipants.md)
+or the [Pact Broker API](../../reference/rest/pact-broker.md). Both take an API key, in `X-API-Key`
+or as a bearer token.
+
+## Label pacticipants
+
+A label is a free-form name on a pacticipant. A pacticipant can carry any number of labels.
+
+1. **Add a label.**
+
+   ```bash
+   curl -X PUT https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service/labels/team-billing \
+     -H "X-API-Key: sk_live_…"
+   ```
+
+   The answer is `201` when the label is new and `200` when the pacticipant already had it. A label
+   may contain `/` (`team/billing`).
+2. **List the pacticipants with a label:** `GET /v1/tenants/acme/pacticipants?label=team-billing`.
+3. **List every label in the workspace:** `GET /v1/tenants/acme/pacticipant-labels`.
+4. **Remove a label:** `DELETE …/pacticipants/billing-service/labels/team-billing`.
+
+The Pact Broker's label routes work too, so a script written for a Pact Broker runs unchanged:
+
+| Pact Broker route | What it does |
+| --- | --- |
+| `GET …/pact-broker/labels` | Every label, under `_embedded.labels`. |
+| `GET …/pact-broker/pacticipants/label/{label}` | The pacticipants with that label. |
+| `PUT …/pact-broker/pacticipants/{p}/labels/{label}` | Add a label. `201` with a `Location` header when it is new. |
+| `GET` / `DELETE …/pact-broker/pacticipants/{p}/labels/{label}` | Read or remove one label. |
+
+A pacticipant's labels are also embedded in its Pact Broker document (`_embedded.labels`), and a
+[contract webhook](./webhooks.mdx) can send them with `${pactbroker.consumerLabels}` and
+`${pactbroker.providerLabels}`.
+
+**One difference from the Pact Broker:** labelling a pacticipant that does not exist answers `404`.
+The Pact Broker would create the pacticipant.
+
+## Delete a version
+
+```bash
+curl -X DELETE "https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service/versions/3f2a9c1?reason=broken%20build" \
+  -H "X-API-Key: sk_live_…"
+```
+
+The answer is `204`. Straight away:
+
+- **The version is gone from every read.** That includes its pacts, the verification results it
+  published as a provider, and its deployments and releases. The matrix and can-i-deploy no longer
+  see it.
+- **A branch it headed falls back** to the latest version still on that branch. A branch with no
+  version left is hidden until a new version is recorded on it.
+- **The version number is free.** Publishing `3f2a9c1` again records a new version.
+- **`reason` is kept** with the delete and in the audit trail. It is optional, up to 500 characters.
+
+`DELETE …/pact-broker/pacticipants/{p}/versions/{v}` does the same through the Pact Broker API.
+
+### A deployed version is protected
+
+A version that is currently deployed to an environment, or released and still supported, is
+refused with `409 pacticipant-version-in-use`. The message names the version. Do one of these:
+
+- **Record the undeployment first** (`pact-broker record-undeployment`, or `record-support-ended`
+  for a release), then delete.
+- **Add `force=true`** to delete it anyway. Its deployment disappears with it, so can-i-deploy will
+  no longer count it as running there.
+
+## Delete a pacticipant
+
+```bash
+curl -X DELETE "https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service?reason=service%20retired" \
+  -H "X-API-Key: sk_live_…"
+```
+
+This deletes the pacticipant **with all of its versions**, and with them their pacts, verification
+results, deployments, branches, tags and labels. The handle is free again at once: publishing a
+pact that names `Billing Service` registers a new pacticipant. The project and the consumer it was
+bound to are not touched.
+
+As with a version, a pacticipant with a deployed or released version is refused with
+`409 pacticipant-version-in-use` unless you add `force=true`. `DELETE …/pact-broker/pacticipants/{p}`
+does the same through the Pact Broker API.
+
+## Restore what you deleted
+
+Everything you delete stays restorable for **30 days**: the grace period.
+
+1. **Find it.** Add `state=deleted` to a list:
+
+   | To find | Request |
+   | --- | --- |
+   | Deleted pacticipants | `GET /v1/tenants/acme/pacticipants?state=deleted` |
+   | Deleted versions of a pacticipant | `GET …/pacticipants/billing-service/versions?state=deleted` |
+
+   Each row has `deleted_at`, `deleted_by_label`, `delete_reason` and `purge_after`: when it goes
+   for good. A version also has `delete_cause`: `version` if it was deleted on its own, `pacticipant`
+   if it went with its pacticipant, or `retention` if a retention run deleted it.
+2. **Restore it.**
+
+   ```bash
+   # A version
+   curl -X POST https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service/versions/3f2a9c1/restore \
+     -H "X-API-Key: sk_live_…"
+
+   # A pacticipant: by its id (from step 1), or by its handle
+   curl -X POST https://api.apiome.dev/v1/tenants/acme/pacticipants/2f9c…/restore \
+     -H "X-API-Key: sk_live_…"
+   ```
+
+What comes back:
+
+- **A version** comes back with its pacts, results and deployments. A branch it headed is headed by
+  it again.
+- **A pacticipant** comes back with the versions that were deleted *with* it. A version you had
+  deleted on its own before stays deleted; restore it separately. With several deleted pacticipants
+  of the same handle, restoring by handle brings back the most recently deleted one.
+
+A restore is refused with `409 pacticipant-restore-conflict` when a live pacticipant has taken the
+handle, or a live version has taken the number, in the meantime. Delete that one first if you want
+the old one back.
+
+## Clean up old versions with a retention run
+
+A retention run keeps the versions you name and deletes the others. A version is **kept** when any
+of these is true:
+
+| Rule | Keeps |
+| --- | --- |
+| Always | The pacticipant's latest version. |
+| `keep.latest_per_branch: N` | The newest *N* versions of each branch. |
+| `keep.deployed_or_released` (on by default) | Every version currently deployed or released. |
+| `keep.created_within_days: D` | Every version recorded in the last *D* days. |
+
+A run always starts as a dry run, so you see the plan before anything is deleted.
+
+1. **Ask for the plan.** `dry_run` defaults to `true`, so this deletes nothing:
+
+   ```bash
+   curl -X POST https://api.apiome.dev/v1/tenants/acme/pact-retention \
+     -H "X-API-Key: sk_live_…" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "keep": { "latest_per_branch": 10, "created_within_days": 30 },
+       "pacticipants": ["billing-service"],
+       "reason": "monthly cleanup"
+     }'
+   ```
+
+   The answer counts what each pacticipant keeps and why (`kept_by`), lists the versions it would
+   delete (oldest first, up to 100 per pacticipant), and ends with a `plan_digest`. Leave out
+   `pacticipants` to clean every pacticipant in the workspace.
+2. **Check the plan.** Look at `deleted` and the `deletions` of each pacticipant.
+3. **Apply it.** Send the same request again with `"dry_run": false` and the `plan_digest` from
+   step 1:
+
+   ```bash
+   curl -X POST https://api.apiome.dev/v1/tenants/acme/pact-retention \
+     -H "X-API-Key: sk_live_…" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "keep": { "latest_per_branch": 10, "created_within_days": 30 },
+       "pacticipants": ["billing-service"],
+       "reason": "monthly cleanup",
+       "dry_run": false,
+       "plan_digest": "sha256:…"
+     }'
+   ```
+
+   The answer is the same plan with `"applied": true`.
+
+If anything changed between the two calls, the run deletes nothing. That covers a version
+published, deployed or deleted in between. The answer is `409 pact-retention-plan-changed`, with
+the new plan under `detail.plan`: check it and apply its own `plan_digest`.
+
+A run deletes at most 5,000 versions, oldest first. `remaining` counts the ones left for the next
+run. A run reads at most 100,000 versions; for a larger workspace, name the pacticipants in groups.
+
+Every deletion a run makes is a normal soft delete, with `delete_cause: retention` and the run's
+reason. You can [restore](#restore-what-you-deleted) any of them during the grace period.
+
+**Run it on a schedule.** Make the two calls from a scheduled CI job: ask for the plan, then apply
+its digest. Applying needs `pacts:delete`, so use an API key of an **Admin** or **Owner**.
+
+## How the purge works
+
+The retention sweep runs every 5 minutes. It removes for good every pacticipant and version
+deleted more than 30 days ago, with its pacts, verification results and deployment records. A
+[contract webhook](./webhooks.mdx) limited to a purged pacticipant is removed with it. After that,
+nothing can bring them back.
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Read labels, list deleted pacticipants and versions | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Ask for a retention plan (dry run) | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Add or remove a label | `pacts:edit` | — | ✓ | ✓ | ✓ |
+| Delete or restore a version or a pacticipant | `pacts:delete` | — | — | ✓ | ✓ |
+| Apply a retention run | `pacts:delete` | — | — | ✓ | ✓ |
+
+**Everything is audited.** Every delete, restore, label change, applied retention run and purge
+writes an entry to the workspace audit log (`pacts.version.delete`, `pacts.retention.apply`,
+`pacts.purge` and so on). The entry records who acted, the target, the reason and the counts.
+
+## When something is refused
+
+| Status | `code` | What to do |
+| --- | --- | --- |
+| `400` | `pacticipant-invalid-label` | A label is 1–255 characters, with no leading or trailing space and no control characters. |
+| `400` | `pacticipant-invalid-reason` | A reason is at most 500 characters, with no control characters. |
+| `404` | `pacticipant-label-not-found` | The pacticipant does not carry that label. |
+| `404` | `pacticipant-not-found`, `pacticipant-version-not-found` | Nothing deleted or live by that name, or a pacticipant named in a retention run does not exist. A run never skips a name silently. |
+| `409` | `pacticipant-version-in-use` | A version is deployed or released. Record the undeployment, or add `force=true`. |
+| `409` | `pacticipant-restore-conflict` | A live pacticipant or version has the handle or number now. |
+| `409` | `pacticipant-not-deleted` | You asked to restore something that is not deleted. |
+| `409` | `pact-retention-plan-changed` | The plan moved since the dry run. Check `detail.plan` and apply its digest. |
+| `422` | `pact-retention-no-selector` | Turn on at least one keep rule. With `deployed_or_released: false` and no other rule, a run would keep only the latest versions. |
+| `422` | `pact-retention-plan-digest-required` | Send the `plan_digest` of the dry run with `dry_run: false`. |
+| `422` | `pact-retention-too-many-pacticipants`, `pact-retention-too-many-versions` | Name at most 200 pacticipants, and fewer per run in a very large workspace. |
+
+## For operators
+
+- Migration `V437` adds the deletion columns and the `pacticipant_label` table. It rewrites no
+  existing rows.
+- `APIOME_PACT_DELETION_GRACE_DAYS` (default `30`, at least `1`) sets how long a delete can be
+  undone. The purge runs on the async-job retention tick.
+
+## Related
+
+- [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, branches and tags.
+- [Environments and deployments](./environments.mdx) — record undeployments before you delete.
+- [Can I deploy?](./can-i-deploy.mdx) — what a deleted version means for the matrix.
+- [Pact Broker compatibility](./compatibility.mdx) — which Pact Broker delete routes are served.
+- [Pacticipants API](../../reference/rest/pacticipants.md) — every endpoint, parameter and error code.

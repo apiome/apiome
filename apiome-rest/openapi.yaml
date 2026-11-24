@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.663.0
+  version: 1.664.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -28122,7 +28122,9 @@ paths:
       - pacticipants
       summary: List pacticipants
       description: 'The applications registered as pacticipants in this workspace, ordered
-        by handle.
+        by handle. `label` keeps the ones carrying that label. `state=deleted` lists
+        the deleted ones instead, each with `deleted_at` and `purge_after` (when it
+        is removed for good unless restored).
 
 
         Pass the previous page''s `next_cursor` as `cursor` until `has_more` is false.
@@ -28139,6 +28141,31 @@ paths:
           title: Tenant Slug
           description: Tenant Slug schema.
         description: URL-safe tenant slug that scopes the request.
+      - name: label
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Listpacticipantslabel schema.
+          - type: 'null'
+            description: Listpacticipantslabel schema.
+          description: Only pacticipants with this label.
+          title: Label
+        description: Only pacticipants with this label.
+      - name: state
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(live|deleted)$
+          description: '`live` (the default) or `deleted`: what was deleted and is waiting
+            to be purged.'
+          default: live
+          title: State
+        description: '`live` (the default) or `deleted`: what was deleted and is waiting
+          to be purged.'
       - name: limit
         in: query
         required: false
@@ -28431,9 +28458,17 @@ paths:
       tags:
       - pacticipants
       summary: Delete a pacticipant
-      description: 'Delete a pacticipant **with all of its versions, branches and tags**.
-        This cannot be undone. The project and the consumer it was bound to are not
-        touched.
+      description: 'Delete a pacticipant **with all of its versions** — and with them
+        its pacts, verification results, deployments, branches and tags. The delete
+        is soft: everything disappears from every read at once, `POST …/restore` brings
+        it back for `APIOME_PACT_DELETION_GRACE_DAYS` (default 30) days, and it is then
+        purged for good. The handle is free again at once. The project and the consumer
+        it was bound to are not touched.
+
+
+        A pacticipant with a version that is currently deployed or released is refused
+        (`409 pacticipant-version-in-use`) unless `force=true`. `reason` is stored with
+        the delete and in the audit trail.
 
 
         Requires `pacts:delete` (the built-in Owner and Admin roles).'
@@ -28455,6 +28490,28 @@ paths:
           title: Pacticipant Ref
           description: Pacticipant Ref schema.
         description: Path parameter identifying the pacticipant ref segment.
+      - name: reason
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 500
+            description: Deleteapacticipantreason schema.
+          - type: 'null'
+            description: Deleteapacticipantreason schema.
+          description: Why; stored with the delete and audited.
+          title: Reason
+        description: Why; stored with the delete and audited.
+      - name: force
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Delete even when a version is currently deployed or released.
+          default: false
+          title: Force
+        description: Delete even when a version is currently deployed or released.
       - name: authorization
         in: header
         required: false
@@ -28483,6 +28540,8 @@ paths:
       responses:
         '204':
           description: Successful response for delete a pacticipant.
+        '409':
+          description: '`pacticipant-version-in-use`: a version is deployed or released.'
         '422':
           description: Validation Error
           content:
@@ -28490,6 +28549,81 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for deleteapacticipantresponse422.
+  /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/restore:
+    post:
+      tags:
+      - pacticipants
+      summary: Restore a deleted pacticipant
+      description: 'Undo a pacticipant''s delete before it is purged, with the versions
+        that were deleted along with it (a version deleted on its own before stays deleted).
+        `{pacticipant_ref}` is the deleted pacticipant''s id, handle or name; with several
+        deleted ones of the same handle the most recently deleted comes back — pass
+        the id (from `?state=deleted`) to choose.
+
+
+        `409 pacticipant-restore-conflict` when a live pacticipant has taken the handle
+        since.
+
+
+        Requires `pacts:delete`.'
+      operationId: restore_deleted_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__restore_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Ref
+          description: Pacticipant Ref schema.
+        description: Path parameter identifying the pacticipant ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Restoreadeletedpacticipantauthorization schema.
+          - type: 'null'
+            description: Restoreadeletedpacticipantauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Restoreadeletedpacticipant Xapikey schema.
+          - type: 'null'
+            description: Restoreadeletedpacticipant Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for restore a deleted pacticipant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PacticipantRecord'
+                description: Response payload for restoreadeletedpacticipantresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for restoreadeletedpacticipantresponse422.
   /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions:
     get:
       tags:
@@ -28498,7 +28632,8 @@ paths:
       description: 'The versions recorded for this pacticipant, latest recorded first,
         each with the branches it was recorded on and its tags. `branch` and `tag` narrow
         the list, so the first row of `?branch=main` is the head of `main` and the first
-        row of `?tag=prod` is the latest version tagged `prod`.
+        row of `?tag=prod` is the latest version tagged `prod`. `state=deleted` lists
+        the deleted versions instead, with `delete_cause` and `purge_after`.
 
 
         Pass the previous page''s `next_cursor` as `cursor` until `has_more` is false.
@@ -28549,6 +28684,18 @@ paths:
           description: Only versions carrying this tag.
           title: Tag
         description: Only versions carrying this tag.
+      - name: state
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(live|deleted)$
+          description: '`live` (the default) or `deleted`: what was deleted and is waiting
+            to be purged.'
+          default: live
+          title: State
+        description: '`live` (the default) or `deleted`: what was deleted and is waiting
+          to be purged.'
       - name: limit
         in: query
         required: false
@@ -28799,6 +28946,187 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readoneversionresponse422.
+    delete:
+      tags:
+      - pacticipants
+      summary: Delete a version
+      description: 'Delete one version — and with it its pacts, the verification results
+        it published, its deployments and releases, branch membership and tags. The
+        delete is soft: the version disappears from every read (the matrix and can-i-deploy
+        included) at once, `POST …/restore` brings it back for `APIOME_PACT_DELETION_GRACE_DAYS`
+        (default 30) days, and it is then purged. A branch it headed falls back to its
+        latest remaining version. The number can be recorded again at once, as a new
+        version.
+
+
+        A version that is currently deployed or released is refused (`409 pacticipant-version-in-use`)
+        unless `force=true`. `reason` is stored and audited.
+
+
+        Requires `pacts:delete`.'
+      operationId: remove_pacticipant_version_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__versions__number__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Ref
+          description: Pacticipant Ref schema.
+        description: Path parameter identifying the pacticipant ref segment.
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Number
+          description: Number schema.
+        description: Path parameter identifying the number segment.
+      - name: reason
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 500
+            description: Deleteaversionreason schema.
+          - type: 'null'
+            description: Deleteaversionreason schema.
+          description: Why; stored with the delete and audited.
+          title: Reason
+        description: Why; stored with the delete and audited.
+      - name: force
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Delete even when a version is currently deployed or released.
+          default: false
+          title: Force
+        description: Delete even when a version is currently deployed or released.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteaversionauthorization schema.
+          - type: 'null'
+            description: Deleteaversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteaversion Xapikey schema.
+          - type: 'null'
+            description: Deleteaversion Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete a version.
+        '409':
+          description: '`pacticipant-version-in-use`: the version is deployed or released.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteaversionresponse422.
+  /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}/restore:
+    post:
+      tags:
+      - pacticipants
+      summary: Restore a deleted version
+      description: 'Undo a version''s delete (on its own or by a retention run) before
+        it is purged: its pacts, results and deployments come back, and a branch whose
+        head it was is headed by it again. `409 pacticipant-restore-conflict` when a
+        live version has taken the number since.
+
+
+        Requires `pacts:delete`.'
+      operationId: restore_deleted_version_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__versions__number__restore_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Ref
+          description: Pacticipant Ref schema.
+        description: Path parameter identifying the pacticipant ref segment.
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Number
+          description: Number schema.
+        description: Path parameter identifying the number segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Restoreadeletedversionauthorization schema.
+          - type: 'null'
+            description: Restoreadeletedversionauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Restoreadeletedversion Xapikey schema.
+          - type: 'null'
+            description: Restoreadeletedversion Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for restore a deleted version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PacticipantVersionRecord'
+                description: Response payload for restoreadeletedversionresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for restoreadeletedversionresponse422.
   /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}/tags/{tag}:
     put:
       tags:
@@ -28981,6 +29309,482 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for listapacticipantsbranchesresponse422.
+  /v1/tenants/{tenant_slug}/pacticipant-labels:
+    get:
+      tags:
+      - pacticipants
+      summary: List the workspace's labels
+      description: 'Every distinct label on the workspace''s pacticipants, by name.
+        `GET …/pacticipants?label=…` lists the pacticipants carrying one.
+
+
+        Pass the previous page''s `next_cursor` as `cursor` until `has_more` is false.
+
+
+        Requires `pacts:view`.'
+      operationId: list_workspace_labels_v1_tenants__tenant_slug__pacticipant_labels_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Page size. At most 200.
+          default: 50
+          title: Limit
+        description: Page size. At most 200.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            description: Listtheworkspaceslabelscursor schema.
+          - type: 'null'
+            description: Listtheworkspaceslabelscursor schema.
+          description: Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor`
+            header). Omit for the first page.
+          title: Cursor
+        description: Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor`
+          header). Omit for the first page.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspaceslabelsauthorization schema.
+          - type: 'null'
+            description: Listtheworkspaceslabelsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspaceslabels Xapikey schema.
+          - type: 'null'
+            description: Listtheworkspaceslabels Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the workspace's labels.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelNameListResponse'
+                description: Response payload for listtheworkspaceslabelsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listtheworkspaceslabelsresponse422.
+  /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/labels:
+    get:
+      tags:
+      - pacticipants
+      summary: List a pacticipant's labels
+      description: 'The labels on this pacticipant, by name.
+
+
+        Requires `pacts:view`.'
+      operationId: list_labels_of_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Ref
+          description: Pacticipant Ref schema.
+        description: Path parameter identifying the pacticipant ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listapacticipantslabelsauthorization schema.
+          - type: 'null'
+            description: Listapacticipantslabelsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listapacticipantslabels Xapikey schema.
+          - type: 'null'
+            description: Listapacticipantslabels Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a pacticipant's labels.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PacticipantLabelListResponse'
+                description: Response payload for listapacticipantslabelsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listapacticipantslabelsresponse422.
+  /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/labels/{label}:
+    get:
+      tags:
+      - pacticipants
+      summary: Read a label
+      description: 'One label of a pacticipant; 404 when it does not carry it.
+
+
+        Requires `pacts:view`.'
+      operationId: read_pacticipant_label_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels__label__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Ref
+          description: Pacticipant Ref schema.
+        description: Path parameter identifying the pacticipant ref segment.
+      - name: label
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label
+          description: Label schema.
+        description: Path parameter identifying the label segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readalabelauthorization schema.
+          - type: 'null'
+            description: Readalabelauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readalabel Xapikey schema.
+          - type: 'null'
+            description: Readalabel Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a label.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PacticipantLabelRecord'
+                description: Response payload for readalabelresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readalabelresponse422.
+    put:
+      tags:
+      - pacticipants
+      summary: Label a pacticipant
+      description: 'Put a label on a pacticipant (`team-billing`, `tier-1`). Answers
+        `201` when the label is new and `200` when the pacticipant already had it. A
+        label may contain `/`.
+
+
+        Requires `pacts:edit`.'
+      operationId: put_pacticipant_label_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels__label__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Ref
+          description: Pacticipant Ref schema.
+        description: Path parameter identifying the pacticipant ref segment.
+      - name: label
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label
+          description: Label schema.
+        description: Path parameter identifying the label segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Labelapacticipantauthorization schema.
+          - type: 'null'
+            description: Labelapacticipantauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Labelapacticipant Xapikey schema.
+          - type: 'null'
+            description: Labelapacticipant Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for label a pacticipant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PacticipantLabelRecord'
+                description: Response payload for labelapacticipantresponse200.
+        '201':
+          description: The label was added by this request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PacticipantLabelRecord'
+                description: Response payload for labelapacticipantresponse201.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for labelapacticipantresponse422.
+    delete:
+      tags:
+      - pacticipants
+      summary: Remove a label
+      description: 'Take a label off a pacticipant; 404 when it does not carry it.
+
+
+        Requires `pacts:edit`.'
+      operationId: delete_pacticipant_label_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels__label__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant Ref
+          description: Pacticipant Ref schema.
+        description: Path parameter identifying the pacticipant ref segment.
+      - name: label
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label
+          description: Label schema.
+        description: Path parameter identifying the label segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removealabelauthorization schema.
+          - type: 'null'
+            description: Removealabelauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removealabel Xapikey schema.
+          - type: 'null'
+            description: Removealabel Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for remove a label.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for removealabelresponse422.
+  /v1/tenants/{tenant_slug}/pact-retention:
+    post:
+      tags:
+      - pacticipants
+      summary: Clean up pacticipant versions (dry run first)
+      description: 'Delete the versions no keep selector needs. A version is **kept**
+        when any of these holds:
+
+
+        - it is its pacticipant''s latest version (always);
+
+        - `keep.latest_per_branch`: it is one of the newest N versions of a branch;
+
+        - `keep.deployed_or_released` (default `true`): it is currently deployed or
+        released;
+
+        - `keep.created_within_days`: it was recorded in the last D days.
+
+
+        Every other live version of the pacticipants named in `pacticipants` (all of
+        them when omitted) is deleted — softly, with its pacts, results and deployments,
+        restorable until it is purged (`grace_days`).
+
+
+        **Dry run first.** `dry_run` defaults to `true`: the answer is the plan and
+        its `plan_digest`, and nothing changes. To apply, send the same request with
+        `dry_run: false` and that `plan_digest`. If the plan changed in between, the
+        answer is `409 pact-retention-plan-changed` with the fresh plan under `detail.plan`.
+
+
+        A run deletes at most `max_deletions` versions, oldest first; `remaining` counts
+        the rest for the next run.
+
+
+        A dry run requires `pacts:view`; applying requires `pacts:delete`.'
+      operationId: run_pact_retention_v1_tenants__tenant_slug__pact_retention_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Cleanuppacticipantversionsdryrunfirstauthorization schema.
+          - type: 'null'
+            description: Cleanuppacticipantversionsdryrunfirstauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Cleanuppacticipantversionsdryrunfirst Xapikey schema.
+          - type: 'null'
+            description: Cleanuppacticipantversionsdryrunfirst Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetentionRequest'
+              description: Request body for cleanuppacticipantversionsdryrunfirstrequest.
+        description: Request body for clean up pacticipant versions (dry run first).
+      responses:
+        '200':
+          description: Successful response for clean up pacticipant versions (dry run
+            first).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionPlan'
+                description: Response payload for cleanuppacticipantversionsdryrunfirstresponse200.
+        '409':
+          description: '`pact-retention-plan-changed`: review `detail.plan` and apply
+            its digest.'
+        '422':
+          description: No keep selector, no `plan_digest` when applying, or a run too
+            large.
   /v1/tenants/{tenant_slug}/pact-broker:
     get:
       tags:
@@ -30402,6 +31206,89 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readapacticipant pact brokershaperesponse422.
+    delete:
+      tags:
+      - pact-broker
+      summary: Delete a pacticipant (Pact Broker shape)
+      description: 'Delete a pacticipant with its versions, pacts, verification results
+        and deployments. Soft: it can be restored through `POST /v1/tenants/{tenant_slug}/pacticipants/{p}/restore`
+        until it is purged (`APIOME_PACT_DELETION_GRACE_DAYS`, default 30). `409 pacticipant-version-in-use`
+        while a version is deployed or released, unless `force=true`. Requires `pacts:delete`.'
+      operationId: delete_broker_pacticipant_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: reason
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 500
+            description: Deleteapacticipant Pact Brokershapereason schema.
+          - type: 'null'
+            description: Deleteapacticipant Pact Brokershapereason schema.
+          description: Why; stored with the delete and audited.
+          title: Reason
+        description: Why; stored with the delete and audited.
+      - name: force
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Delete even when a version is currently deployed or released.
+          default: false
+          title: Force
+        description: Delete even when a version is currently deployed or released.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteapacticipant Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Deleteapacticipant Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteapacticipant Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Deleteapacticipant Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete a pacticipant (pact broker shape).
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteapacticipant pact brokershaperesponse422.
   /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{number}:
     get:
       tags:
@@ -30481,6 +31368,98 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readapacticipantversion pact brokershaperesponse422.
+    delete:
+      tags:
+      - pact-broker
+      summary: Delete a pacticipant version (Pact Broker shape)
+      description: 'Delete one version with its pacts, the verification results it published
+        and its deployments. Soft: restorable through `POST /v1/tenants/{tenant_slug}/pacticipants/{p}/versions/{v}/restore`
+        until it is purged. `409 pacticipant-version-in-use` while it is deployed or
+        released, unless `force=true`. Requires `pacts:delete`.'
+      operationId: delete_broker_pacticipant_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__number__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Number
+          description: Number schema.
+        description: Path parameter identifying the number segment.
+      - name: reason
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 500
+            description: Deleteapacticipantversion Pact Brokershapereason schema.
+          - type: 'null'
+            description: Deleteapacticipantversion Pact Brokershapereason schema.
+          description: Why; stored with the delete and audited.
+          title: Reason
+        description: Why; stored with the delete and audited.
+      - name: force
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Delete even when a version is currently deployed or released.
+          default: false
+          title: Force
+        description: Delete even when a version is currently deployed or released.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteapacticipantversion Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Deleteapacticipantversion Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteapacticipantversion Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Deleteapacticipantversion Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete a pacticipant version (pact broker
+            shape).
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteapacticipantversion pact brokershaperesponse422.
   /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/branches/{branch}/versions/{version}:
     put:
       tags:
@@ -108311,6 +109290,340 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for shieldsioendpointofonepactresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/labels:
+    get:
+      tags:
+      - pact-broker
+      summary: List every label (Pact Broker shape)
+      description: Every distinct label on the workspace's pacticipants, by name, under
+        `_embedded.labels`. Requires `pacts:view`.
+      operationId: read_broker_labels_v1_tenants__tenant_slug__pact_broker_labels_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listeverylabel Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Listeverylabel Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listeverylabel Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Listeverylabel Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list every label (pact broker shape).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listeverylabel pact brokershaperesponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listeverylabel pact brokershaperesponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacticipants/label/{label}:
+    get:
+      tags:
+      - pact-broker
+      summary: List the pacticipants with a label (Pact Broker shape)
+      description: The pacticipants carrying `{label}`, under `_embedded.pacticipants`
+        and `pb:pacticipants`; an empty list when none does. Requires `pacts:view`.
+      operationId: read_broker_pacticipants_with_label_v1_tenants__tenant_slug__pact_broker_pacticipants_label__label__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: label
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label
+          description: Label schema.
+        description: Path parameter identifying the label segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthepacticipantswithalabel Pact Brokersauthorization schema.
+          - type: 'null'
+            description: Listthepacticipantswithalabel Pact Brokersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthepacticipantswithalabel Pact Brokers Xapikey schema.
+          - type: 'null'
+            description: Listthepacticipantswithalabel Pact Brokers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the pacticipants with a label (pact
+            broker shape).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for listthepacticipantswithalabel pact
+                  brokersresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthepacticipantswithalabel pact
+                  brokersresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/labels/{label}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a label (Pact Broker shape)
+      description: One label of a pacticipant; 404 when it does not carry it. Requires
+        `pacts:view`.
+      operationId: read_broker_label_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__labels__label__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: label
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label
+          description: Label schema.
+        description: Path parameter identifying the label segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readalabel Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Readalabel Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readalabel Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Readalabel Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a label (pact broker shape).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readalabel pact brokershaperesponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readalabel pact brokershaperesponse422.
+    put:
+      tags:
+      - pact-broker
+      summary: Label a pacticipant (Pact Broker shape)
+      description: Put a label on a pacticipant. `201` with a `Location` header when
+        the label is new, `200` when the pacticipant already had it. Unlike the Pact
+        Broker, an unknown pacticipant is `404`, not created. Requires `pacts:edit`.
+      operationId: put_broker_label_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__labels__label__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: label
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label
+          description: Label schema.
+        description: Path parameter identifying the label segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Labelapacticipant Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Labelapacticipant Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Labelapacticipant Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Labelapacticipant Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for label a pacticipant (pact broker shape).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for labelapacticipant pact brokershaperesponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for labelapacticipant pact brokershaperesponse422.
+    delete:
+      tags:
+      - pact-broker
+      summary: Remove a label (Pact Broker shape)
+      description: Take a label off a pacticipant; 404 when it does not carry it. Requires
+        `pacts:edit`.
+      operationId: delete_broker_label_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__labels__label__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: pacticipant
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pacticipant
+          description: Pacticipant schema.
+        description: Path parameter identifying the pacticipant segment.
+      - name: label
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Label
+          description: Label schema.
+        description: Path parameter identifying the label segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removealabel Pact Brokershapeauthorization schema.
+          - type: 'null'
+            description: Removealabel Pact Brokershapeauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removealabel Pact Brokershape Xapikey schema.
+          - type: 'null'
+            description: Removealabel Pact Brokershape Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for remove a label (pact broker shape).
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for removealabel pact brokershaperesponse422.
 components:
   schemas:
     AbsenceCategory:
@@ -146702,6 +148015,53 @@ components:
       - invocations
       title: InvocationsResponse
       description: A lane's invocation records.
+    LabelName:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: LabelName
+      description: One distinct label of the workspace.
+    LabelNameListResponse:
+      properties:
+        labels:
+          items:
+            $ref: '#/components/schemas/LabelName'
+          type: array
+          title: Labels
+          description: By name.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many labels were returned.
+          example: 1
+        has_more:
+          type: boolean
+          title: Has More
+          description: Whether another page exists.
+          default: false
+          example: true
+        next_cursor:
+          anyOf:
+          - type: string
+            description: Response payload for label name list.
+          - type: 'null'
+            description: Response payload for label name list.
+          title: Next Cursor
+          description: Pass as `cursor` to read the next page; null on the last page.
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: LabelNameListResponse
+      description: One page of the workspace's distinct labels.
     LicenseFeatureSchema:
       properties:
         name:
@@ -166236,6 +167596,67 @@ components:
         \ source repository.\n    main_branch: The branch read by default when a query\
         \ names none.\n    project: Slug or id of the Apiome project that describes this\
         \ provider.\n    consumer_id: Id of this application's row in the consumer registry."
+    PacticipantLabelListResponse:
+      properties:
+        labels:
+          items:
+            $ref: '#/components/schemas/PacticipantLabelRecord'
+          type: array
+          title: Labels
+          description: By name.
+          maxItems: 1000
+        count:
+          type: integer
+          title: Count
+          description: How many labels were returned.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - count
+      title: PacticipantLabelListResponse
+      description: The labels of one pacticipant.
+    PacticipantLabelRecord:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        pacticipant_id:
+          type: string
+          title: Pacticipant Id
+          description: Pacticipant ID.
+          example: pacticipant_01h2xcejqtf3fz5y5j0v8k9m2p
+        pacticipant_slug:
+          type: string
+          title: Pacticipant Slug
+          description: Pacticipant Slug.
+          example: example-resource
+        pacticipant_name:
+          type: string
+          title: Pacticipant Name
+          description: Pacticipant Name.
+          example: Example
+        created_at:
+          anyOf:
+          - type: string
+            description: Pacticipant Label schema.
+          - type: 'null'
+            description: Pacticipant Label schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - pacticipant_id
+      - pacticipant_slug
+      - pacticipant_name
+      title: PacticipantLabelRecord
+      description: "A label on a pacticipant.\n\nAttributes:\n    name: The label.\n \
+        \   pacticipant_id: The labelled pacticipant.\n    pacticipant_slug: Its handle.\n\
+        \    pacticipant_name: Its display name.\n    created_at: When the label was added."
     PacticipantListResponse:
       properties:
         pacticipants:
@@ -166321,6 +167742,63 @@ components:
         \ New main branch, or ``null`` to clear it.\n    project: Slug or id of the project\
         \ to bind, or ``null`` to unbind.\n    consumer_id: Id of the consumer to bind,\
         \ or ``null`` to unbind."
+    PacticipantPlan:
+      properties:
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        evaluated:
+          type: integer
+          title: Evaluated
+          description: Live versions read.
+          example: 1
+        kept:
+          type: integer
+          title: Kept
+          description: Versions a selector (or the latest-version rule) keeps.
+          example: 1
+        deleted:
+          type: integer
+          title: Deleted
+          description: Versions this run deletes (or, in a dry run, would delete).
+          example: 1
+        remaining:
+          type: integer
+          title: Remaining
+          description: Versions to delete that are past this run's cap; a later run deletes
+            them.
+          default: 0
+          example: 1
+        kept_by:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Kept By
+          description: Kept versions by the first rule that keeps them.
+        deletions:
+          items:
+            $ref: '#/components/schemas/PlannedDeletion'
+          type: array
+          title: Deletions
+          description: The versions deleted, oldest first (at most 100 listed).
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - evaluated
+      - kept
+      - deleted
+      title: PacticipantPlan
+      description: The plan for one pacticipant.
     PacticipantRecord:
       properties:
         id:
@@ -166375,6 +167853,13 @@ components:
             description: Pacticipant schema.
           title: Consumer Id
           description: Consumer ID.
+        labels:
+          items:
+            type: string
+          type: array
+          title: Labels
+          description: Its labels, by name.
+          maxItems: 1000
         created_at:
           anyOf:
           - type: string
@@ -166391,6 +167876,39 @@ components:
             description: Pacticipant schema.
           title: Updated At
           description: Last update timestamp (ISO 8601).
+        deleted_at:
+          anyOf:
+          - type: string
+            description: Pacticipant schema.
+          - type: 'null'
+            description: Pacticipant schema.
+          title: Deleted At
+          description: When it was deleted; null while it is live.
+        deleted_by_label:
+          anyOf:
+          - type: string
+            description: Pacticipant schema.
+          - type: 'null'
+            description: Pacticipant schema.
+          title: Deleted By Label
+          description: Who deleted it.
+        delete_reason:
+          anyOf:
+          - type: string
+            description: Pacticipant schema.
+          - type: 'null'
+            description: Pacticipant schema.
+          title: Delete Reason
+          description: Why it was deleted.
+        purge_after:
+          anyOf:
+          - type: string
+            description: Pacticipant schema.
+          - type: 'null'
+            description: Pacticipant schema.
+          title: Purge After
+          description: When a deleted pacticipant is removed for good, unless it is restored
+            first.
       additionalProperties: false
       type: object
       required:
@@ -166403,8 +167921,12 @@ components:
         \ Owning tenant.\n    slug: Stable handle.\n    name: Display name.\n    repository_url:\
         \ Source repository URL.\n    main_branch: The branch read by default.\n    project_id:\
         \ Bound project, when this is a provider described in Apiome.\n    consumer_id:\
-        \ Bound consumer-registry row, when this is a registered consumer.\n    created_at:\
-        \ When it was registered.\n    updated_at: When it was last changed."
+        \ Bound consumer-registry row, when this is a registered consumer.\n    labels:\
+        \ Its labels, by name.\n    created_at: When it was registered.\n    updated_at:\
+        \ When it was last changed.\n    deleted_at: When it was deleted; ``None`` while\
+        \ it is live.\n    deleted_by_label: Who deleted it, as text.\n    delete_reason:\
+        \ Why, as the caller said.\n    purge_after: When the deleted pacticipant is removed\
+        \ for good, unless restored first."
     PacticipantVersionInput:
       properties:
         build_url:
@@ -166546,6 +168068,48 @@ components:
             description: Pacticipant Version schema.
           title: Created At
           description: Creation timestamp (ISO 8601).
+        deleted_at:
+          anyOf:
+          - type: string
+            description: Pacticipant Version schema.
+          - type: 'null'
+            description: Pacticipant Version schema.
+          title: Deleted At
+          description: When it was deleted; null while it is live.
+        deleted_by_label:
+          anyOf:
+          - type: string
+            description: Pacticipant Version schema.
+          - type: 'null'
+            description: Pacticipant Version schema.
+          title: Deleted By Label
+          description: Who deleted it.
+        delete_reason:
+          anyOf:
+          - type: string
+            description: Pacticipant Version schema.
+          - type: 'null'
+            description: Pacticipant Version schema.
+          title: Delete Reason
+          description: Why it was deleted.
+        delete_cause:
+          anyOf:
+          - type: string
+            description: Pacticipant Version schema.
+          - type: 'null'
+            description: Pacticipant Version schema.
+          title: Delete Cause
+          description: '`version` (deleted on its own), `pacticipant` (with its pacticipant)
+            or `retention`.'
+        purge_after:
+          anyOf:
+          - type: string
+            description: Pacticipant Version schema.
+          - type: 'null'
+            description: Pacticipant Version schema.
+          title: Purge After
+          description: When a deleted version is removed for good, unless it is restored
+            first.
       additionalProperties: false
       type: object
       required:
@@ -166560,7 +168124,11 @@ components:
         \ later.\n    build_url: The CI build that produced it.\n    branches: Branches\
         \ it was recorded on, by name.\n    tags: Its tags, by name.\n    created_by:\
         \ The user who recorded it, when still known.\n    actor_label: Who recorded it,\
-        \ as text.\n    created_at: When it was recorded."
+        \ as text.\n    created_at: When it was recorded.\n    deleted_at: When it was\
+        \ deleted; ``None`` while it is live.\n    deleted_by_label: Who deleted it, as\
+        \ text.\n    delete_reason: Why, as the caller said.\n    delete_cause: ``version``,\
+        \ ``pacticipant`` or ``retention`` (see :data:`DELETE_CAUSES`).\n    purge_after:\
+        \ When the deleted version is removed for good, unless restored first."
     PathCreateRequest:
       properties:
         pathname:
@@ -167389,6 +168957,34 @@ components:
       - state
       title: PlanRef
       description: Another plan of the same product, as a lifecycle field names it.
+    PlannedDeletion:
+      properties:
+        number:
+          type: string
+          title: Number
+          description: Number.
+          example: example
+        created_at:
+          anyOf:
+          - type: string
+            description: Planned Deletion schema.
+          - type: 'null'
+            description: Planned Deletion schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        branches:
+          items:
+            type: string
+          type: array
+          title: Branches
+          description: Branches.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - number
+      title: PlannedDeletion
+      description: A version the plan deletes.
     PlatformOverrideRequest:
       properties:
         tenant_id:
@@ -179669,6 +181265,163 @@ components:
       title: RetentionDays
       description: A pair of retention values in days. ``-1`` means "kept forever"
         (a tier cap only).
+    RetentionKeep:
+      properties:
+        latest_per_branch:
+          anyOf:
+          - type: integer
+            maximum: 1000.0
+            minimum: 1.0
+            description: Retention Keep schema.
+          - type: 'null'
+            description: Retention Keep schema.
+          title: Latest Per Branch
+          description: Keep the newest N versions recorded on each branch.
+        deployed_or_released:
+          type: boolean
+          title: Deployed Or Released
+          description: Keep every version currently deployed to or released in an environment.
+          default: true
+          example: false
+        created_within_days:
+          anyOf:
+          - type: integer
+            maximum: 3650.0
+            minimum: 1.0
+            description: Retention Keep schema.
+          - type: 'null'
+            description: Retention Keep schema.
+          title: Created Within Days
+          description: Keep every version recorded in the last D days.
+      additionalProperties: false
+      type: object
+      title: RetentionKeep
+      description: "The keep selectors of a run; a version any of them matches is kept.\n\
+        \nAttributes:\n    latest_per_branch: Keep the newest N versions of each branch.\n\
+        \    deployed_or_released: Keep every version currently deployed or released.\n\
+        \    created_within_days: Keep every version recorded in the last D days."
+    RetentionPlan:
+      properties:
+        dry_run:
+          type: boolean
+          title: Dry Run
+          description: Dry Run.
+          example: true
+        applied:
+          type: boolean
+          title: Applied
+          description: Whether the deletions were made.
+          example: false
+        plan_digest:
+          type: string
+          title: Plan Digest
+          description: 'Send this back with `dry_run: false` to apply exactly this plan.'
+          example: example
+        keep:
+          $ref: '#/components/schemas/RetentionKeep'
+          description: Keep.
+        evaluated:
+          type: integer
+          title: Evaluated
+          description: Evaluated.
+          example: 1
+        kept:
+          type: integer
+          title: Kept
+          description: Kept.
+          example: 1
+        deleted:
+          type: integer
+          title: Deleted
+          description: Deleted.
+          example: 1
+        remaining:
+          type: integer
+          title: Remaining
+          description: Deletions past this run's cap; run again to make them.
+          default: 0
+          example: 1
+        max_deletions:
+          type: integer
+          title: Max Deletions
+          default: 5000
+          description: Max Deletions.
+          example: 1
+        grace_days:
+          type: integer
+          title: Grace Days
+          description: Days a deleted version can still be restored before it is purged.
+          example: 1
+        pacticipants:
+          items:
+            $ref: '#/components/schemas/PacticipantPlan'
+          type: array
+          title: Pacticipants
+          description: Pacticipants.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - dry_run
+      - applied
+      - plan_digest
+      - keep
+      - evaluated
+      - kept
+      - deleted
+      - grace_days
+      title: RetentionPlan
+      description: 'The answer to a retention run: the plan, and whether it was applied.'
+    RetentionRequest:
+      properties:
+        keep:
+          $ref: '#/components/schemas/RetentionKeep'
+          description: Keep.
+        pacticipants:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Request body for retention.
+          - type: 'null'
+            description: Request body for retention.
+          title: Pacticipants
+          description: Handles, ids or names to clean (at most 200); every pacticipant
+            when omitted.
+        dry_run:
+          type: boolean
+          title: Dry Run
+          description: Only answer the plan. `false` applies it.
+          default: true
+          example: true
+        plan_digest:
+          anyOf:
+          - type: string
+            description: Request body for retention.
+          - type: 'null'
+            description: Request body for retention.
+          title: Plan Digest
+          description: The `plan_digest` of the dry run being applied. Required when `dry_run`
+            is false.
+        reason:
+          anyOf:
+          - type: string
+            description: Request body for retention.
+          - type: 'null'
+            description: Request body for retention.
+          title: Reason
+          description: Why; stored on each deleted version (≤ 500 characters).
+      additionalProperties: false
+      type: object
+      required:
+      - keep
+      title: RetentionRequest
+      description: "One retention run.\n\nAttributes:\n    keep: The keep selectors.\n\
+        \    pacticipants: The pacticipants to clean (handles, ids or names); all of them\
+        \ when omitted.\n    dry_run: Only plan (the default). ``false`` applies the plan.\n\
+        \    plan_digest: The ``plan_digest`` of the dry run being applied; required with\
+        \ ``dry_run: false``.\n    reason: Why, stored on every deleted version and in\
+        \ the audit trail."
     RetentionResponse:
       properties:
         reaped:

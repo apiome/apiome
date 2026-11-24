@@ -32,6 +32,9 @@ _SUCCESSES_SELECT = """
     LEFT JOIN apiome.pacticipant_version_tag t
            ON t.version_id = r.provider_version_id AND t.pacticipant_id = r.provider_id
     WHERE r.provider_id = %s::uuid AND r.tenant_id = %s::uuid AND r.success
+      -- PFX-1.11: a deleted provider version's results no longer count.
+      AND EXISTS (SELECT 1 FROM apiome.pacticipant_version lr
+                  WHERE lr.id = r.provider_version_id AND lr.deleted_at IS NULL)
     GROUP BY pv.sha
 """
 

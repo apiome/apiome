@@ -542,3 +542,15 @@ def test_deleting_a_webhook_removes_its_deliveries_and_history(integration: Dict
     )
     assert integration["cursor"].fetchone()["n"] == 0
     assert integration["client"].get(f"{BASE}/triggered-webhooks/{firing['id']}/logs").status_code == 404
+
+
+def test_the_label_parameters_carry_each_pacticipants_labels(integration: Dict[str, Any]) -> None:
+    # PFX-1.11 (#6924): labels exist now, so ${pactbroker.consumerLabels} is no longer empty.
+    client = integration["client"]
+    for slug, label in (("billing-service", "team-billing"), ("billing-service", "tier-1"), ("ledger-api", "core")):
+        assert client.put(f"/v1/tenants/t/pacticipants/{slug}/labels/{label}").status_code == 201
+    _create(integration, _REQUIRING)
+    _publish(integration, "2.0.0", total=2500, branch="main")
+    parameters = _firings(integration)[0]["payload"]["parameters"]
+    assert parameters["pactbroker.consumerLabels"] == "team-billing, tier-1"
+    assert parameters["pactbroker.providerLabels"] == "core"

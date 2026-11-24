@@ -75,6 +75,8 @@ _PACT_SELECT = """
     JOIN apiome.pacticipant c ON c.id = p.consumer_id
     JOIN apiome.pacticipant pr ON pr.id = p.provider_id
     WHERE p.provider_id = %s::uuid AND p.consumer_id = %s::uuid
+      -- PFX-1.11: a deleted consumer version's pacts are gone with it.
+      AND v.deleted_at IS NULL
 """
 
 
@@ -477,7 +479,7 @@ _CANDIDATE_SELECT = """
     JOIN apiome.pact_version pv ON pv.id = p.pact_version_id
     JOIN apiome.pacticipant_version v ON v.id = p.consumer_version_id
     JOIN apiome.pacticipant c ON c.id = p.consumer_id
-    WHERE p.provider_id = %s::uuid
+    WHERE p.provider_id = %s::uuid AND v.deleted_at IS NULL AND c.deleted_at IS NULL
     ORDER BY v.seq
 """
 

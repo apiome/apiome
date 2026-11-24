@@ -1,6 +1,6 @@
 ---
 title: "Pacticipants"
-description: "REST endpoints tagged pacticipants: 10 operations."
+description: "REST endpoints tagged pacticipants: 19 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,15 +9,87 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.663.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.664.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pacticipants` · 10 operations
+Tag: `pacticipants` · 19 operations
+
+## `POST /v1/tenants/{tenant_slug}/pact-retention` {#run-pact-retention-v1-tenants-tenant-slug-pact-retention-post}
+
+**Clean up pacticipant versions (dry run first)**
+
+Delete the versions no keep selector needs. A version is **kept** when any of these holds:
+
+- it is its pacticipant's latest version (always);
+- `keep.latest_per_branch`: it is one of the newest N versions of a branch;
+- `keep.deployed_or_released` (default `true`): it is currently deployed or released;
+- `keep.created_within_days`: it was recorded in the last D days.
+
+Every other live version of the pacticipants named in `pacticipants` (all of them when omitted) is deleted — softly, with its pacts, results and deployments, restorable until it is purged (`grace_days`).
+
+**Dry run first.** `dry_run` defaults to `true`: the answer is the plan and its `plan_digest`, and nothing changes. To apply, send the same request with `dry_run: false` and that `plan_digest`. If the plan changed in between, the answer is `409 pact-retention-plan-changed` with the fresh plan under `detail.plan`.
+
+A run deletes at most `max_deletions` versions, oldest first; `remaining` counts the rest for the next run.
+
+A dry run requires `pacts:view`; applying requires `pacts:delete`.
+
+Operation id: `run_pact_retention_v1_tenants__tenant_slug__pact_retention_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for clean up pacticipant versions (dry run first).
+
+- `application/json` — [`RetentionRequest`](#schema-retentionrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for clean up pacticipant versions (dry run first). | `application/json` [`RetentionPlan`](#schema-retentionplan) |
+| 409 | `pact-retention-plan-changed`: review `detail.plan` and apply its digest. | — |
+| 422 | No keep selector, no `plan_digest` when applying, or a run too large. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pacticipant-labels` {#list-workspace-labels-v1-tenants-tenant-slug-pacticipant-labels-get}
+
+**List the workspace's labels**
+
+Every distinct label on the workspace's pacticipants, by name. `GET …/pacticipants?label=…` lists the pacticipants carrying one.
+
+Pass the previous page's `next_cursor` as `cursor` until `has_more` is false.
+
+Requires `pacts:view`.
+
+Operation id: `list_workspace_labels_v1_tenants__tenant_slug__pacticipant_labels_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the workspace's labels. | `application/json` [`LabelNameListResponse`](#schema-labelnamelistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pacticipants` {#list-tenant-pacticipants-v1-tenants-tenant-slug-pacticipants-get}
 
 **List pacticipants**
 
-The applications registered as pacticipants in this workspace, ordered by handle.
+The applications registered as pacticipants in this workspace, ordered by handle. `label` keeps the ones carrying that label. `state=deleted` lists the deleted ones instead, each with `deleted_at` and `purge_after` (when it is removed for good unless restored).
 
 Pass the previous page's `next_cursor` as `cursor` until `has_more` is false.
 
@@ -30,6 +102,8 @@ Operation id: `list_tenant_pacticipants_v1_tenants__tenant_slug__pacticipants_ge
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `label` | query | string or null | no | Only pacticipants with this label. |
+| `state` | query | string | no | `live` (the default) or `deleted`: what was deleted and is waiting to be purged. |
 | `limit` | query | integer | no | Page size. At most 200. |
 | `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
@@ -138,7 +212,9 @@ Request body for update a pacticipant.
 
 **Delete a pacticipant**
 
-Delete a pacticipant **with all of its versions, branches and tags**. This cannot be undone. The project and the consumer it was bound to are not touched.
+Delete a pacticipant **with all of its versions** — and with them its pacts, verification results, deployments, branches and tags. The delete is soft: everything disappears from every read at once, `POST …/restore` brings it back for `APIOME_PACT_DELETION_GRACE_DAYS` (default 30) days, and it is then purged for good. The handle is free again at once. The project and the consumer it was bound to are not touched.
+
+A pacticipant with a version that is currently deployed or released is refused (`409 pacticipant-version-in-use`) unless `force=true`. `reason` is stored with the delete and in the audit trail.
 
 Requires `pacts:delete` (the built-in Owner and Admin roles).
 
@@ -150,6 +226,8 @@ Operation id: `remove_pacticipant_v1_tenants__tenant_slug__pacticipants__pactici
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `reason` | query | string or null | no | Why; stored with the delete and audited. |
+| `force` | query | boolean | no | Delete even when a version is currently deployed or released. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -158,6 +236,7 @@ Operation id: `remove_pacticipant_v1_tenants__tenant_slug__pacticipants__pactici
 | Status | Description | Body |
 | --- | --- | --- |
 | 204 | Successful response for delete a pacticipant. | — |
+| 409 | `pacticipant-version-in-use`: a version is deployed or released. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/branches` {#list-pacticipant-branches-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-branches-get}
@@ -190,11 +269,147 @@ Operation id: `list_pacticipant_branches_v1_tenants__tenant_slug__pacticipants__
 | 200 | Successful response for list a pacticipant's branches. | `application/json` [`PacticipantBranchListResponse`](#schema-pacticipantbranchlistresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/labels` {#list-labels-of-pacticipant-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-labels-get}
+
+**List a pacticipant's labels**
+
+The labels on this pacticipant, by name.
+
+Requires `pacts:view`.
+
+Operation id: `list_labels_of_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list a pacticipant's labels. | `application/json` [`PacticipantLabelListResponse`](#schema-pacticipantlabellistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/labels/{label}` {#read-pacticipant-label-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-labels-label-get}
+
+**Read a label**
+
+One label of a pacticipant; 404 when it does not carry it.
+
+Requires `pacts:view`.
+
+Operation id: `read_pacticipant_label_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels__label__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `label` | path | string | yes | Path parameter identifying the label segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a label. | `application/json` [`PacticipantLabelRecord`](#schema-pacticipantlabelrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/labels/{label}` {#put-pacticipant-label-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-labels-label-put}
+
+**Label a pacticipant**
+
+Put a label on a pacticipant (`team-billing`, `tier-1`). Answers `201` when the label is new and `200` when the pacticipant already had it. A label may contain `/`.
+
+Requires `pacts:edit`.
+
+Operation id: `put_pacticipant_label_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels__label__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `label` | path | string | yes | Path parameter identifying the label segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for label a pacticipant. | `application/json` [`PacticipantLabelRecord`](#schema-pacticipantlabelrecord) |
+| 201 | The label was added by this request. | `application/json` [`PacticipantLabelRecord`](#schema-pacticipantlabelrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/labels/{label}` {#delete-pacticipant-label-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-labels-label-delete}
+
+**Remove a label**
+
+Take a label off a pacticipant; 404 when it does not carry it.
+
+Requires `pacts:edit`.
+
+Operation id: `delete_pacticipant_label_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels__label__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `label` | path | string | yes | Path parameter identifying the label segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for remove a label. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/restore` {#restore-deleted-pacticipant-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-restore-post}
+
+**Restore a deleted pacticipant**
+
+Undo a pacticipant's delete before it is purged, with the versions that were deleted along with it (a version deleted on its own before stays deleted). `{pacticipant_ref}` is the deleted pacticipant's id, handle or name; with several deleted ones of the same handle the most recently deleted comes back — pass the id (from `?state=deleted`) to choose.
+
+`409 pacticipant-restore-conflict` when a live pacticipant has taken the handle since.
+
+Requires `pacts:delete`.
+
+Operation id: `restore_deleted_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__restore_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for restore a deleted pacticipant. | `application/json` [`PacticipantRecord`](#schema-pacticipantrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions` {#list-pacticipant-versions-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-versions-get}
 
 **List a pacticipant's versions**
 
-The versions recorded for this pacticipant, latest recorded first, each with the branches it was recorded on and its tags. `branch` and `tag` narrow the list, so the first row of `?branch=main` is the head of `main` and the first row of `?tag=prod` is the latest version tagged `prod`.
+The versions recorded for this pacticipant, latest recorded first, each with the branches it was recorded on and its tags. `branch` and `tag` narrow the list, so the first row of `?branch=main` is the head of `main` and the first row of `?tag=prod` is the latest version tagged `prod`. `state=deleted` lists the deleted versions instead, with `delete_cause` and `purge_after`.
 
 Pass the previous page's `next_cursor` as `cursor` until `has_more` is false.
 
@@ -210,6 +425,7 @@ Operation id: `list_pacticipant_versions_v1_tenants__tenant_slug__pacticipants__
 | `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
 | `branch` | query | string or null | no | Only versions recorded on this branch. |
 | `tag` | query | string or null | no | Only versions carrying this tag. |
+| `state` | query | string | no | `live` (the default) or `deleted`: what was deleted and is waiting to be purged. |
 | `limit` | query | integer | no | Page size. At most 200. |
 | `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
@@ -289,6 +505,65 @@ Request body for record a version.
 | 201 | The version was created by this request. | `application/json` [`RecordedPacticipantVersion`](#schema-recordedpacticipantversion) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `DELETE /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}` {#remove-pacticipant-version-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-versions-number-delete}
+
+**Delete a version**
+
+Delete one version — and with it its pacts, the verification results it published, its deployments and releases, branch membership and tags. The delete is soft: the version disappears from every read (the matrix and can-i-deploy included) at once, `POST …/restore` brings it back for `APIOME_PACT_DELETION_GRACE_DAYS` (default 30) days, and it is then purged. A branch it headed falls back to its latest remaining version. The number can be recorded again at once, as a new version.
+
+A version that is currently deployed or released is refused (`409 pacticipant-version-in-use`) unless `force=true`. `reason` is stored and audited.
+
+Requires `pacts:delete`.
+
+Operation id: `remove_pacticipant_version_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__versions__number__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `number` | path | string | yes | Path parameter identifying the number segment. |
+| `reason` | query | string or null | no | Why; stored with the delete and audited. |
+| `force` | query | boolean | no | Delete even when a version is currently deployed or released. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a version. | — |
+| 409 | `pacticipant-version-in-use`: the version is deployed or released. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}/restore` {#restore-deleted-version-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-versions-number-restore-post}
+
+**Restore a deleted version**
+
+Undo a version's delete (on its own or by a retention run) before it is purged: its pacts, results and deployments come back, and a branch whose head it was is headed by it again. `409 pacticipant-restore-conflict` when a live version has taken the number since.
+
+Requires `pacts:delete`.
+
+Operation id: `restore_deleted_version_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__versions__number__restore_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `number` | path | string | yes | Path parameter identifying the number segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for restore a deleted version. | `application/json` [`PacticipantVersionRecord`](#schema-pacticipantversionrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `PUT /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}/tags/{tag}` {#put-pacticipant-version-tag-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-versions-number-tags-tag-put}
 
 **Tag a version**
@@ -327,6 +602,17 @@ Validation error response emitted when request data fails schema checks.
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
 
+### `LabelNameListResponse` {#schema-labelnamelistresponse}
+
+One page of the workspace's distinct labels.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `labels` | array of `LabelName` | no | By name. |
+| `count` | integer | yes | How many labels were returned. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
+
 ### `PacticipantBranchListResponse` {#schema-pacticipantbranchlistresponse}
 
 One page of a pacticipant's branches.
@@ -358,6 +644,34 @@ Attributes:
 | `main_branch` | string or null | no | The branch read by default when a query names none. |
 | `project` | string or null | no | Slug or id of the project that describes this application as a provider. |
 | `consumer_id` | string or null | no | Id of this application's consumer in the consumer registry. |
+
+### `PacticipantLabelListResponse` {#schema-pacticipantlabellistresponse}
+
+The labels of one pacticipant.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `labels` | array of [`PacticipantLabelRecord`](#schema-pacticipantlabelrecord) | no | By name. |
+| `count` | integer | yes | How many labels were returned. |
+
+### `PacticipantLabelRecord` {#schema-pacticipantlabelrecord}
+
+A label on a pacticipant.
+
+Attributes:
+    name: The label.
+    pacticipant_id: The labelled pacticipant.
+    pacticipant_slug: Its handle.
+    pacticipant_name: Its display name.
+    created_at: When the label was added.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | Human-readable name. |
+| `pacticipant_id` | string | yes | Pacticipant ID. |
+| `pacticipant_slug` | string | yes | Pacticipant Slug. |
+| `pacticipant_name` | string | yes | Pacticipant Name. |
+| `created_at` | string or null | no | Creation timestamp (ISO 8601). |
 
 ### `PacticipantListResponse` {#schema-pacticipantlistresponse}
 
@@ -402,8 +716,13 @@ Attributes:
     main_branch: The branch read by default.
     project_id: Bound project, when this is a provider described in Apiome.
     consumer_id: Bound consumer-registry row, when this is a registered consumer.
+    labels: Its labels, by name.
     created_at: When it was registered.
     updated_at: When it was last changed.
+    deleted_at: When it was deleted; ``None`` while it is live.
+    deleted_by_label: Who deleted it, as text.
+    delete_reason: Why, as the caller said.
+    purge_after: When the deleted pacticipant is removed for good, unless restored first.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -415,8 +734,13 @@ Attributes:
 | `main_branch` | string or null | no | Main Branch. |
 | `project_id` | string or null | no | Project identifier the resource belongs to. |
 | `consumer_id` | string or null | no | Consumer ID. |
+| `labels` | array of string | no | Its labels, by name. |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
+| `deleted_at` | string or null | no | When it was deleted; null while it is live. |
+| `deleted_by_label` | string or null | no | Who deleted it. |
+| `delete_reason` | string or null | no | Why it was deleted. |
+| `purge_after` | string or null | no | When a deleted pacticipant is removed for good, unless it is restored first. |
 
 ### `PacticipantVersionInput` {#schema-pacticipantversioninput}
 
@@ -459,6 +783,11 @@ Attributes:
     created_by: The user who recorded it, when still known.
     actor_label: Who recorded it, as text.
     created_at: When it was recorded.
+    deleted_at: When it was deleted; ``None`` while it is live.
+    deleted_by_label: Who deleted it, as text.
+    delete_reason: Why, as the caller said.
+    delete_cause: ``version``, ``pacticipant`` or ``retention`` (see :data:`DELETE_CAUSES`).
+    purge_after: When the deleted version is removed for good, unless restored first.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -472,6 +801,11 @@ Attributes:
 | `created_by` | string or null | no | Created By. |
 | `actor_label` | string or null | no | Actor Label. |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
+| `deleted_at` | string or null | no | When it was deleted; null while it is live. |
+| `deleted_by_label` | string or null | no | Who deleted it. |
+| `delete_reason` | string or null | no | Why it was deleted. |
+| `delete_cause` | string or null | no | `version` (deleted on its own), `pacticipant` (with its pacticipant) or `retention`. |
+| `purge_after` | string or null | no | When a deleted version is removed for good, unless it is restored first. |
 
 ### `RecordedPacticipantVersion` {#schema-recordedpacticipantversion}
 
@@ -489,3 +823,40 @@ Attributes:
 | `created` | boolean | yes | False when the version already existed; it is returned unchanged. |
 | `head_moved` | boolean | no | Whether the branch named in the request now has this version as its head. |
 | `branch_created` | boolean | no | Whether this request recorded the first version on the named branch. |
+
+### `RetentionPlan` {#schema-retentionplan}
+
+The answer to a retention run: the plan, and whether it was applied.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `dry_run` | boolean | yes | Dry Run. |
+| `applied` | boolean | yes | Whether the deletions were made. |
+| `plan_digest` | string | yes | Send this back with `dry_run: false` to apply exactly this plan. |
+| `keep` | `RetentionKeep` | yes | Keep. |
+| `evaluated` | integer | yes | Evaluated. |
+| `kept` | integer | yes | Kept. |
+| `deleted` | integer | yes | Deleted. |
+| `remaining` | integer | no | Deletions past this run's cap; run again to make them. |
+| `max_deletions` | integer | no | Max Deletions. |
+| `grace_days` | integer | yes | Days a deleted version can still be restored before it is purged. |
+| `pacticipants` | array of `PacticipantPlan` | no | Pacticipants. |
+
+### `RetentionRequest` {#schema-retentionrequest}
+
+One retention run.
+
+Attributes:
+    keep: The keep selectors.
+    pacticipants: The pacticipants to clean (handles, ids or names); all of them when omitted.
+    dry_run: Only plan (the default). ``false`` applies the plan.
+    plan_digest: The ``plan_digest`` of the dry run being applied; required with ``dry_run: false``.
+    reason: Why, stored on every deleted version and in the audit trail.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `keep` | `RetentionKeep` | yes | Keep. |
+| `pacticipants` | array of string or null | no | Handles, ids or names to clean (at most 200); every pacticipant when omitted. |
+| `dry_run` | boolean | no | Only answer the plan. `false` applies it. |
+| `plan_digest` | string or null | no | The `plan_digest` of the dry run being applied. Required when `dry_run` is false. |
+| `reason` | string or null | no | Why; stored on each deleted version (≤ 500 characters). |

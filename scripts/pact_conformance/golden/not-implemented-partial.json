@@ -1,6 +1,9 @@
 {
   "request": {
-    "method": "DELETE",
+    "body": {
+      "mainBranch": "main"
+    },
+    "method": "PUT",
     "path": "/pacticipants/ConformanceWeb"
   },
   "response": {
@@ -10,14 +13,14 @@
         "code": "pact-broker-not-implemented",
         "documentation": "https://docs.apiome.dev/ship/pact-broker/compatibility",
         "endpoint": "/pacticipants/{pacticipant}",
-        "message": "DELETE is not supported on “A pacticipant” (partial). Supported: GET. To create or update one (main branch, repository URL) use Apiome's pacticipant API. Apiome route: /v1/tenants/{tenant}/pacticipants/{pacticipant}. Tracked in https://github.com/apiome/apiome/issues/6924.",
+        "message": "PUT is not supported on “A pacticipant” (partial). Supported: GET, DELETE. To create or update one (main branch, repository URL) use Apiome's pacticipant API. DELETE is soft: restorable until it is purged, and refused while a version is deployed unless force=true. Apiome route: /v1/tenants/{tenant}/pacticipants/{pacticipant}.",
         "pact_broker_version": "2.124.0",
         "pointer": "/v1/tenants/acme-corp/pact-broker/pacticipants/ConformanceWeb",
         "status": "partial",
         "supported_methods": [
-          "GET"
-        ],
-        "tracking": "https://github.com/apiome/apiome/issues/6924"
+          "GET",
+          "DELETE"
+        ]
       }
     },
     "status": 501

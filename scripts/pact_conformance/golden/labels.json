@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/labels"
+  },
+  "response": {
+    "body": {
+      "_embedded": {
+        "labels": [
+          {
+            "name": "team-web"
+          }
+        ]
+      },
+      "_links": {
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/labels",
+          "title": "Labels"
+        }
+      }
+    },
+    "status": 200
+  }
+}

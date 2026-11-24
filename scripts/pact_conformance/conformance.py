@@ -562,6 +562,21 @@ def run_cli_suite(config: Config) -> None:
         require(deleted == 204, f"DELETE {link['href']}: {deleted}")
     ok("both webhooks created, read back redacted and deleted")
 
+    step("Labels and a version delete (PFX-1.11)")
+    # Labels in the Pact Broker's shape; a delete is soft in Apiome, but answers as the broker does.
+    golden_http(config, "label", "PUT", f"/pacticipants/{CONSUMER}/labels/team-web", expect=201)
+    golden_http(config, "labels", "GET", "/labels")
+    golden_http(config, "pacticipants-with-label", "GET", "/pacticipants/label/team-web")
+    deleted, _ = broker_call(config, "DELETE", f"/pacticipants/{CONSUMER}/labels/team-web")
+    require(deleted == 204, f"DELETE label: {deleted}")
+    recorded, _ = broker_call(config, "PUT", f"/pacticipants/{CONSUMER}/branches/scratch/versions/0.0.1-scratch", {})
+    require(recorded in (200, 201), f"PUT scratch version: {recorded}")
+    deleted, _ = broker_call(config, "DELETE", f"/pacticipants/{CONSUMER}/versions/0.0.1-scratch")
+    require(deleted == 204, f"DELETE version: {deleted}")
+    gone, _ = broker_call(config, "GET", f"/pacticipants/{CONSUMER}/versions/0.0.1-scratch")
+    require(gone == 404, f"a deleted version is still readable: {gone}")
+    ok("label added, listed and removed; a version deleted and gone")
+
     step("Unsupported endpoints: no index relation for the CLI, a documented 501 by URL")
     # The CLI reaches every resource through an index relation, and the index only advertises
     # what Apiome serves — so a command for a missing feature stops, saying the broker lacks it,
@@ -576,7 +591,7 @@ def run_cli_suite(config: Config) -> None:
     golden_http(
         config, "not-implemented", "GET", f"/pacts/provider/{PROVIDER}/consumer/{CONSUMER}/latest/badge", expect=501
     )
-    golden_http(config, "not-implemented-partial", "DELETE", f"/pacticipants/{CONSUMER}", expect=501)
+    golden_http(config, "not-implemented-partial", "PUT", f"/pacticipants/{CONSUMER}", {"mainBranch": "main"}, expect=501)
     golden_http(config, "not-implemented-unknown", "GET", "/no/such/resource", expect=501)
 
 

@@ -1325,6 +1325,22 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['create-webhook', 'repository_dispatch', 'GitHub Actions', 'pactbroker.pactUrl', 'signing secret', 'HMAC', 'dead-letter', 'retry', 'triggered'],
   },
   {
+    id: 'badges',
+    title: 'Pact badges',
+    summary: 'Show in a README whether the pacts of a public project are verified.',
+    page: 'apiome-docs/docs/ship/pact-broker/badges.mdx',
+    section: 'reference',
+    keywords: ['shields.io', 'SVG', 'README', 'verified', 'failing', 'public project', 'status'],
+  },
+  {
+    id: 'retention',
+    title: 'Labels, deletes and retention',
+    summary: 'Group pacticipants, undo a delete, and clean up old versions with a dry run.',
+    page: 'apiome-docs/docs/ship/pact-broker/retention.mdx',
+    section: 'reference',
+    keywords: ['soft delete', 'restore', 'purge', 'grace period', 'plan digest', 'keep selectors', 'cleanup', 'force'],
+  },
+  {
     id: 'compatibility',
     title: 'Pact Broker compatibility',
     summary: 'Every Pact Broker endpoint and whether Apiome serves it, tested in CI.',

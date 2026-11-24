@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "PUT",
+    "path": "/pacticipants/ConformanceWeb/labels/team-web"
+  },
+  "response": {
+    "body": {
+      "_links": {
+        "pacticipant": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb",
+          "name": "ConformanceWeb",
+          "title": "Pacticipant"
+        },
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/labels/team-web",
+          "name": "team-web",
+          "title": "Label"
+        }
+      },
+      "createdAt": "{timestamp}",
+      "name": "team-web"
+    },
+    "status": 201
+  }
+}

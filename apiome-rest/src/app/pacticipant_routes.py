@@ -9,9 +9,13 @@ guarded by the ``pacts`` resource:
   ``GET …/versions/{number}``, ``GET …/branches`` — ``pacts:view``;
 * ``POST …/pacticipants``, ``PUT …/versions/{number}``, ``PUT …/versions/{number}/tags/{tag}`` —
   ``pacts:create``. Recording a version or a tag only ever adds; nothing stored is changed;
-* ``PATCH …/pacticipants/{ref}`` — ``pacts:edit``;
-* ``DELETE …/pacticipants/{ref}`` — ``pacts:delete`` (Owner and Admin), because it removes the
-  pacticipant's whole version history.
+* ``PATCH …/pacticipants/{ref}``, ``PUT``/``DELETE …/labels/{label}`` — ``pacts:edit``;
+* ``DELETE …/pacticipants/{ref}``, ``DELETE …/versions/{number}`` and their ``POST …/restore`` —
+  ``pacts:delete`` (Owner and Admin), because a delete hides a whole version history.
+
+A delete is soft (PFX-1.11, #6924): the pacticipant or version disappears from every read at once,
+can be restored for ``APIOME_PACT_DELETION_GRACE_DAYS`` (default 30) days, and is then purged.
+``?state=deleted`` on the two lists shows what is waiting to be purged.
 
 ``{ref}`` is the pacticipant's handle, its id, or its display name.
 """
@@ -27,14 +31,32 @@ from .auth import validate_authentication
 from .consumer_contract_store import actor_from_auth
 from .database import db
 from .keyset_pagination import cursor_query, limit_query
+from .pact_cleanup_store import (
+    LABELS_ORDER,
+    add_label,
+    delete_pacticipant,
+    delete_version,
+    get_label,
+    list_labels,
+    list_pacticipant_labels,
+    remove_label,
+    restore_pacticipant,
+    restore_version,
+    with_purge_after,
+)
 from .pacticipant import (
     CODE_CONSUMER_NOT_FOUND,
+    CODE_LABEL_NOT_FOUND,
+    CODE_NOT_DELETED,
     CODE_NOT_FOUND,
     CODE_PROJECT_NOT_FOUND,
+    CODE_RESTORE_CONFLICT,
     CODE_SLUG_TAKEN,
+    CODE_VERSION_IN_USE,
     CODE_VERSION_NOT_FOUND,
     PacticipantBranchRecord,
     PacticipantInput,
+    PacticipantLabelRecord,
     PacticipantPatch,
     PacticipantRecord,
     PacticipantValidationError,
@@ -48,7 +70,6 @@ from .pacticipant_store import (
     VERSIONS_ORDER,
     add_tag,
     create_pacticipant,
-    delete_pacticipant,
     get_pacticipant,
     get_version,
     list_branches,
@@ -59,18 +80,32 @@ from .pacticipant_store import (
 )
 from .permissions import Action, Resource, enforce_permission
 
-__all__ = ["router"]
+__all__ = ["router", "STATUS_BY_CODE"]
 
 router = APIRouter(prefix="/v1/tenants", tags=["pacticipants"])
 
 #: The HTTP status of each refusal code; anything else is a 400.
-_STATUS_BY_CODE = {
+STATUS_BY_CODE = {
     CODE_NOT_FOUND: 404,
     CODE_VERSION_NOT_FOUND: 404,
     CODE_PROJECT_NOT_FOUND: 404,
     CODE_CONSUMER_NOT_FOUND: 404,
+    CODE_LABEL_NOT_FOUND: 404,
     CODE_SLUG_TAKEN: 409,
+    CODE_NOT_DELETED: 409,
+    CODE_RESTORE_CONFLICT: 409,
+    CODE_VERSION_IN_USE: 409,
 }
+
+_STATE_QUERY = Query(
+    default="live",
+    pattern="^(live|deleted)$",
+    description="`live` (the default) or `deleted`: what was deleted and is waiting to be purged.",
+)
+_REASON_QUERY = Query(default=None, max_length=500, description="Why; stored with the delete and audited.")
+_FORCE_QUERY = Query(
+    default=False, description="Delete even when a version is currently deployed or released."
+)
 
 _PAGING_NOTE = (
     "Pass the previous page's `next_cursor` as `cursor` until `has_more` is false."
@@ -97,6 +132,36 @@ class PacticipantVersionListResponse(BaseModel):
 
     versions: List[PacticipantVersionRecord] = Field(default_factory=list, description="Latest recorded first.")
     count: int = Field(description="How many versions were returned.")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
+
+
+class PacticipantLabelListResponse(BaseModel):
+    """The labels of one pacticipant."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    labels: List[PacticipantLabelRecord] = Field(default_factory=list, description="By name.")
+    count: int = Field(description="How many labels were returned.")
+
+
+class LabelName(BaseModel):
+    """One distinct label of the workspace."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+
+
+class LabelNameListResponse(BaseModel):
+    """One page of the workspace's distinct labels."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    labels: List[LabelName] = Field(default_factory=list, description="By name.")
+    count: int = Field(description="How many labels were returned.")
     has_more: bool = Field(default=False, description="Whether another page exists.")
     next_cursor: Optional[str] = Field(
         default=None, description="Pass as `cursor` to read the next page; null on the last page."
@@ -145,7 +210,7 @@ def _http_error(exc: PacticipantValidationError) -> HTTPException:
         every other fault — always carrying ``{"code", "message"}``.
     """
     return HTTPException(
-        status_code=_STATUS_BY_CODE.get(exc.code, 400),
+        status_code=STATUS_BY_CODE.get(exc.code, 400),
         detail={"code": exc.code, "message": str(exc)},
     )
 
@@ -160,13 +225,17 @@ def _http_error(exc: PacticipantValidationError) -> HTTPException:
     response_model=PacticipantListResponse,
     summary="List pacticipants",
     description=(
-        "The applications registered as pacticipants in this workspace, ordered by handle.\n\n"
+        "The applications registered as pacticipants in this workspace, ordered by handle. "
+        "`label` keeps the ones carrying that label. `state=deleted` lists the deleted ones instead, "
+        "each with `deleted_at` and `purge_after` (when it is removed for good unless restored).\n\n"
         f"{_PAGING_NOTE}\n\n"
         "Requires `pacts:view`."
     ),
 )
 def list_tenant_pacticipants(
     tenant_slug: str,
+    label: Optional[str] = Query(default=None, max_length=255, description="Only pacticipants with this label."),
+    state: str = _STATE_QUERY,
     limit: int = limit_query(),
     cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -175,6 +244,8 @@ def list_tenant_pacticipants(
 
     Args:
         tenant_slug: The tenant in the URL (the authenticated tenant is what actually scopes it).
+        label: Only pacticipants carrying this label.
+        state: ``live`` or ``deleted``.
         limit: Page size.
         cursor: Where the page starts (the previous page's ``next_cursor``).
         auth_data: The authenticated principal.
@@ -188,10 +259,13 @@ def list_tenant_pacticipants(
     enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
     after = PACTICIPANTS_ORDER.parse(cursor)
     _ = tenant_slug
-    rows = list_pacticipants(db, _tenant_id(auth_data), limit=limit + 1, cursor=after)
+    rows = list_pacticipants(
+        db, _tenant_id(auth_data), limit=limit + 1, cursor=after, label=label, deleted=state == "deleted"
+    )
     page = PACTICIPANTS_ORDER.page(rows, limit)
+    items = [with_purge_after(row) for row in page.items]
     return PacticipantListResponse(
-        pacticipants=page.items, count=len(page.items), has_more=page.has_more, next_cursor=page.next_cursor
+        pacticipants=items, count=len(items), has_more=page.has_more, next_cursor=page.next_cursor
     )
 
 
@@ -322,36 +396,94 @@ def patch_pacticipant(
     status_code=204,
     summary="Delete a pacticipant",
     description=(
-        "Delete a pacticipant **with all of its versions, branches and tags**. This cannot be "
-        "undone. The project and the consumer it was bound to are not touched.\n\n"
+        "Delete a pacticipant **with all of its versions** — and with them its pacts, verification "
+        "results, deployments, branches and tags. The delete is soft: everything disappears from "
+        "every read at once, `POST …/restore` brings it back for `APIOME_PACT_DELETION_GRACE_DAYS` "
+        "(default 30) days, and it is then purged for good. The handle is free again at once. The "
+        "project and the consumer it was bound to are not touched.\n\n"
+        "A pacticipant with a version that is currently deployed or released is refused "
+        "(`409 pacticipant-version-in-use`) unless `force=true`. `reason` is stored with the delete "
+        "and in the audit trail.\n\n"
         "Requires `pacts:delete` (the built-in Owner and Admin roles)."
     ),
+    responses={409: {"description": "`pacticipant-version-in-use`: a version is deployed or released."}},
 )
 def remove_pacticipant(
     tenant_slug: str,
     pacticipant_ref: str,
+    reason: Optional[str] = _REASON_QUERY,
+    force: bool = _FORCE_QUERY,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> Response:
-    """Delete a pacticipant and its history.
+    """Soft-delete a pacticipant and its history.
 
     Args:
         tenant_slug: The tenant in the URL.
         pacticipant_ref: Handle, id or display name.
+        reason: Why.
+        force: Delete even when a version is deployed or released.
         auth_data: The authenticated principal.
 
     Returns:
         An empty 204.
 
     Raises:
-        HTTPException: 404 for an unknown pacticipant, 403 without ``pacts:delete``.
+        HTTPException: 404 for an unknown pacticipant, 409 when a version is in use and ``force`` is
+            not set, 400 for a bad reason, 403 without ``pacts:delete``.
     """
-    enforce_permission(db, auth_data, Resource.PACTS, Action.DELETE, target=pacticipant_ref)
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.DELETE, target=pacticipant_ref)
     _ = tenant_slug
     try:
-        delete_pacticipant(db, _tenant_id(auth_data), pacticipant_ref)
+        tenant_id = _tenant_id(auth_data)
+        pacticipant = get_pacticipant(db, tenant_id, pacticipant_ref)
+        delete_pacticipant(
+            db, tenant_id, pacticipant, actor=actor_from_auth(auth_data, user_id), reason=reason, force=force
+        )
     except PacticipantValidationError as exc:
         raise _http_error(exc) from exc
     return Response(status_code=204)
+
+
+@router.post(
+    "/{tenant_slug}/pacticipants/{pacticipant_ref}/restore",
+    response_model=PacticipantRecord,
+    summary="Restore a deleted pacticipant",
+    description=(
+        "Undo a pacticipant's delete before it is purged, with the versions that were deleted along "
+        "with it (a version deleted on its own before stays deleted). `{pacticipant_ref}` is the "
+        "deleted pacticipant's id, handle or name; with several deleted ones of the same handle the "
+        "most recently deleted comes back — pass the id (from `?state=deleted`) to choose.\n\n"
+        "`409 pacticipant-restore-conflict` when a live pacticipant has taken the handle since.\n\n"
+        "Requires `pacts:delete`."
+    ),
+)
+def restore_deleted_pacticipant(
+    tenant_slug: str,
+    pacticipant_ref: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> PacticipantRecord:
+    """Restore a deleted pacticipant.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        pacticipant_ref: The deleted pacticipant's id, handle or name.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The live pacticipant.
+
+    Raises:
+        HTTPException: 404 when no deleted pacticipant matches, 409 when it is not deleted or its
+            handle is taken, 403 without ``pacts:delete``.
+    """
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.DELETE, target=pacticipant_ref)
+    _ = tenant_slug
+    try:
+        return restore_pacticipant(
+            db, _tenant_id(auth_data), pacticipant_ref, actor=actor_from_auth(auth_data, user_id)
+        )
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
 
 
 # ---------------------------------------------------------------------------------------------
@@ -367,7 +499,8 @@ def remove_pacticipant(
         "The versions recorded for this pacticipant, latest recorded first, each with the "
         "branches it was recorded on and its tags. `branch` and `tag` narrow the list, so the "
         "first row of `?branch=main` is the head of `main` and the first row of `?tag=prod` is "
-        "the latest version tagged `prod`.\n\n"
+        "the latest version tagged `prod`. `state=deleted` lists the deleted versions instead, with "
+        "`delete_cause` and `purge_after`.\n\n"
         f"{_PAGING_NOTE}\n\n"
         "Requires `pacts:view`."
     ),
@@ -377,6 +510,7 @@ def list_pacticipant_versions(
     pacticipant_ref: str,
     branch: Optional[str] = Query(default=None, max_length=255, description="Only versions recorded on this branch."),
     tag: Optional[str] = Query(default=None, max_length=255, description="Only versions carrying this tag."),
+    state: str = _STATE_QUERY,
     limit: int = limit_query(),
     cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
@@ -388,6 +522,7 @@ def list_pacticipant_versions(
         pacticipant_ref: Handle, id or display name.
         branch: Only versions recorded on this branch.
         tag: Only versions carrying this tag.
+        state: ``live`` or ``deleted``.
         limit: Page size.
         cursor: Where the page starts (the previous page's ``next_cursor``).
         auth_data: The authenticated principal.
@@ -406,10 +541,13 @@ def list_pacticipant_versions(
         pacticipant = get_pacticipant(db, _tenant_id(auth_data), pacticipant_ref)
     except PacticipantValidationError as exc:
         raise _http_error(exc) from exc
-    rows = list_versions(db, pacticipant, branch=branch, tag=tag, limit=limit + 1, cursor=after)
+    rows = list_versions(
+        db, pacticipant, branch=branch, tag=tag, limit=limit + 1, cursor=after, deleted=state == "deleted"
+    )
     page = VERSIONS_ORDER.page(rows, limit)
+    items = [with_purge_after(row) for row in page.items]
     return PacticipantVersionListResponse(
-        versions=page.items, count=len(page.items), has_more=page.has_more, next_cursor=page.next_cursor
+        versions=items, count=len(items), has_more=page.has_more, next_cursor=page.next_cursor
     )
 
 
@@ -509,6 +647,109 @@ def read_pacticipant_version(
         raise _http_error(exc) from exc
 
 
+@router.delete(
+    "/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}",
+    status_code=204,
+    summary="Delete a version",
+    description=(
+        "Delete one version — and with it its pacts, the verification results it published, its "
+        "deployments and releases, branch membership and tags. The delete is soft: the version "
+        "disappears from every read (the matrix and can-i-deploy included) at once, `POST "
+        "…/restore` brings it back for `APIOME_PACT_DELETION_GRACE_DAYS` (default 30) days, and it "
+        "is then purged. A branch it headed falls back to its latest remaining version. The number "
+        "can be recorded again at once, as a new version.\n\n"
+        "A version that is currently deployed or released is refused (`409 "
+        "pacticipant-version-in-use`) unless `force=true`. `reason` is stored and audited.\n\n"
+        "Requires `pacts:delete`."
+    ),
+    responses={409: {"description": "`pacticipant-version-in-use`: the version is deployed or released."}},
+)
+def remove_pacticipant_version(
+    tenant_slug: str,
+    pacticipant_ref: str,
+    number: str,
+    reason: Optional[str] = _REASON_QUERY,
+    force: bool = _FORCE_QUERY,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Response:
+    """Soft-delete one version.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        pacticipant_ref: Handle, id or display name.
+        number: The version number, exactly as recorded.
+        reason: Why.
+        force: Delete even when the version is deployed or released.
+        auth_data: The authenticated principal.
+
+    Returns:
+        An empty 204.
+
+    Raises:
+        HTTPException: 404 for an unknown pacticipant or version, 409 when it is in use and
+            ``force`` is not set, 400 for a bad reason, 403 without ``pacts:delete``.
+    """
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.DELETE, target=pacticipant_ref)
+    _ = tenant_slug
+    try:
+        tenant_id = _tenant_id(auth_data)
+        pacticipant = get_pacticipant(db, tenant_id, pacticipant_ref)
+        delete_version(
+            db,
+            tenant_id,
+            pacticipant,
+            number,
+            actor=actor_from_auth(auth_data, user_id),
+            reason=reason,
+            force=force,
+        )
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
+    return Response(status_code=204)
+
+
+@router.post(
+    "/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}/restore",
+    response_model=PacticipantVersionRecord,
+    summary="Restore a deleted version",
+    description=(
+        "Undo a version's delete (on its own or by a retention run) before it is purged: its pacts, "
+        "results and deployments come back, and a branch whose head it was is headed by it again. "
+        "`409 pacticipant-restore-conflict` when a live version has taken the number since.\n\n"
+        "Requires `pacts:delete`."
+    ),
+)
+def restore_deleted_version(
+    tenant_slug: str,
+    pacticipant_ref: str,
+    number: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> PacticipantVersionRecord:
+    """Restore a deleted version.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        pacticipant_ref: Handle, id or display name of the (live) pacticipant.
+        number: The version number.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The live version.
+
+    Raises:
+        HTTPException: 404 when no deleted version has that number, 409 when it is not deleted or
+            the number is taken, 403 without ``pacts:delete``.
+    """
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.DELETE, target=pacticipant_ref)
+    _ = tenant_slug
+    try:
+        tenant_id = _tenant_id(auth_data)
+        pacticipant = get_pacticipant(db, tenant_id, pacticipant_ref)
+        return restore_version(db, tenant_id, pacticipant, number, actor=actor_from_auth(auth_data, user_id))
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
+
+
 @router.put(
     "/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}/tags/{tag:path}",
     response_model=PacticipantVersionRecord,
@@ -597,3 +838,202 @@ def list_pacticipant_branches(
     return PacticipantBranchListResponse(
         branches=page.items, count=len(page.items), has_more=page.has_more, next_cursor=page.next_cursor
     )
+
+
+# ---------------------------------------------------------------------------------------------
+# Labels
+# ---------------------------------------------------------------------------------------------
+
+
+@router.get(
+    "/{tenant_slug}/pacticipant-labels",
+    response_model=LabelNameListResponse,
+    summary="List the workspace's labels",
+    description=(
+        "Every distinct label on the workspace's pacticipants, by name. "
+        "`GET …/pacticipants?label=…` lists the pacticipants carrying one.\n\n"
+        f"{_PAGING_NOTE}\n\n"
+        "Requires `pacts:view`."
+    ),
+)
+def list_workspace_labels(
+    tenant_slug: str,
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> LabelNameListResponse:
+    """List one page of the workspace's distinct labels.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        limit: Page size.
+        cursor: Where the page starts.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The label names of the page.
+
+    Raises:
+        HTTPException: 400 for a malformed cursor, 403 without ``pacts:view``.
+    """
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    after = LABELS_ORDER.parse(cursor)
+    _ = tenant_slug
+    rows = list_labels(db, _tenant_id(auth_data), limit=limit + 1, cursor=after)
+    page = LABELS_ORDER.page(rows, limit)
+    labels = [LabelName(name=row["name"]) for row in page.items]
+    return LabelNameListResponse(
+        labels=labels, count=len(labels), has_more=page.has_more, next_cursor=page.next_cursor
+    )
+
+
+@router.get(
+    "/{tenant_slug}/pacticipants/{pacticipant_ref}/labels",
+    response_model=PacticipantLabelListResponse,
+    summary="List a pacticipant's labels",
+    description="The labels on this pacticipant, by name.\n\nRequires `pacts:view`.",
+)
+def list_labels_of_pacticipant(
+    tenant_slug: str,
+    pacticipant_ref: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> PacticipantLabelListResponse:
+    """List a pacticipant's labels.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        pacticipant_ref: Handle, id or display name.
+        auth_data: The authenticated principal.
+
+    Returns:
+        Its labels.
+
+    Raises:
+        HTTPException: 404 for an unknown pacticipant, 403 without ``pacts:view``.
+    """
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    _ = tenant_slug
+    try:
+        pacticipant = get_pacticipant(db, _tenant_id(auth_data), pacticipant_ref)
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
+    labels = list_pacticipant_labels(db, pacticipant)
+    return PacticipantLabelListResponse(labels=labels, count=len(labels))
+
+
+@router.get(
+    "/{tenant_slug}/pacticipants/{pacticipant_ref}/labels/{label:path}",
+    response_model=PacticipantLabelRecord,
+    summary="Read a label",
+    description="One label of a pacticipant; 404 when it does not carry it.\n\nRequires `pacts:view`.",
+)
+def read_pacticipant_label(
+    tenant_slug: str,
+    pacticipant_ref: str,
+    label: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> PacticipantLabelRecord:
+    """Read one label of a pacticipant.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        pacticipant_ref: Handle, id or display name.
+        label: The label.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The label.
+
+    Raises:
+        HTTPException: 404 for an unknown pacticipant or label, 403 without ``pacts:view``.
+    """
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    _ = tenant_slug
+    try:
+        pacticipant = get_pacticipant(db, _tenant_id(auth_data), pacticipant_ref)
+        return get_label(db, pacticipant, label)
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
+
+
+@router.put(
+    "/{tenant_slug}/pacticipants/{pacticipant_ref}/labels/{label:path}",
+    response_model=PacticipantLabelRecord,
+    summary="Label a pacticipant",
+    description=(
+        "Put a label on a pacticipant (`team-billing`, `tier-1`). Answers `201` when the label is "
+        "new and `200` when the pacticipant already had it. A label may contain `/`.\n\n"
+        "Requires `pacts:edit`."
+    ),
+    responses={201: {"description": "The label was added by this request.", "model": PacticipantLabelRecord}},
+)
+def put_pacticipant_label(
+    tenant_slug: str,
+    pacticipant_ref: str,
+    label: str,
+    response: Response,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> PacticipantLabelRecord:
+    """Label a pacticipant.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        pacticipant_ref: Handle, id or display name.
+        label: The label.
+        response: The response, whose status becomes 201 when the label is new.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The label.
+
+    Raises:
+        HTTPException: 400 for a malformed label, 404 for an unknown pacticipant, 403 without
+            ``pacts:edit``.
+    """
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.EDIT, target=pacticipant_ref)
+    _ = tenant_slug
+    try:
+        tenant_id = _tenant_id(auth_data)
+        pacticipant = get_pacticipant(db, tenant_id, pacticipant_ref)
+        record, created = add_label(db, tenant_id, pacticipant, label, actor=actor_from_auth(auth_data, user_id))
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
+    response.status_code = 201 if created else 200
+    return record
+
+
+@router.delete(
+    "/{tenant_slug}/pacticipants/{pacticipant_ref}/labels/{label:path}",
+    status_code=204,
+    summary="Remove a label",
+    description="Take a label off a pacticipant; 404 when it does not carry it.\n\nRequires `pacts:edit`.",
+)
+def delete_pacticipant_label(
+    tenant_slug: str,
+    pacticipant_ref: str,
+    label: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Response:
+    """Remove a label from a pacticipant.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        pacticipant_ref: Handle, id or display name.
+        label: The label.
+        auth_data: The authenticated principal.
+
+    Returns:
+        An empty 204.
+
+    Raises:
+        HTTPException: 404 for an unknown pacticipant or label, 403 without ``pacts:edit``.
+    """
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.EDIT, target=pacticipant_ref)
+    _ = tenant_slug
+    try:
+        tenant_id = _tenant_id(auth_data)
+        pacticipant = get_pacticipant(db, tenant_id, pacticipant_ref)
+        remove_label(db, tenant_id, pacticipant, label, actor=actor_from_auth(auth_data, user_id))
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
+    return Response(status_code=204)
