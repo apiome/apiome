@@ -1,0 +1,76 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/pacticipants/label/team-web"
+  },
+  "response": {
+    "body": {
+      "_embedded": {
+        "pacticipants": [
+          {
+            "_embedded": {
+              "labels": [
+                {
+                  "_links": {
+                    "self": {
+                      "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/labels/team-web",
+                      "name": "team-web",
+                      "title": "Label"
+                    }
+                  },
+                  "name": "team-web"
+                }
+              ]
+            },
+            "_links": {
+              "pb:branch-version": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/branches/{branch}/versions/{version}",
+                "templated": true,
+                "title": "Get or add/create a version for a branch of this pacticipant"
+              },
+              "pb:label": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/labels/{label}",
+                "templated": true,
+                "title": "Get, create or delete a label for ConformanceWeb"
+              },
+              "pb:version-tag": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb/versions/{version}/tags/{tag}",
+                "templated": true,
+                "title": "Get, create or delete a tag for a version of this pacticipant"
+              },
+              "self": {
+                "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb",
+                "name": "ConformanceWeb",
+                "title": "Pacticipant"
+              }
+            },
+            "createdAt": "{timestamp}",
+            "displayName": "ConformanceWeb",
+            "mainBranch": "main",
+            "name": "ConformanceWeb",
+            "repositoryUrl": null,
+            "updatedAt": "{timestamp}"
+          }
+        ]
+      },
+      "_links": {
+        "pb:pacticipants": [
+          {
+            "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceweb",
+            "name": "ConformanceWeb",
+            "title": "Pacticipant"
+          }
+        ],
+        "pb:pacticipants-with-label": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/label/{label}",
+          "templated": true,
+          "title": "Find pacticipants by label"
+        },
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/label/team-web"
+        }
+      }
+    },
+    "status": 200
+  }
+}

@@ -140,9 +140,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 ### PFX-EPIC-1 · [#6907](https://github.com/apiome/apiome/issues/6907) — Pact Broker core · umbrella of the hub
 
-| Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.11 · [#6924](https://github.com/apiome/apiome/issues/6924) | Pacticipant labels, version delete and cleanup | Labels, soft delete, selector-based retention | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest |
+All eleven issues of this epic are complete (PFX-1.11 #6924 was the last); the epic's overview page and release note are still owed by #6907.
 
 #### Detailed issue descriptions
 
@@ -220,7 +218,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 **✅ PFX-1.10 · #6923 Badges and public status endpoints — Complete** — SVG badge per pact / pacticipant ("verified", "failing", "unknown"), shields.io endpoint JSON, optional embed on the browse project page (only when the project is public). *Deps:* 1.4. **Docs:** `…/pact-broker/badges.mdx`.
 
-**PFX-1.11 · #6924 Pacticipant labels, version delete and cleanup** — labels, soft-delete of versions and pacticipants with audit, selector-based retention (keep latest N per branch, anything deployed/released, everything in the last D days) as a dry-run-first job. *Deps:* 1.1, 1.5. **Docs:** `…/pact-broker/retention.mdx`.
+**✅ PFX-1.11 · #6924 Pacticipant labels, version delete and cleanup — Complete** — labels, soft-delete of versions and pacticipants with audit, selector-based retention (keep latest N per branch, anything deployed/released, everything in the last D days) as a dry-run-first job. *Deps:* 1.1, 1.5. **Docs:** `…/pact-broker/retention.mdx`.
 
 ### PFX-EPIC-2 · [#6908](https://github.com/apiome/apiome/issues/6908) — Bi-directional contract testing
 

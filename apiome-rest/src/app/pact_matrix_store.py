@@ -168,13 +168,14 @@ def _row_from(source: str, join: str, matching: str, latest_flag: str) -> str:
     """
     return f"""
     FROM {source} p
-    JOIN apiome.pacticipant c ON c.id = p.consumer_id AND c.tenant_id = $1::uuid
-    JOIN apiome.pacticipant pr ON pr.id = p.provider_id AND pr.tenant_id = $1::uuid
-    JOIN apiome.pacticipant_version cv ON cv.id = p.consumer_version_id
+    JOIN apiome.pacticipant c ON c.id = p.consumer_id AND c.tenant_id = $1::uuid AND c.deleted_at IS NULL
+    JOIN apiome.pacticipant pr ON pr.id = p.provider_id AND pr.tenant_id = $1::uuid AND pr.deleted_at IS NULL
+    JOIN apiome.pacticipant_version cv ON cv.id = p.consumer_version_id AND cv.deleted_at IS NULL
     JOIN apiome.pact_version pv ON pv.id = p.pact_version_id
     {join} apiome.verification_result r
            ON r.pact_version_id = p.pact_version_id
           AND {matching}
+          AND {_LIVE_RESULT}
           AND (NOT {latest_flag}::boolean
                OR r.number = (SELECT max(l.number) FROM apiome.verification_result l
                               WHERE l.pact_version_id = r.pact_version_id
@@ -182,6 +183,19 @@ def _row_from(source: str, join: str, matching: str, latest_flag: str) -> str:
     LEFT JOIN apiome.pacticipant_version rv ON rv.id = r.provider_version_id
     """
 
+
+#: A publication of a live consumer version (PFX-1.11): deleted versions take their pacts with them.
+#: Filtered inside each CTE, before its LIMIT, so hidden rows never take a row's place.
+_LIVE_PUBLICATION = (
+    "EXISTS (SELECT 1 FROM apiome.pacticipant_version lv"
+    " WHERE lv.id = p.consumer_version_id AND lv.deleted_at IS NULL)"
+)
+
+#: A result published by a live provider version.
+_LIVE_RESULT = (
+    "EXISTS (SELECT 1 FROM apiome.pacticipant_version lr"
+    " WHERE lr.id = r.provider_version_id AND lr.deleted_at IS NULL)"
+)
 
 #: A result is of a provider version the query asked about ($2 name-only ids, $3 version ids).
 _ASKED_ABOUT = "(r.provider_id = ANY($2::uuid[]) OR r.provider_version_id = ANY($3::uuid[]))"
@@ -196,6 +210,7 @@ _ROWS_BETWEEN = f"""
         WHERE (p.consumer_id = ANY($2::uuid[]) OR p.consumer_version_id = ANY($3::uuid[]))
           AND p.provider_id = ANY($4::uuid[])
           AND (p.consumer_id = ANY($5::uuid[]) OR p.provider_id = ANY($5::uuid[]))
+          AND {_LIVE_PUBLICATION}
         ORDER BY p.created_at DESC, p.id
         LIMIT $6::bigint
     )
@@ -212,16 +227,19 @@ _ROWS_SINGLE = f"""
     WITH as_consumer AS (
         SELECT {_PUBLICATION_COLUMNS}
         FROM apiome.pact_publication p
-        WHERE p.consumer_id = ANY($2::uuid[]) OR p.consumer_version_id = ANY($3::uuid[])
+        WHERE (p.consumer_id = ANY($2::uuid[]) OR p.consumer_version_id = ANY($3::uuid[]))
+          AND {_LIVE_PUBLICATION}
         ORDER BY p.created_at DESC, p.id
         LIMIT $5::bigint
     ), as_provider AS (
         SELECT {_PUBLICATION_COLUMNS}
         FROM apiome.pact_publication p
         WHERE p.provider_id = ANY($4::uuid[])
+          AND {_LIVE_PUBLICATION}
           AND EXISTS (SELECT 1 FROM apiome.verification_result r
                       WHERE r.pact_version_id = p.pact_version_id
-                        AND (r.provider_id = ANY($2::uuid[]) OR r.provider_version_id = ANY($3::uuid[])))
+                        AND (r.provider_id = ANY($2::uuid[]) OR r.provider_version_id = ANY($3::uuid[]))
+                        AND {_LIVE_RESULT})
         ORDER BY p.created_at DESC, p.id
         LIMIT $5::bigint
     )
@@ -251,7 +269,8 @@ _VERSION_DETAILS = """
                                     SELECT 1 FROM apiome.pacticipant_version_tag t2
                                     JOIN apiome.pacticipant_version v2
                                       ON v2.id = t2.version_id AND v2.pacticipant_id = t2.pacticipant_id
-                                    WHERE t2.pacticipant_id = t.pacticipant_id AND t2.name = t.name AND v2.seq > v.seq))
+                                    WHERE t2.pacticipant_id = t.pacticipant_id AND t2.name = t.name AND v2.seq > v.seq
+                                      AND v2.deleted_at IS NULL))
                                      ORDER BY t.created_at, t.name)
                      FROM apiome.pacticipant_version_tag t
                      WHERE t.version_id = v.id AND t.pacticipant_id = v.pacticipant_id), '[]'::json) AS tags,
@@ -315,7 +334,7 @@ def _find_versions(
     """
     if selector.only_pacticipant_name:
         return None
-    where = ["v.pacticipant_id = %s::uuid"]
+    where = ["v.pacticipant_id = %s::uuid", "v.deleted_at IS NULL"]
     params: List[Any] = [pacticipant["id"]]
     if selector.version_number:
         where.append("v.number = %s")
@@ -399,8 +418,8 @@ _INTEGRATION_NAMES = """
            p.id::text AS provider_id, p.slug AS provider_slug, p.name AS provider_name,
            p.main_branch AS provider_main_branch
     FROM ({pairs}) i
-    JOIN apiome.pacticipant c ON c.id = i.consumer_id AND c.tenant_id = %s::uuid
-    JOIN apiome.pacticipant p ON p.id = i.provider_id AND p.tenant_id = %s::uuid
+    JOIN apiome.pacticipant c ON c.id = i.consumer_id AND c.tenant_id = %s::uuid AND c.deleted_at IS NULL
+    JOIN apiome.pacticipant p ON p.id = i.provider_id AND p.tenant_id = %s::uuid AND p.deleted_at IS NULL
     ORDER BY c.name, p.name
 """
 
@@ -408,12 +427,17 @@ _AS_CONSUMER = """
     SELECT DISTINCT p.consumer_id, p.provider_id, TRUE AS required
     FROM apiome.pact_publication p
     WHERE (p.consumer_id = ANY(%s::uuid[]) OR p.consumer_version_id = ANY(%s::uuid[]))
+      AND EXISTS (SELECT 1 FROM apiome.pacticipant_version lv
+                  WHERE lv.id = p.consumer_version_id AND lv.deleted_at IS NULL)
 """
 
 _AS_PROVIDER = """
     SELECT DISTINCT pv.consumer_id, pv.provider_id, FALSE AS required
     FROM apiome.pact_version pv
     WHERE pv.provider_id = ANY(%s::uuid[]) AND pv.tenant_id = %s::uuid
+      AND EXISTS (SELECT 1 FROM apiome.pact_publication lp
+                  JOIN apiome.pacticipant_version lv ON lv.id = lp.consumer_version_id AND lv.deleted_at IS NULL
+                  WHERE lp.pact_version_id = pv.id)
 """
 
 
@@ -632,8 +656,12 @@ def _uncontracted(db: Any, tenant_id: str, specified: Sequence[ResolvedSelector]
         rows = db.execute_query(
             """
             SELECT (EXISTS (SELECT 1 FROM apiome.pact_publication WHERE consumer_version_id = %s::uuid)
-                    OR EXISTS (SELECT 1 FROM apiome.pact_version
-                               WHERE provider_id = %s::uuid AND tenant_id = %s::uuid)) AS contracted
+                    OR EXISTS (SELECT 1 FROM apiome.pact_version pv
+                               WHERE pv.provider_id = %s::uuid AND pv.tenant_id = %s::uuid
+                                 AND EXISTS (SELECT 1 FROM apiome.pact_publication lp
+                                             JOIN apiome.pacticipant_version lv
+                                               ON lv.id = lp.consumer_version_id AND lv.deleted_at IS NULL
+                                             WHERE lp.pact_version_id = pv.id))) AS contracted
             """,
             (selector.version_id, selector.pacticipant_id, tenant_id),
         )

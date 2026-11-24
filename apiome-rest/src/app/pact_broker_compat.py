@@ -99,7 +99,11 @@ _BADGE_NOTE = (
     "not the broker's tag-aware ones."
 )
 _BADGES = "/v1/browse/tenants/{tenant}/projects/{project}/pact-badges"  # PFX-1.10 (#6923)
-_CLEANUP = "#6924"  # PFX-1.11 Pacticipant labels, version delete and cleanup
+# PFX-1.11 (#6924) shipped labels, pacticipant and version delete, and selector-based retention.
+_RETENTION = "/v1/tenants/{tenant}/pact-retention"
+_DELETE_VERSION = (
+    "Delete the consumer version instead (`DELETE …/pacticipants/{p}/versions/{v}`), which removes its pacts."
+)
 
 _NATIVE = "/v1/tenants/{tenant}/pacticipants"
 
@@ -254,8 +258,10 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "GET PUT DELETE PATCH",
         "GET PUT",
         used_by="older `pact-broker publish`, pact-jvm publisher",
-        tracking=_CLEANUP,
-        note="`PATCH` (merging interactions into a published pact) is not planned: a pact is immutable.",
+        note=(
+            "`PATCH` (merging interactions into a published pact) is not planned: a pact is immutable. "
+            "`DELETE`: " + _DELETE_VERSION
+        ),
     ),
     _e(_G_PACTS, _PAIR + "/latest", "Latest pact of a consumer and provider", "GET", "GET"),
     _e(_G_PACTS, _PAIR + "/latest/{tag}", "Latest pact with a tag", "GET", "GET"),
@@ -372,8 +378,8 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         _PAIR + "/versions",
         "Every published pact of an integration",
         "GET DELETE",
-        tracking=_CLEANUP,
-        note="Deleting a whole history is part of version cleanup.",
+        note="Not planned in the broker shape; clean a history up with a retention run.",
+        alternative=_RETENTION,
     ),
     _e(
         _G_HISTORY,
@@ -457,7 +463,7 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "One verification result",
         "GET DELETE",
         "GET",
-        tracking=_CLEANUP,
+        note="Deleting one result is not planned; deleting the provider version removes the results it published.",
     ),
     _e(
         _G_RESULTS,
@@ -516,10 +522,13 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "/pacticipants/{pacticipant}",
         "A pacticipant",
         "GET PUT PATCH DELETE",
-        "GET",
+        "GET DELETE",
         used_by="`pact-broker describe-pacticipant`, `create-or-update-pacticipant`",
-        tracking=_CLEANUP,
-        note="To create or update one (main branch, repository URL) use Apiome's pacticipant API.",
+        note=(
+            "To create or update one (main branch, repository URL) use Apiome's pacticipant API. "
+            "`DELETE` is soft: restorable until it is purged, and refused while a version is deployed "
+            "unless `force=true`."
+        ),
         alternative=_NATIVE + "/{pacticipant}",
     ),
     _e(
@@ -535,10 +544,12 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         _VERSION,
         "A pacticipant version",
         "GET PUT PATCH DELETE",
-        "GET",
+        "GET DELETE",
         used_by="`pact-broker describe-version`, `record-deployment`, `create-or-update-version`",
-        tracking=_CLEANUP,
-        note="To record a version without publishing a pact use Apiome's pacticipant API.",
+        note=(
+            "To record a version without publishing a pact use Apiome's pacticipant API. `DELETE` is "
+            "soft: restorable until it is purged, and refused while it is deployed unless `force=true`."
+        ),
         alternative=_NATIVE + "/{pacticipant}/versions/{version}",
     ),
     _e(
@@ -587,7 +598,8 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "A branch",
         "GET DELETE",
         used_by="`pact-broker delete-branch`",
-        tracking=_CLEANUP,
+        note="Not planned: a branch goes when its versions are deleted, by hand or by a retention run.",
+        alternative=_RETENTION,
     ),
     _e(
         _G_BRANCHES,
@@ -604,7 +616,7 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "GET PUT DELETE",
         "PUT",
         used_by="`pact-broker create-version-tag --auto-create-version`, pact-jvm",
-        tracking=_CLEANUP,
+        note="A version's branches are on its own document; taking one off a branch is not planned.",
     ),
     _e(
         _G_BRANCHES,
@@ -621,7 +633,7 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "GET PUT DELETE",
         "PUT",
         used_by="`pact-broker create-version-tag`, `publish --tag`",
-        tracking=_CLEANUP,
+        note="A version's tags are on its own document; removing one tag is not planned.",
     ),
     _e(
         _G_BRANCHES,
@@ -823,14 +835,15 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         alternative=_BADGES,
     ),
     # Labels -----------------------------------------------------------------------------------------
-    _e(_G_LABELS, "/labels", "Every label", "GET", tracking=_CLEANUP),
-    _e(_G_LABELS, "/pacticipants/label/{label}", "Pacticipants with a label", "GET", tracking=_CLEANUP),
+    _e(_G_LABELS, "/labels", "Every label", "GET", "GET"),
+    _e(_G_LABELS, "/pacticipants/label/{label}", "Pacticipants with a label", "GET", "GET"),
     _e(
         _G_LABELS,
         "/pacticipants/{pacticipant}/labels/{label}",
         "A label on a pacticipant",
         "GET PUT DELETE",
-        tracking=_CLEANUP,
+        "GET PUT DELETE",
+        note="`PUT` on an unknown pacticipant is a 404; the Pact Broker would create the pacticipant.",
     ),
     # Other ----------------------------------------------------------------------------------------------
     _e(
@@ -845,7 +858,8 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "/integrations/provider/{provider}/consumer/{consumer}",
         "Delete an integration",
         "DELETE",
-        tracking=_CLEANUP,
+        note="Not planned: delete the consumer's versions (or a pacticipant) instead.",
+        alternative=_RETENTION,
     ),
     _e(_G_OTHER, "/dashboard", "Dashboard data", "GET", note="The Pact Broker's own UI; Apiome has its own."),
     _e(

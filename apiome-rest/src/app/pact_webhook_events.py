@@ -69,7 +69,7 @@ _PREVIOUS_SHA = """
     FROM apiome.pact_publication p
     JOIN apiome.pact_version pv ON pv.id = p.pact_version_id
     JOIN apiome.pacticipant_version v ON v.id = p.consumer_version_id
-    WHERE p.consumer_id = %s::uuid AND p.provider_id = %s::uuid AND v.seq < %s
+    WHERE p.consumer_id = %s::uuid AND p.provider_id = %s::uuid AND v.seq < %s AND v.deleted_at IS NULL
 """
 _WITH_TAG = (
     " AND EXISTS (SELECT 1 FROM apiome.pacticipant_version_tag t"
@@ -87,19 +87,19 @@ _REQUIRED = """
     FROM apiome.pacticipant pr
     JOIN apiome.pacticipant_branch b ON b.pacticipant_id = pr.id AND b.name = pr.main_branch
     JOIN apiome.pacticipant_version v ON v.id = b.head_version_id AND v.pacticipant_id = pr.id
-    WHERE pr.id = %(provider)s::uuid
+    WHERE pr.id = %(provider)s::uuid AND v.deleted_at IS NULL
     UNION ALL
     SELECT v.id::text, v.number, v.seq, 'deployed in ' || e.name, NULL
     FROM apiome.deployed_version d
     JOIN apiome.pacticipant_version v ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id
     JOIN apiome.pact_environment e ON e.id = d.environment_id AND e.tenant_id = d.tenant_id
-    WHERE d.pacticipant_id = %(provider)s::uuid AND d.currently_deployed
+    WHERE d.pacticipant_id = %(provider)s::uuid AND d.currently_deployed AND v.deleted_at IS NULL
     UNION ALL
     SELECT v.id::text, v.number, v.seq, 'released in ' || e.name, NULL
     FROM apiome.released_version r
     JOIN apiome.pacticipant_version v ON v.id = r.version_id AND v.pacticipant_id = r.pacticipant_id
     JOIN apiome.pact_environment e ON e.id = r.environment_id AND e.tenant_id = r.tenant_id
-    WHERE r.pacticipant_id = %(provider)s::uuid AND r.currently_supported
+    WHERE r.pacticipant_id = %(provider)s::uuid AND r.currently_supported AND v.deleted_at IS NULL
 """
 
 #: A version's branches, most recently recorded last, and its tags.
@@ -114,7 +114,7 @@ _VERSION_LABELS = """
                 WHERE t.version_id = v.id AND t.pacticipant_id = v.pacticipant_id), ARRAY[]::text[]) AS tags,
       v.id::text AS id, v.seq, v.build_url
     FROM apiome.pacticipant_version v
-    WHERE v.pacticipant_id = %s::uuid AND v.number = %s
+    WHERE v.pacticipant_id = %s::uuid AND v.number = %s AND v.deleted_at IS NULL
 """
 
 
@@ -189,10 +189,20 @@ def _pacticipant_id(cursor: Any, tenant_id: str, slug: str) -> Optional[str]:
     """The id of the tenant's pacticipant with this handle."""
     row = _one(
         cursor,
-        "SELECT id::text AS id FROM apiome.pacticipant WHERE tenant_id = %s::uuid AND slug = %s",
+        "SELECT id::text AS id FROM apiome.pacticipant"
+        " WHERE tenant_id = %s::uuid AND slug = %s AND deleted_at IS NULL",
         (tenant_id, slug),
     )
     return row["id"] if row else None
+
+
+def _pacticipant_labels(cursor: Any, pacticipant_id: str) -> List[str]:
+    """A pacticipant's labels, by name (PFX-1.11), for ``${pactbroker.consumerLabels}`` and the like."""
+    cursor.execute(
+        "SELECT name FROM apiome.pacticipant_label WHERE pacticipant_id = %s::uuid ORDER BY name",
+        (pacticipant_id,),
+    )
+    return [row["name"] for row in cursor.fetchall() or []]
 
 
 def _version_labels(cursor: Any, pacticipant_id: str, number: str) -> Dict[str, Any]:
@@ -306,6 +316,7 @@ def _latest_main_verification(cursor: Any, consumer_id: str, provider_id: str, s
         JOIN apiome.pacticipant_version v ON v.id = r.provider_version_id
         WHERE pv.consumer_id = %s::uuid AND pv.provider_id = %s::uuid AND pv.sha = %s
           AND r.provider_branch IS NOT NULL AND r.provider_branch = pr.main_branch
+          AND v.deleted_at IS NULL
         ORDER BY r.seq DESC LIMIT 1
         """,
         (consumer_id, provider_id, sha),
@@ -355,12 +366,16 @@ def _publish_events_for_pact(
     # The record lists branches by name; the branch of this build is the one recorded last.
     recorded = _version_labels(cursor, consumer_id, pact.consumer_version)["branches"]
     main = _latest_main_verification(cursor, consumer_id, provider_id, pact.sha)
+    consumer_labels = _pacticipant_labels(cursor, consumer_id)
+    provider_labels = _pacticipant_labels(cursor, provider_id)
 
     def parameters(event_name: str, **extra: Any) -> Dict[str, str]:
         values: Dict[str, Any] = {
             "event_name": event_name,
             "consumer_name": pact.consumer_name,
             "provider_name": pact.provider_name,
+            "consumer_labels": consumer_labels,
+            "provider_labels": provider_labels,
             "consumer_version_number": pact.consumer_version,
             "consumer_version_tags": version.tags,
             "consumer_version_branch": recorded[-1] if recorded else None,
@@ -462,6 +477,8 @@ def fire_verification_events(db: Any, tenant_id: str, base: str, result: Verific
         consumer_version = result.consumer_version or ""
         consumer_labels = _version_labels(cursor, consumer_id, consumer_version)
         provider_labels = _version_labels(cursor, provider_id, result.provider_version)
+        consumer_pacticipant_labels = _pacticipant_labels(cursor, consumer_id)
+        provider_pacticipant_labels = _pacticipant_labels(cursor, provider_id)
         queued: List[str] = []
         outcome_event = EVENT_VERIFICATION_SUCCEEDED if result.success else EVENT_VERIFICATION_FAILED
         for event_name in (EVENT_VERIFICATION_PUBLISHED, outcome_event):
@@ -469,6 +486,8 @@ def fire_verification_events(db: Any, tenant_id: str, base: str, result: Verific
                 event_name=event_name,
                 consumer_name=result.consumer_name,
                 provider_name=result.provider_name,
+                consumer_labels=consumer_pacticipant_labels,
+                provider_labels=provider_pacticipant_labels,
                 consumer_version_number=consumer_version,
                 consumer_version_tags=consumer_labels["tags"],
                 consumer_version_branch=(consumer_labels["branches"] or [None])[-1],

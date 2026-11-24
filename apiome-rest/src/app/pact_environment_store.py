@@ -90,8 +90,10 @@ _DEPLOYED_SELECT = f"""
            p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number,
            {_JOINED_ENVIRONMENT}
     FROM apiome.deployed_version d
-    JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id
-    JOIN apiome.pacticipant_version v ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id
+    JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id AND p.deleted_at IS NULL
+    -- PFX-1.11: a deleted version's deployments are hidden with it.
+    JOIN apiome.pacticipant_version v
+      ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id AND v.deleted_at IS NULL
     JOIN apiome.pact_environment e ON e.id = d.environment_id AND e.tenant_id = d.tenant_id
 """
 
@@ -100,8 +102,9 @@ _RELEASED_SELECT = f"""
            p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number,
            {_JOINED_ENVIRONMENT}
     FROM apiome.released_version r
-    JOIN apiome.pacticipant p ON p.id = r.pacticipant_id AND p.tenant_id = r.tenant_id
-    JOIN apiome.pacticipant_version v ON v.id = r.version_id AND v.pacticipant_id = r.pacticipant_id
+    JOIN apiome.pacticipant p ON p.id = r.pacticipant_id AND p.tenant_id = r.tenant_id AND p.deleted_at IS NULL
+    JOIN apiome.pacticipant_version v
+      ON v.id = r.version_id AND v.pacticipant_id = r.pacticipant_id AND v.deleted_at IS NULL
     JOIN apiome.pact_environment e ON e.id = r.environment_id AND e.tenant_id = r.tenant_id
 """
 

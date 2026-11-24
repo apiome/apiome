@@ -35,7 +35,6 @@ from app.pacticipant import (
 from app.pacticipant_store import (
     add_tag,
     create_pacticipant,
-    delete_pacticipant,
     get_pacticipant,
     get_version,
     list_pacticipants,
@@ -225,18 +224,6 @@ def test_a_patch_validates_what_it_writes() -> None:
         update_pacticipant, db, TENANT, "billing-service", PacticipantPatch(project="gone"), actor=ACTOR
     ) == CODE_PROJECT_NOT_FOUND
     assert all("UPDATE" not in call.args[0] for call in db.execute_query.call_args_list)
-
-
-def test_delete_is_scoped_to_the_tenant_and_reports_a_lost_race() -> None:
-    db = _db()
-    assert delete_pacticipant(db, TENANT, "billing-service") == PACTICIPANT
-    sql, params = _statement(db)
-    assert sql.startswith("DELETE FROM apiome.pacticipant WHERE id = %s::uuid AND tenant_id = %s::uuid")
-    assert params == (ROW["id"], TENANT)
-
-    db = _db()
-    db.execute_query.side_effect = [[ROW], []]
-    assert _code(delete_pacticipant, db, TENANT, "billing-service") == CODE_NOT_FOUND
 
 
 # ---------------------------------------------------------------------------------------------

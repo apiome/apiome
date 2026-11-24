@@ -28,6 +28,9 @@ from .consumer_contract import slugify_consumer_name
 __all__ = [
     "CODE_CONSUMER_NOT_FOUND",
     "CODE_INVALID_BRANCH",
+    "CODE_INVALID_LABEL",
+    "CODE_INVALID_REASON",
+    "CODE_LABEL_NOT_FOUND",
     "CODE_INVALID_NAME",
     "CODE_INVALID_SLUG",
     "CODE_INVALID_TAG",
@@ -35,13 +38,19 @@ __all__ = [
     "CODE_INVALID_VERSION",
     "CODE_NOT_FOUND",
     "CODE_PROJECT_NOT_FOUND",
+    "CODE_NOT_DELETED",
+    "CODE_RESTORE_CONFLICT",
     "CODE_SLUG_TAKEN",
+    "CODE_VERSION_IN_USE",
     "CODE_VERSION_NOT_FOUND",
+    "DELETE_CAUSES",
     "MAX_LABEL_LENGTH",
+    "MAX_REASON_LENGTH",
     "MAX_TAGS_PER_REQUEST",
     "MAX_URL_LENGTH",
     "PacticipantBranchRecord",
     "PacticipantInput",
+    "PacticipantLabelRecord",
     "PacticipantPatch",
     "PacticipantRecord",
     "PacticipantValidationError",
@@ -51,8 +60,11 @@ __all__ = [
     "branch_record_from_row",
     "pacticipant_record_from_row",
     "slugify_pacticipant_name",
+    "label_record_from_row",
     "validate_branch",
+    "validate_label",
     "validate_name",
+    "validate_reason",
     "validate_slug",
     "validate_tag",
     "validate_tags",
@@ -73,6 +85,13 @@ CODE_INVALID_VERSION = "pacticipant-invalid-version"
 CODE_PROJECT_NOT_FOUND = "pacticipant-project-not-found"
 CODE_CONSUMER_NOT_FOUND = "pacticipant-consumer-not-found"
 CODE_VERSION_NOT_FOUND = "pacticipant-version-not-found"
+# PFX-1.11 (#6924): labels, soft delete and restore.
+CODE_INVALID_LABEL = "pacticipant-invalid-label"
+CODE_LABEL_NOT_FOUND = "pacticipant-label-not-found"
+CODE_INVALID_REASON = "pacticipant-invalid-reason"
+CODE_NOT_DELETED = "pacticipant-not-deleted"
+CODE_RESTORE_CONFLICT = "pacticipant-restore-conflict"
+CODE_VERSION_IN_USE = "pacticipant-version-in-use"
 
 #: Longest version number, branch name, tag and display name (V432: ``VARCHAR(255)``).
 MAX_LABEL_LENGTH = 255
@@ -80,6 +99,12 @@ MAX_LABEL_LENGTH = 255
 MAX_URL_LENGTH = 2048
 #: Most tags one "record a version" request may carry.
 MAX_TAGS_PER_REQUEST = 50
+#: Longest reason a delete may carry (V437's ``delete_reason`` checks).
+MAX_REASON_LENGTH = 500
+
+#: Why a version was deleted (V437's ``pacticipant_version_delete_cause_check``): on its own, with
+#: its pacticipant (and restored with it), or by a retention run.
+DELETE_CAUSES = ("version", "pacticipant", "retention")
 
 #: Mirrors V432's ``pacticipant_slug_shape_check``.
 _SLUG_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]{0,126}[a-z0-9])?$")
@@ -264,6 +289,49 @@ def validate_tag(name: Optional[str]) -> str:
     return _validate_label(name, code=CODE_INVALID_TAG, what="tag")
 
 
+def validate_label(name: Optional[str]) -> str:
+    """Return a pacticipant label unchanged, or refuse with ``pacticipant-invalid-label``.
+
+    Args:
+        name: The label (``team-billing``).
+
+    Returns:
+        The label.
+
+    Raises:
+        PacticipantValidationError: When the label is not storable (V437's
+            ``pacticipant_label_name_check``).
+    """
+    return _validate_label(name, code=CODE_INVALID_LABEL, what="label")
+
+
+def validate_reason(reason: Optional[str]) -> Optional[str]:
+    """Return a delete reason, trimmed, or ``None`` when none was given.
+
+    Args:
+        reason: Why the caller is deleting something, as they wrote it.
+
+    Returns:
+        The trimmed reason, or ``None`` for an absent or blank one.
+
+    Raises:
+        PacticipantValidationError: ``pacticipant-invalid-reason`` when it is longer than
+            :data:`MAX_REASON_LENGTH` or carries a control character other than a line break,
+            carriage return or tab.
+    """
+    if reason is None:
+        return None
+    candidate = str(reason).strip()
+    if not candidate:
+        return None
+    if len(candidate) > MAX_REASON_LENGTH or re.search(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", candidate):
+        raise PacticipantValidationError(
+            CODE_INVALID_REASON,
+            f"a delete reason is at most {MAX_REASON_LENGTH} characters with no control characters",
+        )
+    return candidate
+
+
 def validate_tags(tags: Optional[List[str]]) -> List[str]:
     """Validate a request's tags and drop repeats, keeping first-seen order.
 
@@ -391,8 +459,13 @@ class PacticipantRecord(BaseModel):
         main_branch: The branch read by default.
         project_id: Bound project, when this is a provider described in Apiome.
         consumer_id: Bound consumer-registry row, when this is a registered consumer.
+        labels: Its labels, by name.
         created_at: When it was registered.
         updated_at: When it was last changed.
+        deleted_at: When it was deleted; ``None`` while it is live.
+        deleted_by_label: Who deleted it, as text.
+        delete_reason: Why, as the caller said.
+        purge_after: When the deleted pacticipant is removed for good, unless restored first.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -405,8 +478,15 @@ class PacticipantRecord(BaseModel):
     main_branch: Optional[str] = None
     project_id: Optional[str] = None
     consumer_id: Optional[str] = None
+    labels: List[str] = Field(default_factory=list, description="Its labels, by name.")
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    deleted_at: Optional[str] = Field(default=None, description="When it was deleted; null while it is live.")
+    deleted_by_label: Optional[str] = Field(default=None, description="Who deleted it.")
+    delete_reason: Optional[str] = Field(default=None, description="Why it was deleted.")
+    purge_after: Optional[str] = Field(
+        default=None, description="When a deleted pacticipant is removed for good, unless it is restored first."
+    )
 
 
 class PacticipantVersionRecord(BaseModel):
@@ -423,6 +503,11 @@ class PacticipantVersionRecord(BaseModel):
         created_by: The user who recorded it, when still known.
         actor_label: Who recorded it, as text.
         created_at: When it was recorded.
+        deleted_at: When it was deleted; ``None`` while it is live.
+        deleted_by_label: Who deleted it, as text.
+        delete_reason: Why, as the caller said.
+        delete_cause: ``version``, ``pacticipant`` or ``retention`` (see :data:`DELETE_CAUSES`).
+        purge_after: When the deleted version is removed for good, unless restored first.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -437,6 +522,16 @@ class PacticipantVersionRecord(BaseModel):
     created_by: Optional[str] = None
     actor_label: Optional[str] = None
     created_at: Optional[str] = None
+    deleted_at: Optional[str] = Field(default=None, description="When it was deleted; null while it is live.")
+    deleted_by_label: Optional[str] = Field(default=None, description="Who deleted it.")
+    delete_reason: Optional[str] = Field(default=None, description="Why it was deleted.")
+    delete_cause: Optional[str] = Field(
+        default=None,
+        description="`version` (deleted on its own), `pacticipant` (with its pacticipant) or `retention`.",
+    )
+    purge_after: Optional[str] = Field(
+        default=None, description="When a deleted version is removed for good, unless it is restored first."
+    )
 
 
 class PacticipantBranchRecord(BaseModel):
@@ -463,6 +558,26 @@ class PacticipantBranchRecord(BaseModel):
     is_main: bool = Field(default=False, description="Whether this is the pacticipant's main branch.")
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+
+
+class PacticipantLabelRecord(BaseModel):
+    """A label on a pacticipant.
+
+    Attributes:
+        name: The label.
+        pacticipant_id: The labelled pacticipant.
+        pacticipant_slug: Its handle.
+        pacticipant_name: Its display name.
+        created_at: When the label was added.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    pacticipant_id: str
+    pacticipant_slug: str
+    pacticipant_name: str
+    created_at: Optional[str] = None
 
 
 class RecordedPacticipantVersion(BaseModel):
@@ -518,8 +633,13 @@ def pacticipant_record_from_row(row: Dict[str, Any]) -> PacticipantRecord:
         main_branch=row.get("main_branch"),
         project_id=_optional_id(row.get("project_id")),
         consumer_id=_optional_id(row.get("consumer_id")),
+        labels=[str(name) for name in row.get("labels") or []],
         created_at=_iso(row.get("created_at")),
         updated_at=_iso(row.get("updated_at")),
+        deleted_at=_iso(row.get("deleted_at")),
+        deleted_by_label=row.get("deleted_by_label"),
+        delete_reason=row.get("delete_reason"),
+        purge_after=_iso(row.get("purge_after")),
     )
 
 
@@ -543,6 +663,11 @@ def version_record_from_row(row: Dict[str, Any]) -> PacticipantVersionRecord:
         created_by=_optional_id(row.get("created_by")),
         actor_label=row.get("actor_label"),
         created_at=_iso(row.get("created_at")),
+        deleted_at=_iso(row.get("deleted_at")),
+        deleted_by_label=row.get("deleted_by_label"),
+        delete_reason=row.get("delete_reason"),
+        delete_cause=row.get("delete_cause"),
+        purge_after=_iso(row.get("purge_after")),
     )
 
 
@@ -564,4 +689,22 @@ def branch_record_from_row(row: Dict[str, Any]) -> PacticipantBranchRecord:
         is_main=bool(row.get("is_main")),
         created_at=_iso(row.get("created_at")),
         updated_at=_iso(row.get("updated_at")),
+    )
+
+
+def label_record_from_row(row: Dict[str, Any]) -> PacticipantLabelRecord:
+    """Adapt a ``pacticipant_label`` row (joined to its pacticipant) into its record.
+
+    Args:
+        row: The row as :mod:`app.pacticipant_store` selects it.
+
+    Returns:
+        The record.
+    """
+    return PacticipantLabelRecord(
+        name=str(row.get("name") or ""),
+        pacticipant_id=str(row.get("pacticipant_id")),
+        pacticipant_slug=str(row.get("pacticipant_slug") or ""),
+        pacticipant_name=str(row.get("pacticipant_name") or ""),
+        created_at=_iso(row.get("created_at")),
     )

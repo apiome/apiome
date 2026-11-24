@@ -26,15 +26,22 @@ from app.main import app
 from app.pacticipant import (
     CODE_CONSUMER_NOT_FOUND,
     CODE_INVALID_BRANCH,
+    CODE_INVALID_LABEL,
+    CODE_INVALID_REASON,
     CODE_INVALID_SLUG,
     CODE_INVALID_TAG,
     CODE_INVALID_URL,
     CODE_INVALID_VERSION,
+    CODE_LABEL_NOT_FOUND,
+    CODE_NOT_DELETED,
     CODE_NOT_FOUND,
     CODE_PROJECT_NOT_FOUND,
+    CODE_RESTORE_CONFLICT,
     CODE_SLUG_TAKEN,
+    CODE_VERSION_IN_USE,
     CODE_VERSION_NOT_FOUND,
     PacticipantBranchRecord,
+    PacticipantLabelRecord,
     PacticipantRecord,
     PacticipantValidationError,
     PacticipantVersionRecord,
@@ -77,6 +84,18 @@ def _version(**overrides: Any) -> PacticipantVersionRecord:
     return PacticipantVersionRecord(**payload)
 
 
+def _label(**overrides: Any) -> PacticipantLabelRecord:
+    """A stored label as the store returns one."""
+    payload: Dict[str, Any] = {
+        "name": "team-billing",
+        "pacticipant_id": "22222222-2222-4222-8222-222222222222",
+        "pacticipant_slug": "billing-service",
+        "pacticipant_name": "Billing Service",
+    }
+    payload.update(overrides)
+    return PacticipantLabelRecord(**payload)
+
+
 def _branch(**overrides: Any) -> PacticipantBranchRecord:
     """A stored branch as the store returns one."""
     payload: Dict[str, Any] = {
@@ -114,6 +133,15 @@ def store() -> Iterator[Dict[str, MagicMock]]:
         "get_version": _version(),
         "add_tag": _version(),
         "list_branches": [_branch()],
+        # PFX-1.11 (#6924): deletes, restores and labels.
+        "restore_pacticipant": _pacticipant(),
+        "delete_version": _version(deleted_at="2026-11-24T00:00:00+00:00", delete_cause="version"),
+        "restore_version": _version(),
+        "list_labels": [{"name": "team-billing"}],
+        "list_pacticipant_labels": [_label()],
+        "get_label": _label(),
+        "add_label": (_label(), True),
+        "remove_label": _label(),
     }
     patches = {name: patch(f"{_ROUTES}.{name}", return_value=answer) for name, answer in answers.items()}
     mocks = {name: patcher.start() for name, patcher in patches.items()}
@@ -134,6 +162,13 @@ _CALLS = [
     ("get", "/billing-service/versions/1.0.0", None, "view", "get_version"),
     ("put", "/billing-service/versions/1.0.0/tags/prod", None, "create", "add_tag"),
     ("get", "/billing-service/branches", None, "view", "list_branches"),
+    ("post", "/billing-service/restore", None, "delete", "restore_pacticipant"),
+    ("delete", "/billing-service/versions/1.0.0", None, "delete", "delete_version"),
+    ("post", "/billing-service/versions/1.0.0/restore", None, "delete", "restore_version"),
+    ("get", "/billing-service/labels", None, "view", "list_pacticipant_labels"),
+    ("get", "/billing-service/labels/team-billing", None, "view", "get_label"),
+    ("put", "/billing-service/labels/team-billing", None, "edit", "add_label"),
+    ("delete", "/billing-service/labels/team-billing", None, "edit", "remove_label"),
 ]
 
 
@@ -212,7 +247,7 @@ def test_an_unknown_pacticipant_is_a_404_on_every_route(
     store: Dict[str, MagicMock], method: str, path: str, body: Any, action: str, ends_in: str
 ) -> None:
     missing = PacticipantValidationError(CODE_NOT_FOUND, "no pacticipant 'billing-service' in this tenant")
-    for name in ("get_pacticipant", "update_pacticipant", "delete_pacticipant"):
+    for name in ("get_pacticipant", "update_pacticipant", "delete_pacticipant", "restore_pacticipant"):
         store[name].side_effect = missing
     response = _send(method, path, body)
     assert response.status_code == 404 and response.json()["detail"]["code"] == CODE_NOT_FOUND
@@ -239,7 +274,7 @@ def test_listing_pages_by_cursor(store: Dict[str, MagicMock]) -> None:
     rows = [_pacticipant(slug="accounts", id="a" * 8 + "-1111-4111-8111-111111111111"), _pacticipant()]
     store["list_pacticipants"].return_value = rows
     body = client.get(_BASE, params={"limit": 1}).json()
-    assert store["list_pacticipants"].call_args.kwargs == {"limit": 2, "cursor": None}
+    assert store["list_pacticipants"].call_args.kwargs == {"limit": 2, "cursor": None, "label": None, "deleted": False}
     assert [row["slug"] for row in body["pacticipants"]] == ["accounts"]
     assert body["count"] == 1 and body["has_more"] is True
     assert PACTICIPANTS_ORDER.decode(body["next_cursor"]) == ["accounts", rows[0].id]
@@ -253,7 +288,13 @@ def test_versions_and_branches_page_the_same_way(store: Dict[str, MagicMock]) ->
     versions = client.get(f"{_BASE}/billing-service/versions", params={"limit": 1, "branch": "main", "tag": "prod"})
     assert versions.json()["has_more"] is True
     assert VERSIONS_ORDER.decode(versions.json()["next_cursor"]) == [9]
-    assert store["list_versions"].call_args.kwargs == {"branch": "main", "tag": "prod", "limit": 2, "cursor": None}
+    assert store["list_versions"].call_args.kwargs == {
+        "branch": "main",
+        "tag": "prod",
+        "limit": 2,
+        "cursor": None,
+        "deleted": False,
+    }
 
     store["list_branches"].return_value = [_branch(), _branch(name="release", is_main=False)]
     branches = client.get(f"{_BASE}/billing-service/branches", params={"limit": 1}).json()
@@ -312,3 +353,74 @@ def test_an_unknown_version_is_a_404(store: Dict[str, MagicMock]) -> None:
     store["get_version"].side_effect = PacticipantValidationError(CODE_VERSION_NOT_FOUND, "no version")
     response = client.get(f"{_BASE}/billing-service/versions/9.9.9")
     assert response.status_code == 404 and response.json()["detail"]["code"] == CODE_VERSION_NOT_FOUND
+
+
+# ===========================================================================
+# PFX-1.11 (#6924): soft delete, restore, labels
+# ===========================================================================
+
+
+def test_the_workspace_labels_list_is_gated_and_paged(guard: MagicMock, store: Dict[str, MagicMock]) -> None:
+    response = client.get("/v1/tenants/acme/pacticipant-labels")
+    assert response.status_code == 200, response.text
+    assert response.json()["labels"] == [{"name": "team-billing"}]
+    assert guard.call_args.args[2:4] == ("pacts", "view")
+    assert client.get("/v1/tenants/acme/pacticipant-labels", params={"cursor": "bad"}).status_code == 400
+
+
+def test_delete_passes_the_reason_and_force_and_the_actor(guard: MagicMock, store: Dict[str, MagicMock]) -> None:
+    response = client.delete(f"{_BASE}/billing-service", params={"reason": "retired service", "force": "true"})
+    assert response.status_code == 204
+    kwargs = store["delete_pacticipant"].call_args.kwargs
+    assert kwargs["reason"] == "retired service" and kwargs["force"] is True
+    assert kwargs["actor"].label == "dev@example.com"
+    version = client.delete(f"{_BASE}/billing-service/versions/1.0.0", params={"reason": "bad build"})
+    assert version.status_code == 204
+    assert store["delete_version"].call_args.kwargs["reason"] == "bad build"
+    assert store["delete_version"].call_args.kwargs["force"] is False
+
+
+def test_a_reason_over_500_characters_is_refused_before_the_store(store: Dict[str, MagicMock]) -> None:
+    assert client.delete(f"{_BASE}/billing-service", params={"reason": "x" * 501}).status_code == 422
+    assert store["delete_pacticipant"].call_count == 0
+
+
+@pytest.mark.parametrize(
+    ("code", "status"),
+    [
+        (CODE_VERSION_IN_USE, 409),
+        (CODE_RESTORE_CONFLICT, 409),
+        (CODE_NOT_DELETED, 409),
+        (CODE_LABEL_NOT_FOUND, 404),
+        (CODE_INVALID_LABEL, 400),
+        (CODE_INVALID_REASON, 400),
+    ],
+)
+def test_the_cleanup_refusals_get_their_status(store: Dict[str, MagicMock], code: str, status: int) -> None:
+    store["delete_version"].side_effect = PacticipantValidationError(code, "because")
+    response = client.delete(f"{_BASE}/billing-service/versions/1.0.0")
+    assert response.status_code == status
+    assert response.json()["detail"] == {"code": code, "message": "because"}
+
+
+def test_the_state_filter_lists_deleted_rows_with_their_purge_time(store: Dict[str, MagicMock]) -> None:
+    store["list_pacticipants"].return_value = [_pacticipant(deleted_at="2026-11-01T00:00:00+00:00")]
+    body = client.get(_BASE, params={"state": "deleted", "label": "team-billing"}).json()
+    assert store["list_pacticipants"].call_args.kwargs["deleted"] is True
+    assert store["list_pacticipants"].call_args.kwargs["label"] == "team-billing"
+    assert body["pacticipants"][0]["purge_after"].startswith("2026-12-01")
+    store["list_versions"].return_value = [_version(deleted_at="2026-11-01T00:00:00+00:00", delete_cause="retention")]
+    versions = client.get(f"{_BASE}/billing-service/versions", params={"state": "deleted"}).json()
+    assert store["list_versions"].call_args.kwargs["deleted"] is True
+    assert versions["versions"][0]["delete_cause"] == "retention"
+    assert client.get(_BASE, params={"state": "gone"}).status_code == 422
+
+
+def test_a_new_label_is_201_and_a_repeat_200(store: Dict[str, MagicMock]) -> None:
+    assert client.put(f"{_BASE}/billing-service/labels/team-billing").status_code == 201
+    store["add_label"].return_value = (_label(), False)
+    again = client.put(f"{_BASE}/billing-service/labels/team-billing")
+    assert again.status_code == 200 and again.json()["name"] == "team-billing"
+    # A label may contain a slash.
+    client.put(f"{_BASE}/billing-service/labels/team/billing")
+    assert store["add_label"].call_args.args[3] == "team/billing"

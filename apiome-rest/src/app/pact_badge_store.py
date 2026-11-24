@@ -29,14 +29,14 @@ _PUBLIC_PROJECT = """
 #: The pacticipants bound to a project. %s: tenant id, project id.
 _BOUND = """
     SELECT id::text AS id, slug, name FROM apiome.pacticipant
-    WHERE tenant_id = %s::uuid AND project_id = %s::uuid
+    WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND deleted_at IS NULL
     ORDER BY slug
 """
 
 #: One pacticipant of a tenant, by slug. %s: tenant id, slug.
 _ONE = """
     SELECT id::text AS id, slug, name, project_id::text AS project_id FROM apiome.pacticipant
-    WHERE tenant_id = %s::uuid AND slug = %s
+    WHERE tenant_id = %s::uuid AND slug = %s AND deleted_at IS NULL
 """
 
 #: The latest pact of every pair a pacticipant is in, with its newest result. %s: pacticipant id,
@@ -45,16 +45,20 @@ _PAIRS = """
     WITH latest AS (
         SELECT DISTINCT ON (p.consumer_id, p.provider_id) p.consumer_id, p.provider_id, p.pact_version_id
         FROM apiome.pact_publication p
-        WHERE p.consumer_id = %s::uuid OR p.provider_id = %s::uuid
+        WHERE (p.consumer_id = %s::uuid OR p.provider_id = %s::uuid)
+          AND EXISTS (SELECT 1 FROM apiome.pacticipant_version lv
+                      WHERE lv.id = p.consumer_version_id AND lv.deleted_at IS NULL)
         ORDER BY p.consumer_id, p.provider_id, p.created_at DESC, p.id
     )
     SELECT c.slug AS consumer_slug, pr.slug AS provider_slug,
            (SELECT r.success FROM apiome.verification_result r
             WHERE r.pact_version_id = l.pact_version_id
+              AND EXISTS (SELECT 1 FROM apiome.pacticipant_version lr
+                          WHERE lr.id = r.provider_version_id AND lr.deleted_at IS NULL)
             ORDER BY r.seq DESC LIMIT 1) AS success
     FROM latest l
-    JOIN apiome.pacticipant c ON c.id = l.consumer_id AND c.tenant_id = %s::uuid
-    JOIN apiome.pacticipant pr ON pr.id = l.provider_id AND pr.tenant_id = %s::uuid
+    JOIN apiome.pacticipant c ON c.id = l.consumer_id AND c.tenant_id = %s::uuid AND c.deleted_at IS NULL
+    JOIN apiome.pacticipant pr ON pr.id = l.provider_id AND pr.tenant_id = %s::uuid AND pr.deleted_at IS NULL
 """
 
 

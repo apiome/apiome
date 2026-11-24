@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 57 operations."
+description: "REST endpoints tagged pact-broker: 64 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.663.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.664.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 57 operations
+Tag: `pact-broker` · 64 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -411,6 +411,29 @@ Operation id: `read_currently_supported_v1_tenants__tenant_slug__pact_broker_env
 | 404 | `pact-environment-not-found`: no such environment in this workspace. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-broker/labels` {#read-broker-labels-v1-tenants-tenant-slug-pact-broker-labels-get}
+
+**List every label (Pact Broker shape)**
+
+Every distinct label on the workspace's pacticipants, by name, under `_embedded.labels`. Requires `pacts:view`.
+
+Operation id: `read_broker_labels_v1_tenants__tenant_slug__pact_broker_labels_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list every label (pact broker shape). | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/matrix` {#read-matrix-v1-tenants-tenant-slug-pact-broker-matrix-get}
 
 **Query the matrix**
@@ -459,6 +482,30 @@ Operation id: `read_matrix_v1_tenants__tenant_slug__pact_broker_matrix_get`
 | 400 | `pact-matrix-invalid`: the query is malformed, or names a pacticipant or an environment that does not exist. `detail.pointer` names the parameter. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/label/{label}` {#read-broker-pacticipants-with-label-v1-tenants-tenant-slug-pact-broker-pacticipants-label-label-get}
+
+**List the pacticipants with a label (Pact Broker shape)**
+
+The pacticipants carrying `{label}`, under `_embedded.pacticipants` and `pb:pacticipants`; an empty list when none does. Requires `pacts:view`.
+
+Operation id: `read_broker_pacticipants_with_label_v1_tenants__tenant_slug__pact_broker_pacticipants_label__label__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `label` | path | string | yes | Path parameter identifying the label segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the pacticipants with a label (pact broker shape). | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}` {#read-broker-pacticipant-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-get}
 
 **Read a pacticipant (Pact Broker shape)**
@@ -483,6 +530,32 @@ Operation id: `read_broker_pacticipant_v1_tenants__tenant_slug__pact_broker_pact
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for read a pacticipant (pact broker shape). | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}` {#delete-broker-pacticipant-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-delete}
+
+**Delete a pacticipant (Pact Broker shape)**
+
+Delete a pacticipant with its versions, pacts, verification results and deployments. Soft: it can be restored through `POST /v1/tenants/{tenant_slug}/pacticipants/{p}/restore` until it is purged (`APIOME_PACT_DELETION_GRACE_DAYS`, default 30). `409 pacticipant-version-in-use` while a version is deployed or released, unless `force=true`. Requires `pacts:delete`.
+
+Operation id: `delete_broker_pacticipant_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | Path parameter identifying the pacticipant segment. |
+| `reason` | query | string or null | no | Why; stored with the delete and audited. |
+| `force` | query | boolean | no | Delete even when a version is currently deployed or released. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a pacticipant (pact broker shape). | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `PUT /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/branches/{branch}/versions/{version}` {#put-branch-version-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-branches-branch-versions-version-put}
@@ -514,6 +587,81 @@ Operation id: `put_branch_version_v1_tenants__tenant_slug__pact_broker_pacticipa
 | 201 | The version was created and recorded on the branch. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/labels/{label}` {#read-broker-label-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-labels-label-get}
+
+**Read a label (Pact Broker shape)**
+
+One label of a pacticipant; 404 when it does not carry it. Requires `pacts:view`.
+
+Operation id: `read_broker_label_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__labels__label__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | Path parameter identifying the pacticipant segment. |
+| `label` | path | string | yes | Path parameter identifying the label segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a label (pact broker shape). | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/labels/{label}` {#put-broker-label-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-labels-label-put}
+
+**Label a pacticipant (Pact Broker shape)**
+
+Put a label on a pacticipant. `201` with a `Location` header when the label is new, `200` when the pacticipant already had it. Unlike the Pact Broker, an unknown pacticipant is `404`, not created. Requires `pacts:edit`.
+
+Operation id: `put_broker_label_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__labels__label__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | Path parameter identifying the pacticipant segment. |
+| `label` | path | string | yes | Path parameter identifying the label segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for label a pacticipant (pact broker shape). | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/labels/{label}` {#delete-broker-label-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-labels-label-delete}
+
+**Remove a label (Pact Broker shape)**
+
+Take a label off a pacticipant; 404 when it does not carry it. Requires `pacts:edit`.
+
+Operation id: `delete_broker_label_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__labels__label__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | Path parameter identifying the pacticipant segment. |
+| `label` | path | string | yes | Path parameter identifying the label segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for remove a label (pact broker shape). | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{number}` {#read-broker-pacticipant-version-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-number-get}
 
 **Read a pacticipant version (Pact Broker shape)**
@@ -539,6 +687,33 @@ Operation id: `read_broker_pacticipant_version_v1_tenants__tenant_slug__pact_bro
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for read a pacticipant version (pact broker shape). | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{number}` {#delete-broker-pacticipant-version-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-number-delete}
+
+**Delete a pacticipant version (Pact Broker shape)**
+
+Delete one version with its pacts, the verification results it published and its deployments. Soft: restorable through `POST /v1/tenants/{tenant_slug}/pacticipants/{p}/versions/{v}/restore` until it is purged. `409 pacticipant-version-in-use` while it is deployed or released, unless `force=true`. Requires `pacts:delete`.
+
+Operation id: `delete_broker_pacticipant_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__number__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | Path parameter identifying the pacticipant segment. |
+| `number` | path | string | yes | Path parameter identifying the number segment. |
+| `reason` | query | string or null | no | Why; stored with the delete and audited. |
+| `force` | query | boolean | no | Delete even when a version is currently deployed or released. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a pacticipant version (pact broker shape). | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/deployed-versions/environment/{uuid}` {#read-deployments-of-version-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-version-deployed-versions-environment-uuid-get}

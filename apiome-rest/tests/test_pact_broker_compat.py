@@ -115,7 +115,10 @@ def test_every_group_has_endpoints_and_the_statuses_add_up() -> None:
     assert {endpoint.group for endpoint in ENDPOINTS} == set(GROUPS)
     counts = status_counts()
     assert sum(counts.values()) == len(ENDPOINTS)
-    assert all(counts[status] > 0 for status in (SUPPORTED, PARTIAL, PLANNED, NOT_PLANNED))
+    # Every endpoint that was scheduled has shipped (PFX-1.11, #6924, was the last), so "planned"
+    # may be empty; the other three always have members.
+    assert all(counts[status] > 0 for status in (SUPPORTED, PARTIAL, NOT_PLANNED))
+    assert counts[PLANNED] == sum(1 for endpoint in ENDPOINTS if endpoint.tracking)
 
 
 def test_status_follows_from_the_methods() -> None:
@@ -202,7 +205,7 @@ def test_the_501_routes_stay_out_of_the_openapi_document() -> None:
 
 
 def test_a_missing_method_on_a_partial_endpoint_is_a_documented_501(authenticated: None) -> None:
-    response = client.delete(f"{_BASE}/pacticipants/web")
+    response = client.put(f"{_BASE}/pacticipants/web", json={})
     assert response.status_code == 501
     assert response.headers["link"] == f'<{compatibility_url()}>; rel="help"'
     detail = response.json()["detail"]
@@ -212,13 +215,14 @@ def test_a_missing_method_on_a_partial_endpoint_is_a_documented_501(authenticate
         "pointer": f"{_BASE}/pacticipants/web",
         "endpoint": "/pacticipants/{pacticipant}",
         "status": PARTIAL,
-        "supported_methods": ["GET"],
-        "tracking": "https://github.com/apiome/apiome/issues/6924",
+        "supported_methods": ["GET", "DELETE"],
         "alternative": "/v1/tenants/{tenant}/pacticipants/{pacticipant}",
         "documentation": "https://docs.apiome.dev/ship/pact-broker/compatibility",
         "pact_broker_version": PACT_BROKER_VERSION,
     }
-    assert detail["message"].startswith("DELETE is not supported on “A pacticipant” (partial). Supported: GET.")
+    assert detail["message"].startswith(
+        "PUT is not supported on “A pacticipant” (partial). Supported: GET, DELETE."
+    )
 
 
 def test_a_broker_badge_points_at_the_public_badges(authenticated: None) -> None:

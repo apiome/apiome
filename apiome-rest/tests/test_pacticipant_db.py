@@ -17,6 +17,7 @@ Everything runs inside one always-rolled-back transaction (the ``tx`` fixture of
 from __future__ import annotations
 
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterator, Tuple
 from unittest.mock import patch
 
@@ -27,6 +28,7 @@ from fastapi.testclient import TestClient
 from app.auth import validate_authentication
 from app.consumer_contract_store import ConsumerActor
 from app.main import app
+from app.pact_cleanup_store import purge_deleted
 from app.pacticipant import PacticipantInput, PacticipantVersionInput
 from app.pacticipant_store import create_pacticipant, get_pacticipant, record_version
 from tests import test_usage_index_db as index_db
@@ -132,11 +134,15 @@ def test_create_list_read_update_and_delete(stack: Dict[str, Any]) -> None:
     assert client.delete(f"{base}/billing-service").status_code == 404
 
 
-def test_deleting_a_pacticipant_removes_its_versions_branches_and_tags(stack: Dict[str, Any]) -> None:
+def test_deleting_a_pacticipant_hides_it_and_the_purge_removes_its_history(stack: Dict[str, Any]) -> None:
     created = _register(stack)
     assert _record(stack, "1.0.0", branch="main", tags=["prod"]).status_code == 201
     assert _record(stack, "1.1.0", branch="main").status_code == 201
     assert stack["client"].delete(f"{stack['base']}/billing-service").status_code == 204
+    # Soft (PFX-1.11): gone from every read, kept until the grace period has passed.
+    assert stack["client"].get(f"{stack['base']}/billing-service").status_code == 404
+    assert _count(stack["cursor"], "pacticipant_version", created["id"]) == 2
+    purge_deleted(stack["db"], now=datetime.now(timezone.utc) + timedelta(days=365))
     for table in ("pacticipant_version", "pacticipant_branch", "pacticipant_branch_version", "pacticipant_version_tag"):
         assert _count(stack["cursor"], table, created["id"]) == 0
 

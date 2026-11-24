@@ -20,6 +20,11 @@ branch adds it to the branch and leaves the head where it was.
 **Tags and branch membership are idempotent.** Both are ``ON CONFLICT DO NOTHING`` on their natural
 keys.
 
+**A deleted row is invisible here** (PFX-1.11, #6924). Every read and write of this module sees only
+live pacticipants and versions (``deleted_at IS NULL``); a deleted handle or version number can be
+registered or recorded again, as a new row (V437's partial unique indexes). Deleting, restoring and
+listing what was deleted is :mod:`app.pact_cleanup_store`.
+
 Every function takes the :class:`~app.database.Database` it runs on, so the live-database tests can
 pass one bound to a rolled-back transaction.
 """
@@ -64,10 +69,11 @@ __all__ = [
     "BRANCHES_ORDER",
     "MAIN_BRANCH_CANDIDATES",
     "PACTICIPANTS_ORDER",
+    "PACTICIPANT_COLUMNS",
     "VERSIONS_ORDER",
+    "VERSION_COLUMNS",
     "add_tag",
     "create_pacticipant",
-    "delete_pacticipant",
     "ensure_pacticipant_tx",
     "get_pacticipant",
     "get_version",
@@ -79,16 +85,22 @@ __all__ = [
     "update_pacticipant",
 ]
 
-#: The columns every pacticipant read returns.
+#: The columns every pacticipant read returns: the row plus its labels, by name. Unqualified, so
+#: it also serves ``RETURNING``; the label subquery names the table to reach the outer row.
 _PACTICIPANT_COLUMNS = """
     id::text AS id, tenant_id::text AS tenant_id, slug, name, repository_url, main_branch,
-    project_id::text AS project_id, consumer_id::text AS consumer_id, created_at, updated_at
+    project_id::text AS project_id, consumer_id::text AS consumer_id, created_at, updated_at,
+    COALESCE((SELECT array_agg(pl.name ORDER BY pl.name)
+              FROM apiome.pacticipant_label pl
+              WHERE pl.pacticipant_id = pacticipant.id), '{}') AS labels,
+    deleted_at, deleted_by_label, delete_reason
 """
 
 #: The columns every version read returns: the row plus its branches and tags, by name.
 _VERSION_COLUMNS = """
     v.id::text AS id, v.pacticipant_id::text AS pacticipant_id, v.number, v.seq, v.build_url,
     v.created_by::text AS created_by, v.actor_label, v.created_at,
+    v.deleted_at, v.deleted_by_label, v.delete_reason, v.delete_cause,
     COALESCE((SELECT array_agg(b.name ORDER BY b.name)
               FROM apiome.pacticipant_branch_version bv
               JOIN apiome.pacticipant_branch b ON b.id = bv.branch_id
@@ -97,6 +109,10 @@ _VERSION_COLUMNS = """
               FROM apiome.pacticipant_version_tag t
               WHERE t.version_id = v.id AND t.pacticipant_id = v.pacticipant_id), '{}') AS tags
 """
+
+#: The same column lists, for :mod:`app.pact_cleanup_store`, which reads deleted rows too.
+PACTICIPANT_COLUMNS = _PACTICIPANT_COLUMNS
+VERSION_COLUMNS = _VERSION_COLUMNS
 
 #: The order of :func:`list_pacticipants`: by handle.
 PACTICIPANTS_ORDER = by_name("pacticipants", "slug", "id", name_field="slug")
@@ -201,7 +217,7 @@ def get_pacticipant(db: Any, tenant_id: str, pacticipant_ref: str) -> Pacticipan
             f"""
             SELECT {_PACTICIPANT_COLUMNS}
             FROM apiome.pacticipant
-            WHERE tenant_id = %s::uuid AND ({by_id}slug = %s)
+            WHERE tenant_id = %s::uuid AND ({by_id}slug = %s) AND deleted_at IS NULL
             """,
             (tenant_id, *([ref] if by_id else []), slugify_pacticipant_name(ref)),
         )
@@ -216,6 +232,8 @@ def list_pacticipants(
     *,
     limit: Optional[int] = None,
     cursor: Optional[Sequence[Any]] = None,
+    label: Optional[str] = None,
+    deleted: bool = False,
 ) -> List[PacticipantRecord]:
     """The tenant's pacticipants, by handle.
 
@@ -224,21 +242,30 @@ def list_pacticipants(
         tenant_id: The caller's tenant.
         limit: Rows to read; ``None`` reads every one.
         cursor: :data:`PACTICIPANTS_ORDER` values of the last row already seen.
+        label: Only pacticipants carrying this label.
+        deleted: Read the deleted pacticipants (waiting to be purged) instead of the live ones.
 
     Returns:
         The records; empty when none is registered.
     """
     if not is_uuid_string(str(tenant_id or "")):
         return []
+    filters = " AND deleted_at IS NOT NULL" if deleted else " AND deleted_at IS NULL"
+    params: List[Any] = [tenant_id]
+    if label:
+        filters += """
+          AND EXISTS (SELECT 1 FROM apiome.pacticipant_label fl
+                      WHERE fl.pacticipant_id = pacticipant.id AND fl.name = %s)"""
+        params.append(label)
     after_sql, after_params, limit_sql, limit_params = PACTICIPANTS_ORDER.window(limit, cursor)
     rows = db.execute_query(
         f"""
         SELECT {_PACTICIPANT_COLUMNS}
         FROM apiome.pacticipant
-        WHERE tenant_id = %s::uuid{after_sql}
+        WHERE tenant_id = %s::uuid{filters}{after_sql}
         ORDER BY {PACTICIPANTS_ORDER.order_by}{limit_sql}
         """,
-        (tenant_id, *after_params, *limit_params),
+        (*params, *after_params, *limit_params),
     )
     return [pacticipant_record_from_row(dict(row)) for row in rows]
 
@@ -342,7 +369,7 @@ def update_pacticipant(
         f"""
         UPDATE apiome.pacticipant
         SET {assignments}, updated_at = CURRENT_TIMESTAMP, updated_by = %s::uuid
-        WHERE id = %s::uuid AND tenant_id = %s::uuid
+        WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
         RETURNING {_PACTICIPANT_COLUMNS}
         """,
         (*values.values(), _user_id(actor), existing.id, tenant_id),
@@ -352,41 +379,13 @@ def update_pacticipant(
     return pacticipant_record_from_row(dict(rows[0]))
 
 
-def delete_pacticipant(db: Any, tenant_id: str, pacticipant_ref: str) -> PacticipantRecord:
-    """Delete a pacticipant with its versions, branches and tags.
-
-    Args:
-        db: The database.
-        tenant_id: The caller's tenant.
-        pacticipant_ref: Slug, id or name.
-
-    Returns:
-        The record that was deleted.
-
-    Raises:
-        PacticipantValidationError: ``pacticipant-not-found``.
-    """
-    existing = get_pacticipant(db, tenant_id, pacticipant_ref)
-    rows = db.execute_query(
-        """
-        DELETE FROM apiome.pacticipant
-        WHERE id = %s::uuid AND tenant_id = %s::uuid
-        RETURNING id::text AS id
-        """,
-        (existing.id, tenant_id),
-    )
-    if not rows:
-        raise PacticipantValidationError(CODE_NOT_FOUND, f"no pacticipant '{pacticipant_ref}' in this tenant")
-    return existing
-
-
 # ---------------------------------------------------------------------------------------------
 # Versions, branches and tags
 # ---------------------------------------------------------------------------------------------
 
 
 def _read_version(cursor_or_db: Any, pacticipant_id: str, number: str) -> Optional[Dict[str, Any]]:
-    """Read one version row with its branches and tags.
+    """Read one live version row with its branches and tags.
 
     Args:
         cursor_or_db: An open cursor (inside a transaction) or the database.
@@ -399,7 +398,7 @@ def _read_version(cursor_or_db: Any, pacticipant_id: str, number: str) -> Option
     query = f"""
         SELECT {_VERSION_COLUMNS}
         FROM apiome.pacticipant_version v
-        WHERE v.pacticipant_id = %s::uuid AND v.number = %s
+        WHERE v.pacticipant_id = %s::uuid AND v.number = %s AND v.deleted_at IS NULL
     """
     if hasattr(cursor_or_db, "execute_query"):
         rows = cursor_or_db.execute_query(query, (pacticipant_id, number))
@@ -439,6 +438,7 @@ def list_versions(
     tag: Optional[str] = None,
     limit: Optional[int] = None,
     cursor: Optional[Sequence[Any]] = None,
+    deleted: bool = False,
 ) -> List[PacticipantVersionRecord]:
     """A pacticipant's versions, latest recorded first.
 
@@ -449,11 +449,12 @@ def list_versions(
         tag: Only versions carrying this tag.
         limit: Rows to read; ``None`` reads every one.
         cursor: :data:`VERSIONS_ORDER` values of the last row already seen.
+        deleted: Read the deleted versions (waiting to be purged) instead of the live ones.
 
     Returns:
         The records, each with its branches and tags.
     """
-    filters = ""
+    filters = " AND v.deleted_at IS NOT NULL" if deleted else " AND v.deleted_at IS NULL"
     params: List[Any] = [pacticipant.id]
     if branch:
         filters += """
@@ -537,7 +538,7 @@ def record_version_tx(
         """
         INSERT INTO apiome.pacticipant_version (pacticipant_id, number, build_url, created_by, actor_label)
         VALUES (%s::uuid, %s, %s, %s::uuid, %s)
-        ON CONFLICT (pacticipant_id, number) DO NOTHING
+        ON CONFLICT (pacticipant_id, number) WHERE deleted_at IS NULL DO NOTHING
         RETURNING id::text AS id, seq
         """,
         (pacticipant.id, version_number, build_url, _user_id(actor), actor.label),
@@ -548,7 +549,7 @@ def record_version_tx(
         cursor.execute(
             """
             SELECT id::text AS id, seq FROM apiome.pacticipant_version
-            WHERE pacticipant_id = %s::uuid AND number = %s
+            WHERE pacticipant_id = %s::uuid AND number = %s AND deleted_at IS NULL
             """,
             (pacticipant.id, version_number),
         )
@@ -559,14 +560,16 @@ def record_version_tx(
     branch_created = False
     if branch:
         # One statement creates the branch or moves its head, and the WHERE is the rule: the
-        # head moves only to a version recorded later than the one it points at.
+        # head moves only to a version recorded later than the one it points at — or off a deleted
+        # head, which a branch keeps only when none of its versions is live any more (PFX-1.11).
         cursor.execute(
             """
             INSERT INTO apiome.pacticipant_branch AS b (pacticipant_id, name, head_version_id)
             VALUES (%s::uuid, %s, %s::uuid)
             ON CONFLICT (pacticipant_id, name) DO UPDATE
                 SET head_version_id = EXCLUDED.head_version_id, updated_at = CURRENT_TIMESTAMP
-                WHERE (SELECT h.seq FROM apiome.pacticipant_version h WHERE h.id = b.head_version_id) < %s
+                WHERE EXISTS (SELECT 1 FROM apiome.pacticipant_version h
+                              WHERE h.id = b.head_version_id AND (h.seq < %s OR h.deleted_at IS NOT NULL))
             RETURNING b.id::text AS id, (b.xmax = 0) AS inserted
             """,
             (pacticipant.id, branch, version_id, seq),
@@ -635,7 +638,7 @@ def ensure_pacticipant_tx(
         """
         INSERT INTO apiome.pacticipant (tenant_id, slug, name, created_by, updated_by)
         VALUES (%s::uuid, %s, %s, %s::uuid, %s::uuid)
-        ON CONFLICT (tenant_id, slug) DO NOTHING
+        ON CONFLICT (tenant_id, slug) WHERE deleted_at IS NULL DO NOTHING
         """,
         (tenant_id, slug, display_name, user_id, user_id),
     )
@@ -643,7 +646,7 @@ def ensure_pacticipant_tx(
         f"""
         SELECT {_PACTICIPANT_COLUMNS}
         FROM apiome.pacticipant
-        WHERE tenant_id = %s::uuid AND slug = %s
+        WHERE tenant_id = %s::uuid AND slug = %s AND deleted_at IS NULL
         """,
         (tenant_id, slug),
     )
@@ -747,7 +750,8 @@ def list_branches(
         cursor: :data:`BRANCHES_ORDER` values of the last row already seen.
 
     Returns:
-        The records; empty when no version was recorded on a branch yet.
+        The records; empty when no version was recorded on a branch yet. A branch whose versions
+        were all deleted is left out until a version is recorded on it again.
     """
     after_sql, after_params, limit_sql, limit_params = BRANCHES_ORDER.window(limit, cursor)
     rows = db.execute_query(
@@ -757,7 +761,7 @@ def list_branches(
                (b.name = %s) AS is_main, b.created_at, b.updated_at
         FROM apiome.pacticipant_branch b
         JOIN apiome.pacticipant_version h ON h.id = b.head_version_id
-        WHERE b.pacticipant_id = %s::uuid{after_sql}
+        WHERE b.pacticipant_id = %s::uuid AND h.deleted_at IS NULL{after_sql}
         ORDER BY {BRANCHES_ORDER.order_by}{limit_sql}
         """,
         (pacticipant.main_branch or "", pacticipant.id, *after_params, *limit_params),

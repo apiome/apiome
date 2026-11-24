@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import base64
 import json
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterator, Tuple
 from unittest.mock import patch
 
@@ -28,10 +29,11 @@ from app.auth import validate_authentication
 from app.consumer_contract_store import ConsumerActor
 from app.main import app
 from app.pact_broker_auth import validate_broker_authentication
+from app.pact_cleanup_store import delete_pacticipant, purge_deleted
 from app.pact_publication import PactPublicationError, prepare_pact
 from app.pact_publication_store import get_latest_pact, publish_pacts
 from app.pacticipant import PacticipantValidationError
-from app.pacticipant_store import delete_pacticipant, get_pacticipant
+from app.pacticipant_store import get_pacticipant
 from tests import test_usage_index_db as index_db
 
 tx = index_db.tx
@@ -293,13 +295,18 @@ def test_nothing_crosses_a_tenant(stack: Dict[str, Any]) -> None:
     assert _count(stack, "pacticipant") == 4
 
 
-def test_deleting_a_pacticipant_removes_its_pacts(stack: Dict[str, Any]) -> None:
+def test_deleting_a_pacticipant_hides_its_pacts_and_the_purge_removes_them(stack: Dict[str, Any]) -> None:
     client = stack["client"]
+    tenant = stack["seed"]["tenant"]
     assert client.put(f"{PAIR}/version/1.0.0", json=_pact()).status_code == 201
-    delete_pacticipant(stack["db"], stack["seed"]["tenant"], "ledger-api")
+    delete_pacticipant(stack["db"], tenant, get_pacticipant(stack["db"], tenant, "ledger-api"), actor=ACTOR)
+    # Soft (PFX-1.11): hidden at once, still stored until the grace period has passed.
+    assert client.get(f"{PAIR}/latest").status_code == 404
+    assert _count(stack, "pact_publication") == 1
+    later = datetime.now(timezone.utc) + timedelta(days=365)
+    assert purge_deleted(stack["db"], now=later)["pacticipants"] >= 1
     assert _count(stack, "pact_version") == 0
     assert _count(stack, "pact_publication") == 0
-    assert client.get(f"{PAIR}/latest").status_code == 404
 
 
 def test_unknown_pacts_are_404(stack: Dict[str, Any]) -> None:

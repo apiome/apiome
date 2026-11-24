@@ -65,13 +65,14 @@ _RESULT_SELECT = """
            pvn.number AS provider_version, pv.sha,
            (SELECT v.number FROM apiome.pact_publication p
             JOIN apiome.pacticipant_version v ON v.id = p.consumer_version_id
-            WHERE p.pact_version_id = r.pact_version_id
+            WHERE p.pact_version_id = r.pact_version_id AND v.deleted_at IS NULL
             ORDER BY v.seq DESC LIMIT 1) AS consumer_version
     FROM apiome.verification_result r
     JOIN apiome.pact_version pv ON pv.id = r.pact_version_id
     JOIN apiome.pacticipant c ON c.id = r.consumer_id
     JOIN apiome.pacticipant pr ON pr.id = r.provider_id
-    JOIN apiome.pacticipant_version pvn ON pvn.id = r.provider_version_id
+    -- PFX-1.11: a result published by a deleted provider version is gone with it.
+    JOIN apiome.pacticipant_version pvn ON pvn.id = r.provider_version_id AND pvn.deleted_at IS NULL
 """
 
 _REPORT_FK = "verification_result_report_fk"

@@ -985,6 +985,17 @@ class Settings(BaseSettings):
             "pact_broker_host_suffix",
         ),
     )
+    # PFX-1.11 (#6924): a deleted pacticipant or version is hidden at once and can be restored for
+    # this many days; the retention tick then removes it for good, with its pacts, verification
+    # results and deployment records. At least 1.
+    pact_deletion_grace_days: int = Field(
+        default=30,
+        ge=1,
+        validation_alias=AliasChoices(
+            "APIOME_PACT_DELETION_GRACE_DAYS",
+            "pact_deletion_grace_days",
+        ),
+    )
 
     # COL-4.1 (#4525): presence heartbeats and lock actions per user, per tenant. A tab heartbeats
     # every ~20s, so the default leaves room for many tabs plus lock traffic.

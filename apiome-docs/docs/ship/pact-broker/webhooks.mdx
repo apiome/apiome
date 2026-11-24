@@ -176,7 +176,7 @@ password, and in the body. A parameter cannot be used in the host of the URL.
 | `${pactbroker.azureDevOpsVerificationStatus}` | `succeeded`, `failed` or `pending`. |
 | `${pactbroker.eventName}` | The event that fired. |
 | `${pactbroker.buildUrl}` | The CI build of the version that caused the event. |
-| `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}` | Always empty: pacticipant labels are not available yet. |
+| `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}` | The consumer's and the provider's [labels](./retention.mdx#label-pacticipants), comma-separated (`team-billing, tier-1`); empty when it has none. |
 | `${pactbroker.currentlyDeployedProviderVersionNumber}` | Always empty in this release. |
 
 A value that is not known is an empty string. In a JSON body, a value is placed inside its
@@ -272,7 +272,7 @@ To try a webhook before you save it, post its body to `POST …/webhooks/execute
 | `404` | `pact-triggered-webhook-not-found` | No firing with that `uuid`. It goes when its webhook is deleted. |
 | `404` | `pacticipant-not-found` | The consumer or provider in the URL does not exist. |
 | `409` | `pact-webhook-limit-reached` | The workspace already has 200 webhooks. Delete one first. |
-| `422` | `pact-webhook-invalid` | The webhook is malformed. `pointer` names the field: `/request/url` for a private address or a parameter in the host, `/request/method`, `/events/0/name`, `/provider/name` for an unknown pacticipant, `/consumer/label` (labels are not available yet). |
+| `422` | `pact-webhook-invalid` | The webhook is malformed. `pointer` names the field: `/request/url` for a private address or a parameter in the host, `/request/method`, `/events/0/name`, `/provider/name` for an unknown pacticipant, `/consumer/label` (choosing pacticipants by label is not supported). |
 | `429` | `pact-webhook-test-rate-limited` | Too many test runs. Wait for the number of seconds in `Retry-After`. |
 | `503` | `pact-webhook-secrets-unavailable` | The webhook has a secret and the server has no vault key. See [For operators](#for-operators). |
 | `401` / `403` | — | The token is not a valid API key for this workspace, or its member lacks the **Pacts** permission below. |
@@ -309,7 +309,8 @@ To try a webhook before you save it, post its body to `POST …/webhooks/execute
 
 ## What differs from the Pact Broker
 
-- Choosing pacticipants by **label** is refused until labels are available.
+- Choosing a webhook's pacticipants by **label** is refused: name the pacticipant, or leave it out
+  for all.
 - `consumer_version_branch_created`, `target`, `signingSecret` and `signed` are Apiome's.
 - `contract_content_changed` also compares by branch, not only by tag.
 - A failed delivery is retried 3 times over about 6 minutes (the Pact Broker: 6 times over about

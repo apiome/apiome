@@ -18,12 +18,14 @@ Runs inside one always-rolled-back transaction (the ``stack`` fixture of
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterator
 from unittest.mock import patch
 
 import psycopg2
 import pytest
 
+from app.pact_cleanup_store import purge_deleted
 from tests import test_pact_publication_db as publication_db
 
 tx = publication_db.tx
@@ -162,6 +164,9 @@ def test_a_result_never_changes_and_goes_with_its_pact(published: Dict[str, Any]
     assert "immutable" in str(caught.value)
     cursor.execute("ROLLBACK TO SAVEPOINT immutable")
     assert published["client"].delete("/v1/tenants/t/pacticipants/billing-service").status_code in (200, 204)
+    # Soft (PFX-1.11): the result stays stored until the purge removes the pacticipant for good.
+    assert _count(published) == 1
+    purge_deleted(published["db"], now=datetime.now(timezone.utc) + timedelta(days=365))
     assert _count(published) == 0
 
 

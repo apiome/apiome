@@ -10,10 +10,10 @@ request no real route serves is answered:
     Link: <https://docs.apiome.dev/ship/pact-broker/compatibility>; rel="help"
 
     {"detail": {"code": "pact-broker-not-implemented",
-                "message": "DELETE is not supported on “A pacticipant” …",
+                "message": "PUT is not supported on “A pacticipant” …",
                 "pointer": "/v1/tenants/acme/pact-broker/pacticipants/web",
                 "endpoint": "/pacticipants/{pacticipant}", "status": "partial",
-                "supported_methods": ["GET"], "tracking": "https://github.com/apiome/apiome/issues/6924",
+                "supported_methods": ["GET", "DELETE"],
                 "alternative": "/v1/tenants/{tenant}/pacticipants/{pacticipant}",
                 "documentation": "https://docs.apiome.dev/ship/pact-broker/compatibility",
                 "pact_broker_version": "2.124.0"}}

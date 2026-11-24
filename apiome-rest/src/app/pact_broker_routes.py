@@ -113,7 +113,11 @@ from .pact_webhook import (
 from .pact_webhook_events import fire_publish_events
 from .pact_wip import select_wip_pacts
 from .pacticipant import (
+    CODE_LABEL_NOT_FOUND,
+    CODE_NOT_DELETED,
     CODE_NOT_FOUND,
+    CODE_RESTORE_CONFLICT,
+    CODE_VERSION_IN_USE,
     CODE_VERSION_NOT_FOUND,
     PacticipantRecord,
     PacticipantValidationError,
@@ -156,6 +160,11 @@ _STATUS_BY_CODE = {
     CODE_TRIGGERED_WEBHOOK_NOT_FOUND: 404,
     CODE_WEBHOOK_SECRETS_UNAVAILABLE: 503,
     CODE_WEBHOOK_LIMIT: 409,
+    # PFX-1.11 (#6924): labels and deletes.
+    CODE_LABEL_NOT_FOUND: 404,
+    CODE_NOT_DELETED: 409,
+    CODE_RESTORE_CONFLICT: 409,
+    CODE_VERSION_IN_USE: 409,
 }
 
 _publish_limiter = FixedWindowRateLimiter()
@@ -353,9 +362,10 @@ def _pacticipant_document(base: str, pacticipant: PacticipantRecord) -> Dict[str
         pacticipant: The pacticipant.
 
     Returns:
-        Its name, repository and main branch, with a ``self`` link and the two templates a Pact
-        verifier records the provider's branch and tags with before it publishes a result
-        (``pb:branch-version``, ``pb:version-tag``).
+        Its name, repository and main branch, its labels embedded (PFX-1.11), with a ``self`` link,
+        the ``pb:label`` template, and the two templates a Pact verifier records the provider's
+        branch and tags with before it publishes a result (``pb:branch-version``,
+        ``pb:version-tag``).
     """
     url = _pacticipant_url(base, pacticipant.slug)
     return {
@@ -365,8 +375,24 @@ def _pacticipant_document(base: str, pacticipant: PacticipantRecord) -> Dict[str
         "mainBranch": pacticipant.main_branch,
         "createdAt": pacticipant.created_at,
         "updatedAt": pacticipant.updated_at,
+        "_embedded": {
+            "labels": [
+                {
+                    "name": label,
+                    "_links": {
+                        "self": {"title": "Label", "name": label, "href": f"{url}/labels/{quote(label, safe='')}"}
+                    },
+                }
+                for label in pacticipant.labels
+            ]
+        },
         "_links": {
             "self": {"title": "Pacticipant", "name": pacticipant.name, "href": url},
+            "pb:label": {
+                "title": f"Get, create or delete a label for {pacticipant.name}",
+                "href": url + "/labels/{label}",
+                "templated": True,
+            },
             "pb:branch-version": {
                 "title": "Get or add/create a version for a branch of this pacticipant",
                 "href": url + "/branches/{branch}/versions/{version}",
