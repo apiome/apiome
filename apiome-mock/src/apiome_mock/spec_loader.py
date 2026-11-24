@@ -1,13 +1,22 @@
-"""Load and compile OpenAPI specs from Postgres (apiome-mcp read path)."""
+"""Load and compile OpenAPI specs from Postgres (apiome-mcp read path).
+
+A load (#7208, DBP-1.25) is a constant number of statements on one pooled connection: the resolve
+query plus apiome-mcp's set-based loader (:func:`~apiome_mcp.spec_openapi_loaders.load_openapi_inputs`,
+at most 11 statements whatever the size of the spec; component pins included, so the generator never
+opens a connection of its own). The connection is returned to the pool before the document is
+generated and the routing table extracted, and that CPU work runs in a worker thread, off the
+event loop.
+"""
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal, Mapping
+from typing import Any, Literal, Mapping, NamedTuple
 from uuid import UUID
 
-from apiome_mcp.spec_openapi_loaders import fetch_openapi_generation_inputs_async
+from apiome_mcp.spec_openapi_loaders import OpenApiInputs, load_openapi_inputs
 from app.mock_routing import MockOperation, extract_operations
 from app.openapi_generator import generate_openapi_spec
 from psycopg.rows import dict_row
@@ -54,10 +63,45 @@ _RESOLVE_MOCK_ACCESS = """
     LIMIT 1
 """
 
-_RESOLVE_PUBLISHED_SPEC = """
+#: What a compiled spec is stamped with, and what revalidation compares (#7208, DBP-1.25):
+#: ``versions.content_stamp`` (bumped by any write to the revision's rows or content columns,
+#: ``mock_settings`` included) and the ``GREATEST`` of the version's, project's and newest tag's
+#: ``updated_at`` — the ``updated_at`` of ``mcp_v_public_specs`` for a published spec, the same
+#: expression for a draft. Needs the ``v`` and ``p`` aliases.
+FRESHNESS_COLUMNS = """
+      v.content_stamp,
+      GREATEST(
+        v.updated_at,
+        p.updated_at,
+        COALESCE(
+          (SELECT max(vt.updated_at) FROM apiome.version_tags vt
+            WHERE vt.version_id = v.id AND vt.project_id = v.project_id),
+          '-infinity'::timestamptz
+        )
+      ) AS stamp_updated_at
+"""
+
+#: One statement: the freshness stamp of a mock-enabled version, read when a cached entry expires.
+SPEC_STAMP_QUERY = f"""
+    SELECT
+      v.id,
+      {FRESHNESS_COLUMNS}
+    FROM apiome.versions v
+    INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
+    INNER JOIN apiome.tenants t ON t.id = p.tenant_id AND t.deleted_at IS NULL AND t.enabled IS TRUE
+    WHERE t.slug = %(tenant)s
+      AND p.slug = %(project)s
+      AND v.version_id = %(version)s
+      AND v.deleted_at IS NULL
+      AND v.mock_enabled IS TRUE
+    LIMIT 1
+"""
+
+_RESOLVE_PUBLISHED_SPEC = f"""
     SELECT
       s.id,
       s.updated_at,
+      {FRESHNESS_COLUMNS},
       t.slug AS tenant_slug,
       p.slug AS project_slug,
       v.version_id AS version_label,
@@ -75,10 +119,11 @@ _RESOLVE_PUBLISHED_SPEC = """
     LIMIT 1
 """
 
-_RESOLVE_DRAFT_SPEC = """
+_RESOLVE_DRAFT_SPEC = f"""
     SELECT
       v.id,
       v.updated_at,
+      {FRESHNESS_COLUMNS},
       t.slug AS tenant_slug,
       p.slug AS project_slug,
       v.version_id AS version_label,
@@ -105,6 +150,58 @@ def _project_description(row: dict[str, Any]) -> str | None:
         return None
     text = str(description).strip()
     return text if text else None
+
+
+class SpecStamp(NamedTuple):
+    """A version's freshness stamp: equal stamps mean the compiled spec is still current."""
+
+    revision_id: UUID
+    content_stamp: int
+    updated_at: datetime
+
+
+def spec_stamp_from_row(row: Mapping[str, Any], *, id_column: str = "id") -> SpecStamp | None:
+    """Build the stamp from a row carrying the revision id and the ``FRESHNESS_COLUMNS``.
+
+    Args:
+        row: Resolve-query or stamp-query row.
+        id_column: The column holding ``versions.id``.
+
+    Returns:
+        The stamp, or ``None`` when the row lacks the columns (an entry with no stamp is reloaded
+        at expiry rather than revalidated).
+    """
+    revision_id = row.get(id_column)
+    content_stamp = row.get("content_stamp")
+    updated_at = row.get("stamp_updated_at")
+    if revision_id is None or content_stamp is None or not isinstance(updated_at, datetime):
+        return None
+    return SpecStamp(revision_id=revision_id, content_stamp=int(content_stamp), updated_at=updated_at)
+
+
+async def fetch_spec_stamp(
+    pool: AsyncConnectionPool,
+    *,
+    tenant: str,
+    project: str,
+    version: str,
+) -> SpecStamp | None:
+    """Read a version's current freshness stamp (one statement) for cache revalidation.
+
+    Args:
+        pool: Database pool.
+        tenant: Tenant slug.
+        project: Project slug.
+        version: Version label.
+
+    Returns:
+        The stamp, or ``None`` when no live, mock-enabled version has these coordinates.
+    """
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(SPEC_STAMP_QUERY, {"tenant": tenant, "project": project, "version": version})
+            row = await cur.fetchone()
+    return spec_stamp_from_row(row) if row is not None else None
 
 
 @dataclass(frozen=True)
@@ -140,6 +237,9 @@ class CompiledSpec:
     Hosted-only: ``proxyCapture`` is not a bundled settings key, so a spec compiled from a portable
     bundle always leaves this ``None`` and the portable runtime can never proxy or record.
     """
+    freshness: SpecStamp | None = None
+    """The stamp the spec was compiled from (#7208, DBP-1.25); the cache revalidates against it.
+    ``None`` (portable bundles, tests) means an expired entry is reloaded."""
 
     @property
     def cache_key(self) -> tuple[str, str, str]:
@@ -270,28 +370,53 @@ async def get_mock_access_status(
     return access_status_from_row(row, tenant=tenant, api_key=api_key)
 
 
-async def _compile_from_row(
+async def _read_spec_inputs(
     conn: Any,
-    row: dict[str, Any],
+    query: str,
+    *,
+    tenant: str,
+    project: str,
+    version: str,
+) -> tuple[dict[str, Any], OpenApiInputs] | None:
+    """Run the resolve query and the batched input loader on one connection.
+
+    Returns:
+        ``(row, inputs)``, or ``None`` when the resolve query matched nothing.
+    """
+    async with conn.cursor(row_factory=dict_row) as cur:
+        await cur.execute(query, {"tenant": tenant, "project": project, "version": version})
+        row = await cur.fetchone()
+    if row is None:
+        return None
+    inputs = await load_openapi_inputs(conn, row["id"], part="document")
+    return dict(row), inputs
+
+
+def compile_spec(
+    row: Mapping[str, Any],
+    inputs: OpenApiInputs,
     *,
     mock_settings: Any = None,
 ) -> CompiledSpec:
-    revision_id = row["id"]
-    inputs = await fetch_openapi_generation_inputs_async(conn, revision_id)
-    classes, all_properties, paths_data, security_rows, server_rows = inputs
+    """Generate the OpenAPI document and the routing table (CPU only: no I/O, no connection).
 
+    Args:
+        row: The resolve-query row (slugs, metadata, ``updated_at``, freshness columns).
+        inputs: The rows the document is generated from, component pins included.
+        mock_settings: The version's ``mock_settings`` (scenarios, chaos, fixtures, ...).
+
+    Returns:
+        The compiled spec.
+    """
+    revision_id = row["id"]
     spec = generate_openapi_spec(
         str(row["tenant_slug"]),
         str(row["project_slug"]),
         str(row["version_label"]),
-        classes,
-        all_properties,
-        project_description=_project_description(row),
-        version_db_id=str(row["id"]),
+        project_description=_project_description(dict(row)),
+        version_db_id=str(revision_id),
         revision_metadata=row.get("metadata"),
-        paths_data=paths_data,
-        security_scheme_rows=security_rows,
-        server_rows=server_rows,
+        **inputs.generator_kwargs(),
     )
     operations = tuple(extract_operations(spec))
     updated_at = row["updated_at"]
@@ -316,6 +441,7 @@ async def _compile_from_row(
         callbacks=parse_callbacks(mock_settings),
         correlation=parse_response_correlation(mock_settings),
         capture_policy=parse_capture_policy(mock_settings),
+        freshness=spec_stamp_from_row(row),
     )
 
 
@@ -326,9 +452,27 @@ async def load_compiled_spec(
     project: str,
     version: str,
     api_key: ValidatedApiKey | None = None,
+    access_row: Mapping[str, Any] | None = None,
 ) -> CompiledSpec | None:
-    """Resolve a spec by slug coordinates and compile its routing table."""
-    access_row = await _fetch_access_row(pool, tenant=tenant, project=project, version=version)
+    """Resolve a spec by slug coordinates and compile its routing table.
+
+    One pooled connection is held for the reads only (resolve + at most 11 loader statements); it
+    is back in the pool before :func:`compile_spec` runs, in a worker thread.
+
+    Args:
+        pool: Database pool.
+        tenant: Tenant slug.
+        project: Project slug.
+        version: Version label.
+        api_key: The caller's validated key (required for a private draft).
+        access_row: The access row the caller already fetched; read from the access cache when
+            omitted.
+
+    Returns:
+        The compiled spec, or ``None`` when the version is not mockable for this caller.
+    """
+    if access_row is None:
+        access_row = await _fetch_access_row(pool, tenant=tenant, project=project, version=version)
     if access_row is None or not access_row.get("mock_enabled"):
         return None
 
@@ -341,10 +485,9 @@ async def load_compiled_spec(
         query = _RESOLVE_DRAFT_SPEC
 
     async with pool.connection() as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(query, {"tenant": tenant, "project": project, "version": version})
-            row = await cur.fetchone()
-            if row is None:
-                return None
-            mock_settings = row.get("mock_settings", access_row.get("mock_settings"))
-            return await _compile_from_row(conn, row, mock_settings=mock_settings)
+        read = await _read_spec_inputs(conn, query, tenant=tenant, project=project, version=version)
+    if read is None:
+        return None
+    row, inputs = read
+    mock_settings = row.get("mock_settings", access_row.get("mock_settings"))
+    return await asyncio.to_thread(compile_spec, row, inputs, mock_settings=mock_settings)

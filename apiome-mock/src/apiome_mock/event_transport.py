@@ -15,6 +15,7 @@ from starlette.requests import Request
 from apiome_mock.api_key import ValidatedApiKey
 from apiome_mock.canonical_compiler import CompiledCanonicalSpec, EventChannelRoute
 from apiome_mock.canonical_loader import get_canonical_access_status, load_canonical_spec
+from apiome_mock.canonical_resolve import resolve_compiled_canonical
 from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from apiome_mock.guard import enforce_mock_limits, record_mock_transport_event, resolve_limits_for_tenant
 from apiome_mock.message_resolver import encode_message_text, message_schema, resolve_message_body
@@ -49,24 +50,19 @@ async def _resolve_canonical_spec(
     if access == "disabled":
         return not_found("Mock is disabled for this version.", instance=f"/{tenant}/{project}/{version}")
 
-    cached = cache.get(tenant, project, version)
-    if cached is not None:
-        return cached
-
-    loaded = await load_canonical_spec(
+    # One load per version however many requests miss at once; the compile runs in a worker
+    # thread after the connection is released (#7208, DBP-1.25).
+    compiled = await resolve_compiled_canonical(
         pool,
+        cache,
         tenant=tenant,
         project=project,
         version=version,
         api_key=api_key,
+        load=load_canonical_spec,
     )
-    if loaded is None:
+    if compiled is None:
         return not_found("Canonical mock spec not found.", instance=f"/{tenant}/{project}/{version}")
-
-    from apiome_mock.canonical_compiler import compile_canonical_spec
-
-    compiled = compile_canonical_spec(loaded)
-    cache.put(compiled)
     return compiled
 
 

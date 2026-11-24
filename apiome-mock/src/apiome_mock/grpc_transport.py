@@ -15,8 +15,9 @@ from grpc_reflection.v1alpha import reflection
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import ValidatedApiKey, validate_api_key_for_tenant
-from apiome_mock.canonical_compiler import CompiledCanonicalSpec, GrpcMethodRoute, compile_canonical_spec
+from apiome_mock.canonical_compiler import CompiledCanonicalSpec, GrpcMethodRoute
 from apiome_mock.canonical_loader import get_canonical_access_status, load_canonical_spec
+from apiome_mock.canonical_resolve import resolve_compiled_canonical
 from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from apiome_mock.guard import enforce_mock_limits_for_context, record_mock_transport_event, resolve_limits_for_tenant
 from apiome_mock.message_resolver import resolve_message_body
@@ -228,21 +229,20 @@ class GrpcMockRuntime:
             await context.abort(grpc.StatusCode.NOT_FOUND, "mock unavailable")
             return None
 
-        compiled = self._cache.get(tenant, project, version)
+        # Single-flight load, compiled off the event loop (#7208, DBP-1.25).
+        compiled = await resolve_compiled_canonical(
+            self._pool,
+            self._cache,
+            tenant=tenant,
+            project=project,
+            version=version,
+            api_key=api_key,
+            load=load_canonical_spec,
+            on_loaded=self._register_reflection,
+        )
         if compiled is None:
-            loaded = await load_canonical_spec(
-                self._pool,
-                tenant=tenant,
-                project=project,
-                version=version,
-                api_key=api_key,
-            )
-            if loaded is None:
-                await context.abort(grpc.StatusCode.NOT_FOUND, "canonical spec not found")
-                return None
-            compiled = compile_canonical_spec(loaded)
-            self._cache.put(compiled)
-            self._register_reflection(compiled)
+            await context.abort(grpc.StatusCode.NOT_FOUND, "canonical spec not found")
+            return None
 
         route = next((item for item in compiled.grpc_methods if item.method_name == method_name), None)
         if route is None:

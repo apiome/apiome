@@ -1,0 +1,33 @@
+---
+slug: mock-spec-loading-single-flight
+title: "Mock spec loading: one load per change"
+description: "A cold mock loads its spec once, and an unchanged spec is never reloaded."
+authors: [apiome]
+---
+
+**Performance.** A hosted mock now loads a spec once per change, rather than once per request
+every time the cache expires. It no longer holds a database connection while compiling the spec.
+
+{/* truncate */}
+
+- **Batched loader.** A REST spec loads in 12 statements whatever its size. The loader is the one
+  the MCP catalog tools use, and it also reads component pins.
+- **One load for a burst.** When many requests arrive for a version that is not cached, one of them
+  loads it and the others wait for that load. This holds for REST, GraphQL, gRPC, SSE, WebSocket
+  and Kafka mocks.
+- **Checked, not dropped.** When a cached spec reaches `APIOME_MOCK_SPEC_CACHE_TTL_SECONDS`
+  (300 seconds), one statement compares its `updated_at` and `content_stamp`. An unchanged spec is
+  kept. A changed spec is reloaded on the next request after a publish, or after the cache time if
+  that notification was lost.
+- **Compiling off the request loop.** The connection goes back to the pool before the spec is
+  compiled, and compiling runs in a worker thread.
+- **Bigger cache.** `APIOME_MOCK_SPEC_CACHE_MAX_ENTRIES` now defaults to 256 compiled specs per
+  cache, up from 128.
+
+On a scratch PostgreSQL 18 database, with a 500-operation spec and a freshly started process,
+100 requests at once for that spec were all answered in 130–145 ms, down from 570–610 ms. A single
+first request took a median of 33 ms, down from 42 ms.
+
+**What changes for you.** Nothing to configure. A process may use more memory, because it keeps up
+to 256 specs per cache: about 0.5 MiB for each 500-operation spec. See
+[The mock runtime's database work per request](/admin/operating-apiome#the-mock-runtimes-database-work-per-request).
