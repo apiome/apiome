@@ -1,0 +1,46 @@
+---
+slug: pact-broker-core-overview
+title: "Pact Broker core: model, API and can-i-deploy"
+description: "Apiome is now a Pact Broker: publish, verify, record deployments and ask can-i-deploy."
+authors: [apiome]
+---
+
+The Pact Broker core is complete. Your Pact tools — the `pact-broker` CLI, the `pact` CLI, pact-js
+and pact-jvm — now work against Apiome unchanged, from the consumer's first published pact to the
+`can-i-deploy` check that gates a release. A new [Pact Broker overview](/ship/pact-broker/overview)
+page walks through it end to end.
+
+{/* truncate */}
+
+**Point your tools at your workspace.** Give them the broker base URL and an API key as the token:
+
+```bash
+export PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker
+export PACT_BROKER_TOKEN=$APIOME_API_KEY
+pact-broker can-i-deploy --pacticipant "Billing Service" --version "$GIT_COMMIT" --to-environment production
+```
+
+**What the core covers:**
+
+- **The registry.** Pacticipants, versions, branches and tags, the names Pact tooling uses for
+  your applications — [Pact Broker concepts](/ship/pact-broker/concepts).
+- **Publishing.** Pacts are registered and stored once per distinct content, so an unchanged pact
+  is verified once — [Publish and fetch pacts](/ship/pact-broker/publish-pacts).
+- **Verifying.** Consumer-version selectors, pending and work-in-progress pacts, and verification
+  results — [Selectors](/ship/pact-broker/selectors),
+  [Pending and WIP pacts](/ship/pact-broker/pending-and-wip),
+  [Verification results](/ship/pact-broker/verification-results).
+- **Deploying.** Environments, deployments and releases, the matrix and can-i-deploy —
+  [Environments and deployments](/ship/pact-broker/environments),
+  [Can I deploy?](/ship/pact-broker/can-i-deploy).
+- **Around it.** Contract webhooks that start CI, public pact badges, labels, deletes you can undo
+  and dry-run-first retention — [Webhooks](/ship/pact-broker/webhooks),
+  [Badges](/ship/pact-broker/badges), [Labels, deletes and retention](/ship/pact-broker/retention).
+- **Tested against the real tools.** The official CLI and libraries run against Apiome in CI, and
+  [Pact Broker compatibility](/ship/pact-broker/compatibility) lists every endpoint.
+
+**Not yet available:** a screen for pacts, the matrix and can-i-deploy (the Contracts workspace),
+and bi-directional contract testing against an OpenAPI provider contract.
+
+Every endpoint is in the [Pact Broker API](/reference/rest/pact-broker) and the
+[Pacticipants API](/reference/rest/pacticipants) reference.
