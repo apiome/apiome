@@ -141,7 +141,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.3 · [#6916](https://github.com/apiome/apiome/issues/6916) | Consumer-version selectors and latest queries | latest, latest-by-branch/tag, selectors, HAL links | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest |
 | PFX-1.4 · [#6917](https://github.com/apiome/apiome/issues/6917) | Verification-result publication | Store verifier results per pact version × provider version | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-db |
 | PFX-1.5 · [#6918](https://github.com/apiome/apiome/issues/6918) | Environments and deployment recording | Environments, record-deployment/release/support-ended | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-db |
 | PFX-1.6 · [#6919](https://github.com/apiome/apiome/issues/6919) | Matrix and can-i-deploy | Verdict with reasons, `to`/`to-environment`, retry-while-unknown | `contracts`,`pact`,`rest`,`mvp` | N | Y | L | apiome-rest |
@@ -169,7 +168,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 - **Technical Stack:** FastAPI, Postgres JSONB + hash column.
 - **Documentation:** `docs/ship/pact-broker/publish-pacts.mdx`; REST reference regen; release note.
 
-**PFX-1.3 · #6916 Consumer-version selectors and latest queries**
+**✅ PFX-1.3 · #6916 Consumer-version selectors and latest queries — Complete**
 - **Problem:** Verifiers fetch "the pacts I must verify" via selectors, not by name.
 - **Solution/Scope:** `POST /pacts/provider/{p}/for-verification` with `consumerVersionSelectors` (`mainBranch`, `branch`, `matchingBranch`, `deployedOrReleased`, `deployed`, `released`, `environment`, `latest`, `tag`, `fallbackBranch`), `includePendingStatus`, `includeWipPacts`, `providerVersionBranch`. Returns pact URLs with notices (why this pact was selected), as the broker does.
 - **Acceptance Criteria:** Each selector kind has a fixture test; response shape matches the Pact Broker golden; ambiguous selectors rejected with 400.

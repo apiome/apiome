@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.832.0] - 2026-11-24
+
+### Added
+- **Consumer-version selectors and latest queries, Pact Broker–compatible (PFX-1.3, #6916).**
+  OpenAPI 1.656.0. Under `/v1/tenants/{tenant_slug}/pact-broker`, all `pacts:view`:
+  - `POST …/pacts/provider/{provider}/for-verification` — the pacts a provider build must verify,
+    chosen by `consumerVersionSelectors`: `mainBranch`, `branch` (with `fallbackBranch` or
+    `fallbackToMainBranch`), `matchingBranch` (uses `providerVersionBranch`), `tag` (every tagged
+    version, or with `latest: true` the latest, with `fallbackTag`), `latest`, and `consumer` to
+    narrow any of them. No selectors means the Pact Broker's defaults. Fallbacks apply per
+    consumer. Pacts chosen by several selectors are merged per consumer and content, named after
+    the latest consumer version. The answer is the broker's: `_embedded.pacts[]` with
+    `shortDescription`, `verificationProperties` (`pending` with `includePendingStatus`, and the
+    `notices` a verifier prints, in the broker's wording) and a `self` link to
+    `…/pact-version/{sha}/metadata/{m}`, where `m` is the broker's encoding of the selection.
+  - Ambiguous or malformed selectors → `400 pact-selector-invalid` with the broker's message and a
+    JSON Pointer to the selector or field (for example `tag` with `branch`, `mainBranch` with
+    `latest: false`, `matchingBranch` without `providerVersionBranch`, a branch field with an
+    environment field).
+  - Not yet: `deployed`, `released`, `deployedOrReleased` and `environment` are accepted and
+    select nothing until environments exist (PFX-1.5). No verification results are recorded yet
+    (PFX-1.4), so every pact is pending. `includeWipPactsSince` is checked; WIP pacts are not
+    added (PFX-1.7).
+  - `GET …/consumer/{consumer}/latest/{tag}` and `GET …/consumer/{consumer}/branch/{branch}/latest`
+    — the latest pact of a pair from a tag or a branch (`{branch}` may contain `/`).
+  - `GET …/pacts/provider/{provider}/latest` and `…/latest/{tag}` — one `pb:pacts` link per
+    consumer to its latest (tagged) pact, with the deprecated `provider` / `pacts` relations.
+  - `GET …/pact-version/{sha}/metadata/{metadata}` — the pact version, as for-verification links it.
+  - The index adds `pb:provider-pacts-for-verification` (and `beta:provider-pacts-for-verification`),
+    `pb:latest-provider-pacts` and `pb:latest-provider-pacts-with-tag`; every pact adds
+    `pb:latest-tagged-pact-version`.
+- `app.pact_selectors` (parsing, selection, notices, metadata) and
+  `pact_publication_store.list_pact_candidates`; `get_latest_pact` takes `tag` and `branch`.
+
 ## [1.831.0] - 2026-11-23
 
 ### Added

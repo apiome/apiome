@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 8 operations."
+description: "REST endpoints tagged pact-broker: 14 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.655.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.656.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 8 operations
+Tag: `pact-broker` · 14 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -19,7 +19,7 @@ Tag: `pact-broker` · 8 operations
 
 The entry point of the Pact Broker–compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.
 
-`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:publish-pact`, `pb:latest-pact-version` and `pb:pact-version` are URI templates.
+`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates.
 
 A workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.
 
@@ -144,6 +144,36 @@ Operation id: `read_broker_pacticipant_version_v1_tenants__tenant_slug__pact_bro
 | 200 | Successful response for read a pacticipant version (pact broker shape). | `application/hal+json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/branch/{branch}/latest` {#read-latest-branch-pact-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-branch-branch-latest-get}
+
+**Read the latest pact for a consumer branch**
+
+The pact of the latest consumer version recorded on branch `{branch}` that published one for the provider. A branch name with a `/` (`feat/new-invoice`) is sent as it is or with the slash encoded.
+
+The body is the Pact document as published, plus `createdAt` and `_links`: `self`, `pb:pact-version` (the content address — the same for every consumer version that published this pact) and `pb:latest-pact-version`.
+
+`{provider}` and `{consumer}` are a pacticipant's handle, id or name. Requires `pacts:view`.
+
+Operation id: `read_latest_branch_pact_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__branch__branch__latest_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `branch` | path | string | yes | Git branch name. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the latest pact for a consumer branch. | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/latest` {#read-latest-pact-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-latest-get}
 
 **Read the latest pact**
@@ -171,6 +201,36 @@ Operation id: `read_latest_pact_v1_tenants__tenant_slug__pact_broker_pacts_provi
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for read the latest pact. | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/latest/{tag}` {#read-latest-tagged-pact-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-latest-tag-get}
+
+**Read the latest pact for a consumer tag**
+
+The pact of the latest consumer version tagged `{tag}` that published one for the provider. Latest means recorded last.
+
+The body is the Pact document as published, plus `createdAt` and `_links`: `self`, `pb:pact-version` (the content address — the same for every consumer version that published this pact) and `pb:latest-pact-version`.
+
+`{provider}` and `{consumer}` are a pacticipant's handle, id or name. Requires `pacts:view`.
+
+Operation id: `read_latest_tagged_pact_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__latest__tag__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `tag` | path | string | yes | Path parameter identifying the tag segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the latest pact for a consumer tag. | `application/hal+json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}` {#read-pact-version-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-get}
@@ -201,6 +261,37 @@ Operation id: `read_pact_version_v1_tenants__tenant_slug__pact_broker_pacts_prov
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for read a pact by its content version. | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}` {#read-pact-version-with-metadata-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-metadata-metadata-get}
+
+**Read a pact by its content version (for-verification link)**
+
+The same pact as `…/pact-version/{sha}`. The last segment is the metadata a for-verification response encodes in its links (which selectors chose the pact, for which consumer version); it does not change the pact returned.
+
+The body is the Pact document as published, plus `createdAt` and `_links`: `self`, `pb:pact-version` (the content address — the same for every consumer version that published this pact) and `pb:latest-pact-version`.
+
+`{provider}` and `{consumer}` are a pacticipant's handle, id or name. Requires `pacts:view`.
+
+Operation id: `read_pact_version_with_metadata_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__metadata__metadata__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | Path parameter identifying the sha segment. |
+| `metadata` | path | string | yes | The selection metadata of a for-verification link (URL-safe base64); not needed to find the pact. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a pact by its content version (for-verification link). | `application/hal+json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{consumer_version}` {#read-pact-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-version-consumer-version-get}
@@ -272,6 +363,110 @@ The Pact document (specification 1.x to 4.x), exactly as the consumer's tests wr
 | 413 | `pact-too-large`: the document or the request is over the size limit. | — |
 | 422 | `pact-invalid`: the document is not a pact. `detail.pointer` is the JSON Pointer of the first problem in the document (for example `/interactions/2/request/method`) and `detail.message` says what is wrong there. | — |
 | 429 | `pact-publish-rate-limited`: over the workspace's publish budget; see `Retry-After`. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/for-verification` {#pacts-for-verification-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-for-verification-post}
+
+**The pacts a provider must verify**
+
+What a Pact verifier calls before it verifies: the pacts a provider build must verify, chosen by **consumer-version selectors**. One entry per distinct pact; a pact chosen by several selectors appears once, with every reason in its notices.
+
+Selectors (`consumerVersionSelectors`, each optionally narrowed by `consumer`):
+
+- `{"mainBranch": true}` — the latest version from each consumer's main branch;
+- `{"branch": "x"}` — the latest version from branch `x`, with `fallbackBranch` or `fallbackToMainBranch` for a consumer that has none there;
+- `{"matchingBranch": true}` — `branch` set to the request's `providerVersionBranch`;
+- `{"tag": "x"}` — every version tagged `x`; with `"latest": true` the latest one, and `fallbackTag` for a consumer that has none;
+- `{"latest": true}` — the latest version of each consumer;
+- `deployed`, `released`, `deployedOrReleased`, `environment` — versions in an environment. Accepted; they select nothing until environments are recorded.
+
+No selectors means the broker's defaults: each consumer's main branch (or its latest version), and whatever is deployed or released.
+
+`includePendingStatus: true` adds `pending` and the pending notices. No verification result has been recorded yet, so every pact is pending: a failure will not fail the provider build. `includeWipPactsSince` is accepted; work-in-progress pacts are not added yet.
+
+An ambiguous selector (for example `tag` with `branch`, or `mainBranch` with `latest: false`) is `400 pact-selector-invalid` with the pointer of the selector. Requires `pacts:view`.
+
+Operation id: `pacts_for_verification_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__for_verification_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (optional)
+
+Request body for the pacts a provider must verify.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumerVersionSelectors` | array of object | no | Consumer Version Selectors. |
+| `providerVersionBranch` | string | no | Provider Version Branch. |
+| `providerVersionTags` | array of string | no | Provider Version Tags. |
+| `includePendingStatus` | boolean | no | Include Pending Status. |
+| `includeWipPactsSince` | string (date) | no | Include Wip Pacts Since. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for the pacts a provider must verify. | `application/hal+json` any |
+| 400 | `pact-selector-invalid`: a selector is ambiguous or malformed; see `detail.pointer`. | — |
+| 404 | `pacticipant-not-found`: the workspace has no such provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/latest` {#read-latest-provider-pacts-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-latest-get}
+
+**The latest pact of every consumer of a provider**
+
+One `pb:pacts` link per consumer: the pact of its latest-recorded version that published one for the provider. `{provider}` is a pacticipant's handle, id or name. Requires `pacts:view`.
+
+Operation id: `read_latest_provider_pacts_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__latest_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for the latest pact of every consumer of a provider. | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/latest/{tag}` {#read-latest-tagged-provider-pacts-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-latest-tag-get}
+
+**The latest pact of every consumer of a provider, for a tag**
+
+One `pb:pacts` link per consumer that has a version tagged `{tag}` with a pact for the provider: the pact of the latest such version. Requires `pacts:view`.
+
+Operation id: `read_latest_tagged_provider_pacts_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__latest__tag__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `tag` | path | string | yes | Path parameter identifying the tag segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for the latest pact of every consumer of a provider, for a tag. | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
 

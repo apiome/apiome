@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.655.0",
+    "version": "1.656.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -38783,7 +38783,7 @@
           "pact-broker"
         ],
         "summary": "Pact Broker index",
-        "description": "The entry point of the Pact Broker\u2013compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.\n\n`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:publish-pact`, `pb:latest-pact-version` and `pb:pact-version` are URI templates.\n\nA workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.",
+        "description": "The entry point of the Pact Broker\u2013compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.\n\n`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates.\n\nA workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.",
         "operationId": "pact_broker_index_v1_tenants__tenant_slug__pact_broker_get",
         "parameters": [
           {
@@ -39572,6 +39572,829 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for readapactbyitscontentversionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Read a pact by its content version (for-verification link)",
+        "description": "The same pact as `\u2026/pact-version/{sha}`. The last segment is the metadata a for-verification response encodes in its links (which selectors chose the pact, for which consumer version); it does not change the pact returned.\n\nThe body is the Pact document as published, plus `createdAt` and `_links`: `self`, `pb:pact-version` (the content address \u2014 the same for every consumer version that published this pact) and `pb:latest-pact-version`.\n\n`{provider}` and `{consumer}` are a pacticipant's handle, id or name. Requires `pacts:view`.",
+        "operationId": "read_pact_version_with_metadata_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__metadata__metadata__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer",
+              "description": "Consumer schema."
+            },
+            "description": "Path parameter identifying the consumer segment."
+          },
+          {
+            "name": "sha",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sha",
+              "description": "Sha schema."
+            },
+            "description": "Path parameter identifying the sha segment."
+          },
+          {
+            "name": "metadata",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The selection metadata of a for-verification link (URL-safe base64); not needed to find the pact.",
+              "title": "Metadata"
+            },
+            "description": "The selection metadata of a for-verification link (URL-safe base64); not needed to find the pact."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readapactbyitscontentversionforverificatauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readapactbyitscontentversionforverificatauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readapactbyitscontentversionforverificat Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readapactbyitscontentversionforverificat Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a pact by its content version (for-verification link).",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "description": "Response payload for readapactbyitscontentversionforverificatresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readapactbyitscontentversionforverificatresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/latest/{tag}": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Read the latest pact for a consumer tag",
+        "description": "The pact of the latest consumer version tagged `{tag}` that published one for the provider. Latest means recorded last.\n\nThe body is the Pact document as published, plus `createdAt` and `_links`: `self`, `pb:pact-version` (the content address \u2014 the same for every consumer version that published this pact) and `pb:latest-pact-version`.\n\n`{provider}` and `{consumer}` are a pacticipant's handle, id or name. Requires `pacts:view`.",
+        "operationId": "read_latest_tagged_pact_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__latest__tag__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer",
+              "description": "Consumer schema."
+            },
+            "description": "Path parameter identifying the consumer segment."
+          },
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tag",
+              "description": "Tag schema."
+            },
+            "description": "Path parameter identifying the tag segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readthelatestpactforaconsumertagauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readthelatestpactforaconsumertagauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readthelatestpactforaconsumertag Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readthelatestpactforaconsumertag Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read the latest pact for a consumer tag.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "description": "Response payload for readthelatestpactforaconsumertagresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readthelatestpactforaconsumertagresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/branch/{branch}/latest": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Read the latest pact for a consumer branch",
+        "description": "The pact of the latest consumer version recorded on branch `{branch}` that published one for the provider. A branch name with a `/` (`feat/new-invoice`) is sent as it is or with the slash encoded.\n\nThe body is the Pact document as published, plus `createdAt` and `_links`: `self`, `pb:pact-version` (the content address \u2014 the same for every consumer version that published this pact) and `pb:latest-pact-version`.\n\n`{provider}` and `{consumer}` are a pacticipant's handle, id or name. Requires `pacts:view`.",
+        "operationId": "read_latest_branch_pact_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__branch__branch__latest_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer",
+              "description": "Consumer schema."
+            },
+            "description": "Path parameter identifying the consumer segment."
+          },
+          {
+            "name": "branch",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Branch",
+              "description": "Branch schema."
+            },
+            "description": "Git branch name."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readthelatestpactforaconsumerbranchauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readthelatestpactforaconsumerbranchauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readthelatestpactforaconsumerbranch Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readthelatestpactforaconsumerbranch Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read the latest pact for a consumer branch.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "description": "Response payload for readthelatestpactforaconsumerbranchresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readthelatestpactforaconsumerbranchresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/for-verification": {
+      "post": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "The pacts a provider must verify",
+        "description": "What a Pact verifier calls before it verifies: the pacts a provider build must verify, chosen by **consumer-version selectors**. One entry per distinct pact; a pact chosen by several selectors appears once, with every reason in its notices.\n\nSelectors (`consumerVersionSelectors`, each optionally narrowed by `consumer`):\n\n- `{\"mainBranch\": true}` \u2014 the latest version from each consumer's main branch;\n- `{\"branch\": \"x\"}` \u2014 the latest version from branch `x`, with `fallbackBranch` or `fallbackToMainBranch` for a consumer that has none there;\n- `{\"matchingBranch\": true}` \u2014 `branch` set to the request's `providerVersionBranch`;\n- `{\"tag\": \"x\"}` \u2014 every version tagged `x`; with `\"latest\": true` the latest one, and `fallbackTag` for a consumer that has none;\n- `{\"latest\": true}` \u2014 the latest version of each consumer;\n- `deployed`, `released`, `deployedOrReleased`, `environment` \u2014 versions in an environment. Accepted; they select nothing until environments are recorded.\n\nNo selectors means the broker's defaults: each consumer's main branch (or its latest version), and whatever is deployed or released.\n\n`includePendingStatus: true` adds `pending` and the pending notices. No verification result has been recorded yet, so every pact is pending: a failure will not fail the provider build. `includeWipPactsSince` is accepted; work-in-progress pacts are not added yet.\n\nAn ambiguous selector (for example `tag` with `branch`, or `mainBranch` with `latest: false`) is `400 pact-selector-invalid` with the pointer of the selector. Requires `pacts:view`.",
+        "operationId": "pacts_for_verification_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__for_verification_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Thepactsaprovidermustverifyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Thepactsaprovidermustverifyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Thepactsaprovidermustverify Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Thepactsaprovidermustverify Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for the pacts a provider must verify.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "description": "Response payload for thepactsaprovidermustverifyresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-selector-invalid`: a selector is ambiguous or malformed; see `detail.pointer`."
+          },
+          "404": {
+            "description": "`pacticipant-not-found`: the workspace has no such provider."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for thepactsaprovidermustverifyresponse422."
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "consumerVersionSelectors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "mainBranch": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ],
+                          "description": "Main Branch.",
+                          "example": true
+                        },
+                        "branch": {
+                          "type": "string",
+                          "description": "Branch.",
+                          "example": "example"
+                        },
+                        "matchingBranch": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ],
+                          "description": "Matching Branch.",
+                          "example": true
+                        },
+                        "fallbackBranch": {
+                          "type": "string",
+                          "description": "Fallback Branch.",
+                          "example": "example"
+                        },
+                        "fallbackToMainBranch": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ],
+                          "description": "Fallback To Main Branch.",
+                          "example": true
+                        },
+                        "tag": {
+                          "type": "string",
+                          "description": "Tag.",
+                          "example": "example"
+                        },
+                        "fallbackTag": {
+                          "type": "string",
+                          "description": "Fallback Tag.",
+                          "example": "example"
+                        },
+                        "latest": {
+                          "type": "boolean",
+                          "description": "Latest.",
+                          "example": false
+                        },
+                        "consumer": {
+                          "type": "string",
+                          "description": "Consumer.",
+                          "example": "example"
+                        },
+                        "deployed": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ],
+                          "description": "Deployed.",
+                          "example": true
+                        },
+                        "released": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ],
+                          "description": "Released.",
+                          "example": true
+                        },
+                        "deployedOrReleased": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ],
+                          "description": "Deployed Or Released.",
+                          "example": true
+                        },
+                        "environment": {
+                          "type": "string",
+                          "description": "Environment.",
+                          "example": "example"
+                        }
+                      }
+                    },
+                    "description": "Consumer Version Selectors.",
+                    "maxItems": 1000
+                  },
+                  "providerVersionBranch": {
+                    "type": "string",
+                    "description": "Provider Version Branch.",
+                    "example": "1.0.0"
+                  },
+                  "providerVersionTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Provider Version Tags.",
+                    "maxItems": 1000
+                  },
+                  "includePendingStatus": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include Pending Status.",
+                    "example": false
+                  },
+                  "includeWipPactsSince": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Include Wip Pacts Since.",
+                    "example": "example"
+                  }
+                },
+                "description": "Request body for thepactsaprovidermustverifyrequest."
+              },
+              "example": {
+                "consumerVersionSelectors": [
+                  {
+                    "mainBranch": true
+                  },
+                  {
+                    "matchingBranch": true
+                  },
+                  {
+                    "deployedOrReleased": true
+                  }
+                ],
+                "providerVersionBranch": "main",
+                "includePendingStatus": true
+              }
+            }
+          },
+          "description": "Request body for the pacts a provider must verify."
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/latest": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "The latest pact of every consumer of a provider",
+        "description": "One `pb:pacts` link per consumer: the pact of its latest-recorded version that published one for the provider. `{provider}` is a pacticipant's handle, id or name. Requires `pacts:view`.",
+        "operationId": "read_latest_provider_pacts_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__latest_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Thelatestpactofeveryconsumerofaproviderauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Thelatestpactofeveryconsumerofaproviderauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Thelatestpactofeveryconsumerofaprovider Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Thelatestpactofeveryconsumerofaprovider Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for the latest pact of every consumer of a provider.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "description": "Response payload for thelatestpactofeveryconsumerofaproviderresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for thelatestpactofeveryconsumerofaproviderresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/latest/{tag}": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "The latest pact of every consumer of a provider, for a tag",
+        "description": "One `pb:pacts` link per consumer that has a version tagged `{tag}` with a pact for the provider: the pact of the latest such version. Requires `pacts:view`.",
+        "operationId": "read_latest_tagged_provider_pacts_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__latest__tag__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tag",
+              "description": "Tag schema."
+            },
+            "description": "Path parameter identifying the tag segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Thelatestpactofeveryconsumerofaproviderfauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Thelatestpactofeveryconsumerofaproviderfauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Thelatestpactofeveryconsumerofaproviderf Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Thelatestpactofeveryconsumerofaproviderf Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for the latest pact of every consumer of a provider, for a tag.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "description": "Response payload for thelatestpactofeveryconsumerofaproviderfresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for thelatestpactofeveryconsumerofaproviderfresponse422."
                 }
               }
             }

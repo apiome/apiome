@@ -1,0 +1,202 @@
+---
+title: Choose pacts to verify with selectors
+description: Consumer-version selectors tell a Pact verifier which pacts a provider build checks.
+sidebar_position: 3
+tags: [contracts, pact, ci, rest]
+---
+
+A provider's CI build does not name the pacts it verifies. Its Pact verifier sends **consumer-version
+selectors** — "the latest pact from each consumer's main branch", "whatever is tagged `prod`" — and
+Apiome answers with the pacts that match and the reason each was chosen. This is the Pact Broker's
+**pacts for verification** API, and the Pact verifiers call it unchanged.
+
+This page also covers the **latest** reads: the latest pact of a consumer from a tag or a branch,
+and the latest pact of every consumer of a provider.
+
+Environment selectors (`deployed`, `released`, `environment`) are accepted but select nothing until
+deployments can be recorded. Verification results are not recorded yet either, so every pact is
+**pending** (see [Pending pacts](#pending-pacts)). Work-in-progress pacts are not added yet.
+
+## Before you start
+
+- Your consumers have [published their pacts](./publish-pacts.mdx), with `--branch` (or tags) on
+  each version.
+- For `mainBranch` selectors, each consumer has a **main branch**. Set it on the pacticipant with
+  `PATCH …/pacticipants/<consumer>` and `{"main_branch": "main"}` (see
+  [Register a pacticipant](./concepts.mdx#register-a-pacticipant)). A consumer with no main branch
+  is never selected by `mainBranch`.
+- The verifier's token is an API key from a member who holds **Pacts** → **View**. Every built-in
+  role does.
+
+## Verify from CI
+
+Give the verifier the [broker base URL](./publish-pacts.mdx#before-you-start), the token, and your
+selectors. With pact-js:
+
+```js
+await new Verifier({
+  provider: 'Ledger API',
+  providerBaseUrl: 'http://localhost:8080',
+  pactBrokerUrl: 'https://api.apiome.dev/v1/tenants/acme/pact-broker',
+  pactBrokerToken: process.env.APIOME_API_KEY,
+  providerVersion: process.env.GIT_COMMIT,
+  providerVersionBranch: process.env.GIT_BRANCH,
+  consumerVersionSelectors: [{ mainBranch: true }, { matchingBranch: true }, { deployedOrReleased: true }],
+  enablePending: true,
+}).verifyProvider();
+```
+
+The selectors above are the ones Pact recommends: the latest pact from each consumer's main branch,
+the pact from a consumer branch named like the provider's branch, and what is in an environment.
+The other Pact verifiers (pact-jvm, pact-go, pact-python, pact-ruby, pact-net) take the same values
+under their own option names.
+
+Before it verifies, the verifier prints why each pact was chosen:
+
+```text
+The pact at https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/0e3369… is being verified because the pact content belongs to the consumer version matching the following criterion:
+    * latest version from the main branch 'main' (2f4c1a9)
+```
+
+## Selectors
+
+Each selector is a JSON object. Add `consumer` to any of them to apply it to one consumer only
+(`{"mainBranch": true, "consumer": "Billing Service"}`); the name or the handle works.
+
+| Selector | Selects |
+| --- | --- |
+| `{"mainBranch": true}` | The latest version of each consumer from **its own** main branch. |
+| `{"branch": "feat/new-invoice"}` | The latest version of each consumer from that branch. |
+| `{"branch": "feat/x", "fallbackBranch": "main"}` | As above; a consumer with no pact from `feat/x` gets its latest from `main` instead. |
+| `{"branch": "feat/x", "fallbackToMainBranch": true}` | As above, falling back to each consumer's main branch. |
+| `{"matchingBranch": true}` | The latest version from the branch named in the request's `providerVersionBranch`. |
+| `{"tag": "prod"}` | **Every** version tagged `prod`. |
+| `{"tag": "prod", "latest": true}` | The latest version of each consumer tagged `prod`. |
+| `{"tag": "rc", "latest": true, "fallbackTag": "prod"}` | As above; a consumer with nothing tagged `rc` gets its latest tagged `prod`. |
+| `{"latest": true}` | The latest version of each consumer that has a pact with the provider. |
+| `{"deployed": true}`, `{"released": true}`, `{"deployedOrReleased": true}`, `{"environment": "production"}` | Versions deployed or released to an environment. Accepted; they select nothing yet. |
+
+- **Latest** means recorded last, not the highest version number.
+- A fallback applies **per consumer**: one consumer without a pact from the branch gets its fallback
+  even when the others have one.
+- **No selectors** means the Pact Broker's defaults: for each consumer, its main branch if it has a
+  pact from there, else the latest version tagged with the main branch's name, else its latest
+  version; then whatever is deployed or released.
+- When several selectors choose **the same pact content** for one consumer, it is verified once.
+  Its notice lists every selector, and it is named after the latest consumer version.
+
+### Other fields of the request
+
+| Field | What it does |
+| --- | --- |
+| `providerVersionBranch` | The branch of the provider build that verifies. Needed by `matchingBranch`, and named in the pending notices. |
+| `providerVersionTags` | The tags of the provider build, for setups that use tags instead of branches. |
+| `includePendingStatus` | `true` adds `pending` to each pact and the pending notices. Defaults to `false`. Pact verifiers send it when pending pacts are enabled. |
+| `includeWipPactsSince` | A date (`2026-01-31`). Accepted and checked; work-in-progress pacts are not added yet. |
+
+### Selectors that are refused
+
+A selector that is missing its criteria or combines criteria that contradict each other is refused
+with `400 pact-selector-invalid`. `pointer` names the selector, and the message is the Pact
+Broker's:
+
+```json
+{
+  "detail": {
+    "code": "pact-selector-invalid",
+    "message": "/consumerVersionSelectors/1: cannot specify both a tag and a branch",
+    "pointer": "/consumerVersionSelectors/1"
+  }
+}
+```
+
+| Refused | Why |
+| --- | --- |
+| `{}` or `{"consumer": "x"}` alone | A selector must say what it selects. |
+| `tag` with `branch` | A version is chosen by one or the other. |
+| `mainBranch` with anything but `consumer` | `mainBranch` already names the branch. |
+| `mainBranch` or `branch` with `"latest": false` | A branch selector always means the latest version. |
+| `matchingBranch` with other criteria, or without `providerVersionBranch` | It takes its branch from the request. |
+| `fallbackTag` without `tag` and `"latest": true` | A fallback replaces a latest-tagged pact. |
+| `fallbackBranch` or `fallbackToMainBranch` without `branch`, or both together | A fallback replaces a branch pact. |
+| A branch or tag field with an environment field | Choose from branches or from environments, not both. |
+| Two of `deployed`, `released`, `deployedOrReleased` | Use `deployedOrReleased` for either. |
+| A field of the wrong type (`"mainBranch": false`, `"latest": "true"`) | `pointer` names the field. |
+
+## What the answer contains
+
+One entry per pact to verify, under `_embedded.pacts`:
+
+```json
+{
+  "_embedded": {
+    "pacts": [
+      {
+        "shortDescription": "latest from main branch",
+        "verificationProperties": {
+          "pending": true,
+          "notices": [
+            { "when": "before_verification", "text": "The pact at … is being verified because …" },
+            { "when": "before_verification", "text": "This pact is in pending state for this version of Ledger API …" }
+          ]
+        },
+        "_links": {
+          "self": {
+            "href": "https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/0e3369…/metadata/c1tdW2Jd…",
+            "name": "Pact between Billing Service (2f4c1a9) and Ledger API"
+          }
+        }
+      }
+    ]
+  },
+  "_links": { "self": { "href": "…/pacts/provider/ledger-api/for-verification", "title": "Pacts to be verified" } }
+}
+```
+
+| Field | What it is |
+| --- | --- |
+| `shortDescription` | Why the pact was chosen, in a few words. Pact Go names its test after it. |
+| `verificationProperties.pending` | Only with `includePendingStatus`. Whether a failure of this pact fails the build. |
+| `verificationProperties.notices` | What the verifier prints, and when (`before_verification`, `after_verification:…`). |
+| `_links.self.href` | The pact to fetch. The last segment records which selectors chose it, so the verification result can be traced back to the consumer version. |
+
+## Pending pacts
+
+A pact is **pending** until the provider has verified it successfully. A failed verification of a
+pending pact is reported, but **does not fail the provider build**, so a consumer can publish a new
+expectation without breaking the provider's pipeline.
+
+Apiome does not record verification results yet, so **every pact is pending** for now. With
+`enablePending: true` in the verifier, no pact failure fails your provider build. Leave pending off
+(`includePendingStatus` not sent) if you want every failure to fail the build.
+
+## Latest pacts without selectors
+
+| To read | Request |
+| --- | --- |
+| The latest pact of a consumer tagged `prod` | `GET …/pact-broker/pacts/provider/ledger-api/consumer/billing-service/latest/prod` |
+| The latest pact of a consumer from a branch | `GET …/pact-broker/pacts/provider/ledger-api/consumer/billing-service/branch/main/latest` |
+| The latest pact of every consumer of a provider | `GET …/pact-broker/pacts/provider/ledger-api/latest` |
+| The same, from versions tagged `prod` | `GET …/pact-broker/pacts/provider/ledger-api/latest/prod` |
+
+- The first two answer with the pact itself, like the other [pact reads](./publish-pacts.mdx#fetch-a-pact).
+  A branch name with a slash works as it is (`branch/feat/new-invoice/latest`) or encoded
+  (`feat%2Fnew-invoice`).
+- The provider-wide reads answer with one `pb:pacts` link per consumer.
+- No matching version is `404 pact-not-found`; an unknown application is `404 pacticipant-not-found`.
+
+The [index](./publish-pacts.mdx#fetch-a-pact) (`GET …/pact-broker`) links to all of these:
+`pb:provider-pacts-for-verification`, `pb:latest-provider-pacts` and
+`pb:latest-provider-pacts-with-tag`. Each pact also carries `pb:latest-tagged-pact-version`.
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Fetch pacts for verification and the latest reads | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+
+## Related
+
+- [Publish and fetch pacts](./publish-pacts.mdx) — how pacts get here, and the broker base URL.
+- [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, branches and tags.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

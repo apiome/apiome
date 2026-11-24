@@ -1,0 +1,126 @@
+{
+  "_embedded": {
+    "pacts": [
+      {
+        "shortDescription": "latest with tag prod",
+        "verificationProperties": {
+          "pending": true,
+          "notices": [
+            {
+              "when": "before_verification",
+              "text": "The pact at http://testserver/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa is being verified because the pact content belongs to the consumer version matching the following criterion:\n    * latest version tagged 'prod' (1.0.0)"
+            },
+            {
+              "when": "before_verification",
+              "text": "This pact is in pending state for this version of Ledger API because a successful verification result for a version of Ledger API from branch 'main' has not yet been published. If this verification fails, it will not cause the overall build to fail. Read more at https://docs.pact.io/go/pending"
+            },
+            {
+              "when": "after_verification:success_true_published_false",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as the successful verification results have not yet been published."
+            },
+            {
+              "when": "after_verification:success_false_published_false",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as a successful verification result has not yet been published"
+            },
+            {
+              "when": "after_verification:success_true_published_true",
+              "text": "This pact is no longer in pending state for any version of Ledger API from branch 'main', as a successful verification result has been published. If a verification for a version of Ledger API fails in the future, it will fail the build. Read more at https://docs.pact.io/go/pending"
+            },
+            {
+              "when": "after_verification:success_false_published_true",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as a successful verification result has not yet been published"
+            }
+          ]
+        },
+        "_links": {
+          "self": {
+            "href": "http://testserver/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/metadata/c1tdW3RdPXByb2Qmc1tdW2xdPXRydWUmc1tdW2N2XT0wMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEmcD10cnVl",
+            "name": "Pact between Billing Service (1.0.0) and Ledger API"
+          }
+        }
+      },
+      {
+        "shortDescription": "latest from main branch",
+        "verificationProperties": {
+          "pending": true,
+          "notices": [
+            {
+              "when": "before_verification",
+              "text": "The pact at http://testserver/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb is being verified because the pact content belongs to the consumer version matching the following criterion:\n    * latest version from the main branch 'main' (1.1.0)"
+            },
+            {
+              "when": "before_verification",
+              "text": "This pact is in pending state for this version of Ledger API because a successful verification result for a version of Ledger API from branch 'main' has not yet been published. If this verification fails, it will not cause the overall build to fail. Read more at https://docs.pact.io/go/pending"
+            },
+            {
+              "when": "after_verification:success_true_published_false",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as the successful verification results have not yet been published."
+            },
+            {
+              "when": "after_verification:success_false_published_false",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as a successful verification result has not yet been published"
+            },
+            {
+              "when": "after_verification:success_true_published_true",
+              "text": "This pact is no longer in pending state for any version of Ledger API from branch 'main', as a successful verification result has been published. If a verification for a version of Ledger API fails in the future, it will fail the build. Read more at https://docs.pact.io/go/pending"
+            },
+            {
+              "when": "after_verification:success_false_published_true",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as a successful verification result has not yet been published"
+            }
+          ]
+        },
+        "_links": {
+          "self": {
+            "href": "http://testserver/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/metadata/c1tdW2JdPW1haW4mc1tdW2xdPXRydWUmc1tdW2N2XT0wMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDImcD10cnVl",
+            "name": "Pact between Billing Service (1.1.0) and Ledger API"
+          }
+        }
+      },
+      {
+        "shortDescription": "latest from branch feat/new-invoice",
+        "verificationProperties": {
+          "pending": true,
+          "notices": [
+            {
+              "when": "before_verification",
+              "text": "The pact at http://testserver/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/checkout-web/pact-version/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc is being verified because the pact content belongs to the consumer version matching the following criterion:\n    * latest version of Checkout Web from branch 'feat/new-invoice' (2f4c1a9)"
+            },
+            {
+              "when": "before_verification",
+              "text": "This pact is in pending state for this version of Ledger API because a successful verification result for a version of Ledger API from branch 'main' has not yet been published. If this verification fails, it will not cause the overall build to fail. Read more at https://docs.pact.io/go/pending"
+            },
+            {
+              "when": "after_verification:success_true_published_false",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as the successful verification results have not yet been published."
+            },
+            {
+              "when": "after_verification:success_false_published_false",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as a successful verification result has not yet been published"
+            },
+            {
+              "when": "after_verification:success_true_published_true",
+              "text": "This pact is no longer in pending state for any version of Ledger API from branch 'main', as a successful verification result has been published. If a verification for a version of Ledger API fails in the future, it will fail the build. Read more at https://docs.pact.io/go/pending"
+            },
+            {
+              "when": "after_verification:success_false_published_true",
+              "text": "This pact is still in pending state for any version of Ledger API from branch 'main' as a successful verification result has not yet been published"
+            }
+          ]
+        },
+        "_links": {
+          "self": {
+            "href": "http://testserver/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/checkout-web/pact-version/cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc/metadata/c1tdW2JdPWZlYXQlMkZuZXctaW52b2ljZSZzW11bbF09dHJ1ZSZzW11bY3ZdPTAwMDAwMDAwLTAwMDAtNDAwMC04MDAwLTAwMDAwMDAwMDAwMyZwPXRydWU",
+            "name": "Pact between Checkout Web (2f4c1a9) and Ledger API"
+          }
+        }
+      }
+    ]
+  },
+  "_links": {
+    "self": {
+      "href": "http://testserver/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/for-verification",
+      "title": "Pacts to be verified"
+    }
+  }
+}

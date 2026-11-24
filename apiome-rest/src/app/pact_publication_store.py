@@ -26,7 +26,7 @@ pass one bound to a rolled-back transaction.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional, Sequence, Tuple
 
 import psycopg2
 from psycopg2.extras import Json
@@ -42,6 +42,7 @@ from .pact_publication import (
     PublishedPact,
     pact_record_from_row,
 )
+from .pact_selectors import PactCandidate
 from .pacticipant import (
     PacticipantRecord,
     RecordedPacticipantVersion,
@@ -58,6 +59,7 @@ __all__ = [
     "get_latest_pact",
     "get_pact",
     "get_pact_by_sha",
+    "list_pact_candidates",
     "publish_pacts",
 ]
 
@@ -361,7 +363,15 @@ def get_pact(db: Any, tenant_id: str, provider_ref: str, consumer_ref: str, vers
     )
 
 
-def get_latest_pact(db: Any, tenant_id: str, provider_ref: str, consumer_ref: str) -> PactRecord:
+def get_latest_pact(
+    db: Any,
+    tenant_id: str,
+    provider_ref: str,
+    consumer_ref: str,
+    *,
+    tag: Optional[str] = None,
+    branch: Optional[str] = None,
+) -> PactRecord:
     """Read the pact of the latest-recorded consumer version that published one for a provider.
 
     Args:
@@ -369,21 +379,41 @@ def get_latest_pact(db: Any, tenant_id: str, provider_ref: str, consumer_ref: st
         tenant_id: The caller's tenant.
         provider_ref: The provider's handle, id or name.
         consumer_ref: The consumer's handle, id or name.
+        tag: Only consumer versions with this tag (``…/latest/{tag}``).
+        branch: Only consumer versions recorded on this branch (``…/branch/{branch}/latest``).
 
     Returns:
         The pact.
 
     Raises:
         PacticipantValidationError: ``pacticipant-not-found`` for an unknown consumer or provider.
-        PactPublicationError: ``pact-not-found`` when the pair has no pact.
+        PactPublicationError: ``pact-not-found`` when no consumer version matches.
     """
     provider = get_pacticipant(db, tenant_id, provider_ref)
     consumer = get_pacticipant(db, tenant_id, consumer_ref)
+    where = ""
+    params: List[Any] = [provider.id, consumer.id]
+    qualifier = ""
+    if tag is not None:
+        where += (
+            " AND EXISTS (SELECT 1 FROM apiome.pacticipant_version_tag t"
+            " WHERE t.version_id = v.id AND t.pacticipant_id = v.pacticipant_id AND t.name = %s)"
+        )
+        params.append(tag)
+        qualifier += f" with tag '{tag}'"
+    if branch is not None:
+        where += (
+            " AND EXISTS (SELECT 1 FROM apiome.pacticipant_branch_version bv"
+            " JOIN apiome.pacticipant_branch b ON b.id = bv.branch_id AND b.pacticipant_id = bv.pacticipant_id"
+            " WHERE bv.version_id = v.id AND bv.pacticipant_id = v.pacticipant_id AND b.name = %s)"
+        )
+        params.append(branch)
+        qualifier += f" from branch '{branch}'"
     return _read_pact(
         db,
-        "",
-        (provider.id, consumer.id),
-        missing=f"no pact between consumer '{consumer.slug}' and provider '{provider.slug}'",
+        where,
+        params,
+        missing=f"no pact between consumer '{consumer.slug}'{qualifier} and provider '{provider.slug}'",
     )
 
 
@@ -412,3 +442,66 @@ def get_pact_by_sha(db: Any, tenant_id: str, provider_ref: str, consumer_ref: st
         (provider.id, consumer.id, (sha or "").strip().lower()),
         missing=(f"no pact version '{sha}' between consumer '{consumer.slug}' and provider '{provider.slug}'"),
     )
+
+
+#: The provider's publications, without content: what consumer-version selectors are applied to.
+_CANDIDATE_SELECT = """
+    SELECT c.id::text AS consumer_id, c.slug AS consumer_slug, c.name AS consumer_name,
+           c.main_branch AS consumer_main_branch,
+           v.id::text AS version_id, v.number AS version_number, v.seq AS version_seq, pv.sha,
+           COALESCE(
+               (SELECT array_agg(b.name ORDER BY b.name)
+                FROM apiome.pacticipant_branch_version bv
+                JOIN apiome.pacticipant_branch b ON b.id = bv.branch_id AND b.pacticipant_id = bv.pacticipant_id
+                WHERE bv.version_id = v.id AND bv.pacticipant_id = v.pacticipant_id),
+               ARRAY[]::text[]) AS branches,
+           COALESCE(
+               (SELECT array_agg(t.name ORDER BY t.name)
+                FROM apiome.pacticipant_version_tag t
+                WHERE t.version_id = v.id AND t.pacticipant_id = v.pacticipant_id),
+               ARRAY[]::text[]) AS tags
+    FROM apiome.pact_publication p
+    JOIN apiome.pact_version pv ON pv.id = p.pact_version_id
+    JOIN apiome.pacticipant_version v ON v.id = p.consumer_version_id
+    JOIN apiome.pacticipant c ON c.id = p.consumer_id
+    WHERE p.provider_id = %s::uuid
+    ORDER BY v.seq
+"""
+
+
+def list_pact_candidates(db: Any, tenant_id: str, provider_ref: str) -> Tuple[PacticipantRecord, List[PactCandidate]]:
+    """Read every publication of a pact for a provider, for selectors to choose from.
+
+    One row per consumer version that published a pact for the provider, with the version's
+    branches and tags and the pact's content address — not the content, which a for-verification
+    response links to rather than carries.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider_ref: The provider's handle, id or name.
+
+    Returns:
+        The provider, and its publications in the order their consumer versions were recorded.
+
+    Raises:
+        PacticipantValidationError: ``pacticipant-not-found`` for an unknown provider.
+    """
+    provider = get_pacticipant(db, tenant_id, provider_ref)
+    rows = db.execute_query(_CANDIDATE_SELECT, (provider.id,)) or []
+    candidates = [
+        PactCandidate(
+            consumer_id=row["consumer_id"],
+            consumer_slug=row["consumer_slug"],
+            consumer_name=row["consumer_name"],
+            consumer_main_branch=row.get("consumer_main_branch"),
+            version_id=row["version_id"],
+            version_number=row["version_number"],
+            version_seq=int(row["version_seq"]),
+            sha=row["sha"],
+            branches=tuple(row.get("branches") or ()),
+            tags=tuple(row.get("tags") or ()),
+        )
+        for row in rows
+    ]
+    return provider, candidates
