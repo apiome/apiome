@@ -145,7 +145,7 @@ def test_build_spec_describe_response_authenticated_merged_sql() -> None:
     assert isinstance(params, tuple)
     assert params[0] == sid
     assert params[1] == sid
-    assert params[2] == str(auth.tenant_id)
+    assert params[2] == tid
 
 
 def test_build_spec_describe_response_schedules_audit_for_private_row() -> None:

@@ -24,7 +24,7 @@ The **Apiome** catalog server registers **16** tools. Call them with `tools/call
 | [`spec.list_components`](#spec-list-components) | Return OpenAPI component names for a published spec revision by id (UUID), grouped by kind: schemas, parameters, responses, securitySchemes. |
 | [`spec.list_my_specs`](#spec-list-my-specs) | List OpenAPI spec revisions this MCP API key can read: in-scope public catalog rows (apiome.mcp_v_public_specs) plus in-scope private published revisions for the key's tenant (same rules as spec.list). |
 | [`spec.list_operations`](#spec-list-operations) | Return a compact index of HTTP operations for a published spec revision by id (UUID): each item has path, method, operation_id, summary, and tags. |
-| [`spec.list_tags`](#spec-list-tags) | Distinct version-tag names across published public OpenAPI specs with counts of specs that expose each tag (via apiome.mcp_v_public_specs). |
+| [`spec.list_tags`](#spec-list-tags) | Distinct version-tag names across published public OpenAPI specs with counts of specs that expose each tag. |
 | [`spec.search`](#spec-search) | Search published public OpenAPI specs with Postgres full-text search (english config) over project title, revision description, version label, and tag names (maintained in apiome.versions.mcp_public_doc_tsv). |
 | [`spec.search_semantic`](#spec-search-semantic) | Semantic search over published **public** specs that have **mcp_public_embedding** populated (pgvector cosine distance vs OpenAI-compatible query embeddings). |
 | [`version.export`](#version-export) | Export an artifact version to any registered target (MFX-40.1) — the same pipeline as the Export dialog and `apiome export`. |
@@ -187,7 +187,7 @@ Return a compact index of HTTP operations for a published spec revision by id (U
 
 ## `spec.list_tags` {#spec-list-tags}
 
-Distinct version-tag names across published public OpenAPI specs with counts of specs that expose each tag (via apiome.mcp_v_public_specs). Sorted by count descending, then tag name ascending. Cursor pagination: limit defaults to 50, capped at 100; pass next_cursor from the previous response for the next page. Requires an MCP API key.
+Distinct version-tag names across published public OpenAPI specs with counts of specs that expose each tag. Sorted by count descending, then tag name ascending. Counts are refreshed about every 45 seconds. Cursor pagination: limit defaults to 50, capped at 100; pass next_cursor from the previous response for the next page. Requires an MCP API key.
 
 **Arguments:**
 
@@ -214,7 +214,7 @@ Search published public OpenAPI specs with Postgres full-text search (english co
 
 ## `spec.search_semantic` {#spec-search-semantic}
 
-Semantic search over published **public** specs that have **mcp_public_embedding** populated (pgvector cosine distance vs OpenAI-compatible query embeddings). Requires APIOME_MCP_OPENAI_API_KEY. Uses the same pagination shape as spec.search (items, has_more, next_cursor). Rows without embeddings are omitted until backfilled. Requires an MCP API key.
+Semantic search over published **public** specs that have **mcp_public_embedding** populated (pgvector cosine distance vs OpenAI-compatible query embeddings). Requires APIOME_MCP_OPENAI_API_KEY. Uses the same pagination shape as spec.search (items, has_more, next_cursor). Returns the 200 nearest specs at most: has_more is false on the page that reaches them. Rows without embeddings are omitted until backfilled. Requires an MCP API key.
 
 **Arguments:**
 

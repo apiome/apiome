@@ -16,6 +16,7 @@ from apiome_mcp.cursor_codec import (
     encode_cursor_payload,
     utc,
 )
+from apiome_mcp.spec_listing_sql import LISTED_PROJECT, listed_version
 
 SEARCH_CURSOR_VERSION = 1
 MAX_PAGE_SIZE = 100
@@ -89,51 +90,65 @@ def _row_out(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-_SEARCH_QUERY = """
+#: Output columns of a search page joined back to its revision and project (aliases ``page``,
+#: ``v``, ``p``); shared with ``spec.search_semantic``.
+SEARCH_OUTPUT_SQL = f"""
+SELECT page.id, p.tenant_id, page.project_id, p.name AS title, v.version_id AS version,
+       v.description, COALESCE(tg.tags, ARRAY[]::TEXT[]) AS tags, page.updated_at, page.rank_score
+FROM page
+INNER JOIN apiome.versions v ON v.id = page.id
+INNER JOIN apiome.projects p ON p.id = page.project_id AND {LISTED_PROJECT}
+LEFT JOIN LATERAL (
+  SELECT array_agg(vt.name ORDER BY vt.name) AS tags
+  FROM apiome.version_tags vt
+  WHERE vt.version_id = page.id AND vt.project_id = page.project_id
+) tg ON TRUE
+ORDER BY page.rank_score DESC, page.updated_at DESC, page.id DESC
+"""
+
+#: ``AND`` predicate that keeps the rows after a cursor in ``(rank_score, updated_at, id)`` order.
+SEARCH_CURSOR_SQL = "(rank_score, updated_at, id) < (%(cur_rank)s::integer, %(cur_ts)s::timestamptz, %(cur_id)s::uuid)"
+
+
+def build_spec_search_query(*, has_cursor: bool) -> str:
+    """The ``spec.search`` statement (DBP-1.22): rank and page on ``versions``, then join.
+
+    ``hit`` reads only ``apiome.versions`` — the GIN match, the rank and the stored listing
+    timestamp; ``page`` applies the cursor and ``LIMIT``; the project and the tags are read for
+    the rows of the page only (they used to be read for every match).
+
+    Args:
+        has_cursor: Whether the statement takes ``cur_rank`` / ``cur_ts`` / ``cur_id``.
+
+    Returns:
+        SQL with named parameters ``q``, ``lim`` and, with a cursor, the three cursor values.
+    """
+    cursor_sql = f"WHERE {SEARCH_CURSOR_SQL}" if has_cursor else ""
+    return f"""
 WITH hit AS (
   SELECT
-    s.id,
-    s.tenant_id,
-    s.project_id,
-    s.title,
-    s.version,
-    s.description,
-    s.tags,
-    s.updated_at,
-    ts_rank_cd(v.mcp_public_doc_tsv, plainto_tsquery('english', %(q)s)) AS rank_raw
-  FROM apiome.mcp_v_public_specs AS s
-  INNER JOIN apiome.versions v ON v.id = s.id
-  WHERE v.mcp_public_doc_tsv @@ plainto_tsquery('english', %(q)s)
-),
-ranked AS (
-  SELECT
-    id,
-    tenant_id,
-    project_id,
-    title,
-    version,
-    description,
-    tags,
-    updated_at,
+    v.id,
+    v.project_id,
+    v.mcp_listed_at AS updated_at,
     GREATEST(
       1,
-      LEAST(2147483647, ROUND((rank_raw::numeric) * 1000000)::integer)
+      LEAST(
+        2147483647,
+        ROUND((ts_rank_cd(v.mcp_public_doc_tsv, plainto_tsquery('english', %(q)s))::numeric) * 1000000)::integer
+      )
     ) AS rank_score
+  FROM apiome.versions v
+  WHERE v.mcp_public_doc_tsv @@ plainto_tsquery('english', %(q)s)
+    AND {listed_version("public")}
+),
+page AS (
+  SELECT id, project_id, updated_at, rank_score
   FROM hit
+  {cursor_sql}
+  ORDER BY rank_score DESC, updated_at DESC, id DESC
+  LIMIT %(lim)s
 )
-SELECT id, tenant_id, project_id, title, version, description, tags, updated_at, rank_score
-FROM ranked
-WHERE
-  CASE
-    WHEN %(has_cursor)s THEN (
-      (rank_score, updated_at, id)
-      < (%(cur_rank)s::integer, %(cur_ts)s::timestamptz, %(cur_id)s::uuid)
-    )
-    ELSE TRUE
-  END
-ORDER BY rank_score DESC, updated_at DESC, id DESC
-LIMIT %(lim)s
-"""
+{SEARCH_OUTPUT_SQL}"""
 
 
 def normalize_search_query(q: str) -> str:
@@ -156,23 +171,14 @@ async def build_spec_search_response(
 
     lim = _clamp_limit(limit)
     decoded = decode_spec_search_cursor(cursor)
-    has_cursor = decoded is not None
-    cur_rank = decoded[0] if decoded else None
-    cur_ts = decoded[1] if decoded else None
-    cur_id = decoded[2] if decoded else None
 
-    params: dict[str, Any] = {
-        "q": query_text,
-        "has_cursor": has_cursor,
-        "cur_rank": cur_rank,
-        "cur_ts": cur_ts,
-        "cur_id": cur_id,
-        "lim": lim + 1,
-    }
+    params: dict[str, Any] = {"q": query_text, "lim": lim + 1}
+    if decoded is not None:
+        params.update(cur_rank=decoded[0], cur_ts=decoded[1], cur_id=decoded[2])
 
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(_SEARCH_QUERY, params)
+            await cur.execute(build_spec_search_query(has_cursor=decoded is not None), params)
             rows = await cur.fetchall()
 
     has_more = len(rows) > lim

@@ -1,0 +1,42 @@
+---
+slug: mcp-catalog-tools-batched-openapi-indexed-lists
+title: "MCP catalog tools: faster specs, lists and search"
+description: "Specs load in a fixed number of statements; lists and search read from indexes."
+authors: [apiome]
+---
+
+**Performance.** The MCP catalog's spec tools now read a spec in a fixed number of statements and
+keep the built document in memory. Its list and search tools read one page from an index instead
+of sorting the whole public catalog for every page.
+
+{/* truncate */}
+
+- **Specs in a fixed number of statements.** `spec.get_openapi`, `spec.export_yaml`,
+  `spec.describe_operation` and `spec.describe_component` read a revision in at most 12 statements,
+  whatever its size. They used to run one statement for each path and four for each operation.
+  `spec.list_operations` and `spec.list_components` read only the rows they need, in 4 and 5.
+- **Built once.** A built document stays in memory until its revision changes, so an agent that
+  calls several spec tools for one spec pays for the document once. Every call still checks that
+  the caller may read the revision. `APIOME_MCP_OPENAPI_DOCUMENT_CACHE_BYTES` (64 MiB) sets how
+  much is kept.
+- **Lists read one page.** `spec.list`, `spec.list_my_specs` and `project.list` keep their order,
+  most recently changed first, and now read it from an index. Page 500 costs the same as page 1.
+- **Tag counts are cached.** `spec.list_tags` counts the catalog's tags once and serves every page
+  from memory for 45 seconds (`APIOME_MCP_SPEC_TAG_HISTOGRAM_CACHE_SECONDS`).
+- **Search joins less.** `spec.search` ranks the matches first and reads project names and tags
+  for the returned page only.
+- **Semantic search uses its index.** `spec.search_semantic` now reads from the vector index. It
+  returns the 200 nearest specs at most, so `has_more` is `false` on the page that reaches them.
+  Before, a query could page through every embedded spec.
+- **The mock runtime loads specs the same way.** It shares the loader, so a spec that is not in
+  its cache is read in 10 statements.
+
+On the scale database (200,000 revisions, 45,000 of them public), a `spec.list` page went from
+70 ms to 0.2 ms and `project.list` from 53 ms to 0.1 ms. A 600-operation spec went from 2,705
+statements and 141 ms to 10 statements and 30 ms, then nothing on the next call.
+`spec.search_semantic` went from 45 ms to 8 ms.
+
+**Upgrading.** Migration `V428` fills a column for every published revision and rebuilds the
+vector index. Saving a project's settings now rewrites that project's published revisions. See
+[What the MCP catalog tools read and cache](/admin/operating-apiome#what-the-mcp-catalog-tools-read-and-cache)
+for the settings, the measurements and what to do on a large database.

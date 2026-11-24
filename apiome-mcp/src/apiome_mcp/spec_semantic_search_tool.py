@@ -14,9 +14,12 @@ from psycopg_pool import AsyncConnectionPool
 
 from apiome_mcp.database_pool import ensure_vector_registered
 from apiome_mcp.settings import Settings
+from apiome_mcp.spec_listing_sql import listed_version
 from apiome_mcp.spec_search_tool import (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
+    SEARCH_CURSOR_SQL,
+    SEARCH_OUTPUT_SQL,
     decode_spec_search_cursor,
     encode_spec_search_cursor,
     normalize_search_query,
@@ -31,51 +34,107 @@ def _clamp_limit(limit: int | None) -> int:
     return min(limit, MAX_PAGE_SIZE)
 
 
-_SEMANTIC_SEARCH_QUERY = """
-WITH scored AS (
+#: Paging depth (DBP-1.22): a query pages through its nearest ``SEMANTIC_SEARCH_DEPTH`` specs and
+#: no further — ``has_more`` is false on the page that reaches it. It is also the HNSW candidate
+#: list size (``hnsw.ef_search``; pgvector's default, 40, would cap every search at 40 results),
+#: so every result within the depth comes from one index scan.
+SEMANTIC_SEARCH_DEPTH = 200
+
+#: pgvector release that added ``hnsw.iterative_scan``.
+_ITERATIVE_SCAN_MIN_VERSION = (0, 8, 0)
+
+
+def build_semantic_search_query(*, has_cursor: bool) -> str:
+    """The ``spec.search_semantic`` statement: nearest neighbours from the HNSW index, then join.
+
+    ``nearest`` orders by the bare distance expression with a ``LIMIT``, the only shape an HNSW
+    index can serve (ordering by a value derived from the distance made every search read and
+    sort all embedded revisions). ``idx_versions_mcp_public_listed_embedding_hnsw`` (V428) has the
+    same public predicate as the query, so the planner need not guess how many embedded revisions
+    are public. The score, the cursor, the project and the tags are computed for those rows only.
+
+    Args:
+        has_cursor: Whether the statement takes ``cur_rank`` / ``cur_ts`` / ``cur_id``.
+
+    Returns:
+        SQL with named parameters ``qv``, ``depth``, ``lim`` and, with a cursor, its three values.
+    """
+    cursor_sql = f"WHERE {SEARCH_CURSOR_SQL}" if has_cursor else ""
+    return f"""
+WITH nearest AS MATERIALIZED (
   SELECT
-    s.id,
-    s.tenant_id,
-    s.project_id,
-    s.title,
-    s.version,
-    s.description,
-    s.tags,
-    s.updated_at,
-    (1 - (v.mcp_public_embedding <=> %(qv)s::vector))::double precision AS similarity
-  FROM apiome.mcp_v_public_specs AS s
-  INNER JOIN apiome.versions v ON v.id = s.id
+    v.id,
+    v.project_id,
+    v.mcp_listed_at AS updated_at,
+    v.mcp_public_embedding <=> %(qv)s::vector AS distance
+  FROM apiome.versions v
   WHERE v.mcp_public_embedding IS NOT NULL
+    AND {listed_version("public")}
+  ORDER BY v.mcp_public_embedding <=> %(qv)s::vector
+  LIMIT %(depth)s
 ),
 ranked AS (
   SELECT
     id,
-    tenant_id,
     project_id,
-    title,
-    version,
-    description,
-    tags,
     updated_at,
     GREATEST(
       1,
-      LEAST(2147483647, ROUND((similarity::numeric) * 1000000000)::integer)
+      LEAST(2147483647, ROUND(((1 - distance)::double precision::numeric) * 1000000000)::integer)
     ) AS rank_score
-  FROM scored
+  FROM nearest
+),
+page AS (
+  SELECT id, project_id, updated_at, rank_score
+  FROM ranked
+  {cursor_sql}
+  ORDER BY rank_score DESC, updated_at DESC, id DESC
+  LIMIT %(lim)s
 )
-SELECT id, tenant_id, project_id, title, version, description, tags, updated_at, rank_score
-FROM ranked
-WHERE
-  CASE
-    WHEN %(has_cursor)s THEN (
-      (rank_score, updated_at, id)
-      < (%(cur_rank)s::integer, %(cur_ts)s::timestamptz, %(cur_id)s::uuid)
-    )
-    ELSE TRUE
-  END
-ORDER BY rank_score DESC, updated_at DESC, id DESC
-LIMIT %(lim)s
-"""
+{SEARCH_OUTPUT_SQL}"""
+
+
+#: Whether the server's pgvector has ``hnsw.iterative_scan``; read once per process.
+_iterative_scan_supported: bool | None = None
+
+
+def reset_semantic_search_state() -> None:
+    """Forget the cached pgvector capability (tests)."""
+    global _iterative_scan_supported
+    _iterative_scan_supported = None
+
+
+async def _apply_hnsw_settings(conn: Any) -> None:
+    """Set the HNSW scan settings for the current transaction.
+
+    ``hnsw.ef_search`` is raised to :data:`SEMANTIC_SEARCH_DEPTH` (the default, 40, would cap a
+    search at 40 results). With pgvector 0.8 or later, ``hnsw.iterative_scan = strict_order`` makes
+    the index keep scanning when the public-visibility filter discards candidates, so the filter
+    cannot leave a page short; an older pgvector simply returns what one scan finds.
+
+    Args:
+        conn: A connection inside a transaction (the settings are transaction-local).
+    """
+    global _iterative_scan_supported
+    if _iterative_scan_supported is None:
+        cur = await conn.execute("SELECT extversion FROM pg_extension WHERE extname = 'vector'")
+        row = await cur.fetchone()
+        _iterative_scan_supported = _parse_version(row[0] if row else None) >= _ITERATIVE_SCAN_MIN_VERSION
+    if _iterative_scan_supported:
+        await conn.execute(
+            "SELECT set_config('hnsw.ef_search', %s, true), set_config('hnsw.iterative_scan', 'strict_order', true)",
+            (str(SEMANTIC_SEARCH_DEPTH),),
+        )
+    else:
+        await conn.execute("SELECT set_config('hnsw.ef_search', %s, true)", (str(SEMANTIC_SEARCH_DEPTH),))
+
+
+def _parse_version(raw: Any) -> tuple[int, ...]:
+    """A dotted version string as a tuple of ints (``()`` when it cannot be read)."""
+    try:
+        return tuple(int(part) for part in str(raw).split("."))
+    except ValueError:
+        return ()
 
 
 def _utc(dt: datetime) -> datetime:
@@ -189,6 +248,9 @@ async def build_spec_semantic_search_response(
 ) -> dict[str, Any]:
     """Return cosine-ranked ``items``, ``has_more``, and ``next_cursor`` for embedded public specs.
 
+    Results come from the HNSW index and cover the query's nearest
+    :data:`SEMANTIC_SEARCH_DEPTH` specs; paging stops there (DBP-1.22).
+
     ``http_client`` is the lifespan's shared embeddings client (DBP-1.21); without one a client is
     opened for this call. pgvector is registered once per pooled connection
     (:func:`~apiome_mcp.database_pool.ensure_vector_registered`), not once per search.
@@ -198,25 +260,19 @@ async def build_spec_semantic_search_response(
 
     lim = _clamp_limit(limit)
     decoded = decode_spec_search_cursor(cursor)
-    has_cursor = decoded is not None
-    cur_rank = decoded[0] if decoded else None
-    cur_ts = decoded[1] if decoded else None
-    cur_id = decoded[2] if decoded else None
 
-    params: dict[str, Any] = {
-        "qv": Vector(vec),
-        "has_cursor": has_cursor,
-        "cur_rank": cur_rank,
-        "cur_ts": cur_ts,
-        "cur_id": cur_id,
-        "lim": lim + 1,
-    }
+    params: dict[str, Any] = {"qv": Vector(vec), "depth": SEMANTIC_SEARCH_DEPTH, "lim": lim + 1}
+    if decoded is not None:
+        params.update(cur_rank=decoded[0], cur_ts=decoded[1], cur_id=decoded[2])
 
     async with pool.connection() as conn:
         await ensure_vector_registered(conn)
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(_SEMANTIC_SEARCH_QUERY, params)
-            rows = await cur.fetchall()
+        # The pool is autocommit: the HNSW settings must share a transaction with the search.
+        async with conn.transaction():
+            await _apply_hnsw_settings(conn)
+            async with conn.cursor(row_factory=dict_row) as cur:
+                await cur.execute(build_semantic_search_query(has_cursor=decoded is not None), params)
+                rows = await cur.fetchall()
 
     has_more = len(rows) > lim
     page = rows[:lim]

@@ -115,7 +115,7 @@ def test_build_spec_list_response_clamps_limit(limit_in: int | None, expected_fe
 
     asyncio.run(run())
     _sql, params = cur.execute.await_args.args
-    assert params["lim"] == expected_fetch_limit
+    assert params == [expected_fetch_limit]
 
 
 def test_build_spec_list_response_has_more_and_next_cursor() -> None:
@@ -224,8 +224,9 @@ def test_build_spec_list_response_tenant_filter_binding() -> None:
         await build_spec_list_response(pool, tenant_id=str(tid))
 
     asyncio.run(run())
-    _sql, params = cur.execute.await_args.args
-    assert params["tenant"] == tid
+    sql, params = cur.execute.await_args.args
+    assert "p.tenant_id = %s" in sql
+    assert params == [tid, 51]
 
 
 def test_build_spec_list_response_project_filter_binding() -> None:
@@ -237,8 +238,29 @@ def test_build_spec_list_response_project_filter_binding() -> None:
         await build_spec_list_response(pool, project_id=str(pid))
 
     asyncio.run(run())
-    _sql, params = cur.execute.await_args.args
-    assert params["project"] == pid
+    sql, params = cur.execute.await_args.args
+    assert "v.project_id = %s" in sql
+    assert params == [pid, 51]
+
+
+def test_build_spec_list_statement_pages_on_the_stored_listing_key() -> None:
+    """DBP-1.22: the page is picked on ``versions.mcp_listed_at``; tags are read for its rows only."""
+    pool, cur = _pool_mock_for_fetch([_sample_row()])
+
+    asyncio.run(build_spec_list_response(pool))
+    sql, params = cur.execute.await_args.args
+    assert "mcp_v_public_specs" not in sql
+    assert "ORDER BY v.mcp_listed_at DESC, v.id DESC" in sql
+    assert "v.mcp_listed_at IS NOT NULL AND v.visibility = 'public'::apiome.visibility_type" in sql
+    # Every visibility rule is still stated, not left to the stored column.
+    for rule in ("v.deleted_at IS NULL", "v.enabled IS TRUE", "v.published IS TRUE", "p.deleted_at IS NULL"):
+        assert rule in sql
+    # Optional filters and the cursor are absent, not "%s IS NULL OR …".
+    assert "IS NULL OR" not in sql
+    assert "p.tenant_id = %s" not in sql and "v.project_id = %s" not in sql and "< (%s, %s)" not in sql
+    # The tag aggregate sits outside the limited page.
+    assert sql.index("LIMIT %s") < sql.index("FROM apiome.version_tags vt")
+    assert params == [51]
 
 
 def test_build_spec_list_response_cursor_binding() -> None:
@@ -252,9 +274,9 @@ def test_build_spec_list_response_cursor_binding() -> None:
         await build_spec_list_response(pool, cursor=cursor)
 
     asyncio.run(run())
-    _sql, params = cur.execute.await_args.args
-    assert params["cur_ts"] == ts
-    assert params["cur_id"] == sid
+    sql, params = cur.execute.await_args.args
+    assert "(v.mcp_listed_at, v.id) < (%s, %s)" in sql
+    assert params == [ts, sid, 51]
 
 
 def test_build_spec_list_response_deny_all_returns_empty_without_query() -> None:
@@ -294,14 +316,31 @@ def test_build_spec_list_response_authenticated_merged_sql() -> None:
     asyncio.run(run())
     sql, params = cur.execute.await_args.args
     assert "UNION ALL" in sql
-    assert "mcp_v_public_specs" in sql
-    assert "visibility = 'private'" in sql
+    assert "v.visibility = 'public'::apiome.visibility_type" in sql
+    assert "v.visibility = 'private'::apiome.visibility_type" in sql
     assert "spec_visibility" in sql
-    assert isinstance(params, tuple)
-    assert params[0:4] == (tid, tid, pid, pid)
-    assert params[4] == str(auth.tenant_id)
-    assert params[5:9] == (tid, tid, pid, pid)
-    assert params[-4:] == (None, None, None, 6)
+    # public branch: tenant filter, project filter, branch limit;
+    # private branch: the key's tenant (authorization), tenant, project, branch limit; then the page limit.
+    assert params == [tid, pid, 6, tid, tid, pid, 6, 6]
+
+
+def test_build_spec_list_response_authenticated_skips_private_branch_for_another_tenant() -> None:
+    """A ``tenant_id`` filter that is not the key's tenant can match no private revision."""
+    auth = McpAuthContext(
+        key_id="00000000-0000-4000-8000-000000000002",
+        tenant_id=str(uuid4()),
+        label="k",
+        scope=Scope(),
+    )
+    other = uuid4()
+    pool, cur = _pool_mock_for_fetch([_sample_row()])
+
+    asyncio.run(build_spec_list_response(pool, tenant_id=str(other), limit=5, auth_ctx=auth))
+    sql, params = cur.execute.await_args.args
+    assert "UNION ALL" not in sql
+    assert "'private'" not in sql
+    assert "spec_visibility" in sql
+    assert params == [other, 6]
 
 
 def test_build_spec_list_response_schedules_audit_batch_for_private_rows() -> None:
@@ -406,7 +445,6 @@ def test_build_spec_list_response_authenticated_cursor_binding_tuple() -> None:
 
     asyncio.run(run())
     _sql, params = cur.execute.await_args.args
-    assert isinstance(params, tuple)
-    assert params[-4] == ts
-    assert params[-3] == ts
-    assert params[-2] == sid
+    key_tenant = UUID(auth.tenant_id)
+    # Each branch applies the cursor and its own limit before the merge.
+    assert params == [ts, sid, 51, key_tenant, key_tenant, ts, sid, 51, 51]
