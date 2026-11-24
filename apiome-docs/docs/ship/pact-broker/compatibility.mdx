@@ -71,7 +71,7 @@ that pact, version or pacticipant does not exist.
 
 {/* pact-broker-compat:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_pact_broker_compat_doc.py */}
 
-Checked against Pact Broker **2.124.0**: 102 endpoints — **35** supported, **6** partial, **13** planned, **48** not planned.
+Checked against Pact Broker **2.124.0**: 102 endpoints — **35** supported, **6** partial, **6** planned, **55** not planned.
 
 ### Index
 
@@ -206,13 +206,13 @@ Checked against Pact Broker **2.124.0**: 102 endpoints — **35** supported, **6
 
 | Endpoint | Apiome serves | Not served | Status | Notes |
 | --- | --- | --- | --- | --- |
-| `/pacts/provider/{provider}/consumer/{consumer}/latest/badge` — Badge of the latest pact | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
-| `/pacts/provider/{provider}/consumer/{consumer}/latest/{tag}/badge` — Badge of the latest tagged pact | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
-| `/pacts/provider/{provider}/consumer/{consumer}/latest-untagged/badge` — Badge of the latest untagged pact | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
-| `/matrix/provider/{provider}/latest/{providerTag}/consumer/{consumer}/latest/{tag}/badge` — Badge of a tagged matrix row | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
-| `/pacticipants/{pacticipant}/latest-version/{tag}/can-i-deploy/to/{to}/badge` — can-i-deploy badge (tag to tag) | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
-| `/pacticipants/{pacticipant}/branches/{branch}/latest-version/can-i-deploy/to-environment/{environment}/badge` — can-i-deploy badge (branch to environment) | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
-| `/pacticipants/{pacticipant}/main-branch/can-i-merge/badge` — can-i-merge badge | — | `GET` | 🗓 Planned ([#6923](https://github.com/apiome/apiome/issues/6923)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest/badge` — Badge of the latest pact | — | `GET` | — Not planned | Apiome serves public SVG and shields.io status badges for a public project instead, not the broker's tag-aware ones. Use `/v1/browse/tenants/{tenant}/projects/{project}/pact-badges`. |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest/{tag}/badge` — Badge of the latest tagged pact | — | `GET` | — Not planned | Apiome serves public SVG and shields.io status badges for a public project instead, not the broker's tag-aware ones. Use `/v1/browse/tenants/{tenant}/projects/{project}/pact-badges`. |
+| `/pacts/provider/{provider}/consumer/{consumer}/latest-untagged/badge` — Badge of the latest untagged pact | — | `GET` | — Not planned | Apiome serves public SVG and shields.io status badges for a public project instead, not the broker's tag-aware ones. Use `/v1/browse/tenants/{tenant}/projects/{project}/pact-badges`. |
+| `/matrix/provider/{provider}/latest/{providerTag}/consumer/{consumer}/latest/{tag}/badge` — Badge of a tagged matrix row | — | `GET` | — Not planned | Apiome serves public SVG and shields.io status badges for a public project instead, not the broker's tag-aware ones. Use `/v1/browse/tenants/{tenant}/projects/{project}/pact-badges`. |
+| `/pacticipants/{pacticipant}/latest-version/{tag}/can-i-deploy/to/{to}/badge` — can-i-deploy badge (tag to tag) | — | `GET` | — Not planned | Apiome serves public SVG and shields.io status badges for a public project instead, not the broker's tag-aware ones. Use `/v1/browse/tenants/{tenant}/projects/{project}/pact-badges`. |
+| `/pacticipants/{pacticipant}/branches/{branch}/latest-version/can-i-deploy/to-environment/{environment}/badge` — can-i-deploy badge (branch to environment) | — | `GET` | — Not planned | Apiome serves public SVG and shields.io status badges for a public project instead, not the broker's tag-aware ones. Use `/v1/browse/tenants/{tenant}/projects/{project}/pact-badges`. |
+| `/pacticipants/{pacticipant}/main-branch/can-i-merge/badge` — can-i-merge badge | — | `GET` | — Not planned | Apiome serves public SVG and shields.io status badges for a public project instead, not the broker's tag-aware ones. Use `/v1/browse/tenants/{tenant}/projects/{project}/pact-badges`. |
 
 ### Labels
 

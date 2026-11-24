@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.839.0] - 2026-11-24
+
+### Added
+- **Pact badges and public status endpoints (PFX-1.10, #6923).** OpenAPI 1.663.0. No migration.
+  - **Public, anonymous routes** under `/v1/browse/tenants/{t}/projects/{p}/pact-badges`, served only
+    for a project with a published public version: `GET …/pact-badges` (every pacticipant bound to
+    the project, its state and badge URLs), `…/pacticipants/{slug}/badge.svg` and `…/shields.json`,
+    and `…/pacts/provider/{p}/consumer/{c}/badge.svg` and `…/shields.json`. Answers carry
+    `Cache-Control: public, max-age=300`.
+  - **States:** a pact is `verified`, `failing` or `unknown` by its newest verification result; a
+    pacticipant is `failing` when any pact is, `verified` when it has pacts and all are verified,
+    otherwise `unknown`. The shields document follows the shields.io endpoint schema.
+  - **Nothing leaks:** a private project, an unbound or unknown pacticipant and an unbound pair are
+    one `404`.
+
+### Changed
+- The Pact Broker's tag-aware badge endpoints (`…/latest/badge`, can-i-deploy and can-i-merge
+  badges) are now catalogued as **not planned** and their `501` points to the public badge
+  routes, instead of "planned #6923".
+
 ## [1.838.0] - 2026-11-24
 
 ### Added

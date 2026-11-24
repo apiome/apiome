@@ -221,12 +221,12 @@ def test_a_missing_method_on_a_partial_endpoint_is_a_documented_501(authenticate
     assert detail["message"].startswith("DELETE is not supported on “A pacticipant” (partial). Supported: GET.")
 
 
-def test_a_planned_endpoint_names_its_issue(authenticated: None) -> None:
+def test_a_broker_badge_points_at_the_public_badges(authenticated: None) -> None:
     response = client.get(f"{_BASE}/pacts/provider/api/consumer/web/latest/badge")
     assert response.status_code == 501
     detail = response.json()["detail"]
-    assert detail["status"] == PLANNED and detail["supported_methods"] == []
-    assert detail["tracking"].endswith("/6923") and "alternative" not in detail
+    assert detail["status"] == "not planned" and detail["supported_methods"] == []
+    assert detail["alternative"].endswith("/pact-badges") and "tracking" not in detail
 
 
 def test_a_badge_is_not_read_as_a_tag(authenticated: None) -> None:

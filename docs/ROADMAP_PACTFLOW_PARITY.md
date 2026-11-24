@@ -142,7 +142,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.10 · [#6923](https://github.com/apiome/apiome/issues/6923) | Badges and public status endpoints | SVG badges, shields JSON, browse-page hooks | `contracts`,`pact`,`rest` | Y | N | S | apiome-rest, apiome-browse |
 | PFX-1.11 · [#6924](https://github.com/apiome/apiome/issues/6924) | Pacticipant labels, version delete and cleanup | Labels, soft delete, selector-based retention | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest |
 
 #### Detailed issue descriptions
@@ -219,7 +218,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 - **Technical Stack:** FastAPI, existing delivery worker, Postgres.
 - **Documentation:** `…/pact-broker/webhooks.mdx`; screenshot ids in 5.6.
 
-**PFX-1.10 · #6923 Badges and public status endpoints** — SVG badge per pact / pacticipant ("verified", "failing", "unknown"), shields.io endpoint JSON, optional embed on the browse project page (only when the project is public). *Deps:* 1.4. **Docs:** `…/pact-broker/badges.mdx`.
+**✅ PFX-1.10 · #6923 Badges and public status endpoints — Complete** — SVG badge per pact / pacticipant ("verified", "failing", "unknown"), shields.io endpoint JSON, optional embed on the browse project page (only when the project is public). *Deps:* 1.4. **Docs:** `…/pact-broker/badges.mdx`.
 
 **PFX-1.11 · #6924 Pacticipant labels, version delete and cleanup** — labels, soft-delete of versions and pacticipants with audit, selector-based retention (keep latest N per branch, anything deployed/released, everything in the last D days) as a dry-run-first job. *Deps:* 1.1, 1.5. **Docs:** `…/pact-broker/retention.mdx`.
 

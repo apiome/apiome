@@ -6,6 +6,7 @@ import { AppShell } from '../../../components/AppShell';
 import { Breadcrumb } from '../../../components/Breadcrumb';
 import { EntityHeader } from '../../../components/EntityHeader';
 import { VersionTimeline } from '../../../components/VersionTimeline';
+import { PactBadges } from './PactBadges';
 import type { Severity } from '../../../../../lib/changelog/types';
 import { pickCardFacts, type CardFacts } from '../../../../../lib/cardFacts';
 import { relativeTime } from '../../../../../lib/relativeTime';
@@ -185,6 +186,8 @@ export function ProjectClient({
             </>
           }
         />
+
+        <PactBadges tenantSlug={tenantSlug} projectSlug={projectSlug} />
 
         <section className="space-y-4">
           <header className="flex items-end justify-between gap-3">
