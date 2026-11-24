@@ -1,0 +1,43 @@
+---
+slug: pact-broker-pacticipants
+title: "Pact Broker: pacticipants, versions, branches and tags"
+description: "Register the applications in your pacts and record each build's version, branch and tags."
+authors: [apiome]
+---
+
+Pact tooling names everything by **pacticipant**, **version**, **branch** and **tag**. Apiome now
+keeps that registry for each workspace. It is the first piece of Pact Broker compatibility: pact
+publication, verification results and can-i-deploy are built on it and are not yet available.
+
+{/* truncate */}
+
+**What you can do now**, through the [Pacticipants API](/reference/rest/pacticipants):
+
+- **Register a pacticipant** — an application that takes part in a pact. Its handle comes from its
+  name (`Billing Service` becomes `billing-service`) and is unique in the workspace. Optionally bind
+  a provider to the project that describes it, and a consumer to its entry in the consumer registry.
+- **Record a version from CI** with the branch it was built from, its build URL and tags:
+  `PUT /v1/tenants/{workspace}/pacticipants/billing-service/versions/3f2a9c1`.
+- **Read versions and branch heads** — a pacticipant's versions latest first, filtered by branch or
+  tag, and every branch with its head.
+
+**The rules the registry keeps:**
+
+- **A version never changes.** Recording the same version again answers with the stored one; it is
+  how a build adds a branch or a tag.
+- **A branch head only moves forward.** Re-running an old build does not move the head back.
+- **Tags are added once.** Tagging a version twice changes nothing.
+- **Deleting a project keeps its pacticipant.** The binding is cleared; versions, branches and tags
+  stay.
+- **Nothing crosses a workspace.** A pacticipant can only be bound to a project or consumer of its
+  own workspace.
+
+**Permissions.** A new **Pacts** row on **Roles** guards the registry. **Editor** can view, create
+and edit; only **Owner** and **Admin** can delete a pacticipant, because that removes its whole
+version history. Custom roles do not get **Pacts** automatically — grant it on each role that needs
+it.
+
+**Upgrading.** Run `apiome-db migrate` to apply `V432`. It adds five tables and reseeds the built-in
+roles.
+
+Read [Pact Broker concepts](/ship/pact-broker/concepts) for the terms and worked requests.

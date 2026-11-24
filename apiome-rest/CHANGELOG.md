@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.830.0] - 2026-11-23
+
+### Added
+- **Pact Broker registry: pacticipants, versions, branches and tags (PFX-1.1, #6914).** OpenAPI
+  1.654.0. The model the rest of the Pact Broker surface is built on, under a new `pacticipants`
+  tag and a new RBAC resource, `pacts` (Owner and Admin: all; Editor: view, create, edit; Viewer:
+  view). All routes are under `/v1/tenants/{tenant_slug}/pacticipants`:
+  - `GET` / `POST` the collection, `GET` / `PATCH` / `DELETE` `/{ref}` — a pacticipant has a handle
+    (derived from its name when omitted, unique per tenant, never renamed), a display name, a
+    repository URL, a main branch, and two optional bindings: `project` (the project that describes
+    a provider) and `consumer_id` (its row in the consumer registry). `{ref}` is the handle, the id
+    or the name. `DELETE` removes the pacticipant with its versions, branches and tags.
+  - `PUT /{ref}/versions/{number}` records a version with an optional `build_url`, `branch` and
+    `tags`. `201` when it creates the version, `200` when it already existed; the stored version is
+    returned unchanged either way. `GET /{ref}/versions` (filters `branch`, `tag`; latest first)
+    and `GET /{ref}/versions/{number}` read them.
+  - `PUT /{ref}/versions/{number}/tags/{tag}` adds a tag; `GET /{ref}/branches` lists each branch
+    with its head.
+  - Refusals carry a stable `code`: `pacticipant-not-found`, `pacticipant-version-not-found`,
+    `pacticipant-project-not-found`, `pacticipant-consumer-not-found` (404),
+    `pacticipant-slug-taken` (409), and `pacticipant-invalid-slug` / `-name` / `-url` / `-branch` /
+    `-tag` / `-version` (400).
+- Migration `V432` adds `pacticipant`, `pacticipant_version`, `pacticipant_branch`,
+  `pacticipant_branch_version` and `pacticipant_version_tag`, and keeps the rules in the schema:
+  handles unique per tenant; bindings by composite `(id, tenant_id)` keys, so nothing crosses a
+  tenant; a branch and a tag can only name a version of the same pacticipant; a trigger refuses any
+  `UPDATE` of a version; deleting a project — hard, or the `deleted_at` stamp the app writes —
+  clears the binding and keeps the pacticipant, and retiring or deleting a consumer does the same. A branch head moves only to a version recorded
+  later than the current head. `projects` and `consumer` gain a unique `(id, tenant_id)` key, and
+  `seed_builtin_roles` is replaced and every tenant reseeded.
+
 ## [1.829.0] - 2026-11-23
 
 ### Performance

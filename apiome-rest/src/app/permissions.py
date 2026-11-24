@@ -44,6 +44,8 @@ class Resource:
     VERIFICATION_EVIDENCE = "verification_evidence"
     CONSUMER_CONTRACTS = "consumer_contracts"
     TEAMS = "teams"
+    #: The Pact Broker registry: pacticipants, their versions, branches and tags (PFX-1.1, #6914).
+    PACTS = "pacts"
     #: Where the tenant's documents are kept (COA-5.15, #7092). Its only action is ``manage``.
     DOCUMENT_STORE = "document_store"
 
@@ -78,6 +80,7 @@ RESOURCES = frozenset(
         Resource.VERIFICATION_EVIDENCE,
         Resource.CONSUMER_CONTRACTS,
         Resource.TEAMS,
+        Resource.PACTS,
         Resource.DOCUMENT_STORE,
     }
 )

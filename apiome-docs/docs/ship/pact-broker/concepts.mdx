@@ -1,0 +1,156 @@
+---
+title: Pact Broker concepts
+description: Pacticipants, versions, branches and tags — the names Pact tooling uses for your applications.
+sidebar_position: 1
+tags: [contracts, pact, ci, rest]
+---
+
+Pact tooling does not talk about projects and specifications. It talks about **pacticipants** —
+the applications on either side of a contract — and names each build of one by its **version**,
+its **branch** and its **tags**. Apiome keeps that registry per workspace. It is the model that
+pact publication, verification results and can-i-deploy are built on.
+
+This release has the registry and its REST API. Publishing pacts, verification results and
+can-i-deploy are not yet available, and there is no screen for the registry yet: use the
+[Pacticipants API](../../reference/rest/pacticipants.md).
+
+## Terms
+
+| Term | What it is |
+| --- | --- |
+| **Pacticipant** | An application that takes part in a pact, as a consumer, a provider or both. It has a **handle** (`billing-service`), a display name, and optionally a repository URL and a main branch. |
+| **Handle** | The lowercase name URLs and CI jobs use for a pacticipant. It is unique in the workspace and never changes. |
+| **Version** | One build of a pacticipant, named by a **version number** — usually a commit SHA or a semantic version. A version is recorded once and never changes. |
+| **Branch** | A branch of the pacticipant's repository (`main`, `feat/new-invoice`). A version is recorded *on* a branch. |
+| **Head** | The latest version recorded on a branch. |
+| **Main branch** | The branch a query reads when it names none. Set it on the pacticipant. |
+| **Tag** | A label on a version (`prod`). Tags are Pact's older way to name a branch or a stage; branches are preferred for new setups. |
+| **Binding** | A link from a pacticipant to what Apiome already knows about that application: the **project** that describes a provider, or the **consumer** registered on a project. |
+
+## How a pacticipant relates to projects and consumers
+
+A pacticipant stands on its own. It does not need a project, and one application is one
+pacticipant however many APIs it calls or serves. Two optional bindings connect it to the rest of
+the workspace:
+
+- **Project** — for a provider. Bind the pacticipant to the project that holds its specification.
+- **Consumer** — for a consumer. Bind it to the consumer you registered on a provider's project
+  (see [Consumers](../../build/projects.mdx#consumers)).
+
+Both must belong to the same workspace as the pacticipant. **Deleting a project or retiring a
+consumer does not delete the pacticipant.** The binding is cleared, and the pacticipant keeps its
+versions, branches and tags. Restoring the project does not restore the binding; set it again.
+
+## The rules the registry keeps
+
+- **Names are unique per workspace.** The handle is taken from the name when you do not give one
+  (`Billing Service` becomes `billing-service`), and a second pacticipant with the same handle is
+  refused with `409 pacticipant-slug-taken`. You can read a pacticipant by its handle, its id or
+  its name.
+- **A version never changes.** The first request that records version `1.4.0` creates it and
+  stores its build URL. Recording `1.4.0` again answers with the stored version; the build URL is
+  not replaced. Repeating a request is how a build adds a branch or a tag to a version it already
+  recorded.
+- **A branch head only moves forward.** Recording a version on a branch adds it to the branch. It
+  becomes the head only when it was recorded later than the current head. Re-running an old build
+  does not move the head back, and nothing else moves a head: not a tag, not a version recorded
+  on another branch.
+- **Tags are added once.** Tagging a version that already has the tag changes nothing.
+- **Version numbers, branch names and tags are stored exactly as sent** — case and punctuation
+  included. A value with a leading or trailing space or a control character is refused, not
+  repaired. Versions are ordered by when they were recorded, never by comparing their numbers.
+
+## Register a pacticipant
+
+```bash
+curl -X POST https://api.apiome.dev/v1/tenants/acme/pacticipants \
+  -H "Authorization: Bearer sk_live_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Billing Service",
+    "repository_url": "https://github.com/acme/billing-service",
+    "main_branch": "main",
+    "project": "billing-api"
+  }'
+```
+
+The answer carries the handle, `billing-service`. `project` takes a project's slug or id;
+`consumer_id` takes a consumer's id. Change the name, repository URL, main branch or bindings later
+with `PATCH`; send `null` to clear one.
+
+## Record a version from CI
+
+Record each build once it has a version number:
+
+```bash
+curl -X PUT https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service/versions/3f2a9c1 \
+  -H "Authorization: Bearer sk_live_…" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "branch": "main",
+    "build_url": "https://ci.example.com/builds/4812",
+    "tags": ["prod"]
+  }'
+```
+
+- The status is **`201`** when the request created the version and **`200`** when it already
+  existed.
+- `created` says the same in the body, and `head_moved` says whether `branch` now has this version
+  as its head.
+- The body is optional. A version can be recorded with no branch and no tags.
+- A version number cannot contain `/` in this URL. Branch names and tags can.
+
+Add a tag to a version that is already recorded:
+
+```bash
+curl -X PUT https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service/versions/3f2a9c1/tags/prod \
+  -H "Authorization: Bearer sk_live_…"
+```
+
+## Read versions and branch heads
+
+| To read | Request |
+| --- | --- |
+| Every pacticipant, by handle | `GET /v1/tenants/acme/pacticipants` |
+| A pacticipant's versions, latest first | `GET …/pacticipants/billing-service/versions` |
+| The versions on a branch — the first is its head | `GET …/versions?branch=main` |
+| The versions with a tag — the first is the latest | `GET …/versions?tag=prod` |
+| One version, with its branches and tags | `GET …/versions/3f2a9c1` |
+| Every branch with its head | `GET …/pacticipants/billing-service/branches` |
+
+Lists return 50 rows a page (at most 200 with `limit`). Pass the previous page's `next_cursor` as
+`cursor` until `has_more` is false.
+
+## Delete a pacticipant
+
+```bash
+curl -X DELETE https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service \
+  -H "Authorization: Bearer sk_live_…"
+```
+
+This deletes the pacticipant **with all of its versions, branches and tags**, and cannot be undone.
+The project and the consumer it was bound to are not touched.
+
+## Who can do what
+
+The registry is guarded by the **Pacts** resource (`pacts`):
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Read pacticipants, versions and branches | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Register a pacticipant, record a version, add a tag | `pacts:create` | — | ✓ | ✓ | ✓ |
+| Change a pacticipant | `pacts:edit` | — | ✓ | ✓ | ✓ |
+| Delete a pacticipant | `pacts:delete` | — | — | ✓ | ✓ |
+
+An API key acts with the role of the member it belongs to. Give a CI job a key from a member with
+the **Editor** role: it can register its application and record versions, but cannot delete a
+pacticipant. Custom roles do not get **Pacts** automatically — grant it in the permission matrix on
+[Roles](../../workspace/roles.mdx).
+
+## Related
+
+- [Pacticipants API](../../reference/rest/pacticipants.md) — every endpoint, parameter and error code.
+- [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — the breaking-change gates
+  and the consumer registry.
+- [Consumer contracts API](../../reference/rest/consumer-contracts.md) — record what each consumer
+  uses, or import its Pact file.

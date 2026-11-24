@@ -1,0 +1,12 @@
+{
+  "label": "Pact Broker",
+  "position": 5.5,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "generated-index",
+    "title": "Pact Broker",
+    "description": "Consumer-driven contract testing with Pact: pacticipants, versions, branches and tags.",
+    "slug": "/ship/pact-broker"
+  }
+}

@@ -33,6 +33,7 @@ const RESOURCES = [
   'verification_evidence',
   'consumer_contracts',
   'teams',
+  'pacts',
 ] as const;
 
 /** The spec-authoring resources an Editor writes to. */
@@ -84,7 +85,7 @@ export const DOCS_ROLES = [
     member_count: 3,
     permissions: [
       ...grant(RESOURCES, ['view']),
-      ...grant([...AUTHORING, 'lint_findings'], ['create', 'edit']),
+      ...grant([...AUTHORING, 'lint_findings', 'pacts'], ['create', 'edit']),
     ],
   },
   {
