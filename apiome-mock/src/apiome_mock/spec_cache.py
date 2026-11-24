@@ -1,15 +1,15 @@
-"""In-process LRU cache for compiled specs with TTL and NOTIFY invalidation."""
+"""Compiled-spec cache (single flight, revalidation at expiry) and its NOTIFY listener."""
 
 from __future__ import annotations
 
 import asyncio
 import time
-from collections import OrderedDict
-from dataclasses import dataclass
-from threading import Lock
+from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, Awaitable, Callable
 
 import structlog
+
+from apiome_mock.revalidating_cache import RevalidatingSpecCache
 
 if TYPE_CHECKING:
     from apiome_mock.spec_loader import CompiledSpec
@@ -17,52 +17,25 @@ if TYPE_CHECKING:
 _log = structlog.get_logger(__name__)
 
 
-@dataclass
-class _CacheEntry:
-    compiled: CompiledSpec
-    loaded_at: float
+def _compiled_spec_stamp(compiled: CompiledSpec) -> Hashable | None:
+    return compiled.freshness
 
 
-class SpecCache:
-    """Thread-safe LRU cache for :class:`CompiledSpec` with TTL expiry."""
+class SpecCache(RevalidatingSpecCache["CompiledSpec"]):
+    """LRU of :class:`CompiledSpec` by ``(tenant, project, version)`` (#7208, DBP-1.25).
 
-    def __init__(self, *, max_entries: int, ttl_seconds: float) -> None:
-        self._max_entries = max_entries
-        self._ttl_seconds = ttl_seconds
-        self._entries: OrderedDict[tuple[str, str, str], _CacheEntry] = OrderedDict()
-        self._lock = Lock()
+    See :class:`~apiome_mock.revalidating_cache.RevalidatingSpecCache`: concurrent misses share one
+    load, and an expired entry whose ``freshness`` stamp is unchanged is kept rather than reloaded.
+    """
 
-    def get(self, tenant: str, project: str, version: str) -> CompiledSpec | None:
-        key = (tenant, project, version)
-        now = time.monotonic()
-        with self._lock:
-            entry = self._entries.get(key)
-            if entry is None:
-                return None
-            if now - entry.loaded_at > self._ttl_seconds:
-                del self._entries[key]
-                return None
-            self._entries.move_to_end(key)
-            return entry.compiled
-
-    def put(self, compiled: CompiledSpec) -> None:
-        key = compiled.cache_key
-        with self._lock:
-            self._entries[key] = _CacheEntry(compiled=compiled, loaded_at=time.monotonic())
-            self._entries.move_to_end(key)
-            while len(self._entries) > self._max_entries:
-                self._entries.popitem(last=False)
-
-    def invalidate(self, tenant: str, project: str, version: str) -> None:
-        key = (tenant, project, version)
-        with self._lock:
-            if key in self._entries:
-                del self._entries[key]
-                _log.info("spec_cache_invalidated", tenant=tenant, project=project, version=version)
-
-    def clear(self) -> None:
-        with self._lock:
-            self._entries.clear()
+    def __init__(self, *, max_entries: int, ttl_seconds: float, clock: Callable[[], float] = time.monotonic) -> None:
+        super().__init__(
+            max_entries=max_entries,
+            ttl_seconds=ttl_seconds,
+            stamp_of=_compiled_spec_stamp,
+            event_prefix="spec_cache",
+            clock=clock,
+        )
 
 
 ConnectFn = Callable[[str], Awaitable[Any]]

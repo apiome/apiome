@@ -326,6 +326,20 @@ whether the mock is on, the compiled spec, the API key, the tenant's limits and 
 A streamed SSE or WebSocket message runs no statement either. Mocks that are already cached keep
 answering even when every connection in the pool is busy with slow queries.
 
+**Loading a spec.** The first request for a version, or the first one after a publish, loads and
+compiles the spec. However many requests arrive at once, one of them loads it and the rest wait for
+that load, so a burst for a cold version holds one connection, not one per request. A REST load runs
+12 statements whatever the size of the spec. The connection goes back to the pool before the spec is
+compiled, and compiling runs in a worker thread, so other requests keep being served meanwhile.
+
+**Keeping a spec.** A compiled spec is checked again after `APIOME_MOCK_SPEC_CACHE_TTL_SECONDS`.
+The check is one statement that compares the version's `updated_at` and `content_stamp` with the
+ones the spec was compiled from. When nothing changed, the spec is kept for another period without
+reloading it. A publish or a settings change reloads the spec on the next request. If that
+notification is lost, the check picks up the change instead. Each process keeps up to
+`APIOME_MOCK_SPEC_CACHE_MAX_ENTRIES` REST specs, and as many event, gRPC and GraphQL specs. A
+compiled 500-operation spec takes about 0.5 MiB, so lower the limit on small instances.
+
 **Mock on or off, visibility and mode.** These are cached per version for
 `APIOME_MOCK_ACCESS_CACHE_TTL_SECONDS`. A publish or a change to the mock's settings clears the
 version at once. Turning a mock off is picked up within the cache time: requests then get a
@@ -382,6 +396,8 @@ never heard.
 | `APIOME_MOCK_MONTHLY_USAGE_CACHE_TTL_SECONDS` | `30` | Seconds the month's usage total is reused between reads |
 | `APIOME_MOCK_UNKNOWN_TENANT_RPS` | `5` | Requests per second one client address may make to workspaces that do not exist |
 | `APIOME_MOCK_BROKER_PRODUCER_DB_CONCURRENCY` | `2` | Statements the Kafka producer runs at once |
+| `APIOME_MOCK_SPEC_CACHE_MAX_ENTRIES` | `256` | Compiled specs each cache keeps (REST, and event, gRPC and GraphQL). Was `128` |
+| `APIOME_MOCK_SPEC_CACHE_TTL_SECONDS` | `300` | Seconds before a compiled spec is checked for changes. An unchanged spec is kept |
 
 Measured on a scratch PostgreSQL 18 database, one hot public version, `GET` with 16 concurrent
 clients and 15,000 requests, before and after these changes. The usage totals matched the requests
@@ -390,6 +406,16 @@ served both times:
 | Request | Before | After |
 | --- | --- | --- |
 | Hosted REST mock, cached, no key | 2 statements and 2 checkouts per request; 4,680–4,810 requests/s | 0 statements and 0 checkouts per request (1 batched usage write every 2 s); 11,410–12,560 requests/s |
+
+Spec loading was measured on the same kind of database with a 500-operation published spec and a
+freshly started process. Times are from the first request to the last response, over three to seven
+runs:
+
+| Cold version | Before | After |
+| --- | --- | --- |
+| One request | 38–55 ms (median 42) | 29–40 ms (median 33) |
+| 100 requests at once | 570–610 ms; every request loaded the spec itself, all 10 connections busy | 130–145 ms; one load and one connection |
+| Unchanged spec after the cache time | Reloaded | 1 statement, kept |
 
 ### What the web app reuses within a request and on Home
 

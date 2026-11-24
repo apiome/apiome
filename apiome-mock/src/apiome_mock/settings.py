@@ -100,16 +100,22 @@ class Settings(BaseSettings):
         description="Concurrent database operations the periodic Kafka producer may run (#7207).",
     )
     spec_cache_max_entries: int = Field(
-        default=128,
+        default=256,
         ge=1,
         le=10_000,
-        description="Maximum compiled specs held in the in-process LRU cache.",
+        description=(
+            "Maximum compiled specs held in each in-process LRU cache (REST and canonical); was 128 before #7208."
+        ),
     )
     spec_cache_ttl_seconds: float = Field(
         default=300.0,
         gt=0,
         le=86_400.0,
-        description="TTL fallback for compiled spec cache entries (seconds).",
+        description=(
+            "How long a compiled spec is served before it is revalidated (seconds). At expiry one "
+            "statement compares the version's updated_at and content_stamp; an unchanged spec is "
+            "kept, a changed one is reloaded (#7208). NOTIFY invalidates sooner."
+        ),
     )
     spec_notify_channel: str = Field(
         default="apiome_mock_spec_published",

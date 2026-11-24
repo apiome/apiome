@@ -79,7 +79,7 @@ from apiome_mock.scenarios import (
 from apiome_mock.schema_synthesizer import parse_mock_seed, validate_value
 from apiome_mock.session_store import SessionStore
 from apiome_mock.spec_cache import SpecCache
-from apiome_mock.spec_loader import CompiledSpec, get_mock_access_status, load_compiled_spec
+from apiome_mock.spec_loader import CompiledSpec, fetch_spec_stamp, get_mock_access_status, load_compiled_spec
 from apiome_mock.stateful_handler import parse_mock_session_token, try_handle_stateful_crud
 
 _log = structlog.get_logger(__name__)
@@ -403,20 +403,31 @@ async def resolve_compiled_spec(
     version: str,
     api_key: ValidatedApiKey | None = None,
 ) -> Any:
-    """Return a compiled spec from cache or Postgres."""
-    cached = cache.get(tenant, project, version)
-    if cached is not None:
-        return cached
-    compiled = await load_compiled_spec(
-        pool,
-        tenant=tenant,
-        project=project,
-        version=version,
-        api_key=api_key,
+    """Return a compiled spec from cache or Postgres.
+
+    Concurrent misses for one version share a single load, and an expired entry is revalidated
+    with one statement instead of being reloaded when the version is unchanged (#7208, DBP-1.25).
+    The loader reads the access row from the access cache, which the caller's access check has
+    just filled, so a miss resolves the coordinates once.
+
+    Args:
+        pool: Database pool.
+        cache: Compiled-spec cache.
+        tenant: Tenant slug.
+        project: Project slug.
+        version: Version label.
+        api_key: The caller's validated key, if any.
+
+    Returns:
+        The compiled spec, or ``None`` when the version is not mockable for this caller.
+    """
+    return await cache.get_or_load(
+        tenant,
+        project,
+        version,
+        load=lambda: load_compiled_spec(pool, tenant=tenant, project=project, version=version, api_key=api_key),
+        revalidate=lambda: fetch_spec_stamp(pool, tenant=tenant, project=project, version=version),
     )
-    if compiled is not None:
-        cache.put(compiled)
-    return compiled
 
 
 async def handle_mock_request(

@@ -64,8 +64,9 @@ from psycopg_pool import AsyncConnectionPool
 from starlette.requests import Request
 
 from apiome_mock.api_key import ValidatedApiKey
-from apiome_mock.canonical_compiler import GraphQlRoute, compile_canonical_spec
+from apiome_mock.canonical_compiler import GraphQlRoute
 from apiome_mock.canonical_loader import load_canonical_spec
+from apiome_mock.canonical_resolve import resolve_compiled_canonical
 from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from apiome_mock.chaos import (
     CHAOS_DELAY_HEADER,
@@ -640,14 +641,18 @@ async def _resolve_graphql_route(
         return None
     if access_status_from_row(access_row, tenant=tenant, api_key=api_key) != "ok":
         return None
-    cached = cache.get(tenant, project, version)
-    if cached is not None:
-        return cached.graphql
-    loaded = await load_canonical_spec(pool, tenant=tenant, project=project, version=version, api_key=api_key)
-    if loaded is None or loaded.paradigm is not ApiParadigm.GRAPH:
-        return None
     try:
-        compiled = compile_canonical_spec(loaded)
+        # Single-flight load, compiled off the event loop (#7208, DBP-1.25).
+        compiled = await resolve_compiled_canonical(
+            pool,
+            cache,
+            tenant=tenant,
+            project=project,
+            version=version,
+            api_key=api_key,
+            access_row=access_row,
+            load=load_canonical_spec,
+        )
     except ValueError as exc:
         _log.warning(
             "graphql_mock_schema_build_failed", tenant=tenant, project=project, version=version, error=str(exc)
@@ -656,7 +661,8 @@ async def _resolve_graphql_route(
             {"errors": [_error("This version's GraphQL schema could not be built for mocking.", CODE_UNSUPPORTED)]},
             status_code=200,
         )
-    cache.put(compiled)
+    if compiled is None or compiled.paradigm is not ApiParadigm.GRAPH:
+        return None
     return compiled.graphql
 
 

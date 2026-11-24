@@ -1,11 +1,15 @@
-"""Load canonical API models from Postgres for multi-protocol mock serving (SIM-4.4)."""
+"""Load canonical API models from Postgres for multi-protocol mock serving (SIM-4.4).
+
+One statement on one pooled connection; the canonical model is rebuilt in a worker thread after the
+connection is back in the pool (#7208, DBP-1.25).
+"""
 
 from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Mapping
 from uuid import UUID
 
 from app.canonical_model import ApiParadigm, CanonicalApi
@@ -15,9 +19,16 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mock.api_key import ValidatedApiKey
-from apiome_mock.spec_loader import MockAccessStatus, _fetch_access_row, row_is_private_mode
+from apiome_mock.spec_loader import (
+    FRESHNESS_COLUMNS,
+    MockAccessStatus,
+    SpecStamp,
+    _fetch_access_row,
+    row_is_private_mode,
+    spec_stamp_from_row,
+)
 
-_RESOLVE_PUBLISHED_SOURCE = """
+_RESOLVE_PUBLISHED_SOURCE = f"""
     SELECT
       v.id AS version_record_id,
       p.id,
@@ -30,7 +41,8 @@ _RESOLVE_PUBLISHED_SOURCE = """
       v.source_tool_versions AS tool_versions,
       p.metadata,
       v.mock_settings,
-      t.slug AS tenant_slug
+      t.slug AS tenant_slug,
+      {FRESHNESS_COLUMNS}
     FROM apiome.versions v
     INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
     INNER JOIN apiome.tenants t ON t.id = p.tenant_id AND t.deleted_at IS NULL AND t.enabled IS TRUE
@@ -43,7 +55,7 @@ _RESOLVE_PUBLISHED_SOURCE = """
     LIMIT 1
 """
 
-_RESOLVE_DRAFT_SOURCE = """
+_RESOLVE_DRAFT_SOURCE = f"""
     SELECT
       v.id AS version_record_id,
       p.id,
@@ -56,7 +68,8 @@ _RESOLVE_DRAFT_SOURCE = """
       v.source_tool_versions AS tool_versions,
       p.metadata,
       v.mock_settings,
-      t.slug AS tenant_slug
+      t.slug AS tenant_slug,
+      {FRESHNESS_COLUMNS}
     FROM apiome.versions v
     INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL
     INNER JOIN apiome.tenants t ON t.id = p.tenant_id AND t.deleted_at IS NULL AND t.enabled IS TRUE
@@ -84,6 +97,9 @@ class LoadedCanonicalSpec:
     source_format: str | None
     mock_settings: Any = None
     """The version's raw ``mock_settings`` (scenarios, chaos, fixture packs, ``graphql``; #5729)."""
+    freshness: SpecStamp | None = None
+    """The stamp the model was built from (#7208, DBP-1.25); the cache revalidates against it.
+    ``None`` means an expired entry is reloaded."""
 
     @property
     def cache_key(self) -> tuple[str, str, str]:
@@ -115,9 +131,25 @@ async def load_canonical_spec(
     project: str,
     version: str,
     api_key: ValidatedApiKey | None = None,
+    access_row: Mapping[str, Any] | None = None,
 ) -> LoadedCanonicalSpec | None:
-    """Resolve slug coordinates and rebuild the canonical model from captured source."""
-    access_row = await _fetch_access_row(pool, tenant=tenant, project=project, version=version)
+    """Resolve slug coordinates and rebuild the canonical model from captured source.
+
+    Args:
+        pool: Database pool.
+        tenant: Tenant slug.
+        project: Project slug.
+        version: Version label.
+        api_key: The caller's validated key (required for a private draft).
+        access_row: The access row the caller already fetched; read from the access cache when
+            omitted.
+
+    Returns:
+        The loaded model, or ``None`` when the version is not mockable or its source cannot be
+        converted.
+    """
+    if access_row is None:
+        access_row = await _fetch_access_row(pool, tenant=tenant, project=project, version=version)
     if access_row is None or not access_row.get("mock_enabled"):
         return None
 
@@ -154,6 +186,7 @@ async def load_canonical_spec(
         api=api,
         source_format=row.get("source_format"),
         mock_settings=row.get("mock_settings", access_row.get("mock_settings")),
+        freshness=spec_stamp_from_row(row, id_column="version_record_id"),
     )
 
 
