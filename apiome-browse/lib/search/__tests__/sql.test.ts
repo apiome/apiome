@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolveSearchRequest } from '../params';
-import { SEARCH_HIT_CAP, applicableKinds, buildCatalogSearchSql, escapeLikePattern, orderBySql } from '../sql';
+import { SEARCH_KIND_CAP, applicableKinds, buildCatalogSearchSql, escapeLikePattern, orderBySql } from '../sql';
 import { HIT_KINDS } from '../kinds';
 
 function build(state: Parameters<typeof resolveSearchRequest>[0]) {
@@ -46,9 +46,39 @@ describe('buildCatalogSearchSql', () => {
     expect(text).toContain(`ILIKE ${draftSlot} ESCAPE '\\')`);
   });
 
-  it('restricts to each project\'s latest version unless all versions are asked for', () => {
-    expect(build({ q: 'x' }).text).toContain('sc.version_rank = 1');
-    expect(build({ q: 'x', all: '1' }).text).not.toContain('sc.version_rank = 1');
+  it("scopes to each project's latest version through the summary table, without a window", () => {
+    const { text } = build({ q: 'x' });
+    const scope = text.slice(text.indexOf('WITH scope AS'), text.indexOf('sv AS ('));
+    expect(scope).toContain('FROM apiome.browse_public_projects b');
+    expect(scope).toContain('JOIN apiome.versions v ON v.id = b.latest_version_id');
+    expect(text).not.toContain('ROW_NUMBER() OVER (PARTITION BY');
+    expect(text).not.toContain('version_rank');
+  });
+
+  it('scopes to every public version of the projects in range when all versions are asked for', () => {
+    const { text } = build({ q: 'x', all: '1' });
+    const scope = text.slice(text.indexOf('WITH scope AS'), text.indexOf('sv AS ('));
+    expect(scope).toContain('JOIN apiome.versions v ON v.project_id = b.project_id');
+    expect(scope).toContain("AND v.visibility = 'public'");
+    expect(scope).toContain('AND v.published = true');
+    expect(scope).toContain('AND v.deleted_at IS NULL');
+    expect(scope).not.toContain('b.latest_version_id');
+  });
+
+  it('resolves org: and project: inside the scope, before any version is read (DBP-1.27)', () => {
+    const { text, values } = build({ q: 'x org:acme project:payments format:openapi' });
+    const scope = text.slice(text.indexOf('WITH scope AS'), text.indexOf('sv AS ('));
+    const sv = text.slice(text.indexOf('sv AS ('), text.indexOf('hits AS ('));
+    expect(values).toContainEqual(['acme']);
+    expect(values).toContainEqual(['payments']);
+    // The owner filters sit on the tenant and project rows of the scope itself…
+    expect(scope).toContain('(t.slug = ANY(');
+    expect(scope).toContain('OR LOWER(t.name) = ANY(');
+    expect(scope).toContain('(p.slug = ANY(');
+    // …and only the filters that depend on the version are applied afterwards.
+    expect(sv).not.toContain('tenant_slug = ANY(');
+    expect(sv).not.toContain('project_slug = ANY(');
+    expect(sv).toContain('sc.source_format = ANY(');
   });
 
   it('applies the scope filters with array parameters', () => {
@@ -63,7 +93,7 @@ describe('buildCatalogSearchSql', () => {
     expect(values).toContainEqual(['stable']);
     expect(values).toContain('2026-01-01');
     expect(values).toContain('2026-07-01');
-    expect(text).toContain('sc.tenant_slug = ANY(');
+    expect(text).toContain('t.slug = ANY(');
     expect(text).toContain('sc.source_format LIKE ANY(');
     expect(text).toContain('FROM apiome.version_tags vt');
     expect(text).toContain('sc.published_at >= ');
@@ -81,19 +111,58 @@ describe('buildCatalogSearchSql', () => {
     expect(text).not.toContain("'schema' AS hit_type");
   });
 
-  it('filters the page by the requested kinds while counting every kind', () => {
-    const { text, values } = build({ q: 'x', scope: 'schemas' });
-    expect(values).toContainEqual(['schema', 'property']);
-    expect(text).toContain('hit_type = ANY(');
-    expect(text).toContain('FROM hits_all GROUP BY 1) x), \'[]\'::json) AS kind_facets');
-    expect(text).toContain('(SELECT COUNT(*)::int FROM hits_all) AS total_all_kinds');
+  /** The members that produce rows: the body of the `hits` CTE. */
+  const rowsPart = (text: string) => text.slice(text.indexOf('hits AS ('), text.indexOf('kind_counts AS ('));
+  /** The members that are only counted: the rest of the `kind_counts` CTE. */
+  const countsPart = (text: string) => text.slice(text.indexOf('kind_counts AS ('), text.indexOf('page AS ('));
+
+  it('produces rows for the requested kinds only, and only counts the others (DBP-1.27)', () => {
+    const { text } = build({ q: 'x', scope: 'schemas' });
+    // Schema and property hits are the rows…
+    expect(rowsPart(text)).toContain("'schema' AS hit_type");
+    expect(rowsPart(text)).toContain("'property' AS hit_type");
+    expect(rowsPart(text)).not.toContain("'operation' AS hit_type");
+    expect(rowsPart(text)).not.toContain('FROM apiome.path_operation');
+    // …and the other kinds are run for their count alone, for the scope tabs.
+    expect(countsPart(text)).toContain("SELECT 'operation'::text AS hit_type, COUNT(*)::int AS c FROM (");
+    expect(countsPart(text)).toContain("SELECT 'organization'::text AS hit_type, COUNT(*)::int AS c FROM (");
+    expect(text).not.toContain('hits_all');
+    expect(text).toContain('FROM kind_counts kc), \'[]\'::json) AS kind_facets');
+    expect(text).toContain('(SELECT COALESCE(SUM(kc.c), 0)::int FROM kind_counts kc) AS total_all_kinds');
   });
 
-  it('pages with the request\'s page size and offset, and caps the corpus', () => {
+  it('runs only the requested kinds when the caller already has the other counts', () => {
+    const request = resolveSearchRequest({ q: 'x', scope: 'schemas', page: '2' });
+    const all = buildCatalogSearchSql(request)!;
+    const lean = buildCatalogSearchSql(request, { facets: false, otherKindCounts: false })!;
+    expect(countsPart(lean.text)).not.toContain("'operation'::text AS hit_type");
+    expect(lean.text).not.toContain('FROM apiome.path_operation');
+    expect(lean.text).not.toContain('FROM apiome.version_changelogs');
+    expect(lean.text.length).toBeLessThan(all.text.length);
+    // The page's own kinds still run and are still counted.
+    expect(rowsPart(lean.text)).toContain("'schema' AS hit_type");
+    expect(countsPart(lean.text)).toContain('SELECT hit_type, COUNT(*)::int AS c FROM hits GROUP BY 1');
+  });
+
+  it('caps every kind on its own, so a broad term cannot drop a kind (DBP-1.27)', () => {
+    const { text, values } = build({ q: 'x' });
+    const cap = `$${values.indexOf(SEARCH_KIND_CAP) + 1}`;
+    expect(values.filter((v) => v === SEARCH_KIND_CAP)).toHaveLength(1);
+    // One capped sub-select per kind — twelve of them — and no cap on their union.
+    const members = rowsPart(text).split(`) member LIMIT ${cap})`);
+    expect(members).toHaveLength(HIT_KINDS.length + 1);
+    for (const kind of HIT_KINDS) expect(rowsPart(text)).toContain(`'${kind}' AS hit_type`);
+    expect(rowsPart(text)).not.toMatch(/\) members\s+LIMIT/);
+    // A kind that is only counted is capped the same way.
+    const counted = build({ q: 'x', scope: 'schemas' });
+    const countedCap = `$${counted.values.indexOf(SEARCH_KIND_CAP) + 1}`;
+    expect(countsPart(counted.text).split(`LIMIT ${countedCap}) other`).length).toBeGreaterThan(5);
+  });
+
+  it('pages with the request\'s page size and offset', () => {
     const { values } = build({ q: 'x', page: '3' });
     expect(values).toContain(25);
     expect(values).toContain(50);
-    expect(values).toContain(SEARCH_HIT_CAP);
   });
 
   it('ranks with exact / prefix / contains tiers plus the kind weight', () => {

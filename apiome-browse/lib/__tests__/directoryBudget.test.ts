@@ -106,33 +106,56 @@ describe('directory statement budget', () => {
 });
 
 describe('directory statements', () => {
-  it('rank the operations rail on stored counts and compute full card facts for the winners only', async () => {
+  it('read the summary table, never the versions of the whole catalog (DBP-1.27)', async () => {
+    await renderHome('operations');
+    const byScope = (needle: string) => query.mock.calls.map(sqlOf).find((text) => text.includes(needle)) ?? '';
+    for (const text of [byScope('tenant_count'), byScope('GROUP BY b.tenant_id'), byScope('ORDER BY t.created_at DESC')]) {
+      expect(text).toContain('apiome.browse_public_projects b');
+      expect(text).not.toContain('apiome.versions');
+      expect(text).not.toContain('apiome.projects');
+    }
+  });
+
+  it('pick every rail order from the summary table, then compute card facts for the winners only', async () => {
+    for (const sort of ['versions', 'operations', 'grade'] as const) {
+      query.mockClear();
+      await getMostVersionedProjects(8, sort);
+      const text = sqlOf(query.mock.calls[0]);
+      const ranked = text.slice(text.indexOf('WITH ranked AS'), text.indexOf('SELECT p.id'));
+      // The ranking pass reads the summary table alone and stops at the limit…
+      expect(ranked).toContain('FROM apiome.browse_public_projects b');
+      expect(ranked).toContain('LIMIT $1');
+      expect(ranked).not.toContain('apiome.versions');
+      expect(ranked).not.toContain('sdk_generation_settings');
+      // …and the facts are joined for those projects' latest versions.
+      const rest = text.slice(text.indexOf('SELECT p.id'));
+      expect(rest).toContain('f_v.id = rk.latest_version_id');
+      expect(rest).toContain('sdk_generation_settings');
+    }
+  });
+
+  it('give the three rail orders the same shape, differing only in the ORDER BY', async () => {
+    const shapes: string[] = [];
+    for (const sort of ['versions', 'operations', 'grade'] as const) {
+      query.mockClear();
+      await getMostVersionedProjects(8, sort);
+      shapes.push(sqlOf(query.mock.calls[0]).replace(/ORDER BY [^\n]+/g, 'ORDER BY …'));
+    }
+    expect(shapes[1]).toBe(shapes[0]);
+    expect(shapes[2]).toBe(shapes[0]);
+  });
+
+  it('rank the operations rail by the stored operation count', async () => {
     await getMostVersionedProjects(8, 'operations');
     const text = sqlOf(query.mock.calls[0]);
-    // The ranking pass reads versions.operation_count (falling back to a count when it is NULL)…
-    const ranked = text.slice(text.indexOf('ranked AS'), text.indexOf('SELECT rk.id'));
-    expect(ranked).toContain('COALESCE(r_v.operation_count,');
-    expect(ranked).toContain('LIMIT $1');
-    // …and keeps the SDK and schema lookups out of it.
-    expect(ranked).not.toContain('sdk_generation_settings');
-    expect(ranked).not.toContain('apiome.classes');
-    expect(text.slice(text.indexOf('SELECT rk.id'))).toContain('sdk_generation_settings');
+    expect(text).toContain('ORDER BY b.operation_count DESC, b.version_count DESC, b.latest_published_at DESC NULLS LAST');
+    expect(text).toContain('cf.operation_count DESC NULLS LAST');
   });
 
-  it('limit the default rail before any version is looked at', async () => {
-    await getMostVersionedProjects(8, 'versions');
-    const text = sqlOf(query.mock.calls[0]);
-    const projectVersions = text.slice(text.indexOf('project_versions AS'), text.indexOf('ranked AS'));
-    expect(projectVersions).toContain('ORDER BY version_count DESC, latest_published_at DESC NULLS LAST');
-    expect(projectVersions).toContain('LIMIT $1');
-    // Versions are counted per project id, before project and tenant rows are joined.
-    expect(text).toMatch(/counted AS \([\s\S]*GROUP BY v\.project_id/);
-  });
-
-  it('find the newest organizations with an EXISTS probe, not a DISTINCT over every public version', async () => {
+  it('find the newest organizations with an EXISTS probe of the summary table', async () => {
     await getNewestTenants(8);
     const text = sqlOf(query.mock.calls[0]);
-    expect(text).toContain('AND EXISTS (');
+    expect(text).toContain('AND EXISTS (SELECT 1 FROM apiome.browse_public_projects b WHERE b.tenant_id = t.id)');
     expect(text).not.toContain('DISTINCT');
     expect(text).toContain('ORDER BY t.created_at DESC');
   });
@@ -140,7 +163,14 @@ describe('directory statements', () => {
   it('roll the organization list up by tenant id before joining tenant rows', async () => {
     await getPublicTenants();
     const text = sqlOf(query.mock.calls[0]);
-    expect(text).toContain('GROUP BY p.tenant_id');
+    expect(text).toContain('GROUP BY b.tenant_id');
     expect(text).not.toContain('GROUP BY t.id, t.name');
+  });
+
+  it('count the directory from the summary rows', async () => {
+    await getDirectoryStats();
+    const text = sqlOf(query.mock.calls[0]);
+    expect(text).toContain('COUNT(DISTINCT b.tenant_id)::int as tenant_count');
+    expect(text).toContain('COALESCE(SUM(b.version_count), 0)::int as version_count');
   });
 });

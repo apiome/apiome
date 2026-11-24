@@ -1,9 +1,5 @@
 import { notFound } from 'next/navigation';
-import {
-  getPublicVersionChangelog,
-  getPublicVersionDetails,
-  getPublicVersionsForProject,
-} from '../../../../../../lib/db/helper';
+import { loadVersionPage } from '../../../../../../lib/db/routeLoaders';
 import { buildMockBaseUrl } from '../../../../../../lib/mock/mockUrl';
 import { VersionClient } from './VersionClient';
 import { getReaderSession } from '../../../../portal/readerSession';
@@ -20,17 +16,20 @@ export default async function VersionPage({
   const { tab, find } = await searchParams;
   // BDX-1.3: `?find=` pre-fills the "find in this version" box (a search result deep link).
   const initialFind = sanitizeSearchInput(Array.isArray(find) ? (find[0] ?? '') : (find ?? ''));
-  const [version, versions, changelog, readerSession] = await Promise.all([
-    getPublicVersionDetails(tenantSlug, projectSlug, versionSlug),
-    getPublicVersionsForProject(tenantSlug, projectSlug),
-    getPublicVersionChangelog(tenantSlug, projectSlug, versionSlug),
+  const initialTab = tab === 'feedback' ? 'feedback' : tab === 'changes' ? 'changes' : 'specification';
+  const [data, readerSession] = await Promise.all([
+    // One statement (DBP-1.27): the version, its facts, the sidebar's versions and the changelog's
+    // summary. The changelog's entries come with it only when the page opens on the Changes tab;
+    // otherwise the tab fetches them from `changes.json` when it is opened.
+    loadVersionPage(tenantSlug, projectSlug, versionSlug, initialTab === 'changes'),
     // COL-4.4: the Feedback tab needs to know whether a reader of this portal is signed in.
     getReaderSession(tenantSlug),
   ]);
 
-  if (!version) {
+  if (!data) {
     notFound();
   }
+  const { version, versions, changelog } = data;
 
   const restApiBaseUrl =
     process.env.NEXT_PUBLIC_REST_API_BASE_URL || 'http://localhost:8000/v1';
@@ -55,7 +54,7 @@ export default async function VersionPage({
       mockBaseUrl={mockBaseUrl}
       readerEmail={readerSession?.reader.email ?? null}
       initialFind={initialFind}
-      initialTab={tab === 'feedback' ? 'feedback' : tab === 'changes' ? 'changes' : 'specification'}
+      initialTab={initialTab}
     />
   );
 }

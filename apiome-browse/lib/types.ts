@@ -84,6 +84,22 @@ export interface McpPublicHostGroup {
   endpoints: McpPublicEndpoint[];
 }
 
+/** One page of the public MCP index, with the catalog's totals (DBP-1.27, #7210). */
+export interface McpPublicIndexPage {
+  /** This page's endpoints, grouped by host. */
+  groups: McpPublicHostGroup[];
+  /** The 1-based page number. */
+  page: number;
+  /** Endpoints per page. */
+  pageSize: number;
+  /** Public endpoints in the whole catalog. */
+  totalEndpoints: number;
+  /** Distinct hosts in the whole catalog. */
+  totalHosts: number;
+  /** Whether a later page exists. */
+  hasNext: boolean;
+}
+
 /** A published curated collection and its public-visible endpoints (MCAT-22.4). */
 export interface McpPublicCollection {
   id: string;

@@ -9,7 +9,8 @@
 
 import type { Metadata } from 'next';
 
-import { getPublicTenantBySlug } from '../../../../../lib/db/helper';
+import { getPublicTenantIdentity } from '../../../../../lib/db/identity';
+import { softly } from '../../../../../lib/db/query';
 import { isTenantSlug, portalPath } from '../../../../../lib/portal/session';
 import { withBasePath } from '../../readerSession';
 import { redirect } from 'next/navigation';
@@ -35,7 +36,8 @@ export default async function ExchangePage({ searchParams }: { searchParams: Pro
   if (!isTenantSlug(tenant) || !token) {
     redirect(portalPath('/portal/auth/error', { tenant: isTenantSlug(tenant) ? tenant : null, reason: 'invalid' }));
   }
-  const row = await getPublicTenantBySlug(tenant);
+  // The name only decorates the card: when the catalog cannot be read, the slug stands in.
+  const row = await softly(null, () => getPublicTenantIdentity(tenant));
   const tenantName: string = row?.name ?? tenant;
 
   return (

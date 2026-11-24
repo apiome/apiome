@@ -11,7 +11,7 @@ import { hitCrumbs, hitHref, hitKindLabel, type CatalogSearchHit } from '../../.
 import type { HitKind } from '../../../../lib/search/kinds';
 import { FactsLine } from '../FactsLine';
 import { Highlight } from './Highlight';
-import { HitVersionMenu } from './HitVersionMenu';
+import { HitVersionMenu, type VersionMenuMore } from './HitVersionMenu';
 import { MethodBadge } from './httpMethodTone';
 
 /** The icon tile tone per kind: what a visitor scans first. */
@@ -140,6 +140,7 @@ export function HitRow({
   onSelect,
   compare,
   versionMenu,
+  versionMenuMore,
 }: {
   hit: CatalogSearchHit;
   needles: readonly string[];
@@ -152,6 +153,8 @@ export function HitRow({
   compare?: HitCompareControl;
   /** Results page only: the project's other published versions, for the version chip's menu. */
   versionMenu?: readonly VersionMenuEntry[];
+  /** Results page only: the versions the menu does not list yet, and how to load them. */
+  versionMenuMore?: VersionMenuMore;
 }) {
   const href = hitHref(hit);
   const allCrumbs = hitCrumbs(hit);
@@ -199,7 +202,9 @@ export function HitRow({
                   </Fragment>
                 ))}
               </span>
-              {showVersionMenu && <HitVersionMenu versionSlug={hit.version_slug as string} entries={versionMenu ?? []} />}
+              {showVersionMenu && (
+                <HitVersionMenu versionSlug={hit.version_slug as string} entries={versionMenu ?? []} more={versionMenuMore} />
+              )}
               {compare && (
                 <label className="hit-compare-toggle relative z-10 ml-auto" data-checked={compare.checked ? 'true' : 'false'} data-testid="hit-compare">
                   <input type="checkbox" checked={compare.checked} onChange={compare.onToggle} aria-label={`Compare ${hit.title} (v${hit.version_slug})`} />

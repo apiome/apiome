@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { formatLabel, paradigmLabel } from '../../../lib/browseFacets';
 import { severityLabel } from '../../../lib/changelog/group';
-import { isCompareEligible, toggleCompare, versionMenuEntries, type HitVersionsMap } from '../../../lib/search/compare';
+import {
+  isCompareEligible,
+  moreVersionsCount,
+  toggleCompare,
+  versionMenuEntries,
+  type HitVersion,
+  type HitVersionCounts,
+  type HitVersionsMap,
+} from '../../../lib/search/compare';
 import { groupHitsByKind, hitHref, type CatalogSearchHit, type CatalogSearchResponse } from '../../../lib/search/hits';
 import {
   HIT_KIND_LABELS,
@@ -40,6 +48,7 @@ import { GradeBadge } from '../mcp/McpShared';
 import { FacetRail, type FacetRailActions } from '../components/search/FacetRail';
 import { Highlight } from '../components/search/Highlight';
 import { HitRow } from '../components/search/HitRow';
+import type { VersionMenuMore } from '../components/search/HitVersionMenu';
 import { CompareBar } from '../components/search/CompareBar';
 import { SearchBox } from '../components/search/SearchBox';
 import { OperatorChips, SyntaxHelpCard } from '../components/search/SyntaxHelp';
@@ -88,6 +97,45 @@ function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
 }
 
 /**
+ * The versions a hit's menu does not list, and how to load them (DBP-1.27): the page fills a menu
+ * with the project's newest versions and `/api/search/hit-versions` returns the complete list.
+ *
+ * @param hit The hit.
+ * @param versions The versions the page looked up for it.
+ * @param total How many published versions the hit's project has in all.
+ * @returns Nothing when the menu is already complete.
+ */
+function versionMenuMoreFor(
+  hit: CatalogSearchHit,
+  versions: readonly HitVersion[] | undefined,
+  total: number | undefined
+): VersionMenuMore | undefined {
+  const count = moreVersionsCount(versions, total);
+  if (count === 0 || !isCompareEligible(hit)) return undefined;
+  return {
+    count,
+    load: async () => {
+      const query = new URLSearchParams({
+        id: hit.hit_id,
+        type: hit.hit_type,
+        tenant: hit.tenant_slug,
+        project: hit.project_slug ?? '',
+        version: hit.version_slug ?? '',
+      });
+      if (hit.hit_type === 'operation') {
+        query.set('method', hit.method ?? '');
+        query.set('path', hit.path ?? '');
+      }
+      if (hit.hit_type === 'schema') query.set('name', hit.anchor_key ?? '');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/api/search/hit-versions?${query}`);
+      if (!res.ok) throw new Error(`hit-versions answered ${res.status}`);
+      const body = (await res.json()) as { versions?: HitVersion[] };
+      return versionMenuEntries(hit, body.versions ?? []);
+    },
+  };
+}
+
+/**
  * The results page. The URL is the state: every control navigates, the server re-runs the
  * engine, and this component renders what came back. Local state is limited to the text in the
  * box, the keyboard cursor, the group toggle, the mobile filter drawer and the compare selection
@@ -97,6 +145,7 @@ export function SearchClient({
   request,
   response,
   hitVersions = {},
+  hitVersionCounts = {},
   mcpHits,
   mcpQuery,
 }: {
@@ -104,7 +153,13 @@ export function SearchClient({
   response: CatalogSearchResponse;
   /** hit_id → the project's published versions, for the version chip menus (BDX-2.6). */
   hitVersions?: HitVersionsMap;
-  mcpHits: McpPublicSearchHit[];
+  /** hit_id → how many published versions the project has in all (DBP-1.27: the menus are capped). */
+  hitVersionCounts?: HitVersionCounts;
+  /**
+   * The MCP catalog's matches, or null when it was not searched: it is searched only on its own
+   * tab (DBP-1.27), so the other tabs show the MCP tab without a count.
+   */
+  mcpHits: McpPublicSearchHit[] | null;
   mcpQuery: string;
 }) {
   const router = useRouter();
@@ -260,9 +315,9 @@ export function SearchClient({
       operations: sum(SCOPE_KINDS.operations),
       schemas: sum(SCOPE_KINDS.schemas),
       catalog: sum(SCOPE_KINDS.catalog),
-      mcp: mcpHits.length,
-    } satisfies Record<SearchScope, number>;
-  }, [response, mcpHits.length]);
+      mcp: mcpHits ? mcpHits.length : null,
+    } satisfies Record<SearchScope, number | null>;
+  }, [response, mcpHits]);
 
   const activeCount = activeFilterCount(request);
   const groups = useMemo(() => (grouped ? groupHitsByKind(rows) : [{ kind: null, rows }]), [grouped, rows]);
@@ -351,10 +406,12 @@ export function SearchClient({
                     title={disabled ? 'Type a word to search MCP servers' : undefined}
                   >
                     {SEARCH_SCOPE_LABELS[scope]}
-                    <span className={`rounded-full px-1.5 text-[10.5px] tabular-nums ${active ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'}`}>
-                      {count.toLocaleString()}
-                      {scope === 'all' && response.truncated ? '+' : ''}
-                    </span>
+                    {count !== null && (
+                      <span className={`rounded-full px-1.5 text-[10.5px] tabular-nums ${active ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'}`}>
+                        {count.toLocaleString()}
+                        {scope === 'all' && response.truncated ? '+' : ''}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -415,7 +472,7 @@ export function SearchClient({
             {/* Results */}
             <section className="min-w-0 space-y-3" aria-live="polite" aria-busy={isPending}>
               {request.scope === 'mcp' ? (
-                <McpResults hits={mcpHits} query={mcpQuery} needles={needles} />
+                <McpResults hits={mcpHits ?? []} query={mcpQuery} needles={needles} />
               ) : (
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -487,7 +544,7 @@ export function SearchClient({
                   </div>
 
                   {rows.length === 0 && !isPending ? (
-                    <NoResults request={request} chips={chips} mcpCount={mcpHits.length} onGo={go} />
+                    <NoResults request={request} chips={chips} onGo={go} />
                   ) : (
                     <div className={`space-y-5 ${isPending ? 'opacity-60 transition-opacity' : ''}`}>
                       {groups.map((group) => {
@@ -529,6 +586,7 @@ export function SearchClient({
                                       : undefined
                                   }
                                   versionMenu={versionMenuEntries(hit, hitVersions[hit.hit_id])}
+                                  versionMenuMore={versionMenuMoreFor(hit, hitVersions[hit.hit_id], hitVersionCounts[hit.hit_id])}
                                 />
                               ))}
                             </ul>
@@ -741,12 +799,10 @@ function Landing({
 function NoResults({
   request,
   chips,
-  mcpCount,
   onGo,
 }: {
   request: SearchRequest;
   chips: ActiveChip[];
-  mcpCount: number;
   onGo: (state: SearchUrlState) => void;
 }) {
   const needles = textNeedles(request.parsed);
@@ -779,12 +835,12 @@ function NoResults({
           </li>
         ))}
         {needles.length > 1 && <li>Try fewer words — every word must match.</li>}
-        {needles.length > 0 && mcpCount > 0 && (
+        {needles.length > 0 && (
           <li>
             <button type="button" onClick={() => onGo(patchSearchRequest(request, { scope: 'mcp', type: null }))} className="font-medium text-[var(--brand)] hover:underline">
-              {mcpCount} MCP server {mcpCount === 1 ? 'capability matches' : 'capabilities match'}
+              Search MCP servers
             </button>{' '}
-            in the MCP catalog.
+            for the same words.
           </li>
         )}
         <li>

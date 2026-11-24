@@ -13,9 +13,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { cache } from 'react';
 
-import { getPortalProduct } from '../../../../../../lib/db/products';
+import { loadProductPage } from '../../../../../../lib/db/routeLoaders';
 import {
   approvalLabel,
   authStrategyLabel,
@@ -35,8 +34,8 @@ import { getReaderSession } from '../../../../portal/readerSession';
 
 export const dynamic = 'force-dynamic';
 
-/** One product read per request, shared by the metadata and the page. */
-const loadProduct = cache(getPortalProduct);
+/** One product read per request, shared by the metadata and the page (`cache()` in the loader). */
+const loadProduct = loadProductPage;
 
 interface ProductPageParams {
   params: Promise<{ tenantSlug: string; productSlug: string }>;

@@ -98,7 +98,8 @@ interface HomeClientProps {
 
 /**
  * The project rail's sort control: one link per order, so the server re-queries and the choice is
- * shareable. `scroll={false}` keeps the visitor at the rail.
+ * shareable. `scroll={false}` keeps the visitor at the rail. The links are `nofollow` (DBP-1.27):
+ * each is the same home page in another order, which a crawler has no reason to fetch.
  */
 function RailSortControl({ current }: { current: ProjectRailSort }) {
   return (
@@ -113,6 +114,7 @@ function RailSortControl({ current }: { current: ProjectRailSort }) {
           <Link
             key={option.value}
             href={href}
+            rel="nofollow"
             scroll={false}
             aria-current={active ? 'true' : undefined}
             className={`rounded px-2 py-0.5 font-medium transition-colors ${

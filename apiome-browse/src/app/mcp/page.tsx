@@ -9,7 +9,14 @@ export const metadata = {
     'Browse published public Model Context Protocol servers by site, ranked by quality grade.',
 };
 
-export default async function McpBrowsePage() {
-  const groups = await getPublicMcpEndpointsByHost();
-  return <McpBrowseClient groups={groups} />;
+export default async function McpBrowsePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string | string[] }>;
+}) {
+  // DBP-1.27: the index is paged — 100 servers per page, `?page=2` for the next.
+  const raw = (await searchParams).page;
+  const page = Number.parseInt((Array.isArray(raw) ? raw[0] : raw) ?? '1', 10);
+  const index = await getPublicMcpEndpointsByHost(Number.isFinite(page) ? page : 1);
+  return <McpBrowseClient index={index} />;
 }

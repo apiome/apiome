@@ -451,6 +451,19 @@ export function buildScaleSteps(params: ScaleParams): ScaleStep[] {
       doneSql:
         "SELECT NOT EXISTS (SELECT 1 FROM apiome.mcp_endpoint_versions WHERE tool_count IS NULL) AS done",
     },
+    // The public-catalog summary Browse reads (V431, DBP-1.27 #7210). Its triggers summarized
+    // each project when its revisions were inserted — before their content and their publish
+    // counts existed, both of which the seed writes with triggers off — so the rows are refreshed
+    // here with the migration's own function. Without it the home rails in the plan check would
+    // rank every project at zero operations.
+    {
+      ...step("browse_public_projects", "apiome.browse_public_projects", Math.ceil(params.projects / 4), "", `
+      SELECT apiome.refresh_browse_public_projects(ARRAY(SELECT id FROM apiome.projects))`),
+      doneSql:
+        "SELECT EXISTS (SELECT 1 FROM apiome.browse_public_projects) AND NOT EXISTS (" +
+        "SELECT 1 FROM apiome.browse_public_projects b JOIN apiome.versions v ON v.id = b.latest_version_id " +
+        "WHERE v.operation_count IS DISTINCT FROM b.operation_count OR v.schema_count IS DISTINCT FROM b.schema_count) AS done",
+    },
   ];
 }
 

@@ -10,7 +10,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { getPublicTenantBySlug } from '../../../../lib/db/helper';
+import { getPublicTenantIdentity } from '../../../../lib/db/identity';
+import { softly } from '../../../../lib/db/query';
 import { isTenantSlug, portalPath, safeReturnTo } from '../../../../lib/portal/session';
 import { SignInForm } from './SignInForm';
 
@@ -53,7 +54,8 @@ export default async function ReaderSignInPage({ searchParams }: { searchParams:
   }
 
   const returnTo = safeReturnTo(first(params.return_to), `/tenant/${tenant}`);
-  const row = await getPublicTenantBySlug(tenant);
+  // The name only decorates the card: when the catalog cannot be read, the slug stands in.
+  const row = await softly(null, () => getPublicTenantIdentity(tenant));
   const tenantName: string = row?.name ?? tenant;
 
   if (sent) {

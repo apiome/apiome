@@ -100,6 +100,7 @@ describe("buildScaleSteps", () => {
       "version_content_counts",
       "version_publish_counts",
       "mcp_version_facts",
+      "browse_public_projects",
     ]);
   });
 
@@ -130,6 +131,21 @@ describe("buildScaleSteps", () => {
     expect(counts?.doneSql).toContain("operation_count IS NULL OR schema_count IS NULL");
     expect(counts?.bypassTriggers).toBe(true);
     expect(counts?.sql).not.toMatch(/random\(|now\(\)|clock_timestamp/);
+  });
+
+  it("refreshes the public-catalog summary with the migration's function, after the counts (DBP-1.27)", () => {
+    const summary = steps.find((s) => s.name === "browse_public_projects");
+    expect(summary?.table).toBe("apiome.browse_public_projects");
+    // A quarter of the 20,000 projects publish public revisions.
+    expect(summary?.rows).toBe(5_000);
+    expect(summary?.sql).toBe(
+      "SELECT apiome.refresh_browse_public_projects(ARRAY(SELECT id FROM apiome.projects))",
+    );
+    // Done when every row carries its latest revision's stored counts — not by a last row.
+    expect(summary?.doneSql).toContain("v.operation_count IS DISTINCT FROM b.operation_count");
+    expect(summary?.bypassTriggers).toBe(false);
+    const names = steps.map((s) => s.name);
+    expect(names.indexOf("browse_public_projects")).toBeGreaterThan(names.indexOf("version_publish_counts"));
   });
 
   it("derives the MCP endpoint version facts with the migration's backfill function (DBP-1.17)", () => {

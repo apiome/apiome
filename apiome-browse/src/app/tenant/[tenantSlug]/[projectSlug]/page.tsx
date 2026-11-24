@@ -1,9 +1,5 @@
 import { notFound } from "next/navigation";
-import {
-  getPublicChangelogsForProject,
-  getPublicProjectBySlug,
-  getPublicVersionsForProject,
-} from "../../../../../lib/db/helper";
+import { loadProjectPage } from "../../../../../lib/db/routeLoaders";
 import type { Severity } from "../../../../../lib/changelog/types";
 import { ProjectClient } from "./ProjectClient";
 
@@ -13,22 +9,20 @@ export default async function ProjectPage({
   params: Promise<{ tenantSlug: string; projectSlug: string }>;
 }) {
   const { tenantSlug, projectSlug } = await params;
-  const project = await getPublicProjectBySlug(tenantSlug, projectSlug);
+  // Two statements (DBP-1.27): the project with its facts, then its newest versions, each with its
+  // classified severity.
+  const data = await loadProjectPage(tenantSlug, projectSlug);
 
-  if (!project) {
+  if (!data) {
     notFound();
   }
-
-  const [versions, changelogs] = await Promise.all([
-    getPublicVersionsForProject(tenantSlug, projectSlug),
-    getPublicChangelogsForProject(tenantSlug, projectSlug),
-  ]);
+  const { project, versions } = data;
 
   // Classified max severity per version label, for the timeline pills (CTG-3.2, #4476).
   const changelogSeverities: Record<string, Severity> = {};
-  for (const row of changelogs) {
-    if (row.maxSeverity) {
-      changelogSeverities[row.versionLabel] = row.maxSeverity;
+  for (const row of versions) {
+    if (row.max_severity) {
+      changelogSeverities[row.version_id] = row.max_severity;
     }
   }
 
@@ -36,6 +30,7 @@ export default async function ProjectPage({
     <ProjectClient
       project={project}
       versions={versions}
+      versionCount={project.version_count}
       changelogSeverities={changelogSeverities}
       tenantSlug={tenantSlug}
       projectSlug={projectSlug}

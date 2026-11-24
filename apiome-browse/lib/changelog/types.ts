@@ -52,7 +52,7 @@ export interface ChangelogPayload {
 
 /**
  * One public version's changelog row as returned by the DB helpers
- * (`getPublicVersionChangelog` / `getPublicChangelogsForProject`). `status` and `changelog` are
+ * (the reads in `lib/db/changelogs.ts`). `status` and `changelog` are
  * null when the version is public but no classification row exists yet ("pending"). The private
  * `error` column is deliberately never part of this shape.
  */
@@ -65,4 +65,9 @@ export interface PublicVersionChangelogRow {
   maxSeverity: Severity | null;
   status: ChangelogStatus | null;
   changelog: ChangelogPayload | null;
+  /**
+   * The read left the payload's `entries` out (DBP-1.27, #7210): `changelog.entries` is then an
+   * empty list that means "not loaded", and `counts` / `maxSeverity` still describe the version.
+   */
+  entriesOmitted?: true;
 }

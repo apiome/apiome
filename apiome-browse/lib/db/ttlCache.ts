@@ -34,6 +34,12 @@ export interface CacheCallOptions {
   ttlMs?: number;
   /** The clock, in epoch milliseconds; injectable for tests. */
   now?: () => number;
+  /**
+   * Whether a failed refresh may return the previous (expired) value. Default true: stale beats
+   * empty for a counter. Pass false where an expired value must not be acted on (the Try It
+   * relay's allow-policy): the loader's error then reaches the caller.
+   */
+  staleOnError?: boolean;
 }
 
 interface Entry {
@@ -110,7 +116,7 @@ export class TtlCache {
         entry.expiresAt = now() + ttlMs;
         return value;
       } catch (err) {
-        if (entry.loaded) {
+        if (entry.loaded && options.staleOnError !== false) {
           const e = err as { message?: string };
           console.error(`[db] ${key}: refresh failed, serving the previous value:`, e?.message ?? err);
           return entry.value;

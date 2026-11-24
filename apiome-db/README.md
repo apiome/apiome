@@ -66,7 +66,8 @@ database (migrate it first): 200 tenants, 20,000 projects (5,000 in the skewed t
 properties, 600,000 paths, 1,200,000 operations, MCP endpoints, versions and capability items,
 usage rows and audit rows, then fills Home's per-revision count rollup (`version_content_counts`,
 V423), the publish counts Browse cards read (`versions.operation_count` / `schema_count`, V424)
-and the derived facts of every MCP endpoint version (V425) the way a busy deployment has them. `--scale-factor <n>` multiplies every count. Each table is filled by one
+the derived facts of every MCP endpoint version (V425) and the public-catalog summary Browse reads
+(`browse_public_projects`, V431) the way a busy deployment has them. `--scale-factor <n>` multiplies every count. Each table is filled by one
 `INSERT … SELECT generate_series(…)` statement ([`src/seed-scale.ts`](./src/seed-scale.ts)); ids are
 `md5('apiome-scale:<kind>:<n>')::uuid`, so a run is reproducible, and a re-run skips every step whose
 last row exists. The bulk revision-content steps insert with `session_replication_role = replica`

@@ -1,12 +1,15 @@
 /**
  * `/tenant/{tenantSlug}/{projectSlug}/changelog` — the public changelog of one API (PCX-2.1, #5896).
  *
- * Server-rendered: every published public version from `version_changelogs`, newest first, one
+ * Server-rendered: the published public versions from `version_changelogs`, newest first, one
  * section each, entries in the stored CTG-1.3 order (breaking → non-breaking → docs-only, then
  * path group). Filters are plain query parameters (`?severity=`, `?pathGroup=`, `?since=`) read on
  * the server and applied by a no-JavaScript GET form, so every filtered view is a shareable URL.
- * All shaping lives in `lib/changelog/projectChangelog.ts`, where it is unit-tested; this file
- * only renders the model.
+ *
+ * DBP-1.27 (#7210): the page shows 20 versions at a time (`?before=<version>` for the next, older
+ * page) and the filters are applied in SQL (`getChangelogPage`), where it used to read up to 500
+ * full changelogs and filter them here. Shaping lives in `lib/changelog/projectChangelog.ts`,
+ * where it is unit-tested; this file only renders the model.
  *
  * APX-1.4 (#6101): when the API belongs to a portal product that is deprecated or has a deprecated
  * plan, {@link ProductLifecycleNotice} says so under the header — what retires, when, and what to
@@ -20,24 +23,20 @@ import { AppShell } from '../../../../components/AppShell';
 import { Breadcrumb } from '../../../../components/Breadcrumb';
 import { ChangesNote, SeverityPill } from '../../../../components/SeverityPill';
 import { ProductLifecycleNotice } from '../../../../components/ProductLifecycleNotice';
-import { getProductLifecycleForProject } from '../../../../../../lib/db/products';
-import {
-  getPublicChangelogsForProject,
-  getPublicProjectBySlug,
-} from '../../../../../../lib/db/helper';
+import { getPublicProjectIdentity } from '../../../../../../lib/db/identity';
+import { loadChangelogPage } from '../../../../../../lib/db/routeLoaders';
 import { severityLabel } from '../../../../../../lib/changelog/group';
 import {
   CHANGELOG_SEVERITIES,
   buildProjectChangelog,
   changelogFilterQuery,
+  changelogPageQuery,
+  parseChangelogBefore,
   parseChangelogFilters,
   sectionNote,
   type ChangelogPageSection,
   type ShownCounts,
 } from '../../../../../../lib/changelog/projectChangelog';
-
-/** Upper bound on versions read for the page (the helper's default of 50 is for feeds). */
-const CHANGELOG_PAGE_VERSION_LIMIT = 500;
 
 type PageParams = Promise<{ tenantSlug: string; projectSlug: string }>;
 type PageSearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -55,7 +54,8 @@ const FILTER_SELECT =
  */
 export async function generateMetadata({ params }: { params: PageParams }): Promise<Metadata> {
   const { tenantSlug, projectSlug } = await params;
-  const project = await getPublicProjectBySlug(tenantSlug, projectSlug);
+  // Shared with the page through React's cache(): one lookup per request.
+  const project = await getPublicProjectIdentity(tenantSlug, projectSlug);
   if (!project) return {};
   const base = `/tenant/${tenantSlug}/${projectSlug}`;
   return {
@@ -236,17 +236,21 @@ export default async function ProjectChangelogPage({
   searchParams: PageSearchParams;
 }) {
   const { tenantSlug, projectSlug } = await params;
-  const project = await getPublicProjectBySlug(tenantSlug, projectSlug);
-  if (!project) {
+  const query = await searchParams;
+  const filters = parseChangelogFilters(query);
+  const before = parseChangelogBefore(query);
+  // Three statements (DBP-1.27): the project, one page of its changelog, its lifecycle news.
+  const data = await loadChangelogPage(tenantSlug, projectSlug, { ...filters, before });
+  if (!data) {
     notFound();
   }
-
-  const filters = parseChangelogFilters(await searchParams);
-  const [rows, lifecycle] = await Promise.all([
-    getPublicChangelogsForProject(tenantSlug, projectSlug, CHANGELOG_PAGE_VERSION_LIMIT),
-    getProductLifecycleForProject(tenantSlug, String(project.id)),
-  ]);
-  const model = buildProjectChangelog(rows, filters, tenantSlug, projectSlug);
+  const { project, page, lifecycle } = data;
+  const rows = page.rows;
+  const model = buildProjectChangelog(rows, filters, tenantSlug, projectSlug, {
+    pathGroups: page.pathGroups,
+    sinceNotFound: page.sinceNotFound,
+  });
+  const versionCount = project.version_count;
 
   const projectHref = `/tenant/${tenantSlug}/${projectSlug}`;
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -269,9 +273,9 @@ export default async function ProjectChangelogPage({
               {project.name} changelog
             </h1>
             <p className="mt-1 text-[13px] text-zinc-500 dark:text-zinc-400">
-              {rows.length === 0
+              {versionCount === 0
                 ? 'No published versions yet.'
-                : `${rows.length} published ${rows.length === 1 ? 'version' : 'versions'}, newest first. Breaking changes are listed first in each version.`}
+                : `${versionCount} published ${versionCount === 1 ? 'version' : 'versions'}, newest first. Breaking changes are listed first in each version.`}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -290,7 +294,7 @@ export default async function ProjectChangelogPage({
 
         <ProductLifecycleNotice tenantSlug={tenantSlug} notices={lifecycle} />
 
-        {rows.length > 0 && (
+        {versionCount > 0 && (
           <form
             method="get"
             action={`${basePath}${projectHref}/changelog`}
@@ -323,9 +327,9 @@ export default async function ProjectChangelogPage({
               Since version
               <select name="since" defaultValue={filters.since ?? ''} className={FILTER_SELECT}>
                 <option value="">All versions</option>
-                {rows.map((row) => (
-                  <option key={row.versionLabel} value={row.versionLabel}>
-                    v{row.versionLabel}
+                {page.versionLabels.map((label) => (
+                  <option key={label} value={label}>
+                    v{label}
                   </option>
                 ))}
               </select>
@@ -352,9 +356,11 @@ export default async function ProjectChangelogPage({
         {model.sections.length === 0 ? (
           <ChangesNote
             text={
-              rows.length === 0
-                ? 'No published versions yet.'
-                : `No versions were published after v${filters.since}.`
+              filters.since && page.versionsInRange === 0
+                ? `No versions were published after v${filters.since}.`
+                : before
+                  ? 'No older versions.'
+                  : 'No published versions yet.'
             }
           />
         ) : (
@@ -369,6 +375,31 @@ export default async function ProjectChangelogPage({
               />
             ))}
           </div>
+        )}
+
+        {(before || page.nextBefore) && (
+          <nav aria-label="Changelog pages" className="flex items-center justify-between gap-3">
+            {before ? (
+              <Link
+                href={`${projectHref}/changelog${changelogPageQuery(filters)}`}
+                className={OUTLINE_BUTTON}
+                data-testid="changelog-newest"
+              >
+                ← Newest versions
+              </Link>
+            ) : (
+              <span />
+            )}
+            {page.nextBefore && (
+              <Link
+                href={`${projectHref}/changelog${changelogPageQuery(filters, page.nextBefore)}`}
+                className={OUTLINE_BUTTON}
+                data-testid="changelog-older"
+              >
+                Older versions →
+              </Link>
+            )}
+          </nav>
         )}
       </div>
     </AppShell>

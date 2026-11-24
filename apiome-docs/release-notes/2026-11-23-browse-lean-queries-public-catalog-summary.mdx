@@ -1,0 +1,52 @@
+---
+slug: browse-lean-queries-public-catalog-summary
+title: "Browse pages: one lean query per page and a public-catalog summary table"
+description: "The browse site reads less per page, pages long changelogs and answers 503 when busy."
+authors: [apiome]
+---
+
+**Performance.** Each page of the public browse site now runs a fixed, small number of database
+statements, and the home page no longer passes over every published version.
+
+{/* truncate */}
+
+## Performance
+
+- **A public-catalog summary table.** Migration `V431` adds `browse_public_projects`: one row per
+  public project with its version count, latest version, protocols, formats, operation count and
+  grade. The database keeps it current when a version is published, unpublished, made public or
+  private, or deleted. The home page, the counts in the top bar, an organization's project list
+  and the scope of a search read it. The three orders of the home project rail now cost the same:
+  0.4 ms each on the scale database, where **Most operations** took 17 ms.
+- **One statement for a version page.** It used to run three. A project page runs two and reads
+  each version's severity, not its whole changelog.
+- **Search with an `org:` or `project:` filter reads only that organization's or project's rows.**
+  On the scale database a search with an `org:` filter went from 23 ms to 3 ms.
+- **Changelog feeds answer `304` from one small query.** A feed reader that sends `If-None-Match`
+  no longer makes the site read and render 50 changelogs to find out that nothing changed.
+- **Try It looks its version up once.** The relay reads the version's mock setting and servers with
+  one statement and reuses the answer for 30 seconds.
+- **The public MCP index and its registry de-duplication use a stored host.** Each MCP server's
+  host is now a stored column with indexes.
+
+## What you will see
+
+- **Changelog page:** 20 versions at a time, with **Older versions →** under the list. Filters
+  apply to every page. See [API changelog](/ship/api-changelog#page-through-older-versions).
+- **Project page:** the newest 200 versions; a project with more points to the changelog.
+- **Search results:** every kind of result is counted up to 1,000 on its own, so a common word no
+  longer hides organizations and projects behind thousands of properties. A result's version menu
+  lists the newest 20 versions and ends with **Show all versions**. The **MCP servers** tab shows
+  its count once you open it.
+- **MCP catalog:** 100 servers a page, with **← Previous** and **Next →**.
+
+## Fixed
+
+- **A busy database no longer reads as "page not found".** When the browse site could not reach
+  the database, pages answered `404`, which tells a search engine to drop them. The site now
+  answers `503` with `Retry-After` while its connection pool is full or the database is
+  unreachable, and an error page for a single failed read.
+
+**What changes for you.** Apply migration `V431`, then upgrade the browse site. There is no new
+setting. See
+[What the browse site reads for each page](/admin/operating-apiome#what-the-browse-site-reads-for-each-page).

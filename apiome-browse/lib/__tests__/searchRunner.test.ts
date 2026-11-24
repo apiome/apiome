@@ -12,7 +12,11 @@ vi.mock('../db/db', () => ({
   isStatementTimeout: (err: unknown) => (err as { code?: string } | null)?.code === '57014',
 }));
 
-import { runCatalogSearch, runCatalogSuggest } from '../db/search';
+import { runAllHitVersions, runCatalogSearch, runCatalogSuggest, runHitVersionsLookup } from '../db/search';
+import { DatabaseUnavailableError } from '../db/errors';
+import { HIT_VERSIONS_ALL_CAP, HIT_VERSIONS_CAP } from '../search/compare';
+import type { CatalogSearchHit } from '../search/hits';
+import { SEARCH_KIND_CAP } from '../search/sql';
 import { clearBrowseCache } from '../db/ttlCache';
 import { SearchTimeoutError } from '../search/errors';
 import { resolveSearchRequest } from '../search/params';
@@ -62,10 +66,50 @@ describe('runCatalogSearch facets', () => {
     const page2 = await runCatalogSearch(resolveSearchRequest({ q: 'order', page: '2' }));
     expect(query).toHaveBeenCalledTimes(2);
     expect(computesFacets(query.mock.calls[1])).toBe(false);
-    // The rail is the same on page 2, and the per-kind counts still come from page 2's own row.
+    // The rail and the per-kind counts are the same on page 2.
     expect(page2.facets.orgs).toEqual(ORGS);
     expect(page2.facets.kinds).toEqual([{ value: 'operation', count: 60 }]);
     expect(page2.page).toBe(2);
+  });
+
+  it('reuses the per-kind counts too, so a later page runs only the kinds it lists (DBP-1.27)', async () => {
+    // Page 1 of the Schemas tab counts the other kinds for the tabs…
+    query.mockImplementationOnce(async () => ({
+      rows: [
+        {
+          ...searchRow(true),
+          total: 40,
+          total_all_kinds: 100,
+          kind_facets: [
+            { value: 'operation', count: 60 },
+            { value: 'schema', count: 40 },
+          ],
+        },
+      ],
+    }));
+    await runCatalogSearch(resolveSearchRequest({ q: 'order', scope: 'schemas' }));
+    expect(String(query.mock.calls[0][0])).toContain("SELECT 'operation'::text AS hit_type, COUNT(*)::int AS c FROM (");
+
+    // …and page 2 runs the schema kinds only, answering with page 1's counts.
+    query.mockImplementationOnce(async () => ({
+      rows: [{ ...searchRow(false), total: 40, total_all_kinds: 40, kind_facets: [{ value: 'schema', count: 40 }] }],
+    }));
+    const page2 = await runCatalogSearch(resolveSearchRequest({ q: 'order', scope: 'schemas', page: '2' }));
+    const text = String(query.mock.calls[1][0]);
+    expect(text).not.toContain("'operation'::text AS hit_type");
+    expect(text).not.toContain('FROM apiome.path_operation');
+    expect(page2.totalAllKinds).toBe(100);
+    expect(page2.facets.kinds).toEqual([
+      { value: 'operation', count: 60 },
+      { value: 'schema', count: 40 },
+    ]);
+  });
+
+  it('says "more than" when a kind reached its own cap, and only then', async () => {
+    const capped = { ...searchRow(true), kind_facets: [{ value: 'property', count: SEARCH_KIND_CAP }, { value: 'operation', count: 12 }] };
+    query.mockImplementationOnce(async () => ({ rows: [capped] }));
+    expect((await runCatalogSearch(resolveSearchRequest({ q: 'id' }))).truncated).toBe(true);
+    expect((await runCatalogSearch(resolveSearchRequest({ q: 'order' }))).truncated).toBe(false);
   });
 
   it('computes them on a later page when nothing is cached (a shared deep link)', async () => {
@@ -164,5 +208,56 @@ describe('runCatalogSuggest', () => {
     const severity = { ...resolveSearchRequest({ q: 'order severity:breaking' }), perPage: 8, page: 1 };
     expect((await runCatalogSuggest(severity)).rows).toEqual([]);
     expect(query).not.toHaveBeenCalled();
+  });
+});
+
+/** A search hit for the version-menu lookups. */
+function versionHit(overrides: Partial<CatalogSearchHit> = {}): CatalogSearchHit {
+  return {
+    hit_id: 'op:1',
+    hit_type: 'operation',
+    tenant_slug: 'acme',
+    project_slug: 'orders',
+    version_slug: '2.0.0',
+    method: 'post',
+    path: '/orders',
+    ...overrides,
+  } as CatalogSearchHit;
+}
+
+describe('hit version menus (DBP-1.27)', () => {
+  const versions = [{ version_slug: '2.0.0', published_at: null, has_anchor: true }];
+
+  it('looks up a capped list per hit, with the project total', async () => {
+    query.mockResolvedValue({ rows: [{ hit_id: 'op:1', version_count: 45, versions }] });
+    const lookup = await runHitVersionsLookup([versionHit()]);
+    expect(lookup).toEqual({ versions: { 'op:1': versions }, counts: { 'op:1': 45 } });
+    expect((query.mock.calls[0][1] as unknown[])[6]).toBe(HIT_VERSIONS_CAP);
+  });
+
+  it('renders no menus, not an error, when the lookup fails or nothing is eligible', async () => {
+    query.mockRejectedValue(new Error('connection refused'));
+    expect(await runHitVersionsLookup([versionHit()])).toEqual({ versions: {}, counts: {} });
+    query.mockClear();
+    expect(await runHitVersionsLookup([versionHit({ hit_type: 'project' })])).toEqual({ versions: {}, counts: {} });
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('loads the long list of one hit on request', async () => {
+    query.mockResolvedValue({ rows: [{ hit_id: 'op:1', version_count: 45, versions }] });
+    expect(await runAllHitVersions(versionHit())).toEqual(versions);
+    expect((query.mock.calls[0][1] as unknown[])[6]).toBe(HIT_VERSIONS_ALL_CAP);
+  });
+
+  it('answers an empty list for a hit that is not eligible or whose project is not public', async () => {
+    expect(await runAllHitVersions(versionHit({ hit_type: 'project' }))).toEqual([]);
+    expect(query).not.toHaveBeenCalled();
+    query.mockResolvedValue({ rows: [] });
+    expect(await runAllHitVersions(versionHit())).toEqual([]);
+  });
+
+  it('raises a database failure of the on-request load, so its route answers 503', async () => {
+    query.mockRejectedValue(new Error('timeout exceeded when trying to connect'));
+    await expect(runAllHitVersions(versionHit())).rejects.toBeInstanceOf(DatabaseUnavailableError);
   });
 });

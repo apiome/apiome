@@ -598,6 +598,25 @@ a.table-row:hover {
   cursor: progress;
 }
 
+/* Previous / Next under the public MCP index (DBP-1.27, #7210). */
+.mcp-page-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.mcp-page-link:hover {
+  color: var(--text-primary);
+  border-color: var(--brand);
+}
+
 .portal-link {
   color: var(--brand-soft-text);
   font-weight: 500;
@@ -1185,6 +1204,15 @@ a.table-row:hover {
 .hit-version-menu-item:focus-visible {
   background-color: var(--surface-muted);
   color: var(--brand);
+}
+
+/* "Show all versions" at the end of a version menu (DBP-1.27, #7210). */
+.hit-version-menu-more {
+  width: 100%;
+  margin-top: 0.125rem;
+  border-top: 1px solid var(--border-subtle);
+  text-align: left;
+  font-family: var(--font-sans);
 }
 
 .hit-version-menu-note {

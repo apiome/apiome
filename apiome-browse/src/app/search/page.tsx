@@ -47,13 +47,26 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const request = resolveSearchRequest(state);
   const mcpQuery = mcpQueryFor(request);
 
+  // DBP-1.27: the MCP catalog is searched only on its own tab (where the catalog statement does
+  // not run at all). The other tabs show the MCP tab without a count.
+  const onMcpTab = request.scope === 'mcp';
   const [response, mcpHits] = await Promise.all([
     runCatalogSearch(request),
-    mcpQuery ? searchPublicMcpCatalog(mcpQuery, 'relevance') : Promise.resolve([]),
+    onMcpTab ? (mcpQuery ? searchPublicMcpCatalog(mcpQuery, 'relevance') : Promise.resolve([])) : Promise.resolve(null),
   ]);
 
-  // BDX-2.6: one follow-up query fills the version quick-switch menus of the page's hits.
+  // BDX-2.6: one follow-up query fills the version quick-switch menus of the page's hits — the
+  // newest versions of each hit's project; a menu loads the rest when asked.
   const hitVersions = await runHitVersionsLookup(response.rows);
 
-  return <SearchClient request={request} response={response} hitVersions={hitVersions} mcpHits={mcpHits} mcpQuery={mcpQuery} />;
+  return (
+    <SearchClient
+      request={request}
+      response={response}
+      hitVersions={hitVersions.versions}
+      hitVersionCounts={hitVersions.counts}
+      mcpHits={mcpHits}
+      mcpQuery={mcpQuery}
+    />
+  );
 }

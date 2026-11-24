@@ -4,9 +4,10 @@
  * The layouts and pages that show who is signed in call {@link getReaderSession}. It reads the
  * `HttpOnly` cookie (so it only works in Server Components and route handlers) and asks apiome-rest
  * whether the session is still live — revocation takes effect on the next page load, because nothing
- * here is cached.
+ * here is cached beyond the request.
  */
 
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 
 import { fetchReader, serverRestBase, type ReaderProfile } from '../../../lib/portal/api';
@@ -25,16 +26,19 @@ export interface ReaderSession {
  *
  * @param tenantSlug - When given, only a session for this tenant counts — a reader signed in to one
  *   portal is not signed in to another.
+ * Wrapped in React's `cache()` (DBP-1.27): a page and the `ReaderStatus` chip on it both ask, and
+ * share one request to apiome-rest per page view. Nothing is kept between requests.
+ *
  * @returns The live session, or null when there is none, it belongs to another tenant, or apiome-rest
  *   no longer accepts it.
  */
-export async function getReaderSession(tenantSlug?: string): Promise<ReaderSession | null> {
+export const getReaderSession = cache(async (tenantSlug?: string): Promise<ReaderSession | null> => {
   const store = await cookies();
   const parsed = parseReaderCookie(store.get(READER_SESSION_COOKIE)?.value);
   if (!parsed || (tenantSlug && parsed.tenantSlug !== tenantSlug)) return null;
   const reader = await fetchReader(serverRestBase(process.env), parsed.tenantSlug, parsed.token);
   return reader ? { tenantSlug: parsed.tenantSlug, reader } : null;
-}
+});
 
 /**
  * Prefix a Browse path with `NEXT_PUBLIC_BASE_PATH` for a plain HTML `<form action>`, which (unlike

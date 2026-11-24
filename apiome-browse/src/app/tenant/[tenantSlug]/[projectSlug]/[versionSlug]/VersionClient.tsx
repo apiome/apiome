@@ -62,7 +62,10 @@ type VersionTab = 'specification' | 'changes' | 'feedback';
 interface VersionClientProps {
   version: Version;
   versions: SidebarVersion[];
-  /** Stored publish changelog row for this version, or null when not publicly visible (CTG-3.2). */
+  /**
+   * Stored publish changelog row for this version (CTG-3.2). When it is marked `entriesOmitted`
+   * (DBP-1.27) its entries were not read with the page; the Changes tab fetches them when opened.
+   */
   changelog: PublicVersionChangelogRow | null;
   tenantSlug: string;
   projectSlug: string;
@@ -81,7 +84,7 @@ interface VersionClientProps {
 export function VersionClient({
   version,
   versions,
-  changelog,
+  changelog: initialChangelog,
   tenantSlug,
   projectSlug,
   versionSlug,
@@ -91,6 +94,10 @@ export function VersionClient({
   initialTab = 'specification',
   initialFind = '',
 }: VersionClientProps) {
+  // The changelog with its entries, once the Changes tab has fetched them (DBP-1.27).
+  const [loadedChangelog, setLoadedChangelog] = useState<PublicVersionChangelogRow | null>(null);
+  const [changesError, setChangesError] = useState(false);
+  const changelog = loadedChangelog ?? initialChangelog;
   const [spec, setSpec] = useState<unknown>(null);
   const [format, setFormat] = useState<SpecFormat>('openapi');
   const [activeAnchor, setActiveAnchor] = useState<string | undefined>(undefined);
@@ -121,6 +128,31 @@ export function VersionClient({
     () => ({ tenantSlug, projectSlug, versionSlug }),
     [tenantSlug, projectSlug, versionSlug]
   );
+
+  // DBP-1.27: the page arrives with the changelog's summary only. Its entries are fetched the first
+  // time the Changes tab is shown; `changesAttempt` counts retries after a failed fetch.
+  const [changesAttempt, setChangesAttempt] = useState(0);
+  const entriesPending = activeTab === 'changes' && Boolean(changelog?.entriesOmitted);
+  useEffect(() => {
+    if (!entriesPending) return;
+    let cancelled = false;
+    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+    const url = `${base}/tenant/${encodeURIComponent(tenantSlug)}/${encodeURIComponent(projectSlug)}/${encodeURIComponent(versionSlug)}/changes.json`;
+    fetch(url, { headers: { Accept: 'application/json' } })
+      .then((res) => {
+        if (!res.ok) throw new Error(`changes.json answered ${res.status}`);
+        return res.json() as Promise<PublicVersionChangelogRow>;
+      })
+      .then((row) => {
+        if (!cancelled) setLoadedChangelog(row);
+      })
+      .catch(() => {
+        if (!cancelled) setChangesError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [entriesPending, changesAttempt, tenantSlug, projectSlug, versionSlug]);
 
   // SDK-3.3 (#4493). The publisher opts a project into public SDK access per project, and a
   // project that has not opted in answers this call with the same 404 an unpublished version
@@ -384,11 +416,31 @@ export function VersionClient({
                 See the whole changelog →
               </Link>
             </div>
-            <ChangesPanel
-              changelog={changelog}
-              tenantSlug={tenantSlug}
-              projectSlug={projectSlug}
-            />
+            {changelog?.entriesOmitted && changesError ? (
+              <div className="space-y-2 text-center" role="alert">
+                <ChangesNote text="The changes could not be loaded." />
+                <button
+                  type="button"
+                  className="text-[13px] font-medium text-[var(--brand-soft-text)] hover:underline"
+                  onClick={() => {
+                    setChangesError(false);
+                    setChangesAttempt((n) => n + 1);
+                  }}
+                >
+                  Try again
+                </button>
+              </div>
+            ) : changelog?.entriesOmitted ? (
+              <div aria-live="polite" data-testid="version-changes-loading">
+                <ChangesNote text="Loading changes…" />
+              </div>
+            ) : (
+              <ChangesPanel
+                changelog={changelog}
+                tenantSlug={tenantSlug}
+                projectSlug={projectSlug}
+              />
+            )}
           </div>
         )}
 
