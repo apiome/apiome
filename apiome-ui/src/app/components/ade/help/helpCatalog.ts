@@ -1269,6 +1269,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['pacticipant', 'application version', 'branch head', 'tag', 'consumer-driven contracts', 'can-i-deploy'],
   },
   {
+    id: 'publish-pacts',
+    title: 'Publish and fetch pacts',
+    summary: 'Point the Pact CLI or a Pact library at Apiome to publish pacts.',
+    page: 'apiome-docs/docs/ship/pact-broker/publish-pacts.mdx',
+    section: 'reference',
+    keywords: ['broker base url', 'broker token', 'pact version', 'consumer version', 'pact cli', 'pact-js', 'contracts'],
+  },
+  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',

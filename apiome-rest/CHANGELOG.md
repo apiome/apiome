@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.831.0] - 2026-11-23
+
+### Added
+- **Pact publication and retrieval, Pact Broker–compatible (PFX-1.2, #6915).** OpenAPI 1.655.0. A
+  new `pact-broker` tag under `/v1/tenants/{tenant_slug}/pact-broker` — the URL a Pact client is
+  given as its broker base URL, with a workspace API key as its token. Responses are
+  `application/hal+json` in the Pact Broker's shape; the `pact-broker` CLI and pact-js
+  `publishPacts` publish against it unchanged.
+  - `GET /pact-broker` — the index (`pb:publish-contracts`, `pb:publish-pact`,
+    `pb:latest-pact-version`, `pb:pact-version`, `pb:pacticipant`, `pb:pacticipant-version`).
+  - `POST /pact-broker/contracts/publish` — publish every pact of one consumer version with its
+    `branch`, `tags` and `buildUrl`, all or nothing. Answers `notices` (and the older `logs`), the
+    embedded pacticipant and version, and a `pb:contracts` link per pact.
+  - `PUT` / `GET /pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{version}` —
+    publish (`201` new, `200` unchanged) or read one pact; `GET …/latest` reads the pact of the
+    latest-recorded consumer version; `GET …/pact-version/{sha}` reads a pact by content address.
+  - `GET /pact-broker/pacticipants/{pacticipant}` and `…/versions/{number}` — a pacticipant and a
+    version in the Pact Broker's shape, which the `pb:consumer`, `pb:provider` and
+    `pb:consumer-version` links lead to.
+  - **Content-addressed pact versions.** A pact version is the SHA-256 of the document's
+    `interactions`, `messages` and declared specification version (sorted keys; `metadata` is not
+    part of it), unique per consumer and provider. The same pact published for many consumer
+    versions is one pact version.
+  - Pact specification 1.x to 4.x is stored as published, including message pacts. Consumers and
+    providers are registered as pacticipants on first publication.
+  - Refusals carry a stable `code` and, where the problem has a place, a JSON Pointer in
+    `detail.pointer`: `pact-invalid`, `pact-publish-invalid`, `pact-publish-unsupported` (422;
+    `merge` conflict handling and non-Pact specifications), `pact-content-conflict` (409: a
+    different pact for a consumer version that already has one), `pact-too-large` (413),
+    `pact-publish-rate-limited` (429 with `Retry-After`), `pact-not-found` (404).
+  - On these routes a workspace API key may be sent as `Authorization: Bearer <key>`, because that
+    is the credential Pact tooling sends. `X-API-Key` and session tokens work as everywhere else.
+- Settings: `APIOME_PACT_MAX_BYTES` (default 10 MiB per pact), `APIOME_PACT_PUBLISH_RATE_LIMIT_PER_MINUTE`
+  (default 120 publishes per workspace), `APIOME_PACT_ALLOW_CONTRACT_MODIFICATION` (default `false`;
+  `true` replaces a consumer version's pact instead of answering 409) and
+  `APIOME_PACT_BROKER_HOST_SUFFIX` (default empty; with `pact.example.com`, requests to
+  `https://<tenant>.pact.example.com/…` are served as that tenant's `/pact-broker/…`).
+- Migration `V433` adds `pact_version` (content JSONB + SHA-256, unique per consumer, provider and
+  hash) and `pact_publication` (one pact per consumer version and provider, with a revision
+  counter). Both pacticipants are referenced by `(id, tenant_id)`, so a pact cannot cross a tenant,
+  and every reference cascades, so a pact goes with its pacticipants.
+
 ## [1.830.0] - 2026-11-23
 
 ### Added

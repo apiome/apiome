@@ -133,6 +133,8 @@ from .document_store_router import refresh_routing as refresh_document_store_rou
 from .document_store_routes import admin_router as document_store_admin_router
 from .document_store_routes import ops_router as document_store_ops_router
 from .ownership_policy_routes import router as ownership_policy_router
+from .pact_broker_host import PactBrokerHostAliasMiddleware
+from .pact_broker_routes import router as pact_broker_router
 from .pacticipant_routes import router as pacticipant_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
@@ -326,6 +328,12 @@ app.add_middleware(
 # observes the final status/latency of every response — including those produced by CORS and the
 # rate limiter — for the metrics surface and access log.
 app.add_middleware(ObservabilityMiddleware)
+
+# The Pact Broker tenant-host alias (PFX-1.2, #6915) rewrites ``<tenant>.<suffix>/<path>`` onto
+# ``/v1/tenants/<tenant>/pact-broker/<path>``. It is added after everything else so it runs first:
+# the access log, the rate limiter and the router all see the real path. A no-op unless
+# ``APIOME_PACT_BROKER_HOST_SUFFIX`` is set.
+app.add_middleware(PactBrokerHostAliasMiddleware)
 
 _error_log = get_logger("app.errors")
 
@@ -542,6 +550,8 @@ app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
 # Pact Broker registry (PFX-1.1, #6914): pacticipants, versions, branches and tags.
 app.include_router(pacticipant_router)
+# Pact Broker-compatible publication and retrieval (PFX-1.2, #6915).
+app.include_router(pact_broker_router)
 # consumer_binding_router: RDG-1.8 consumer bindings + declared-vs-observed runtime edges under
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).
 app.include_router(consumer_binding_router)

@@ -945,6 +945,47 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Pact Broker surface (PFX-1.2, #6915) — ``/v1/tenants/{tenant}/pact-broker``.
+    #
+    # ``pact_publish_rate_limit_per_minute``: publish requests one workspace may make per
+    # ``rate_limit_window_seconds``, on top of the global middleware (and under its kill switch).
+    # A CI fleet publishes once per build, so the default leaves room for a few builds a second.
+    pact_publish_rate_limit_per_minute: int = Field(
+        default=120,
+        validation_alias=AliasChoices(
+            "APIOME_PACT_PUBLISH_RATE_LIMIT_PER_MINUTE",
+            "pact_publish_rate_limit_per_minute",
+        ),
+    )
+    # The largest Pact document accepted, in bytes. A bulk publish request may be this large per
+    # contract (base64 included).
+    pact_max_bytes: int = Field(
+        default=10 * 1024 * 1024,
+        validation_alias=AliasChoices("APIOME_PACT_MAX_BYTES", "pact_max_bytes"),
+    )
+    # A consumer version's pact is fixed once published: publishing different content for the same
+    # version is answered 409, as a Pact Broker does by default. Set true to replace the pact
+    # instead (the broker's ``allow_dangerous_contract_modification``) — only for teams whose
+    # version numbers are not unique per build.
+    pact_allow_contract_modification: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_PACT_ALLOW_CONTRACT_MODIFICATION",
+            "pact_allow_contract_modification",
+        ),
+    )
+    # The tenant-host alias of the Pact Broker surface. With ``pact.example.com`` here, a request
+    # to ``https://acme.pact.example.com/<path>`` is served as
+    # ``/v1/tenants/acme/pact-broker/<path>``, so a Pact client's broker base URL is the bare host.
+    # Empty (the default) turns the alias off. DNS and TLS for ``*.<suffix>`` are the operator's.
+    pact_broker_host_suffix: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "APIOME_PACT_BROKER_HOST_SUFFIX",
+            "pact_broker_host_suffix",
+        ),
+    )
+
     # COL-4.1 (#4525): presence heartbeats and lock actions per user, per tenant. A tab heartbeats
     # every ~20s, so the default leaves room for many tabs plus lock traffic.
     presence_rate_limit_per_minute: int = Field(

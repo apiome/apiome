@@ -6,7 +6,7 @@
   "link": {
     "type": "generated-index",
     "title": "Pact Broker",
-    "description": "Consumer-driven contract testing with Pact: pacticipants, versions, branches and tags.",
+    "description": "Consumer-driven contract testing with Pact: pacticipants, versions, and publishing pacts.",
     "slug": "/ship/pact-broker"
   }
 }
