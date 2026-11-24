@@ -133,6 +133,7 @@ from .document_store_router import refresh_routing as refresh_document_store_rou
 from .document_store_routes import admin_router as document_store_admin_router
 from .document_store_routes import ops_router as document_store_ops_router
 from .ownership_policy_routes import router as ownership_policy_router
+from .pacticipant_routes import router as pacticipant_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
 from .primitives_lifecycle_routes import router as primitives_lifecycle_router
@@ -539,6 +540,8 @@ app.include_router(agent_invocation_export_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
+# Pact Broker registry (PFX-1.1, #6914): pacticipants, versions, branches and tags.
+app.include_router(pacticipant_router)
 # consumer_binding_router: RDG-1.8 consumer bindings + declared-vs-observed runtime edges under
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).
 app.include_router(consumer_binding_router)

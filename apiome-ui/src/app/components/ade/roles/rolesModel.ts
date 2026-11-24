@@ -61,6 +61,8 @@ export const RESOURCES: readonly PermissionResource[] = [
   { key: 'verification_evidence', label: 'Verification evidence' },
   { key: 'consumer_contracts', label: 'Consumer contracts' },
   { key: 'teams', label: 'Teams' },
+  // PFX-1.1 (#6914): the Pact Broker registry — pacticipants, their versions, branches and tags.
+  { key: 'pacts', label: 'Pacts' },
   // COA-5.15 (#7092): where the workspace's documents are kept. Its only action is `manage`.
   { key: 'document_store', label: 'Document storage' },
 ];

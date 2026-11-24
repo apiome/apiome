@@ -6,7 +6,7 @@
  * fixture happens to have. The four that matter most are the ones the ticket's acceptance
  * criteria turn on:
  *
- *   1. **The permission vocabulary is the guard's.** 15 resources × 5 actions = 75 cells,
+ *   1. **The permission vocabulary is the guard's.** 16 resources × 5 actions = 80 cells,
  *      spelled `resource:action` exactly as `apiome-rest/src/app/permissions.py` checks them.
  *   2. **Built-in roles cannot be renamed or deleted, and the reason is stated** — and the
  *      lock is exactly the server's, so an administrator can still tune a built-in *grid*.
@@ -102,7 +102,7 @@ const VIEWER = { is_admin: false, permissions: ['members:view'] };
 // ---------------------------------------------------------------------------------------
 
 describe('the permission vocabulary', () => {
-  it('is the fourteen resources and five actions the REST guard checks', () => {
+  it('is the resources and actions the REST guard checks', () => {
     expect(RESOURCES.map((resource) => resource.key)).toEqual([
       'projects',
       'versions',
@@ -119,6 +119,7 @@ describe('the permission vocabulary', () => {
       'verification_evidence',
       'consumer_contracts',
       'teams',
+      'pacts',
       'document_store',
     ]);
     expect(ACTIONS.map((action) => action.key)).toEqual([
@@ -129,8 +130,8 @@ describe('the permission vocabulary', () => {
       'publish',
       'manage',
     ]);
-    // 15 content resources × 5 actions, plus document_store:manage.
-    expect(TOTAL_CELLS).toBe(76);
+    // 16 content resources × 5 actions, plus document_store:manage.
+    expect(TOTAL_CELLS).toBe(81);
   });
 
   it('gives a setting resource one action, manage, and content resources none of it (COA-5.15)', () => {
@@ -245,7 +246,7 @@ describe('what makes a draft dirty', () => {
   });
 
   it('counts the cells that are on against the whole matrix', () => {
-    expect(describeCellsOn(new Set(['projects:view']))).toBe('1 of 76 cells on');
+    expect(describeCellsOn(new Set(['projects:view']))).toBe('1 of 81 cells on');
   });
 });
 

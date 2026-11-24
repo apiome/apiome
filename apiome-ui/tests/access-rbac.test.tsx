@@ -148,9 +148,9 @@ describe('RolesClient (#3611)', () => {
     expect(await screen.findByTestId('role-item-owner')).toHaveTextContent('Owner');
     expect(screen.getByTestId('role-item-release-manager')).toHaveTextContent('Release Manager');
 
-    // All 15 resources render as rows (lint_findings added by CLX-4.1, #4859;
+    // All 16 resources render as rows (lint_findings added by CLX-4.1, #4859;
     // verification_targets by ECA-1.2, #4730; verification_evidence by ECA-1.3, #4731;
-    // consumer_contracts by CTG-4.1, #4479; teams by CDG-2.1, #5960).
+    // consumer_contracts by CTG-4.1, #4479; teams by CDG-2.1, #5960; pacts by PFX-1.1, #6914).
     // HIVE-5.3 (#5306) took the labels to sentence case, as the mockup writes them; the
     // guard keys they grant against are unchanged and are now printed under each label.
     for (const label of [
@@ -169,6 +169,7 @@ describe('RolesClient (#3611)', () => {
       'Verification evidence',
       'Consumer contracts',
       'Teams',
+      'Pacts',
     ]) {
       // Scoped to the matrix: "Members" is also the header's link to the roster.
       expect(within(screen.getByRole('table')).getByText(label)).toBeInTheDocument();
@@ -179,13 +180,13 @@ describe('RolesClient (#3611)', () => {
     const headers = within(matrix).getAllByRole('columnheader').map((h) => h.textContent);
     expect(headers).toEqual(['Resource', 'View', 'Create', 'Edit', 'Delete', 'Publish', 'Manage']);
 
-    // 15 content resources x 5 actions + Document storage's Manage (COA-5.15) = 76 toggle cells,
-    // plus the 16 row toggles HIVE-5.3 added — the tri-state control that grants or revokes a
+    // 16 content resources x 5 actions + Document storage's Manage (COA-5.15) = 81 toggle cells,
+    // plus the 17 row toggles HIVE-5.3 added — the tri-state control that grants or revokes a
     // whole resource at once.
     const toggles = within(matrix).getAllByRole('button');
-    expect(toggles).toHaveLength(92);
+    expect(toggles).toHaveLength(98);
     expect(toggles.filter((button) => button.getAttribute('aria-pressed') !== null)).toHaveLength(
-      92
+      98
     );
   });
 });

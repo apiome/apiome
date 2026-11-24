@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.653.0",
+    "version": "1.654.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -37579,6 +37579,1197 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for importa pactfileintoaconsumercontractresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pacticipants": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "List pacticipants",
+        "description": "The applications registered as pacticipants in this workspace, ordered by handle.\n\nPass the previous page's `next_cursor` as `cursor` until `has_more` is false.\n\nRequires `pacts:view`.",
+        "operationId": "list_tenant_pacticipants_v1_tenants__tenant_slug__pacticipants_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size. At most 200.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size. At most 200."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "description": "Listpacticipantscursor schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpacticipantscursor schema."
+                }
+              ],
+              "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listpacticipantsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpacticipantsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listpacticipants Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpacticipants Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list pacticipants.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacticipantListResponse",
+                  "description": "Response payload for listpacticipantsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listpacticipantsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Register a pacticipant",
+        "description": "Register an application that takes part in pacts. The handle (`slug`) is what URLs and CI name; it is derived from `name` when omitted (`Billing Service` becomes `billing-service`), is unique in the workspace, and is **not** editable afterwards.\n\n`project` binds a provider to the project that describes it; `consumer_id` binds a consumer to its row in the consumer registry. Both are optional and must belong to this workspace. Deleting the project or the consumer clears the binding and keeps the pacticipant.\n\nRequires `pacts:create`.",
+        "operationId": "register_pacticipant_v1_tenants__tenant_slug__pacticipants_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registerapacticipantauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registerapacticipantauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registerapacticipant Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registerapacticipant Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PacticipantInput",
+                "description": "Request body for registerapacticipantrequest."
+              }
+            }
+          },
+          "description": "Request body for register a pacticipant."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for register a pacticipant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacticipantRecord",
+                  "description": "Response payload for registerapacticipantresponse201."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`pacticipant-slug-taken`: the workspace already has that handle."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for registerapacticipantresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Read one pacticipant",
+        "description": "Read a pacticipant by its handle, its id, or its display name (`Billing Service` finds `billing-service`).\n\nRequires `pacts:view`.",
+        "operationId": "read_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonepacticipantauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonepacticipantauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonepacticipant Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonepacticipant Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one pacticipant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacticipantRecord",
+                  "description": "Response payload for readonepacticipantresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readonepacticipantresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Update a pacticipant",
+        "description": "Change the display name, repository URL, main branch or bindings. A field that is left out is not changed; `null` clears `repository_url` and `main_branch` and unbinds `project` and `consumer_id`. The handle cannot be changed.\n\nRequires `pacts:edit`.",
+        "operationId": "patch_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Updateapacticipantauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Updateapacticipantauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Updateapacticipant Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Updateapacticipant Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PacticipantPatch",
+                "description": "Request body for updateapacticipantrequest."
+              }
+            }
+          },
+          "description": "Request body for update a pacticipant."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for update a pacticipant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacticipantRecord",
+                  "description": "Response payload for updateapacticipantresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for updateapacticipantresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Delete a pacticipant",
+        "description": "Delete a pacticipant **with all of its versions, branches and tags**. This cannot be undone. The project and the consumer it was bound to are not touched.\n\nRequires `pacts:delete` (the built-in Owner and Admin roles).",
+        "operationId": "remove_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteapacticipantauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteapacticipantauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteapacticipant Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteapacticipant Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete a pacticipant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteapacticipantresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "List a pacticipant's versions",
+        "description": "The versions recorded for this pacticipant, latest recorded first, each with the branches it was recorded on and its tags. `branch` and `tag` narrow the list, so the first row of `?branch=main` is the head of `main` and the first row of `?tag=prod` is the latest version tagged `prod`.\n\nPass the previous page's `next_cursor` as `cursor` until `has_more` is false.\n\nRequires `pacts:view`.",
+        "operationId": "list_pacticipant_versions_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__versions_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255,
+                  "description": "Listapacticipantsversionsbranch schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantsversionsbranch schema."
+                }
+              ],
+              "description": "Only versions recorded on this branch.",
+              "title": "Branch"
+            },
+            "description": "Only versions recorded on this branch."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255,
+                  "description": "Listapacticipantsversionstag schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantsversionstag schema."
+                }
+              ],
+              "description": "Only versions carrying this tag.",
+              "title": "Tag"
+            },
+            "description": "Only versions carrying this tag."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size. At most 200.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size. At most 200."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "description": "Listapacticipantsversionscursor schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantsversionscursor schema."
+                }
+              ],
+              "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listapacticipantsversionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantsversionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listapacticipantsversions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantsversions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a pacticipant's versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacticipantVersionListResponse",
+                  "description": "Response payload for listapacticipantsversionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listapacticipantsversionsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}": {
+      "put": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Record a version",
+        "description": "Record that a build produced version `number` of this pacticipant, optionally with the branch it was built from and tags. Safe to repeat:\n\n- **A version is created once and never changes.** The first request answers `201` and stores `build_url`. A later request for the same number answers `200` with the stored version; its `build_url` is not replaced.\n- **A branch head only moves forward.** The version is added to `branch`, and becomes its head only when it was recorded later than the current head (`head_moved`). Recording an older version on a branch does not move the head back.\n- **Tags are added once.** Sending a tag the version already has changes nothing.\n\nThe version number is stored exactly as sent. It cannot contain a `/` here, because it is a path segment.\n\nRequires `pacts:create`.",
+        "operationId": "put_pacticipant_version_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__versions__number__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Number",
+              "description": "Number schema."
+            },
+            "description": "Path parameter identifying the number segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordaversionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordaversionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordaversion Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordaversion Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PacticipantVersionInput"
+                  },
+                  {
+                    "type": "null",
+                    "description": "Request body for recordaversionrequest."
+                  }
+                ],
+                "title": "Body",
+                "description": "Body schema."
+              }
+            }
+          },
+          "description": "Request body for record a version."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for record a version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordedPacticipantVersion",
+                  "description": "Response payload for recordaversionresponse200."
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The version was created by this request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordedPacticipantVersion",
+                  "description": "Response payload for recordaversionresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for recordaversionresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Read one version",
+        "description": "Read a version by its number, with the branches it was recorded on and its tags.\n\nRequires `pacts:view`.",
+        "operationId": "read_pacticipant_version_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__versions__number__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Number",
+              "description": "Number schema."
+            },
+            "description": "Path parameter identifying the number segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readoneversionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readoneversionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readoneversion Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readoneversion Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacticipantVersionRecord",
+                  "description": "Response payload for readoneversionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readoneversionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/versions/{number}/tags/{tag}": {
+      "put": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Tag a version",
+        "description": "Put a tag on a recorded version. Tagging a version that already has the tag changes nothing and answers the same way. A tag may contain `/` (`feat/new-invoice`).\n\nRequires `pacts:create`.",
+        "operationId": "put_pacticipant_version_tag_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__versions__number__tags__tag__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Number",
+              "description": "Number schema."
+            },
+            "description": "Path parameter identifying the number segment."
+          },
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tag",
+              "description": "Tag schema."
+            },
+            "description": "Path parameter identifying the tag segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Tagaversionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Tagaversionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Tagaversion Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Tagaversion Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for tag a version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacticipantVersionRecord",
+                  "description": "Response payload for tagaversionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for tagaversionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/branches": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "List a pacticipant's branches",
+        "description": "The branches versions were recorded on, by name, each with its head: the latest version recorded on it. `is_main` marks the pacticipant's main branch.\n\nPass the previous page's `next_cursor` as `cursor` until `has_more` is false.\n\nRequires `pacts:view`.",
+        "operationId": "list_pacticipant_branches_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__branches_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size. At most 200.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size. At most 200."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "description": "Listapacticipantsbranchescursor schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantsbranchescursor schema."
+                }
+              ],
+              "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listapacticipantsbranchesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantsbranchesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listapacticipantsbranches Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantsbranches Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a pacticipant's branches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PacticipantBranchListResponse",
+                  "description": "Response payload for listapacticipantsbranchesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listapacticipantsbranchesresponse422."
                 }
               }
             }
@@ -210448,6 +211639,699 @@
         "title": "PactImportRequest",
         "description": "A Pact document to import.\n\nAttributes:\n    pact: The Pact document as raw JSON text.\n    consumer_slug: The handle to store it under. Derived from the document's own\n        ``consumer.name`` when omitted, which is what lets a CI job upload a pact for a\n        service that has never been registered.\n    consumer_name: Display name for a consumer this import registers.\n    version: Version label, revision id, or ``latest`` to resolve the interactions against.\n    note: Free text explaining the revision."
       },
+      "PacticipantBranchListResponse": {
+        "properties": {
+          "branches": {
+            "items": {
+              "$ref": "#/components/schemas/PacticipantBranchRecord"
+            },
+            "type": "array",
+            "title": "Branches",
+            "description": "By name.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many branches were returned.",
+            "example": 1
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "Whether another page exists.",
+            "default": false,
+            "example": true
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for pacticipant branch list."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for pacticipant branch list."
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Pass as `cursor` to read the next page; null on the last page."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "title": "PacticipantBranchListResponse",
+        "description": "One page of a pacticipant's branches."
+      },
+      "PacticipantBranchRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "pacticipant_id": {
+            "type": "string",
+            "title": "Pacticipant Id",
+            "description": "Pacticipant ID.",
+            "example": "pacticipant_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "head_version_id": {
+            "type": "string",
+            "title": "Head Version Id",
+            "description": "Head Version ID.",
+            "example": "head_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "head_version": {
+            "type": "string",
+            "title": "Head Version",
+            "description": "Number of the latest version recorded on this branch.",
+            "example": "1.0.0"
+          },
+          "is_main": {
+            "type": "boolean",
+            "title": "Is Main",
+            "description": "Whether this is the pacticipant's main branch.",
+            "default": false,
+            "example": true
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Branch schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Branch schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601)."
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Branch schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Branch schema."
+              }
+            ],
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pacticipant_id",
+          "name",
+          "head_version_id",
+          "head_version"
+        ],
+        "title": "PacticipantBranchRecord",
+        "description": "A stored branch and its head.\n\nAttributes:\n    id: Row id.\n    pacticipant_id: Owning pacticipant.\n    name: The branch, as git names it.\n    head_version_id: Id of the latest version recorded on it.\n    head_version: That version's number.\n    is_main: Whether this is the pacticipant's main branch.\n    created_at: When a version was first recorded on it.\n    updated_at: When the head last moved."
+      },
+      "PacticipantInput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name, as a Pact file or a person writes it.",
+            "examples": [
+              "Billing Service"
+            ]
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Input schema."
+              }
+            ],
+            "title": "Slug",
+            "description": "The handle URLs and CI name. Derived from `name` when omitted; not editable afterwards.",
+            "examples": [
+              "billing-service"
+            ]
+          },
+          "repository_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Input schema."
+              }
+            ],
+            "title": "Repository Url",
+            "description": "http(s) URL of the application's source repository.",
+            "examples": [
+              "https://github.com/example/billing-service"
+            ]
+          },
+          "main_branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Input schema."
+              }
+            ],
+            "title": "Main Branch",
+            "description": "The branch read by default when a query names none.",
+            "examples": [
+              "main"
+            ]
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Input schema."
+              }
+            ],
+            "title": "Project",
+            "description": "Slug or id of the project that describes this application as a provider.",
+            "examples": [
+              "billing-api"
+            ]
+          },
+          "consumer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Input schema."
+              }
+            ],
+            "title": "Consumer Id",
+            "description": "Id of this application's consumer in the consumer registry.",
+            "examples": [
+              "7b1f0c1e-6f4e-4f0a-9d53-3d0e3f5a2a11"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "PacticipantInput",
+        "description": "A new pacticipant.\n\nAttributes:\n    name: Display name, as a Pact file or a person writes it.\n    slug: The handle; derived from ``name`` when omitted, and never editable.\n    repository_url: http(s) URL of the application's source repository.\n    main_branch: The branch read by default when a query names none.\n    project: Slug or id of the Apiome project that describes this provider.\n    consumer_id: Id of this application's row in the consumer registry."
+      },
+      "PacticipantListResponse": {
+        "properties": {
+          "pacticipants": {
+            "items": {
+              "$ref": "#/components/schemas/PacticipantRecord"
+            },
+            "type": "array",
+            "title": "Pacticipants",
+            "description": "By handle.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many pacticipants were returned.",
+            "example": 1
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "Whether another page exists.",
+            "default": false,
+            "example": true
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for pacticipant list."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for pacticipant list."
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Pass as `cursor` to read the next page; null on the last page."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "title": "PacticipantListResponse",
+        "description": "One page of the tenant's pacticipants."
+      },
+      "PacticipantPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Patch schema."
+              }
+            ],
+            "title": "Name",
+            "description": "New display name."
+          },
+          "repository_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Patch schema."
+              }
+            ],
+            "title": "Repository Url",
+            "description": "New repository URL; `null` clears it."
+          },
+          "main_branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Patch schema."
+              }
+            ],
+            "title": "Main Branch",
+            "description": "New main branch; `null` clears it."
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Patch schema."
+              }
+            ],
+            "title": "Project",
+            "description": "Project slug or id to bind; `null` unbinds."
+          },
+          "consumer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Patch schema."
+              }
+            ],
+            "title": "Consumer Id",
+            "description": "Consumer id to bind; `null` unbinds."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PacticipantPatch",
+        "description": "A partial update of a pacticipant. An omitted field is left alone; ``null`` clears it.\n\nAttributes:\n    name: New display name (cannot be cleared).\n    repository_url: New repository URL, or ``null`` to clear it.\n    main_branch: New main branch, or ``null`` to clear it.\n    project: Slug or id of the project to bind, or ``null`` to unbind.\n    consumer_id: Id of the consumer to bind, or ``null`` to unbind."
+      },
+      "PacticipantRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id",
+            "description": "Tenant that owns the resource.",
+            "example": "ten_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "repository_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant schema."
+              }
+            ],
+            "title": "Repository Url",
+            "description": "Repository URL."
+          },
+          "main_branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant schema."
+              }
+            ],
+            "title": "Main Branch",
+            "description": "Main Branch."
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant schema."
+              }
+            ],
+            "title": "Project Id",
+            "description": "Project identifier the resource belongs to."
+          },
+          "consumer_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant schema."
+              }
+            ],
+            "title": "Consumer Id",
+            "description": "Consumer ID."
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601)."
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant schema."
+              }
+            ],
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "tenant_id",
+          "slug",
+          "name"
+        ],
+        "title": "PacticipantRecord",
+        "description": "A stored pacticipant.\n\nAttributes:\n    id: Row id.\n    tenant_id: Owning tenant.\n    slug: Stable handle.\n    name: Display name.\n    repository_url: Source repository URL.\n    main_branch: The branch read by default.\n    project_id: Bound project, when this is a provider described in Apiome.\n    consumer_id: Bound consumer-registry row, when this is a registered consumer.\n    created_at: When it was registered.\n    updated_at: When it was last changed."
+      },
+      "PacticipantVersionInput": {
+        "properties": {
+          "build_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Version Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Version Input schema."
+              }
+            ],
+            "title": "Build Url",
+            "description": "http(s) URL of the CI build. Stored only when this request creates the version.",
+            "examples": [
+              "https://ci.example.com/builds/4812"
+            ]
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Version Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Version Input schema."
+              }
+            ],
+            "title": "Branch",
+            "description": "The repository branch this version was built from.",
+            "examples": [
+              "main"
+            ]
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Tags to put on the version (at most 50).",
+            "examples": [
+              [
+                "prod"
+              ]
+            ],
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PacticipantVersionInput",
+        "description": "What a build reports when it records a version.\n\nAttributes:\n    build_url: http(s) URL of the CI build. Kept only when this request creates the version.\n    branch: The repository branch the version was built from.\n    tags: Tags to put on the version."
+      },
+      "PacticipantVersionListResponse": {
+        "properties": {
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/PacticipantVersionRecord"
+            },
+            "type": "array",
+            "title": "Versions",
+            "description": "Latest recorded first.",
+            "maxItems": 1000
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "How many versions were returned.",
+            "example": 1
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "Whether another page exists.",
+            "default": false,
+            "example": true
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for pacticipant version list."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for pacticipant version list."
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Pass as `cursor` to read the next page; null on the last page."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "title": "PacticipantVersionListResponse",
+        "description": "One page of a pacticipant's versions."
+      },
+      "PacticipantVersionRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "pacticipant_id": {
+            "type": "string",
+            "title": "Pacticipant Id",
+            "description": "Pacticipant ID.",
+            "example": "pacticipant_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "number": {
+            "type": "string",
+            "title": "Number",
+            "description": "Number.",
+            "example": "example"
+          },
+          "seq": {
+            "type": "integer",
+            "title": "Seq",
+            "description": "Order of recording; a higher value was recorded later.",
+            "example": 1
+          },
+          "build_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Version schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Version schema."
+              }
+            ],
+            "title": "Build Url",
+            "description": "Build URL."
+          },
+          "branches": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Branches",
+            "description": "Branches.",
+            "maxItems": 1000
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Associated tag labels.",
+            "maxItems": 1000
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Version schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Version schema."
+              }
+            ],
+            "title": "Created By",
+            "description": "Created By."
+          },
+          "actor_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Version schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Version schema."
+              }
+            ],
+            "title": "Actor Label",
+            "description": "Actor Label."
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Version schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Version schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pacticipant_id",
+          "number",
+          "seq"
+        ],
+        "title": "PacticipantVersionRecord",
+        "description": "A stored pacticipant version.\n\nAttributes:\n    id: Row id.\n    pacticipant_id: Owning pacticipant.\n    number: The version string, as the build reported it.\n    seq: Order of recording; a higher value was recorded later.\n    build_url: The CI build that produced it.\n    branches: Branches it was recorded on, by name.\n    tags: Its tags, by name.\n    created_by: The user who recorded it, when still known.\n    actor_label: Who recorded it, as text.\n    created_at: When it was recorded."
+      },
       "PathCreateRequest": {
         "properties": {
           "pathname": {
@@ -220456,6 +222340,35 @@
         ],
         "title": "RecordChecksRequest",
         "description": "Record the outcome of the checks a preview must pass before its alias advances."
+      },
+      "RecordedPacticipantVersion": {
+        "properties": {
+          "version": {
+            "$ref": "#/components/schemas/PacticipantVersionRecord",
+            "description": "Version."
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created",
+            "description": "False when the version already existed; it is returned unchanged.",
+            "example": false
+          },
+          "head_moved": {
+            "type": "boolean",
+            "title": "Head Moved",
+            "description": "Whether the branch named in the request now has this version as its head.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "created"
+        ],
+        "title": "RecordedPacticipantVersion",
+        "description": "The outcome of recording a version.\n\nAttributes:\n    version: The version as stored, with every branch and tag it now has.\n    created: Whether this request created the version (false: it already existed, unchanged).\n    head_moved: Whether the named branch's head moved to this version."
       },
       "RedactionInfo": {
         "properties": {

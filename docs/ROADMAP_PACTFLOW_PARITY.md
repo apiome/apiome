@@ -141,7 +141,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.1 · [#6914](https://github.com/apiome/apiome/issues/6914) | Pacticipant, version, branch and tag model | Tenant-scoped registry (V###) linking pacticipants to projects/consumers | `contracts`,`pact`,`rest`,`mvp` | N | Y | L | apiome-db, apiome-rest |
 | PFX-1.2 · [#6915](https://github.com/apiome/apiome/issues/6915) | Pact publication and retrieval API | Broker-compatible publish/fetch, content-addressed pact versions | `contracts`,`pact`,`rest`,`mvp` | N | Y | L | apiome-rest |
 | PFX-1.3 · [#6916](https://github.com/apiome/apiome/issues/6916) | Consumer-version selectors and latest queries | latest, latest-by-branch/tag, selectors, HAL links | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest |
 | PFX-1.4 · [#6917](https://github.com/apiome/apiome/issues/6917) | Verification-result publication | Store verifier results per pact version × provider version | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-db |
@@ -155,7 +154,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 #### Detailed issue descriptions
 
-**PFX-1.1 · #6914 Pacticipant, version, branch and tag model**
+**✅ PFX-1.1 · #6914 Pacticipant, version, branch and tag model — Complete**
 - **Problem:** Apiome stores *what a consumer uses* (CTG-4.1) but not *who published which pact from which build*. Pact tooling addresses everything by pacticipant name, application version, branch and tag; without those there is no matrix, no can-i-deploy and no environments.
 - **Solution/Scope:** New migration (check V### on `origin/main` first) adding `pacticipant` (tenant, slug, display name, repository URL, main branch, optional `project_id`, optional `consumer_id`), `pacticipant_version` (immutable; version string, build URL, created_by), `pacticipant_branch` + `pacticipant_branch_version` (head per branch), `pacticipant_version_tag`. Provider pacticipant may bind to an Apiome project; consumer pacticipant to a `consumer` row (CTG-4.1). RBAC resource `pacts` (view/create/edit; delete Owner/Admin) seeded via `seed_builtin_roles`. Rules: versions never mutate; names unique per tenant; cross-tenant access impossible by composite FKs, as in V251.
 - **Acceptance Criteria:** Create/list/get/delete pacticipants; versions are immutable; branch head moves forward only on publish; tags idempotent; deleting a project does not delete pacticipants (it nulls the binding); `yarn`/pytest + scratch-DB SQL checks.

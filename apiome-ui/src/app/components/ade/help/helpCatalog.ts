@@ -1261,6 +1261,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['breaking', 'changelog', 'diff', 'fail-on', 'github action', 'pact', 'deploy gate', 'drift'],
   },
   {
+    id: 'concepts',
+    title: 'Pact Broker concepts',
+    summary: 'Pacticipants, versions, branches and tags — the names Pact tooling uses for your applications.',
+    page: 'apiome-docs/docs/ship/pact-broker/concepts.mdx',
+    section: 'reference',
+    keywords: ['pacticipant', 'application version', 'branch head', 'tag', 'consumer-driven contracts', 'can-i-deploy'],
+  },
+  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',
