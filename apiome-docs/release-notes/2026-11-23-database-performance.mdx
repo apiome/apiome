@@ -1,0 +1,52 @@
+---
+slug: database-performance
+title: "Database performance across the REST API, the app, Browse, MCP and mocks"
+description: "Fewer statements per request, bounded lists and indexed queries at scale."
+authors: [apiome]
+---
+
+Apiome stays fast on large workspaces and large catalogs. Requests run a small, fixed number of
+database statements, long lists load a page at a time, and queries use their indexes. This post
+sums up the 27 changes of the database performance work; each has its own entry with the full
+numbers.
+
+{/* truncate */}
+
+Measured on the scale benchmark database (20,000 projects, 200,000 versions, 1,000,000 classes,
+3,100,000 class properties; PostgreSQL 18), before and after:
+
+| Where | Before | After |
+| --- | --- | --- |
+| Loading the paths of a 1,000-operation spec | 4,251 statements, 529 ms | 6 statements, 27 ms |
+| Loading the properties of a 20,000-class version | 19,000 statements, 4.6 s | 1 statement, 0.39 s |
+| Importing a spec in the app | 19,519 statements, 1.56 s | 41 statements, 0.66 s |
+| Forking a 20,000-class revision | 12.3 s | 2.1 s |
+| Usage ingest, four writers in one workspace | 1,446 events/s | 20,772 events/s |
+| Project list, 5,000-project workspace | 33 ms for every project | 1.9 ms a page |
+| Deleting one version: the check on its 1,000,000-row `classes` table | 26.9 ms | 0.07 ms |
+| Finding a revision's history among 200,000 versions | 21.4 ms | 0.44 ms |
+| **Home** stat strip counts, 5,000 projects | about 1.6 s | about 0.4 s, then cached for a minute |
+| **MCP Catalog** **Servers** grid, 2,000 servers | 7.9 s | 45 ms |
+| MCP catalog tool call, 50 concurrent callers | 7 statements, 15.5 s p50 | 2 statements, 20 ms |
+| MCP `spec.get_openapi`, 600-operation spec | 2,705 statements, 141 ms | 10 statements, 30 ms |
+| Mock request for a cached spec | an access query and a usage write | no statement |
+| Browse search suggestions | 0.2–1.2 s a keystroke | 18–40 ms |
+| Browse "Recently published" | 13.6 ms | 0.01 ms |
+
+What else changed:
+
+- **Every database statement has a time limit.** The REST API, the web app and the browse site stop
+  a statement that runs longer than `DB_STATEMENT_TIMEOUT_MS` (30 seconds by default).
+- **Sign-in and permission checks** run in one cached query, and an API key is no longer
+  re-verified with bcrypt on every request.
+- **Long lists page with a cursor** instead of counting every row. A count that would read every
+  row shows as `10,000+`. Some list limits changed; see the REST API changelog.
+- **Slow queries are easier to find.** Every REST request logs its statement count and time, and
+  the Docker Compose `postgres` service loads `pg_stat_statements` and `auto_explain`.
+- **Some answers are cached for a short time:** the public directory, MCP catalog analytics and
+  mock specs. A change can take up to the cache time to show.
+
+Upgrading adds indexes and rewrites a few tables. See
+[Upgrade a large database without blocking writes](/admin/operating-apiome#upgrade-a-large-database-without-blocking-writes),
+and [Database performance](/admin/operating-apiome#database-performance) for the settings to size
+and watch.
