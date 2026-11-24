@@ -255,6 +255,21 @@ class Settings(BaseSettings):
         le=1_000_000,
         description="Maximum concurrent mock sessions (process-wide for memory; global for postgres).",
     )
+    session_purge_interval_seconds: float = Field(
+        default=60.0,
+        gt=0,
+        le=3600.0,
+        description=(
+            "Seconds between sweeps that delete expired sessions (postgres backend only; "
+            "expired sessions are already invisible to requests before they are swept)."
+        ),
+    )
+    session_purge_batch_size: int = Field(
+        default=500,
+        ge=1,
+        le=100_000,
+        description="Expired sessions one sweep statement deletes (postgres backend only).",
+    )
 
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:

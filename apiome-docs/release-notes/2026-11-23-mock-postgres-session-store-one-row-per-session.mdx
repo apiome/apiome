@@ -1,0 +1,33 @@
+---
+slug: mock-postgres-session-store-one-row-per-session
+title: "Mock Postgres session store: one row per session"
+description: "Stateful mock sessions on PostgreSQL do no table-wide work per request."
+authors: [apiome]
+---
+
+**Performance.** With the PostgreSQL session store (`APIOME_MOCK_SESSION_STORE_BACKEND=postgres`),
+stateful `X-Mock-Session` requests now touch only their own session. No request does work across
+the whole table.
+
+{/* truncate */}
+
+- **One row per session.** A session's expiry, last activity, resource count and size live in one
+  `mock_session` row. A read extends the expiry at most about once a minute and never rewrites the
+  stored resources. Before, every read rewrote every resource row of the session.
+- **No table-wide statements on requests.** Expired sessions are deleted by a sweep every 60
+  seconds (`APIOME_MOCK_SESSION_PURGE_INTERVAL_SECONDS`), 500 at a time, instead of at the start of
+  every operation. A new session reads a one-row count instead of counting every session in the
+  table. On 100,000 sessions and 2,000,000 stored resources, that count had taken 6.7 seconds.
+- **The session limit holds under load.** `APIOME_MOCK_SESSION_MAX_SESSIONS` is checked while a lock
+  is held, so concurrent new sessions cannot go past it.
+- **One transaction per action.** A create allocates its id and stores the resource in one
+  transaction, so concurrent creates in one collection get distinct ids. A fixture pack is stored
+  with one multi-row write.
+- **Sequence scenarios advance.** On the PostgreSQL store, a sequence scenario served its first
+  response on every call because the call counter was never saved. It now moves through its
+  responses, as it does on the memory store.
+
+**What changes for you.** Upgrade `apiome-mock` right after migration `V430`, which carries live
+sessions over. An idle session can expire up to a minute (or a tenth of its TTL) sooner than
+before. See
+[The mock runtime's database work per request](/admin/operating-apiome#the-mock-runtimes-database-work-per-request).

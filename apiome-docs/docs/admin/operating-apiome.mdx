@@ -376,6 +376,23 @@ is still on and reads the broker binding's state, without the credential. The ad
 for every channel until the binding changes. The producer runs at most
 `APIOME_MOCK_BROKER_PRODUCER_DB_CONCURRENCY` statements at once.
 
+**Stateful sessions on PostgreSQL.** With `APIOME_MOCK_SESSION_STORE_BACKEND=postgres`, each
+`X-Mock-Session` has one row in `mock_session`. That row holds the session's expiry, its last
+activity, its resource count and its size, and the resources reference it. A read is one statement
+that finds the session by its key and reads only that session's resources. It extends the expiry
+only when the last extension is more than a minute old (or a tenth of
+`APIOME_MOCK_SESSION_TTL_SECONDS`, if that is shorter). Reads never rewrite resource rows, and a
+read does not wait for a write to the same session. Each create, update, delete or fixture-pack
+reset runs in one transaction that locks the session's row first. Concurrent creates therefore
+get distinct ids, and ids and sequence-scenario call numbers come from a counter row per
+collection. A fixture pack is stored with one multi-row `INSERT`. A new session is checked against
+`APIOME_MOCK_SESSION_MAX_SESSIONS` with a one-row count kept by a trigger, so the limit holds across
+replicas and the table is never counted. Expired sessions are already invisible to requests. A
+sweep on every replica deletes them every `APIOME_MOCK_SESSION_PURGE_INTERVAL_SECONDS`, in batches
+of `APIOME_MOCK_SESSION_PURGE_BATCH_SIZE` taken with `SKIP LOCKED`. Until it runs, an expired
+session still counts toward the limit, unless the same token is used again. The default `memory`
+backend is unchanged.
+
 **Cache invalidation.** The runtime listens on `APIOME_MOCK_SPEC_NOTIFY_CHANNEL`. When that
 connection drops, it reconnects with backoff, from 0.5 seconds up to 30 seconds, without a restart.
 Every time it connects, it empties its caches, because changes made while it was disconnected were
@@ -398,6 +415,8 @@ never heard.
 | `APIOME_MOCK_BROKER_PRODUCER_DB_CONCURRENCY` | `2` | Statements the Kafka producer runs at once |
 | `APIOME_MOCK_SPEC_CACHE_MAX_ENTRIES` | `256` | Compiled specs each cache keeps (REST, and event, gRPC and GraphQL). Was `128` |
 | `APIOME_MOCK_SPEC_CACHE_TTL_SECONDS` | `300` | Seconds before a compiled spec is checked for changes. An unchanged spec is kept |
+| `APIOME_MOCK_SESSION_PURGE_INTERVAL_SECONDS` | `60` | Seconds between sweeps of expired `X-Mock-Session` state (PostgreSQL store only) |
+| `APIOME_MOCK_SESSION_PURGE_BATCH_SIZE` | `500` | Expired sessions one sweep statement deletes; a sweep repeats full batches |
 
 Measured on a scratch PostgreSQL 18 database, one hot public version, `GET` with 16 concurrent
 clients and 15,000 requests, before and after these changes. The usage totals matched the requests
@@ -416,6 +435,17 @@ runs:
 | One request | 38–55 ms (median 42) | 29–40 ms (median 33) |
 | 100 requests at once | 570–610 ms; every request loaded the spec itself, all 10 connections busy | 130–145 ms; one load and one connection |
 | Unchanged spec after the cache time | Reloaded | 1 statement, kept |
+
+The PostgreSQL session store was measured on a scratch PostgreSQL 18 database holding 100,000
+sessions and 2,000,000 stored resources, 8,763 of those sessions already expired:
+
+| Statement | Before | After |
+| --- | --- | --- |
+| Start of every operation | Deleted every workspace's expired rows: 188,700 rows, 132 ms | Nothing; the sweep deletes 500 expired sessions per statement in 7 ms, by index |
+| Read of one resource | Rewrote the expiry of all 20 of the session's rows | At most one session row, about once a minute |
+| New session | Counted the distinct sessions of the whole table: sequential scan of 1,811,300 rows, 6.7 s | Reads the one-row count: under 0.1 ms |
+| Next id | Read every id of the collection, and did not save it (sequence scenarios stayed on their first response) | One upsert of a counter row: 0.5 ms |
+| Fixture-pack reset | One `INSERT` per resource | One multi-row `INSERT` |
 
 ### What the web app reuses within a request and on Home
 
@@ -850,6 +880,16 @@ import runs. Bulk writes to a revision's classes, paths and operations now cost 
 they touch one revision or hundreds: 50,000 inserted classes spread over 500 revisions took the
 same time with the trigger as without (the row-level triggers made it 3.1 times as slow). To go
 back, follow the rollback notes at the top of the migration file.
+
+`V430` (DBP-1.26) replaces the mock runtime's `mock_session_state` table with `mock_session`
+and its child tables (see
+[The mock runtime's database work per request](#the-mock-runtimes-database-work-per-request)).
+Sessions that have not expired are carried over, with their resources and expiry, and expired rows
+are dropped with the old table. On 100,000 sessions and 2,000,000 stored resources it took 8
+seconds; a typical table is far smaller. Stateful requests to a mock runtime that is still on the
+previous version fail between the migration and that runtime's restart, so upgrade `apiome-mock`
+right after the migration. Only deployments with `APIOME_MOCK_SESSION_STORE_BACKEND=postgres` use
+these tables.
 
 A migration that adds a stored generated column cannot be prepared this way. `V409` adds
 `properties.data_digest`, which rewrites the `properties` table and blocks reads and writes of

@@ -4,13 +4,24 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, Mapping, Protocol, Sequence, runtime_checkable
+from typing import Any, Callable, Mapping, Protocol, Sequence, runtime_checkable
 
 MOCK_SESSION_HEADER = "X-Mock-Session"
 
 SeedCollections = Mapping[str, Sequence[tuple[str, dict[str, Any]]]]
 """Seed state for one session: ordered ``(resource_id, resource)`` pairs per collection path
 (#4745, PMR-2.2). This is the shape ``FixturePack.collections`` carries."""
+
+CreateBuilder = Callable[[int], tuple[str, dict[str, Any]]]
+"""Builds a new resource from the integer id the store allocated: returns ``(resource_id, resource)``.
+
+The builder may ignore the allocated id (a client-supplied id wins); it runs inside the store's
+write, so it must be quick and must not touch the store (#7209, DBP-1.26)."""
+
+UpdateBuilder = Callable[[dict[str, Any] | None], dict[str, Any]]
+"""Builds the resource to store from the current one (``None`` when it does not exist yet).
+
+Runs inside the store's write, like :data:`CreateBuilder` (#7209, DBP-1.26)."""
 
 
 @dataclass(frozen=True)
@@ -88,12 +99,61 @@ class SessionStore(Protocol):
     ) -> bool:
         """Delete a resource; return whether it existed."""
 
+    async def create_resource(
+        self,
+        key: SessionKey,
+        collection_path: str,
+        build: CreateBuilder,
+    ) -> dict[str, Any]:
+        """Allocate the next integer id and store the resource ``build`` returns, in one step.
+
+        Concurrent creates in one collection get distinct allocated ids (#7209, DBP-1.26).
+
+        Args:
+            key: The session namespace.
+            collection_path: The collection the resource goes into.
+            build: Called once with the allocated id; returns ``(resource_id, resource)``.
+
+        Returns:
+            The stored resource.
+
+        Raises:
+            SessionCapacityError: The write would exceed a session cap.
+        """
+
+    async def update_resource(
+        self,
+        key: SessionKey,
+        collection_path: str,
+        resource_id: str,
+        build: UpdateBuilder,
+    ) -> dict[str, Any]:
+        """Read the current resource, store what ``build`` returns from it, in one step (#7209).
+
+        Args:
+            key: The session namespace.
+            collection_path: The collection of the resource.
+            resource_id: The resource's id.
+            build: Called once with the current resource (``None`` when missing).
+
+        Returns:
+            The stored resource.
+
+        Raises:
+            SessionCapacityError: The write would exceed a session cap.
+        """
+
     async def next_integer_id(
         self,
         key: SessionKey,
         collection_path: str,
     ) -> int:
-        """Allocate a monotonic integer id for ``collection_path`` within the session."""
+        """Allocate a monotonic integer id for ``collection_path`` within the session.
+
+        The allocation is persisted: the next call returns a higher number (sequence scenarios
+        count calls with it), and it is never lower than one past the highest numeric
+        ``resource_id`` stored in the collection.
+        """
 
     async def replace_session(
         self,

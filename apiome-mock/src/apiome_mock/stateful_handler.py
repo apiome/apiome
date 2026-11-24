@@ -139,51 +139,71 @@ async def _dispatch_crud(
 
     if matched.action == CrudAction.CREATE:
         body = await _read_json_object(request)
-        next_int = await store.next_integer_id(key, collection)
-        resource_id, payload, _ = extract_or_synthesize_id(
-            body,
-            resource=matched.resource,
-            operation=operation,
-            spec=spec,
-            next_int=next_int,
-        )
-        stored = await store.put_resource(
-            key,
-            collection,
-            resource_id,
-            payload,
-            replace=True,
-        )
+
+        def _build_created(next_int: int) -> tuple[str, dict[str, Any]]:
+            resource_id, payload, _ = extract_or_synthesize_id(
+                body,
+                resource=matched.resource,
+                operation=operation,
+                spec=spec,
+                next_int=next_int,
+            )
+            return resource_id, payload
+
+        # Id allocation and the write are one store call (one transaction on Postgres, #7209).
+        stored = await store.create_resource(key, collection, _build_created)
         return _json_response(status, stored)
 
     if matched.action == CrudAction.UPDATE:
         assert matched.resource_id is not None
-        existing = await store.get_resource(key, collection, matched.resource_id)
         body = await _read_json_object(request)
-        if request.method.upper() == "PATCH" and existing is not None:
-            payload = {**existing, **body}
-        else:
-            payload = dict(body)
-        typed_id: Any = int(matched.resource_id) if matched.resource_id.isdigit() else matched.resource_id
-        if existing is not None:
-            for candidate in (matched.resource.id_param, "id"):
-                if candidate in existing:
-                    typed_id = existing[candidate]
-                    payload[candidate] = typed_id
-                    break
-            else:
-                payload[matched.resource.id_param] = typed_id
-        else:
-            payload[matched.resource.id_param] = typed_id
-            if matched.resource.id_param != "id":
-                payload.setdefault("id", typed_id)
-        stored = await store.put_resource(
-            key,
-            collection,
-            matched.resource_id,
-            payload,
-            replace=True,
-        )
+        resource_id = matched.resource_id
+        id_param = matched.resource.id_param
+        is_patch = request.method.upper() == "PATCH"
+
+        def _build_updated(existing: dict[str, Any] | None) -> dict[str, Any]:
+            return _updated_payload(existing, body, resource_id=resource_id, id_param=id_param, is_patch=is_patch)
+
+        # Read and write are one store call (one transaction on Postgres, #7209).
+        stored = await store.update_resource(key, collection, resource_id, _build_updated)
         return _json_response(status, stored)
 
     raise RuntimeError(f"Unhandled CRUD action: {matched.action}")
+
+
+def _updated_payload(
+    existing: dict[str, Any] | None,
+    body: dict[str, Any],
+    *,
+    resource_id: str,
+    id_param: str,
+    is_patch: bool,
+) -> dict[str, Any]:
+    """Build the resource a PUT / PATCH stores.
+
+    Args:
+        existing: The stored resource, or ``None`` when the id is new.
+        body: The request's JSON object.
+        resource_id: The path's resource id.
+        id_param: The collection's id path parameter name.
+        is_patch: Merge ``body`` into ``existing`` instead of replacing it.
+
+    Returns:
+        The new resource, with its id field kept from ``existing`` (or set from the path).
+    """
+    if is_patch and existing is not None:
+        payload = {**existing, **body}
+    else:
+        payload = dict(body)
+    typed_id: Any = int(resource_id) if resource_id.isdigit() else resource_id
+    if existing is not None:
+        for candidate in (id_param, "id"):
+            if candidate in existing:
+                payload[candidate] = existing[candidate]
+                return payload
+        payload[id_param] = typed_id
+        return payload
+    payload[id_param] = typed_id
+    if id_param != "id":
+        payload.setdefault("id", typed_id)
+    return payload

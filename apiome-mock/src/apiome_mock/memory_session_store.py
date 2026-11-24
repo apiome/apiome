@@ -8,10 +8,12 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from apiome_mock.session_store import (
+    CreateBuilder,
     SeedCollections,
     SessionCapacityError,
     SessionCaps,
     SessionKey,
+    UpdateBuilder,
     resource_byte_size,
 )
 
@@ -108,33 +110,85 @@ class InMemorySessionStore:
         *,
         replace: bool,
     ) -> dict[str, Any]:
-        payload = dict(resource)
-        new_size = resource_byte_size(payload)
+        del replace  # create and replace store the same way (an existing id is overwritten)
         now = self._now()
         with self._lock:
             session = self._ensure(key, now)
-            bucket = session.collections.setdefault(collection_path, {})
-            existing = bucket.get(resource_id)
-            if existing is not None and not replace:
-                # Idempotent create: overwrite with same id when client supplied it.
-                pass
-            old_size = resource_byte_size(existing) if existing is not None else 0
-            delta_count = 0 if existing is not None else 1
-            projected_count = session.resource_count + delta_count
-            projected_bytes = session.total_bytes - old_size + new_size
-            if projected_count > self._caps.max_resources:
-                raise SessionCapacityError(
-                    f"Session resource limit of {self._caps.max_resources} exceeded.",
-                )
-            if projected_bytes > self._caps.max_bytes:
-                raise SessionCapacityError(
-                    f"Session size limit of {self._caps.max_bytes} bytes exceeded.",
-                )
-            bucket[resource_id] = payload
-            session.resource_count = projected_count
-            session.total_bytes = projected_bytes
-            self._touch(session, now)
-            return dict(payload)
+            return self._store(session, collection_path, resource_id, resource, now)
+
+    def _store(
+        self,
+        session: _SessionData,
+        collection_path: str,
+        resource_id: str,
+        resource: dict[str, Any],
+        now: float,
+    ) -> dict[str, Any]:
+        """Store ``resource`` under the lock after checking the session caps.
+
+        Args:
+            session: The live session (from :meth:`_ensure`).
+            collection_path: The collection the resource goes into.
+            resource_id: The resource's id; an existing resource with it is overwritten.
+            resource: The resource to store (copied).
+            now: The clock reading of this operation.
+
+        Returns:
+            A copy of the stored resource.
+
+        Raises:
+            SessionCapacityError: The write would exceed the resource or byte cap.
+        """
+        payload = dict(resource)
+        new_size = resource_byte_size(payload)
+        bucket = session.collections.get(collection_path, {})
+        existing = bucket.get(resource_id)
+        old_size = resource_byte_size(existing) if existing is not None else 0
+        delta_count = 0 if existing is not None else 1
+        projected_count = session.resource_count + delta_count
+        projected_bytes = session.total_bytes - old_size + new_size
+        if projected_count > self._caps.max_resources:
+            raise SessionCapacityError(
+                f"Session resource limit of {self._caps.max_resources} exceeded.",
+            )
+        if projected_bytes > self._caps.max_bytes:
+            raise SessionCapacityError(
+                f"Session size limit of {self._caps.max_bytes} bytes exceeded.",
+            )
+        session.collections.setdefault(collection_path, {})[resource_id] = payload
+        session.resource_count = projected_count
+        session.total_bytes = projected_bytes
+        self._touch(session, now)
+        return dict(payload)
+
+    async def create_resource(
+        self,
+        key: SessionKey,
+        collection_path: str,
+        build: CreateBuilder,
+    ) -> dict[str, Any]:
+        """Allocate an id and store the built resource under one lock (#7209)."""
+        now = self._now()
+        with self._lock:
+            session = self._ensure(key, now)
+            next_int = self._allocate(session, collection_path)
+            resource_id, resource = build(next_int)
+            return self._store(session, collection_path, resource_id, resource, now)
+
+    async def update_resource(
+        self,
+        key: SessionKey,
+        collection_path: str,
+        resource_id: str,
+        build: UpdateBuilder,
+    ) -> dict[str, Any]:
+        """Read, rebuild and store one resource under one lock (#7209)."""
+        now = self._now()
+        with self._lock:
+            session = self._ensure(key, now)
+            current = session.collections.get(collection_path, {}).get(resource_id)
+            resource = build(dict(current) if current is not None else None)
+            return self._store(session, collection_path, resource_id, resource, now)
 
     async def delete_resource(
         self,
@@ -217,13 +271,20 @@ class InMemorySessionStore:
         now = self._now()
         with self._lock:
             session = self._ensure(key, now)
-            current = session.next_ids.get(collection_path, 0) + 1
-            # Also consider max existing numeric id in the collection.
-            for rid in session.collections.get(collection_path, {}):
-                try:
-                    current = max(current, int(rid) + 1)
-                except ValueError:
-                    continue
-            session.next_ids[collection_path] = current
+            current = self._allocate(session, collection_path)
             self._touch(session, now)
             return current
+
+    @staticmethod
+    def _allocate(session: _SessionData, collection_path: str) -> int:
+        """Return and persist the next integer id of ``collection_path`` (caller holds the lock).
+
+        The id is one past the last one allocated, and at least one past the highest numeric
+        resource id stored in the collection.
+        """
+        current = session.next_ids.get(collection_path, 0) + 1
+        for rid in session.collections.get(collection_path, {}):
+            if rid.isascii() and rid.isdigit():
+                current = max(current, int(rid) + 1)
+        session.next_ids[collection_path] = current
+        return current
