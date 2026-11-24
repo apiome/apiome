@@ -45,6 +45,13 @@ def _rate_limit_key(tenant_slug: str, client_ip: str) -> str:
     return f"{tenant_slug}:{client_ip}"
 
 
+UNKNOWN_TENANT_BUCKET_PREFIX = "unknown-tenant:"
+"""Bucket namespace for requests naming a tenant that does not exist (#7207).
+
+Keyed by the client address alone, not the slug: a prober cycling random slugs shares one bucket.
+"""
+
+
 async def _check_mock_limits(
     *,
     client_ip: str,
@@ -59,6 +66,20 @@ async def _check_mock_limits(
 
     limits = await resolve_tenant_limits(pool, tenant_slug=tenant, settings=settings)
     if limits is None:
+        # Unknown tenant: the 404 that follows is cheap (the lookup is negatively cached), but it
+        # still gets an address-keyed bucket so 404 probing is bounded (#7207, DBP-1.24).
+        allowed, retry_after = _limiter.check(
+            f"{UNKNOWN_TENANT_BUCKET_PREFIX}{client_ip}",
+            settings.unknown_tenant_rps,
+            time.monotonic(),
+        )
+        if not allowed:
+            return too_many_requests(
+                "Mock request rate limit exceeded.",
+                instance=f"/{tenant}/{project}/{version}",
+                retry_after=retry_after,
+                limit_type="rps",
+            )
         return None
 
     monthly_count = await resolve_monthly_usage(pool, tenant_id=limits.tenant_id, settings=settings)

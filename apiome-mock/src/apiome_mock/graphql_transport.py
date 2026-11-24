@@ -87,7 +87,7 @@ from apiome_mock.scenarios import (
 )
 from apiome_mock.schema_synthesizer import parse_mock_seed
 from apiome_mock.settings import Settings, get_settings
-from apiome_mock.spec_loader import _fetch_access_row
+from apiome_mock.spec_loader import _fetch_access_row, access_status_from_row
 
 _log = structlog.get_logger(__name__)
 
@@ -632,12 +632,17 @@ async def _resolve_graphql_route(
         caller serves the request through the REST path instead; or an error response when the
         version is GraphQL but its schema cannot be built.
     """
-    cached = cache.get(tenant, project, version)
-    if cached is not None:
-        return cached.graphql
+    # The access row is cached on its own (#7207, DBP-1.24), so checking it before the compiled
+    # cache costs no statement; a version that is no longer mockable for this caller falls through
+    # to the REST path, which answers with the right problem.
     access_row = await _fetch_access_row(pool, tenant=tenant, project=project, version=version)
     if access_row is None or not is_graphql_source_format(access_row.get("source_format")):
         return None
+    if access_status_from_row(access_row, tenant=tenant, api_key=api_key) != "ok":
+        return None
+    cached = cache.get(tenant, project, version)
+    if cached is not None:
+        return cached.graphql
     loaded = await load_canonical_spec(pool, tenant=tenant, project=project, version=version, api_key=api_key)
     if loaded is None or loaded.paradigm is not ApiParadigm.GRAPH:
         return None

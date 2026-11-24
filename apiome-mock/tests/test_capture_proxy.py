@@ -32,6 +32,7 @@ from apiome_mock.capture import (
     build_capture_proxy,
     parse_capture_policy,
 )
+from apiome_mock.capture_store import QUEUE_FULL, UNRESOLVED
 from apiome_mock.spec_cache import SpecCache
 from apiome_mock.spec_loader import CompiledSpec
 
@@ -162,11 +163,14 @@ def _make_client(
     get_settings.cache_clear()
     from apiome_mock.server import create_app
 
-    async def _insert(*_args: Any, **kwargs: Any) -> str | None:
+    async def _store(*_args: Any, **kwargs: Any) -> tuple[str | None, str | None]:
+        # Stands in for the one-transaction store (#7207): bounded count, insert, audit.
         if insert_error is not None:
             raise insert_error
+        if pending >= kwargs["max_pending"]:
+            return None, QUEUE_FULL
         inserted.append(kwargs)
-        return insert_result
+        return (insert_result, None) if insert_result is not None else (None, UNRESOLVED)
 
     with (
         patch("apiome_mock.server.create_async_pool", return_value=mock_pool),
@@ -181,8 +185,7 @@ def _make_client(
             "apiome_mock.handler.load_compiled_spec",
             new=AsyncMock(return_value=_compiled(mock_settings)),
         ),
-        patch("apiome_mock.capture.count_pending_captures", new=AsyncMock(return_value=pending)),
-        patch("apiome_mock.capture.insert_capture_exchange", new=_insert),
+        patch("apiome_mock.capture.store_capture_exchange", new=_store),
     ):
         app = create_app()
         with TestClient(app, raise_server_exceptions=False) as client:
