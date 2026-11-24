@@ -99,6 +99,8 @@ async def run_agent_usage_sweep(
             locked = await cur.fetchone()
             if not locked or not locked[0]:
                 return None
+            # DBP-1.21: pooled sessions carry statement_timeout; rollups and purges may run longer.
+            await conn.execute("SET LOCAL statement_timeout = 0")
 
             async def scalar(sql: str, params: tuple[object, ...]) -> int:
                 row = await (await conn.execute(sql, params)).fetchone()

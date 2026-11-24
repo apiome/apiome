@@ -171,3 +171,32 @@ def test_schedule_skips_when_no_event_loop() -> None:
     assert ev["reason"] == "not_in_registry"
     assert "argument" not in ev
     assert "authorization" not in ev
+
+
+def test_with_a_writer_a_denial_is_queued_not_written() -> None:
+    """DBP-1.21: the denial row goes to the batched writer."""
+    import asyncio as _asyncio
+
+    from agent_invocation_fakes import RecordingPool
+    from apiome_mcp.audit_writer import AuditWriter, register_audit_writer, unregister_audit_writer
+    from apiome_mcp.mcp_capability_denial_audit import schedule_mcp_capability_denial
+
+    pool = RecordingPool()
+    writer = AuditWriter(pool)  # type: ignore[arg-type]
+    register_audit_writer(pool, writer)
+    try:
+        schedule_mcp_capability_denial(
+            pool,
+            key_id="k",
+            tenant_id="t",
+            tool_id="spec.list",
+            transport="http",
+            reason=None,  # type: ignore[arg-type]
+        )
+        assert pool.statements == []
+        _asyncio.run(writer.flush())
+        [(sql, params)] = pool.statements
+        assert "INSERT INTO apiome.mcp_capability_denials" in sql
+        assert params[2] == "spec.list" and params[4] == "http" and params[5] == "capability_disabled"
+    finally:
+        unregister_audit_writer(pool)

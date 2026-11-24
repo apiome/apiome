@@ -121,11 +121,32 @@ def test_enabled_tools_come_from_the_curation_tables(row, expected) -> None:
     assert "v.published AND v.deleted_at IS NULL" in sql
 
 
-def test_the_default_source_reads_the_keys_toolset_through_the_lifespan_pool() -> None:
-    pool = _ToolsetPool({"available": True, "tools": ["listPets"]})
+def test_the_default_source_reads_the_keys_toolset_manifest_through_the_lifespan_pool() -> None:
+    """DBP-1.21: the enabled tools come from the manifest statement, which the provider reuses."""
+    from agent_runtime_fakes import manifest_row
+
+    pool = _ToolsetPool(manifest_row(enabled_tools=["listPets"]))
     with patch.object(agent_access, "get_db_pool", return_value=pool):
-        assert asyncio.run(toolset_enabled_tools(MagicMock(), _KEY)) == ["listPets"]
+        manifest = asyncio.run(toolset_enabled_tools(MagicMock(), _KEY))
+    assert manifest.enabled_tools == ("listPets",)
     assert pool.params == [(_KEY.toolset_id, _KEY.tenant_id)]
+    assert "enabled_tools" in pool.sql[0]
+
+
+def test_the_manifest_source_is_cached_until_the_toolset_stamp_changes() -> None:
+    """A second request within the cache time reads nothing; a new toolset updated_at rereads."""
+    from dataclasses import replace
+
+    from agent_runtime_fakes import manifest_row
+
+    pool = _ToolsetPool(manifest_row(enabled_tools=["listPets"]))
+    key = replace(_KEY, toolset_stamp="2026-11-23 10:00:00+00")
+    with patch.object(agent_access, "get_db_pool", return_value=pool):
+        asyncio.run(toolset_enabled_tools(MagicMock(), key))
+        asyncio.run(toolset_enabled_tools(MagicMock(), key))
+        assert len(pool.sql) == 1
+        asyncio.run(toolset_enabled_tools(MagicMock(), replace(key, toolset_stamp="2026-11-23 10:00:05+00")))
+    assert len(pool.sql) == 2
 
 
 # ============================================================================

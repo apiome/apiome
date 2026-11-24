@@ -88,6 +88,11 @@ With the defaults, two API instances and one of each app need 80 × 2 + 10 + 10 
 which is more than PostgreSQL's default of `100`. Raise `max_connections` or lower
 `DB_POOL_MAX_IN_USE`.
 
+Add the MCP server too: each `apiome-mcp` instance serving HTTP keeps two pools, up to
+`APIOME_MCP_DATABASE_POOL_MAX_SIZE` + `APIOME_MCP_AGENT_DATABASE_POOL_MAX_SIZE` connections
+(`10` + `10` by default). See
+[The MCP server's database work per call](#the-mcp-servers-database-work-per-call).
+
 The web app keeps its own pool of up to `DB_POOL_MAX` connections (default `10`). The public
 browse site keeps a pool of its own, sized by the `DB_POOL_MAX` set on the browse service (default
 `10` as well). The two are separate settings on separate services, so you can size them apart. Add
@@ -137,7 +142,8 @@ site set limits on every connection they open, so a stuck session ends with an e
 an `options` parameter, so yours win.
 
 If the app stops responding, look at what the sessions are doing. Each service names its
-connections (`apiome-rest`, `apiome-ui`, `apiome-browse`):
+connections (`apiome-rest`, `apiome-ui`, `apiome-browse`, and `apiome-mcp-catalog` /
+`apiome-mcp-agent` for the MCP server's two pools):
 
 ```sql
 SELECT pid, application_name, state, wait_event_type, wait_event,
@@ -179,6 +185,72 @@ whose workspace is disabled, is refused on its next request, wherever that chang
 
 Lower `AUTH_CACHE_TTL_SECONDS` if role changes made in the web app must apply sooner. Each cached
 answer saves several statements on every request, so `0` costs the most.
+
+### The MCP server's database work per call
+
+`apiome-mcp` serves two apps from one process: the catalog at `/mcp` and the agent runtime at
+`/agent/mcp`. Each has its own connection pool, named in `pg_stat_activity` as
+`apiome-mcp-catalog` and `apiome-mcp-agent`. Every connection runs in autocommit mode, so a read
+is one round trip with no `BEGIN` or `COMMIT`.
+
+**What one call costs.** Once a key has been used, a catalog `tools/call` runs one statement
+before the tool's own query. That statement reads the key row, the workspace's MCP policy and the
+called tool's policy row together. A warm agent `tools/call` runs one statement too, the key row,
+and writes nothing while the agent waits. Its invocation row is written a moment later, together
+with other calls' rows.
+
+**Keys.** bcrypt is deliberately slow. The server runs it in a worker thread, so a key being
+checked never holds up other requests. A key that passed recently skips bcrypt for
+`APIOME_MCP_KEY_CACHE_SECONDS`. Each call still reads the key's own row, so a key that is revoked,
+disabled or expired is refused on its next call, wherever the change was made. `last_used_at` is
+written at most once a minute per key.
+
+**Policy.** A change to a workspace's MCP policy applies on the next call. The policy is read with
+the key on every call, so it is never cached (the freshness budget stays `0` seconds).
+
+**Agent toolsets.** A toolset's manifest is reused for
+`APIOME_MCP_AGENT_TOOLSET_MANIFEST_CACHE_SECONDS`. The manifest holds the enabled tools, accepted
+descriptions, target and body capture, and the same time applies to its upstream credential rows.
+An edit to the toolset itself, such as switching it off or changing its target, applies on the next
+call, because the key's statement also reads when the toolset last changed. Enabling a tool,
+accepting a description or rotating a credential applies within the cache time. Only encrypted
+credential rows are cached: each call decrypts the one credential it sends.
+
+**Audit rows.** Agent invocations, upstream credential uses, private-spec reads and capability
+denials go through one writer per pool. Every `APIOME_MCP_AUDIT_FLUSH_INTERVAL_MS` it writes what
+is waiting as one multi-row `INSERT` per table. On a graceful shutdown it writes everything still
+waiting before the pool closes. The queue holds at most `APIOME_MCP_AUDIT_QUEUE_MAX_ROWS` rows.
+When it is full, a new row is dropped and the call goes on, and the log line `audit_rows_dropped`
+names the table and the running count. If a batch fails, its rows are retried one call at a time,
+and only a row that fails again is lost, logged as `audit_rows_failed`.
+
+**Daily quota counts.** Concurrent calls by one agent key share one count of the day's calls. A
+finished past day is counted from the daily rollup.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `APIOME_MCP_DATABASE_POOL_MIN_SIZE` / `_MAX_SIZE` | `1` / `10` | Connections the catalog (`/mcp`) pool keeps open and may open |
+| `APIOME_MCP_AGENT_DATABASE_POOL_MIN_SIZE` / `_MAX_SIZE` | `1` / `10` | The same for the agent runtime (`/agent/mcp`) pool |
+| `APIOME_MCP_DATABASE_STATEMENT_TIMEOUT_MS` | `30000` | How long one statement may run. The usage sweep lifts it for its own work. `0` turns it off |
+| `APIOME_MCP_DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS` | `60000` | How long a connection may sit in an open transaction before PostgreSQL ends the session. `0` turns it off |
+| `APIOME_MCP_KEY_CACHE_SECONDS` | `60` | Seconds a key that passed bcrypt skips it. `0` checks on every call |
+| `APIOME_MCP_KEY_CACHE_MAX_ENTRIES` | `10000` | Most keys one process remembers; the oldest go first |
+| `APIOME_MCP_AGENT_TOOLSET_MANIFEST_CACHE_SECONDS` | `5` | Seconds a toolset's manifest and credential rows are reused. `0` reads them on every call |
+| `APIOME_MCP_AUDIT_FLUSH_INTERVAL_MS` | `250` | Milliseconds between audit writes |
+| `APIOME_MCP_AUDIT_QUEUE_MAX_ROWS` | `10000` | Most audit rows waiting at once per pool; beyond it new rows are dropped and logged |
+| `APIOME_MCP_AUDIT_BATCH_MAX_ROWS` | `500` | Most rows in one `INSERT` |
+
+The server skips its two session timeouts when `APIOME_MCP_DATABASE_URL` already carries an
+`options` parameter, so yours win.
+
+Measured on a scratch PostgreSQL 18 database with 50 concurrent callers and 1,000 calls in all, before
+and after these changes. Each row lists statements, pool checkouts, writes and bcrypt checks per
+call, then p50 and p95 latency:
+
+| Call | Before | After |
+| --- | --- | --- |
+| Catalog `tools/call` (`ping`, keys hashed at bcrypt's default cost) | 7 statements, 6 checkouts, 2 writes, 2 bcrypt checks on the event loop; 15.5 s / 16.4 s | 2 statements (one is the tool's own), 2 checkouts, 0 writes, 0 bcrypt; 20 ms / 51 ms |
+| Agent `tools/call`, database steps only | 6 statements, 6 checkouts, 2 writes while the agent waits, 1 bcrypt; 840 ms / 1,305 ms | 1 statement, 1 checkout, 0 writes while the agent waits (0.003 batched writes per call), 0 bcrypt; 4 ms / 10 ms |
 
 ### What the web app reuses within a request and on Home
 

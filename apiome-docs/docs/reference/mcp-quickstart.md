@@ -82,7 +82,9 @@ uv run apiome-mcp serve --transport http --host 0.0.0.0 --port 8765
 
 Required env (see `apiome-mcp/.env.example`): `APIOME_MCP_DATABASE_URL`,
 `APIOME_MCP_INTERNAL_SECRET` (≥16 chars). Host/port default to `127.0.0.1:8765` and can be set
-with `APIOME_MCP_HTTP_HOST` / `APIOME_MCP_HTTP_PORT`. The local `docker compose up` already
+with `APIOME_MCP_HTTP_HOST` / `APIOME_MCP_HTTP_PORT`. Connection pools, session timeouts, key
+caching and the batched audit writer have their own settings. They are listed in
+[The MCP server's database work per call](../admin/operating-apiome.mdx#the-mcp-servers-database-work-per-call). The local `docker compose up` already
 brings the MCP server up on `:8765`.
 
 ## Tools available to the host

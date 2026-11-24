@@ -14,6 +14,7 @@ from starlette.responses import JSONResponse
 from structlog.contextvars import bound_contextvars
 
 from apiome_mcp.agent_usage_sweep import start_agent_usage_sweep, stop_agent_usage_sweep
+from apiome_mcp.audit_writer import running_audit_writer
 from apiome_mcp.capability_middleware import CapabilityCallGateMiddleware
 from apiome_mcp.catalog_key_gate import McpKeyRequiredMiddleware
 from apiome_mcp.database_pool import MCP_DB_POOL_KEY, create_async_pool, get_db_pool, ping_pool
@@ -35,7 +36,11 @@ from apiome_mcp.spec_list_operations_tool import build_spec_list_operations_resp
 from apiome_mcp.spec_list_tags_tool import build_spec_list_tags_response
 from apiome_mcp.spec_list_tool import build_spec_list_response
 from apiome_mcp.spec_search_tool import build_spec_search_response
-from apiome_mcp.spec_semantic_search_tool import build_spec_semantic_search_response
+from apiome_mcp.spec_semantic_search_tool import (
+    EMBEDDING_HTTP_CLIENT_KEY,
+    build_spec_semantic_search_response,
+    embedding_http_client,
+)
 
 _log = structlog.get_logger(__name__)
 
@@ -45,7 +50,8 @@ async def database_lifespan(server: Any) -> Any:
     """Open the shared async pool at MCP startup; close it on shutdown (including cancellation).
 
     Also runs the AGX-3.3 agent usage sweep (rollups + retention) in the background while the pool
-    is open, unless ``agent_usage_sweep_interval_seconds`` is 0.
+    is open, unless ``agent_usage_sweep_interval_seconds`` is 0, the batched audit writer
+    (DBP-1.21; flushed before the pool closes) and the shared embeddings HTTP client.
     """
     settings = get_settings()
     configure_logging(settings)
@@ -61,7 +67,10 @@ async def database_lifespan(server: Any) -> Any:
                 _log.warning("database_pool_probe_failed_at_startup", error=str(exc))
             sweep = start_agent_usage_sweep(pool, settings)
             try:
-                yield {MCP_DB_POOL_KEY: pool}
+                # DBP-1.21: one batched writer for audit rows, one HTTP client for embeddings.
+                async with running_audit_writer(pool, settings):
+                    async with embedding_http_client(settings) as client:
+                        yield {MCP_DB_POOL_KEY: pool, EMBEDDING_HTTP_CLIENT_KEY: client}
             finally:
                 await stop_agent_usage_sweep(sweep)
         finally:
@@ -432,6 +441,7 @@ async def spec_search_semantic(
         q=q,
         limit=limit,
         cursor=cursor,
+        http_client=ctx.lifespan_context.get(EMBEDDING_HTTP_CLIENT_KEY),
     )
 
 

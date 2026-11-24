@@ -35,6 +35,12 @@ decision is made once, when the block is entered; a sampled call's bodies go to
 ``apiome.agent_invocation_samples``, each truncated to :data:`MAX_SAMPLE_BYTES` UTF-8 bytes. Headers
 are never captured.
 
+**Off the latency path (DBP-1.21 / #7204).** When the agent lifespan registered a batched
+:class:`~apiome_mcp.audit_writer.AuditWriter` for the pool, the row (and its sample) is only queued
+when the block exits — the id is generated here so the sample can reference it — and written with
+its neighbours in one multi-row INSERT a few milliseconds later. Without a writer (tests, tooling)
+it is written in the block's exit as before.
+
 Calls refused before they reach the tool (unknown or non-permitted tool, a rejected key) are not
 invocations: the key may be unknown and the tool name is caller-chosen. Those refusals are logged
 by :mod:`apiome_mcp.agent_access`.
@@ -45,6 +51,7 @@ from __future__ import annotations
 import random
 import re
 import time
+import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -58,6 +65,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mcp.agent_access import AgentKey
+from apiome_mcp.audit_writer import AuditWriter, audit_writer_for
 
 _log = structlog.get_logger(__name__)
 
@@ -73,6 +81,7 @@ __all__ = [
     "audit_invocation",
     "insert_invocation",
     "load_body_capture_policy",
+    "submit_invocation",
     "truncate_body",
 ]
 
@@ -309,6 +318,61 @@ async def insert_invocation(
     return invocation_id
 
 
+def submit_invocation(
+    writer: AuditWriter,
+    record: InvocationRecord,
+    sample: InvocationSample | None = None,
+) -> str:
+    """Queue one invocation row (and its sample) on the batched writer, as one group.
+
+    Args:
+        writer: The pool's audit writer.
+        record: The row. The stored ``sampled`` flag is whether ``sample`` is given.
+        sample: Captured bodies, only for a sampled call.
+
+    Returns:
+        The id given to the row (generated here so the sample can reference it), or ``""`` when the
+        writer's queue was full and the row was dropped (counted and logged by the writer).
+    """
+    invocation_id = str(uuid.uuid4())
+    rows: list[tuple[str, tuple[object, ...]]] = [
+        (
+            "agent_invocations",
+            (
+                invocation_id,
+                record.tenant_id,
+                record.key_id,
+                record.toolset_id,
+                record.tool_name,
+                record.target,
+                record.invoked_at,
+                record.latency_ms,
+                record.outcome.value,
+                record.error_code,
+                record.http_status,
+                record.request_bytes,
+                record.response_bytes,
+                sample is not None,
+            ),
+        )
+    ]
+    if sample is not None:
+        rows.append(
+            (
+                "agent_invocation_samples",
+                (
+                    invocation_id,
+                    record.tenant_id,
+                    sample.request_body,
+                    sample.response_body,
+                    sample.request_truncated,
+                    sample.response_truncated,
+                ),
+            )
+        )
+    return invocation_id if writer.submit_group(rows) else ""
+
+
 def _checked_code(code: str) -> str:
     """Return ``code`` if it fits the reason-code grammar, else raise (it would fail the CHECK)."""
     if not _ERROR_CODE.match(code):
@@ -475,7 +539,11 @@ class InvocationAudit:
             except Exception:
                 _log.warning("agent_invocation_observer_failed", tool=record.tool_name, exc_info=True)
         try:
-            await insert_invocation(self._pool, record, sample)
+            writer = audit_writer_for(self._pool)
+            if writer is not None:
+                submit_invocation(writer, record, sample)
+            else:
+                await insert_invocation(self._pool, record, sample)
         except Exception:
             _log.warning(
                 "agent_invocation_record_failed",

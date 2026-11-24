@@ -41,6 +41,92 @@ class Settings(BaseSettings):
     database_pool_min_size: int = Field(default=1, ge=1, le=256)
     database_pool_max_size: int = Field(default=10, ge=1, le=256)
     database_pool_timeout: float = Field(default=30.0, gt=0, le=600.0)
+    agent_database_pool_min_size: int = Field(
+        default=1,
+        ge=1,
+        le=256,
+        description=(
+            "DBP-1.21: fewest connections the agent runtime's (/agent/mcp) pool keeps open. The catalog "
+            "(/mcp) pool uses database_pool_min_size; a process serving both holds the two pools."
+        ),
+    )
+    agent_database_pool_max_size: int = Field(
+        default=10,
+        ge=1,
+        le=256,
+        description=(
+            "DBP-1.21: most connections the agent runtime's pool opens. One HTTP process can hold "
+            "database_pool_max_size + agent_database_pool_max_size connections."
+        ),
+    )
+    database_statement_timeout_ms: int = Field(
+        default=30_000,
+        ge=0,
+        le=86_400_000,
+        description=(
+            "DBP-1.21: statement_timeout set on every pooled connection, in milliseconds (0 = none). "
+            "The usage sweep lifts it for its own transactions."
+        ),
+    )
+    database_idle_in_transaction_timeout_ms: int = Field(
+        default=60_000,
+        ge=0,
+        le=86_400_000,
+        description=(
+            "DBP-1.21: idle_in_transaction_session_timeout on every pooled connection, in milliseconds "
+            "(0 = none). Ends a session that left a transaction open."
+        ),
+    )
+    key_cache_seconds: float = Field(
+        default=60.0,
+        ge=0,
+        le=3600,
+        description=(
+            "DBP-1.21: seconds a verified MCP or agent key skips bcrypt (cached by SHA-256 of the "
+            "secret). Each call still re-reads the key row, so revocation and expiry apply on the next "
+            "call. 0 turns the cache off."
+        ),
+    )
+    key_cache_max_entries: int = Field(
+        default=10_000,
+        ge=1,
+        le=1_000_000,
+        description="DBP-1.21: most verified keys kept per process (oldest dropped first).",
+    )
+    agent_toolset_manifest_cache_seconds: float = Field(
+        default=5.0,
+        ge=0,
+        le=300,
+        description=(
+            "DBP-1.21: seconds an agent toolset's manifest (enabled tools, descriptions, target) and its "
+            "upstream credential rows are reused. An edit to the toolset row applies on the next call; "
+            "a tool switch, accepted description or credential change within this time. 0 = read every call."
+        ),
+    )
+    audit_flush_interval_ms: int = Field(
+        default=250,
+        ge=10,
+        le=60_000,
+        description=(
+            "DBP-1.21: milliseconds between flushes of the batched audit writer (agent invocations, "
+            "credential uses, private-access audit, capability denials)."
+        ),
+    )
+    audit_queue_max_rows: int = Field(
+        default=10_000,
+        ge=1,
+        le=1_000_000,
+        description=(
+            "DBP-1.21: most audit rows waiting to be written per pool. A row submitted to a full queue is "
+            "dropped, counted and logged (audit_rows_dropped)."
+        ),
+    )
+    audit_batch_max_rows: int = Field(
+        default=500,
+        ge=1,
+        le=10_000,
+        description="DBP-1.21: most rows one multi-row INSERT of the audit writer carries.",
+    )
     openapi_max_json_bytes: int = Field(
         default=2_097_152,
         ge=1024,
@@ -296,6 +382,10 @@ class Settings(BaseSettings):
             raise ValueError(
                 "database_pool_max_size must be greater than or equal to database_pool_min_size",
             )
+        if self.agent_database_pool_max_size < self.agent_database_pool_min_size:
+            raise ValueError(
+                "agent_database_pool_max_size must be greater than or equal to agent_database_pool_min_size",
+            )
         return self
 
     @field_validator("mock_public_base_url")
@@ -325,3 +415,22 @@ def get_settings() -> Settings:
     """Return process-wide settings (parsed once per interpreter)."""
     # Required fields are populated from the environment by pydantic-settings.
     return Settings()  # type: ignore[call-arg]
+
+
+def setting_or_default(name: str, default: float) -> float:
+    """Return a numeric setting, or ``default`` when settings cannot be loaded (tests, tooling).
+
+    Process-wide caches read their lifetimes through this, so importing a module never needs a
+    configured environment.
+
+    Args:
+        name: The :class:`Settings` field name.
+        default: The value used when the environment is not configured.
+
+    Returns:
+        The configured value, else ``default``.
+    """
+    try:
+        return float(getattr(get_settings(), name))
+    except Exception:
+        return default

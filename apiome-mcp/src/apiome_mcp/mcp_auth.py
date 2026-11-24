@@ -14,6 +14,12 @@ key cannot stand in for the caller's.
 Stored secrets use **SHA-256 of the UTF-8 secret, then bcrypt**, matching the planned
 ``mcp keys issue`` workflow (long secrets safe for bcrypt's 72-byte limit).
 
+**Per-call cost (DBP-1.21 / #7204).** bcrypt runs in a worker thread, never on the event loop.
+A secret that verified in this process within ``key_cache_seconds`` skips bcrypt: one statement
+re-reads the key row by id and hash together with the tenant policy and the called tool's policy
+row (:func:`validate_mcp_api_key`), so a revoked or expired key is still refused on its next
+call. ``last_used_at`` is written at most once a minute per key.
+
 Tools opt in with::
 
     from fastmcp.dependencies import Depends
@@ -53,9 +59,11 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, ConfigDict, Field
 
+from apiome_mcp.capability_policy import PrefetchedToolPolicy, prefetched_policy_from_row
 from apiome_mcp.database_pool import get_db_pool
 from apiome_mcp.effective_policy import KeyCapabilitySnapshot
 from apiome_mcp.http_credential_middleware import get_http_bearer_from_context
+from apiome_mcp.key_cache import CachedKey, LastUsedThrottle, VerifiedKeyCache
 from apiome_mcp.scope import Scope, parse_scope_json
 from apiome_mcp.settings import get_settings
 
@@ -87,6 +95,8 @@ class McpAuthContext(BaseModel):
     scope: Scope = Field(default_factory=Scope)
     capability_mode: CapabilityMode = "inherit"
     enabled_tools: frozenset[str] = Field(default_factory=frozenset)
+    #: DBP-1.21: the called tool's tenant policy, read with the key (``tools/call`` only).
+    call_policy: PrefetchedToolPolicy | None = None
 
     def key_capability_snapshot(self) -> KeyCapabilitySnapshot:
         """Return MTG-1.3 grants as the MTG-1.4 resolver snapshot."""
@@ -215,49 +225,120 @@ def _parse_enabled_tools(raw: Any) -> frozenset[str]:
     return frozenset()
 
 
-async def validate_mcp_api_key(pool: AsyncConnectionPool, raw_secret: str) -> McpAuthContext:
-    """Load key row by prefix, enforce lifecycle, verify bcrypt(SHA256(secret))."""
+#: The key columns plus the tenant policy row and the called tool's policy row (DBP-1.21): the
+#: whole catalog gate in one statement. ``%(tool)s`` is ``NULL`` outside ``tools/call``.
+KEY_AND_POLICY_COLUMNS = """
+    SELECT k.id, k.tenant_id, k.scope_json, k.label, k.key_hash, k.expires_at, k.revoked_at,
+           k.capability_mode, k.enabled_tools,
+           (p.tenant_id IS NOT NULL) AS has_policy, p.default_mode, p.allow_anonymous_mcp,
+           pt.tool_id AS policy_tool_id, pt.in_ceiling, pt.default_enabled, pt.anonymous_enabled
+    FROM apiome.mcp_api_keys k
+    LEFT JOIN apiome.tenant_mcp_policies p ON p.tenant_id = k.tenant_id
+    LEFT JOIN apiome.tenant_mcp_policy_tools pt
+           ON pt.tenant_id = k.tenant_id AND pt.tool_id = %(tool)s
+"""
+
+#: Cold path: every key with the presented prefix (then bcrypt picks the one that matches).
+_KEY_BY_PREFIX = KEY_AND_POLICY_COLUMNS + "    WHERE k.prefix = %(prefix)s\n"
+
+#: Warm path: the key the secret verified as earlier, re-read by id and hash (no bcrypt).
+_KEY_BY_ID = KEY_AND_POLICY_COLUMNS + "    WHERE k.id = %(id)s::uuid AND k.key_hash = %(hash)s\n"
+
+#: ``sha256(secret)`` → verified key id + hash, for this process (see :mod:`apiome_mcp.key_cache`).
+MCP_KEY_CACHE = VerifiedKeyCache()
+
+#: One ``last_used_at`` write per key per minute from this process.
+_LAST_USED = LastUsedThrottle()
+
+
+def _usable(row: dict[str, Any], now: datetime) -> bool:
+    """Whether a key row is neither revoked nor expired at ``now``."""
+    if row.get("revoked_at") is not None:
+        return False
+    exp = row.get("expires_at")
+    return exp is None or _as_utc_aware(exp) > now
+
+
+def _auth_from_row(row: dict[str, Any], tool_name: str | None) -> McpAuthContext:
+    """Build the caller from a verified key row (with the tool's policy when it was joined)."""
+    return McpAuthContext(
+        key_id=str(row["id"]),
+        tenant_id=str(row["tenant_id"]),
+        label=str(row["label"]),
+        scope=parse_scope_json(row.get("scope_json")),
+        capability_mode=_parse_capability_mode(row.get("capability_mode")),
+        enabled_tools=_parse_enabled_tools(row.get("enabled_tools")),
+        call_policy=prefetched_policy_from_row(row, tool_name) if tool_name else None,
+    )
+
+
+async def _fetch_key_rows(pool: AsyncConnectionPool, query: str, params: dict[str, Any]) -> list[dict[str, Any]]:
+    """Run one key statement on one checkout and return its rows."""
+    async with pool.connection() as conn:
+        async with conn.cursor(row_factory=dict_row) as cur:
+            await cur.execute(query, params)
+            return list(await cur.fetchall())
+
+
+def _accepted(pool: AsyncConnectionPool, row: dict[str, Any], tool_name: str | None) -> McpAuthContext:
+    """Return the caller for a usable row and stamp ``last_used_at`` when due."""
+    key_id = str(row["id"])
+    if _LAST_USED.due(key_id):
+        schedule_mcp_key_last_used_touch(pool, key_id)
+    return _auth_from_row(row, tool_name)
+
+
+async def validate_mcp_api_key(
+    pool: AsyncConnectionPool,
+    raw_secret: str,
+    *,
+    tool_name: str | None = None,
+) -> McpAuthContext:
+    """Verify a presented secret and return the caller (with the tool's policy when asked).
+
+    **Warm** (the secret verified in this process within ``key_cache_seconds``): one statement
+    re-reads the key by id and stored hash, plus the tenant policy and ``tool_name``'s policy row —
+    no bcrypt. A revoked, expired, regenerated or deleted key misses, drops the cache entry and
+    takes the cold path, which reports why.
+
+    **Cold**: one statement reads every key with the prefix (same policy columns), then
+    bcrypt(SHA-256(secret)) runs **in a worker thread** so a slow hash never stalls the event loop.
+
+    Args:
+        pool: The catalog pool.
+        raw_secret: The presented key.
+        tool_name: The tool of a ``tools/call``; its policy row is read in the same statement and
+            returned as :attr:`McpAuthContext.call_policy`.
+
+    Returns:
+        The verified caller.
+
+    Raises:
+        AuthorizationError: Unknown, wrong, revoked or expired key.
+    """
     if not raw_secret or len(raw_secret) < MIN_SECRET_LEN:
         raise AuthorizationError("Invalid or unknown MCP API key.")
 
-    prefix = mcp_key_prefix(raw_secret)
-    query = """
-        SELECT id, tenant_id, scope_json, label, key_hash, expires_at, revoked_at,
-               capability_mode, enabled_tools
-        FROM apiome.mcp_api_keys
-        WHERE prefix = %s
-    """
-    async with pool.connection() as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(query, (prefix,))
-            rows = await cur.fetchall()
+    cached = MCP_KEY_CACHE.get(raw_secret)
+    if cached is not None:
+        rows = await _fetch_key_rows(
+            pool, _KEY_BY_ID, {"id": cached.key_id, "hash": cached.key_hash, "tool": tool_name}
+        )
+        if rows and _usable(rows[0], _utc_now()):
+            return _accepted(pool, rows[0], tool_name)
+        MCP_KEY_CACHE.invalidate(cached.key_id)
 
+    rows = await _fetch_key_rows(pool, _KEY_BY_PREFIX, {"prefix": mcp_key_prefix(raw_secret), "tool": tool_name})
     if not rows:
         _log.debug("mcp_api_key_unknown_prefix")
         raise AuthorizationError("Invalid or unknown MCP API key.")
 
     now = _utc_now()
-    eligible: list[dict[str, Any]] = []
-    for row in rows:
-        if row.get("revoked_at") is not None:
-            continue
-        exp = row.get("expires_at")
-        if exp is not None and _as_utc_aware(exp) <= now:
-            continue
-        eligible.append(row)
-
+    eligible = [row for row in rows if _usable(row, now)]
     for row in eligible:
-        if _verify_hash(raw_secret, row.get("key_hash")):
-            key_id = str(row["id"])
-            schedule_mcp_key_last_used_touch(pool, key_id)
-            return McpAuthContext(
-                key_id=key_id,
-                tenant_id=str(row["tenant_id"]),
-                label=str(row["label"]),
-                scope=parse_scope_json(row.get("scope_json")),
-                capability_mode=_parse_capability_mode(row.get("capability_mode")),
-                enabled_tools=_parse_enabled_tools(row.get("enabled_tools")),
-            )
+        if await asyncio.to_thread(_verify_hash, raw_secret, row.get("key_hash")):
+            MCP_KEY_CACHE.put(raw_secret, CachedKey(key_id=str(row["id"]), key_hash=row.get("key_hash")))
+            return _accepted(pool, row, tool_name)
 
     if not eligible:
         if any(r.get("revoked_at") is not None for r in rows):
@@ -335,10 +416,18 @@ async def resolve_optional_mcp_auth(
     pool: AsyncConnectionPool,
     *,
     headers: dict[str, str],
+    tool_name: str | None = None,
 ) -> McpAuthContext | None:
     """Return validated :class:`McpAuthContext` when a credential is present, else ``None``.
 
-    Reuses the catalog key gate's verification when it ran for this request.
+    Reuses the verification already recorded for this request when there is one.
+
+    Args:
+        ctx: The request's FastMCP context.
+        pool: The catalog pool.
+        headers: HTTP headers (``Authorization`` only).
+        tool_name: The tool of a ``tools/call``; its policy row is read with the key
+            (:attr:`McpAuthContext.call_policy`).
     """
     verified = current_mcp_auth()
     if verified is not None:
@@ -346,7 +435,7 @@ async def resolve_optional_mcp_auth(
     raw = await presented_mcp_api_key(ctx, headers=headers)
     if raw is None:
         return None
-    return await validate_mcp_api_key(pool, raw)
+    return await validate_mcp_api_key(pool, raw, tool_name=tool_name)
 
 
 async def require_mcp_auth(
@@ -372,18 +461,30 @@ async def require_mcp_auth(
 McpAuthDependency = Depends(require_mcp_auth)
 
 
+#: ``last_used_at`` writes skip a row any process wrote in the last minute (DBP-1.21).
+_TOUCH_LAST_USED = """
+    UPDATE apiome.mcp_api_keys SET last_used_at = CURRENT_TIMESTAMP
+    WHERE id = %s::uuid
+      AND (last_used_at IS NULL OR last_used_at < CURRENT_TIMESTAMP - INTERVAL '1 minute')
+"""
+
+#: In-flight touches; the loop keeps only weak references to tasks.
+_BACKGROUND_TASKS: set[asyncio.Task[None]] = set()
+
+
 async def touch_mcp_key_last_used(pool: AsyncConnectionPool, key_id: str) -> None:
-    """Persist ``last_used_at`` for a successfully authenticated key."""
+    """Persist ``last_used_at`` for a successfully authenticated key (at most once a minute)."""
     async with pool.connection() as conn:
-        await conn.execute(
-            "UPDATE apiome.mcp_api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = %s::uuid",
-            (key_id,),
-        )
+        await conn.execute(_TOUCH_LAST_USED, (key_id,))
         await conn.commit()
 
 
 def schedule_mcp_key_last_used_touch(pool: AsyncConnectionPool, key_id: str) -> None:
-    """Fire-and-forget ``last_used_at`` update so auth latency stays low."""
+    """Fire-and-forget ``last_used_at`` update so auth latency stays low.
+
+    :func:`validate_mcp_api_key` calls it at most once per key per minute
+    (:class:`~apiome_mcp.key_cache.LastUsedThrottle`).
+    """
 
     async def _run() -> None:
         try:
@@ -392,6 +493,16 @@ def schedule_mcp_key_last_used_touch(pool: AsyncConnectionPool, key_id: str) -> 
             _log.warning("mcp_api_key_last_used_update_failed", key_id=key_id, exc_info=True)
 
     try:
-        asyncio.get_running_loop().create_task(_run())
+        task = asyncio.get_running_loop().create_task(_run())
     except RuntimeError:
         _log.debug("mcp_api_key_last_used_skip_no_event_loop", key_id=key_id)
+        return
+    if isinstance(task, asyncio.Task):
+        _BACKGROUND_TASKS.add(task)
+        task.add_done_callback(_BACKGROUND_TASKS.discard)
+
+
+def reset_mcp_key_caches() -> None:
+    """Forget every verified key and ``last_used_at`` stamp (tests; after bulk revocation)."""
+    MCP_KEY_CACHE.clear()
+    _LAST_USED.clear()
