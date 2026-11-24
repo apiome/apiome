@@ -1277,6 +1277,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['broker base url', 'broker token', 'pact version', 'consumer version', 'pact cli', 'pact-js', 'contracts'],
   },
   {
+    id: 'selectors',
+    title: 'Choose pacts to verify with selectors',
+    summary: 'Consumer-version selectors tell a Pact verifier which pacts a provider build checks.',
+    page: 'apiome-docs/docs/ship/pact-broker/selectors.mdx',
+    section: 'reference',
+    keywords: ['consumer version selectors', 'for-verification', 'main branch', 'matching branch', 'pending pacts', 'pact verifier', 'latest tag'],
+  },
+  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',

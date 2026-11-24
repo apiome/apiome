@@ -10,7 +10,16 @@ libraries publish to it by changing only their broker base URL and token:
 * ``GET  …/pact-broker/pacts/provider/{p}/consumer/{c}/version/{v}`` — the pact of that version;
 * ``GET  …/pact-broker/pacts/provider/{p}/consumer/{c}/latest`` — the latest pact of the pair;
 * ``GET  …/pact-broker/pacts/provider/{p}/consumer/{c}/pact-version/{sha}`` — a pact by its
-  content address.
+  content address (also with a ``/metadata/{m}`` suffix, the form for-verification links take).
+
+PFX-1.3 (#6916) adds what a verifier and a person ask for without knowing a version:
+
+* ``POST …/pact-broker/pacts/provider/{p}/for-verification`` — the pacts a provider build must
+  verify, chosen by consumer-version selectors, each with the notices saying why
+  (:mod:`app.pact_selectors`);
+* ``GET  …/consumer/{c}/latest/{tag}`` and ``…/consumer/{c}/branch/{branch}/latest`` — the latest
+  pact of a pair from a tag or a branch;
+* ``GET  …/pacts/provider/{p}/latest`` and ``…/latest/{tag}`` — the latest pact of every consumer.
 
 The base URL a client is given is ``https://<api>/v1/tenants/<tenant>/pact-broker``, or — where the
 operator configured it — the tenant-host alias ``https://<tenant>.<suffix>``
@@ -26,11 +35,12 @@ Responses are ``application/hal+json`` in the Pact Broker's shape. Refusals keep
 
 from __future__ import annotations
 
+import json
 import time
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
@@ -60,7 +70,21 @@ from .pact_publication_store import (
     get_latest_pact,
     get_pact,
     get_pact_by_sha,
+    list_pact_candidates,
     publish_pacts,
+)
+from .pact_selectors import (
+    CODE_SELECTOR_INVALID,
+    ForVerificationQuery,
+    PactCandidate,
+    VerifiablePact,
+    build_notices,
+    encode_metadata,
+    latest_per_consumer,
+    parse_for_verification_request,
+    select_verifiable_pacts,
+    short_description,
+    verification_metadata,
 )
 from .pacticipant import (
     CODE_NOT_FOUND,
@@ -90,6 +114,7 @@ _STATUS_BY_CODE = {
     CODE_PACT_NOT_FOUND: 404,
     CODE_NOT_FOUND: 404,
     CODE_VERSION_NOT_FOUND: 404,
+    CODE_SELECTOR_INVALID: 400,
 }
 
 _publish_limiter = FixedWindowRateLimiter()
@@ -395,6 +420,11 @@ def _pact_document(base: str, pact: PactRecord) -> Dict[str, Any]:
             "title": "Latest version of this pact",
             "href": f"{pair}/latest",
         },
+        "pb:latest-tagged-pact-version": {
+            "title": "Latest version of this pact for a tag",
+            "href": pair + "/latest/{tag}",
+            "templated": True,
+        },
     }
     return body
 
@@ -653,7 +683,9 @@ def _read(
         "other routes from. Give a Pact client this URL as its **broker base URL** and a workspace "
         "API key as its **token**.\n\n"
         "`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; "
-        "`pb:publish-pact`, `pb:latest-pact-version` and `pb:pact-version` are URI templates.\n\n"
+        "`pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version "
+        "selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, "
+        "`pb:latest-provider-pacts` and the others are URI templates.\n\n"
         "A workspace API key may be sent as `Authorization: Bearer <key>` on every route under "
         "`/pact-broker`. Requires `pacts:view`."
     ),
@@ -711,6 +743,28 @@ def pact_broker_index(
                 "pb:pacticipant-version": {
                     "href": base + "/pacticipants/{pacticipant}/versions/{version}",
                     "title": "A version of a pacticipant",
+                    "templated": True,
+                },
+                "pb:provider-pacts-for-verification": {
+                    "href": base + "/pacts/provider/{provider}/for-verification",
+                    "title": "Pact versions to be verified for the specified provider",
+                    "templated": True,
+                },
+                # The name the first Pact clients with selector support look for.
+                "beta:provider-pacts-for-verification": {
+                    "name": "beta",
+                    "href": base + "/pacts/provider/{provider}/for-verification",
+                    "title": "DEPRECATED - please use pb:provider-pacts-for-verification",
+                    "templated": True,
+                },
+                "pb:latest-provider-pacts": {
+                    "href": base + "/pacts/provider/{provider}/latest",
+                    "title": "Latest pacts by provider",
+                    "templated": True,
+                },
+                "pb:latest-provider-pacts-with-tag": {
+                    "href": base + "/pacts/provider/{provider}/latest/{tag}",
+                    "title": "Latest pacts for provider with the specified tag",
                     "templated": True,
                 },
             }
@@ -1019,6 +1073,468 @@ def read_pact_version(
     return _read(
         request, tenant_slug, auth_data, lambda tenant_id: get_pact_by_sha(db, tenant_id, provider, consumer, sha)
     )
+
+
+# The form a for-verification response links to: the same pact, with the selection it was chosen
+# by encoded in the last segment, for the verification result to be traced back (PFX-1.4).
+@router.get(
+    "/{tenant_slug}/pact-broker" + _PAIR_PATH + "/pact-version/{sha}/metadata/{metadata}",
+    response_class=HalJSONResponse,
+    summary="Read a pact by its content version (for-verification link)",
+    description=(
+        "The same pact as `…/pact-version/{sha}`. The last segment is the metadata a "
+        "for-verification response encodes in its links (which selectors chose the pact, for which "
+        "consumer version); it does not change the pact returned.\n\n" + _READ_NOTE
+    ),
+)
+def read_pact_version_with_metadata(
+    tenant_slug: str,
+    provider: str,
+    consumer: str,
+    sha: str,
+    request: Request,
+    metadata: str = Path(
+        description="The selection metadata of a for-verification link (URL-safe base64); not needed to find the pact."
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> HalJSONResponse:
+    """Read a pact version through the link a for-verification response gave.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        consumer: The consumer's handle, id or name.
+        sha: The pact version's SHA-256.
+        metadata: The encoded selection metadata; not needed to find the pact.
+        request: The request.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The pact.
+
+    Raises:
+        HTTPException: 404 for an unknown pacticipant or SHA, 403 without ``pacts:view``.
+    """
+    del metadata  # Read back when a verification result is published to this URL (PFX-1.4).
+    return read_pact_version(tenant_slug, provider, consumer, sha, request, auth_data)
+
+
+@router.get(
+    "/{tenant_slug}/pact-broker" + _PAIR_PATH + "/latest/{tag}",
+    response_class=HalJSONResponse,
+    summary="Read the latest pact for a consumer tag",
+    description=(
+        "The pact of the latest consumer version tagged `{tag}` that published one for the "
+        "provider. Latest means recorded last.\n\n" + _READ_NOTE
+    ),
+)
+def read_latest_tagged_pact(
+    tenant_slug: str,
+    provider: str,
+    consumer: str,
+    tag: str,
+    request: Request,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> HalJSONResponse:
+    """Read the latest pact of a pair from consumer versions with a tag.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        consumer: The consumer's handle, id or name.
+        tag: The consumer version tag, exactly as recorded.
+        request: The request.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The pact.
+
+    Raises:
+        HTTPException: 404 for an unknown pacticipant or when no tagged version has a pact, 403
+            without ``pacts:view``.
+    """
+    return _read(
+        request,
+        tenant_slug,
+        auth_data,
+        lambda tenant_id: get_latest_pact(db, tenant_id, provider, consumer, tag=tag),
+    )
+
+
+@router.get(
+    "/{tenant_slug}/pact-broker" + _PAIR_PATH + "/branch/{branch:path}/latest",
+    response_class=HalJSONResponse,
+    summary="Read the latest pact for a consumer branch",
+    description=(
+        "The pact of the latest consumer version recorded on branch `{branch}` that published one "
+        "for the provider. A branch name with a `/` (`feat/new-invoice`) is sent as it is or with "
+        "the slash encoded.\n\n" + _READ_NOTE
+    ),
+)
+def read_latest_branch_pact(
+    tenant_slug: str,
+    provider: str,
+    consumer: str,
+    branch: str,
+    request: Request,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> HalJSONResponse:
+    """Read the latest pact of a pair from consumer versions on a branch.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        consumer: The consumer's handle, id or name.
+        branch: The consumer branch, exactly as recorded.
+        request: The request.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The pact.
+
+    Raises:
+        HTTPException: 404 for an unknown pacticipant or when no version on the branch has a
+            pact, 403 without ``pacts:view``.
+    """
+    return _read(
+        request,
+        tenant_slug,
+        auth_data,
+        lambda tenant_id: get_latest_pact(db, tenant_id, provider, consumer, branch=branch),
+    )
+
+
+# ---------------------------------------------------------------------------------------------
+# The pacts of a provider: latest per consumer, and the pacts to verify
+# ---------------------------------------------------------------------------------------------
+
+
+def _provider_url(base: str, slug: str) -> str:
+    """The URL prefix of a provider's pacts."""
+    return f"{base}/pacts/provider/{quote(slug, safe='')}"
+
+
+def _candidate_pact_url(base: str, provider: PacticipantRecord, candidate: PactCandidate) -> str:
+    """The URL of the pact one consumer version published for the provider."""
+    return (
+        f"{_pair_url(base, provider.slug, candidate.consumer_slug)}/version/"
+        f"{quote(candidate.version_number, safe='')}"
+    )
+
+
+def _candidate_title(provider: PacticipantRecord, candidate: PactCandidate) -> str:
+    """How a selected pact is named: both applications and the consumer version."""
+    return f"Pact between {candidate.consumer_name} ({candidate.version_number}) and {provider.name}"
+
+
+def _verifiable_pact_document(
+    base: str, provider: PacticipantRecord, pact: VerifiablePact, query: ForVerificationQuery
+) -> Dict[str, Any]:
+    """Render one pact of a for-verification response the way a Pact Broker does.
+
+    Args:
+        base: The broker base URL.
+        provider: The verifying provider.
+        pact: The selected pact.
+        query: The request.
+
+    Returns:
+        ``shortDescription``, ``verificationProperties`` (``pending`` when asked for, ``wip`` when
+        it is one, and ``notices``) and a ``self`` link to the pact version with its metadata.
+    """
+    candidate = pact.candidate
+    pact_version_url = f"{_pair_url(base, provider.slug, candidate.consumer_slug)}/pact-version/{candidate.sha}"
+    properties: Dict[str, Any] = {}
+    if query.include_pending_status:
+        properties["pending"] = pact.pending
+    if pact.wip:
+        properties["wip"] = True
+    notice_url = f"{pact_version_url}/metadata/{encode_metadata({'w': True})}" if pact.wip else pact_version_url
+    properties["notices"] = build_notices(pact, notice_url, query, provider.name)
+    return {
+        "shortDescription": short_description(pact),
+        "verificationProperties": properties,
+        "_links": {
+            "self": {
+                "href": f"{pact_version_url}/metadata/{encode_metadata(verification_metadata(pact))}",
+                "name": _candidate_title(provider, candidate),
+            }
+        },
+    }
+
+
+def _parse_json_body(raw: bytes) -> Any:
+    """Decode a JSON request body; ``None`` when it is empty.
+
+    Args:
+        raw: The body, already size-limited.
+
+    Returns:
+        The decoded value.
+
+    Raises:
+        HTTPException: 400 ``pact-selector-invalid`` for malformed JSON.
+    """
+    if not raw.strip():
+        return None
+    try:
+        return json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": CODE_SELECTOR_INVALID, "message": f"the request body is not JSON: {exc}", "pointer": ""},
+        ) from exc
+
+
+@router.post(
+    "/{tenant_slug}/pact-broker/pacts/provider/{provider}/for-verification",
+    response_class=HalJSONResponse,
+    summary="The pacts a provider must verify",
+    description=(
+        "What a Pact verifier calls before it verifies: the pacts a provider build must verify, "
+        "chosen by **consumer-version selectors**. One entry per distinct pact; a pact chosen by "
+        "several selectors appears once, with every reason in its notices.\n\n"
+        "Selectors (`consumerVersionSelectors`, each optionally narrowed by `consumer`):\n\n"
+        '- `{"mainBranch": true}` — the latest version from each consumer\'s main branch;\n'
+        '- `{"branch": "x"}` — the latest version from branch `x`, with `fallbackBranch` or '
+        "`fallbackToMainBranch` for a consumer that has none there;\n"
+        '- `{"matchingBranch": true}` — `branch` set to the request\'s `providerVersionBranch`;\n'
+        '- `{"tag": "x"}` — every version tagged `x`; with `"latest": true` the latest one, and '
+        "`fallbackTag` for a consumer that has none;\n"
+        '- `{"latest": true}` — the latest version of each consumer;\n'
+        "- `deployed`, `released`, `deployedOrReleased`, `environment` — versions in an "
+        "environment. Accepted; they select nothing until environments are recorded.\n\n"
+        "No selectors means the broker's defaults: each consumer's main branch (or its latest "
+        "version), and whatever is deployed or released.\n\n"
+        "`includePendingStatus: true` adds `pending` and the pending notices. No verification "
+        "result has been recorded yet, so every pact is pending: a failure will not fail the "
+        "provider build. `includeWipPactsSince` is accepted; work-in-progress pacts are not added "
+        "yet.\n\n"
+        "An ambiguous selector (for example `tag` with `branch`, or `mainBranch` with `latest: "
+        "false`) is `400 pact-selector-invalid` with the pointer of the selector. Requires "
+        "`pacts:view`."
+    ),
+    openapi_extra={
+        "requestBody": {
+            "required": False,
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "consumerVersionSelectors": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "mainBranch": {"type": "boolean", "enum": [True]},
+                                        "branch": {"type": "string"},
+                                        "matchingBranch": {"type": "boolean", "enum": [True]},
+                                        "fallbackBranch": {"type": "string"},
+                                        "fallbackToMainBranch": {"type": "boolean", "enum": [True]},
+                                        "tag": {"type": "string"},
+                                        "fallbackTag": {"type": "string"},
+                                        "latest": {"type": "boolean"},
+                                        "consumer": {"type": "string"},
+                                        "deployed": {"type": "boolean", "enum": [True]},
+                                        "released": {"type": "boolean", "enum": [True]},
+                                        "deployedOrReleased": {"type": "boolean", "enum": [True]},
+                                        "environment": {"type": "string"},
+                                    },
+                                },
+                            },
+                            "providerVersionBranch": {"type": "string"},
+                            "providerVersionTags": {"type": "array", "items": {"type": "string"}},
+                            "includePendingStatus": {"type": "boolean", "default": False},
+                            "includeWipPactsSince": {"type": "string", "format": "date"},
+                        },
+                    },
+                    "example": {
+                        "consumerVersionSelectors": [
+                            {"mainBranch": True},
+                            {"matchingBranch": True},
+                            {"deployedOrReleased": True},
+                        ],
+                        "providerVersionBranch": "main",
+                        "includePendingStatus": True,
+                    },
+                }
+            },
+        }
+    },
+    responses={
+        400: {"description": "`pact-selector-invalid`: a selector is ambiguous or malformed; see `detail.pointer`."},
+        404: {"description": "`pacticipant-not-found`: the workspace has no such provider."},
+    },
+)
+def pacts_for_verification(
+    tenant_slug: str,
+    provider: str,
+    request: Request,
+    raw: bytes = Depends(_read_pact_body),
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> HalJSONResponse:
+    """Return the pacts a provider build must verify.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        request: The request.
+        raw: The JSON body carrying the selectors, already size-limited.
+        auth_data: The authenticated principal.
+
+    Returns:
+        ``_embedded.pacts`` (one entry per distinct pact) and a ``self`` link.
+
+    Raises:
+        HTTPException: 400 for an ambiguous or malformed selector, 404 for an unknown provider,
+            403 without ``pacts:view``.
+    """
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    try:
+        query = parse_for_verification_request(_parse_json_body(raw))
+        record, candidates = list_pact_candidates(db, _tenant_id(auth_data), provider)
+    except (PactPublicationError, PacticipantValidationError) as exc:
+        raise _http_error(exc) from exc
+    base = _base_url(request, tenant_slug)
+    pacts = select_verifiable_pacts(candidates, query)
+    return HalJSONResponse(
+        {
+            "_embedded": {"pacts": [_verifiable_pact_document(base, record, pact, query) for pact in pacts]},
+            "_links": {
+                "self": {
+                    "href": f"{_provider_url(base, record.slug)}/for-verification",
+                    "title": "Pacts to be verified",
+                }
+            },
+        }
+    )
+
+
+def _latest_provider_pacts(
+    request: Request, tenant_slug: str, provider: str, auth_data: Dict[str, Any], tag: Optional[str]
+) -> HalJSONResponse:
+    """The latest pact of each consumer of a provider, optionally from tagged versions only.
+
+    Args:
+        request: The request.
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        auth_data: The authenticated principal.
+        tag: Only consumer versions with this tag, when set.
+
+    Returns:
+        The Pact Broker's provider-pacts shape: ``pb:provider`` and one ``pb:pacts`` link per
+        consumer (with the deprecated ``provider`` and ``pacts`` spellings older clients read).
+
+    Raises:
+        HTTPException: 404 for an unknown provider, 403 without ``pacts:view``.
+    """
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    try:
+        record, candidates = list_pact_candidates(db, _tenant_id(auth_data), provider)
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
+    base = _base_url(request, tenant_slug)
+    latest = latest_per_consumer(candidates, lambda c: tag is None or tag in c.tags)
+    latest.sort(key=lambda c: c.consumer_name.casefold())
+    links = [
+        {
+            "href": _candidate_pact_url(base, record, candidate),
+            "title": _candidate_title(record, candidate),
+            "name": candidate.consumer_name,
+        }
+        for candidate in latest
+    ]
+    self_url = f"{_provider_url(base, record.slug)}/latest" + (f"/{quote(tag, safe='')}" if tag else "")
+    title = f"Latest pact versions for the provider {record.name}" + (
+        f" with consumer version tag '{tag}'" if tag else ""
+    )
+    return HalJSONResponse(
+        {
+            "_links": {
+                "self": {"href": self_url, "title": title},
+                "pb:provider": {"href": _pacticipant_url(base, record.slug), "name": record.name},
+                "pb:pacts": links,
+                "provider": {
+                    "href": _pacticipant_url(base, record.slug),
+                    "title": record.name,
+                    "name": "DEPRECATED - please use the pb:provider relation",
+                },
+                "pacts": [
+                    {**link, "title": f"DEPRECATED - please use the pb:pacts relation. {link['title']}"}
+                    for link in links
+                ],
+            }
+        }
+    )
+
+
+@router.get(
+    "/{tenant_slug}/pact-broker/pacts/provider/{provider}/latest",
+    response_class=HalJSONResponse,
+    summary="The latest pact of every consumer of a provider",
+    description=(
+        "One `pb:pacts` link per consumer: the pact of its latest-recorded version that published "
+        "one for the provider. `{provider}` is a pacticipant's handle, id or name. Requires "
+        "`pacts:view`."
+    ),
+)
+def read_latest_provider_pacts(
+    tenant_slug: str,
+    provider: str,
+    request: Request,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> HalJSONResponse:
+    """List the latest pact of each consumer of a provider.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        request: The request.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The links to the pacts.
+
+    Raises:
+        HTTPException: 404 for an unknown provider, 403 without ``pacts:view``.
+    """
+    return _latest_provider_pacts(request, tenant_slug, provider, auth_data, None)
+
+
+@router.get(
+    "/{tenant_slug}/pact-broker/pacts/provider/{provider}/latest/{tag}",
+    response_class=HalJSONResponse,
+    summary="The latest pact of every consumer of a provider, for a tag",
+    description=(
+        "One `pb:pacts` link per consumer that has a version tagged `{tag}` with a pact for the "
+        "provider: the pact of the latest such version. Requires `pacts:view`."
+    ),
+)
+def read_latest_tagged_provider_pacts(
+    tenant_slug: str,
+    provider: str,
+    tag: str,
+    request: Request,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> HalJSONResponse:
+    """List the latest tagged pact of each consumer of a provider.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        tag: The consumer version tag, exactly as recorded.
+        request: The request.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The links to the pacts.
+
+    Raises:
+        HTTPException: 404 for an unknown provider, 403 without ``pacts:view``.
+    """
+    return _latest_provider_pacts(request, tenant_slug, provider, auth_data, tag)
 
 
 # ---------------------------------------------------------------------------------------------

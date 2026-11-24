@@ -1,0 +1,52 @@
+---
+slug: pact-broker-consumer-version-selectors
+title: "Pact Broker: consumer-version selectors and latest queries"
+description: "Pact verifiers fetch the pacts a provider must verify from Apiome, chosen by selectors."
+authors: [apiome]
+---
+
+A provider's Pact verifier can now ask Apiome which pacts to verify. Send consumer-version selectors
+such as `{ mainBranch: true }` or `{ tag: "prod", latest: true }`, and Apiome answers with each
+matching pact and the reason it was chosen, in the Pact Broker's wording.
+
+{/* truncate */}
+
+**Point your verifier at Apiome** with the same broker base URL and token you publish with:
+
+```js
+await new Verifier({
+  provider: 'Ledger API',
+  providerBaseUrl: 'http://localhost:8080',
+  pactBrokerUrl: 'https://api.apiome.dev/v1/tenants/acme/pact-broker',
+  pactBrokerToken: process.env.APIOME_API_KEY,
+  providerVersion: process.env.GIT_COMMIT,
+  providerVersionBranch: process.env.GIT_BRANCH,
+  consumerVersionSelectors: [{ mainBranch: true }, { matchingBranch: true }, { deployedOrReleased: true }],
+}).verifyProvider();
+```
+
+The token needs **Pacts** → **View**, which every built-in role has.
+
+**What you can do now**, through the [Pact Broker API](/reference/rest/pact-broker):
+
+- **Fetch the pacts to verify** with `POST …/pacts/provider/{provider}/for-verification`. The
+  selectors are `mainBranch`, `branch` (with `fallbackBranch` or `fallbackToMainBranch`),
+  `matchingBranch`, `tag` (all, or `latest` with `fallbackTag`), `latest` and `consumer`. No
+  selectors means the Pact Broker's defaults.
+- **One entry per pact.** When several selectors choose the same pact content, the provider
+  verifies it once and the notice lists every reason.
+- **Ambiguous selectors are refused** with `400 pact-selector-invalid`, the Pact Broker's message
+  and a pointer to the selector, for example `tag` with `branch`.
+- **Read the latest pact** of a consumer from a tag (`…/latest/prod`) or a branch
+  (`…/branch/main/latest`), or the latest pact of every consumer of a provider
+  (`…/pacts/provider/{provider}/latest`).
+
+**Not yet available:** environment selectors (`deployed`, `released`, `environment`) are accepted
+but select nothing until deployments can be recorded. No verification results are recorded yet, so
+with `includePendingStatus` every pact is reported as **pending**: its failure does not fail the
+provider build. Work-in-progress pacts (`includeWipPactsSince`) are not added yet.
+
+**For operators.** Nothing to migrate: this release reads the tables of `V432` and `V433`.
+
+Read [Choose pacts to verify with selectors](/ship/pact-broker/selectors) for every selector and
+the refusals.

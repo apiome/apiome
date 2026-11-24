@@ -275,6 +275,11 @@ def test_a_pact_reads_back_as_published_with_links(allowed: MagicMock) -> None:
             "title": "Latest version of this pact",
             "href": f"{_ROOT}/pacts/provider/ledger-api/consumer/billing-service/latest",
         },
+        "pb:latest-tagged-pact-version": {
+            "title": "Latest version of this pact for a tag",
+            "href": f"{_ROOT}/pacts/provider/ledger-api/consumer/billing-service/latest/{{tag}}",
+            "templated": True,
+        },
     }
 
 
