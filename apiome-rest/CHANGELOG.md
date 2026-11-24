@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.834.0] - 2026-11-24
+
+### Added
+- **Environments and deployment recording, Pact Broker–compatible (PFX-1.5, #6918).** OpenAPI
+  1.658.0. apiome-db V435 adds `pact_environment`, `deployed_version` and `released_version`.
+  Under `/v1/tenants/{tenant_slug}/pact-broker`, what `pact-broker create-environment`,
+  `list-environments`, `describe-environment`, `update-environment`, `delete-environment`,
+  `record-deployment`, `record-undeployment`, `record-release` and `record-support-ended` call:
+  - `GET|POST …/environments` (`?name=`; `pacts:view` / `pacts:create`) and
+    `GET|PUT|DELETE …/environments/{uuid}` (`pacts:view` / `pacts:edit` / `pacts:delete`). The
+    broker's body — `name` (one word, unique per workspace), `displayName`, `production`,
+    `contacts` — plus Apiome's `contractRequired` (default `false`). `201` + `Location` on create;
+    `409 pact-environment-name-taken`; `422 pact-environment-invalid` with a JSON Pointer.
+  - `POST …/pacticipants/{p}/versions/{v}/deployed-versions/environment/{uuid}` (`pacts:create`,
+    body `applicationInstance` or the deprecated `target`): marks the pacticipant's previous
+    deployment to the same environment and application instance undeployed, in one transaction,
+    and keeps it as history. Recording the current version again answers `200` with it.
+  - `POST …/versions/{v}/released-versions/environment/{uuid}` (`pacts:create`): releases stay
+    supported side by side; releasing again supports again (`200`).
+  - `GET|PATCH …/deployed-versions/{uuid}` and `…/released-versions/{uuid}`: a merge patch
+    `{"currentlyDeployed": false}` / `{"currentlySupported": false}` (`pacts:edit`) ends the
+    deployment or support; `true` is `422 pact-deployment-invalid`.
+  - `GET …/environments/{uuid}/deployed-versions/currently-deployed` (`?pacticipant=`,
+    `?applicationInstance=`, `?target=`) and `…/released-versions/currently-supported`
+    (`?pacticipant=`, `?version=`); `GET` on the two record URLs lists a version's history there.
+  - Links: the index adds `pb:environments` and `pb:environment`; a broker-shaped version adds
+    one `pb:record-deployment` and one `pb:record-release` link per environment, named after it.
+  - `404 pact-environment-not-found`, `pact-deployed-version-not-found`,
+    `pact-released-version-not-found`; recording for an unrecorded version is
+    `404 pacticipant-version-not-found`.
+- **Environment selectors select.** `deployed`, `released`, `deployedOrReleased` and
+  `environment` consumer-version selectors (PFX-1.3) now return the versions currently deployed or
+  supported, every one of them (not only the latest), and the notices name the environment.
+- `app.pact_environment`, `app.pact_environment_store`, `app.pact_broker_environment_routes`.
+
 ## [1.833.0] - 2026-11-24
 
 ### Added

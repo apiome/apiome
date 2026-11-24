@@ -13,8 +13,8 @@ Apiome answers with the pacts that match and the reason each was chosen. This is
 This page also covers the **latest** reads: the latest pact of a consumer from a tag or a branch,
 and the latest pact of every consumer of a provider.
 
-Environment selectors (`deployed`, `released`, `environment`) are accepted but select nothing until
-deployments can be recorded. Every pact is reported **pending** for now (see
+Environment selectors (`deployed`, `released`, `environment`) select what your deploy jobs
+[record as deployed or released](./environments.mdx). Every pact is reported **pending** for now (see
 [Pending pacts](#pending-pacts)). Work-in-progress pacts are not added yet.
 
 ## Before you start
@@ -74,7 +74,10 @@ Each selector is a JSON object. Add `consumer` to any of them to apply it to one
 | `{"tag": "prod", "latest": true}` | The latest version of each consumer tagged `prod`. |
 | `{"tag": "rc", "latest": true, "fallbackTag": "prod"}` | As above; a consumer with nothing tagged `rc` gets its latest tagged `prod`. |
 | `{"latest": true}` | The latest version of each consumer that has a pact with the provider. |
-| `{"deployed": true}`, `{"released": true}`, `{"deployedOrReleased": true}`, `{"environment": "production"}` | Versions deployed or released to an environment. Accepted; they select nothing yet. |
+| `{"deployed": true}` | **Every** version currently deployed, in any environment and on every application instance. Add `"environment": "production"` for one environment. |
+| `{"released": true}` | **Every** version released and still supported. Add `environment` for one environment. |
+| `{"deployedOrReleased": true}` | Both of the above. |
+| `{"environment": "production"}` | Every version currently deployed or supported in `production`. |
 
 - **Latest** means recorded last, not the highest version number.
 - A fallback applies **per consumer**: one consumer without a pact from the branch gets its fallback
@@ -200,5 +203,6 @@ The [index](./publish-pacts.mdx#fetch-a-pact) (`GET …/pact-broker`) links to a
 
 - [Publish and fetch pacts](./publish-pacts.mdx) — how pacts get here, and the broker base URL.
 - [Publish verification results](./verification-results.mdx) — what the verifier reports back.
+- [Environments and deployments](./environments.mdx) — what the environment selectors read.
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, branches and tags.
 - [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

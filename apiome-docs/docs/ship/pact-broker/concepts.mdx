@@ -12,8 +12,8 @@ pact publication, verification results and can-i-deploy are built on.
 
 This release has the registry, [publishing and fetching pacts](./publish-pacts.mdx) with the
 Pact CLI and libraries, [choosing the pacts a provider verifies](./selectors.mdx) with
-consumer-version selectors, and [publishing verification results](./verification-results.mdx).
-Can-i-deploy is not yet available, and there is no screen for the registry yet: use the
+consumer-version selectors, [publishing verification results](./verification-results.mdx), and
+[environments and deployments](./environments.mdx). Can-i-deploy is not yet available, and there is no screen for the registry yet: use the
 [Pacticipants API](../../reference/rest/pacticipants.md).
 
 ## Terms
@@ -35,6 +35,10 @@ Can-i-deploy is not yet available, and there is no screen for the registry yet: 
 | **Consumer-version selector** | A rule a provider's verifier sends to say which pacts it must verify — `{"mainBranch": true}`, `{"tag": "prod", "latest": true}`. See [Choose pacts to verify with selectors](./selectors.mdx). |
 | **Verification result** | What a provider's verifier published after replaying a pact: whether that provider version honours that pact version, with the result of each interaction. See [Publish verification results](./verification-results.mdx). |
 | **Pending pact** | A pact the provider has not yet verified successfully. Its failure is reported but does not fail the provider's build. |
+| **Environment** | A place versions run (`test`, `production`), with a production flag. See [Environments and deployments](./environments.mdx). |
+| **Deployed version** | A version recorded as deployed to an environment. Recording the next deployment there replaces it; the replaced one stays in the history. |
+| **Application instance** | One of several copies of an application in one environment (`eu-1`, `us-1`). Each copy has its own deployed version. |
+| **Released version** | A version released to an environment where several versions are in use at once, such as a mobile app. It stays supported until support is recorded as ended. |
 
 ## How a pacticipant relates to projects and consumers
 
@@ -165,6 +169,7 @@ pacticipant. Custom roles do not get **Pacts** automatically — grant it in the
 - [Publish and fetch pacts](./publish-pacts.mdx) — point the Pact CLI or a Pact library at Apiome.
 - [Choose pacts to verify with selectors](./selectors.mdx) — what a provider's verifier asks for.
 - [Publish verification results](./verification-results.mdx) — what the verifier reports back.
+- [Environments and deployments](./environments.mdx) — record what runs where.
 - [Pacticipants API](../../reference/rest/pacticipants.md) — every endpoint, parameter and error code.
 - [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — the breaking-change gates
   and the consumer registry.

@@ -1,0 +1,173 @@
+---
+title: Environments and deployments
+description: Record which version of each application runs in each environment.
+sidebar_position: 5
+tags: [contracts, pact, ci, rest]
+---
+
+Can-i-deploy answers "is it safe to deploy this version to **production**?" To answer, Apiome has
+to know what runs in production now. You tell it with **environments** and **deployment
+records**: create each environment once, then have your deploy job record every deployment or
+release. The `pact-broker` CLI does this against Apiome unchanged.
+
+Can-i-deploy is not yet available, and there is no screen for environments yet. What is recorded
+here is already used by the `deployed`, `released` and `environment`
+[consumer-version selectors](./selectors.mdx), so a provider verifies the pacts of the consumer
+versions that are really in production.
+
+## Before you start
+
+- Your pacts are [published to Apiome](./publish-pacts.mdx), so the versions you record exist.
+  A deployment can only be recorded for a version Apiome already has.
+- Set `PACT_BROKER_BASE_URL` to your workspace's broker base URL
+  (`https://api.apiome.dev/v1/tenants/<workspace>/pact-broker`) and `PACT_BROKER_TOKEN` to an API
+  key. Create the key on [API keys](../../workspace/api-keys.mdx) for a member with the **Editor**
+  role: it can create environments and record deployments.
+
+## Create your environments
+
+Create each environment once, for example from a setup script:
+
+```bash
+pact-broker create-environment --name test --display-name Test
+pact-broker create-environment --name production --display-name Production --production
+```
+
+| Field | What it is |
+| --- | --- |
+| `name` | The name your deploy jobs use (`production`). One word, no spaces, unique in the workspace. |
+| `displayName` | The name people read (`Production`). The name is used when you leave it out. |
+| `production` | Whether this is a production environment. Defaults to `false`. |
+| `contractRequired` | Apiome only. When `true`, can-i-deploy to this environment will refuse an application that has no contract. Defaults to `false`. |
+| `contacts` | Who to contact about the environment: `[{"name": "Team Ledger", "details": {"emailAddress": "…"}}]`. |
+
+`pact-broker list-environments` lists them with their `uuid`. Use the `uuid` with
+`describe-environment`, `update-environment` and `delete-environment`. Renaming an environment
+keeps its deployments, because they refer to it by `uuid`. **Deleting an environment deletes every
+deployment and release recorded to it**, and cannot be undone.
+
+Set `contractRequired` with the API, since the CLI has no flag for it:
+
+```bash
+curl -X PUT "$PACT_BROKER_BASE_URL/environments/<uuid>" \
+  -H "Authorization: Bearer $PACT_BROKER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "production", "displayName": "Production", "production": true, "contractRequired": true}'
+```
+
+A `PUT` replaces every field, so send the ones you want to keep.
+
+## Record a deployment
+
+Add this to your deploy job, after the deployment succeeds:
+
+```bash
+pact-broker record-deployment \
+  --pacticipant "Ledger API" \
+  --version "$GIT_COMMIT" \
+  --environment production
+```
+
+- **The deployment replaces the one before it.** The version deployed to that environment before
+  is marked as no longer deployed. It stays in the history, with the time it was replaced.
+- **Recording the same version again changes nothing.** The answer is `200` with the existing
+  deployment instead of `201`.
+- **The version must already be recorded**, by publishing a pact or verifying one. Otherwise the
+  CLI reports `<pacticipant> version <version> not found`.
+
+### Application instances
+
+Some environments run more than one copy of an application at once: one per region, or one per
+customer. Name the copy with `--application-instance`:
+
+```bash
+pact-broker record-deployment --pacticipant "Ledger API" --version 4f1e2d0 \
+  --environment production --application-instance eu-1
+```
+
+A deployment then only replaces the previous deployment **to the same instance**. Deploying to
+`eu-1` leaves `us-1` running its own version, and both count as deployed. Leave the instance out
+when the environment has one copy.
+
+## Record an undeployment
+
+When you take an application out of an environment without deploying another version, record it:
+
+```bash
+pact-broker record-undeployment --pacticipant "Ledger API" --environment production
+```
+
+Add `--application-instance eu-1` to take only that copy out. You do not need to record an
+undeployment when you deploy a new version: `record-deployment` does that for you.
+
+## Record a release
+
+Use a **release** instead of a deployment for an application where several versions are in use at
+once, such as a mobile app or a library: releasing 2.0 does not replace 1.0.
+
+```bash
+pact-broker record-release --pacticipant "Billing App" --version 2.0.0 --environment app-store
+```
+
+Every released version stays **supported** until you record that support has ended:
+
+```bash
+pact-broker record-support-ended --pacticipant "Billing App" --version 1.0.0 --environment app-store
+```
+
+Recording a release of the same version again starts supporting it again.
+
+## What the provider verifies
+
+A provider's verifier picks up what you recorded with these selectors (see
+[Choose pacts to verify with selectors](./selectors.mdx)):
+
+| Selector | What it selects |
+| --- | --- |
+| `{"deployed": true, "environment": "production"}` | Every consumer version currently deployed to production, on every instance. |
+| `{"released": true}` | Every consumer version released and still supported, in any environment. |
+| `{"deployedOrReleased": true}` | Both of the above. |
+| `{"environment": "production"}` | Every consumer version deployed or supported in production. |
+
+The reasons in the verifier's output name the environment: `deployed to production`.
+
+## Read what is recorded
+
+| To read | Request |
+| --- | --- |
+| Every environment | `GET …/pact-broker/environments` (`?name=production` for one) |
+| What is deployed to an environment now | `GET …/environments/<uuid>/deployed-versions/currently-deployed?pacticipant=Ledger%20API` |
+| What is supported in an environment now | `GET …/environments/<uuid>/released-versions/currently-supported` |
+| Every deployment of one version to an environment, current or not | `GET …/pacticipants/ledger-api/versions/4f1e2d0/deployed-versions/environment/<uuid>` |
+| One deployment or release | `GET …/deployed-versions/<uuid>`, `GET …/released-versions/<uuid>` |
+
+A version's document (`GET …/pacticipants/ledger-api/versions/4f1e2d0`) lists one
+`pb:record-deployment` and one `pb:record-release` link per environment, each named after its
+environment. This is how the CLI finds where to post.
+
+## When a request is refused
+
+| Status | Code | What to do |
+| --- | --- | --- |
+| `404` | `pacticipant-version-not-found` | The version is not recorded yet. Publish its pacts or record it first. |
+| `404` | `pact-environment-not-found` | No environment with that `uuid` in this workspace. List them with `list-environments`. |
+| `409` | `pact-environment-name-taken` | Another environment already has the name. |
+| `422` | `pact-environment-invalid` | The environment is malformed. `pointer` names the field: `/name` with a space in it, `/production` not `true` or `false`. |
+| `422` | `pact-deployment-invalid` | `currentlyDeployed` or `currentlySupported` was set to `true`. Record the deployment or release again instead. |
+| `401` / `403` | — | The token is not a valid API key for this workspace, or its member lacks the **Pacts** permission below. |
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| List environments and read deployments | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Create an environment, record a deployment or a release | `pacts:create` | — | ✓ | ✓ | ✓ |
+| Change an environment, record an undeployment or the end of support | `pacts:edit` | — | ✓ | ✓ | ✓ |
+| Delete an environment | `pacts:delete` | — | — | ✓ | ✓ |
+
+## Related
+
+- [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, environments and deployments.
+- [Choose pacts to verify with selectors](./selectors.mdx) — the environment selectors.
+- [Publish verification results](./verification-results.mdx) — what can-i-deploy will read with this.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

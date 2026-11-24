@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 20 operations."
+description: "REST endpoints tagged pact-broker: 35 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.657.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.658.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 20 operations
+Tag: `pact-broker` · 35 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -19,7 +19,7 @@ Tag: `pact-broker` · 20 operations
 
 The entry point of the Pact Broker–compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.
 
-`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates.
+`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in.
 
 A workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.
 
@@ -91,6 +91,291 @@ Request body for publish the pacts of a consumer version.
 | 422 | `pact-invalid`: the document is not a pact. `detail.pointer` is the JSON Pointer of the first problem in the document (for example `/interactions/2/request/method`) and `detail.message` says what is wrong there. | — |
 | 429 | `pact-publish-rate-limited`: over the workspace's publish budget; see `Retry-After`. | — |
 
+## `GET /v1/tenants/{tenant_slug}/pact-broker/deployed-versions/{uuid}` {#read-deployed-version-v1-tenants-tenant-slug-pact-broker-deployed-versions-uuid-get}
+
+**Read a deployment**
+
+One deployment, current or not. Requires `pacts:view`.
+
+Operation id: `read_deployed_version_v1_tenants__tenant_slug__pact_broker_deployed_versions__uuid__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | The deployment's `uuid`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a deployment. | `application/hal+json` any |
+| 404 | `pact-deployed-version-not-found`: no such deployment in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PATCH /v1/tenants/{tenant_slug}/pact-broker/deployed-versions/{uuid}` {#patch-deployed-version-v1-tenants-tenant-slug-pact-broker-deployed-versions-uuid-patch}
+
+**Record an undeployment**
+
+`{"currentlyDeployed": false}` records that the version is no longer deployed — what `pact-broker record-undeployment` sends to each matching deployment's `self` link. The deployment stays in the history. Patching an undeployed deployment changes nothing; `true` is refused (record the deployment again instead).
+
+Requires `pacts:edit`.
+
+Operation id: `patch_deployed_version_v1_tenants__tenant_slug__pact_broker_deployed_versions__uuid__patch`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | The deployment's `uuid`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for record an undeployment.
+
+- `application/merge-patch+json` — object
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `currentlyDeployed` | enum `false` | no | Currently Deployed. |
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `currentlyDeployed` | enum `false` | no | Currently Deployed. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for record an undeployment. | `application/hal+json` any |
+| 404 | `pact-deployed-version-not-found`: no such deployment in this workspace. | — |
+| 422 | `pact-deployment-invalid`: `currentlyDeployed` is not `false`. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/environments` {#read-environments-v1-tenants-tenant-slug-pact-broker-environments-get}
+
+**List environments**
+
+The workspace's environments — what `pact-broker list-environments` prints and what `record-deployment`, `record-undeployment` and `record-support-ended` look an environment up in (`_links.pb:environments`, each named after its environment). `?name=` narrows the list to the environment with exactly that name.
+
+Requires `pacts:view`.
+
+Operation id: `read_environments_v1_tenants__tenant_slug__pact_broker_environments_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `name` | query | string or null | no | Only the environment with exactly this name. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list environments. | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/environments` {#post-environment-v1-tenants-tenant-slug-pact-broker-environments-post}
+
+**Create an environment**
+
+Create an environment — what `pact-broker create-environment --name production --production` posts. `name` is one word (no spaces) and unique in the workspace; `displayName` defaults to the name; `production` defaults to `false`. Apiome adds `contractRequired`: can-i-deploy to the environment refuses a pacticipant without a contract.
+
+Answers `201` with the environment and its URL in `Location`. Requires `pacts:create`.
+
+Operation id: `post_environment_v1_tenants__tenant_slug__pact_broker_environments_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create an environment.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | The name tooling uses: one word, no spaces. |
+| `displayName` | string | no | The name people read; the name when omitted. |
+| `production` | boolean | no | Production. |
+| `contractRequired` | boolean | no | Apiome only: can-i-deploy to this environment refuses a pacticipant that has no contract. |
+| `contacts` | array of object | no | Contacts. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create an environment. | `application/hal+json` any |
+| 409 | `pact-environment-name-taken`: another environment has this name. | — |
+| 422 | `pact-environment-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/environments/{uuid}` {#read-environment-v1-tenants-tenant-slug-pact-broker-environments-uuid-get}
+
+**Read an environment**
+
+One environment by its `uuid` — the index's `pb:environment` template, and what `pact-broker describe-environment` reads. Requires `pacts:view`.
+
+Operation id: `read_environment_v1_tenants__tenant_slug__pact_broker_environments__uuid__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read an environment. | `application/hal+json` any |
+| 404 | `pact-environment-not-found`: no such environment in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-broker/environments/{uuid}` {#put-environment-v1-tenants-tenant-slug-pact-broker-environments-uuid-put}
+
+**Replace an environment**
+
+Replace every field of an environment — what `pact-broker update-environment` sends. The body is the same as for creating one; a field left out returns to its default. Renaming is allowed: deployments refer to the environment by `uuid`.
+
+Requires `pacts:edit`.
+
+Operation id: `put_environment_v1_tenants__tenant_slug__pact_broker_environments__uuid__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for replace an environment.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | The name tooling uses: one word, no spaces. |
+| `displayName` | string | no | The name people read; the name when omitted. |
+| `production` | boolean | no | Production. |
+| `contractRequired` | boolean | no | Apiome only: can-i-deploy to this environment refuses a pacticipant that has no contract. |
+| `contacts` | array of object | no | Contacts. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for replace an environment. | `application/hal+json` any |
+| 404 | `pact-environment-not-found`: no such environment in this workspace. | — |
+| 409 | `pact-environment-name-taken`: another environment has this name. | — |
+| 422 | `pact-environment-invalid`: the body is malformed. | — |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-broker/environments/{uuid}` {#remove-environment-v1-tenants-tenant-slug-pact-broker-environments-uuid-delete}
+
+**Delete an environment**
+
+Delete an environment and every deployment and release recorded to it — what `pact-broker delete-environment` calls. can-i-deploy can no longer be asked about it. Answers `204`. Requires `pacts:delete`.
+
+Operation id: `remove_environment_v1_tenants__tenant_slug__pact_broker_environments__uuid__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete an environment. | — |
+| 404 | `pact-environment-not-found`: no such environment in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/environments/{uuid}/deployed-versions/currently-deployed` {#read-currently-deployed-v1-tenants-tenant-slug-pact-broker-environments-uuid-deployed-versions-currently-deployed-get}
+
+**List the versions currently deployed to an environment**
+
+What is deployed to the environment now, newest first, under `_embedded.deployedVersions` — what `pact-broker record-undeployment` reads before it patches each match.
+
+- `pacticipant` narrows to one pacticipant (handle or name; an unknown one lists nothing).
+- `applicationInstance` narrows to one instance; sent empty, to the unnamed instance. `target` is its deprecated name.
+
+Requires `pacts:view`.
+
+Operation id: `read_currently_deployed_v1_tenants__tenant_slug__pact_broker_environments__uuid__deployed_versions_currently_deployed_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `pacticipant` | query | string or null | no | Only this pacticipant (handle or name). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the versions currently deployed to an environment. | `application/hal+json` any |
+| 404 | `pact-environment-not-found`: no such environment in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/environments/{uuid}/released-versions/currently-supported` {#read-currently-supported-v1-tenants-tenant-slug-pact-broker-environments-uuid-released-versions-currently-supported-get}
+
+**List the versions released and supported in an environment**
+
+The releases still supported in the environment, newest first, under `_embedded.releasedVersions` — what `pact-broker record-support-ended` reads. `pacticipant` and `version` narrow the list.
+
+Requires `pacts:view`.
+
+Operation id: `read_currently_supported_v1_tenants__tenant_slug__pact_broker_environments__uuid__released_versions_currently_supported_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `pacticipant` | query | string or null | no | Only this pacticipant (handle or name). |
+| `version` | query | string or null | no | Only this version number. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the versions released and supported in an environment. | `application/hal+json` any |
+| 404 | `pact-environment-not-found`: no such environment in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}` {#read-broker-pacticipant-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-get}
 
 **Read a pacticipant (Pact Broker shape)**
@@ -150,7 +435,7 @@ Operation id: `put_branch_version_v1_tenants__tenant_slug__pact_broker_pacticipa
 
 **Read a pacticipant version (Pact Broker shape)**
 
-One version of a pacticipant in the Pact Broker's shape: `number`, `buildUrl`, and its branches and tags under `_embedded` — what the `pb:consumer-version` and `pb:pacticipant-version` links of this API lead to.
+One version of a pacticipant in the Pact Broker's shape: `number`, `buildUrl`, and its branches and tags under `_embedded` — what the `pb:consumer-version` and `pb:pacticipant-version` links of this API lead to. `pb:record-deployment` and `pb:record-release` list one link per environment of the workspace, named after it — what `pact-broker record-deployment` and `record-release` post to.
 
 `{pacticipant}` is its handle, id or name. Requires `pacts:view`.
 
@@ -172,6 +457,135 @@ Operation id: `read_broker_pacticipant_version_v1_tenants__tenant_slug__pact_bro
 | --- | --- | --- |
 | 200 | Successful response for read a pacticipant version (pact broker shape). | `application/hal+json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/deployed-versions/environment/{uuid}` {#read-deployments-of-version-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-version-deployed-versions-environment-uuid-get}
+
+**List the deployments of a version to an environment**
+
+Every deployment of this version to the environment, current or not, newest first. Requires `pacts:view`.
+
+Operation id: `read_deployments_of_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | The pacticipant's handle, id or name. |
+| `version` | path | string | yes | The version number, exactly as recorded. |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the deployments of a version to an environment. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`: the version must have been recorded (published a pact, or verified one) first. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/deployed-versions/environment/{uuid}` {#post-deployment-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-version-deployed-versions-environment-uuid-post}
+
+**Record a deployment**
+
+Record that this version is now deployed to the environment — the version's `pb:record-deployment` link, which `pact-broker record-deployment --pacticipant Ledger --version 4f1e2d0 --environment production` posts to.
+
+- The pacticipant's previous deployment to the same environment and application instance is marked undeployed; it stays in the history.
+- Deployments to other application instances are not touched.
+- Recording the version that is already deployed there returns that deployment, `200`.
+
+Answers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.
+
+Operation id: `post_deployment_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | The pacticipant's handle, id or name. |
+| `version` | path | string | yes | The version number, exactly as recorded. |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (optional)
+
+Request body for record a deployment.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `applicationInstance` | string | no | The instance of the environment deployed to (a region, a customer). Omit it when the environment has one instance. |
+| `target` | string | no | Deprecated name of `applicationInstance`. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | This version was already the current deployment; it is returned. | — |
+| 201 | Successful response for record a deployment. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`: the version must have been recorded (published a pact, or verified one) first. | — |
+| 422 | `pact-deployment-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{uuid}` {#read-releases-of-version-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-version-released-versions-environment-uuid-get}
+
+**Read the release of a version to an environment**
+
+The release of this version to the environment, if any, under `_embedded.releasedVersions`. Requires `pacts:view`.
+
+Operation id: `read_releases_of_version_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__released_versions_environment__uuid__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | The pacticipant's handle, id or name. |
+| `version` | path | string | yes | The version number, exactly as recorded. |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the release of a version to an environment. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`: the version must have been recorded (published a pact, or verified one) first. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{uuid}` {#post-release-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-version-released-versions-environment-uuid-post}
+
+**Record a release**
+
+Record that this version is released to the environment — the version's `pb:record-release` link, which `pact-broker record-release` posts to. Releases do not replace each other: every released version stays supported until `record-support-ended`. Recording a release again starts supporting it again and answers `200`.
+
+The body is ignored. Requires `pacts:create`.
+
+Operation id: `post_release_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__released_versions_environment__uuid__post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | path | string | yes | The pacticipant's handle, id or name. |
+| `version` | path | string | yes | The version number, exactly as recorded. |
+| `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The version was already released there; it is supported again. | — |
+| 201 | Successful response for record a release. | `application/hal+json` any |
+| 404 | `pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`: the version must have been recorded (published a pact, or verified one) first. | — |
+| 422 | `pact-deployment-invalid`: the body is malformed; `detail.pointer` names the field. | — |
 
 ## `PUT /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}/versions/{version}/tags/{tag}` {#put-version-tag-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-versions-version-tags-tag-put}
 
@@ -683,6 +1097,73 @@ Operation id: `read_latest_tagged_provider_pacts_v1_tenants__tenant_slug__pact_b
 | --- | --- | --- |
 | 200 | Successful response for the latest pact of every consumer of a provider, for a tag. | `application/hal+json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/released-versions/{uuid}` {#read-released-version-v1-tenants-tenant-slug-pact-broker-released-versions-uuid-get}
+
+**Read a release**
+
+One release, supported or not. Requires `pacts:view`.
+
+Operation id: `read_released_version_v1_tenants__tenant_slug__pact_broker_released_versions__uuid__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | The release's `uuid`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a release. | `application/hal+json` any |
+| 404 | `pact-released-version-not-found`: no such release in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PATCH /v1/tenants/{tenant_slug}/pact-broker/released-versions/{uuid}` {#patch-released-version-v1-tenants-tenant-slug-pact-broker-released-versions-uuid-patch}
+
+**Record the end of support for a release**
+
+`{"currentlySupported": false}` records that the release is no longer supported — what `pact-broker record-support-ended` sends. The release stays in the history; `true` is refused (record the release again instead).
+
+Requires `pacts:edit`.
+
+Operation id: `patch_released_version_v1_tenants__tenant_slug__pact_broker_released_versions__uuid__patch`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `uuid` | path | string | yes | The release's `uuid`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for record the end of support for a release.
+
+- `application/merge-patch+json` — object
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `currentlySupported` | enum `false` | no | Currently Supported. |
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `currentlySupported` | enum `false` | no | Currently Supported. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for record the end of support for a release. | `application/hal+json` any |
+| 404 | `pact-released-version-not-found`: no such release in this workspace. | — |
+| 422 | `pact-deployment-invalid`: `currentlySupported` is not `false`. | — |
 
 ## Schemas used {#schemas-used}
 

@@ -28,6 +28,7 @@ from app.config import settings
 from app.main import app
 from app.pact_broker_auth import validate_broker_authentication
 from app.pact_broker_routes import _publish_limiter
+from app.pact_environment import EnvironmentRecord
 from app.pact_publication import (
     CODE_PACT_CONFLICT,
     CODE_PACT_NOT_FOUND,
@@ -323,10 +324,16 @@ def test_an_unknown_pact_or_pacticipant_is_a_404(allowed: MagicMock, error: Exce
     assert "pointer" not in response.json()["detail"]
 
 
+_PRODUCTION = EnvironmentRecord(
+    id="44444444-4444-4444-8444-444444444444", name="production", display_name="Production", production=True
+)
+
+
 def test_a_pacticipant_and_its_version_read_in_the_broker_shape(allowed: MagicMock) -> None:
     with (
         patch(f"{_ROUTES}.get_pacticipant", return_value=_consumer()) as find,
         patch(f"{_ROUTES}.get_version", return_value=_version()),
+        patch(f"{_ROUTES}.list_environments", return_value=[_PRODUCTION]),
     ):
         pacticipant = client.get(f"{_BASE}/pacticipants/Billing%20Service")
         version = client.get(f"{_BASE}/pacticipants/billing-service/versions/1.0.0")
@@ -337,6 +344,18 @@ def test_a_pacticipant_and_its_version_read_in_the_broker_shape(allowed: MagicMo
     assert (body["number"], body["buildUrl"]) == ("1.0.0", "https://ci.example.com/1")
     assert body["_embedded"] == {"branchVersions": [{"name": "main"}], "tags": [{"name": "rc"}]}
     assert body["_links"]["pb:pacticipant"]["href"] == f"{_ROOT}/pacticipants/billing-service"
+    # One record link per environment, named after it: what `pact-broker record-deployment` picks.
+    version_url = f"{_ROOT}/pacticipants/billing-service/versions/1.0.0"
+    assert body["_links"]["pb:record-deployment"] == [
+        {
+            "title": "Record deployment to Production",
+            "name": "production",
+            "href": f"{version_url}/deployed-versions/environment/{_PRODUCTION.id}",
+        }
+    ]
+    assert body["_links"]["pb:record-release"][0]["href"] == (
+        f"{version_url}/released-versions/environment/{_PRODUCTION.id}"
+    )
 
 
 def test_an_unknown_version_is_a_404(allowed: MagicMock) -> None:

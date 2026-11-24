@@ -141,7 +141,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.5 · [#6918](https://github.com/apiome/apiome/issues/6918) | Environments and deployment recording | Environments, record-deployment/release/support-ended | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-db |
 | PFX-1.6 · [#6919](https://github.com/apiome/apiome/issues/6919) | Matrix and can-i-deploy | Verdict with reasons, `to`/`to-environment`, retry-while-unknown | `contracts`,`pact`,`rest`,`mvp` | N | Y | L | apiome-rest |
 | PFX-1.7 · [#6920](https://github.com/apiome/apiome/issues/6920) | Pending pacts and work-in-progress pacts | Non-blocking new pacts; WIP selection | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest |
 | PFX-1.8 · [#6921](https://github.com/apiome/apiome/issues/6921) | Broker API conformance suite | Run the official `pact-broker` CLI and clients against Apiome in CI | `contracts`,`pact`,`devex`,`mvp` | Y | Y | M | apiome-rest, scripts |
@@ -183,7 +182,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 - **Technical Stack:** Postgres, FastAPI.
 - **Documentation:** `…/pact-broker/verification-results.mdx`.
 
-**PFX-1.5 · #6918 Environments and deployment recording**
+**✅ PFX-1.5 · #6918 Environments and deployment recording — Complete**
 - **Problem:** can-i-deploy answers "is it safe in *production*?", which needs to know what is deployed there.
 - **Solution/Scope:** `environment` (name, display name, production flag, contract-required flag), `deployed_version` (currently-deployed / released flag, application instance), `released_version`. Endpoints and CLI parity: `create-environment`, `record-deployment`, `record-undeployment`, `record-release`, `record-support-ended`, `list-environments`. Hooks into the existing project environments if present (link, do not duplicate).
 - **Acceptance Criteria:** Recording a deployment marks the previous one undeployed (same application instance); history retained; `pact-broker record-deployment` works unmodified.
