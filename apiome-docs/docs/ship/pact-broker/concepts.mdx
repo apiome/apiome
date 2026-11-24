@@ -35,7 +35,8 @@ matrix. There is no screen for the registry yet: use the
 | **Broker base URL** | The address a Pact client is given: `https://<api>/v1/tenants/<workspace>/pact-broker`. |
 | **Consumer-version selector** | A rule a provider's verifier sends to say which pacts it must verify — `{"mainBranch": true}`, `{"tag": "prod", "latest": true}`. See [Choose pacts to verify with selectors](./selectors.mdx). |
 | **Verification result** | What a provider's verifier published after replaying a pact: whether that provider version honours that pact version, with the result of each interaction. See [Publish verification results](./verification-results.mdx). |
-| **Pending pact** | A pact the provider has not yet verified successfully. Its failure is reported but does not fail the provider's build. |
+| **Pending pact** | A pact the provider has not yet verified successfully on the verifying branch. Its failure is reported but does not fail the provider's build. See [Pending and work-in-progress pacts](./pending-and-wip.mdx). |
+| **Work-in-progress (WIP) pact** | The latest pact of a consumer branch or tag that no selector chose and the provider has not verified yet. A verifier that asks for WIP pacts verifies it as pending. |
 | **Environment** | A place versions run (`test`, `production`), with a production flag. See [Environments and deployments](./environments.mdx). |
 | **Deployed version** | A version recorded as deployed to an environment. Recording the next deployment there replaces it; the replaced one stays in the history. |
 | **Application instance** | One of several copies of an application in one environment (`eu-1`, `us-1`). Each copy has its own deployed version. |

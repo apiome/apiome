@@ -8,6 +8,7 @@ the SQL.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Dict, Iterator
 from unittest.mock import MagicMock, patch
 
@@ -253,6 +254,23 @@ def test_a_failed_verdict_and_ignored_rows(store: Dict[str, MagicMock]) -> None:
     assert ignored["summary"]["ignored"] == 1
     assert [row["ignored"] for row in ignored["matrix"]] == [True]
     assert store["query"].call_args[0][3].ignore_selectors == (UnresolvedSelector(pacticipant_name="Ledger API"),)
+
+
+def test_a_result_says_whether_the_pact_was_pending_or_wip(store: Dict[str, MagicMock]) -> None:
+    pending_failure = replace(_row(False), pact_pending=True, wip=True)
+    store["query"].return_value = _result(pending_failure)
+    body = client.get(f"{_BASE}/matrix?{_CLI_QUERY}").json()
+    (row,) = body["matrix"]
+    assert row["verificationResult"]["pending"] is True
+    assert row["verificationResult"]["wip"] is True
+    assert row["reason"] == {"code": "pact-pending", "text": "pact is pending"}
+    # Pending does not soften the verdict (PFX-1.6): the failure still blocks the deploy.
+    assert body["summary"]["deployable"] is False
+
+    store["query"].return_value = _result(replace(_row(), pact_pending=False))
+    (verified,) = client.get(f"{_BASE}/matrix?{_CLI_QUERY}").json()["matrix"]
+    assert verified["verificationResult"]["pending"] is False
+    assert "wip" not in verified["verificationResult"]
 
 
 def test_can_i_deploy_asks_the_same_question(store: Dict[str, MagicMock]) -> None:

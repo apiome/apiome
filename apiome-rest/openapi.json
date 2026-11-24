@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.659.0",
+    "version": "1.660.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -39953,7 +39953,7 @@
           "pact-broker"
         ],
         "summary": "The pacts a provider must verify",
-        "description": "What a Pact verifier calls before it verifies: the pacts a provider build must verify, chosen by **consumer-version selectors**. One entry per distinct pact; a pact chosen by several selectors appears once, with every reason in its notices.\n\nSelectors (`consumerVersionSelectors`, each optionally narrowed by `consumer`):\n\n- `{\"mainBranch\": true}` \u2014 the latest version from each consumer's main branch;\n- `{\"branch\": \"x\"}` \u2014 the latest version from branch `x`, with `fallbackBranch` or `fallbackToMainBranch` for a consumer that has none there;\n- `{\"matchingBranch\": true}` \u2014 `branch` set to the request's `providerVersionBranch`;\n- `{\"tag\": \"x\"}` \u2014 every version tagged `x`; with `\"latest\": true` the latest one, and `fallbackTag` for a consumer that has none;\n- `{\"latest\": true}` \u2014 the latest version of each consumer;\n- `deployed`, `released`, `deployedOrReleased`, `environment` \u2014 versions in an environment. Accepted; they select nothing until environments are recorded.\n\nNo selectors means the broker's defaults: each consumer's main branch (or its latest version), and whatever is deployed or released.\n\n`includePendingStatus: true` adds `pending` and the pending notices. No verification result has been recorded yet, so every pact is pending: a failure will not fail the provider build. `includeWipPactsSince` is accepted; work-in-progress pacts are not added yet.\n\nAn ambiguous selector (for example `tag` with `branch`, or `mainBranch` with `latest: false`) is `400 pact-selector-invalid` with the pointer of the selector. Requires `pacts:view`.",
+        "description": "What a Pact verifier calls before it verifies: the pacts a provider build must verify, chosen by **consumer-version selectors**. One entry per distinct pact; a pact chosen by several selectors appears once, with every reason in its notices.\n\nSelectors (`consumerVersionSelectors`, each optionally narrowed by `consumer`):\n\n- `{\"mainBranch\": true}` \u2014 the latest version from each consumer's main branch;\n- `{\"branch\": \"x\"}` \u2014 the latest version from branch `x`, with `fallbackBranch` or `fallbackToMainBranch` for a consumer that has none there;\n- `{\"matchingBranch\": true}` \u2014 `branch` set to the request's `providerVersionBranch`;\n- `{\"tag\": \"x\"}` \u2014 every version tagged `x`; with `\"latest\": true` the latest one, and `fallbackTag` for a consumer that has none;\n- `{\"latest\": true}` \u2014 the latest version of each consumer;\n- `deployed`, `released`, `deployedOrReleased`, `environment` \u2014 versions in an environment. Accepted; they select nothing until environments are recorded.\n\nNo selectors means the broker's defaults: each consumer's main branch (or its latest version), and whatever is deployed or released.\n\n`includePendingStatus: true` adds `pending` and the pending notices. A pact is pending until the provider has verified its content successfully \u2014 from `providerVersionBranch` (or on any branch before that branch was created), with each of `providerVersionTags`, or, with neither, at all. A failure of a pending pact does not fail the provider build.\n\n`includeWipPactsSince: <date>` (with a `providerVersionBranch` or `providerVersionTags`) adds **work-in-progress** pacts after the selected ones: the latest pact of each consumer branch and tag, published on or after the date, that no selector chose and that is still pending. They carry `wip: true` and `pending: true`, so they never fail the build.\n\nAn ambiguous selector (for example `tag` with `branch`, or `mainBranch` with `latest: false`) is `400 pact-selector-invalid` with the pointer of the selector. Requires `pacts:view`.",
         "operationId": "pacts_for_verification_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__for_verification_post",
         "parameters": [
           {
@@ -40189,7 +40189,8 @@
                   }
                 ],
                 "providerVersionBranch": "main",
-                "includePendingStatus": true
+                "includePendingStatus": true,
+                "includeWipPactsSince": "2026-11-01"
               }
             }
           },

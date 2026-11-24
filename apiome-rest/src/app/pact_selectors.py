@@ -34,14 +34,14 @@ Selectors, as a verifier sends them:
 ``environment: "x"``  Alone: every version currently deployed or supported in ``x``.
 ====================  ==========================================================================
 
-**Pending.** A pact is *pending* for a provider until a verification of it from that provider (on
-the request's ``providerVersionBranch``) has succeeded; a failure of a pending pact does not fail
-the provider's build. Verification results are recorded from PFX-1.4 (#6917) on, so today no pact
-has been verified and every pact is pending — the correct answer under the broker's definition.
-:func:`is_pending` is the one place that changes when results exist (PFX-1.7, #6920).
+**Pending.** A pact is *pending* for a provider build until the provider has verified its
+content successfully (on the request's ``providerVersionBranch``, with its ``providerVersionTags``,
+or at all); a failure of a pending pact does not fail the provider's build. The rule lives in
+:mod:`app.pact_pending` (PFX-1.7, #6920); :func:`is_pending` applies it with the provider's
+history (:class:`app.pact_pending.PendingEvidence`).
 
-**Work in progress.** ``includeWipPactsSince`` is accepted and checked; selecting WIP pacts is
-PFX-1.7 (#6920), so none are added yet.
+**Work in progress.** ``includeWipPactsSince`` adds the pacts no selector chose that are still
+pending — :func:`app.pact_wip.select_wip_pacts` (PFX-1.7, #6920).
 """
 
 from __future__ import annotations
@@ -52,6 +52,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import parse_qsl, quote_plus
 
+from .pact_pending import NO_EVIDENCE, PendingEvidence, pact_is_pending
 from .pact_publication import PactPublicationError
 from .pacticipant import slugify_pacticipant_name
 
@@ -73,6 +74,7 @@ __all__ = [
     "select_verifiable_pacts",
     "short_description",
     "verification_metadata",
+    "wip_inclusion_reason",
 ]
 
 #: A for-verification request or one of its selectors is malformed or ambiguous (HTTP 400).
@@ -80,6 +82,7 @@ CODE_SELECTOR_INVALID = "pact-selector-invalid"
 
 #: Where a verifier's notices point a reader for pending and WIP pacts (the broker's links).
 READ_MORE_PENDING = "Read more at https://docs.pact.io/go/pending"
+READ_MORE_WIP = "Read more at https://docs.pact.io/go/wip"
 
 #: The most selectors one request may carry; a verifier sends a handful.
 MAX_SELECTORS = 100
@@ -461,6 +464,7 @@ class PactCandidate:
         tags: The tags of the version.
         deployed_to: The environments the version is currently deployed to, by name.
         released_in: The environments the version is released and supported in, by name.
+        published_at: When this consumer version published the pact (for ``includeWipPactsSince``).
     """
 
     consumer_id: str
@@ -475,6 +479,7 @@ class PactCandidate:
     tags: Tuple[str, ...] = ()
     deployed_to: Tuple[str, ...] = ()
     released_in: Tuple[str, ...] = ()
+    published_at: Optional[datetime.datetime] = None
 
 
 @dataclass(frozen=True)
@@ -520,7 +525,7 @@ class VerifiablePact:
             pact is named after).
         selected_by: The selectors that chose it, in the broker's order.
         pending: Whether the pact is pending for the verifying provider build.
-        wip: Whether it was included as a work-in-progress pact (PFX-1.7).
+        wip: Whether it was included as a work-in-progress pact (:mod:`app.pact_wip`).
     """
 
     candidate: PactCandidate
@@ -695,26 +700,29 @@ def _selection_order(selected: SelectedBy) -> Tuple[int, str, int]:
     )
 
 
-def is_pending(pact: VerifiablePact, query: ForVerificationQuery) -> bool:
+def is_pending(pact: VerifiablePact, query: ForVerificationQuery, evidence: PendingEvidence = NO_EVIDENCE) -> bool:
     """Whether a pact is pending for the provider build that is about to verify it.
 
-    A pact is pending until a verification of its content by the provider — from the request's
-    ``providerVersionBranch``, or with one of its ``providerVersionTags`` — has succeeded.
-    Verification results are recorded from PFX-1.4 (#6917) on, so no pact has been verified yet
-    and every pact is pending. PFX-1.7 (#6920) replaces this with the lookup.
+    A pact is pending until the provider has verified its content successfully — from the
+    request's ``providerVersionBranch`` (or before that branch was created), with each of its
+    ``providerVersionTags``, or, with neither, at all (:func:`app.pact_pending.pact_is_pending`).
 
     Args:
         pact: The selected pact.
         query: The request.
+        evidence: The provider's successful verifications; none means every pact is pending.
 
     Returns:
-        ``True``.
+        Whether a failure of the pact must not fail the provider build.
     """
-    del pact, query
-    return True
+    return pact_is_pending(pact.candidate.sha, query.provider_version_branch, query.provider_version_tags, evidence)
 
 
-def select_verifiable_pacts(candidates: Sequence[PactCandidate], query: ForVerificationQuery) -> List[VerifiablePact]:
+def select_verifiable_pacts(
+    candidates: Sequence[PactCandidate],
+    query: ForVerificationQuery,
+    evidence: PendingEvidence = NO_EVIDENCE,
+) -> List[VerifiablePact]:
     """The pacts a provider must verify for a request.
 
     Every selector is applied (the broker's defaults when the request has none); what they select
@@ -724,6 +732,7 @@ def select_verifiable_pacts(candidates: Sequence[PactCandidate], query: ForVerif
     Args:
         candidates: The provider's publications.
         query: The checked request.
+        evidence: The provider's verification history, for each pact's pending flag.
 
     Returns:
         The pacts, ordered by consumer name and then by consumer version.
@@ -743,7 +752,7 @@ def select_verifiable_pacts(candidates: Sequence[PactCandidate], query: ForVerif
     pacts = sorted(merged.values(), key=lambda p: (p.candidate.consumer_name.casefold(), p.candidate.version_seq))
     for pact in pacts:
         pact.selected_by.sort(key=_selection_order)
-        pact.pending = is_pending(pact, query)
+        pact.pending = is_pending(pact, query, evidence)
     return pacts
 
 
@@ -858,6 +867,30 @@ def inclusion_reason(pact: VerifiablePact, pact_url: str, provider_name: str) ->
     )
 
 
+def wip_inclusion_reason(pact: VerifiablePact, pact_url: str) -> str:
+    """The notice saying why a WIP pact is being verified.
+
+    Args:
+        pact: A WIP pact.
+        pact_url: Its URL.
+
+    Returns:
+        The broker's ``before_verification`` WIP text, naming the branches and tags it heads.
+    """
+    consumer = pact.candidate.consumer_name
+    heads: List[str] = []
+    for selected in pact.selected_by:
+        if selected.selector.branch is not None:
+            heads.append(f"the latest version of {consumer} from branch '{selected.selector.branch}'")
+        elif selected.selector.tag is not None:
+            heads.append(f"the latest version of {consumer} tagged with '{selected.selector.tag}'")
+    what = " and ".join(heads) or f"the latest version of {consumer}"
+    return (
+        f"The pact at {pact_url} is being verified because it is a 'work in progress' pact (ie. it is the pact for "
+        f"{what} and is still in pending state). {READ_MORE_WIP}"
+    )
+
+
 def _provider_description(query: ForVerificationQuery, provider_name: str, any_or_a: str) -> str:
     """Which provider builds the pending state is about: a branch, tags, or the provider."""
     if query.provider_version_branch:
@@ -919,11 +952,13 @@ def build_notices(
         provider_name: The verifying provider.
 
     Returns:
-        ``[{"when", "text"}]``: the inclusion reason, and with ``includePendingStatus`` the pending
-        reason and the four ``after_verification:…`` lines for a pending pact.
+        ``[{"when", "text"}]``: the inclusion reason (the WIP reason for a WIP pact), and with
+        ``includePendingStatus`` — always for a WIP pact — the pending reason and the four
+        ``after_verification:…`` lines for a pending pact.
     """
-    notices = [{"when": "before_verification", "text": inclusion_reason(pact, pact_url, provider_name)}]
-    if not query.include_pending_status:
+    reason = wip_inclusion_reason(pact, pact_url) if pact.wip else inclusion_reason(pact, pact_url, provider_name)
+    notices = [{"when": "before_verification", "text": reason}]
+    if not (query.include_pending_status or pact.wip):
         return notices
     notices.append({"when": "before_verification", "text": pending_reason(pact, query, provider_name)})
     if pact.pending:
@@ -1057,7 +1092,8 @@ def decode_metadata(segment: Optional[str]) -> Dict[str, Any]:
 
     Returns:
         ``{"pending": True | False | None, "wip": bool}``: the pending flag the for-verification
-        response gave the pact (``None`` when it carried none) and whether it was a WIP pact.
+        response gave the pact (``None`` when it carried none; ``True`` for a WIP pact, which is
+        always pending) and whether it was a WIP pact.
     """
     result: Dict[str, Any] = {"pending": None, "wip": False}
     if not segment:
@@ -1072,4 +1108,6 @@ def decode_metadata(segment: Optional[str]) -> Dict[str, Any]:
             result["pending"] = value == "true"
         elif key == "w":
             result["wip"] = value == "true"
+    if result["wip"] and result["pending"] is None:
+        result["pending"] = True  # A WIP pact is always verified as pending (the broker's rule).
     return result

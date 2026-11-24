@@ -14,8 +14,9 @@ This page also covers the **latest** reads: the latest pact of a consumer from a
 and the latest pact of every consumer of a provider.
 
 Environment selectors (`deployed`, `released`, `environment`) select what your deploy jobs
-[record as deployed or released](./environments.mdx). Every pact is reported **pending** for now (see
-[Pending pacts](#pending-pacts)). Work-in-progress pacts are not added yet.
+[record as deployed or released](./environments.mdx). Each pact can report whether it is
+**pending**, and the answer can include **work-in-progress** pacts no selector chose (see
+[Pending and work-in-progress pacts](./pending-and-wip.mdx)).
 
 ## Before you start
 
@@ -95,7 +96,7 @@ Each selector is a JSON object. Add `consumer` to any of them to apply it to one
 | `providerVersionBranch` | The branch of the provider build that verifies. Needed by `matchingBranch`, and named in the pending notices. |
 | `providerVersionTags` | The tags of the provider build, for setups that use tags instead of branches. |
 | `includePendingStatus` | `true` adds `pending` to each pact and the pending notices. Defaults to `false`. Pact verifiers send it when pending pacts are enabled. |
-| `includeWipPactsSince` | A date (`2026-01-31`). Accepted and checked; work-in-progress pacts are not added yet. |
+| `includeWipPactsSince` | A date (`2026-01-31`). Adds the [work-in-progress pacts](./pending-and-wip.mdx#which-pacts-are-work-in-progress) published on or after it. Needs `providerVersionBranch` or `providerVersionTags`. |
 
 ### Selectors that are refused
 
@@ -159,7 +160,8 @@ One entry per pact to verify, under `_embedded.pacts`:
 | Field | What it is |
 | --- | --- |
 | `shortDescription` | Why the pact was chosen, in a few words. Pact Go names its test after it. |
-| `verificationProperties.pending` | Only with `includePendingStatus`. Whether a failure of this pact fails the build. |
+| `verificationProperties.pending` | With `includePendingStatus`, and always for a WIP pact. `true` when a failure of this pact does not fail the build. |
+| `verificationProperties.wip` | `true` for a [work-in-progress pact](./pending-and-wip.mdx#which-pacts-are-work-in-progress); left out otherwise. |
 | `verificationProperties.notices` | What the verifier prints, and when (`before_verification`, `after_verification:…`). |
 | `_links.self.href` | The pact to fetch. The last segment records which selectors chose it, so the verification result can be traced back to the consumer version. |
 
@@ -167,12 +169,13 @@ One entry per pact to verify, under `_embedded.pacts`:
 
 A pact is **pending** until the provider has verified it successfully. A failed verification of a
 pending pact is reported, but **does not fail the provider build**, so a consumer can publish a new
-expectation without breaking the provider's pipeline.
+expectation without breaking the provider's pipeline. A successful
+[verification result](./verification-results.mdx) from the provider branch takes the pact out of
+the pending state.
 
-Apiome [records verification results](./verification-results.mdx), but a successful result does
-not yet take a pact out of the pending state: **every pact is reported pending** for now. With
-`enablePending: true` in the verifier, no pact failure fails your provider build. Leave pending off
-(`includePendingStatus` not sent) if you want every failure to fail the build.
+Leave pending off (`includePendingStatus` not sent) if you want every failure to fail the build.
+[Pending and work-in-progress pacts](./pending-and-wip.mdx) has the exact rules, two worked
+examples and the work-in-progress pacts.
 
 ## Latest pacts without selectors
 
@@ -202,6 +205,7 @@ The [index](./publish-pacts.mdx#fetch-a-pact) (`GET …/pact-broker`) links to a
 ## Related
 
 - [Publish and fetch pacts](./publish-pacts.mdx) — how pacts get here, and the broker base URL.
+- [Pending and work-in-progress pacts](./pending-and-wip.mdx) — new expectations that do not break the build.
 - [Publish verification results](./verification-results.mdx) — what the verifier reports back.
 - [Environments and deployments](./environments.mdx) — what the environment selectors read.
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, branches and tags.

@@ -283,6 +283,11 @@ retries, and prints the reason for each. Apiome answers from the pacts consumers
 results providers published, and the deployments your deploy jobs recorded. See
 [Can I deploy?](./pact-broker/can-i-deploy.mdx).
 
+So that a consumer's new expectation does not fail the provider's build the moment it is
+published, turn on **pending pacts** (`enablePending: true`) in the provider's verifier, and
+**work-in-progress pacts** (`includeWipPactsSince`) to verify feature-branch pacts early. See
+[Pending and work-in-progress pacts](./pact-broker/pending-and-wip.mdx).
+
 ## How the pieces fit
 
 - **One classifier.** The CLI, the GitHub Action, the changelog, the webhook, the guardrail and the

@@ -77,8 +77,9 @@ Apiome finds every application the version has a pact with, takes the versions o
 - **The latest result decides.** When a provider version verified a pact more than once, the last
   result is used.
 - **A pending pact still blocks the consumer.** A failed result of a
-  [pending pact](./selectors.mdx#pending-pacts) does not fail the provider's build, but the consumer
-  cannot deploy against that provider version. The row's reason reads `pact is pending`.
+  [pending pact](./pending-and-wip.mdx) does not fail the provider's build, but the consumer
+  cannot deploy against that provider version. The row's reason reads `pact is pending`, and its
+  `verificationResult` carries `pending: true` (and `wip: true` for a work-in-progress pact).
 
 ### Reasons
 

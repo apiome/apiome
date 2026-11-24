@@ -9,8 +9,8 @@ When a provider build verifies a pact, its Pact verifier can publish the outcome
 provider version honour this pact? Apiome keeps every result, and [can-i-deploy](./can-i-deploy.mdx)
 answers from them. The Pact verifiers publish to Apiome unchanged.
 
-The pending state of a pact does not yet change after a successful result (see
-[Pending pacts](./selectors.mdx#pending-pacts)). There is no screen for results yet.
+A successful result takes the pact out of the pending state for that provider branch (see
+[Pending and work-in-progress pacts](./pending-and-wip.mdx)). There is no screen for results yet.
 
 ## Before you start
 
@@ -64,7 +64,8 @@ Apiome registers the provider version if it does not have it yet.
 - **Results are numbered per pact version**: 1, 2, 3 … The answer is `201` with the result's URL
   in `Location`.
 - **The pending state is kept.** When the pact was fetched with selectors, the result records
-  whether the pact was pending at that moment.
+  whether the pact was pending at that moment, and whether it was a
+  [work-in-progress pact](./pending-and-wip.mdx#which-pacts-are-work-in-progress) (always pending).
 
 ### Link an Apiome provider verification report
 

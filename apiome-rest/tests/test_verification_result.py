@@ -175,7 +175,7 @@ def test_a_row_becomes_a_record() -> None:
     [
         ({"s": [{"b": "main", "l": True, "cv": "v1"}], "p": True}, {"pending": True, "wip": False}),
         ({"s": [{"t": "prod", "cv": "v1"}], "p": False}, {"pending": False, "wip": False}),
-        ({"w": True}, {"pending": None, "wip": True}),
+        ({"w": True}, {"pending": True, "wip": True}),
     ],
 )
 def test_for_verification_metadata_reads_back(metadata: Dict[str, Any], expected: Dict[str, Any]) -> None:

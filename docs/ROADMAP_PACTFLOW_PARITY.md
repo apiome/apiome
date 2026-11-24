@@ -142,7 +142,6 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-1.7 · [#6920](https://github.com/apiome/apiome/issues/6920) | Pending pacts and work-in-progress pacts | Non-blocking new pacts; WIP selection | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest |
 | PFX-1.8 · [#6921](https://github.com/apiome/apiome/issues/6921) | Broker API conformance suite | Run the official `pact-broker` CLI and clients against Apiome in CI | `contracts`,`pact`,`devex`,`mvp` | Y | Y | M | apiome-rest, scripts |
 | PFX-1.9 | Contract webhooks | Pact events, templating, HMAC, execution log | `contracts`,`pact`,`rest`,`mvp` | Y | Y | L | apiome-rest, apiome-db |
 | PFX-1.10 · [#6923](https://github.com/apiome/apiome/issues/6923) | Badges and public status endpoints | SVG badges, shields JSON, browse-page hooks | `contracts`,`pact`,`rest` | Y | N | S | apiome-rest, apiome-browse |
@@ -198,7 +197,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 - **Technical Stack:** SQL with named statements (see browse SSR recipe), FastAPI.
 - **Documentation:** `…/pact-broker/can-i-deploy.mdx`; also the existing CI-gates hub gets a section.
 
-**PFX-1.7 · #6920 Pending pacts and work-in-progress pacts**
+**✅ PFX-1.7 · #6920 Pending pacts and work-in-progress pacts — Complete**
 - **Problem:** A new consumer expectation must not break the provider build the moment it is published.
 - **Solution/Scope:** Pending = a pact version never successfully verified by the provider branch; verification failures of pending pacts do not fail the provider build. WIP = pacts from consumer branches not matched by selectors, included on request. Implement the broker's definitions, exposed in `for-verification` notices and the matrix.
 - **Acceptance Criteria:** Fixture scenarios from the broker docs pass; pending flag flips after first success.
