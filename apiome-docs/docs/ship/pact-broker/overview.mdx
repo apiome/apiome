@@ -1,0 +1,92 @@
+---
+title: Pact Broker overview
+description: Use Apiome as your Pact Broker, from publishing pacts to can-i-deploy.
+sidebar_position: 0.5
+tags: [contracts, pact, ci, overview]
+---
+
+Apiome is a Pact Broker. The `pact-broker` CLI, the `pact` CLI, pact-js and pact-jvm work against
+it unchanged: give them your workspace's **broker base URL**
+(`https://api.apiome.dev/v1/tenants/<workspace>/pact-broker`) and an API key as the **token**.
+Consumers publish their pacts, providers verify them and report back, deploy jobs record what runs
+where, and `can-i-deploy` stops a release that would break something.
+
+All of it is served through the API and the Pact tools. There is no screen for pacts yet.
+
+## When to use it
+
+- **You test with Pact and want the broker next to your specs.** Your pacts, verification results
+  and deployments live in the same workspace as the projects that describe your APIs, under the
+  same members, roles and API keys.
+- **You are moving off a self-hosted Pact Broker.** Point the same CLI commands and library
+  options at Apiome; [Pact Broker compatibility](./compatibility.mdx) lists every endpoint and
+  whether Apiome serves it.
+- **You want deploys gated on contracts.** Ask [can-i-deploy](./can-i-deploy.mdx) before each
+  deployment, and let [contract webhooks](./webhooks.mdx) start a provider build when a pact
+  changes.
+
+## Where you work from
+
+| Where | Best for | Details |
+| --- | --- | --- |
+| The **Pact CLI** (`pact-broker`, `pact broker`) | Publishing, recording deployments and can-i-deploy from CI | [Publish and fetch pacts](./publish-pacts.mdx) |
+| A **Pact library** (pact-js, pact-jvm, …) | Publishing from the consumer's tests and verifying in the provider's | [Choose pacts to verify with selectors](./selectors.mdx) |
+| The **Pact Broker API** (`…/pact-broker/…`) | Anything a Pact tool does, from a script | [Pact Broker API](../../reference/rest/pact-broker.md) |
+| The **Pacticipants API** (`…/pacticipants/…`) | Registering applications, labels, deletes and retention | [Pacticipants API](../../reference/rest/pacticipants.md) |
+
+## At a glance
+
+| To | Read |
+| --- | --- |
+| Learn the words: pacticipant, version, branch, tag, pact version | [Pact Broker concepts](./concepts.mdx) |
+| Publish a consumer's pacts and fetch them back | [Publish and fetch pacts](./publish-pacts.mdx) |
+| Tell a provider's verifier which pacts to check | [Choose pacts to verify with selectors](./selectors.mdx) |
+| Verify a new expectation without breaking the provider's build | [Pending and work-in-progress pacts](./pending-and-wip.mdx) |
+| Report whether a provider version honours each pact | [Publish verification results](./verification-results.mdx) |
+| Record which version runs in each environment | [Environments and deployments](./environments.mdx) |
+| Ask whether a version is safe to deploy | [Can I deploy?](./can-i-deploy.mdx) |
+| Start CI when a pact needs verifying or a verification finishes | [Contract webhooks](./webhooks.mdx) |
+| Show in a README whether a public project's pacts are verified | [Pact badges](./badges.mdx) |
+| Group applications, undo a delete, clean up old versions | [Labels, deletes and retention](./retention.mdx) |
+| Check which Pact Broker endpoints Apiome serves | [Pact Broker compatibility](./compatibility.mdx) |
+
+## How the pieces fit
+
+1. **The consumer publishes.** Its Pact tests write a pact file, and its build
+   [publishes it](./publish-pacts.mdx) with the consumer version and branch. The consumer and the
+   provider are registered as [pacticipants](./concepts.mdx) the first time a pact names them.
+   Identical pacts are stored once as one **pact version**, so an unchanged pact is verified once.
+2. **A webhook starts the provider.** A
+   [`contract_requiring_verification_published`](./webhooks.mdx#events) webhook fires for each
+   provider version that has not verified the pact yet — the head of the main branch and what is
+   deployed or released — and can start a GitHub Actions workflow directly.
+3. **The provider verifies.** Its verifier sends
+   [consumer-version selectors](./selectors.mdx) (`{ mainBranch: true }`, `{ deployedOrReleased: true }`)
+   and gets each pact to check once. With `enablePending`, a new expectation comes back
+   [pending](./pending-and-wip.mdx) and its failure does not fail the build.
+4. **The verifier reports back.** It [publishes a result](./verification-results.mdx) per pact:
+   passed or failed, with the outcome of each interaction. Results are what the matrix is made of.
+5. **Deploy jobs record where versions run.** `pact-broker record-deployment` (or
+   `record-release`) [records each version](./environments.mdx) in its environment, replacing the
+   one deployed there before.
+6. **Can-i-deploy decides.** Before each deployment,
+   [`pact-broker can-i-deploy`](./can-i-deploy.mdx) reads the matrix against what runs in the
+   target environment and answers **yes**, **no** or **unknown**, with a reason for each
+   integration. The job stops when the answer is not yes.
+
+Along the way, [badges](./badges.mdx) show the state of a public project's pacts, and
+[retention](./retention.mdx) keeps the registry small: it deletes old versions but keeps anything
+deployed or released, and always starts as a dry run.
+
+## Who can do what
+
+Everything here is guarded by the **Pacts** resource. **Viewer** can read; **Editor** can publish,
+verify, record deployments and create webhooks — give CI an API key from an Editor; only **Admin**
+and **Owner** can delete. Each page's *Who can do what* section has the details, and custom roles
+get **Pacts** on [Roles](../../workspace/roles.mdx).
+
+## Related
+
+- [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — breaking-change gates
+  and the consumer registry.
+- [API keys](../../workspace/api-keys.mdx) — the token your Pact tools send.

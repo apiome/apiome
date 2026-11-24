@@ -1261,6 +1261,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['breaking', 'changelog', 'diff', 'fail-on', 'github action', 'pact', 'deploy gate', 'drift'],
   },
   {
+    id: 'overview',
+    title: 'Pact Broker overview',
+    summary: 'Use Apiome as your Pact Broker, from publishing pacts to can-i-deploy.',
+    page: 'apiome-docs/docs/ship/pact-broker/overview.mdx',
+    section: 'reference',
+    keywords: ['consumer-driven contracts', 'pact cli', 'pact-js', 'can-i-deploy', 'record-deployment', 'verification', 'contract testing'],
+  },
+  {
     id: 'concepts',
     title: 'Pact Broker concepts',
     summary: 'Pacticipants, versions, branches and tags — the names Pact tooling uses for your applications.',

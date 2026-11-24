@@ -130,7 +130,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 | Epic | Title | MVP issues | Issues |
 | --- | --- | --- | --- |
-| PFX-EPIC-1 | Pact Broker core: model, API, can-i-deploy | 1.1–1.9 | 11 |
+| ✅ PFX-EPIC-1 | Pact Broker core: model, API, can-i-deploy | 1.1–1.9 | 11 |
 | PFX-EPIC-2 | Bi-directional contract testing | 2.1–2.4 | 6 |
 | PFX-EPIC-3 | Provider verification engine | 3.1–3.3 | 7 |
 | PFX-EPIC-4 | CLI, CI and client compatibility | 4.1–4.3 | 7 |
@@ -138,9 +138,11 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 | PFX-EPIC-6 | Operations, governance and migration | 6.1, 6.7 | 8 |
 | PFX-EPIC-7 | Integration with specs, gates and registry | 7.1–7.3 | 5 |
 
-### PFX-EPIC-1 · [#6907](https://github.com/apiome/apiome/issues/6907) — Pact Broker core · umbrella of the hub
+### ✅ PFX-EPIC-1 · [#6907](https://github.com/apiome/apiome/issues/6907) — Pact Broker core · umbrella of the hub
 
-All eleven issues of this epic are complete (PFX-1.11 #6924 was the last); the epic's overview page and release note are still owed by #6907.
+✅ **Done** (2026-11-24).
+
+**Status.** All eleven issues of this epic are complete (PFX-1.11 #6924 was the last). #6907 added the hub page `apiome-docs/docs/ship/pact-broker/overview.mdx` (when to use it · where you work from · at a glance · how the pieces fit), its **Help & docs** entry, the release-notes post `2026-11-24-pact-broker-core-overview.mdx` and a What's new line.
 
 #### Detailed issue descriptions
 
