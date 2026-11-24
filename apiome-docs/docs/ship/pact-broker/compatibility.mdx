@@ -23,11 +23,11 @@ against Apiome in CI to keep the list true.
 
 The `pact-broker` CLI finds every endpoint through the links on the broker's index. Apiome's index
 links only what it serves. So a command for a missing feature stops before it sends a request, and
-names the link it could not find:
+says the broker does not have it:
 
 ```text
-$ pact-broker create-webhook https://ci.example.com/hooks/pact --request POST --contract-content-changed
-Could not find relation 'pb:webhooks' in resource at https://api.apiome.dev/v1/tenants/acme/pact-broker …
+$ pact-broker delete-branch --branch main --pacticipant checkout-web
+This version of the Pact Broker does not support deleting branches. …
 ```
 
 A client or script that builds the URL itself never gets a bare `404` for a missing endpoint.
@@ -71,7 +71,7 @@ that pact, version or pacticipant does not exist.
 
 {/* pact-broker-compat:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_pact_broker_compat_doc.py */}
 
-Checked against Pact Broker **2.124.0**: 102 endpoints — **23** supported, **6** partial, **25** planned, **48** not planned.
+Checked against Pact Broker **2.124.0**: 102 endpoints — **35** supported, **6** partial, **13** planned, **48** not planned.
 
 ### Index
 
@@ -132,7 +132,7 @@ Checked against Pact Broker **2.124.0**: 102 endpoints — **23** supported, **6
 | `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/latest` — Latest result of a pact version | `GET` | — | ✅ Supported | — |
 | `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}` — One verification result | `GET` | `DELETE` | ◐ Partial ([#6924](https://github.com/apiome/apiome/issues/6924)) | — |
 | `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}/verification-results/{number}` — One result (for-verification link form) | — | `GET` `DELETE` | — Not planned | Use `…/pact-version/{sha}/verification-results/{n}`. |
-| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}/triggered-webhooks` — Webhooks a result triggered | — | `GET` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/{number}/triggered-webhooks` — Webhooks a result triggered | `GET` | — | ✅ Supported | — |
 | `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}/verification-results/latest` — Latest result of a consumer version's pact | — | `GET` | — Not planned | Use `…/pact-version/{sha}/verification-results/latest`. |
 | `/pacts/provider/{provider}/consumer/{consumer}/latest/verification-results/latest` — Latest result of the latest pact | — | `GET` | — Not planned | Use the matrix. |
 | `/pacts/provider/{provider}/consumer/{consumer}/latest/{tag}/verification-results/latest` — Latest result of the latest tagged pact | — | `GET` | — Not planned | Use the matrix. |
@@ -190,17 +190,17 @@ Checked against Pact Broker **2.124.0**: 102 endpoints — **23** supported, **6
 
 | Endpoint | Apiome serves | Not served | Status | Notes |
 | --- | --- | --- | --- | --- |
-| `/webhooks` — List or create webhooks | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | Used by `pact-broker create-webhook`. |
-| `/webhooks/{uuid}` — A webhook | — | `GET` `PUT` `DELETE` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | Used by `pact-broker create-or-update-webhook`. |
-| `/webhooks/{uuid}/execute` — Run a webhook now | — | `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | Used by `pact-broker test-webhook`. |
-| `/webhooks/execute` — Run an unsaved webhook | — | `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
-| `/webhooks/provider/{provider}/consumer/{consumer}` — Webhooks of an integration | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
-| `/webhooks/provider/{provider}` — Webhooks of a provider | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
-| `/webhooks/consumer/{consumer}` — Webhooks of a consumer | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
-| `/pacts/provider/{provider}/consumer/{consumer}/webhooks` — Webhooks of a pact | — | `GET` `POST` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
-| `/pacts/provider/{provider}/consumer/{consumer}/webhooks/status` — Webhook status of a pact | — | `GET` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
-| `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}/triggered-webhooks` — Webhooks a publication triggered | — | `GET` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
-| `/triggered-webhooks/{uuid}/logs` — Execution log of a webhook run | — | `GET` | 🗓 Planned ([#6922](https://github.com/apiome/apiome/issues/6922)) | — |
+| `/webhooks` — List or create webhooks | `GET` `POST` | — | ✅ Supported | Used by `pact-broker create-webhook`. |
+| `/webhooks/{uuid}` — A webhook | `GET` `PUT` `DELETE` | — | ✅ Supported | Used by `pact-broker create-or-update-webhook`. |
+| `/webhooks/{uuid}/execute` — Run a webhook now | `POST` | — | ✅ Supported | Used by `pact-broker test-webhook`. |
+| `/webhooks/execute` — Run an unsaved webhook | `POST` | — | ✅ Supported | — |
+| `/webhooks/provider/{provider}/consumer/{consumer}` — Webhooks of an integration | `GET` `POST` | — | ✅ Supported | — |
+| `/webhooks/provider/{provider}` — Webhooks of a provider | `GET` `POST` | — | ✅ Supported | — |
+| `/webhooks/consumer/{consumer}` — Webhooks of a consumer | `GET` `POST` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/webhooks` — Webhooks of a pact | `GET` `POST` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/webhooks/status` — Webhook status of a pact | `GET` | — | ✅ Supported | — |
+| `/pacts/provider/{provider}/consumer/{consumer}/version/{consumerVersion}/triggered-webhooks` — Webhooks a publication triggered | `GET` | — | ✅ Supported | — |
+| `/triggered-webhooks/{uuid}/logs` — Execution log of a webhook run | `GET` | — | ✅ Supported | — |
 
 ### Badges
 
@@ -244,12 +244,12 @@ publish → verify → record-deployment → can-i-deploy:
 
 | Client | What it exercises |
 | --- | --- |
-| **`pact-broker` CLI** (`pactfoundation/pact-cli`) | `create-environment`, `publish`, `pact-provider-verifier` with result publishing, `record-deployment`, `can-i-deploy` (yes, then no for an unverified version), `create-version-tag`, `record-release`, `record-support-ended`, `record-undeployment`, `describe-environment`, `list-environments`. |
+| **`pact-broker` CLI** (`pactfoundation/pact-cli`) | `create-environment`, `publish`, `pact-provider-verifier` with result publishing, `record-deployment`, `can-i-deploy` (yes, then no for an unverified version), `create-version-tag`, `record-release`, `record-support-ended`, `record-undeployment`, `describe-environment`, `list-environments`, `create-webhook`, `create-or-update-webhook`. |
 | **pact-js** | A PactV3 consumer test, then the `Verifier` (the Rust core) fetching pacts with selectors and publishing its result. |
 | **pact-jvm** | A JUnit 5 consumer test, the Gradle plugin's `pactPublish`, then a JUnit 5 provider test that verifies from the broker and publishes its result. |
 
 The suite also compares the HAL documents the clients read (the index, the pacticipant, the pact,
-for-verification, the verification result, environments, the matrix, can-i-deploy and a `501`)
+for-verification, the verification result, environments, the matrix, can-i-deploy, a webhook and a `501`)
 with checked-in **golden transcripts**. Any change to what a Pact client sees therefore shows up in
 review.
 

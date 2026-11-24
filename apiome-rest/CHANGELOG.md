@@ -6,6 +6,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.838.0] - 2026-11-24
+
+### Added
+- **Contract webhooks (PFX-1.9, #6922).** OpenAPI 1.662.0. Migration `V436`.
+  - **Webhooks in the Pact Broker's shape**, under `/v1/tenants/{t}/pact-broker`:
+    `GET|POST …/webhooks`, `GET|PUT|DELETE …/webhooks/{uuid}` (`PUT` creates when the workspace has
+    none with that uuid), and the scoped collections `…/webhooks/provider/{p}/consumer/{c}`,
+    `…/webhooks/provider/{p}`, `…/webhooks/consumer/{c}` and `…/pacts/provider/{p}/consumer/{c}/webhooks`.
+    The index links `pb:webhooks` and `pb:webhook`, so `pact-broker create-webhook` and
+    `create-or-update-webhook` work unmodified. Refusals: `422 pact-webhook-invalid` with a
+    pointer, `404 pact-webhook-not-found`, `503 pact-webhook-secrets-unavailable`.
+  - **Events** (`app.pact_webhook_events`), queued after the write that caused them committed:
+    `contract_published`; `contract_content_changed` (against the previous pact on the same branch
+    or tag); `contract_requiring_verification_published`, once per provider version that has not
+    verified the pact content — the main-branch head and every deployed or released version — with
+    that version, its branch and the reason; `provider_verification_published`, `…_succeeded`,
+    `…_failed`; and Apiome's `consumer_version_branch_created`. A publish that changes nothing
+    fires nothing. Queueing never fails the publish.
+  - **Templates** (`app.pact_webhook`): every `${pactbroker.*}` parameter of the Pact Broker, in
+    the URL's path and query (URL-encoded), headers, basic-auth credentials and body (inside JSON
+    strings, so a value cannot break the document). A parameter may not appear in the host.
+  - **Targets:** a generic `request` (`POST`, `PUT`, `PATCH`), or `target` of type
+    `github_repository_dispatch` (repository, token, optional event type, client payload and
+    GitHub Enterprise API root).
+  - **Delivery reuses the push-webhook queue** (`push_webhook_delivery_events`, which gains
+    `pact_webhook_id`): the same worker, 4 attempts (10 s, 60 s, 5 min; `Retry-After` honoured),
+    then dead-letter. `app.pact_webhook_delivery` sends the webhook's own request through the SSRF
+    guard, without following redirects, with `X-Apiome-Event`, `X-Apiome-Delivery` and — when the
+    webhook has a `signingSecret` — `X-Apiome-Signature: sha256=<hmac>`.
+  - **Execution log** per attempt (`push_webhook_delivery_attempts.execution_log`):
+    `GET …/triggered-webhooks/{uuid}/logs` (text or HAL), `GET …/pacts/provider/{p}/consumer/{c}/webhooks/status`,
+    `GET …/version/{v}/triggered-webhooks` and
+    `GET …/pact-version/{sha}/verification-results/{n}/triggered-webhooks`. A pact links
+    `pb:pact-webhooks`, `pb:pact-webhooks-status` and `pb:triggered-webhooks`; a verification
+    result links `pb:triggered-webhooks`.
+  - **Test runs:** `POST …/webhooks/{uuid}/execute` (`pact-broker test-webhook`) and
+    `POST …/webhooks/execute` for an unsaved webhook.
+  - **Secrets** (`app.pact_webhook_secrets`): password, GitHub token, secret headers and signing
+    secret are envelope-sealed with the credential vault's keys
+    (`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`, own magic `OPWH`). Reads show `**********` /
+    `signed: true`; sending `**********` back keeps the stored value. Secret header values are
+    redacted in every log, and every secret value is scrubbed from the log, the error and the
+    response preview, even when the receiver echoes it.
+  - **SSRF:** the URL passes `app.ssrf_guard` when saved (scheme, no credentials, host resolves to
+    public addresses) and on every send.
+  - **Limits:** 200 webhooks per workspace (`409 pact-webhook-limit-reached`) and 30 test runs
+    per rate-limit window (`429 pact-webhook-test-rate-limited`).
+  - Recording a pacticipant version reports `branch_created`.
+  - Pact Broker compatibility: 12 webhook endpoints move from planned to supported. The
+    conformance suite creates, updates, reads and deletes webhooks with the real CLI.
+
+### Changed
+- `finalize_push_webhook_delivery_attempt` takes an optional `execution_log`; a claimed delivery
+  row carries `pact_webhook_id`.
+
 ## [1.837.0] - 2026-11-24
 
 ### Added

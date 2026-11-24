@@ -295,6 +295,20 @@ def test_a_pact_reads_back_as_published_with_links(allowed: MagicMock) -> None:
             "href": f"{_ROOT}/pacts/provider/ledger-api/consumer/billing-service/latest/{{tag}}",
             "templated": True,
         },
+        "pb:pact-webhooks": {
+            "title": "Webhooks for the pact between consumer and provider",
+            "href": f"{_ROOT}/pacts/provider/ledger-api/consumer/billing-service/webhooks",
+        },
+        "pb:pact-webhooks-status": {
+            "title": "Webhooks status",
+            "href": f"{_ROOT}/pacts/provider/ledger-api/consumer/billing-service/webhooks/status",
+        },
+        "pb:triggered-webhooks": {
+            "title": "Webhooks triggered by the publication of this pact",
+            "href": (
+                f"{_ROOT}/pacts/provider/ledger-api/consumer/billing-service/version/1.0.0/triggered-webhooks"
+            ),
+        },
     }
 
 

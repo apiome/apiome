@@ -18867,7 +18867,8 @@ class Database:
         Claimed events move to ``processing`` under ``FOR UPDATE SKIP LOCKED``, oldest
         ``next_retry_at`` first, through ``idx_push_webhook_delivery_events_due``. A direct-URL
         delivery (CDG-2.3 team chat, no subscription) comes back with ``target_url`` set,
-        ``subscription_url`` equal to it, ``subscription_active`` true and no signing secret.
+        ``subscription_url`` equal to it, ``subscription_active`` true and no signing secret. A
+        contract-webhook firing (PFX-1.9) is such a row that also names its ``pact_webhook_id``.
         Batch claims feed the delivery worker pool (DBP-1.18, #7201).
 
         Args:
@@ -18916,7 +18917,8 @@ class Database:
                           e.status AS event_status,
                           e.attempt_count,
                           e.next_retry_at,
-                          e.target_url
+                          e.target_url,
+                          e.pact_webhook_id
                     )
                     SELECT
                       ce.event_id,
@@ -18928,6 +18930,7 @@ class Database:
                       ce.attempt_count,
                       ce.next_retry_at,
                       ce.target_url,
+                      ce.pact_webhook_id,
                       COALESCE(s.url, ce.target_url) AS subscription_url,
                       COALESCE(s.active, TRUE) AS subscription_active,
                       s.signing_secret_encrypted
@@ -18962,8 +18965,24 @@ class Database:
         new_attempt_count: int,
         next_retry_at: Optional[datetime],
         last_error: Optional[str],
+        execution_log: Optional[str] = None,
     ) -> None:
-        """Insert one attempt row and update the parent event (single transaction)."""
+        """Insert one attempt row and update the parent event (single transaction).
+
+        Args:
+            event_id: The delivery event.
+            attempt_number: This attempt, from 1.
+            http_status: The response status, if a response arrived.
+            response_body_preview: The start of the response body.
+            error_message: Why the attempt failed.
+            latency_ms: How long the request took.
+            new_status: The event's status after this attempt.
+            new_attempt_count: The event's attempt count after this attempt.
+            next_retry_at: When to try again, for ``retrying``.
+            last_error: The event's last error.
+            execution_log: The attempt's request and response as text, secrets already redacted
+                (contract webhooks, PFX-1.9); ``None`` writes no log.
+        """
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
@@ -18982,6 +19001,15 @@ class Database:
                         latency_ms,
                     ),
                 )
+                if execution_log is not None:
+                    cursor.execute(
+                        """
+                        UPDATE apiome.push_webhook_delivery_attempts
+                        SET execution_log = %s
+                        WHERE delivery_event_id = %s::uuid AND attempt_number = %s
+                        """,
+                        (execution_log, event_id, attempt_number),
+                    )
                 cursor.execute(
                     """
                     UPDATE apiome.push_webhook_delivery_events

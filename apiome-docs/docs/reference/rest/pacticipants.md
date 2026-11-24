@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.661.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.662.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pacticipants` · 10 operations
 
@@ -481,9 +481,11 @@ Attributes:
     version: The version as stored, with every branch and tag it now has.
     created: Whether this request created the version (false: it already existed, unchanged).
     head_moved: Whether the named branch's head moved to this version.
+    branch_created: Whether the named branch did not exist before this request.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `version` | [`PacticipantVersionRecord`](#schema-pacticipantversionrecord) | yes | Version. |
 | `created` | boolean | yes | False when the version already existed; it is returned unchanged. |
 | `head_moved` | boolean | no | Whether the branch named in the request now has this version as its head. |
+| `branch_created` | boolean | no | Whether this request recorded the first version on the named branch. |

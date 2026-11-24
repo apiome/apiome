@@ -8,11 +8,12 @@ differs from what the Pact Broker would give:
    ``publish`` → verify (the image's ``pact-provider-verifier``, publishing results) →
    ``record-deployment`` → ``can-i-deploy`` (yes, then no for an unverified version) →
    ``create-version-tag``, ``record-release``, ``record-support-ended``, ``record-undeployment``,
-   ``describe-environment``, ``list-environments`` — and one unsupported command, which must end
-   on Apiome's documented 501, not a 404.
+   ``describe-environment``, ``list-environments``, ``create-webhook``,
+   ``create-or-update-webhook`` — and one unsupported command, which must end on Apiome's
+   documented 501, not a 404.
 2. **Golden transcripts**: the HAL documents a client reads along the way (index, pacticipant,
-   version, pact, for-verification, verification result, environments, matrix, can-i-deploy and a
-   501), normalised (host, UUIDs, timestamps) and compared with ``golden/*.json``; the CLI's
+   version, pact, for-verification, verification result, environments, matrix, can-i-deploy, a
+   webhook and a 501), normalised (host, UUIDs, timestamps) and compared with ``golden/*.json``; the CLI's
    output is compared with ``golden/cli-*.txt``.
 3. **pact-js** (``--clients pact-js``, Docker ``node``): a PactV3 consumer test writes a pact, the
    CLI publishes it, and pact-js's ``Verifier`` (the Rust core) fetches it with selectors and
@@ -69,6 +70,9 @@ GRADLE_IMAGE = os.environ.get("PACT_GRADLE_IMAGE", "gradle:8.14.3-jdk17")
 
 ENVIRONMENT = "conformance-production"
 CONSUMER, PROVIDER = "ConformanceWeb", "ConformanceAPI"
+#: Where the suite's webhooks point. They are created, read and deleted; nothing is ever sent.
+WEBHOOK_URL = "https://example.com/hooks/pact"
+WEBHOOK_UUID = "6922c0de-0000-4000-8000-000000000001"
 JS_CONSUMER, JS_PROVIDER = "ConformanceJsWeb", "ConformanceJsAPI"
 JVM_CONSUMER, JVM_PROVIDER = "ConformanceJvmWeb", "ConformanceJvmAPI"
 
@@ -513,24 +517,65 @@ def run_cli_suite(config: Config) -> None:
     )
     pact_broker(config, "describe-environment", "--uuid", uuid, golden="describe-environment")
 
-    step("Unsupported endpoints: no index relation for the CLI, a documented 501 by URL")
-    # The CLI reaches every resource through an index relation, and the index only advertises
-    # what Apiome serves — so a command for a missing feature stops, naming the relation, before
-    # it sends a request. A client that builds the URL itself gets the 501.
-    output = pact_broker(
+    step("pact-broker create-webhook / create-or-update-webhook")
+    # `create-webhook` posts to the index's pb:webhooks; `create-or-update-webhook --uuid` puts to
+    # pb:webhook. The Authorization header is a secret: it must read back redacted.
+    webhook = (WEBHOOK_URL, "--request", "POST", "--header", "Authorization: Bearer conformance-token")
+    pact_broker(
         config,
         "create-webhook",
-        "https://ci.example.com/hooks/pact",
-        "--request",
-        "POST",
+        *webhook,
         "--contract-content-changed",
         "--description",
         "conformance",
-        expect=1,
-        golden="unsupported",
+        golden="create-webhook",
     )
-    require("pb:webhooks" in output, f"create-webhook did not name the missing relation: {output}")
-    golden_http(config, "not-implemented", "POST", "/webhooks", {"description": "conformance"}, expect=501)
+    declared = (
+        "create-or-update-webhook",
+        *webhook,
+        "--uuid",
+        WEBHOOK_UUID,
+        "--provider",
+        PROVIDER,
+        "--contract-requiring-verification-published",
+        "--data",
+        '{"pactUrl": "${pactbroker.pactUrl}", "providerVersion": "${pactbroker.providerVersionNumber}"}',
+        "--description",
+        "conformance declared",
+    )
+    created = pact_broker(config, *declared)
+    require("created" in created, f"create-or-update-webhook did not create the webhook: {created}")
+    updated = pact_broker(config, *declared)
+    require("updated" in updated, f"create-or-update-webhook did not update the webhook: {updated}")
+    document = golden_http(config, "webhook", "GET", f"/webhooks/{WEBHOOK_UUID}")
+    require(
+        document["request"]["headers"]["Authorization"] == "**********",
+        f"the webhook's Authorization header is not redacted: {document['request']}",
+    )
+    # Remove both again, so the pacts the other clients publish do not send anything to WEBHOOK_URL.
+    status, listing = broker_call(config, "GET", "/webhooks")
+    require(status == 200, f"GET /webhooks: {status}")
+    links = listing["_links"]["pb:webhooks"]
+    require(len(links) == 2, f"expected the two webhooks of this step, got {links}")
+    for link in links:
+        deleted, _ = broker_call(config, "DELETE", link["href"][len(config.broker_url) :])
+        require(deleted == 204, f"DELETE {link['href']}: {deleted}")
+    ok("both webhooks created, read back redacted and deleted")
+
+    step("Unsupported endpoints: no index relation for the CLI, a documented 501 by URL")
+    # The CLI reaches every resource through an index relation, and the index only advertises
+    # what Apiome serves — so a command for a missing feature stops, saying the broker lacks it,
+    # before it sends a request. A client that builds the URL itself gets the 501.
+    output = pact_broker(
+        config, "delete-branch", "--branch", "main", "--pacticipant", CONSUMER, expect=1, golden="unsupported"
+    )
+    require(
+        "does not support deleting branches" in output,
+        f"delete-branch did not stop on the missing relation: {output}",
+    )
+    golden_http(
+        config, "not-implemented", "GET", f"/pacts/provider/{PROVIDER}/consumer/{CONSUMER}/latest/badge", expect=501
+    )
     golden_http(config, "not-implemented-partial", "DELETE", f"/pacticipants/{CONSUMER}", expect=501)
     golden_http(config, "not-implemented-unknown", "GET", "/no/such/resource", expect=501)
 

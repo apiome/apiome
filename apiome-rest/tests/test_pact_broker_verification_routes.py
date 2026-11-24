@@ -170,6 +170,10 @@ def test_a_result_is_published_in_the_brokers_shape(allowed: MagicMock) -> None:
                 "name": "Pact between Billing Service (1.0.0) and Ledger API",
                 "href": f"{_ROOT}/pacts/provider/ledger-api/consumer/billing-service/pact-version/{_SHA}",
             },
+            "pb:triggered-webhooks": {
+                "title": "Webhooks triggered by the publication of this verification result",
+                "href": f"{_PACT_VERSION_URL}/verification-results/1/triggered-webhooks",
+            },
         },
     }
 

@@ -1,0 +1,324 @@
+---
+title: Contract webhooks
+description: Tell your CI when a pact needs verifying and when a verification finishes.
+sidebar_position: 6.5
+tags: [contracts, pact, ci, rest, webhooks]
+---
+
+A consumer publishes a pact. The provider's pipeline has to hear about it, verify the pact and
+publish the result — and the consumer's pipeline has to hear about that result. A **contract
+webhook** is how Apiome tells them: an HTTP request it sends when something happens to a pact.
+
+Webhooks have the Pact Broker's shape, so `pact-broker create-webhook`,
+`create-or-update-webhook` and `test-webhook` work unchanged, and a webhook body written for a
+Pact Broker works here. There is no screen for webhooks yet: use the Pact CLI or the
+[Pact Broker API](../../reference/rest/pact-broker.md).
+
+## Before you start
+
+- You have [published a pact](./publish-pacts.mdx), so the consumer and provider you name exist.
+- You have a **workspace API key** whose member has the **Pacts** permission (see
+  [Who can do what](#who-can-do-what)).
+- The endpoint you send to is reachable from the internet over `http` or `https`.
+- To store a secret (a token, a password or a signing secret), the server needs a vault key. On
+  Apiome Cloud it is set. If you host Apiome yourself, see [For operators](#for-operators).
+
+The examples use these two variables:
+
+```bash
+export PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker
+export PACT_BROKER_TOKEN=$APIOME_API_KEY
+```
+
+## Create a webhook
+
+The most useful webhook starts the provider's verification build whenever a pact needs verifying:
+
+```bash
+pact-broker create-webhook https://ci.example.com/hooks/verify-pact \
+  --request POST \
+  --provider "Ledger API" \
+  --contract-requiring-verification-published \
+  --header "Content-Type: application/json" "Authorization: Bearer $CI_TOKEN" \
+  --data '{"pactUrl": "${pactbroker.pactUrl}", "providerVersion": "${pactbroker.providerVersionNumber}", "providerBranch": "${pactbroker.providerVersionBranch}"}' \
+  --description "Verify Ledger API when a pact changes"
+```
+
+1. **Give the URL and the method.** `POST`, `PUT` and `PATCH` are accepted.
+2. **Choose who it is for.** `--provider`, `--consumer`, both, or neither for every pact in the
+   workspace.
+3. **Choose the events** (see [Events](#events)). With none, the webhook fires on
+   `contract_content_changed`.
+4. **Write the headers and the body.** `${pactbroker.…}` parameters are filled in when the webhook
+   fires (see [Template parameters](#template-parameters)).
+
+To declare the webhook from a pipeline, so that running it twice changes nothing, give it a UUID
+of your own and use `create-or-update-webhook`:
+
+```bash
+pact-broker create-or-update-webhook https://ci.example.com/hooks/verify-pact \
+  --uuid 8f7f2a0e-3c1d-4f6b-9a55-1d2f4c6b7a90 \
+  --request POST --provider "Ledger API" --contract-requiring-verification-published
+```
+
+With the REST API, post the same webhook as JSON:
+
+```bash
+curl -X POST "$PACT_BROKER_BASE_URL/webhooks" \
+  -H "Authorization: Bearer $PACT_BROKER_TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "description": "Verify Ledger API when a pact changes",
+    "provider": {"name": "Ledger API"},
+    "events": [{"name": "contract_requiring_verification_published"}],
+    "request": {
+      "method": "POST",
+      "url": "https://ci.example.com/hooks/verify-pact",
+      "headers": {"Content-Type": "application/json", "Authorization": "Bearer ci-token"},
+      "body": {"pactUrl": "${pactbroker.pactUrl}", "providerVersion": "${pactbroker.providerVersionNumber}"}
+    },
+    "signingSecret": "a-shared-secret-of-16-chars-or-more"
+  }'
+```
+
+The answer is `201` with the webhook, its `uuid` and its URL in `Location`. A workspace can have
+200 webhooks.
+
+## Start a GitHub Actions workflow
+
+Instead of `request`, send a `target` of type `github_repository_dispatch`. Apiome builds the
+[`repository_dispatch`](https://docs.github.com/en/rest/repos/repos#create-a-repository-dispatch-event)
+request for you:
+
+```bash
+curl -X POST "$PACT_BROKER_BASE_URL/webhooks" \
+  -H "Authorization: Bearer $PACT_BROKER_TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "description": "Run the pact verification workflow",
+    "provider": {"name": "Ledger API"},
+    "events": [{"name": "contract_requiring_verification_published"}],
+    "target": {
+      "type": "github_repository_dispatch",
+      "repository": "acme/ledger-api",
+      "eventType": "pact_requires_verification",
+      "token": "'"$GITHUB_TOKEN"'"
+    }
+  }'
+```
+
+| Field | What it is |
+| --- | --- |
+| `repository` | The repository whose workflow runs, as `owner/name`. |
+| `token` | A GitHub token that may write the repository's **Contents**. It is sealed and never shown again. |
+| `eventType` | The `event_type` the workflow listens for. Default: the event name, such as `contract_requiring_verification_published`. |
+| `clientPayload` | The `client_payload` object, at most 10 properties. Default: the event, the pact URL, both names, the consumer and provider version and branch, the verification result URL and the GitHub status. |
+| `apiUrl` | The API root of a GitHub Enterprise Server. Default: `https://api.github.com`. |
+
+The workflow reads the values from `github.event.client_payload`:
+
+```yaml
+on:
+  repository_dispatch:
+    types: [pact_requires_verification]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.providerVersionNumber }}
+      - run: npm run test:pact
+        env:
+          PACT_URL: ${{ github.event.client_payload.pactUrl }}
+```
+
+## Events
+
+| Event | Fires when |
+| --- | --- |
+| `contract_published` | A consumer version publishes a pact. |
+| `contract_content_changed` | A published pact differs from the pact of the previous consumer version on the same branch or with the same tag, or is the first one there. |
+| `contract_requiring_verification_published` | A published pact has not been verified by a provider version that should verify it. It fires **once for each such provider version**: the head of the provider's main branch, and each version currently deployed or released. Each firing carries that version in `${pactbroker.providerVersionNumber}` and its branch in `${pactbroker.providerVersionBranch}`. |
+| `provider_verification_published` | A verification result is published, passed or failed. |
+| `provider_verification_succeeded` | A verification result that passed is published. |
+| `provider_verification_failed` | A verification result that failed is published. |
+| `consumer_version_branch_created` | A pact publication records the consumer version on a branch the consumer did not have before. Apiome only. |
+
+Publishing the same pact for the same consumer version again fires nothing.
+
+A webhook fires only while it is `enabled`, and only for pacts of its consumer and provider.
+
+:::tip
+Use `contract_requiring_verification_published` to start provider builds. It tells the build
+which provider commit to check out, and it skips provider versions that have already verified
+the pact.
+:::
+
+## Template parameters
+
+Parameters are replaced in the URL's path and query, in header values, in the user name and
+password, and in the body. A parameter cannot be used in the host of the URL.
+
+| Parameter | Value |
+| --- | --- |
+| `${pactbroker.pactUrl}` | The URL to fetch the pact from. Give it to the verifier. |
+| `${pactbroker.consumerName}`, `${pactbroker.providerName}` | The names of the two applications. |
+| `${pactbroker.consumerVersionNumber}` | The consumer version that published the pact. |
+| `${pactbroker.consumerVersionBranch}` | The branch that version was recorded on. |
+| `${pactbroker.consumerVersionTags}` | That version's tags, separated by `, `. |
+| `${pactbroker.providerVersionNumber}` | The provider version that verified, or that has to verify. |
+| `${pactbroker.providerVersionBranch}` | That version's branch. |
+| `${pactbroker.providerVersionTags}` | That version's tags, separated by `, `. |
+| `${pactbroker.providerVersionDescriptions}` | Why that version has to verify: `latest from main branch`, `deployed in production`. |
+| `${pactbroker.verificationResultUrl}` | The verification result, when there is one. |
+| `${pactbroker.githubVerificationStatus}` | `success`, `failure` or `pending`, for a GitHub commit status. |
+| `${pactbroker.gitlabVerificationStatus}` | `success`, `failed` or `pending`. |
+| `${pactbroker.bitbucketVerificationStatus}` | `SUCCESSFUL`, `FAILED` or `INPROGRESS`. |
+| `${pactbroker.azureDevOpsVerificationStatus}` | `succeeded`, `failed` or `pending`. |
+| `${pactbroker.eventName}` | The event that fired. |
+| `${pactbroker.buildUrl}` | The CI build of the version that caused the event. |
+| `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}` | Always empty: pacticipant labels are not available yet. |
+| `${pactbroker.currentlyDeployedProviderVersionNumber}` | Always empty in this release. |
+
+A value that is not known is an empty string. In a JSON body, a value is placed inside its
+string, so a quote in a name cannot break the JSON. In the URL, values are URL-encoded.
+
+## Secrets and signing
+
+- **What is a secret.** The `password`, a GitHub `token`, the `signingSecret`, and the value of
+  any header whose name is `Authorization` or contains `token`, `secret`, `api-key`, `cookie`,
+  `password` or `signature`.
+- **How secrets are kept.** They are sealed in the credential vault. No API response and no log
+  contains them: a password and a secret header read `**********`, and a signing secret reads
+  `"signed": true`.
+- **To change a webhook and keep a secret**, send `**********` in its place. A secret you leave
+  out is removed.
+- **To let the receiver check a delivery**, set `signingSecret` (16 characters or more). Each
+  request then carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the request body
+  with that secret.
+
+Every request also carries `X-Apiome-Event` (`pact.` and the event name) and
+`X-Apiome-Delivery`, an id that is the same on every retry of one firing. Use it to ignore a
+repeat. A webhook cannot set these two headers or `X-Apiome-Signature` itself.
+
+:::caution
+A URL is not treated as a secret. If the URL itself is the credential, as with a Slack incoming
+webhook, anyone with the **Pacts** view permission can read it.
+:::
+
+## Where a webhook may send
+
+A webhook goes to an `http` or `https` URL on a **public address**. Loopback, private and
+link-local addresses (including cloud metadata addresses) are refused when the webhook is saved
+and checked again on every send. The URL may not contain `user:password@`. Redirects are not
+followed.
+
+## Retries and the dead-letter list
+
+A delivery succeeds when the receiver answers `2xx`. Otherwise Apiome tries again after 10
+seconds, 60 seconds and 5 minutes — 4 attempts in all. If the receiver answers `429` or `503` with
+`Retry-After`, Apiome waits at least that long, up to one hour. After the fourth failure the
+delivery is **dead-lettered**: its status is `failure` and it is not sent again.
+
+## See what a webhook did
+
+| To read | Request |
+| --- | --- |
+| The latest firing of each webhook for a pact, with a summary | `GET …/pacts/provider/ledger-api/consumer/billing-service/webhooks/status` |
+| What one publication fired | `GET …/pacts/provider/ledger-api/consumer/billing-service/version/1.0.0/triggered-webhooks` |
+| What one verification result fired | `GET …/pact-version/<sha>/verification-results/1/triggered-webhooks` |
+| The log of one firing | `GET …/triggered-webhooks/<uuid>/logs` |
+
+Each firing has a `status`: `not_run`, `retrying`, `success` or `failure`. The log shows what
+every attempt sent and received, with secrets replaced by `**********`:
+
+```text
+[2026-11-24T10:05:01Z] INFO: HTTP/1.1 POST https://ci.example.com/hooks/verify-pact
+[2026-11-24T10:05:01Z] INFO: Content-Type: application/json
+[2026-11-24T10:05:01Z] INFO: Authorization: **********
+[2026-11-24T10:05:01Z] INFO: {"pactUrl":"https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/…"}
+[2026-11-24T10:05:01Z] INFO: HTTP/1.1 500 Internal Server Error
+[2026-11-24T10:05:01Z] INFO: Webhook failed; it will be retried
+```
+
+Send `Accept: application/hal+json` to get one entry per attempt instead of text.
+
+## Test a webhook
+
+```bash
+pact-broker test-webhook --uuid 8f7f2a0e-3c1d-4f6b-9a55-1d2f4c6b7a90
+```
+
+The webhook is sent once, now, and the log is printed. Parameters are filled from the latest pact
+of the webhook's consumer and provider, or with placeholders when there is none.
+`${pactbroker.eventName}` is `test`. A test is not retried and is not listed as a firing. A
+workspace can run 30 tests a minute.
+
+To try a webhook before you save it, post its body to `POST …/webhooks/execute`.
+
+## Change or delete a webhook
+
+- **Change:** `PUT …/webhooks/<uuid>` with the whole webhook. `pact-broker
+  create-or-update-webhook` does this.
+- **Turn off:** send `"enabled": false`. Queued deliveries of a webhook that is turned off are
+  not sent.
+- **Delete:** `DELETE …/webhooks/<uuid>`. The webhook's queued deliveries, its firings and their
+  logs are deleted with it.
+
+## When a request is refused
+
+| Status | Code | What to do |
+| --- | --- | --- |
+| `404` | `pact-webhook-not-found` | No webhook with that `uuid` in this workspace. |
+| `404` | `pact-triggered-webhook-not-found` | No firing with that `uuid`. It goes when its webhook is deleted. |
+| `404` | `pacticipant-not-found` | The consumer or provider in the URL does not exist. |
+| `409` | `pact-webhook-limit-reached` | The workspace already has 200 webhooks. Delete one first. |
+| `422` | `pact-webhook-invalid` | The webhook is malformed. `pointer` names the field: `/request/url` for a private address or a parameter in the host, `/request/method`, `/events/0/name`, `/provider/name` for an unknown pacticipant, `/consumer/label` (labels are not available yet). |
+| `429` | `pact-webhook-test-rate-limited` | Too many test runs. Wait for the number of seconds in `Retry-After`. |
+| `503` | `pact-webhook-secrets-unavailable` | The webhook has a secret and the server has no vault key. See [For operators](#for-operators). |
+| `401` / `403` | — | The token is not a valid API key for this workspace, or its member lacks the **Pacts** permission below. |
+
+## Troubleshooting
+
+| What you see | Why, and what to do |
+| --- | --- |
+| The webhook did not fire | Check that it is `enabled`, lists the event, and names the right consumer and provider. Publishing an unchanged pact again fires nothing. |
+| `contract_requiring_verification_published` did not fire | Every provider version that should verify has already verified this pact content, or the provider has no main branch, deployment or release recorded yet. |
+| `/request/url: … could not resolve host` | The host must resolve when the webhook is saved. Check the name. |
+| The status is `failure` | Read the log. Fix the receiver, then publish again or run `test-webhook`. A dead-lettered delivery is not sent again. |
+| The receiver gets a repeat | A retry after a slow answer. Compare `X-Apiome-Delivery`. |
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| List webhooks, read their status and logs | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Create a webhook, test an unsaved one | `pacts:create` | — | ✓ | ✓ | ✓ |
+| Change a webhook, test a saved one | `pacts:edit` | — | ✓ | ✓ | ✓ |
+| Delete a webhook | `pacts:delete` | — | — | ✓ | ✓ |
+
+## For operators
+
+- **Vault key.** Webhook secrets are sealed with the credential vault's keys,
+  `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`. Without it, a webhook that has no secret still works,
+  and one that has a secret is refused with `503`.
+- **Delivery.** Webhooks are sent by the push-webhook delivery worker, with its limits
+  (`APIOME_WEBHOOK_DELIVERY_WORKERS`, `APIOME_WEBHOOK_DELIVERY_PER_TENANT`).
+- **Private receivers.** `APIOME_SSRF_ALLOW_PRIVATE=true` turns the address check off for the
+  whole server. Use it only for local development.
+- **Migration.** `V436` adds two tables and two nullable columns. Nothing existing is rewritten.
+
+## What differs from the Pact Broker
+
+- Choosing pacticipants by **label** is refused until labels are available.
+- `consumer_version_branch_created`, `target`, `signingSecret` and `signed` are Apiome's.
+- `contract_content_changed` also compares by branch, not only by tag.
+- A failed delivery is retried 3 times over about 6 minutes (the Pact Broker: 6 times over about
+  38 minutes), and the receiver's response is always in the log.
+
+## Related
+
+- [Publish pacts](./publish-pacts.mdx) — what fires the contract events.
+- [Publish verification results](./verification-results.mdx) — what fires the verification events.
+- [Environments and deployments](./environments.mdx) — which provider versions have to verify.
+- [Pact Broker compatibility](./compatibility.mdx) — every Pact Broker endpoint and its status.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

@@ -34,6 +34,14 @@
           "name": "ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5",
           "title": "Pact content version permalink"
         },
+        "pb:pact-webhooks": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/webhooks",
+          "title": "Webhooks for the pact between consumer and provider"
+        },
+        "pb:pact-webhooks-status": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/webhooks/status",
+          "title": "Webhooks status"
+        },
         "pb:provider": {
           "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi",
           "name": "ConformanceAPI",
@@ -42,6 +50,10 @@
         "pb:publish-verification-results": {
           "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results",
           "title": "Publish verification results"
+        },
+        "pb:triggered-webhooks": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/version/1.0.0/triggered-webhooks",
+          "title": "Webhooks triggered by the publication of this pact"
         },
         "self": {
           "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/version/1.0.0",

@@ -1,0 +1,55 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/webhooks/{uuid}"
+  },
+  "response": {
+    "body": {
+      "_links": {
+        "pb:execute": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/webhooks/{uuid}/execute",
+          "title": "Test the execution of the webhook with the latest matching pact or verification by sending a POST request to this URL"
+        },
+        "pb:provider": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacticipants/conformanceapi",
+          "name": "ConformanceAPI",
+          "title": "Provider"
+        },
+        "pb:webhooks": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/webhooks",
+          "title": "All webhooks"
+        },
+        "self": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/webhooks/{uuid}",
+          "title": "conformance declared"
+        }
+      },
+      "createdAt": "{timestamp}",
+      "description": "conformance declared",
+      "enabled": true,
+      "events": [
+        {
+          "name": "contract_requiring_verification_published"
+        }
+      ],
+      "provider": {
+        "name": "ConformanceAPI"
+      },
+      "request": {
+        "body": {
+          "pactUrl": "${pactbroker.pactUrl}",
+          "providerVersion": "${pactbroker.providerVersionNumber}"
+        },
+        "headers": {
+          "Authorization": "**********"
+        },
+        "method": "POST",
+        "url": "https://example.com/hooks/pact"
+      },
+      "signed": false,
+      "updatedAt": "{timestamp}",
+      "uuid": "{uuid}"
+    },
+    "status": 200
+  }
+}

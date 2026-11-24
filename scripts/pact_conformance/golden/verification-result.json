@@ -11,6 +11,10 @@
           "name": "Pact between ConformanceWeb (1.0.0) and ConformanceAPI",
           "title": "Pact"
         },
+        "pb:triggered-webhooks": {
+          "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results/1/triggered-webhooks",
+          "title": "Webhooks triggered by the publication of this verification result"
+        },
         "self": {
           "href": "{rest}/v1/tenants/acme-corp/pact-broker/pacts/provider/conformanceapi/consumer/conformanceweb/pact-version/ca1867d29e0a4936563263c9a503948f9b8b0925116ad54365096101f48786c5/verification-results/1",
           "name": "Verification result 1 for Pact between ConformanceWeb (1.0.0) and ConformanceAPI",

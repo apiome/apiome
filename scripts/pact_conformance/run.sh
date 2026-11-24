@@ -60,6 +60,8 @@ docker compose run --rm seed
 echo "==> apiome-rest from source on :$REST_PORT (log: $LOG_DIR/rest.log)"
 (
   cd apiome-rest/src
+  # A throwaway vault key: the suite's webhooks carry an Authorization header, which is sealed.
+  APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS="{\"1\": \"$(head -c 32 /dev/urandom | base64)\"}" \
   APIOME_LOAD_DOTENV=0 POSTGRES_HOST=localhost POSTGRES_PORT="$POSTGRES_PUBLISH_PORT" POSTGRES_DB=apiome \
     POSTGRES_USER=postgres POSTGRES_PASSWORD=apiome_local_dev PYTHONPATH=. \
     exec uv run --frozen --project .. uvicorn app.main:app --host 127.0.0.1 --port "$REST_PORT"

@@ -1,11 +1,14 @@
 """Outbound push webhook delivery with bounded backoff and persisted attempts (#2588).
 
-Two kinds of delivery share this worker:
+Three kinds of delivery share this worker:
 
 * **Subscription deliveries** (#2588) are signed with the subscription's secret.
 * **Direct-URL deliveries** (CDG-2.3, #5962) carry a ``target_url`` instead of a subscription — a
   team's chat channel. They are sent unsigned (a chat incoming-webhook has no shared secret) through
   :func:`app.ssrf_guard.build_guarded_client`, because the URL is user-supplied.
+* **Contract-webhook firings** (PFX-1.9, #6922) name a ``pact_webhook_id``. They are handed to
+  :func:`app.pact_webhook_delivery.deliver_pact_webhook_event`, which sends the webhook's own
+  templated request and records the attempt here, so retries and dead-lettering are shared.
 
 **Rate limits are honoured** (CDG-2.3): a ``429`` or ``503`` carrying ``Retry-After`` (seconds or an
 HTTP date) schedules the next attempt no sooner than the receiver asked, capped at
@@ -159,6 +162,12 @@ def _finalize_dead_letter(
 
 def deliver_one_due_event(database: Database, row: Dict[str, Any]) -> None:
     """Execute one HTTP attempt for a queued event and persist outcome."""
+    if row.get("pact_webhook_id"):
+        # A contract-webhook firing (PFX-1.9): the webhook's own request, not the envelope.
+        from .pact_webhook_delivery import deliver_pact_webhook_event
+
+        deliver_pact_webhook_event(database, row)
+        return
     event_id = str(row["event_id"])
     prev_attempt_count = int(row["attempt_count"])
     attempt_number = prev_attempt_count + 1

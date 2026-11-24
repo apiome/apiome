@@ -103,6 +103,14 @@ from .pact_selectors import (
     short_description,
     verification_metadata,
 )
+from .pact_webhook import (
+    CODE_TRIGGERED_WEBHOOK_NOT_FOUND,
+    CODE_WEBHOOK_INVALID,
+    CODE_WEBHOOK_LIMIT,
+    CODE_WEBHOOK_NOT_FOUND,
+    CODE_WEBHOOK_SECRETS_UNAVAILABLE,
+)
+from .pact_webhook_events import fire_publish_events
 from .pact_wip import select_wip_pacts
 from .pacticipant import (
     CODE_NOT_FOUND,
@@ -143,6 +151,11 @@ _STATUS_BY_CODE = {
     CODE_DEPLOYMENT_INVALID: 422,
     CODE_DEPLOYED_VERSION_NOT_FOUND: 404,
     CODE_RELEASED_VERSION_NOT_FOUND: 404,
+    CODE_WEBHOOK_INVALID: 422,
+    CODE_WEBHOOK_NOT_FOUND: 404,
+    CODE_TRIGGERED_WEBHOOK_NOT_FOUND: 404,
+    CODE_WEBHOOK_SECRETS_UNAVAILABLE: 503,
+    CODE_WEBHOOK_LIMIT: 409,
 }
 
 _publish_limiter = FixedWindowRateLimiter()
@@ -527,6 +540,18 @@ def _pact_document(base: str, pact: PactRecord, metadata: Optional[str] = None) 
             "href": pair + "/latest/{tag}",
             "templated": True,
         },
+        "pb:pact-webhooks": {
+            "title": "Webhooks for the pact between consumer and provider",
+            "href": f"{pair}/webhooks",
+        },
+        "pb:pact-webhooks-status": {
+            "title": "Webhooks status",
+            "href": f"{pair}/webhooks/status",
+        },
+        "pb:triggered-webhooks": {
+            "title": "Webhooks triggered by the publication of this pact",
+            "href": f"{_pact_url(base, pact)}/triggered-webhooks",
+        },
     }
     return body
 
@@ -795,7 +820,8 @@ def _read(
         "`pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the "
         "environments `pact-broker record-deployment` looks an environment up in. "
         "`pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` answer whether a version "
-        "can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`.\n\n"
+        "can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`. `pb:webhooks` and "
+        "`pb:webhook` are what `pact-broker create-webhook` and `create-or-update-webhook` use.\n\n"
         "A workspace API key may be sent as `Authorization: Bearer <key>` on every route under "
         "`/pact-broker`. Requires `pacts:view`."
     ),
@@ -885,6 +911,16 @@ def pact_broker_index(
                 "pb:environment": {
                     "href": base + "/environments/{uuid}",
                     "title": "Environment",
+                    "templated": True,
+                },
+                "pb:webhooks": {
+                    "href": base + "/webhooks",
+                    "title": "Webhooks",
+                    "templated": False,
+                },
+                "pb:webhook": {
+                    "href": base + "/webhooks/{uuid}",
+                    "title": "Webhook",
                     "templated": True,
                 },
                 "pb:can-i-deploy-pacticipant-version-to-tag": {
@@ -1009,7 +1045,9 @@ def publish_contracts(
         )
     except (PactPublicationError, PacticipantValidationError) as exc:
         raise _http_error(exc) from exc
-    return HalJSONResponse(_publish_result(_base_url(request, tenant_slug), outcome))
+    base = _base_url(request, tenant_slug)
+    fire_publish_events(db, tenant_id, base, outcome)
+    return HalJSONResponse(_publish_result(base, outcome))
 
 
 @router.put(
@@ -1082,8 +1120,10 @@ def publish_pact(
     except (PactPublicationError, PacticipantValidationError) as exc:
         raise _http_error(exc) from exc
     published: PublishedPact = outcome.pacts[0]
+    base = _base_url(request, tenant_slug)
+    fire_publish_events(db, tenant_id, base, outcome)
     return HalJSONResponse(
-        _pact_document(_base_url(request, tenant_slug), published.pact),
+        _pact_document(base, published.pact),
         status_code=201 if published.created else 200,
     )
 

@@ -527,7 +527,8 @@ def record_version_tx(
         actor: Who is recording it.
 
     Returns:
-        The version as stored, whether this call created it, and whether the branch head moved.
+        The version as stored, whether this call created it, whether the branch head moved and
+        whether the branch is new.
 
     When ``branch`` is one of :data:`MAIN_BRANCH_CANDIDATES` and the pacticipant has no main branch
     yet, the branch becomes its main branch.
@@ -555,6 +556,7 @@ def record_version_tx(
     version_id, seq = inserted["id"], inserted["seq"]
 
     head_moved = False
+    branch_created = False
     if branch:
         # One statement creates the branch or moves its head, and the WHERE is the rule: the
         # head moves only to a version recorded later than the one it points at.
@@ -565,11 +567,14 @@ def record_version_tx(
             ON CONFLICT (pacticipant_id, name) DO UPDATE
                 SET head_version_id = EXCLUDED.head_version_id, updated_at = CURRENT_TIMESTAMP
                 WHERE (SELECT h.seq FROM apiome.pacticipant_version h WHERE h.id = b.head_version_id) < %s
-            RETURNING b.id::text AS id
+            RETURNING b.id::text AS id, (b.xmax = 0) AS inserted
             """,
             (pacticipant.id, branch, version_id, seq),
         )
-        head_moved = cursor.fetchone() is not None
+        moved = cursor.fetchone()
+        head_moved = moved is not None
+        # xmax is 0 only on a row this statement inserted: the branch did not exist before.
+        branch_created = bool(moved and moved.get("inserted"))
         cursor.execute(
             """
             INSERT INTO apiome.pacticipant_branch_version (branch_id, pacticipant_id, version_id)
@@ -594,7 +599,10 @@ def record_version_tx(
 
     row = _read_version(cursor, pacticipant.id, version_number)
     return RecordedPacticipantVersion(
-        version=version_record_from_row(row or {}), created=created, head_moved=head_moved
+        version=version_record_from_row(row or {}),
+        created=created,
+        head_moved=head_moved,
+        branch_created=branch_created,
     )
 
 
