@@ -12,8 +12,9 @@ pact publication, verification results and can-i-deploy are built on.
 
 This release has the registry, [publishing and fetching pacts](./publish-pacts.mdx) with the
 Pact CLI and libraries, [choosing the pacts a provider verifies](./selectors.mdx) with
-consumer-version selectors, [publishing verification results](./verification-results.mdx), and
-[environments and deployments](./environments.mdx). Can-i-deploy is not yet available, and there is no screen for the registry yet: use the
+consumer-version selectors, [publishing verification results](./verification-results.mdx),
+[environments and deployments](./environments.mdx), and [can-i-deploy](./can-i-deploy.mdx) with the
+matrix. There is no screen for the registry yet: use the
 [Pacticipants API](../../reference/rest/pacticipants.md).
 
 ## Terms
@@ -39,6 +40,9 @@ consumer-version selectors, [publishing verification results](./verification-res
 | **Deployed version** | A version recorded as deployed to an environment. Recording the next deployment there replaces it; the replaced one stays in the history. |
 | **Application instance** | One of several copies of an application in one environment (`eu-1`, `us-1`). Each copy has its own deployed version. |
 | **Released version** | A version released to an environment where several versions are in use at once, such as a mobile app. It stays supported until support is recorded as ended. |
+| **Matrix** | The table of consumer versions against provider versions, with the verification result between each pair. |
+| **Can-i-deploy** | The question "is this version compatible with what runs in that environment?", answered from the matrix: yes, no or unknown, with reasons. See [Can I deploy?](./can-i-deploy.mdx). |
+| **Integration** | A consumer and a provider that have a pact between them. A consumer needs its provider to be deployed; a provider does not need its consumers. |
 
 ## How a pacticipant relates to projects and consumers
 
@@ -170,6 +174,7 @@ pacticipant. Custom roles do not get **Pacts** automatically — grant it in the
 - [Choose pacts to verify with selectors](./selectors.mdx) — what a provider's verifier asks for.
 - [Publish verification results](./verification-results.mdx) — what the verifier reports back.
 - [Environments and deployments](./environments.mdx) — record what runs where.
+- [Can I deploy?](./can-i-deploy.mdx) — gate a deployment on recorded results.
 - [Pacticipants API](../../reference/rest/pacticipants.md) — every endpoint, parameter and error code.
 - [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — the breaking-change gates
   and the consumer registry.

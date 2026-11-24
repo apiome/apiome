@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 35 operations."
+description: "REST endpoints tagged pact-broker: 37 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.658.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.659.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 35 operations
+Tag: `pact-broker` · 37 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -19,7 +19,7 @@ Tag: `pact-broker` · 35 operations
 
 The entry point of the Pact Broker–compatible API: the links a Pact client discovers the other routes from. Give a Pact client this URL as its **broker base URL** and a workspace API key as its **token**.
 
-`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in.
+`pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in. `pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` answer whether a version can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`.
 
 A workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.
 
@@ -38,6 +38,41 @@ Operation id: `pact_broker_index_v1_tenants__tenant_slug__pact_broker_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for pact broker index. | `application/hal+json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/can-i-deploy` {#read-can-i-deploy-v1-tenants-tenant-slug-pact-broker-can-i-deploy-get}
+
+**Can I deploy?**
+
+Whether one version of a pacticipant can be deployed — the index's `pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` links.
+
+`pacticipant` and `version` name what is being deployed. `toEnvironment` names where: the version is checked against every version of its providers and consumers currently deployed to or released in that environment. `to` names a tag instead: it is checked against the latest version of each with that tag. Give exactly one of the two. `ignore` leaves a pacticipant out of the verdict.
+
+The answer is the matrix document of `GET …/matrix`: `summary.deployable` is `true`, `false`, or `null` (a verification result is missing; `Retry-After` says when to ask again). An environment marked `contractRequired` refuses a version that has no pact at all (`no-pact`).
+
+Always `200` when the query is valid. Requires `pacts:view`.
+
+Operation id: `read_can_i_deploy_v1_tenants__tenant_slug__pact_broker_can_i_deploy_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `pacticipant` | query | string | yes | The pacticipant being deployed: its name or handle. |
+| `version` | query | string | yes | The version being deployed. |
+| `toEnvironment` | query | string | no | The environment being deployed to. `environment` is accepted too. |
+| `to` | query | string | no | A tag instead of an environment: check against the latest version of each other pacticipant with it. |
+| `ignore` | query | array of string | no | A pacticipant whose rows do not count towards the verdict. Repeat for several; `ignore[][pacticipant]` with `ignore[][version]` ignores one version. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The verdict and the rows it was reached from. `summary.deployable` is `true`, `false`, or `null` when a verification result is missing — then `Retry-After` says when to ask again. | `application/hal+json` any |
+| 400 | `pact-matrix-invalid`: the query is malformed, or names a pacticipant or an environment that does not exist. `detail.pointer` names the parameter. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-broker/contracts/publish` {#publish-contracts-v1-tenants-tenant-slug-pact-broker-contracts-publish-post}
@@ -374,6 +409,54 @@ Operation id: `read_currently_supported_v1_tenants__tenant_slug__pact_broker_env
 | --- | --- | --- |
 | 200 | Successful response for list the versions released and supported in an environment. | `application/hal+json` any |
 | 404 | `pact-environment-not-found`: no such environment in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/matrix` {#read-matrix-v1-tenants-tenant-slug-pact-broker-matrix-get}
+
+**Query the matrix**
+
+The matrix: which consumer versions were verified against which provider versions, and the verdict on deploying the versions asked about. This is the Pact Broker's `GET /matrix`, and what `pact-broker can-i-deploy` calls.
+
+- **Selectors** (`q[][pacticipant]` …) name the versions in question. One selector with a destination asks *can I deploy this?*; two or more ask *do these work together?*
+- **Destination**: `environment` checks against every version currently deployed to or released in that environment; `tag` with `latest=true` against the latest version with that tag; `latest=true` alone against the latest version of each other pacticipant; `mainBranch=true` (with `latest=true`) against main branches. The other pacticipants are worked out from the pacts.
+- **Verdict** (`summary.deployable`): `true` when every row that counts succeeded (or nothing depends on the version); `false` when a verification failed or a named version does not exist; `null` when a result is missing. A consumer needs its providers to be there; a provider does not need its consumers.
+- **Reasons**: `summary.reason` and `notices` use the Pact Broker's wording. Each notice has a `code` and each row a `reason` (`verified`, `verification-failed`, `pact-pending`, `no-verification-result`); `no-pact` is the notice when the environment requires a contract and the version has none.
+- **Ignore**: rows of an `ignore[][pacticipant]` are returned with `ignored: true` and do not count.
+- **Retry while unknown**: a `null` verdict comes with `Retry-After`.
+
+Always `200` when the query is valid — read `summary.deployable`, not the status. Requires `pacts:view`.
+
+Operation id: `read_matrix_v1_tenants__tenant_slug__pact_broker_matrix_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `q[][pacticipant]` | query | array of string | no | A pacticipant to put in the matrix. Repeat `q[][pacticipant]` (each followed by its own `q[][version]`, `q[][latest]`, `q[][tag]`, `q[][branch]`, `q[][environment]` or `q[][mainBranch]`) for several. |
+| `q[][version]` | query | array of string | no | Exactly this version of the pacticipant. |
+| `q[][latest]` | query | array of string | no | `true`: only the latest of the versions described. |
+| `q[][tag]` | query | array of string | no | Versions with this tag. |
+| `q[][branch]` | query | array of string | no | Versions recorded on this branch. |
+| `q[][environment]` | query | array of string | no | Versions currently deployed to, or released and supported in, this environment. |
+| `q[][mainBranch]` | query | array of string | no | `true`: versions on the pacticipant's main branch. |
+| `latestby` | query | enum `"cvp"`, `"cvpv"`, `"cp"` | no | Collapse rows to the latest result per consumer version and provider (`cvp`), per consumer version and provider version (`cvpv`), or per consumer and provider (`cp`). Without it every result is a row. |
+| `limit` | query | integer | no | The most rows to return. |
+| `environment` | query | string | no | The destination: check against every version currently in this environment (`can-i-deploy --to-environment`). |
+| `tag` | query | string | no | The destination: check against versions with this tag (`can-i-deploy --to`, with `latest=true`). |
+| `latest` | query | boolean | no | `true`: check against the latest version of each other pacticipant. |
+| `mainBranch` | query | boolean | no | `true`: check against each other pacticipant's main branch. |
+| `ignore[][pacticipant]` | query | array of string | no | A pacticipant whose rows do not count towards the verdict; `ignore[][version]` narrows it to one version. |
+| `success[]` | query | array of string | no | Keep only rows with this result: `true`, `false`, or empty for rows without a result. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The verdict and the rows it was reached from. `summary.deployable` is `true`, `false`, or `null` when a verification result is missing — then `Retry-After` says when to ask again. | `application/hal+json` any |
+| 400 | `pact-matrix-invalid`: the query is malformed, or names a pacticipant or an environment that does not exist. `detail.pointer` names the parameter. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacticipants/{pacticipant}` {#read-broker-pacticipant-v1-tenants-tenant-slug-pact-broker-pacticipants-pacticipant-get}

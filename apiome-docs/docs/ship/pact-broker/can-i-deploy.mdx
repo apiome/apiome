@@ -1,0 +1,247 @@
+---
+title: Can I deploy?
+description: Ask whether a version is safe to deploy, from recorded pacts, results and deployments.
+sidebar_position: 6
+tags: [contracts, pact, ci, rest]
+---
+
+**Can-i-deploy** answers one question before a deployment: *is this version compatible with what
+already runs there?* Apiome answers it from three things you already record: the
+[pacts](./publish-pacts.mdx) each consumer version published, the
+[verification results](./verification-results.mdx) of each provider version, and
+[what is deployed where](./environments.mdx). The `pact-broker can-i-deploy` command asks Apiome
+unchanged.
+
+There is no screen for the matrix yet. Use the CLI or the API.
+
+## Before you start
+
+- Consumers [publish their pacts](./publish-pacts.mdx), and providers
+  [publish verification results](./verification-results.mdx).
+- Each environment exists, and your deploy jobs
+  [record every deployment](./environments.mdx#record-a-deployment). Can-i-deploy checks against
+  what is recorded there.
+- Set `PACT_BROKER_BASE_URL` to your workspace's broker base URL
+  (`https://api.apiome.dev/v1/tenants/<workspace>/pact-broker`) and `PACT_BROKER_TOKEN` to an API
+  key. Any role can ask: the key needs **Pacts** → **View**. Create one on
+  [API keys](../../workspace/api-keys.mdx).
+
+## Gate a deployment
+
+Add this to your deploy job, before the deployment:
+
+```bash
+pact-broker can-i-deploy \
+  --pacticipant "Billing Service" \
+  --version "$GIT_COMMIT" \
+  --to-environment production
+```
+
+The command exits `0` when the answer is yes and `1` when it is no or not yet known, so the job
+stops before deploying. After a deployment that goes ahead,
+[record it](./environments.mdx#record-a-deployment).
+
+```text
+Computer says no ¯\_(ツ)_/¯
+
+CONSUMER        | C.VERSION | PROVIDER   | P.VERSION | SUCCESS? | RESULT#
+----------------|-----------|------------|-----------|----------|--------
+Billing Service | 2.0.0     | Ledger API | 5.1.0     | false    | 3
+
+The verification for the pact between version 2.0.0 of Billing Service and the version of
+Ledger API currently in production (5.1.0) failed
+```
+
+## How the answer is reached
+
+Apiome finds every application the version has a pact with, takes the versions of each that are
+**currently in the environment**, and reads the latest verification result between each pair.
+
+| Answer | `deployable` | When |
+| --- | --- | --- |
+| **Yes** | `true` | Every result that counts is successful, or nothing depends on the version. |
+| **No** | `false` | A verification failed, or the version you named does not exist. |
+| **Unknown** | `null` | A verification result is missing. The provider has not verified this pact yet. |
+
+- **A consumer needs its providers.** Deploying a consumer checks its pacts against the provider
+  versions in the environment. If a provider is not deployed there yet, the answer is unknown:
+  deploy the provider first.
+- **A provider does not need its consumers.** Deploying a provider checks the pacts of the consumer
+  versions in the environment. If no consumer is deployed there, the answer is yes.
+- **Every version in the environment is checked.** When two versions of an application run in one
+  environment, on two [application instances](./environments.mdx#application-instances) or as two
+  supported releases, the version must work with both. One of them without a result makes the
+  answer unknown.
+- **Only the pacts of that version count.** A consumer version that no longer calls a provider has
+  no pact with it, and that provider is not checked.
+- **The latest result decides.** When a provider version verified a pact more than once, the last
+  result is used.
+- **A pending pact still blocks the consumer.** A failed result of a
+  [pending pact](./selectors.mdx#pending-pacts) does not fail the provider's build, but the consumer
+  cannot deploy against that provider version. The row's reason reads `pact is pending`.
+
+### Reasons
+
+The answer always comes with its reasons, in the same words a Pact Broker uses. Each notice also
+has a `code` your scripts can branch on:
+
+| Code | Reads like | Answer |
+| --- | --- | --- |
+| `verified` | All required verification results are published and successful | Yes |
+| `no-dependencies` | There are no missing dependencies | Yes |
+| `verification-failed` | The verification for the pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0) failed | No |
+| `pact-pending` | The same sentence as `verification-failed`, for a pact that was pending for that provider build | No |
+| `version-not-found` | No pacts or verifications have been published for version 9.9.9 of Billing Service | No |
+| `no-pact` | No pact has been published for version s-1 of Search API, and environment production requires a contract | No |
+| `no-verification-result` | There is no verified pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0) | Unknown |
+
+Each row of the matrix has its own `reason`: `verified`, `verification failed`, `pact is pending`
+or `no verification result`.
+
+## Wait for a result
+
+A consumer's pipeline often asks before the provider has finished verifying the new pact. Tell the
+CLI to keep asking while the answer is unknown:
+
+```bash
+pact-broker can-i-deploy --pacticipant "Billing Service" --version "$GIT_COMMIT" \
+  --to-environment production \
+  --retry-while-unknown 12 --retry-interval 10
+```
+
+It asks again every 10 seconds, up to 12 times, and stops as soon as the answer is yes or no. When
+the answer is unknown, Apiome's response also carries a `Retry-After` header with the number of
+seconds to wait, for clients that call the API themselves.
+
+## Leave an application out
+
+To deploy although one integration is not ready, ignore that application:
+
+```bash
+pact-broker can-i-deploy --pacticipant "Billing Service" --version "$GIT_COMMIT" \
+  --to-environment production --ignore "Ledger API"
+```
+
+Its rows are still listed, marked `ignored`, and counted in `summary.ignored`. They do not change
+the answer. A name that matches no application gives a warning, `Cannot ignore …`, not an error.
+
+## Require a contract
+
+By default an application with no pacts can always deploy: nothing depends on it. To refuse it
+instead, set `contractRequired` on the environment (see
+[Create your environments](./environments.mdx#create-your-environments)). Can-i-deploy to that
+environment then answers no, with the code `no-pact`, for a version that published no pact and
+that no pact names as its provider.
+
+## Deploy to a tag instead of an environment
+
+Setups that mark what is in production with a tag, not with recorded deployments, name the tag:
+
+```bash
+pact-broker can-i-deploy --pacticipant "Billing Service" --version "$GIT_COMMIT" --to prod
+```
+
+The version is checked against the latest version of each other application that has the tag.
+Environments are preferred for new setups: a tag cannot say that two versions are live at once.
+
+## Check two versions against each other
+
+Name both sides to ask whether two specific versions work together, wherever they run:
+
+```bash
+pact-broker can-i-deploy \
+  --pacticipant "Billing Service" --version 2.0.0 \
+  --pacticipant "Ledger API" --version 5.1.0
+```
+
+## Ask the API
+
+`pact-broker can-i-deploy` calls the matrix. You can call either endpoint yourself; both return the
+same document.
+
+| To ask | Request |
+| --- | --- |
+| Can this version go to an environment? | `GET …/pact-broker/can-i-deploy?pacticipant=Billing%20Service&version=2.0.0&toEnvironment=production` |
+| Can it go where a tag is? | `GET …/pact-broker/can-i-deploy?pacticipant=Billing%20Service&version=2.0.0&to=prod` |
+| The same, leaving one application out | add `&ignore=Ledger%20API` |
+| The matrix, as the CLI asks it | `GET …/pact-broker/matrix?q[][pacticipant]=Billing%20Service&q[][version]=2.0.0&latestby=cvpv&environment=production` |
+| The history of one integration | `GET …/pact-broker/matrix?q[][pacticipant]=Billing%20Service&q[][pacticipant]=Ledger%20API&latestby=cvpv` |
+
+```bash
+curl -G "$PACT_BROKER_BASE_URL/can-i-deploy" \
+  -H "Authorization: Bearer $PACT_BROKER_TOKEN" \
+  --data-urlencode "pacticipant=Billing Service" \
+  --data-urlencode "version=2.0.0" \
+  --data-urlencode "toEnvironment=production"
+```
+
+```json
+{
+  "summary": {
+    "deployable": null,
+    "reason": "There is no verified pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0)",
+    "success": 0,
+    "failed": 0,
+    "unknown": 1
+  },
+  "notices": [
+    {
+      "type": "error",
+      "code": "no-verification-result",
+      "text": "There is no verified pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0)"
+    }
+  ],
+  "matrix": [
+    {
+      "consumer": { "name": "Billing Service", "version": { "number": "2.0.0", "branch": "main" } },
+      "provider": { "name": "Ledger API", "version": null },
+      "pact": { "createdAt": "2026-11-24T10:00:00+00:00" },
+      "verificationResult": null,
+      "reason": { "code": "no-verification-result", "text": "no verification result" }
+    }
+  ]
+}
+```
+
+The rows are shortened here: each also carries links to the pact, the result and both versions.
+
+**The status is `200` whatever the answer is.** Read `summary.deployable`, not the status code.
+`summary.unknown` is the number of results still missing. Each version in a row also lists its
+branches, its tags and the environments it is in.
+
+### Matrix parameters
+
+| Parameter | What it does |
+| --- | --- |
+| `q[][pacticipant]` | An application to include. Repeat it for several; the parameters after each one belong to it. |
+| `q[][version]`, `q[][branch]`, `q[][tag]`, `q[][environment]`, `q[][mainBranch]=true` | Which of its versions. With `q[][latest]=true`, only the latest of them. Without any, every version. |
+| `environment` | Check against the versions currently in this environment. |
+| `tag` with `latest=true` | Check against the latest version with this tag. |
+| `latest=true` | Check against the latest version of each other application. |
+| `mainBranch=true` with `latest=true` | Check against the head of each other application's main branch. |
+| `latestby` | `cvpv` keeps the latest result per consumer version and provider version, `cvp` per consumer version and provider, `cp` per consumer and provider. Without it, every result is a row. |
+| `ignore[][pacticipant]`, `ignore[][version]` | Leave an application, or one version of it, out of the answer. |
+| `success[]` | Keep only rows with this result: `true`, `false`, or empty for rows without a result. |
+| `limit` | The most rows to return, from 1 to 1000. Defaults to 100. |
+
+## When a request is refused
+
+| Status | Code | What to do |
+| --- | --- | --- |
+| `400` | `pact-matrix-invalid` | The query is malformed, or names an application or an environment that does not exist. `message` says which, and `pointer` names the parameter: `Pacticipant Nope not found` at `/q/0/pacticipant`. Publish a pact or a result for the application first, or create the environment. |
+| `401` / `403` | — | The token is not a valid API key for this workspace, or its member lacks **Pacts** → **View**. |
+
+A version that does not exist is not a refusal: the answer is no, with the code `version-not-found`.
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Ask can-i-deploy and read the matrix | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+
+## Related
+
+- [Environments and deployments](./environments.mdx) — record what runs where.
+- [Publish verification results](./verification-results.mdx) — the results the answer is read from.
+- [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — the other gates a pipeline can run.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

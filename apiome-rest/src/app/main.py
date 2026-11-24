@@ -135,6 +135,7 @@ from .document_store_routes import ops_router as document_store_ops_router
 from .ownership_policy_routes import router as ownership_policy_router
 from .pact_broker_environment_routes import router as pact_broker_environment_router
 from .pact_broker_host import PactBrokerHostAliasMiddleware
+from .pact_broker_matrix_routes import router as pact_broker_matrix_router
 from .pact_broker_routes import router as pact_broker_router
 from .pact_broker_verification_routes import router as pact_broker_verification_router
 from .pacticipant_routes import router as pacticipant_router
@@ -556,6 +557,7 @@ app.include_router(pacticipant_router)
 app.include_router(pact_broker_router)
 app.include_router(pact_broker_verification_router)
 app.include_router(pact_broker_environment_router)
+app.include_router(pact_broker_matrix_router)
 # consumer_binding_router: RDG-1.8 consumer bindings + declared-vs-observed runtime edges under
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).
 app.include_router(consumer_binding_router)

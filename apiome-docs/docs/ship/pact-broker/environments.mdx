@@ -5,15 +5,14 @@ sidebar_position: 5
 tags: [contracts, pact, ci, rest]
 ---
 
-Can-i-deploy answers "is it safe to deploy this version to **production**?" To answer, Apiome has
+[Can-i-deploy](./can-i-deploy.mdx) answers "is it safe to deploy this version to **production**?" To answer, Apiome has
 to know what runs in production now. You tell it with **environments** and **deployment
 records**: create each environment once, then have your deploy job record every deployment or
 release. The `pact-broker` CLI does this against Apiome unchanged.
 
-Can-i-deploy is not yet available, and there is no screen for environments yet. What is recorded
-here is already used by the `deployed`, `released` and `environment`
-[consumer-version selectors](./selectors.mdx), so a provider verifies the pacts of the consumer
-versions that are really in production.
+There is no screen for environments yet. What is recorded here is also used by the `deployed`,
+`released` and `environment` [consumer-version selectors](./selectors.mdx), so a provider verifies
+the pacts of the consumer versions that are really in production.
 
 ## Before you start
 
@@ -38,7 +37,7 @@ pact-broker create-environment --name production --display-name Production --pro
 | `name` | The name your deploy jobs use (`production`). One word, no spaces, unique in the workspace. |
 | `displayName` | The name people read (`Production`). The name is used when you leave it out. |
 | `production` | Whether this is a production environment. Defaults to `false`. |
-| `contractRequired` | Apiome only. When `true`, can-i-deploy to this environment will refuse an application that has no contract. Defaults to `false`. |
+| `contractRequired` | Apiome only. When `true`, [can-i-deploy](./can-i-deploy.mdx#require-a-contract) to this environment refuses a version that has no contract. Defaults to `false`. |
 | `contacts` | Who to contact about the environment: `[{"name": "Team Ledger", "details": {"emailAddress": "…"}}]`. |
 
 `pact-broker list-environments` lists them with their `uuid`. Use the `uuid` with
@@ -169,5 +168,6 @@ environment. This is how the CLI finds where to post.
 
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, environments and deployments.
 - [Choose pacts to verify with selectors](./selectors.mdx) — the environment selectors.
-- [Publish verification results](./verification-results.mdx) — what can-i-deploy will read with this.
+- [Can I deploy?](./can-i-deploy.mdx) — gate a deployment on what is recorded here.
+- [Publish verification results](./verification-results.mdx) — what can-i-deploy reads with this.
 - [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.
