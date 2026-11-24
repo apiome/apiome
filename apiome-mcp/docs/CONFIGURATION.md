@@ -26,6 +26,8 @@ Runtime configuration is loaded from the environment by [`Settings`](../src/apio
 | **`APIOME_MCP_AUDIT_QUEUE_MAX_ROWS`** | No | `10000` | DBP-1.21: most audit rows queued per pool (**1–1000000**). A row submitted to a full queue is dropped, counted and logged as `audit_rows_dropped`; the call is never delayed. |
 | **`APIOME_MCP_AUDIT_BATCH_MAX_ROWS`** | No | `500` | DBP-1.21: most rows in one multi-row `INSERT` (**1–10000**). |
 | **`APIOME_MCP_OPENAPI_MAX_JSON_BYTES`** | No | `2097152` | Max UTF-8 size for exported OpenAPI JSON/YAML payloads (**1024–100_000_000**). |
+| **`APIOME_MCP_OPENAPI_DOCUMENT_CACHE_BYTES`** | No | `67108864` | DBP-1.22: budget of the spec tools' built-document cache, counted as the compact-JSON size of the cached documents (**0–17179869184**; memory use is several times that). Keyed by the revision's `updated_at` and `content_stamp`, so a changed revision is rebuilt on its next call. Least recently used entries go first. `0` = off. |
+| **`APIOME_MCP_SPEC_TAG_HISTOGRAM_CACHE_SECONDS`** | No | `45` | DBP-1.22: seconds **`spec.list_tags`** serves its tag counts from memory before recounting (**0–3600**, `0` = count on every call). |
 | **`APIOME_MCP_OPENAI_API_KEY`** | No | — | Secret for **`spec.search_semantic`** query embeddings (`Bearer` to **`APIOME_MCP_OPENAI_EMBEDDING_URL`**). When unset, calling **`spec.search_semantic`** fails fast. |
 | **`APIOME_MCP_OPENAI_EMBEDDING_URL`** | No | `https://api.openai.com/v1/embeddings` | OpenAI-compatible embeddings endpoint (POST JSON `model`, `input`, `dimensions`). |
 | **`APIOME_MCP_OPENAI_EMBEDDING_MODEL`** | No | `text-embedding-3-small` | Passed through to the embeddings API as **`model`**. |

@@ -735,6 +735,121 @@
       ]
     },
     {
+      "name": "mcp.spec_list_page",
+      "source": "apiome-mcp/src/apiome_mcp/spec_list_tool.py build_spec_list_query (spec.list, anonymous, one page of 50 on idx_versions_mcp_public_listed; DBP-1.22 #7205)",
+      "sql": "WITH page AS ( SELECT v.id, p.tenant_id, v.project_id, p.name AS title, v.version_id AS version, v.description, v.mcp_listed_at AS updated_at FROM apiome.versions v INNER JOIN apiome.projects p ON p.id = v.project_id WHERE (v.mcp_listed_at IS NOT NULL AND v.visibility = 'public'::apiome.visibility_type AND v.deleted_at IS NULL AND v.enabled IS TRUE AND v.published IS TRUE) AND (p.deleted_at IS NULL AND p.enabled IS TRUE) ORDER BY v.mcp_listed_at DESC, v.id DESC LIMIT $1 ) SELECT page.id, page.tenant_id, page.project_id, page.title, page.version, page.description, page.updated_at, COALESCE(tg.tags, ARRAY[]::TEXT[]) AS tags FROM page LEFT JOIN LATERAL ( SELECT array_agg(vt.name ORDER BY vt.name) AS tags FROM apiome.version_tags vt WHERE vt.version_id = page.id AND vt.project_id = page.project_id ) tg ON TRUE ORDER BY updated_at DESC, id DESC",
+      "params": [
+        51
+      ]
+    },
+    {
+      "name": "mcp.spec_list_project",
+      "source": "apiome-mcp/src/apiome_mcp/spec_list_tool.py build_spec_list_query (spec.list with a project_id filter, on idx_versions_mcp_project_listed; DBP-1.22 #7205)",
+      "sql": "WITH page AS ( SELECT v.id, p.tenant_id, v.project_id, p.name AS title, v.version_id AS version, v.description, v.mcp_listed_at AS updated_at FROM apiome.versions v INNER JOIN apiome.projects p ON p.id = v.project_id WHERE (v.mcp_listed_at IS NOT NULL AND v.visibility = 'public'::apiome.visibility_type AND v.deleted_at IS NULL AND v.enabled IS TRUE AND v.published IS TRUE) AND (p.deleted_at IS NULL AND p.enabled IS TRUE) AND (v.project_id = $1) ORDER BY v.mcp_listed_at DESC, v.id DESC LIMIT $2 ) SELECT page.id, page.tenant_id, page.project_id, page.title, page.version, page.description, page.updated_at, COALESCE(tg.tags, ARRAY[]::TEXT[]) AS tags FROM page LEFT JOIN LATERAL ( SELECT array_agg(vt.name ORDER BY vt.name) AS tags FROM apiome.version_tags vt WHERE vt.version_id = page.id AND vt.project_id = page.project_id ) tg ON TRUE ORDER BY updated_at DESC, id DESC",
+      "params": [
+        "scale:project:0",
+        51
+      ]
+    },
+    {
+      "name": "mcp.spec_list_authenticated",
+      "source": "apiome-mcp/src/apiome_mcp/spec_list_tool.py build_spec_list_query (spec.list for an API key: the public page merged with the key tenant's private revisions; DBP-1.22 #7205)",
+      "sql": "WITH page AS ( SELECT * FROM ( ( SELECT v.id, p.tenant_id, v.project_id, p.name AS title, v.version_id AS version, v.description, v.mcp_listed_at AS updated_at, 'public'::text AS spec_visibility FROM apiome.versions v INNER JOIN apiome.projects p ON p.id = v.project_id WHERE (v.mcp_listed_at IS NOT NULL AND v.visibility = 'public'::apiome.visibility_type AND v.deleted_at IS NULL AND v.enabled IS TRUE AND v.published IS TRUE) AND (p.deleted_at IS NULL AND p.enabled IS TRUE) AND (TRUE) ORDER BY v.mcp_listed_at DESC, v.id DESC LIMIT $1 ) UNION ALL ( SELECT v.id, p.tenant_id, v.project_id, p.name AS title, v.version_id AS version, v.description, v.mcp_listed_at AS updated_at, 'private'::text AS spec_visibility FROM apiome.versions v INNER JOIN apiome.projects p ON p.id = v.project_id WHERE (v.mcp_listed_at IS NOT NULL AND v.visibility = 'private'::apiome.visibility_type AND v.deleted_at IS NULL AND v.enabled IS TRUE AND v.published IS TRUE) AND (p.deleted_at IS NULL AND p.enabled IS TRUE) AND ((TRUE) AND (v.visibility = 'public'::apiome.visibility_type OR (v.visibility = 'private'::apiome.visibility_type AND p.tenant_id = $2::uuid))) AND (p.tenant_id = $3) ORDER BY v.mcp_listed_at DESC, v.id DESC LIMIT $4 ) ) AS merged ORDER BY updated_at DESC, id DESC LIMIT $5 ) SELECT page.id, page.tenant_id, page.project_id, page.title, page.version, page.description, page.updated_at, page.spec_visibility, COALESCE(tg.tags, ARRAY[]::TEXT[]) AS tags FROM page LEFT JOIN LATERAL ( SELECT array_agg(vt.name ORDER BY vt.name) AS tags FROM apiome.version_tags vt WHERE vt.version_id = page.id AND vt.project_id = page.project_id ) tg ON TRUE ORDER BY updated_at DESC, id DESC",
+      "params": [
+        51,
+        "scale:tenant:7",
+        "scale:tenant:7",
+        51,
+        51
+      ]
+    },
+    {
+      "name": "mcp.project_list_page",
+      "source": "apiome-mcp/src/apiome_mcp/project_list_tool.py build_project_list_query (project.list, anonymous, one page of the rollup; DBP-1.22 #7205)",
+      "sql": "SELECT l.tenant_id, l.project_id, p.name AS title, l.public_listed_at AS updated_at FROM apiome.mcp_project_listing l INNER JOIN apiome.projects p ON p.id = l.project_id WHERE (l.public_listed_at IS NOT NULL) AND (p.deleted_at IS NULL AND p.enabled IS TRUE) ORDER BY l.public_listed_at DESC, l.tenant_id DESC, l.project_id DESC LIMIT $1",
+      "params": [
+        51
+      ]
+    },
+    {
+      "name": "mcp.project_list_authenticated",
+      "source": "apiome-mcp/src/apiome_mcp/project_list_tool.py build_project_list_query (project.list for an API key: other tenants merged with its own; DBP-1.22 #7205)",
+      "sql": "SELECT tenant_id, project_id, title, updated_at FROM ( ( SELECT l.tenant_id, l.project_id, p.name AS title, l.public_listed_at AS updated_at FROM apiome.mcp_project_listing l INNER JOIN apiome.projects p ON p.id = l.project_id WHERE (l.public_listed_at IS NOT NULL) AND (p.deleted_at IS NULL AND p.enabled IS TRUE) AND (l.tenant_id <> $1) AND (TRUE) ORDER BY l.public_listed_at DESC, l.tenant_id DESC, l.project_id DESC LIMIT $2 ) UNION ALL ( SELECT l.tenant_id, l.project_id, p.name AS title, l.listed_at AS updated_at FROM apiome.mcp_project_listing l INNER JOIN apiome.projects p ON p.id = l.project_id WHERE (l.listed_at IS NOT NULL) AND (p.deleted_at IS NULL AND p.enabled IS TRUE) AND (l.tenant_id = $3) AND (TRUE) ORDER BY l.listed_at DESC, l.tenant_id DESC, l.project_id DESC LIMIT $4 ) ) AS merged ORDER BY updated_at DESC, tenant_id DESC, project_id DESC LIMIT $5",
+      "params": [
+        "scale:tenant:7",
+        51,
+        "scale:tenant:7",
+        51,
+        51
+      ]
+    },
+    {
+      "name": "mcp.spec_search_page",
+      "source": "apiome-mcp/src/apiome_mcp/spec_search_tool.py build_spec_search_query (spec.search: rank and page on versions, then join the page; about 5,000 matches; DBP-1.22 #7205)",
+      "sql": "WITH hit AS ( SELECT v.id, v.project_id, v.mcp_listed_at AS updated_at, GREATEST( 1, LEAST( 2147483647, ROUND((ts_rank_cd(v.mcp_public_doc_tsv, plainto_tsquery('english', $1))::numeric) * 1000000)::integer ) ) AS rank_score FROM apiome.versions v WHERE v.mcp_public_doc_tsv @@ plainto_tsquery('english', $1) AND v.mcp_listed_at IS NOT NULL AND v.visibility = 'public'::apiome.visibility_type AND v.deleted_at IS NULL AND v.enabled IS TRUE AND v.published IS TRUE ), page AS ( SELECT id, project_id, updated_at, rank_score FROM hit ORDER BY rank_score DESC, updated_at DESC, id DESC LIMIT $2 ) SELECT page.id, p.tenant_id, page.project_id, p.name AS title, v.version_id AS version, v.description, COALESCE(tg.tags, ARRAY[]::TEXT[]) AS tags, page.updated_at, page.rank_score FROM page INNER JOIN apiome.versions v ON v.id = page.id INNER JOIN apiome.projects p ON p.id = page.project_id AND p.deleted_at IS NULL AND p.enabled IS TRUE LEFT JOIN LATERAL ( SELECT array_agg(vt.name ORDER BY vt.name) AS tags FROM apiome.version_tags vt WHERE vt.version_id = page.id AND vt.project_id = page.project_id ) tg ON TRUE ORDER BY page.rank_score DESC, page.updated_at DESC, page.id DESC",
+      "params": [
+        "revision 7",
+        51
+      ]
+    },
+    {
+      "name": "mcp.spec_list_tags_histogram",
+      "source": "apiome-mcp/src/apiome_mcp/spec_list_tags_tool.py _HISTOGRAM_QUERY (spec.list_tags: every public tag counted once per cache lifetime, 45 s by default, then paged from memory; DBP-1.22 #7205)",
+      "sql": "SELECT tag, cnt FROM ( SELECT vt.name AS tag, COUNT(*)::bigint AS cnt FROM apiome.version_tags vt INNER JOIN apiome.versions v ON v.id = vt.version_id AND v.project_id = vt.project_id INNER JOIN apiome.projects p ON p.id = v.project_id WHERE v.mcp_listed_at IS NOT NULL AND v.visibility = 'public'::apiome.visibility_type AND v.deleted_at IS NULL AND v.enabled IS TRUE AND v.published IS TRUE AND p.deleted_at IS NULL AND p.enabled IS TRUE GROUP BY vt.name ) AS counts ORDER BY cnt DESC, tag ASC",
+      "params": [],
+      "budgetMs": 500,
+      "allowSeqScan": [
+        {
+          "relation": "apiome.version_tags",
+          "reason": "the histogram counts every tag of every public revision; it runs once per cache lifetime, not per call"
+        },
+        {
+          "relation": "apiome.versions",
+          "reason": "joined to every tag row: reading the public revisions once is the cheapest plan"
+        }
+      ]
+    },
+    {
+      "name": "mcp.openapi_class_properties",
+      "source": "apiome-mcp/src/apiome_mcp/spec_openapi_loaders.py load_classes_and_properties, statement 2 of 2: every property of a revision's classes, keyed by the revision instead of an IN list of class ids (DBP-1.22 #7205)",
+      "sql": "SELECT cp.id, cp.class_id, cp.property_id, cp.name, cp.description, cp.data, cp.parent_id, p.id as property_source_id, p.name as property_source_name, p.data as property_source_data FROM apiome.class_properties cp INNER JOIN apiome.classes c ON c.id = cp.class_id LEFT JOIN apiome.properties p ON cp.property_id = p.id WHERE c.version_id = $1 AND c.deleted_at IS NULL ORDER BY cp.class_id, cp.parent_id NULLS FIRST, cp.name ASC",
+      "params": [
+        "scale:version:1"
+      ]
+    },
+    {
+      "name": "mcp.openapi_operations",
+      "source": "apiome-mcp/src/apiome_mcp/spec_openapi_loaders.py load_paths_tree: every operation of a revision (DBP-1.22 #7205)",
+      "sql": "SELECT po.id, po.version_path_id, po.operation FROM apiome.path_operation po INNER JOIN apiome.version_path vp ON vp.id = po.version_path_id WHERE vp.version_id = $1 ORDER BY po.version_path_id, CASE po.operation WHEN 'GET' THEN 1 WHEN 'POST' THEN 2 WHEN 'PUT' THEN 3 WHEN 'PATCH' THEN 4 WHEN 'DELETE' THEN 5 ELSE 6 END",
+      "params": [
+        "scale:version:1"
+      ]
+    },
+    {
+      "name": "mcp.openapi_parameters",
+      "source": "apiome-mcp/src/apiome_mcp/spec_openapi_loaders.py load_paths_tree: every operation's parameters (DBP-1.22 #7205)",
+      "sql": "SELECT popl.path_operation_id AS loader_path_operation_id, spp.id, spp.name, spp.in_location, spp.summary, spp.description, spp.data FROM apiome.shared_path_parameter spp INNER JOIN apiome.path_operation_parameter_link popl ON spp.id = popl.shared_path_parameter_id INNER JOIN apiome.path_operation po ON po.id = popl.path_operation_id INNER JOIN apiome.version_path vp ON vp.id = po.version_path_id WHERE vp.version_id = $1 ORDER BY popl.path_operation_id, CASE spp.in_location WHEN 'path' THEN 1 WHEN 'query' THEN 2 WHEN 'header' THEN 3 ELSE 4 END, spp.name",
+      "params": [
+        "scale:version:1"
+      ]
+    },
+    {
+      "name": "mcp.openapi_request_bodies",
+      "source": "apiome-mcp/src/apiome_mcp/spec_openapi_loaders.py load_paths_tree: every operation's request body with its content types (DBP-1.22 #7205)",
+      "sql": "SELECT link.path_operation_id AS loader_path_operation_id, rb.id, rb.name, rb.description, rb.required, COALESCE(json_agg(json_build_object( 'id', rbc.id, 'media_type', rbc.media_type, 'class_id', rbc.class_id, 'class_name', c.name, 'inline_schema', rbc.inline_schema, 'encoding', rbc.encoding, 'examples', rbc.examples ) ORDER BY rbc.ctid) FILTER (WHERE rbc.id IS NOT NULL), '[]') as content_types FROM apiome.shared_path_request_body rb INNER JOIN apiome.path_operation_request_body_link link ON rb.id = link.shared_path_request_body_id INNER JOIN apiome.path_operation po ON po.id = link.path_operation_id INNER JOIN apiome.version_path vp ON vp.id = po.version_path_id LEFT JOIN apiome.shared_path_request_body_content rbc ON rb.id = rbc.shared_path_request_body_id LEFT JOIN apiome.classes c ON rbc.class_id = c.id WHERE vp.version_id = $1 GROUP BY link.path_operation_id, rb.id",
+      "params": [
+        "scale:version:1"
+      ]
+    },
+    {
+      "name": "mcp.openapi_responses",
+      "source": "apiome-mcp/src/apiome_mcp/spec_openapi_loaders.py load_paths_tree: every operation's responses with their content types (DBP-1.22 #7205)",
+      "sql": "SELECT porl.path_operation_id AS loader_path_operation_id, spr.id, spr.status_code, spr.description, spr.data, spr.class_id, c.name as class_name, spr.inline_schema, COALESCE( json_agg( json_build_object( 'id', rc.id, 'media_type', rc.media_type, 'class_id', rc.class_id, 'class_name', rc_class.name, 'inline_schema', rc.inline_schema, 'examples', rc.examples ) ORDER BY rc.ctid ) FILTER (WHERE rc.id IS NOT NULL), '[]' ) as content_types FROM apiome.shared_path_response spr INNER JOIN apiome.path_operation_response_link porl ON spr.id = porl.shared_path_response_id INNER JOIN apiome.path_operation po ON po.id = porl.path_operation_id INNER JOIN apiome.version_path vp ON vp.id = po.version_path_id LEFT JOIN apiome.classes c ON spr.class_id = c.id LEFT JOIN apiome.shared_path_response_content rc ON spr.id = rc.shared_path_response_id LEFT JOIN apiome.classes rc_class ON rc.class_id = rc_class.id WHERE vp.version_id = $1 GROUP BY porl.path_operation_id, spr.id, spr.status_code, spr.description, spr.data, spr.class_id, c.name, spr.inline_schema ORDER BY porl.path_operation_id, spr.status_code",
+      "params": [
+        "scale:version:1"
+      ]
+    },
+    {
       "name": "sweep.due_mcp_endpoints",
       "source": "apiome-rest/src/app/database.py Database.list_due_mcp_endpoints (MCP discovery sweep tick; idx_mcp_endpoints_discovery_due[_default], V426, DBP-1.18 #7201)",
       "sql": "SELECT * FROM ( (SELECT id, tenant_id, created_at, COALESCE(last_discovered_at, '-infinity'::timestamptz) AS due_anchor FROM apiome.mcp_endpoints WHERE deleted_at IS NULL AND enabled AND quarantined_at IS NULL AND discovery_cadence_seconds IS NULL AND COALESCE(last_discovered_at, '-infinity'::timestamptz) <= now() - make_interval(secs => $1::int) AND (next_discovery_after IS NULL OR next_discovery_after <= now()) ORDER BY COALESCE(last_discovered_at, '-infinity'::timestamptz) LIMIT $2::int) UNION ALL (SELECT id, tenant_id, created_at, COALESCE(last_discovered_at, '-infinity'::timestamptz) FROM apiome.mcp_endpoints WHERE deleted_at IS NULL AND enabled AND quarantined_at IS NULL AND discovery_cadence_seconds IS NOT NULL AND discovery_due_at <= now() ORDER BY discovery_due_at LIMIT $2::int) ) due ORDER BY due_anchor ASC, created_at ASC LIMIT $2::int",

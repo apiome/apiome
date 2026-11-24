@@ -13,6 +13,7 @@ from psycopg_pool import AsyncConnectionPool
 from apiome_mcp.mcp_auth import McpAuthContext
 from apiome_mcp.scope import Scope
 from apiome_mcp.spec_export_yaml_tool import build_spec_export_yaml_response
+from apiome_mcp.spec_openapi_loaders import OpenApiInputs
 
 
 def _openapi_row(*, spec_id: UUID | None = None, visibility: str = "public") -> dict[str, object]:
@@ -57,11 +58,11 @@ def test_build_spec_export_yaml_success_round_trips_json() -> None:
 
     pool = _mock_pool_with_row(row)
 
-    async def fake_fetch(_conn: object, _revision_id: UUID) -> tuple:
-        return ([], {}, [], [], [])
+    async def fake_fetch(_conn: object, _revision_id: UUID, **_kw: object) -> OpenApiInputs:
+        return OpenApiInputs()
 
     with (
-        patch("apiome_mcp.spec_get_openapi_tool.fetch_openapi_generation_inputs_async", side_effect=fake_fetch),
+        patch("apiome_mcp.spec_get_openapi_tool.load_openapi_inputs", side_effect=fake_fetch),
         patch("apiome_mcp.spec_get_openapi_tool.generate_openapi_spec", return_value=sample_spec),
         patch("apiome_mcp.spec_export_yaml_tool.get_settings") as gs,
     ):
@@ -96,11 +97,11 @@ def test_build_spec_export_yaml_private_audited() -> None:
 
     pool = _mock_pool_with_row(row)
 
-    async def fake_fetch(_conn: object, _revision_id: UUID) -> tuple:
-        return ([], {}, [], [], [])
+    async def fake_fetch(_conn: object, _revision_id: UUID, **_kw: object) -> OpenApiInputs:
+        return OpenApiInputs()
 
     with (
-        patch("apiome_mcp.spec_get_openapi_tool.fetch_openapi_generation_inputs_async", side_effect=fake_fetch),
+        patch("apiome_mcp.spec_get_openapi_tool.load_openapi_inputs", side_effect=fake_fetch),
         patch("apiome_mcp.spec_get_openapi_tool.generate_openapi_spec", return_value=sample_spec),
         patch("apiome_mcp.spec_export_yaml_tool.get_settings") as gs,
         patch("apiome_mcp.spec_get_openapi_tool.schedule_mcp_private_access_audit") as audit,
@@ -123,11 +124,11 @@ def test_build_spec_export_yaml_payload_too_large() -> None:
 
     pool = _mock_pool_with_row(row)
 
-    async def fake_fetch(_conn: object, _revision_id: UUID) -> tuple:
-        return ([], {}, [], [], [])
+    async def fake_fetch(_conn: object, _revision_id: UUID, **_kw: object) -> OpenApiInputs:
+        return OpenApiInputs()
 
     with (
-        patch("apiome_mcp.spec_get_openapi_tool.fetch_openapi_generation_inputs_async", side_effect=fake_fetch),
+        patch("apiome_mcp.spec_get_openapi_tool.load_openapi_inputs", side_effect=fake_fetch),
         patch("apiome_mcp.spec_get_openapi_tool.generate_openapi_spec", return_value=huge),
         patch("apiome_mcp.spec_export_yaml_tool.get_settings") as gs,
     ):

@@ -166,11 +166,25 @@ def test_build_spec_search_response_cursor_binding() -> None:
         await build_spec_search_response(pool, q="demo", cursor=cursor)
 
     asyncio.run(run())
-    _sql, params = cur.execute.await_args.args
-    assert params["has_cursor"] is True
-    assert params["cur_rank"] == 700
-    assert params["cur_ts"] == ts
-    assert params["cur_id"] == sid
+    sql, params = cur.execute.await_args.args
+    assert "(rank_score, updated_at, id) < (%(cur_rank)s::integer" in sql
+    assert params == {"q": "demo", "lim": 51, "cur_rank": 700, "cur_ts": ts, "cur_id": sid}
+
+
+def test_build_spec_search_statement_limits_before_joining() -> None:
+    """DBP-1.22: rank and page on ``versions``; the project and tags are read for the page only."""
+    pool, cur = _pool_mock_for_fetch([_sample_row()])
+
+    asyncio.run(build_spec_search_response(pool, q="demo"))
+    sql, params = cur.execute.await_args.args
+    assert params == {"q": "demo", "lim": 51}
+    assert "mcp_v_public_specs" not in sql
+    assert "cur_rank" not in sql
+    hit, rest = sql.split("page AS (", 1)
+    assert "apiome.projects" not in hit and "apiome.version_tags" not in hit
+    assert "v.mcp_public_doc_tsv @@ plainto_tsquery('english', %(q)s)" in hit
+    assert "v.mcp_listed_at IS NOT NULL AND v.visibility = 'public'::apiome.visibility_type" in hit
+    assert rest.index("LIMIT %(lim)s") < rest.index("apiome.projects") < rest.index("apiome.version_tags")
 
 
 def test_build_spec_search_empty_query_raises() -> None:

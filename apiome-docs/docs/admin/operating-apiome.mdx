@@ -252,6 +252,63 @@ call, then p50 and p95 latency:
 | Catalog `tools/call` (`ping`, keys hashed at bcrypt's default cost) | 7 statements, 6 checkouts, 2 writes, 2 bcrypt checks on the event loop; 15.5 s / 16.4 s | 2 statements (one is the tool's own), 2 checkouts, 0 writes, 0 bcrypt; 20 ms / 51 ms |
 | Agent `tools/call`, database steps only | 6 statements, 6 checkouts, 2 writes while the agent waits, 1 bcrypt; 840 ms / 1,305 ms | 1 statement, 1 checkout, 0 writes while the agent waits (0.003 batched writes per call), 0 bcrypt; 4 ms / 10 ms |
 
+### What the MCP catalog tools read and cache
+
+The catalog's spec tools build a revision's OpenAPI document, and its listing tools page through
+every published spec. Both do a fixed amount of database work, whatever the size of the spec or of
+the catalog.
+
+**Spec documents.** `spec.get_openapi`, `spec.export_yaml`, `spec.describe_operation` and
+`spec.describe_component` read a revision in at most 12 statements. `spec.list_operations` reads
+only paths and operations, in 4. `spec.list_components` reads only schemas and security schemes,
+in 5. The first statement of each call checks that the caller may read the revision. The built
+document is then kept in memory, so the next call for the same revision runs that one statement and
+nothing else. A revision that changes in any way is rebuilt on its next call: the server never
+serves a stale document.
+
+**Lists.** `spec.list`, `spec.list_my_specs` and `project.list` read one page from an index, so
+page 500 costs the same as page 1. The order is the one they always had: most recently changed
+first, where a change to the revision, its project or one of its tags counts.
+
+**Tag counts.** `spec.list_tags` counts the catalog's tags once and serves every page from memory
+for `APIOME_MCP_SPEC_TAG_HISTOGRAM_CACHE_SECONDS`. A tag that is added or removed shows in the
+counts within that time.
+
+**Search.** `spec.search` ranks the matching specs first and reads project names and tags for the
+page it returns only. `spec.search_semantic` reads from the vector index and returns the 200
+nearest specs at most, so `has_more` is `false` on the page that reaches them. Use PostgreSQL with
+pgvector 0.8 or later: an older pgvector can return a short page when unpublished specs still have
+embeddings.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `APIOME_MCP_OPENAPI_DOCUMENT_CACHE_BYTES` | `67108864` | Most built documents one process keeps, counted as their size as compact JSON (64 MiB). Memory use is several times that. The least recently used go first. `0` builds the document on every call |
+| `APIOME_MCP_SPEC_TAG_HISTOGRAM_CACHE_SECONDS` | `45` | Seconds `spec.list_tags` serves its counts from memory. `0` counts on every call |
+
+Measured on the scale database (200,000 revisions, 45,000 of them public), before and after:
+
+| Call | Before | After |
+| --- | --- | --- |
+| Read a 300-path, 600-operation spec | 2,705 statements, 141 ms | 10 statements, 30 ms; nothing on the next call |
+| `spec.list`, page 1 and page 500 | 70 ms and 67 ms | 0.2 ms each |
+| `project.list`, page 1 | 53 ms | 0.1 ms |
+| `spec.list_tags`, each page | 83 ms | one count of 97 ms, then from memory for 45 seconds |
+| `spec.search`, 5,000 and 45,000 matches | 21 ms and 138 ms | 7 ms and 34 ms |
+| `spec.search_semantic`, 20,000 embedded specs | 45 ms | 8 ms |
+
+**What the upgrade changes in the database.** Migration `V428` stores each published revision's
+place in the list, keeps one row per project for `project.list`, and replaces the vector index
+with one over public specs only. Two things cost more afterwards:
+
+- Publishing a revision writes two more index entries and its project's row.
+- Saving a project's settings rewrites that project's published revisions, because they all move
+  to the top of the list. That takes about 0.05 ms a revision, and about 2 ms for each revision
+  that has an embedding.
+
+Creating or editing a draft costs less than before. On a large database, read
+[Upgrade a large database without blocking writes](#upgrade-a-large-database-without-blocking-writes)
+before you apply `V428`.
+
 ### What the web app reuses within a request and on Home
 
 The web app reads your session, your workspace membership, the workspace's slug and your
@@ -701,6 +758,14 @@ took 7 seconds on the scale database (1,000,000 classes, 500,000 `usage_daily` r
   table and blocks repository scans and file browsing while it runs.
 - `V421` adds an `id` primary key to `usage_hourly` and `usage_daily`. It rewrites both tables, so usage
   ingest and the adoption views wait for it. Apply it outside peak ingest.
+
+`V428` (the MCP catalog's list order) adds a column to `versions`, fills it for every published
+revision, and creates three indexes on `versions`, one of them the vector index. It took 84 seconds
+on the scale database, most of it re-indexing 20,000 embeddings. To keep the index builds from
+blocking writes, add the column yourself first (`ALTER TABLE apiome.versions ADD COLUMN IF NOT EXISTS
+mcp_listed_at timestamptz`), build `idx_versions_mcp_public_listed`,
+`idx_versions_mcp_project_listed` and `idx_versions_mcp_public_listed_embedding_hnsw` concurrently
+with the definitions in the script, then deploy.
 
 ## Find slow queries
 

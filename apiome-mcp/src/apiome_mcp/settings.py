@@ -127,6 +127,25 @@ class Settings(BaseSettings):
         le=10_000,
         description="DBP-1.21: most rows one multi-row INSERT of the audit writer carries.",
     )
+    openapi_document_cache_bytes: int = Field(
+        default=67_108_864,
+        ge=0,
+        le=17_179_869_184,
+        description=(
+            "DBP-1.22: budget of the spec tools' built-document cache, counted as the compact-JSON "
+            "size of the cached OpenAPI documents (memory use is several times that). A revision's "
+            "document is rebuilt only when the revision changes. 0 turns the cache off."
+        ),
+    )
+    spec_tag_histogram_cache_seconds: float = Field(
+        default=45.0,
+        ge=0,
+        le=3600,
+        description=(
+            "DBP-1.22: seconds spec.list_tags serves its tag counts from memory before recounting "
+            "(a new or removed tag shows within this time). 0 recounts on every call."
+        ),
+    )
     openapi_max_json_bytes: int = Field(
         default=2_097_152,
         ge=1024,

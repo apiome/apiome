@@ -20,6 +20,8 @@ on:
       - 'docker-compose.env.example'
       # test_agent_quotas.py pins the SQL of migration V272.
       - 'apiome-db/scripts/**'
+      # test_plan_check_queries.py pins the apiome-mcp statements in the plan check's query list.
+      - 'apiome-db/plan-check/**'
       # The AGX-1.4 golden toolsets (tests/golden/toolsets) are compiled from the import
       # corpus, so a fixture or manifest edit alone must re-run the drift gate.
       - 'apiome-ui/examples/**'
@@ -42,6 +44,8 @@ on:
       - 'docker-compose.env.example'
       # test_agent_quotas.py pins the SQL of migration V272.
       - 'apiome-db/scripts/**'
+      # test_plan_check_queries.py pins the apiome-mcp statements in the plan check's query list.
+      - 'apiome-db/plan-check/**'
       # The AGX-1.4 golden toolsets (tests/golden/toolsets) are compiled from the import
       # corpus, so a fixture or manifest edit alone must re-run the drift gate.
       - 'apiome-ui/examples/**'

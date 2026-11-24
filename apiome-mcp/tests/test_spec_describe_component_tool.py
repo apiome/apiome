@@ -14,6 +14,7 @@ from apiome_mcp.spec_describe_component_tool import (
     build_spec_describe_component_response,
     extract_resolved_component,
 )
+from apiome_mcp.spec_openapi_loaders import OpenApiInputs
 
 
 def test_extract_resolved_component_plain_schema() -> None:
@@ -102,11 +103,11 @@ def test_build_spec_describe_component_success() -> None:
     conn_cm.__aexit__.return_value = None
     pool.connection = MagicMock(return_value=conn_cm)
 
-    async def fake_fetch(_conn: object, _revision_id: UUID) -> tuple:
-        return ([], {}, [], [], [])
+    async def fake_fetch(_conn: object, _revision_id: UUID, **_kw: object) -> OpenApiInputs:
+        return OpenApiInputs()
 
     with (
-        patch("apiome_mcp.spec_get_openapi_tool.fetch_openapi_generation_inputs_async", side_effect=fake_fetch),
+        patch("apiome_mcp.spec_get_openapi_tool.load_openapi_inputs", side_effect=fake_fetch),
         patch("apiome_mcp.spec_get_openapi_tool.generate_openapi_spec", return_value=sample_spec),
     ):
 
@@ -164,11 +165,11 @@ def test_build_spec_describe_component_unknown_component() -> None:
     conn_cm.__aexit__.return_value = None
     pool.connection = MagicMock(return_value=conn_cm)
 
-    async def fake_fetch(_conn: object, _revision_id: UUID) -> tuple:
-        return ([], {}, [], [], [])
+    async def fake_fetch(_conn: object, _revision_id: UUID, **_kw: object) -> OpenApiInputs:
+        return OpenApiInputs()
 
     with (
-        patch("apiome_mcp.spec_get_openapi_tool.fetch_openapi_generation_inputs_async", side_effect=fake_fetch),
+        patch("apiome_mcp.spec_get_openapi_tool.load_openapi_inputs", side_effect=fake_fetch),
         patch("apiome_mcp.spec_get_openapi_tool.generate_openapi_spec", return_value=sample_spec),
     ):
 
@@ -207,11 +208,11 @@ def test_build_spec_describe_component_private_audited() -> None:
     conn_cm.__aexit__.return_value = None
     pool.connection = MagicMock(return_value=conn_cm)
 
-    async def fake_fetch(_conn: object, _revision_id: UUID) -> tuple:
-        return ([], {}, [], [], [])
+    async def fake_fetch(_conn: object, _revision_id: UUID, **_kw: object) -> OpenApiInputs:
+        return OpenApiInputs()
 
     with (
-        patch("apiome_mcp.spec_get_openapi_tool.fetch_openapi_generation_inputs_async", side_effect=fake_fetch),
+        patch("apiome_mcp.spec_get_openapi_tool.load_openapi_inputs", side_effect=fake_fetch),
         patch("apiome_mcp.spec_get_openapi_tool.generate_openapi_spec", return_value=sample_spec),
         patch("apiome_mcp.spec_get_openapi_tool.schedule_mcp_private_access_audit") as audit,
     ):
@@ -251,11 +252,11 @@ def test_build_spec_describe_component_allows_oversize_openapi_payload() -> None
     conn_cm.__aexit__.return_value = None
     pool.connection = MagicMock(return_value=conn_cm)
 
-    async def fake_fetch(_conn: object, _revision_id: UUID) -> tuple:
-        return ([], {}, [], [], [])
+    async def fake_fetch(_conn: object, _revision_id: UUID, **_kw: object) -> OpenApiInputs:
+        return OpenApiInputs()
 
     with (
-        patch("apiome_mcp.spec_get_openapi_tool.fetch_openapi_generation_inputs_async", side_effect=fake_fetch),
+        patch("apiome_mcp.spec_get_openapi_tool.load_openapi_inputs", side_effect=fake_fetch),
         patch("apiome_mcp.spec_get_openapi_tool.generate_openapi_spec", return_value=huge),
         patch("apiome_mcp.spec_get_openapi_tool.get_settings") as gs,
     ):

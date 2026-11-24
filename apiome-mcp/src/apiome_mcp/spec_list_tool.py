@@ -1,9 +1,12 @@
-"""MCP ``spec.list`` tool: paginated specs — public catalog plus private rows when authed (#3005, #3011)."""
+"""MCP ``spec.list`` tool: paginated specs — public catalog plus private rows when authed (#3005, #3011).
+
+Pages on the stored ``versions.mcp_listed_at`` (DBP-1.22, #7205): see :mod:`apiome_mcp.spec_listing_sql`.
+"""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from psycopg.rows import dict_row
@@ -22,6 +25,7 @@ from apiome_mcp.spec_authorization import (
     build_authorized_spec_sql_predicate,
     build_mcp_scope_sql_predicate,
 )
+from apiome_mcp.spec_listing_sql import LISTED_PROJECT, PAGE_COLUMNS, Where, listed_version, page_with_tags
 
 CURSOR_VERSION = 1
 MAX_PAGE_SIZE = 100
@@ -97,59 +101,131 @@ def _row_out(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-_LIST_QUERY_ANONYMOUS = """
-    SELECT id, tenant_id, project_id, title, version, description, tags, updated_at
-    FROM apiome.mcp_v_public_specs
-    WHERE (%(tenant)s::uuid IS NULL OR tenant_id = %(tenant)s::uuid)
-      AND (%(project)s::uuid IS NULL OR project_id = %(project)s::uuid)
-      AND (
-        %(cur_ts)s::timestamptz IS NULL
-        OR (updated_at, id) < (%(cur_ts)s::timestamptz, %(cur_id)s::uuid)
-      )
-    ORDER BY updated_at DESC, id DESC
-    LIMIT %(lim)s
-"""
+_ORDER = "updated_at DESC, id DESC"
+_OUTPUT_COLUMNS = (
+    "page.id, page.tenant_id, page.project_id, page.title, page.version, page.description, page.updated_at"
+)
 
-# Positional %%s — filled via str.format with scope/auth fragments from spec_authorization.
-_LIST_QUERY_AUTHENTICATED = """
-SELECT id, tenant_id, project_id, title, version, description, tags, updated_at, spec_visibility
-FROM (
-  SELECT id, tenant_id, project_id, title, version, description, tags, updated_at,
-         'public'::text AS spec_visibility
-  FROM apiome.mcp_v_public_specs AS ps
-  WHERE (%s::uuid IS NULL OR ps.tenant_id = %s::uuid)
-    AND (%s::uuid IS NULL OR ps.project_id = %s::uuid)
-    AND ({public_scope})
 
-  UNION ALL
+def _branch(
+    visibility: Literal["public", "private"],
+    *,
+    access: tuple[str, list[Any]] | None,
+    tenant: UUID | None,
+    project: UUID | None,
+    cursor: tuple[datetime, UUID] | None,
+    limit: int,
+    with_visibility: bool,
+) -> tuple[str, list[Any]]:
+    """One visibility's page: listable revisions in list order, after the cursor, limited.
 
-  SELECT v.id, p.tenant_id, v.project_id, p.name AS title, v.version_id AS version,
-         v.description,
-         COALESCE(tg.tags, ARRAY[]::TEXT[]) AS tags,
-         GREATEST(v.updated_at, p.updated_at, COALESCE(tg.max_tag_updated_at, '-infinity'::timestamptz)) AS updated_at,
-         'private'::text AS spec_visibility
+    Args:
+        visibility: Which revisions.
+        access: The caller's scope / authorization predicate and its parameters (aliases ``p`` and
+            ``v``), or ``None`` for an anonymous caller.
+        tenant: Optional ``tenant_id`` filter.
+        project: Optional ``project_id`` filter.
+        cursor: ``(updated_at, id)`` of the last row of the previous page, if any.
+        limit: Rows to return.
+        with_visibility: Add a ``spec_visibility`` column (the authenticated statement).
+
+    Returns:
+        ``(sql, params)``.
+    """
+    where = Where(listed_version(visibility), LISTED_PROJECT)
+    if access is not None:
+        where.add(access[0], *access[1])
+    where.add_if(tenant, "p.tenant_id = %s")
+    where.add_if(project, "v.project_id = %s")
+    if cursor is not None:
+        where.add("(v.mcp_listed_at, v.id) < (%s, %s)", cursor[0], cursor[1])
+    columns = PAGE_COLUMNS + (f", '{visibility}'::text AS spec_visibility" if with_visibility else "")
+    sql = f"""
+  SELECT {columns}
   FROM apiome.versions v
   INNER JOIN apiome.projects p ON p.id = v.project_id
-  LEFT JOIN LATERAL (
-    SELECT array_agg(vt.name ORDER BY vt.name) AS tags,
-           max(vt.updated_at) AS max_tag_updated_at
-    FROM apiome.version_tags vt
-    WHERE vt.version_id = v.id AND vt.project_id = v.project_id
-  ) tg ON TRUE
-  WHERE v.deleted_at IS NULL
-    AND p.deleted_at IS NULL
-    AND v.enabled IS TRUE
-    AND p.enabled IS TRUE
-    AND v.published IS TRUE
-    AND v.visibility = 'private'::apiome.visibility_type
-    AND ({private_auth})
-    AND (%s::uuid IS NULL OR p.tenant_id = %s::uuid)
-    AND (%s::uuid IS NULL OR v.project_id = %s::uuid)
-) AS merged
-WHERE (%s::timestamptz IS NULL OR (merged.updated_at, merged.id) < (%s::timestamptz, %s::uuid))
-ORDER BY merged.updated_at DESC, merged.id DESC
-LIMIT %s
-"""
+  WHERE {where.sql}
+  ORDER BY v.mcp_listed_at DESC, v.id DESC
+  LIMIT %s"""
+    return sql, [*where.params, limit]
+
+
+def build_spec_list_query(
+    *,
+    auth_ctx: McpAuthContext | None,
+    tenant: UUID | None,
+    project: UUID | None,
+    cursor: tuple[datetime, UUID] | None,
+    limit: int,
+) -> tuple[str, list[Any]]:
+    """The ``spec.list`` statement for a caller: one page, then that page's tags.
+
+    Anonymous callers read the public branch. Authenticated callers read the public branch
+    filtered by key scope and the private branch for their own tenant; each branch returns its
+    first ``limit`` rows after the cursor, so their merge holds the page's first ``limit`` rows.
+
+    Args:
+        auth_ctx: The authenticated caller, or ``None``.
+        tenant: Optional ``tenant_id`` filter.
+        project: Optional ``project_id`` filter.
+        cursor: ``(updated_at, id)`` of the last row already returned, if any.
+        limit: Rows to fetch (the page size plus one, to tell whether more exist).
+
+    Returns:
+        ``(sql, params)``.
+    """
+    if auth_ctx is None:
+        page_sql, params = _branch(
+            "public", access=None, tenant=tenant, project=project, cursor=cursor, limit=limit, with_visibility=False
+        )
+        return page_with_tags(page_sql, columns=_OUTPUT_COLUMNS, order_by=_ORDER), params
+
+    public_sql, public_params = _branch(
+        "public",
+        access=build_mcp_scope_sql_predicate(auth_ctx, tenant_column="p.tenant_id", project_column="v.project_id"),
+        tenant=tenant,
+        project=project,
+        cursor=cursor,
+        limit=limit,
+        with_visibility=True,
+    )
+    try:
+        key_tenant: UUID | None = UUID(str(auth_ctx.tenant_id).strip())
+    except ValueError:
+        key_tenant = None
+    if key_tenant is None or (tenant is not None and tenant != key_tenant):
+        # No private revision can match: the key has no tenant, or the filter names another one.
+        return page_with_tags(public_sql, columns=_OUTPUT_COLUMNS + ", page.spec_visibility", order_by=_ORDER), (
+            public_params
+        )
+    private_sql, private_params = _branch(
+        "private",
+        access=build_authorized_spec_sql_predicate(
+            auth_ctx,
+            tenant_column="p.tenant_id",
+            project_column="v.project_id",
+            visibility_column="v.visibility",
+        ),
+        # Private revisions are the key's own tenant's. The authorization predicate says so inside
+        # an OR; stating it as a plain equality lets the planner start from that tenant's projects.
+        tenant=key_tenant,
+        project=project,
+        cursor=cursor,
+        limit=limit,
+        with_visibility=True,
+    )
+    page_sql = f"""
+  SELECT * FROM (
+    ({public_sql}
+    )
+    UNION ALL
+    ({private_sql}
+    )
+  ) AS merged
+  ORDER BY {_ORDER}
+  LIMIT %s"""
+    statement = page_with_tags(page_sql, columns=_OUTPUT_COLUMNS + ", page.spec_visibility", order_by=_ORDER)
+    return statement, [*public_params, *private_params, limit]
 
 
 async def build_spec_list_response(
@@ -166,60 +242,19 @@ async def build_spec_list_response(
 
     Anonymous callers see published public specs only. Authenticated callers get the
     same response shape with public rows filtered by key scope plus in-scope private
-    revisions for their tenant (see #3011).
+    revisions for their tenant (see #3011). One statement, whose cost is that of one page.
     """
     tenant = _parse_optional_uuid("tenant_id", tenant_id)
     project = _parse_optional_uuid("project_id", project_id)
     lim = _clamp_limit(limit)
     decoded = decode_spec_list_cursor(cursor)
-    cur_ts = decoded[0] if decoded else None
-    cur_id = decoded[1] if decoded else None
 
     if auth_ctx is not None and auth_ctx.scope.deny_all:
         return {"items": [], "has_more": False, "next_cursor": None}
 
-    if auth_ctx is None:
-        params: dict[str, Any] = {
-            "tenant": tenant,
-            "project": project,
-            "cur_ts": cur_ts,
-            "cur_id": cur_id,
-            "lim": lim + 1,
-        }
-        query = _LIST_QUERY_ANONYMOUS
-        exec_params: dict[str, Any] | tuple[Any, ...] = params
-    else:
-        public_scope_sql, public_scope_params = build_mcp_scope_sql_predicate(
-            auth_ctx,
-            tenant_column="ps.tenant_id",
-            project_column="ps.project_id",
-        )
-        private_auth_sql, private_auth_params = build_authorized_spec_sql_predicate(
-            auth_ctx,
-            tenant_column="p.tenant_id",
-            project_column="v.project_id",
-            visibility_column="v.visibility",
-        )
-        query = _LIST_QUERY_AUTHENTICATED.format(
-            public_scope=public_scope_sql,
-            private_auth=private_auth_sql,
-        )
-        exec_params = (
-            tenant,
-            tenant,
-            project,
-            project,
-            *public_scope_params,
-            *private_auth_params,
-            tenant,
-            tenant,
-            project,
-            project,
-            cur_ts,
-            cur_ts,
-            cur_id,
-            lim + 1,
-        )
+    query, exec_params = build_spec_list_query(
+        auth_ctx=auth_ctx, tenant=tenant, project=project, cursor=decoded, limit=lim + 1
+    )
 
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import pytest
 
 from apiome_mcp.mcp_auth import McpAuthContext
@@ -82,8 +84,14 @@ def test_build_sql_deny_all() -> None:
     assert params == []
 
 
+_KEY_TENANT = UUID("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+_TENANT_A = UUID("11111111-1111-4111-8111-111111111111")
+_TENANT_B = UUID("22222222-2222-4222-8222-222222222222")
+_PROJECT_1 = UUID("33333333-3333-4333-8333-333333333333")
+
+
 def test_build_sql_unrestricted_scope_includes_visibility_guard_params() -> None:
-    auth = _ctx(key_tenant="kt-1")
+    auth = _ctx(key_tenant=str(_KEY_TENANT))
     sql, params = build_authorized_spec_sql_predicate(
         auth,
         tenant_column="v.tenant_id",
@@ -91,15 +99,39 @@ def test_build_sql_unrestricted_scope_includes_visibility_guard_params() -> None
         visibility_column="v.visibility",
     )
     assert sql.startswith("(TRUE) AND ")
-    assert "v.visibility::text = 'public'" in sql
-    assert "private" in sql
-    assert params == ["kt-1"]
+    assert "v.visibility = 'public'::apiome.visibility_type" in sql
+    assert "v.visibility = 'private'::apiome.visibility_type AND v.tenant_id = %s::uuid" in sql
+    assert params == [_KEY_TENANT]
+
+
+def test_build_sql_compares_uuid_columns_without_text_casts() -> None:
+    """DBP-1.22: ``column::text = …`` kept every index on the column from serving the predicate."""
+    auth = _ctx(key_tenant=str(_KEY_TENANT), scope=Scope(tenants=(str(_TENANT_A),), projects=(str(_PROJECT_1),)))
+    sql, _params = build_authorized_spec_sql_predicate(
+        auth,
+        tenant_column="p.tenant_id",
+        project_column="v.project_id",
+        visibility_column="v.visibility",
+    )
+    assert "::text" not in sql
+
+
+def test_build_sql_key_without_uuid_tenant_reads_public_only() -> None:
+    auth = _ctx(key_tenant="not-a-uuid")
+    sql, params = build_authorized_spec_sql_predicate(
+        auth,
+        tenant_column="v.tenant_id",
+        project_column="v.project_id",
+        visibility_column="v.visibility",
+    )
+    assert sql == "(TRUE) AND v.visibility = 'public'::apiome.visibility_type"
+    assert params == []
 
 
 def test_build_sql_tenant_and_project_allowlists_order_params() -> None:
     auth = _ctx(
-        key_tenant="kt-9",
-        scope=Scope(tenants=("t-a", "t-b"), projects=("p-1",)),
+        key_tenant=str(_KEY_TENANT),
+        scope=Scope(tenants=(str(_TENANT_A), str(_TENANT_B)), projects=(str(_PROJECT_1),)),
     )
     sql, params = build_authorized_spec_sql_predicate(
         auth,
@@ -107,9 +139,24 @@ def test_build_sql_tenant_and_project_allowlists_order_params() -> None:
         project_column="s.project_id",
         visibility_column="s.visibility",
     )
-    assert "s.tenant_id::text = ANY(%s)" in sql
-    assert "s.project_id::text = ANY(%s)" in sql
-    assert params == [["t-a", "t-b"], ["p-1"], "kt-9"]
+    assert "s.tenant_id = ANY(%s::uuid[])" in sql
+    assert "s.project_id = ANY(%s::uuid[])" in sql
+    assert params == [[_TENANT_A, _TENANT_B], [_PROJECT_1], _KEY_TENANT]
+
+
+def test_scope_entries_that_are_not_uuids_are_dropped() -> None:
+    auth = _ctx(scope=Scope(tenants=("t-a", str(_TENANT_A))))
+    sql, params = build_mcp_scope_sql_predicate(auth, tenant_column="ps.tenant_id", project_column="ps.project_id")
+    assert sql == "(ps.tenant_id = ANY(%s::uuid[]))"
+    assert params == [[_TENANT_A]]
+
+
+def test_scope_allowlist_without_any_uuid_matches_nothing() -> None:
+    """A non-empty allow-list stays a restriction: with no valid id it allows no row."""
+    auth = _ctx(scope=Scope(projects=("p-1",)))
+    sql, params = build_mcp_scope_sql_predicate(auth, tenant_column="ps.tenant_id", project_column="ps.project_id")
+    assert sql == "FALSE"
+    assert params == []
 
 
 def test_build_sql_rejects_bad_identifiers() -> None:

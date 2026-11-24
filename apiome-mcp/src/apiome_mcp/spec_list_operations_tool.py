@@ -7,7 +7,7 @@ from typing import Any
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mcp.mcp_auth import McpAuthContext
-from apiome_mcp.spec_get_openapi_tool import build_spec_get_openapi_response
+from apiome_mcp.spec_get_openapi_tool import build_spec_part_response
 
 # OpenAPI 3.x path item operation keys (exclude summary/description/parameters/servers/$ref).
 _HTTP_METHODS = frozenset({"get", "put", "post", "delete", "options", "head", "patch", "trace"})
@@ -56,12 +56,17 @@ async def build_spec_list_operations_response(
     spec_id: str,
     auth_ctx: McpAuthContext | None = None,
 ) -> list[dict[str, Any]]:
-    """Return sorted operation rows for ``spec_id``, or raise like ``spec.get_openapi``."""
-    spec = await build_spec_get_openapi_response(
+    """Return sorted operation rows for ``spec_id``, or raise like ``spec.get_openapi``.
+
+    Reads the paths, operations and their descriptions only (three statements; none when the
+    index or the full document of the unchanged revision is cached) — DBP-1.22.
+    """
+    rows: list[dict[str, Any]] = await build_spec_part_response(
         pool,
         spec_id=spec_id,
+        part="operations",
+        derive=sorted_operations_from_openapi,
         auth_ctx=auth_ctx,
-        apply_json_payload_cap=False,
         private_access_audit_tool="spec.list_operations",
     )
-    return sorted_operations_from_openapi(spec)
+    return rows

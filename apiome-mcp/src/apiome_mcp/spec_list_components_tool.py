@@ -7,7 +7,7 @@ from typing import Any
 from psycopg_pool import AsyncConnectionPool
 
 from apiome_mcp.mcp_auth import McpAuthContext
-from apiome_mcp.spec_get_openapi_tool import build_spec_get_openapi_response
+from apiome_mcp.spec_get_openapi_tool import build_spec_part_response
 
 # OpenAPI ``components`` kinds exposed by MCP list/describe tools (subset of the spec).
 MCP_COMPONENT_KINDS: tuple[str, ...] = ("schemas", "parameters", "responses", "securitySchemes")
@@ -36,12 +36,17 @@ async def build_spec_list_components_response(
     spec_id: str,
     auth_ctx: McpAuthContext | None = None,
 ) -> dict[str, list[str]]:
-    """Return grouped component names for ``spec_id``, or raise like ``spec.get_openapi``."""
-    spec = await build_spec_get_openapi_response(
+    """Return grouped component names for ``spec_id``, or raise like ``spec.get_openapi``.
+
+    Reads the classes, properties, security schemes and component pins only (four statements; none
+    when the names or the full document of the unchanged revision are cached) — DBP-1.22.
+    """
+    names: dict[str, list[str]] = await build_spec_part_response(
         pool,
         spec_id=spec_id,
+        part="components",
+        derive=grouped_components_from_openapi,
         auth_ctx=auth_ctx,
-        apply_json_payload_cap=False,
         private_access_audit_tool="spec.list_components",
     )
-    return grouped_components_from_openapi(spec)
+    return names

@@ -1,9 +1,13 @@
-"""MCP ``project.list`` tool: distinct projects with cursor pagination."""
+"""MCP ``project.list`` tool: distinct projects with cursor pagination.
+
+Reads the per-project rollup ``apiome.mcp_project_listing`` (DBP-1.22, #7205) instead of grouping
+every listed revision by project on each page.
+"""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from psycopg.rows import dict_row
@@ -17,10 +21,8 @@ from apiome_mcp.cursor_codec import (
     utc,
 )
 from apiome_mcp.mcp_auth import McpAuthContext
-from apiome_mcp.spec_authorization import (
-    build_authorized_spec_sql_predicate,
-    build_mcp_scope_sql_predicate,
-)
+from apiome_mcp.spec_authorization import build_mcp_scope_sql_predicate
+from apiome_mcp.spec_listing_sql import LISTED_PROJECT, Where
 
 CURSOR_VERSION = 1
 MAX_PAGE_SIZE = 100
@@ -89,94 +91,107 @@ def _row_out(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-_PROJECT_LIST_ANONYMOUS = """
-WITH agg AS (
-  SELECT tenant_id, project_id, MAX(title) AS title, MAX(updated_at) AS updated_at
-  FROM apiome.mcp_v_public_specs
-  WHERE (%(tenant)s::uuid IS NULL OR tenant_id = %(tenant)s::uuid)
-    AND (%(project)s::uuid IS NULL OR project_id = %(project)s::uuid)
-  GROUP BY tenant_id, project_id
-)
-SELECT tenant_id, project_id, title, updated_at
-FROM agg
-WHERE (
-  %(cur_ts)s::timestamptz IS NULL
-  OR (
-    updated_at < %(cur_ts)s::timestamptz
-    OR (
-      updated_at = %(cur_ts)s::timestamptz
-      AND tenant_id < %(cur_te)s::uuid
-    )
-    OR (
-      updated_at = %(cur_ts)s::timestamptz
-      AND tenant_id = %(cur_te)s::uuid
-      AND project_id < %(cur_pr)s::uuid
-    )
+_ORDER = "updated_at DESC, tenant_id DESC, project_id DESC"
+
+
+def _branch(
+    stamp: Literal["public_listed_at", "listed_at"],
+    *,
+    access: tuple[str, list[Any]] | None,
+    own_tenant: tuple[str, UUID] | None,
+    tenant: UUID | None,
+    project: UUID | None,
+    cursor: tuple[datetime, UUID, UUID] | None,
+    limit: int,
+) -> tuple[str, list[Any]]:
+    """One page of ``apiome.mcp_project_listing`` in list order on one of its timestamps.
+
+    Args:
+        stamp: ``public_listed_at`` (projects with a public listed revision) or ``listed_at``
+            (projects with any listed revision — a key's own tenant).
+        access: The caller's scope predicate and its parameters (columns ``l.tenant_id``,
+            ``l.project_id``), or ``None`` for an anonymous caller.
+        own_tenant: ``("=", id)`` to read only the key's tenant, ``("<>", id)`` to read every
+            other tenant, ``None`` for no such split.
+        tenant: Optional ``tenant_id`` filter.
+        project: Optional ``project_id`` filter.
+        cursor: ``(updated_at, tenant_id, project_id)`` of the last row already returned, if any.
+        limit: Rows to return.
+
+    Returns:
+        ``(sql, params)``.
+    """
+    where = Where(f"l.{stamp} IS NOT NULL", LISTED_PROJECT)
+    if own_tenant is not None:
+        where.add(f"l.tenant_id {own_tenant[0]} %s", own_tenant[1])
+    if access is not None:
+        where.add(access[0], *access[1])
+    where.add_if(tenant, "l.tenant_id = %s")
+    where.add_if(project, "l.project_id = %s")
+    if cursor is not None:
+        where.add(f"(l.{stamp}, l.tenant_id, l.project_id) < (%s, %s, %s)", *cursor)
+    sql = f"""
+  SELECT l.tenant_id, l.project_id, p.name AS title, l.{stamp} AS updated_at
+  FROM apiome.mcp_project_listing l
+  INNER JOIN apiome.projects p ON p.id = l.project_id
+  WHERE {where.sql}
+  ORDER BY l.{stamp} DESC, l.tenant_id DESC, l.project_id DESC
+  LIMIT %s"""
+    return sql, [*where.params, limit]
+
+
+def build_project_list_query(
+    *,
+    auth_ctx: McpAuthContext | None,
+    tenant: UUID | None,
+    project: UUID | None,
+    cursor: tuple[datetime, UUID, UUID] | None,
+    limit: int,
+) -> tuple[str, list[Any]]:
+    """The ``project.list`` statement for a caller, over the per-project rollup (V428).
+
+    A project's ``updated_at`` is the newest listing timestamp of the revisions the caller may
+    see: its public revisions for an anonymous caller or a key of another tenant
+    (``public_listed_at``), all its listed revisions for a key of the owning tenant
+    (``listed_at``). The two cases are disjoint sets of projects, so an authenticated caller's
+    page is the merge of one limited read of each.
+
+    Args:
+        auth_ctx: The authenticated caller, or ``None``.
+        tenant: Optional ``tenant_id`` filter.
+        project: Optional ``project_id`` filter.
+        cursor: ``(updated_at, tenant_id, project_id)`` of the last row already returned, if any.
+        limit: Rows to fetch (the page size plus one).
+
+    Returns:
+        ``(sql, params)``.
+    """
+    common: dict[str, Any] = {"tenant": tenant, "project": project, "cursor": cursor, "limit": limit}
+    if auth_ctx is None:
+        return _branch("public_listed_at", access=None, own_tenant=None, **common)
+
+    access = build_mcp_scope_sql_predicate(auth_ctx, tenant_column="l.tenant_id", project_column="l.project_id")
+    try:
+        key_tenant: UUID | None = UUID(str(auth_ctx.tenant_id).strip())
+    except ValueError:
+        key_tenant = None
+    if key_tenant is None:
+        # A key without a tenant id owns no private revisions: the public rollup is all it sees.
+        return _branch("public_listed_at", access=access, own_tenant=None, **common)
+
+    others_sql, others_params = _branch("public_listed_at", access=access, own_tenant=("<>", key_tenant), **common)
+    own_sql, own_params = _branch("listed_at", access=access, own_tenant=("=", key_tenant), **common)
+    sql = f"""
+SELECT tenant_id, project_id, title, updated_at FROM (
+  ({others_sql}
   )
-)
-ORDER BY updated_at DESC, tenant_id DESC, project_id DESC
-LIMIT %(lim)s
-"""
-
-# Positional %%s — filled via str.format with scope/auth fragments from spec_authorization.
-_PROJECT_LIST_AUTHENTICATED = """
-WITH merged AS (
-  SELECT ps.tenant_id, ps.project_id, ps.title, ps.updated_at
-  FROM apiome.mcp_v_public_specs AS ps
-  WHERE (%s::uuid IS NULL OR ps.tenant_id = %s::uuid)
-    AND (%s::uuid IS NULL OR ps.project_id = %s::uuid)
-    AND ({public_scope})
-
   UNION ALL
-
-  SELECT p.tenant_id, v.project_id, p.name AS title,
-         GREATEST(
-           v.updated_at,
-           p.updated_at,
-           COALESCE(tg.max_tag_updated_at, '-infinity'::timestamptz)
-         ) AS updated_at
-  FROM apiome.versions v
-  INNER JOIN apiome.projects p ON p.id = v.project_id
-  LEFT JOIN LATERAL (
-    SELECT max(vt.updated_at) AS max_tag_updated_at
-    FROM apiome.version_tags vt
-    WHERE vt.version_id = v.id AND vt.project_id = v.project_id
-  ) tg ON TRUE
-  WHERE v.deleted_at IS NULL
-    AND p.deleted_at IS NULL
-    AND v.enabled IS TRUE
-    AND p.enabled IS TRUE
-    AND v.published IS TRUE
-    AND v.visibility = 'private'::apiome.visibility_type
-    AND ({private_auth})
-    AND (%s::uuid IS NULL OR p.tenant_id = %s::uuid)
-    AND (%s::uuid IS NULL OR v.project_id = %s::uuid)
-),
-agg AS (
-  SELECT tenant_id, project_id, MAX(title) AS title, MAX(updated_at) AS updated_at
-  FROM merged
-  GROUP BY tenant_id, project_id
-)
-SELECT tenant_id, project_id, title, updated_at
-FROM agg
-WHERE (
-  %s::timestamptz IS NULL
-  OR (
-    updated_at < %s::timestamptz
-    OR (
-      updated_at = %s::timestamptz
-      AND tenant_id < %s::uuid
-    )
-    OR (
-      updated_at = %s::timestamptz
-      AND tenant_id = %s::uuid
-      AND project_id < %s::uuid
-    )
+  ({own_sql}
   )
-)
-ORDER BY updated_at DESC, tenant_id DESC, project_id DESC
-LIMIT %s
-"""
+) AS merged
+ORDER BY {_ORDER}
+LIMIT %s"""
+    return sql, [*others_params, *own_params, limit]
 
 
 async def build_project_list_response(
@@ -197,60 +212,13 @@ async def build_project_list_response(
     project = _parse_optional_uuid("project_id", project_id)
     lim = _clamp_limit(limit)
     decoded = decode_project_list_cursor(cursor)
-    cur_ts = decoded[0] if decoded else None
-    cur_te = decoded[1] if decoded else None
-    cur_pr = decoded[2] if decoded else None
 
     if auth_ctx is not None and auth_ctx.scope.deny_all:
         return {"items": [], "has_more": False, "next_cursor": None}
 
-    if auth_ctx is None:
-        params: dict[str, Any] = {
-            "tenant": tenant,
-            "project": project,
-            "cur_ts": cur_ts,
-            "cur_te": cur_te,
-            "cur_pr": cur_pr,
-            "lim": lim + 1,
-        }
-        query = _PROJECT_LIST_ANONYMOUS
-        exec_params: dict[str, Any] | tuple[Any, ...] = params
-    else:
-        public_scope_sql, public_scope_params = build_mcp_scope_sql_predicate(
-            auth_ctx,
-            tenant_column="ps.tenant_id",
-            project_column="ps.project_id",
-        )
-        private_auth_sql, private_auth_params = build_authorized_spec_sql_predicate(
-            auth_ctx,
-            tenant_column="p.tenant_id",
-            project_column="v.project_id",
-            visibility_column="v.visibility",
-        )
-        query = _PROJECT_LIST_AUTHENTICATED.format(
-            public_scope=public_scope_sql,
-            private_auth=private_auth_sql,
-        )
-        exec_params = (
-            tenant,
-            tenant,
-            project,
-            project,
-            *public_scope_params,
-            *private_auth_params,
-            tenant,
-            tenant,
-            project,
-            project,
-            cur_ts,
-            cur_ts,
-            cur_ts,
-            cur_te,
-            cur_ts,
-            cur_te,
-            cur_pr,
-            lim + 1,
-        )
+    query, exec_params = build_project_list_query(
+        auth_ctx=auth_ctx, tenant=tenant, project=project, cursor=decoded, limit=lim + 1
+    )
 
     async with pool.connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:

@@ -424,7 +424,8 @@ async def spec_search(
         "Semantic search over published **public** specs that have **mcp_public_embedding** populated "
         "(pgvector cosine distance vs OpenAI-compatible query embeddings). Requires "
         "APIOME_MCP_OPENAI_API_KEY. Uses the same pagination shape as spec.search (items, has_more, "
-        "next_cursor). Rows without embeddings are omitted until backfilled. Requires an MCP API key."
+        "next_cursor). Returns the 200 nearest specs at most: has_more is false on the page that reaches "
+        "them. Rows without embeddings are omitted until backfilled. Requires an MCP API key."
     ),
 )
 async def spec_search_semantic(
@@ -449,8 +450,8 @@ async def spec_search_semantic(
     name="spec.list_tags",
     description=(
         "Distinct version-tag names across published public OpenAPI specs with counts of specs "
-        "that expose each tag (via apiome.mcp_v_public_specs). Sorted by count descending, "
-        "then tag name ascending. Cursor pagination: limit defaults to 50, capped at 100; "
+        "that expose each tag. Sorted by count descending, then tag name ascending. Counts are "
+        "refreshed about every 45 seconds. Cursor pagination: limit defaults to 50, capped at 100; "
         "pass next_cursor from the previous response for the next page. Requires an MCP API key."
     ),
 )

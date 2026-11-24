@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 from typing import Any, Mapping
+from uuid import UUID
 
 from apiome_mcp.mcp_auth import McpAuthContext
 from apiome_mcp.scope import Scope
@@ -64,17 +65,47 @@ def authorize_spec(auth_ctx: McpAuthContext, spec_row: Mapping[str, Any]) -> boo
     return tenant_id == str(auth_ctx.tenant_id)
 
 
+def _uuid_list(values: tuple[str, ...]) -> list[UUID]:
+    """The entries of a scope list that are UUIDs, as UUIDs.
+
+    Tenant and project ids are UUIDs, so an entry that is not one can never match a row; it is
+    dropped here instead of being compared as text on every row.
+    """
+    out: list[UUID] = []
+    for value in values:
+        try:
+            out.append(UUID(str(value).strip()))
+        except ValueError:
+            continue
+    return out
+
+
+def _uuid_or_none(value: Any) -> UUID | None:
+    """``value`` as a UUID, or ``None`` when it is not one."""
+    try:
+        return UUID(str(value).strip())
+    except ValueError:
+        return None
+
+
 def _scope_predicate_sql(scope: Scope, tenant_column: str, project_column: str) -> tuple[str, list[Any]]:
+    """Scope allow-lists as ``column = ANY(uuid[])`` predicates (DBP-1.22).
+
+    The columns are compared as uuid, with the allow-list sent as a uuid array, so an index on the
+    column can serve the predicate (a ``column::text`` cast could not). A non-empty allow-list
+    with no valid id matches nothing.
+    """
     parts: list[str] = []
     params: list[Any] = []
 
-    if scope.tenants:
-        parts.append(f"{tenant_column}::text = ANY(%s)")
-        params.append(list(scope.tenants))
-
-    if scope.projects:
-        parts.append(f"{project_column}::text = ANY(%s)")
-        params.append(list(scope.projects))
+    for column, allowed in ((tenant_column, scope.tenants), (project_column, scope.projects)):
+        if not allowed:
+            continue
+        ids = _uuid_list(allowed)
+        if not ids:
+            return "FALSE", []
+        parts.append(f"{column} = ANY(%s::uuid[])")
+        params.append(ids)
 
     if not parts:
         return "TRUE", []
@@ -96,7 +127,8 @@ def build_authorized_spec_sql_predicate(
 
     Returns ``FALSE`` with an empty param list when ``auth_ctx.scope`` is deny-all. Otherwise
     params are ordered: tenant allow-list (if any), project allow-list (if any),
-    then the key's ``tenant_id`` text for the private-spec guard.
+    then the key's ``tenant_id`` (a uuid) for the private-spec guard. A key whose tenant id is
+    not a UUID can read no private spec.
     """
     tenant_column = _validate_qualified_identifier(tenant_column, role="tenant_column")
     project_column = _validate_qualified_identifier(project_column, role="project_column")
@@ -107,11 +139,15 @@ def build_authorized_spec_sql_predicate(
 
     scope_sql, scope_params = _scope_predicate_sql(auth_ctx.scope, tenant_column, project_column)
 
+    public_sql = f"{visibility_column} = 'public'::apiome.visibility_type"
+    key_tenant = _uuid_or_none(auth_ctx.tenant_id)
+    if key_tenant is None:
+        return f"({scope_sql}) AND {public_sql}", scope_params
+
     visibility_sql = (
-        f"({visibility_column}::text = 'public' OR "
-        f"({visibility_column}::text = 'private' AND {tenant_column}::text = %s))"
+        f"({public_sql} OR ({visibility_column} = 'private'::apiome.visibility_type AND {tenant_column} = %s::uuid))"
     )
-    params = [*scope_params, str(auth_ctx.tenant_id)]
+    params = [*scope_params, key_tenant]
 
     combined = f"({scope_sql}) AND {visibility_sql}"
     return combined, params
