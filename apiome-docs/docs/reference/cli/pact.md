@@ -1,6 +1,6 @@
 ---
 title: "apiome pact"
-description: "Pact Broker: publish provider contracts for bi-directional contract testing."
+description: "Pact Broker: publish provider contracts, and export consumer surfaces as Pact files."
 sidebar_position: 27
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,59 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome pact {#pact}
 
-Pact Broker: publish provider contracts for bi-directional contract testing.
+Pact Broker: publish provider contracts, and export consumer surfaces as Pact files.
 
 ```text
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`publish-provider-contract`](#pact-publish-provider-contract).
+Subcommands: [`export-consumer-contract`](#pact-export-consumer-contract), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract).
+
+## apiome pact export-consumer-contract {#pact-export-consumer-contract}
+
+Export a picker-declared consumer surface as a Pact v4 file (GET …/consumers/{c}/pact).
+
+The pact carries one interaction per declared operation and response status, only the declared fields, and the specification's examples as sample values. Prints the findings — every value that had to be invented (placeholder) and everything left out (omitted), with a reason. Without --output the Pact JSON goes to stdout and the summary to stderr. Exits 2 when the server refuses (a contract imported from a Pact file, or one that yields no interaction), and 1 with --fail-on-findings when there are findings.
+
+```text
+apiome pact export-consumer-contract [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--project`, `-p` | text |  | yes | The project the consumer consumes (slug or id). |
+| `--consumer`, `-c` | text |  | yes | The consumer (slug or id). |
+| `--revision` | integer range |  |  | A contract revision; defaults to the current one. |
+| `--provider` | text |  |  | The provider pacticipant name; defaults to the project's bound pacticipant. |
+| `--output`, `-o` | file |  |  | Write the Pact file here instead of stdout. |
+| `--fail-on-findings` | flag |  |  | Exit 1 when any value was invented or anything was left out. |
+
+## apiome pact publish-consumer-contract {#pact-publish-consumer-contract}
+
+Publish a picker-declared consumer surface to the Pact Broker (POST …/consumers/{c}/pact/publish).
+
+Generates the same Pact v4 file as export-consumer-contract and publishes it for the consumer version, as `pact-broker publish` would: branch, tags and build URL are recorded and the bi-directional comparisons run. Prints the findings and the broker's notices. Exits 2 when the server refuses (409 when that version already published a different pact), and 1 with --fail-on-findings when there are findings.
+
+```text
+apiome pact publish-consumer-contract [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--project`, `-p` | text |  | yes | The project the consumer consumes (slug or id). |
+| `--consumer`, `-c` | text |  | yes | The consumer (slug or id). |
+| `--consumer-app-version`, `-a` | text |  | yes | The consumer build's version (a commit SHA is best). |
+| `--branch` | text |  |  | The branch the build came from. |
+| `--tag`, `-t` | text (repeatable) |  |  | Tag the consumer version (repeatable). |
+| `--build-url` | text |  |  | http(s) URL of the CI build. |
+| `--revision` | integer range |  |  | A contract revision; defaults to the current one. |
+| `--provider` | text |  |  | The provider pacticipant name; defaults to the project's bound pacticipant. |
+| `--output`, `-o` | file |  |  | Also write the published Pact file here. |
+| `--fail-on-findings` | flag |  |  | Exit 1 when any value was invented or anything was left out. |
 
 ## apiome pact publish-provider-contract {#pact-publish-provider-contract}
 

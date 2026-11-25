@@ -452,3 +452,69 @@ def test_an_import_against_an_empty_specification_reports_every_interaction() ->
     assert result.surface.operations == []
     assert len(result.unresolved) == 2
     assert {entry.reason for entry in result.unresolved} == {"operation-not-found"}
+
+
+# ===========================================================================
+# Pact v4 body objects (PFX-2.6, #6930)
+# ===========================================================================
+
+
+def _v4(request_body: Any, response_body: Any) -> Dict[str, Any]:
+    """A v4 pact with one POST interaction carrying the given body objects."""
+    return {
+        "consumer": {"name": "Billing Service"},
+        "provider": {"name": "Pets"},
+        "interactions": [
+            {
+                "type": "Synchronous/HTTP",
+                "description": "create a pet",
+                "request": {"method": "POST", "path": "/v1/pets", "body": request_body},
+                "response": {"status": 201, "body": response_body},
+            }
+        ],
+        "metadata": {"pactSpecification": {"version": "4.0"}},
+    }
+
+
+def _field_paths(result: Any) -> Dict[str, list]:
+    """Declared field paths by location."""
+    found: Dict[str, list] = {}
+    for operation in result.surface.operations:
+        for declared in operation.fields:
+            found.setdefault(declared.location, []).append(declared.path)
+    return {key: sorted(value) for key, value in found.items()}
+
+
+def test_a_v4_body_is_read_out_of_its_content_wrapper() -> None:
+    result = import_pact(
+        _v4(
+            {"contentType": "application/json", "encoded": False, "content": {"name": "Rex"}},
+            {"contentType": "application/json", "encoded": False, "content": {"id": "1", "name": "Rex"}},
+        ),
+        _index(),
+    )
+    assert result.unresolved == []
+    assert _field_paths(result) == {"request": ["name"], "response": ["id", "name"]}
+
+
+def test_a_v4_body_stored_as_json_text_or_base64_is_parsed() -> None:
+    import base64 as b64
+
+    encoded = b64.b64encode(json.dumps({"id": "1"}).encode()).decode()
+    result = import_pact(
+        _v4(
+            {"contentType": "application/json", "encoded": "json", "content": json.dumps({"tag": "dog"})},
+            {"contentType": "application/json", "encoded": "base64", "content": encoded},
+        ),
+        _index(),
+    )
+    assert result.unresolved == []
+    assert _field_paths(result) == {"request": ["tag"], "response": ["id"]}
+
+
+def test_a_v3_body_that_looks_like_a_wrapper_is_read_as_it_is() -> None:
+    document = _v4({"content": {"name": "Rex"}}, None)
+    document["metadata"] = {"pactSpecification": {"version": "3.0.0"}}
+    result = import_pact(document, _index())
+    # v3 has no wrapper: "content" is a field the consumer sends, and the Pet schema lacks it.
+    assert [u.field_path for u in result.unresolved] == ["content", "content.name"]

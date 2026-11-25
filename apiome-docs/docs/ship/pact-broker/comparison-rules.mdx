@@ -330,6 +330,26 @@ An `unverified` verdict (see [above](#when-the-provider-contract-is-unverified))
 comparison's own strength; `comparisonVerdict` holds the verdict before the evidence was weighed,
 and `selfVerification` the evidence status.
 
+## Pacts generated from a declared surface
+
+A consumer declared in the picker can [export or publish a generated pact](./bi-directional.mdx#consumers-without-a-pact-file).
+That pact is compared by exactly the rules on this page. Three things about it are worth knowing
+when you read its verdict:
+
+- **Its response bodies carry one `type` matcher at `$`.** The sample values are the provider's
+  own examples, so the comparison checks that the provider promises the same **shape** — every
+  declared field with the same type — not the example values. A nullable field the consumer reads
+  shows as an unproven `type` rule in the [fidelity list](#the-fidelity-list).
+- **Its request bodies carry no matcher.** They are what the consumer sends, so each value is
+  checked against the request schema as it is.
+- **A placeholder is still compared.** A field with no example gets a value of its declared type,
+  which the schema accepts, so a placeholder does not fail the comparison — but it only proves the
+  type. The export's `findings` list every placeholder; add examples to the specification to
+  compare real values.
+
+Generated from the same specification it is compared with, the pact normally passes. It fails when the
+provider's contract has since dropped or changed something the consumer declared.
+
 ## What is not compared
 
 - **Security requirements.** Whether a request carries the credentials the operation's `security`

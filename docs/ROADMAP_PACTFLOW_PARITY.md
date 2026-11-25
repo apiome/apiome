@@ -235,7 +235,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-2.6 · [#6930](https://github.com/apiome/apiome/issues/6930) | Pact export from a declared consumer surface | Generate a Pact v4 file from a CTG-4.1 consumer contract | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest, apiome-cli |
 
 **✅ PFX-2.1 · #6925 Provider contract publication — Complete**
 - **Problem:** Bi-directional testing needs the provider's OpenAPI registered against a provider version, tying it to the broker's version/branch model.
@@ -257,7 +256,7 @@ flowchart LR
 
 **✅ PFX-2.5 · #6929 Comparison fidelity report — Complete** — surfaced in API and UI: for every interaction the list of checks performed, unsupported matching rules, and "could not compare" items, so a green verdict is never read as stronger than it is (same honesty rule as CTG-4.3 coverage). *Deps:* 2.2. **Docs:** screenshot `pact-comparison-fidelity`.
 
-**PFX-2.6 · #6930 Pact export from a declared consumer surface** — consumers registered through the UI picker (not a pact file) can export a Pact v4 file (and publish it to the broker) generated from the operations/fields they declared, using OAS examples as the sample values. *Deps:* CTG-4.1, 1.2. **Docs:** how-to page.
+**✅ PFX-2.6 · #6930 Pact export from a declared consumer surface — Complete** — consumers registered through the UI picker (not a pact file) can export a Pact v4 file (and publish it to the broker) generated from the operations/fields they declared, using OAS examples as the sample values. *Deps:* CTG-4.1, 1.2. **Docs:** how-to page.
 
 ### PFX-EPIC-3 · [#6909](https://github.com/apiome/apiome/issues/6909) — Provider verification engine
 

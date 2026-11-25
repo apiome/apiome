@@ -39,6 +39,8 @@ which is the honest answer, and the one the acceptance criterion asks for.
 
 from __future__ import annotations
 
+import base64
+import binascii
 import hashlib
 import json
 from dataclasses import dataclass
@@ -64,6 +66,7 @@ __all__ = [
     "MAX_BODY_DEPTH",
     "MAX_PACT_BYTES",
     "PactImportResult",
+    "body_content",
     "import_pact",
     "interaction_is_http",
     "parse_pact_document",
@@ -249,6 +252,46 @@ def unwrap_matcher(node: Any) -> Any:
     return current
 
 
+#: The keys of a Pact v4 body object (``{"content": …, "contentType": …, "encoded": …}``).
+_V4_BODY_KEYS = frozenset({"content", "contentType", "encoded", "contentTypeHint"})
+
+
+def body_content(body: Any, *, v4: bool) -> Any:
+    """The example body an interaction carries, out of the v4 body object when there is one.
+
+    Pact specification 4 wraps every body: ``{"contentType": "application/json", "encoded":
+    false, "content": {...}}``. Reading the wrapper as the body would declare ``content`` and
+    ``contentType`` as fields. A JSON body the writer stored as text (``encoded: "json"``, or a
+    string under a JSON content type) is parsed; a base64 body is decoded first.
+
+    Args:
+        body: The interaction's ``request.body`` or ``response.body``.
+        v4: Whether the document declares specification 4.x.
+
+    Returns:
+        The example body; unchanged for v1-v3, and for a v4 body that is not a wrapper. A text
+        body that is not JSON comes back as text, which names no fields.
+    """
+    if not (v4 and isinstance(body, dict) and "content" in body and set(body) <= _V4_BODY_KEYS):
+        return body
+    content = body["content"]
+    encoded = body.get("encoded")
+    encoding = encoded.strip().lower() if isinstance(encoded, str) else ""
+    if encoding == "base64" and isinstance(content, str):
+        try:
+            content = base64.b64decode(content, validate=True).decode("utf-8")
+        except (binascii.Error, UnicodeDecodeError, ValueError):
+            return None
+        encoding = "json"
+    media_type = str(body.get("contentType") or "").lower()
+    if isinstance(content, str) and (encoding == "json" or "json" in media_type):
+        try:
+            return json.loads(content)
+        except ValueError:
+            return content
+    return content
+
+
 def _body_paths(body: Any) -> List[str]:
     """Every dotted data path a Pact example body names.
 
@@ -340,6 +383,7 @@ def import_pact(document: Mapping[str, Any], index: SpecIndex) -> PactImportResu
         The import result, including everything that could not be placed.
     """
     interactions = _as_list(document.get("interactions"))
+    v4 = (pact_specification_version(document) or "").startswith("4")
     accumulated: Dict[Tuple[str, str], ConsumerContractOperation] = {}
     seen_pointers: Dict[Tuple[str, str], set[str]] = {}
     unresolved: List[UnresolvedInteraction] = []
@@ -437,7 +481,7 @@ def import_pact(document: Mapping[str, Any], index: SpecIndex) -> PactImportResu
             index,
             entry,
             location="request",
-            paths=_body_paths(request.get("body")),
+            paths=_body_paths(body_content(request.get("body"), v4=v4)),
             status=None,
             target=target,
             pointers=pointers,
@@ -448,7 +492,7 @@ def import_pact(document: Mapping[str, Any], index: SpecIndex) -> PactImportResu
             index,
             entry,
             location="response",
-            paths=_body_paths(response.get("body")),
+            paths=_body_paths(body_content(response.get("body"), v4=v4)),
             status=status_text,
             target=target,
             pointers=pointers,

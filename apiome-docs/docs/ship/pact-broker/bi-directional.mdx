@@ -457,6 +457,118 @@ its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901), in the OpenAPI docum
 | `429` | `pact-publish-rate-limited` | The workspace is over its publish budget, shared with pact publishing. Retry after the seconds in `Retry-After`. |
 | `404` | `provider-contract-not-found`, `pacticipant-not-found` | On a read: the version published no contract, or there is no such provider. |
 
+## Consumers without a Pact file
+
+A consumer you registered on a project's [**Consumers**](../../build/projects.mdx#consumers) tab
+by picking operations and fields has no contract test suite, so it has no pact to publish. Apiome
+can write one for it: a **Pact v4 file** generated from what the consumer declared, with the
+provider's own OpenAPI **examples** as the sample values. Publish it, and the consumer takes part
+in the matrix, can-i-deploy and bi-directional comparisons like any other.
+
+### Export the pact
+
+1. **Declare the consumer's surface** on **Consumers** (or with
+   `PUT …/projects/<project>/consumers/<consumer>/contract`). Only a revision declared this way is
+   exported.
+2. **Run the export** from the CLI, naming the project and the consumer:
+
+   ```bash
+   apiome pact export-consumer-contract --project pets --consumer web-app -o web-app-pets.json
+   ```
+
+   The command writes the Pact file and prints a summary:
+
+   ```text
+   Pact v4 for web-app → pets-api: 3 interaction(s) from contract revision 4 (specification 1.2.0)
+     findings: 1 placeholder(s), 0 omitted
+       placeholder [no-example] GET /pets/{petId} 404 response 'code': the specification has no example for the response field 'code'; wrote 0
+     wrote web-app-pets.json
+   ```
+
+3. **Read the findings** (see [What the generated pact says](#what-the-generated-pact-says)). Add
+   `--fail-on-findings` in CI to exit `1` while any value is invented or anything is left out.
+
+`--revision 3` exports an older revision; without it the current one is used. Without `-o` the
+Pact JSON goes to stdout and the summary to stderr. The same export is
+`GET …/v1/tenants/<workspace>/projects/<project>/consumers/<consumer>/pact`; it answers the pact
+in `pact` next to `findings`, `placeholder_count` and `omitted_count`.
+
+### Publish it to the broker
+
+Publish straight from Apiome for a consumer version, as `pact-broker publish` would:
+
+```bash
+apiome pact publish-consumer-contract --project pets --consumer web-app \
+  --consumer-app-version "$GIT_COMMIT" --branch main --tag prod
+```
+
+The version, branch, tags and `--build-url` are recorded; the pact is stored once however many
+versions publish it unchanged; a different pact for a version that already has one is refused
+with `409 pact-content-conflict`; and the comparisons run against the provider's contracts, listed
+in the output. The API is `POST …/consumers/<consumer>/pact/publish` with `consumer_version` and,
+optionally, `branch`, `tags`, `build_url`, `revision` and `provider`. You can also publish the
+exported file with `pact-broker publish` yourself.
+
+### What the generated pact says
+
+- **One interaction per operation and response status.** A consumer that reads fields of the
+  `200` and the `404` of `GET /pets/{petId}` gets two interactions, `showPet returns 200` and
+  `showPet returns 404`. An operation declared without fields expects its first `2xx` status and
+  no body.
+- **Only the declared fields.** A response body carries the fields the consumer reads and the
+  objects that hold them; a request body carries the fields it sends. Declared query, header and
+  cookie parameters are sent; path parameters fill the path, after the first server URL's base
+  path (`/v1/pets/p-42`).
+- **Sample values from the specification**, in this order: the media type's `example` or first
+  `examples` value, then the field schema's `example`, first `examples` value, `default`, `const`
+  or first `enum` value, then the same on an enclosing object. A parameter uses its own `example`
+  or `examples` first.
+- **Response values are matched by type.** Every response body carries a `type` matcher at `$`:
+  the examples are documentation, not the provider's data, so the provider must return the same
+  shape, not the same values. See [Comparison rules](./comparison-rules.mdx#pacts-generated-from-a-declared-surface).
+- **The same revision always gives the same pact**, so publishing it again for a new version
+  reuses the stored pact version.
+
+Nothing is dropped silently. Every finding names its operation, status and field:
+
+| Outcome | Reason | What happened |
+| --- | --- | --- |
+| `placeholder` | `no-example` | No example covers the field or parameter. A value of its type was written (`"string"`, `0`, `true`, or a date, UUID, email or URI for those formats). |
+| `placeholder` | `status-range` | The response is declared as a range such as `2XX`; the interaction expects `200`. |
+| `placeholder` | `complex-parameter-value` | A parameter's example is an object; it was sent as JSON text. |
+| `omitted` | `status-default`, `status-not-numeric` | Fields declared under the `default` response name no status, so they are left out. Declare them under a numeric status. |
+| `omitted` | `media-type-not-json` | The body is not JSON (form data, XML, text); its fields are left out. |
+| `omitted` | `media-type-conflict` | Fields of one body were declared under two media types; only the JSON one is written. |
+| `omitted` | `operation-not-found`, `field-not-found`, `parameter-not-declared` | The specification version the contract was declared against no longer has it. |
+| `omitted` | `no-response-declared` | The operation has no response with a single status, so it has no interaction. |
+| `omitted` | `contract-unresolved` | The contract itself recorded this as unresolved when it was declared. |
+
+### Which names the pact carries
+
+- **Consumer** — the pacticipant [bound](./concepts.mdx#how-a-pacticipant-relates-to-projects-and-consumers)
+  to the consumer, otherwise the consumer's handle (`web-app`).
+- **Provider** — `--provider` when you give it; otherwise the pacticipant bound to the project,
+  otherwise the project's handle. When several pacticipants are bound to the project, name one
+  with `--provider`, or the export is refused with `409 consumer-pact-export-provider-ambiguous`.
+
+Bind both before you publish, so the pact lands on the applications you already have rather than
+registering new ones.
+
+### When an export is refused
+
+| Status | Code | What to do |
+| --- | --- | --- |
+| `404` | `consumer-not-found`, `consumer-contract-not-found` | The project has no such consumer, or the consumer declared nothing yet. |
+| `404` | `consumer-version-not-found` | The specification version the revision was declared against was deleted. Declare the contract again. |
+| `409` | `consumer-pact-export-provider-ambiguous` | Several pacticipants are bound to the project. Name the provider. |
+| `422` | `consumer-pact-export-unsupported-source` | The revision came from a Pact file (publish that file instead) or from an agent's tools. |
+| `422` | `consumer-pact-export-no-version` | The revision records no specification version. Declare the contract again. |
+| `422` | `consumer-pact-export-empty` | No interaction could be written. `findings` says why for each operation. |
+| `422` | `consumer-specification-unavailable` | The specification version cannot be rendered as OpenAPI. |
+
+Publishing can also answer the [publish refusals](./publish-pacts.mdx), such as
+`409 pact-content-conflict` and `429 pact-publish-rate-limited`.
+
 ## Who can do what
 
 | Action | Needs | Viewer | Editor | Admin | Owner |
@@ -466,6 +578,8 @@ its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901), in the OpenAPI docum
 | Publish from an Apiome version | `pacts:create` and `versions:view` | — | ✓ | ✓ | ✓ |
 | Cite an Apiome provider-verification report | `pacts:create` and `verification_evidence:view` | — | ✓ | ✓ | ✓ |
 | List comparisons and read a fidelity report | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Export a declared consumer surface as a pact | `consumer_contracts:view` and `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Publish a declared consumer surface | `consumer_contracts:view` and `pacts:create` | — | ✓ | ✓ | ✓ |
 
 A restricted API key (one with scopes) cannot use these routes yet; use a full-access key from a
 member with the **Editor** role.
