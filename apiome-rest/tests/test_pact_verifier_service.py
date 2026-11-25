@@ -14,6 +14,7 @@ pact-jvm and pact-go write, replayed on the real runner over a fake transport:
 
 from __future__ import annotations
 
+import json
 from contextlib import ExitStack
 from typing import Any, Dict, List, Optional
 from unittest.mock import patch
@@ -24,6 +25,7 @@ import pytest
 from app.consumer_contract_store import ConsumerActor
 from app.contract_runner import AuthResolutionError
 from app.pact_pending import NO_EVIDENCE
+from app.pact_provider_state import ProviderStateRecord, StateParameter, StateSetup
 from app.pact_publication import PactPublicationError, PactRecord, pact_content_sha
 from app.pact_selectors import CODE_SELECTOR_INVALID, PactCandidate
 from app.pact_verifier import PactVerificationOptions
@@ -150,6 +152,7 @@ def _verify(
     *,
     allow_mutating_target: bool = True,
     resolve: Any = None,
+    states: Any = (),
     **request: Any,
 ) -> PactVerifyResponse:
     """Run the service with the stores faked and the transport pointed at ``api``."""
@@ -168,6 +171,7 @@ def _verify(
         ):
             stack.enter_context(patch(f"{_SERVICE}.{name}", side_effect=fake))
         stack.enter_context(patch(f"{_SERVICE}.load_pending_evidence", return_value=NO_EVIDENCE))
+        stack.enter_context(patch(f"{_SERVICE}.list_states", return_value=list(states)))
         stack.enter_context(
             patch(
                 f"{_SERVICE}.resolve_target",
@@ -175,6 +179,9 @@ def _verify(
             )
         )
         stack.enter_context(patch("app.contract_runner.build_guarded_client", side_effect=lambda **_k: api.client()))
+        stack.enter_context(
+            patch("app.pact_provider_state_handler.build_guarded_client", side_effect=lambda **_k: api.client())
+        )
         try:
             return verify_provider_pacts(None, _TENANT, "ledger-api", body, actor=_ACTOR, broker_base=_BASE)
         finally:
@@ -469,5 +476,118 @@ def test_a_storage_fault_in_evidence_does_not_lose_the_verification() -> None:
     assert pact.outcome == "passed" and pact.published
 
 
-def test_no_provider_state_handler_is_registered_yet() -> None:
-    assert provider_state_handler(None, _TENANT, _PROVIDER, target()) is None
+def test_no_provider_state_handler_without_registered_states() -> None:
+    with patch(f"{_SERVICE}.list_states", return_value=[]):
+        assert provider_state_handler(None, _TENANT, _PROVIDER, target()) is None
+
+
+# ---------------------------------------------------------------------------
+# The provider-state registry (PFX-3.3)
+# ---------------------------------------------------------------------------
+
+_STATE_CHANGE = "POST /_pact/states"
+
+
+def _registered(name: str = "invoice 1042 exists", **fields: Any) -> ProviderStateRecord:
+    moment = target().resolved_at
+    return ProviderStateRecord(
+        id="33333333-3333-4333-8333-333333333333",
+        provider="ledger-api",
+        name=name,
+        parameters=[
+            StateParameter.model_validate(p) for p in fields.pop("parameters", [{"name": "id", "required": True}])
+        ],
+        setup=StateSetup.model_validate(fields.pop("setup", {"kind": "state_change", "url": "/_pact/states"})),
+        created_at=moment,
+        updated_at=moment,
+    )
+
+
+def _state_api(teardown_status: int = 200, setup_status: int = 200) -> LedgerApi:
+    def state_change(request: httpx.Request) -> httpx.Response:
+        action = json.loads(request.content)["action"]
+        return httpx.Response(setup_status if action == "setup" else teardown_status)
+
+    return LedgerApi({_STATE_CHANGE: state_change})
+
+
+def test_a_registered_state_is_set_up_around_its_interaction_and_the_pact_publishes() -> None:
+    broker, api = _Broker([PACT_JS]), _state_api()
+    response = _verify(broker, api, verification=PactVerificationOptions(), states=[_registered()])
+    (pact,) = response.pacts
+    assert (pact.outcome, pact.published) == ("passed", True)
+    assert api.sent == [_STATE_CHANGE, "GET /invoices/1042", _STATE_CHANGE, "GET /invoices/9999"]
+    assert [json.loads(r.content) for r in api.requests if r.method == "POST"] == [
+        {"state": "invoice 1042 exists", "params": {"id": 1042}, "action": "setup"},
+        {"state": "invoice 1042 exists", "params": {"id": 1042}, "action": "teardown"},
+    ]
+    assert pact.interactions[0].states_set_up is True
+    assert pact.state_teardown_failures == []
+
+
+def test_an_unregistered_state_is_held_back_before_anything_is_sent() -> None:
+    broker, api = _Broker([PACT_JS]), _state_api()
+    response = _verify(
+        broker, api, verification=PactVerificationOptions(), states=[_registered("some other state")]
+    )
+    (pact,) = response.pacts
+    assert pact.outcome == "incomplete" and not pact.published
+    assert pact.interactions[0].code == "provider-state-not-registered"
+    assert "'invoice 1042 exists'" in (pact.interactions[0].message or "")
+    assert api.sent == ["GET /invoices/9999"]
+
+
+def test_an_unregistered_state_can_still_be_replayed_without_setup_when_asked() -> None:
+    broker, api = _Broker([PACT_JS]), _state_api()
+    options = PactVerificationOptions(replay_without_state_setup=True)
+    response = _verify(broker, api, verification=options, states=[_registered("some other state")])
+    (pact,) = response.pacts
+    assert pact.outcome == "passed"
+    assert pact.interactions[0].states_set_up is False
+    assert _STATE_CHANGE not in api.sent
+
+
+def test_a_missing_required_parameter_holds_the_interaction_back() -> None:
+    broker, api = _Broker([PACT_JS]), _state_api()
+    state = _registered(parameters=[{"name": "id", "required": True}, {"name": "customer", "required": True}])
+    response = _verify(broker, api, verification=PactVerificationOptions(), states=[state])
+    (pact,) = response.pacts
+    assert pact.interactions[0].code == "provider-state-param-missing"
+    assert _STATE_CHANGE not in api.sent
+
+
+def test_a_failed_setup_skips_the_interaction_with_the_call_named() -> None:
+    broker, api = _Broker([PACT_JS]), _state_api(setup_status=500)
+    response = _verify(broker, api, verification=PactVerificationOptions(), states=[_registered()])
+    (pact,) = response.pacts
+    assert pact.outcome == "incomplete"
+    assert pact.interactions[0].code == "provider-state-setup-failed"
+    assert "POST /_pact/states answered 500" in (pact.interactions[0].message or "")
+    assert "GET /invoices/1042" not in api.sent
+
+
+def test_a_failed_teardown_is_reported_and_the_result_stands() -> None:
+    broker, api = _Broker([PACT_JS]), _state_api(teardown_status=503)
+    response = _verify(broker, api, verification=PactVerificationOptions(), states=[_registered()])
+    (pact,) = response.pacts
+    assert (pact.outcome, pact.published) == ("passed", True)
+    assert pact.state_teardown_failures == [
+        "teardown of 'invoice 1042 exists' failed: POST /_pact/states answered 503"
+    ]
+
+
+def test_a_state_change_on_a_target_that_forbids_mutating_is_held_back() -> None:
+    broker, api = _Broker([PACT_JS]), _state_api()
+    response = _verify(
+        broker, api, verification=PactVerificationOptions(), states=[_registered()], allow_mutating_target=False
+    )
+    (pact,) = response.pacts
+    assert pact.interactions[0].code == "provider-state-setup-blocked"
+    assert _STATE_CHANGE not in api.sent
+
+
+def test_the_registry_handler_is_built_from_the_provider_s_states() -> None:
+    with patch(f"{_SERVICE}.list_states", return_value=[_registered()]):
+        handler = provider_state_handler(None, _TENANT, _PROVIDER, target(), {"Authorization": "x"})
+    assert handler is not None and set(handler.registry) == {"invoice 1042 exists"}
+    assert handler.auth_headers == {"Authorization": "x"}

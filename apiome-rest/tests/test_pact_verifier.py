@@ -378,3 +378,46 @@ def test_a_skipped_interaction_carries_its_reason_as_an_exception() -> None:
 def test_a_pact_4_interaction_key_is_the_interaction_id() -> None:
     _, results = _replay(PACT_JVM, LedgerApi(), None, PactVerificationOptions(allow_mutating=True))
     assert [entry["interactionId"] for entry in pact_test_results(results)] == ["5a1c9e0b", "77aa01ff"]
+
+
+# ---------------------------------------------------------------------------
+# The registry's pre-run question (PFX-3.3)
+# ---------------------------------------------------------------------------
+
+
+def test_the_planner_holds_back_what_the_registry_cannot_set_up() -> None:
+    manifest = compile_fixture(PACT_JS)
+    asked: List[List[str]] = []
+
+    def issue(states: Sequence[PactProviderState]) -> Optional[tuple]:
+        asked.append([state.name for state in states])
+        return ("provider-state-not-registered", "the provider has no registered state 'invoice 1042 exists'")
+
+    plan = plan_pact_run(
+        manifest, PactVerificationOptions(), target_allows_mutating=False, has_state_handler=True, state_issue=issue
+    )
+    held = _case_id(manifest, "GET /invoices/1042")
+    assert plan.skips == {held: "provider-state-not-registered"}
+    assert "not sent" in (plan.decisions[held].skip_message or "")
+    assert asked == [["invoice 1042 exists"]]  # only interactions that name a state are asked about
+
+    replay = plan_pact_run(
+        manifest,
+        PactVerificationOptions(replay_without_state_setup=True),
+        target_allows_mutating=False,
+        has_state_handler=True,
+        state_issue=issue,
+    )
+    assert replay.skips == {} and replay.states_assumed == [held]
+
+
+def test_hooks_leave_assumed_interactions_alone() -> None:
+    manifest = compile_fixture(PACT_JS)
+    handler = _Handler()
+    held = _case_id(manifest, "GET /invoices/1042")
+    hooks = state_hooks(handler, [held])
+    assert hooks is not None and hooks.before is not None and hooks.after is not None
+    case = next(case for case in manifest.cases if case.case_id == held)
+    assert hooks.before(case) is None
+    hooks.after(case, None)  # type: ignore[arg-type]
+    assert handler.calls == []

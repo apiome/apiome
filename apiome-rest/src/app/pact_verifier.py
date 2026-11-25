@@ -16,6 +16,7 @@ Recorded path is not a path on the target       skip ``pact-request-path-not-on-
 Mutating, target policy forbids it              skip ``mutating-method-blocked``
 Mutating, run did not opt in                    skip ``mutating-method-blocked``
 Names a provider state, nothing can set it up   skip ``provider-state-not-set-up`` …
+Names a state the registry cannot set up        skip with the registry's code (PFX-3.3) …
 … and the run asked to replay it anyway         run, without setup
 Anything else                                   run (a fixture, if one matches, substituted)
 ==============================================  ==========================================
@@ -31,11 +32,14 @@ than the target, never wider. Unlike a CTG-4.3 verification, no fixture is neede
 mutating interaction: the consumer recorded the request. A CTG-4.3 :class:`MutatingFixture` is
 still honoured when one names the operation, to send a safer query, headers or body.
 
-**Provider states are a seam.** An interaction that says "given an invoice 1042 exists" is only
-meaningful once the provider is in that state. Setting states up is the provider-state registry's
-job (PFX-3.3, #6933); this module defines what it plugs into — :class:`ProviderStateHandler` — and
-until a handler exists an interaction with a state is **skipped, with the reason**, unless the run
-sets ``replay_without_state_setup`` because its target already holds the data.
+**Provider states.** An interaction that says "given an invoice 1042 exists" is only meaningful
+once the provider is in that state. Setting states up is the provider-state registry's job
+(PFX-3.3, :mod:`app.pact_provider_state`); this module defines what it plugs into —
+:class:`ProviderStateHandler`. Without a handler an interaction with a state is **skipped, with the
+reason**, unless the run sets ``replay_without_state_setup`` because its target already holds the
+data. With one, the planner first asks the handler's ``state_issue`` whether the interaction's
+states can be set up at all — an unregistered state, a missing required parameter, a setup the
+target's policy forbids — and holds back, before anything is sent, every interaction it cannot.
 
 **What does the run say?** — :func:`interaction_results`, :func:`pact_outcome`
 
@@ -54,7 +58,7 @@ header) and the rule that failed, with what was expected and what came back.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Protocol, Sequence
+from typing import Any, Callable, Collection, Dict, List, Optional, Protocol, Sequence, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -176,14 +180,15 @@ class PactVerificationOptions(BaseModel):
         default=False,
         description=(
             "Replay interactions that name a provider state even though nothing sets the state "
-            "up — for a target that already holds the data the pacts assume. Off by default: "
-            "such interactions are skipped with `provider-state-not-set-up`."
+            "up — no state is registered, or the registry cannot set this one up — for a target "
+            "that already holds the data the pacts assume. Off by default: such interactions are "
+            "skipped with `provider-state-not-set-up` or the registry's reason."
         ),
     )
 
 
 class ProviderStateHandler(Protocol):
-    """What sets a provider up for an interaction — the seam PFX-3.3 (#6933) implements.
+    """What sets a provider up for an interaction — implemented by the registry (PFX-3.3).
 
     The verifier calls :meth:`setup` immediately before an interaction that names states is sent,
     and :meth:`teardown` after it, one interaction at a time.
@@ -245,6 +250,7 @@ def plan_pact_run(
     *,
     target_allows_mutating: bool,
     has_state_handler: bool = False,
+    state_issue: Optional[Callable[[Sequence[PactProviderState]], Optional[Tuple[str, str]]]] = None,
 ) -> PactRunPlan:
     """Decide, interaction by interaction, what this verification is allowed to send.
 
@@ -256,6 +262,9 @@ def plan_pact_run(
         options: The run's mutation opt-in, fixtures and provider-state choice.
         target_allows_mutating: The ECA-1.2 target policy's ``allow_mutating_methods``.
         has_state_handler: Whether a :class:`ProviderStateHandler` will set states up.
+        state_issue: With a handler, why an interaction's states cannot be set up —
+            ``(code, message)`` or ``None`` — asked before anything is sent (the registry's
+            :meth:`~app.pact_provider_state_handler.RegistryStateHandler.issue`).
 
     Returns:
         The :class:`PactRunPlan` to hand to :func:`app.contract_runner.run_suite`.
@@ -309,6 +318,13 @@ def plan_pact_run(
                 )
                 continue
             plan.states_assumed.append(case.case_id)
+        elif states and state_issue is not None:
+            found = state_issue(case.pact.provider_states if case.pact is not None else [])
+            if found is not None:
+                if not options.replay_without_state_setup:
+                    _skip(plan, case, found[0], f"the interaction was not sent: {found[1]}")
+                    continue
+                plan.states_assumed.append(case.case_id)
 
         fixture = by_case.get((case.operation_key, case.case_id)) or by_operation.get(case.operation_key)
         if mutating and fixture is not None:
@@ -317,11 +333,15 @@ def plan_pact_run(
     return plan
 
 
-def state_hooks(handler: Optional[ProviderStateHandler]) -> Optional[CaseHooks]:
+def state_hooks(
+    handler: Optional[ProviderStateHandler], assumed: Collection[str] = ()
+) -> Optional[CaseHooks]:
     """Wrap a provider-state handler as the runner's per-case hooks.
 
     Args:
         handler: The handler, or ``None`` when nothing sets states up.
+        assumed: Case ids the plan replays without setting their states up
+            (:attr:`PactRunPlan.states_assumed`); the handler is not called for them.
 
     Returns:
         Hooks that set an interaction's states up before it is sent and tear them down after, or
@@ -330,9 +350,11 @@ def state_hooks(handler: Optional[ProviderStateHandler]) -> Optional[CaseHooks]:
     if handler is None:
         return None
 
+    skip = set(assumed)
+
     def before(case: ContractCase) -> Optional[CaseDecision]:
         states = case.pact.provider_states if case.pact is not None else []
-        if not states:
+        if not states or case.case_id in skip:
             return None
         problem = handler.setup(states)
         if problem is None:
@@ -345,7 +367,7 @@ def state_hooks(handler: Optional[ProviderStateHandler]) -> Optional[CaseHooks]:
 
     def after(case: ContractCase, _result: OperationResultInput) -> None:
         states = case.pact.provider_states if case.pact is not None else []
-        if states:
+        if states and case.case_id not in skip:
             handler.teardown(states)
 
     return CaseHooks(before=before, after=after)
@@ -405,7 +427,9 @@ class InteractionVerification(BaseModel):
         default=None,
         description=(
             "Why it did not pass: `status-mismatch`, `pact-header-mismatch`, `pact-body-mismatch`, "
-            "`mutating-method-blocked`, `provider-state-not-set-up`, `transport-error`, `timeout` …"
+            "`mutating-method-blocked`, `provider-state-not-set-up`, `provider-state-not-registered`, "
+            "`provider-state-param-missing`, `provider-state-setup-blocked`, `provider-state-setup-failed`, "
+            "`transport-error`, `timeout` …"
         ),
     )
     message: Optional[str] = Field(default=None, description="The reason, in a sentence.")

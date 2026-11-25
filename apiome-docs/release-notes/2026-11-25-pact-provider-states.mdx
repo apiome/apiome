@@ -1,0 +1,32 @@
+---
+slug: pact-provider-states
+title: "Provider states for hosted verification"
+description: "Register how each provider state is set up; Apiome sets it up around every interaction."
+authors: [apiome]
+---
+
+Hosted verification can now set provider states up. A provider registers the states its pacts name
+("an invoice 1042 exists") and how each one is set up, and Apiome sets each interaction's states up
+before replaying it and tears them down after. See [Provider states](/ship/pact-broker/provider-states).
+
+{/* truncate */}
+
+- **Two ways to set a state up.** A call to a state-change URL with the Pact state-change body
+  (`state`, `params`, `action`), sent to the verification target with its credential or to an
+  external URL with none; or a recorded fixture of requests sent to the target, with `${param}`
+  filled in. An empty fixture says the target already holds the data.
+- **Parameters and defaults.** Each state declares its parameters. A default fills in a value the
+  interaction leaves out; a missing required parameter holds the interaction back instead of
+  setting up the wrong data.
+- **One setup per target when you need it.** A per-target override replaces the default setup on
+  one verification target, for example a fixture on staging and a state-change endpoint locally.
+- **Checked before a run.** `POST …/provider-states/check` reports every state the selected pacts
+  name that is not registered, misses a required parameter, or needs a mutating request the
+  target forbids. The new **Provider states** page shows the same check with the registry.
+- **The target stays in charge.** Setup requests follow the target's policy: no mutating request
+  goes to a target that forbids mutating methods. A failed setup skips the interaction and says
+  which state and call failed; a failed teardown is reported with the pact.
+
+Provider states are registered through the REST API and need `pacts:create`; reading and checking
+them needs `pacts:view`. Values a state-change call returns are not injected into `ProviderState`
+generators yet.

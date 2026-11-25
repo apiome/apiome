@@ -1,0 +1,156 @@
+{
+  "providers": [
+    {
+      "slug": "billing-service",
+      "name": "Billing Service"
+    },
+    {
+      "slug": "ledger-api",
+      "name": "Ledger API"
+    },
+    {
+      "slug": "orders-ui",
+      "name": "Orders UI"
+    }
+  ],
+  "states": [
+    {
+      "id": "33333331-3333-4333-8333-333333333331",
+      "provider": "ledger-api",
+      "name": "invoice 1042 exists",
+      "description": "An open invoice with the given id.",
+      "parameters": [
+        {
+          "name": "currency",
+          "required": false,
+          "default": "EUR",
+          "description": null
+        }
+      ],
+      "setup": {
+        "kind": "state_change",
+        "url": "/_pact/provider-states",
+        "teardown": true,
+        "requests": [],
+        "teardown_requests": []
+      },
+      "overrides": [
+        {
+          "target_id": "22222222-2222-4222-8222-222222222222",
+          "target_slug": "ledger-staging",
+          "setup": {
+            "kind": "fixture",
+            "url": null,
+            "teardown": true,
+            "requests": [
+              {
+                "method": "PUT",
+                "path": "/test-data/invoices/${id}",
+                "headers": {},
+                "body": {
+                  "id": "${id}"
+                }
+              }
+            ],
+            "teardown_requests": [
+              {
+                "method": "DELETE",
+                "path": "/test-data/invoices/${id}",
+                "headers": {},
+                "body": null
+              }
+            ]
+          }
+        }
+      ],
+      "created_at": "2026-11-25T09:00:00Z",
+      "updated_at": "2026-11-25T09:00:00Z"
+    },
+    {
+      "id": "33333332-3333-4333-8333-333333333332",
+      "provider": "ledger-api",
+      "name": "an archived invoice exists",
+      "description": null,
+      "parameters": [],
+      "setup": {
+        "kind": "state_change",
+        "url": "https://states.example.test/pact",
+        "teardown": false,
+        "requests": [],
+        "teardown_requests": []
+      },
+      "overrides": [],
+      "created_at": "2026-11-25T09:00:00Z",
+      "updated_at": "2026-11-25T09:00:00Z"
+    }
+  ],
+  "check": {
+    "provider": "ledger-api",
+    "target": "ledger-staging",
+    "ready": false,
+    "pacts": 3,
+    "blocking": 1,
+    "warnings": 1,
+    "states": [
+      {
+        "name": "the ledger has entries",
+        "registered": false,
+        "state_id": null,
+        "setup_kind": null,
+        "overridden": false,
+        "interactions": 1,
+        "uses": [
+          {
+            "consumer": "reporting-job",
+            "pact_version_sha": "2e4c3573b76f9557c45fc54e77dd5bac766317280ec77d6ff85cc4ebaabd3e2f",
+            "interaction": "a request for the ledger summary",
+            "params": {}
+          }
+        ],
+        "problems": [
+          {
+            "code": "provider-state-not-registered",
+            "severity": "blocking",
+            "state": "the ledger has entries",
+            "parameter": null,
+            "message": "the provider has no registered state 'the ledger has entries'; register it (with how to set it up) or ask the consumer to use a registered name.",
+            "consumer": null,
+            "interaction": null
+          }
+        ]
+      },
+      {
+        "name": "invoice 1042 exists",
+        "registered": true,
+        "state_id": "33333331-3333-4333-8333-333333333331",
+        "setup_kind": "fixture",
+        "overridden": true,
+        "interactions": 1,
+        "uses": [
+          {
+            "consumer": "billing-service",
+            "pact_version_sha": "e136c2d01e7105e9ceb43ac12e347b48a33eb9bf2e3268b37d0dc90c029bf644",
+            "interaction": "a request for invoice 1042",
+            "params": {
+              "id": 1042
+            }
+          }
+        ],
+        "problems": [
+          {
+            "code": "provider-state-param-undeclared",
+            "severity": "warning",
+            "state": "invoice 1042 exists",
+            "parameter": "id",
+            "message": "the interaction passes 'id' to the state 'invoice 1042 exists', which does not declare it; it is passed on unchanged.",
+            "consumer": "billing-service",
+            "interaction": "a request for invoice 1042"
+          }
+        ]
+      }
+    ],
+    "unused": [
+      "an archived invoice exists"
+    ]
+  }
+}

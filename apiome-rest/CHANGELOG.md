@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.849.0] - 2026-11-25
+
+### Added
+- **Provider-state registry (PFX-3.3, #6933).** OpenAPI 1.673.0 (three new paths, twelve new
+  schemas). Migration apiome-db V441 (`pact_provider_state`, `pact_provider_state_override`).
+  - `GET|POST /v1/tenants/{tenant}/pact-verifier/providers/{provider}/provider-states` and
+    `GET|PUT|DELETE …/provider-states/{stateId}` register the states a provider's pacts name: the
+    name (as consumers write it, unique per provider), declared parameters
+    (`required`, `default`), and the setup — `state_change` (POST the Pact state-change body
+    `{state, params, action}` to a path on the verification target, with the target's credential,
+    or to an absolute http(s) URL through the SSRF guard with none; teardown optional) or
+    `fixture` (recorded `requests` / `teardown_requests` sent to the target with `${param}`
+    substituted; empty `requests` means the target already holds the data). Per-target
+    `overrides` replace the default on one verification target, resolved in the caller's tenant.
+    Refusals carry a JSON Pointer (`provider-state-invalid` 422: a fixture path off the target, a
+    placeholder naming no parameter, a credential header, two overrides of one target;
+    `provider-state-name-taken` 409; `provider-state-not-found` 404). `pacts:view` / `create` /
+    `edit` / `delete` on the provider.
+  - `POST …/provider-states/check` selects the pacts a run would (`selection`, as on `…/verify`)
+    and reports every provider state their interactions name, before anything is sent:
+    registered or not, the setup used on `target_ref`, and each problem —
+    `provider-state-not-registered`, `provider-state-param-missing`,
+    `provider-state-setup-blocked` (blocking) and `provider-state-param-undeclared` (warning);
+    `ready` when nothing blocks; `unused` lists registered states no pact names. `pacts:view`.
+
+### Changed
+- **Hosted verifier sets provider states up (PFX-3.2 → 3.3).** When the provider has registered
+  states, `POST …/pact-verifier/pacts/provider/{provider}/verify` holds back, before anything is
+  sent, every interaction whose states the registry cannot set up (the codes above), unless
+  `verification.replay_without_state_setup` is set; it then sets each state up before its
+  interaction and tears it down after, in reverse. A failed setup skips the interaction with
+  `provider-state-setup-failed` naming the state and the call; a failed teardown is listed in the
+  pact's new `state_teardown_failures` and the result stands. Setup requests to the target honour
+  its policy (no mutating request when `allow_mutating_methods` is false). A provider with no
+  registered state behaves as before (`provider-state-not-set-up`).
+
 ## [1.848.0] - 2026-11-25
 
 ### Added

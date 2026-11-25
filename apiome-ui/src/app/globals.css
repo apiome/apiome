@@ -44741,3 +44741,192 @@ tr[data-selected="true"] > td:first-child {
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+
+/* ===========================================================================
+   Provider states — PFX-3.3 (#6933). `.pps-*` is the page: the provider
+   picker, the pre-run check and the registered states. A problem reads as a
+   badge and a sentence; blocking ones carry a danger rule. Tokens only.
+   =========================================================================== */
+.pps {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pps__providers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pps__provider {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.pps__provider:hover {
+  background: var(--bg-subtle);
+}
+
+.pps__provider[aria-pressed='true'] {
+  border-color: var(--border-focus);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+.pps__panels {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pps__panel {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pps__panel-head,
+.pps__entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pps__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.pps__statement {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pps__meta {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pps__counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.pps__counter {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 7rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+}
+
+.pps__counter-label {
+  color: var(--fg-muted);
+  font-size: var(--fs-2xs);
+}
+
+.pps__counter-value {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pps__counter[data-zero] .pps__counter-value {
+  color: var(--fg-muted);
+}
+
+.pps__entries,
+.pps__problems {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pps__entry {
+  display: grid;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+.pps__state-name {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pps__problem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 2px solid var(--warn);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  font-size: var(--fs-sm);
+}
+
+.pps__problem[data-severity='blocking'] {
+  border-inline-start-color: var(--danger);
+}
+
+.pps__problem-message {
+  flex: 1 1 20rem;
+  color: var(--fg);
+}
+
+.pps__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.pps__facts {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.pps__fact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.pps__fact dt {
+  min-inline-size: 8rem;
+  color: var(--fg-muted);
+}
+
+.pps__fact dd {
+  margin: 0;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}

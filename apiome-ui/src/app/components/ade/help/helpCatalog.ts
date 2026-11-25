@@ -1317,6 +1317,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['hosted verifier', 'pact-verifier', 'mismatches', 'matching rules', 'mutating interactions', 'provider states', 'dry run', 'incomplete'],
   },
   {
+    id: 'provider-states',
+    title: 'Provider states',
+    summary: "Register the states a provider's pacts name, and how Apiome sets them up.",
+    page: 'apiome-docs/docs/ship/pact-broker/provider-states.mdx',
+    section: 'reference',
+    keywords: ['state-change url', 'recorded fixture', 'setup', 'teardown', 'per-target override', 'pre-run check', 'parameters'],
+  },
+  {
     id: 'environments',
     title: 'Environments and deployments',
     summary: 'Record which version of each application runs in each environment.',

@@ -1,0 +1,211 @@
+---
+title: Provider states
+description: Register the states a provider's pacts name, and how Apiome sets them up.
+sidebar_position: 4.5
+tags: [contracts, pact, verification, rest]
+---
+
+A pact interaction often assumes a **provider state**, such as "an invoice 1042 exists". Before
+[hosted verification](./hosted-verification.mdx) replays that interaction, the provider has to be
+in that state. You register each state once, per provider, with how Apiome sets it up. Apiome then
+sets the state up before the interaction and tears it down after.
+
+Until a provider registers at least one state, interactions that name a state are skipped with
+`provider-state-not-set-up`, as before.
+
+## Before you start
+
+- A consumer has [published a pact](./publish-pacts.mdx) that names provider states.
+- The provider's running copy is registered as a **verification target**. See
+  [Verify a provider from Apiome](./hosted-verification.mdx#before-you-start).
+- To register states, your API key belongs to a member who holds **Pacts** → **Create**. To change
+  or delete them, **Pacts** → **Edit** or **Delete**. To read and check them, **Pacts** → **View**.
+
+## Register a state
+
+Send a `POST` with the state's name, its parameters and its setup:
+
+```bash
+curl -X POST \
+  "$APIOME/v1/tenants/acme/pact-verifier/providers/ledger-api/provider-states" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "invoice 1042 exists",
+    "description": "An open invoice with the given id.",
+    "parameters": [
+      { "name": "id", "required": true },
+      { "name": "currency", "default": "EUR" }
+    ],
+    "setup": { "kind": "state_change", "url": "/_pact/provider-states" }
+  }'
+```
+
+| Field | Required | What it does |
+| --- | --- | --- |
+| `name` | Yes | The state exactly as consumers write it in the pact. It is unique for the provider. |
+| `description` | No | What the state means, for the people reading the registry. |
+| `parameters` | No | The parameters the state takes. A `default` fills in a value the interaction leaves out. |
+| `setup` | Yes | How Apiome sets the state up. See [Setups](#setups). |
+| `overrides` | No | A different setup on one verification target. See [Per-target overrides](#per-target-overrides). |
+
+The answer is `201` with the stored state and its `id`. Read the provider's states with
+`GET …/provider-states`, one with `GET …/provider-states/{id}`, replace one with `PUT` (same body),
+and delete one with `DELETE`.
+
+## Setups
+
+### State-change call
+
+`"kind": "state_change"` sends the Pact state-change request, the one a Pact verifier's
+`stateChangeUrl` receives:
+
+```json
+{ "state": "invoice 1042 exists", "params": { "id": 1042, "currency": "EUR" }, "action": "setup" }
+```
+
+After the interaction the same request is sent with `"action": "teardown"`. Set `"teardown": false`
+to skip it.
+
+| `url` | Sent to | Credential |
+| --- | --- | --- |
+| A path, such as `/_pact/provider-states` | The verification target's base URL. | The target's own credential. |
+| An absolute `https://` URL | That URL, through the same guard that keeps targets off private networks. | None. |
+
+### Recorded fixture
+
+`"kind": "fixture"` sends recorded requests to the verification target. `requests` put the target
+into the state, and `teardown_requests` take it out again. `${name}` in a path, a header value or a
+string in the body is replaced with the parameter's value. A string that is only `${id}` keeps the
+value's type, so `1042` stays a number:
+
+```json
+{
+  "kind": "fixture",
+  "requests": [{ "method": "PUT", "path": "/test-data/invoices/${id}", "body": { "id": "${id}" } }],
+  "teardown_requests": [{ "method": "DELETE", "path": "/test-data/invoices/${id}" }]
+}
+```
+
+Leave `requests` empty when the target already holds the data the state describes, for example a
+staging database seeded on every deploy.
+
+Fixture requests carry the target's credential. A fixture may not store one itself: an
+`Authorization`, `Cookie` or API-key header is refused.
+
+### The target's policy still applies
+
+A setup that sends a mutating request to the target (a state-change call to a path, or a fixture
+with `POST`, `PUT`, `PATCH` or `DELETE`) is only run on a target whose policy allows mutating
+methods. On any other target the interaction is held back with `provider-state-setup-blocked`. A
+state-change URL off the target is not affected.
+
+## Per-target overrides
+
+Use `overrides` when one target needs a different setup, for example seeding staging by fixture
+while a local stack has a state-change endpoint:
+
+```json
+{
+  "overrides": [
+    { "target_ref": "ledger-staging", "setup": { "kind": "fixture", "requests": [] } }
+  ]
+}
+```
+
+`target_ref` is the target's slug or id in this workspace. A target the workspace does not have is
+refused with `provider-state-invalid`, pointing at the override.
+
+## Parameters
+
+When an interaction passes parameters (`"params": { "id": 1042 }`), Apiome compares them with the
+state's declared parameters:
+
+| The interaction | Result |
+| --- | --- |
+| Leaves out a parameter that has a `default` | The default is sent. |
+| Leaves out a `required` parameter with no default | The interaction is held back with `provider-state-param-missing`. |
+| Passes a parameter the state does not declare | It is sent unchanged, and the check reports `provider-state-param-undeclared` as a warning. |
+
+## Check before a run
+
+`POST …/provider-states/check` selects the pacts a verification would and reports every provider
+state their interactions name. Nothing is sent to the target.
+
+```bash
+curl -X POST \
+  "$APIOME/v1/tenants/acme/pact-verifier/providers/ledger-api/provider-states/check" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "target_ref": "ledger-staging", "selection": { "consumerVersionSelectors": [{ "mainBranch": true }] } }'
+```
+
+`selection` is the same as on the verify request. `target_ref` is optional: with it, the check uses
+that target's overrides and its mutating-method policy.
+
+The answer lists unregistered states first. For each state it gives whether it is registered, the
+setup it would use, how many interactions name it, and its problems. `ready` is `true` only when
+nothing would hold an interaction back. `unused` lists registered states that no selected pact
+names.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `provider-state-not-registered` | Blocking | The provider has not registered the state. |
+| `provider-state-param-missing` | Blocking | An interaction leaves out a required parameter. |
+| `provider-state-setup-blocked` | Blocking | The setup sends a mutating request to a target that forbids it. |
+| `provider-state-param-undeclared` | Warning | An interaction passes a parameter the state does not declare. |
+
+## See provider states in the app
+
+**Open** `/ade/dashboard/pacts/provider-states` and **choose a provider**. **Before a run** shows the
+check of its pacts against the registry, with each problem and the interaction it comes from.
+**Registered states** lists every state with its parameters, its setup and each target's override.
+States are registered through the REST API.
+
+<Screenshot id="pact-provider-states" alt="The Provider states page for Ledger API: Before a run is Not ready, with the unregistered state 'the ledger has entries' listed first and an undeclared-parameter warning on 'invoice 1042 exists'; Registered states lists each state's parameters, setup and target override."/>
+
+## During a run
+
+With states registered, a [hosted verification](./hosted-verification.mdx):
+
+1. Holds back, before anything is sent, every interaction whose states cannot be set up, with the
+   blocking code above. Set `"verification": { "replay_without_state_setup": true }` to replay those
+   interactions anyway, when the target already holds the data. They are marked
+   `"states_set_up": false`.
+2. Sets each state of an interaction up, in the order the pact lists them, then replays it.
+3. Tears the states down after the interaction, in reverse order.
+
+If a setup call fails (an answer outside `2xx`, or no answer), the states already set up for that
+interaction are torn down, and it is skipped with `provider-state-setup-failed` naming the state
+and the call. A failed teardown does not change the result: it is listed in the pact's
+`state_teardown_failures`.
+
+Values a state-change call returns are not used: a `ProviderState` generator gets no injected
+value.
+
+## What can go wrong
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| `404` | `pacticipant-not-found` | No such provider in this workspace. |
+| `404` | `provider-state-not-found` | No such state for this provider. |
+| `409` | `provider-state-name-taken` | The provider already has a state with this name. |
+| `422` | `provider-state-invalid` | The body is malformed. `pointer` names the place, such as `/setup/requests/0/path`. |
+| `400` | `pact-selector-invalid` | A selector in the check's `selection` is malformed. |
+| `422` | `pact-verify-too-many-pacts` | The check's selectors chose more than 25 pacts. |
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| List, read and check provider states | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Register a provider state | `pacts:create` | — | ✓ | ✓ | ✓ |
+| Replace a provider state | `pacts:edit` | — | ✓ | ✓ | ✓ |
+| Delete a provider state | `pacts:delete` | — | — | ✓ | ✓ |
+
+## Related
+
+- [Verify a provider from Apiome](./hosted-verification.mdx): the run that uses the registry.
+- [Compile a pact into a contract suite](./verification.mdx): where an interaction's states come from.
+- [Pact Broker REST reference](../../reference/rest/pact-broker.md): the full request and response
+  schema.
