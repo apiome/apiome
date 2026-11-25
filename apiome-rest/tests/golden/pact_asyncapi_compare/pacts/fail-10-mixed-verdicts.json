@@ -1,0 +1,38 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "OrderCreated",
+      "metadata": {
+        "kafka_key": "1001"
+      },
+      "contents": {
+        "id": 1,
+        "status": "new"
+      }
+    },
+    {
+      "description": "OrderCreated",
+      "contents": {
+        "id": 2,
+        "status": "new",
+        "lines": [
+          {
+            "sku": "A",
+            "quantity": 0
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

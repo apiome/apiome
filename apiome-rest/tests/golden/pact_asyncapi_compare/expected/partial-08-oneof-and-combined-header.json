@@ -1,0 +1,75 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 2,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "metadata-not-compared",
+      "oneof-relaxed"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "Shipment",
+      "pointer": "/messages/0",
+      "verdict": "partial",
+      "operation": null,
+      "message": {
+        "channel": "shipments",
+        "address": "shipments",
+        "message": "Shipment",
+        "pointer": "/channels/shipments/messages/Shipment",
+        "resolvedPointer": "/channels/shipments/messages/Shipment",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "metadata-not-compared",
+          "message": "metadata 'carrier' is described by a combination of schemas, so its value was not compared",
+          "pactPointer": "/messages/0/metadata/carrier",
+          "reason": "composition",
+          "oasPointer": "/channels/shipments/messages/Shipment/headers"
+        },
+        {
+          "code": "oneof-relaxed",
+          "message": "part of the message contents is described by a oneOf; with required properties lifted its branches cannot be told apart, so it was compared as anyOf",
+          "pactPointer": "/messages/0/contents",
+          "oasPointer": "/channels/shipments/messages/Shipment/payload"
+        }
+      ]
+    }
+  ]
+}

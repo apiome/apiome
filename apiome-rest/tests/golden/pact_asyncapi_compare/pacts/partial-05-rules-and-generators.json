@@ -1,0 +1,62 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "interactions": [
+    {
+      "type": "Asynchronous/Messages",
+      "description": "OrderCreated",
+      "contents": {
+        "content": {
+          "id": 8,
+          "status": "new",
+          "customer": "acme"
+        },
+        "contentType": "application/json",
+        "encoded": false
+      },
+      "metadata": {},
+      "matchingRules": {
+        "content": {
+          "$.customer": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "regex",
+                "regex": "^[a-z]+$"
+              }
+            ]
+          },
+          "$.id": {
+            "combine": "OR",
+            "matchers": [
+              {
+                "match": "integer"
+              },
+              {
+                "match": "type"
+              }
+            ]
+          }
+        }
+      },
+      "generators": {
+        "content": {
+          "$.id": {
+            "type": "RandomInt",
+            "min": 1,
+            "max": 100
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

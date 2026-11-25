@@ -1,0 +1,328 @@
+[
+  {
+    "id": "pass-01-v3-topic-with-template",
+    "title": "Pact 3 message on a templated channel, named by topic",
+    "pact": "pacts/pass-01-v3-topic-with-template.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-02-v4-named-by-description",
+    "title": "Pact 4 asynchronous message resolved by its name, rules on content and metadata",
+    "pact": "pacts/pass-02-v4-named-by-description.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-03-v3-asyncapi-2-subscribe",
+    "title": "AsyncAPI 2.6 subscribe message, destination with a parameter",
+    "pact": "pacts/pass-03-v3-asyncapi-2-subscribe.json",
+    "provider": "providers/streetlights-2.6.json",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-04-metadata-text-number",
+    "title": "Metadata sent as text is read as the integer its schema wants",
+    "pact": "pacts/pass-04-metadata-text-number.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-05-v4-content-type-hint",
+    "title": "Pact 4 message with an explicit JSON content type and no metadata",
+    "pact": "pacts/pass-05-v4-content-type-hint.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-06-v3-pact-js-shape",
+    "title": "A message pact in the shape pact-js writes (metadata.contentType, providerStates)",
+    "pact": "pacts/pass-06-v3-pact-js-shape.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-07-v4-pact-jvm-shape",
+    "title": "A Pact 4 message in the shape pact-jvm writes (key, pending, destination)",
+    "pact": "pacts/pass-07-v4-pact-jvm-shape.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-08-v2-oneof-branch",
+    "title": "AsyncAPI 2 oneOf message, resolved by name",
+    "pact": "pacts/pass-08-v2-oneof-branch.json",
+    "provider": "providers/streetlights-2.6.json",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-01-resolved-by-contents",
+    "title": "Unnamed message on a channel with two messages, matched by its contents",
+    "pact": "pacts/partial-01-resolved-by-contents.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "message-resolved-by-contents"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-02-direction-undeclared",
+    "title": "A message no operation sends or receives",
+    "pact": "pacts/partial-02-direction-undeclared.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "message-direction-undeclared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-03-avro-payload",
+    "title": "An Avro payload is not compared with JSON contents",
+    "pact": "pacts/partial-03-avro-payload.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-04-binary-contents",
+    "title": "A PDF message: contents that are not JSON are not validated",
+    "pact": "pacts/partial-04-binary-contents.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-05-rules-and-generators",
+    "title": "An unproven rule, an OR combination and a generator",
+    "pact": "pacts/partial-05-rules-and-generators.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "generator-not-applied",
+      "matching-rule-not-mapped",
+      "matching-rule-unverified"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-06-mixed-pact",
+    "title": "A Pact 4 pact with HTTP, synchronous and asynchronous interactions",
+    "pact": "pacts/partial-06-mixed-pact.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "interaction-not-message",
+      "synchronous-message-not-compared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-07-embedded-matcher",
+    "title": "Contents with a matcher embedded in the example",
+    "pact": "pacts/partial-07-embedded-matcher.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "embedded-matcher-not-mapped"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-08-oneof-and-combined-header",
+    "title": "A oneOf payload and a header described by a combination",
+    "pact": "pacts/partial-08-oneof-and-combined-header.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "metadata-not-compared",
+      "oneof-relaxed"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-09-external-payload",
+    "title": "A payload that needs a document outside the contract",
+    "pact": "pacts/partial-09-external-payload.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "schema-not-usable"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-10-no-payload",
+    "title": "A message the provider declares without a payload",
+    "pact": "pacts/partial-10-no-payload.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-01-channel-unknown",
+    "title": "The topic names no channel of the provider",
+    "pact": "pacts/fail-01-channel-unknown.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.channel.unknown"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-02-message-unknown",
+    "title": "No message of the channel accepts the contents",
+    "pact": "pacts/fail-02-message-unknown.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.unknown"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-03-not-sent",
+    "title": "The provider only receives the message",
+    "pact": "pacts/fail-03-not-sent.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.not-sent"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-04-content-type",
+    "title": "The message is XML, the provider sends JSON",
+    "pact": "pacts/fail-04-content-type.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.content-type.mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-05-metadata-invalid",
+    "title": "A metadata value breaks the headers schema",
+    "pact": "pacts/fail-05-metadata-invalid.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.metadata.invalid"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-06-body-schema",
+    "title": "Wrong type and a value outside the enum",
+    "pact": "pacts/fail-06-body-schema.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-07-unknown-property",
+    "title": "The consumer expects a property the provider does not send",
+    "pact": "pacts/fail-07-unknown-property.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.body.unknown-property"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-08-nullable",
+    "title": "The consumer expects null where the provider sends a number",
+    "pact": "pacts/fail-08-nullable.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.body.nullable-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-09-asyncapi-2-publish-only",
+    "title": "AsyncAPI 2: the channel's message is published to the provider, not by it",
+    "pact": "pacts/fail-09-asyncapi-2-publish-only.json",
+    "provider": "providers/streetlights-2.6.json",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.not-sent"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-10-mixed-verdicts",
+    "title": "One good message and one that breaks the payload; undeclared metadata warns",
+    "pact": "pacts/fail-10-mixed-verdicts.json",
+    "provider": "providers/orders-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "message.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": [
+      "message.metadata.undeclared"
+    ]
+  }
+]

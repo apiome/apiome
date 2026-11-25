@@ -1,0 +1,26 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "OrderCreated",
+      "metadata": {
+        "traceId": "not-hex",
+        "attempt": 0
+      },
+      "contents": {
+        "id": 1,
+        "status": "new"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

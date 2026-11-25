@@ -156,7 +156,10 @@ FIDELITY_CLASSES: Dict[str, str] = {
 
 
 class PactOasCompareError(ValueError):
-    """The inputs are not a pact and an OpenAPI 3.x document, so nothing can be compared."""
+    """The inputs are not a pact and a provider contract the engine reads, so nothing can be compared.
+
+    Raised by the OpenAPI comparison (PFX-2.2) and the AsyncAPI one (PFX-3.6) alike.
+    """
 
 
 # =============================================================================================
@@ -255,6 +258,9 @@ class InteractionResult:
         pointer: JSON Pointer of the interaction in the pact document.
         operation: The matched operation (``method``, ``path``, ``pointer``, ``operationId``),
             or ``None`` when none was resolved.
+        message: For a message interaction compared with an AsyncAPI document (PFX-3.6), the
+            message it resolved to (``channel``, ``address``, ``message``, ``pointer``,
+            ``action``); ``None`` otherwise, and then left out of the serialized form.
         checks: The checks that actually ran, in the order they ran.
         failures: What the provider's document contradicts.
         warnings: What is worth a look.
@@ -267,6 +273,7 @@ class InteractionResult:
     description: Optional[str]
     pointer: str
     operation: Optional[Dict[str, Any]] = None
+    message: Optional[Dict[str, Any]] = None
     checks: List[str] = dataclass_field(default_factory=list)
     failures: List[Finding] = dataclass_field(default_factory=list)
     warnings: List[Finding] = dataclass_field(default_factory=list)
@@ -288,12 +295,17 @@ class InteractionResult:
         Returns:
             A camelCase mapping.
         """
-        return {
+        payload: Dict[str, Any] = {
             "index": self.index,
             "description": self.description,
             "pointer": self.pointer,
             "verdict": self.verdict,
             "operation": self.operation,
+        }
+        if self.message is not None:
+            payload["message"] = dict(self.message)
+        return {
+            **payload,
             "checks": list(self.checks),
             "matchingRules": dict(self.matching_rules),
             "failures": [finding.to_dict() for finding in self.failures],
@@ -304,14 +316,19 @@ class InteractionResult:
 
 @dataclass
 class ComparisonResult:
-    """The comparison of one pact with one provider OpenAPI document.
+    """The comparison of one pact with one provider contract.
 
     Attributes:
         consumer: The pact's consumer name.
         provider: The pact's provider name.
         pact_specification: The Pact specification version the pact declares.
-        oas_version: The ``openapi`` version the provider document declares.
+        oas_version: The ``openapi`` version the provider document declares (``""`` for an
+            AsyncAPI document).
         interactions: One result per interaction, in pact order.
+        asyncapi_version: The ``asyncapi`` version, when the provider contract is an AsyncAPI
+            document (PFX-3.6). The serialized form then reads ``contractType: asyncapi`` and
+            ``asyncapiVersion`` in place of ``oasVersion``; an OpenAPI comparison serializes
+            exactly as before.
     """
 
     consumer: Optional[str]
@@ -319,6 +336,7 @@ class ComparisonResult:
     pact_specification: Optional[str]
     oas_version: str
     interactions: List[InteractionResult] = dataclass_field(default_factory=list)
+    asyncapi_version: Optional[str] = None
 
     @property
     def verdict(self) -> str:
@@ -357,13 +375,18 @@ class ComparisonResult:
         by_verdict = {VERDICT_PASS: 0, VERDICT_PARTIAL: 0, VERDICT_FAIL: 0}
         for interaction in self.interactions:
             by_verdict[interaction.verdict] += 1
+        contract: Dict[str, Any] = (
+            {"contractType": "asyncapi", "asyncapiVersion": self.asyncapi_version}
+            if self.asyncapi_version is not None
+            else {"oasVersion": self.oas_version}
+        )
         return {
             "verdict": self.verdict,
             "success": self.success,
             "consumer": self.consumer,
             "provider": self.provider,
             "pactSpecification": self.pact_specification,
-            "oasVersion": self.oas_version,
+            **contract,
             "summary": {
                 "interactions": len(self.interactions),
                 "passed": by_verdict[VERDICT_PASS],

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.675.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.676.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 77 operations
 
@@ -79,7 +79,7 @@ Operation id: `read_can_i_deploy_v1_tenants__tenant_slug__pact_broker_can_i_depl
 
 **Read a provider contract**
 
-The provider contract a provider version published: `contentSha`, `oasVersion`, `operationCount`, `contentType`, where it came from (`source`: `inline`, or `apiome` with the project and version it was rendered from), the `verificationResults` sent with it, and the OpenAPI document in `content`.
+The provider contract a provider version published: `contractType`, `contentSha`, `oasVersion` and `operationCount` (`asyncapiVersion` and `messageCount` for an AsyncAPI contract), `contentType`, where it came from (`source`: `inline`, or `apiome` with the project and version it was rendered from), the `verificationResults` sent with it, and the document in `content`.
 
 `{provider}` is a pacticipant's handle, id or name. Requires `pacts:view`.
 
@@ -107,9 +107,9 @@ Operation id: `read_contract_v1_tenants__tenant_slug__pact_broker_contracts_prov
 
 **Publish a provider contract**
 
-Register the provider's OpenAPI document — its **provider contract** — against a provider version, for bi-directional contract testing. Send the document inline in `content` (base64; JSON or YAML, PactFlow's shape) **or** name an Apiome version in `apiomeVersion` (`ledger-api@1.4.0`) to render it from the canonical model with the exporter `GET /v1/schema/…` uses (OpenAPI 3.1). With a provider bound to its Apiome project, `apiomeVersion` may be just the version, and `latest` is the project's newest.
+Register the provider's OpenAPI (or AsyncAPI) document — its **provider contract** — against a provider version, for bi-directional contract testing. Send the document inline in `content` (base64; JSON or YAML, PactFlow's shape) **or** name an Apiome version in `apiomeVersion` (`ledger-api@1.4.0`) to render it from the canonical model with the exporter `GET /v1/schema/…` uses (OpenAPI 3.1). With a provider bound to its Apiome project, `apiomeVersion` may be just the version, and `latest` is the project's newest.
 
-- **Only OpenAPI 3.0, 3.1 and 3.2.** The document must validate against its version's meta-schema. Swagger 2.0, AsyncAPI and anything else are `422 provider-contract-invalid`, with `detail.pointer` locating the problem.
+- **OpenAPI 3.0, 3.1 and 3.2**, validated against its version's meta-schema — or, for message pacts, **AsyncAPI 2.x and 3.x** (`contractType: asyncapi`, read from the document when omitted; inline only), checked for its version, `info`, channels, operations and local `$ref`s. Swagger 2.0 and anything else are `422 provider-contract-invalid`, with `detail.pointer` locating the problem.
 - **The provider is registered on first use**, and the version is recorded with its `branch`, `tags` and `buildUrl`, as `PUT …/pacticipants/{ref}/versions/{number}` does.
 - **Content is stored once.** The document is addressed by the SHA-256 of its canonical JSON (`contentSha`), so JSON, YAML and a rendered copy of one document are one contract.
 - **Write-once.** `201` for a new contract, `200` when the same contract and self-verification results are published again (nothing changes), `409` for anything different.
@@ -138,8 +138,8 @@ Request body for publish a provider contract.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `content` | string | no | The OpenAPI 3.x document (JSON or YAML), base64-encoded. Send this or `apiomeVersion`. |
-| `contractType` | enum `"oas"` | no | Contract Type. |
+| `content` | string | no | The OpenAPI 3.x or AsyncAPI 2.x / 3.x document (JSON or YAML), base64-encoded. Send this or `apiomeVersion`. |
+| `contractType` | enum `"oas"`, `"asyncapi"` | no | `oas` for an OpenAPI 3.x document (HTTP pacts), `asyncapi` for an AsyncAPI 2.x / 3.x document (message pacts). Read from the document when omitted. An AsyncAPI contract is always sent inline in `content`. |
 | `contentType` | string | no | How `content` is encoded: `application/json` or `application/yaml`. Sniffed when omitted. |
 | `apiomeVersion` | string | no | `<project>@<version>`: render the contract from an Apiome version instead of sending it. `<version>` alone uses the project the provider is bound to; `latest` is the project's newest version. Send this or `content`. |
 | `branch` | string | no | The repository branch the version was built from. |
@@ -155,7 +155,7 @@ Request body for publish a provider contract.
 | 201 | The contract was published for this provider version. `selfVerification` says what the evidence proved (`status` `verified`, `failed`, `inconclusive` or `missing`, with `kind`, `tool`, `digest`, `summary` and `reasons`) and whether the contract is `providerContractVerified`. `comparisons` reports the bi-directional comparisons the publish ran: the counts (`compared`, `alreadyCompared`, `errors`, `skipped`) and one entry per pact, with its `status`, `verdict` (`unverified` when the contract has no passing evidence), `success` and `verificationNumber`. | — |
 | 409 | `provider-contract-conflict`: this provider version already published a different contract (or the same one with different self-verification results). Nothing was stored. | — |
 | 413 | `provider-contract-too-large`: the document or the request is over the size limit. `provider-contract-evidence-too-large`: the self-verification report is over `APIOME_PACT_EVIDENCE_MAX_BYTES`. | — |
-| 422 | `provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the document (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema error). `provider-contract-request-invalid` / `provider-contract-unsupported`: a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`: `apiomeVersion` names no project or version of this workspace. `provider-contract-evidence-unsupported`: the report's `contentType` is not one a report is read as. `provider-contract-evidence-invalid`: the report is not what its type says (XML that does not parse or is not JUnit, a DTD, JSON that is not JSON, text that is not UTF-8). `provider-contract-evidence-report-not-found`: `providerVerificationReportId` names no report of this workspace. | — |
+| 422 | `provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 (or, as `contractType: asyncapi`, not AsyncAPI 2.x / 3.x) — `detail.pointer` is the JSON Pointer of the problem in the document (`/swagger` for Swagger 2.0, `/openapi`, `/asyncapi`, the first meta-schema error, or the first structural problem of an AsyncAPI document). `provider-contract-request-invalid` / `provider-contract-unsupported`: a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`: `apiomeVersion` names no project or version of this workspace. `provider-contract-evidence-unsupported`: the report's `contentType` is not one a report is read as. `provider-contract-evidence-invalid`: the report is not what its type says (XML that does not parse or is not JUnit, a DTD, JSON that is not JSON, text that is not UTF-8). `provider-contract-evidence-report-not-found`: `providerVerificationReportId` names no report of this workspace. | — |
 | 429 | `pact-publish-rate-limited`: over the workspace's publish budget; see `Retry-After`. | — |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-broker/contracts/publish` {#publish-contracts-v1-tenants-tenant-slug-pact-broker-contracts-publish-post}

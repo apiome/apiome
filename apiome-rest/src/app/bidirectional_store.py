@@ -2,7 +2,8 @@
 
 :mod:`app.bidirectional_verification` says what a comparison is stored as; this module decides
 which pairs to compare when one side publishes, runs :func:`app.pact_oas_compare.compare_pact_to_oas`
-on each, and writes the ``verification_result`` rows (``kind = bidirectional``, apiome-db V439).
+on each — or, for an AsyncAPI provider contract, :func:`app.pact_asyncapi_compare.compare_pact_to_asyncapi`
+(PFX-3.6) — and writes the ``verification_result`` rows (``kind = bidirectional``, apiome-db V439).
 
 **When a consumer publishes a pact** (:func:`compare_published_pacts`), each pact is compared with
 the provider versions can-i-deploy will ask about: the latest provider version with a contract,
@@ -58,6 +59,7 @@ from .bidirectional_verification import (
 )
 from .config import settings
 from .consumer_contract_store import ConsumerActor
+from .pact_asyncapi_compare import compare_pact_to_asyncapi, is_asyncapi_document
 from .pact_oas_compare import PactOasCompareError, compare_pact_to_oas
 from .pact_publication_store import PublishOutcome, list_pact_candidates
 from .pact_selectors import ConsumerVersionSelector, ForVerificationQuery, PactCandidate, select_verifiable_pacts
@@ -229,7 +231,7 @@ class _Documents:
         return self._one(self._pacts, pact_version_id, "SELECT content FROM apiome.pact_version WHERE id = %s::uuid")
 
     def contract(self, contract_id: str) -> Any:
-        """The OpenAPI document of a provider contract."""
+        """The OpenAPI or AsyncAPI document of a provider contract."""
         return self._one(
             self._contracts, contract_id, "SELECT content FROM apiome.provider_contract WHERE id = %s::uuid"
         )
@@ -242,7 +244,9 @@ def _compare(pact: Any, contract: Any, target: ContractTarget) -> StoredComparis
     policy (PFX-2.4, ``APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT``).
     """
     try:
-        stored = stored_comparison(compare_pact_to_oas(pact, contract), contract_sha=target.contract_sha)
+        # PFX-3.6: an AsyncAPI provider contract is compared with the pact's messages.
+        compare = compare_pact_to_asyncapi if is_asyncapi_document(contract) else compare_pact_to_oas
+        stored = stored_comparison(compare(pact, contract), contract_sha=target.contract_sha)
     except PactOasCompareError as exc:
         stored = error_comparison(str(exc), contract_sha=target.contract_sha)
     return apply_evidence_policy(stored, target.evidence, settings.pact_unverified_provider_contract)

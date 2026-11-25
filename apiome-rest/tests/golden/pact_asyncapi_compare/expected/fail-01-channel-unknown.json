@@ -1,0 +1,57 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 1,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "message.channel.unknown"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "a refund",
+      "pointer": "/messages/0",
+      "verdict": "fail",
+      "operation": null,
+      "checks": [
+        "message.channel"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "message.channel.unknown",
+          "message": "the message travels on 'refunds' (topic), but the provider declares no channel with that id or address",
+          "pactPointer": "/messages/0/metadata/topic",
+          "oasPointer": "/channels",
+          "resolvedPointer": "/channels"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

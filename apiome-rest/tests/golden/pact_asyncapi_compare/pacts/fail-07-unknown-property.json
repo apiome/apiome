@@ -1,0 +1,29 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "interactions": [
+    {
+      "type": "Asynchronous/Messages",
+      "description": "OrderCreated",
+      "contents": {
+        "content": {
+          "id": 1,
+          "status": "new",
+          "loyaltyPoints": 12
+        },
+        "contentType": "application/json",
+        "encoded": false
+      },
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

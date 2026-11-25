@@ -214,7 +214,8 @@ class MatchingRule:
     """One matcher from a Pact interaction, wherever its specification version filed it.
 
     Attributes:
-        category: ``body``, ``header``, ``query``, ``path``, ``status`` or ``unknown``.
+        category: ``body``, ``header``, ``query``, ``path``, ``status``, ``metadata`` (a
+            message's metadata, PFX-3.6) or ``unknown``.
         path: The JSONPath for a body rule (``$.items[*].id``), the header or query name, or
             ``""`` for a path or status rule.
         kind: The matcher, lowercase (``type``, ``regex`` …).
@@ -344,12 +345,15 @@ def _pact2_location(key: str) -> Tuple[str, str]:
     return "unknown", key
 
 
-def parse_matching_rules(section: Any, pointer: str) -> List[MatchingRule]:
+def parse_matching_rules(section: Any, pointer: str, *, message: bool = False) -> List[MatchingRule]:
     """Read a request's or response's ``matchingRules`` in any specification version.
 
     Args:
         section: The ``matchingRules`` value.
         pointer: JSON Pointer of that value in the pact document.
+        message: Read the rules of a message (PFX-3.6): Pact 4 files the body's rules under
+            ``content`` (read as ``body``), and both Pact 3 and 4 file ``metadata`` rules,
+            which become the ``metadata`` category. Off for HTTP, where neither is defined.
 
     Returns:
         Every matcher, in a stable order (category, then path, then position).
@@ -365,6 +369,8 @@ def parse_matching_rules(section: Any, pointer: str) -> List[MatchingRule]:
             )
         return rules
     aliases = {"headers": "header", "body": "body", "header": "header", "query": "query"}
+    if message:
+        aliases.update(content="body", metadata="metadata")
     for key in sorted(str(k) for k in section):
         value = section[key]
         where = f"{pointer}/{json_pointer_escape(key)}"

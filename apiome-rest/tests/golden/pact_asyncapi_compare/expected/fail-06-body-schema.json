@@ -1,0 +1,77 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 2,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "message.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "OrderCreated",
+      "pointer": "/messages/0",
+      "verdict": "fail",
+      "operation": null,
+      "message": {
+        "channel": "orderCreated",
+        "address": "orders.{region}.created",
+        "message": "OrderCreated",
+        "pointer": "/channels/orderCreated/messages/OrderCreated",
+        "resolvedPointer": "/components/messages/OrderCreated",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "message.body.schema-mismatch",
+          "message": "the message body at /id does not satisfy the provider's schema (type)",
+          "pactPointer": "/messages/0/contents/id",
+          "oasPointer": "/channels/orderCreated/messages/OrderCreated/payload/properties/id/type",
+          "resolvedPointer": "/components/schemas/Order/properties/id/type",
+          "keyword": "type"
+        },
+        {
+          "code": "message.body.schema-mismatch",
+          "message": "the message body at /status does not satisfy the provider's schema (enum)",
+          "pactPointer": "/messages/0/contents/status",
+          "oasPointer": "/channels/orderCreated/messages/OrderCreated/payload/properties/status/enum",
+          "resolvedPointer": "/components/schemas/Order/properties/status/enum",
+          "keyword": "enum"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

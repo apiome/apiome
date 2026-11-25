@@ -1,0 +1,67 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "schema-not-usable"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "ExternalEvent",
+      "pointer": "/messages/0",
+      "verdict": "partial",
+      "operation": null,
+      "message": {
+        "channel": "external",
+        "address": "external.events",
+        "message": "ExternalEvent",
+        "pointer": "/channels/external/messages/ExternalEvent",
+        "resolvedPointer": "/channels/external/messages/ExternalEvent",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "schema-not-usable",
+          "message": "the provider's schema could not be evaluated, so this value was not compared",
+          "pactPointer": "/messages/0/contents",
+          "oasPointer": "/channels/external/messages/ExternalEvent/payload"
+        }
+      ]
+    }
+  ]
+}

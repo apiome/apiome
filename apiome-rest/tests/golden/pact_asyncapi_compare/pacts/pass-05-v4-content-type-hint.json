@@ -1,0 +1,29 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "interactions": [
+    {
+      "type": "Asynchronous/Messages",
+      "description": "Order created",
+      "contents": {
+        "content": {
+          "id": 9,
+          "status": "new",
+          "total": 0
+        },
+        "contentType": "application/json",
+        "encoded": false
+      },
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

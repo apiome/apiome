@@ -1,0 +1,107 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "4.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 3,
+    "passed": 1,
+    "partial": 2,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 2,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "interaction-not-message",
+      "synchronous-message-not-compared"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "get an order",
+      "pointer": "/interactions/0",
+      "verdict": "partial",
+      "operation": null,
+      "checks": [],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "interaction-not-message",
+          "message": "an HTTP interaction carries no message, so there is nothing to compare with an AsyncAPI document",
+          "pactPointer": "/interactions/0"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "description": "price an order",
+      "pointer": "/interactions/1",
+      "verdict": "partial",
+      "operation": null,
+      "checks": [],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "synchronous-message-not-compared",
+          "message": "a synchronous message (a request and its reply) is not compared with an AsyncAPI document yet; only asynchronous messages are",
+          "pactPointer": "/interactions/1"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "description": "OrderCreated",
+      "pointer": "/interactions/2",
+      "verdict": "pass",
+      "operation": null,
+      "message": {
+        "channel": "orderCreated",
+        "address": "orders.{region}.created",
+        "message": "OrderCreated",
+        "pointer": "/channels/orderCreated/messages/OrderCreated",
+        "resolvedPointer": "/components/messages/OrderCreated",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

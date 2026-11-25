@@ -280,7 +280,9 @@ An interaction that is not replayed has `outcome` `skipped` or `errored`, a `cod
 | `transport-error`, `timeout` | The target could not be reached or did not answer in time. | Check the target, then run again. |
 
 Interactions Apiome cannot replay at all, such as message and plugin interactions, are listed
-under the pact's `unsupported` with a reason.
+under the pact's `unsupported` with a reason. Asynchronous messages are verified without running
+the provider, against its AsyncAPI document: see [Message pacts](./message-pacts.mdx). Replaying
+synchronous messages (a request and its reply) against a message handler is not available yet.
 
 ## What can stop a run
 

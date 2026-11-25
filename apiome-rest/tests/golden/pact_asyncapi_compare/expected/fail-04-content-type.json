@@ -1,0 +1,68 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 1,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "message.content-type.mismatch"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "OrderCreated",
+      "pointer": "/messages/0",
+      "verdict": "fail",
+      "operation": null,
+      "message": {
+        "channel": "orderCreated",
+        "address": "orders.{region}.created",
+        "message": "OrderCreated",
+        "pointer": "/channels/orderCreated/messages/OrderCreated",
+        "resolvedPointer": "/components/messages/OrderCreated",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "message.content-type.mismatch",
+          "message": "the message is 'application/xml', but the provider declares 'application/json' for 'OrderCreated'",
+          "pactPointer": "/messages/0/metadata/contentType",
+          "oasPointer": "/defaultContentType",
+          "resolvedPointer": "/defaultContentType"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

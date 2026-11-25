@@ -1,0 +1,106 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 2,
+    "passed": 1,
+    "partial": 0,
+    "failed": 1,
+    "failures": 1,
+    "warnings": 1,
+    "fidelity": 0,
+    "failureCodes": [
+      "message.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "OrderCreated",
+      "pointer": "/messages/0",
+      "verdict": "pass",
+      "operation": null,
+      "message": {
+        "channel": "orderCreated",
+        "address": "orders.{region}.created",
+        "message": "OrderCreated",
+        "pointer": "/channels/orderCreated/messages/OrderCreated",
+        "resolvedPointer": "/components/messages/OrderCreated",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [
+        {
+          "code": "message.metadata.undeclared",
+          "message": "the message carries metadata 'kafka_key', which the provider's headers for 'OrderCreated' do not declare",
+          "pactPointer": "/messages/0/metadata/kafka_key",
+          "oasPointer": "/channels/orderCreated/messages/OrderCreated/headers"
+        }
+      ],
+      "fidelity": []
+    },
+    {
+      "index": 1,
+      "description": "OrderCreated",
+      "pointer": "/messages/1",
+      "verdict": "fail",
+      "operation": null,
+      "message": {
+        "channel": "orderCreated",
+        "address": "orders.{region}.created",
+        "message": "OrderCreated",
+        "pointer": "/channels/orderCreated/messages/OrderCreated",
+        "resolvedPointer": "/components/messages/OrderCreated",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "message.body.schema-mismatch",
+          "message": "the message body at /lines/0/quantity does not satisfy the provider's schema (minimum)",
+          "pactPointer": "/messages/1/contents/lines/0/quantity",
+          "oasPointer": "/channels/orderCreated/messages/OrderCreated/payload/properties/lines/items/properties/quantity/minimum",
+          "resolvedPointer": "/components/schemas/Order/properties/lines/items/properties/quantity/minimum",
+          "keyword": "minimum"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

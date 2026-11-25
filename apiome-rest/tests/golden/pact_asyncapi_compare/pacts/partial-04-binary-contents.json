@@ -1,0 +1,23 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "InvoicePdf",
+      "metadata": {
+        "topic": "invoices",
+        "contentType": "application/pdf"
+      },
+      "contents": "JVBERi0xLjQK"
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

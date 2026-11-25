@@ -1,0 +1,25 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "an order note",
+      "metadata": {
+        "topic": "orders.events"
+      },
+      "contents": {
+        "orderId": 1,
+        "note": "gift"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

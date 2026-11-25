@@ -17,9 +17,14 @@ provider-verification coverage:
 * **could not compare** — everything else that was not compared, or compared more weakly than the
   pact asks (fidelity codes in :data:`NOT_COMPARED_CODES`).
 
-Every fidelity code of :data:`app.pact_oas_result.FIDELITY_CLASSES` belongs to exactly one of the
-two groups, and every failure and warning code to exactly one check, so no note is dropped from
+Every fidelity code of :data:`app.pact_oas_result.FIDELITY_CLASSES` (and of the message
+comparison's :data:`app.pact_asyncapi_compare.MESSAGE_FIDELITY_CLASSES`) belongs to exactly one of
+the two groups, and every failure and warning code to exactly one check, so no note is dropped from
 the report (the tests hold the tables together).
+
+A comparison with an AsyncAPI provider contract (PFX-3.6, payload ``contractType: asyncapi``)
+compares messages, so its report lists the message checks (:data:`MESSAGE_CHECK_LABELS`) instead of
+the HTTP ones, and names the ``asyncapiVersion`` in place of ``oasVersion``.
 
 :func:`build_fidelity_report` reads only the stored payload, so a report of an old result is the
 report of what that comparison actually did.
@@ -38,6 +43,8 @@ __all__ = [
     "CHECK_NOT_RUN",
     "CHECK_PARTIAL",
     "CORE_CHECKS",
+    "MESSAGE_CHECK_LABELS",
+    "MESSAGE_CORE_CHECKS",
     "MATCHING_RULE_CODES",
     "NOT_COMPARED_CODES",
     "STRENGTH_FAILED",
@@ -85,6 +92,21 @@ CHECK_LABELS: Dict[str, str] = {
 #: The checks every HTTP interaction is expected to run; one that did not is reported ``not-run``.
 CORE_CHECKS: Tuple[str, ...] = tuple(key for key in CHECK_LABELS if not key.endswith(".matching-rules"))
 
+#: Every check the message comparison (PFX-3.6) runs, in order, with its label. The matching-rule
+#: check runs only when the message declares rules.
+MESSAGE_CHECK_LABELS: Dict[str, str] = {
+    "message.channel": "Channel and message",
+    "message.content-type": "Content type",
+    "message.metadata": "Metadata (message headers)",
+    "message.body": "Message contents",
+    "message.matching-rules": "Matching rules and generators",
+}
+
+#: The checks every message is expected to run.
+MESSAGE_CORE_CHECKS: Tuple[str, ...] = tuple(
+    key for key in MESSAGE_CHECK_LABELS if not key.endswith(".matching-rules")
+)
+
 #: Fidelity codes reported under *unsupported matching rules*.
 MATCHING_RULE_CODES: Tuple[str, ...] = (
     "matching-rule-not-mapped",
@@ -101,7 +123,15 @@ NOT_COMPARED_CODES: Tuple[str, ...] = (
     "oneof-relaxed",
     "interaction-not-http",
     "findings-truncated",
+    "message-direction-undeclared",
+    "message-resolved-by-contents",
+    "metadata-not-compared",
+    "interaction-not-message",
+    "synchronous-message-not-compared",
 )
+
+#: Fidelity codes that mean "this interaction is not the kind the contract describes".
+_NOT_APPLICABLE_CODES = ("interaction-not-http", "interaction-not-message", "synchronous-message-not-compared")
 
 #: Failure and warning codes by the check that raises them, matched on the longest prefix. The
 #: body and content-type helpers are shared by both sides, so the side is part of the prefix.
@@ -119,6 +149,13 @@ _FINDING_PREFIXES: Tuple[Tuple[str, str], ...] = (
     ("response.header.", "response.headers"),
     ("response.content-type.", "response.body"),
     ("response.body.", "response.body"),
+    ("message.channel.", "message.channel"),
+    ("message.unknown", "message.channel"),
+    ("message.ambiguous", "message.channel"),
+    ("message.not-sent", "message.channel"),
+    ("message.content-type.", "message.content-type"),
+    ("message.metadata.", "message.metadata"),
+    ("message.body.", "message.body"),
 )
 
 #: The part of a pact request or response a fidelity note points into, by the check it belongs to.
@@ -134,6 +171,15 @@ _NOTE_PARTS: Dict[Tuple[str, str], str] = {
     ("response", "body"): "response.body",
     ("response", "matchingRules"): "response.matching-rules",
     ("response", "generators"): "response.matching-rules",
+}
+
+#: The same for a message (PFX-3.6), whose parts sit directly on it: one more level up.
+_MESSAGE_NOTE_PARTS: Dict[str, str] = {
+    "contents": "message.body",
+    "metadata": "message.metadata",
+    "metaData": "message.metadata",
+    "matchingRules": "message.matching-rules",
+    "generators": "message.matching-rules",
 }
 
 
@@ -165,6 +211,8 @@ def check_of_note(pact_pointer: str, interaction_pointer: str) -> Optional[str]:
     if not pact_pointer.startswith(interaction_pointer + "/"):
         return None
     parts = pact_pointer[len(interaction_pointer) + 1 :].split("/")
+    if parts[0] in _MESSAGE_NOTE_PARTS:
+        return _MESSAGE_NOTE_PARTS[parts[0]]
     if len(parts) < 2:
         return None
     return _NOTE_PARTS.get((parts[0], parts[1]))
@@ -188,22 +236,32 @@ def _note_entry(note: Mapping[str, Any], check: Optional[str]) -> Dict[str, Any]
     return entry
 
 
-def _not_run_reason(not_http: bool, first_failed: Optional[str]) -> str:
+def _not_run_reason(not_http: bool, first_failed: Optional[str], messages: bool = False) -> str:
     """Why a core check did not run."""
+    labels = MESSAGE_CHECK_LABELS if messages else CHECK_LABELS
     if not_http:
+        if messages:
+            return "the interaction has no message to compare"
         return "the interaction has no HTTP exchange to compare"
     if first_failed:
-        return f"not run because an earlier check failed ({CHECK_LABELS.get(first_failed, first_failed)})"
+        return f"not run because an earlier check failed ({labels.get(first_failed, first_failed)})"
     return "not run"
 
 
-def _checks(interaction: Mapping[str, Any], notes: Sequence[Dict[str, Any]], not_http: bool) -> List[Dict[str, Any]]:
+def _checks(
+    interaction: Mapping[str, Any],
+    notes: Sequence[Dict[str, Any]],
+    not_http: bool,
+    messages: bool = False,
+) -> List[Dict[str, Any]]:
     """Every check of one interaction with its status, in run order.
 
     Args:
         interaction: The stored interaction.
         notes: Its fidelity notes as :func:`_note_entry` made them.
-        not_http: Whether the interaction is a message interaction.
+        not_http: Whether the interaction is not the kind the contract describes (a message
+            against OpenAPI, an HTTP interaction against AsyncAPI).
+        messages: Whether the contract is AsyncAPI, so the message checks apply.
 
     Returns:
         One entry per check: ``check``, ``label``, ``status``, the counts of ``failures``,
@@ -222,12 +280,13 @@ def _checks(interaction: Mapping[str, Any], notes: Sequence[Dict[str, Any]], not
         if note["check"] is not None:
             noted[note["check"]] = noted.get(note["check"], 0) + 1
 
+    labels, core = (MESSAGE_CHECK_LABELS, MESSAGE_CORE_CHECKS) if messages else (CHECK_LABELS, CORE_CHECKS)
     first_failed = next((check for check in ran if failures.get(check)), None)
-    keys = [key for key in CHECK_LABELS if key in CORE_CHECKS or key in ran or noted.get(key)]
-    keys += [check for check in ran if check not in CHECK_LABELS]
+    keys = [key for key in labels if key in core or key in ran or noted.get(key)]
+    keys += [check for check in ran if check not in labels]
     entries: List[Dict[str, Any]] = []
     for key in keys:
-        entry: Dict[str, Any] = {"check": key, "label": CHECK_LABELS.get(key, key)}
+        entry: Dict[str, Any] = {"check": key, "label": labels.get(key, key)}
         if failures.get(key):
             entry["status"] = CHECK_FAILED
         elif noted.get(key):
@@ -236,7 +295,7 @@ def _checks(interaction: Mapping[str, Any], notes: Sequence[Dict[str, Any]], not
             entry["status"] = CHECK_COMPARED
         else:
             entry["status"] = CHECK_NOT_RUN
-            entry["reason"] = _not_run_reason(not_http, first_failed)
+            entry["reason"] = _not_run_reason(not_http, first_failed, messages)
         entry["failures"] = failures.get(key, 0)
         entry["warnings"] = warnings.get(key, 0)
         entry["notes"] = noted.get(key, 0)
@@ -244,11 +303,12 @@ def _checks(interaction: Mapping[str, Any], notes: Sequence[Dict[str, Any]], not
     return entries
 
 
-def _interaction_report(interaction: Mapping[str, Any]) -> Dict[str, Any]:
+def _interaction_report(interaction: Mapping[str, Any], messages: bool = False) -> Dict[str, Any]:
     """The report of one stored interaction.
 
     Args:
         interaction: One entry of the payload's ``interactions``.
+        messages: Whether the comparison was with an AsyncAPI contract (PFX-3.6).
 
     Returns:
         ``index``, ``description``, ``pointer``, ``verdict``, ``operation``, ``checks``,
@@ -260,14 +320,19 @@ def _interaction_report(interaction: Mapping[str, Any]) -> Dict[str, Any]:
         _note_entry(note, check_of_note(str(note.get("pactPointer", "")), pointer))
         for note in (_dict(raw) for raw in _list(interaction.get("fidelity")))
     ]
-    not_http = any(note["code"] == "interaction-not-http" for note in notes)
-    return {
+    not_http = any(note["code"] in _NOT_APPLICABLE_CODES for note in notes)
+    report: Dict[str, Any] = {
         "index": interaction.get("index"),
         "description": interaction.get("description"),
         "pointer": pointer,
         "verdict": interaction.get("verdict"),
         "operation": interaction.get("operation"),
-        "checks": _checks(interaction, notes, not_http),
+    }
+    if messages:
+        report["message"] = interaction.get("message")
+    return {
+        **report,
+        "checks": _checks(interaction, notes, not_http, messages),
         "matchingRules": _dict(interaction.get("matchingRules")),
         "unsupportedMatchingRules": [note for note in notes if note["code"] in MATCHING_RULE_CODES],
         # A code neither table knows (a newer engine) is still reported, never dropped.
@@ -294,7 +359,7 @@ def _plural(count: int, word: str) -> str:
     return f"{count} {word}{'' if count == 1 else 's'}"
 
 
-def _statement(strength: str, summary: Mapping[str, int], error: Optional[str]) -> str:
+def _statement(strength: str, summary: Mapping[str, int], error: Optional[str], messages: bool = False) -> str:
     """One sentence a reader can take the verdict at."""
     if error:
         return f"Nothing was compared: {error}."
@@ -302,6 +367,8 @@ def _statement(strength: str, summary: Mapping[str, int], error: Optional[str]) 
     if total == 0:
         return "Nothing was compared: the pact has no interactions."
     if strength == STRENGTH_NONE:
+        if messages:
+            return "Nothing was compared: no interaction is a message to compare with the AsyncAPI provider contract."
         return "Nothing was compared: no interaction has an HTTP exchange to compare with the provider contract."
     gaps = [
         f"{summary[key]} {one if summary[key] == 1 else many}"
@@ -340,7 +407,8 @@ def build_fidelity_report(comparison: Mapping[str, Any]) -> Dict[str, Any]:
     """
     payload = _dict(comparison)
     error = _dict(payload.get("error")) or None
-    interactions = [_interaction_report(_dict(item)) for item in _list(payload.get("interactions"))]
+    messages = payload.get("contractType") == "asyncapi"
+    interactions = [_interaction_report(_dict(item), messages) for item in _list(payload.get("interactions"))]
     verdict = payload.get("verdict")
     comparison_verdict = payload.get("comparisonVerdict") or verdict
     statuses = [[check["status"] for check in item["checks"]] for item in interactions]
@@ -367,13 +435,17 @@ def build_fidelity_report(comparison: Mapping[str, Any]) -> Dict[str, Any]:
         "verdict": verdict,
         "comparisonVerdict": comparison_verdict,
         "strength": strength,
-        "statement": _statement(strength, summary, error.get("message") if error else None),
+        "statement": _statement(strength, summary, error.get("message") if error else None, messages),
         "selfVerification": evidence.get("status"),
         "providerContractSha": payload.get("providerContractSha"),
         "consumer": payload.get("consumer"),
         "provider": payload.get("provider"),
         "pactSpecification": payload.get("pactSpecification"),
-        "oasVersion": payload.get("oasVersion"),
+        **(
+            {"contractType": "asyncapi", "asyncapiVersion": payload.get("asyncapiVersion")}
+            if messages
+            else {"oasVersion": payload.get("oasVersion")}
+        ),
         "summary": summary,
         "interactions": interactions,
     }

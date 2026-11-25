@@ -1,0 +1,67 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "message-resolved-by-contents"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "a shipping notice",
+      "pointer": "/messages/0",
+      "verdict": "partial",
+      "operation": null,
+      "message": {
+        "channel": "orderEvents",
+        "address": "orders.events",
+        "message": "OrderShipped",
+        "pointer": "/channels/orderEvents/messages/OrderShipped",
+        "resolvedPointer": "/components/messages/OrderShipped",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "message-resolved-by-contents",
+          "message": "2 messages of channel 'orders.events' could be this one; it was compared with 'OrderShipped' on 'orderEvents', the first whose payload accepts it",
+          "pactPointer": "/messages/0",
+          "oasPointer": "/channels/orderEvents/messages/OrderShipped"
+        }
+      ]
+    }
+  ]
+}

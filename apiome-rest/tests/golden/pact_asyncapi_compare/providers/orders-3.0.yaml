@@ -1,0 +1,199 @@
+asyncapi: 3.0.0
+info:
+  title: Orders events
+  version: 2.1.0
+defaultContentType: application/json
+channels:
+  orderCreated:
+    address: orders.{region}.created
+    parameters:
+      region:
+        description: The sales region.
+    messages:
+      OrderCreated:
+        $ref: '#/components/messages/OrderCreated'
+  orderEvents:
+    address: orders.events
+    messages:
+      OrderShipped:
+        $ref: '#/components/messages/OrderShipped'
+      OrderCancelled:
+        $ref: '#/components/messages/OrderCancelled'
+  paymentRequests:
+    address: payments.requests
+    messages:
+      PaymentRequested:
+        name: PaymentRequested
+        payload:
+          type: object
+          properties:
+            orderId:
+              type: integer
+  audit:
+    address: audit.log
+    messages:
+      AuditEntry:
+        name: AuditEntry
+        payload:
+          type: object
+          properties:
+            actor:
+              type: string
+            action:
+              type: string
+  invoices:
+    address: invoices
+    messages:
+      InvoiceAvro:
+        name: InvoiceAvro
+        payload:
+          schemaFormat: application/vnd.apache.avro;version=1.9.0
+          schema:
+            type: record
+            name: Invoice
+            fields:
+              - name: id
+                type: long
+      InvoicePdf:
+        name: InvoicePdf
+        contentType: application/pdf
+        payload:
+          type: string
+          contentEncoding: base64
+  shipments:
+    address: shipments
+    messages:
+      Shipment:
+        name: Shipment
+        headers:
+          type: object
+          properties:
+            carrier:
+              oneOf:
+                - type: string
+                  enum: [ups, dhl]
+                - type: integer
+        payload:
+          type: object
+          properties:
+            parcel:
+              oneOf:
+                - type: object
+                  properties:
+                    kind:
+                      const: box
+                    weight:
+                      type: number
+                - type: object
+                  properties:
+                    kind:
+                      const: letter
+  heartbeat:
+    address: heartbeat
+    messages:
+      Heartbeat:
+        name: Heartbeat
+        summary: A liveness ping with no declared payload.
+  external:
+    address: external.events
+    messages:
+      ExternalEvent:
+        name: ExternalEvent
+        payload:
+          $ref: 'https://schemas.example.com/external-event.json'
+operations:
+  publishOrderCreated:
+    action: send
+    channel:
+      $ref: '#/channels/orderCreated'
+  publishOrderEvents:
+    action: send
+    channel:
+      $ref: '#/channels/orderEvents'
+  receivePaymentRequests:
+    action: receive
+    channel:
+      $ref: '#/channels/paymentRequests'
+  publishInvoices:
+    action: send
+    channel:
+      $ref: '#/channels/invoices'
+  publishShipments:
+    action: send
+    channel:
+      $ref: '#/channels/shipments'
+  publishHeartbeat:
+    action: send
+    channel:
+      $ref: '#/channels/heartbeat'
+    messages:
+      - $ref: '#/channels/heartbeat/messages/Heartbeat'
+  publishExternal:
+    action: send
+    channel:
+      $ref: '#/channels/external'
+components:
+  messages:
+    OrderCreated:
+      name: OrderCreated
+      title: Order created
+      headers:
+        type: object
+        properties:
+          traceId:
+            type: string
+            pattern: '^[0-9a-f]{16}$'
+          attempt:
+            type: integer
+            minimum: 1
+      payload:
+        $ref: '#/components/schemas/Order'
+    OrderShipped:
+      name: OrderShipped
+      payload:
+        type: object
+        required: [orderId, trackingNumber]
+        properties:
+          orderId:
+            type: integer
+          trackingNumber:
+            type: string
+    OrderCancelled:
+      name: OrderCancelled
+      payload:
+        type: object
+        required: [orderId, reason]
+        properties:
+          orderId:
+            type: integer
+          reason:
+            type: string
+            enum: [customer, fraud, stock]
+  schemas:
+    Order:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: integer
+        customer:
+          type: string
+        status:
+          type: string
+          enum: [new, paid, shipped]
+        total:
+          type: number
+          minimum: 0
+        placedAt:
+          type: string
+          format: date-time
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              sku:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1

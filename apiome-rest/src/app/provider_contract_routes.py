@@ -52,6 +52,7 @@ from .pacticipant import PacticipantValidationError
 from .permissions import Action, Resource, enforce_permission
 from .provider_contract import (
     CODE_REQUEST_INVALID,
+    CONTRACT_TYPE_ASYNCAPI,
     ProviderContractError,
     ProviderContractRecord,
     PublishProviderContractRequest,
@@ -103,10 +104,16 @@ _PUBLISH_BODY = {
                 "properties": {
                     "content": {
                         "type": "string",
-                        "description": "The OpenAPI 3.x document (JSON or YAML), base64-encoded. "
-                        "Send this or `apiomeVersion`.",
+                        "description": "The OpenAPI 3.x or AsyncAPI 2.x / 3.x document (JSON or YAML), "
+                        "base64-encoded. Send this or `apiomeVersion`.",
                     },
-                    "contractType": {"type": "string", "enum": ["oas"], "default": "oas"},
+                    "contractType": {
+                        "type": "string",
+                        "enum": ["oas", "asyncapi"],
+                        "description": "`oas` for an OpenAPI 3.x document (HTTP pacts), `asyncapi` for an AsyncAPI "
+                        "2.x / 3.x document (message pacts). Read from the document when omitted. An AsyncAPI "
+                        "contract is always sent inline in `content`.",
+                    },
                     "contentType": {
                         "type": "string",
                         "description": "How `content` is encoded: `application/json` or `application/yaml`. "
@@ -189,6 +196,17 @@ _PUBLISH_BODY = {
                     "summary": "Rendered from an Apiome version",
                     "value": {"apiomeVersion": "ledger-api@1.4.0", "branch": "main"},
                 },
+                "asyncapi": {
+                    "summary": "An uploaded AsyncAPI document, for message pacts",
+                    "value": {
+                        "contractType": "asyncapi",
+                        "contentType": "application/yaml",
+                        "content": (
+                            "YXN5bmNhcGk6IDMuMC4wCmluZm86CiAgdGl0bGU6IE9yZGVycwogIHZlcnNpb246IDEuMC4wCmNoYW5uZWxzOiB7fQo="
+                        ),
+                        "branch": "main",
+                    },
+                },
             },
         }
     },
@@ -217,9 +235,11 @@ _RESPONSES: Dict[int | str, Dict[str, Any]] = {
         "`APIOME_PACT_EVIDENCE_MAX_BYTES`."
     },
     422: {
-        "description": "`provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 — `detail.pointer` "
-        "is the JSON Pointer of the problem in the document (`/swagger` for Swagger 2.0, `/openapi`, or the first "
-        "meta-schema error). `provider-contract-request-invalid` / `provider-contract-unsupported`: a field of the "
+        "description": "`provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 (or, as "
+        "`contractType: asyncapi`, not AsyncAPI 2.x / 3.x) — `detail.pointer` is the JSON Pointer of the problem in "
+        "the document (`/swagger` for Swagger 2.0, `/openapi`, `/asyncapi`, the first meta-schema error, or the first "
+        "structural problem of an AsyncAPI document). `provider-contract-request-invalid` / "
+        "`provider-contract-unsupported`: a field of the "
         "request (`detail.pointer` locates it). `provider-contract-source-not-found`: `apiomeVersion` names no "
         "project or version of this workspace. `provider-contract-evidence-unsupported`: the report's `contentType` "
         "is not one a report is read as. `provider-contract-evidence-invalid`: the report is not what its type says "
@@ -276,11 +296,14 @@ def _contract_document(base: str, contract: ProviderContractRecord) -> Dict[str,
     return {
         "provider": {"name": contract.provider_name},
         "providerVersion": contract.provider_version,
-        "contractType": "oas",
+        "contractType": contract.contract_type,
         "contentType": contract.content_type,
         "contentSha": contract.sha,
-        "oasVersion": contract.oas_version,
-        "operationCount": contract.operation_count,
+        **(
+            {"asyncapiVersion": contract.oas_version, "messageCount": contract.operation_count}
+            if contract.contract_type == CONTRACT_TYPE_ASYNCAPI
+            else {"oasVersion": contract.oas_version, "operationCount": contract.operation_count}
+        ),
         "source": source,
         "verificationResults": contract.verification_results,
         "selfVerification": _self_verification(contract),
@@ -388,14 +411,16 @@ def _read_evidence(
     response_class=HalJSONResponse,
     summary="Publish a provider contract",
     description=(
-        "Register the provider's OpenAPI document — its **provider contract** — against a provider version, "
+        "Register the provider's OpenAPI (or AsyncAPI) document — its **provider contract** — against a provider "
+        "version, "
         "for bi-directional contract testing. Send the document inline in `content` (base64; JSON or YAML, "
         "PactFlow's shape) **or** name an Apiome version in `apiomeVersion` (`ledger-api@1.4.0`) to render it "
         "from the canonical model with the exporter `GET /v1/schema/…` uses (OpenAPI 3.1). With a provider bound "
         "to its Apiome project, `apiomeVersion` may be just the version, and `latest` is the project's newest.\n\n"
-        "- **Only OpenAPI 3.0, 3.1 and 3.2.** The document must validate against its version's meta-schema. "
-        "Swagger 2.0, AsyncAPI and anything else are `422 provider-contract-invalid`, with `detail.pointer` "
-        "locating the problem.\n"
+        "- **OpenAPI 3.0, 3.1 and 3.2**, validated against its version's meta-schema — or, for message pacts, "
+        "**AsyncAPI 2.x and 3.x** (`contractType: asyncapi`, read from the document when omitted; inline only), "
+        "checked for its version, `info`, channels, operations and local `$ref`s. Swagger 2.0 and anything else "
+        "are `422 provider-contract-invalid`, with `detail.pointer` locating the problem.\n"
         "- **The provider is registered on first use**, and the version is recorded with its `branch`, `tags` "
         "and `buildUrl`, as `PUT …/pacticipants/{ref}/versions/{number}` does.\n"
         "- **Content is stored once.** The document is addressed by the SHA-256 of its canonical JSON "
@@ -474,7 +499,12 @@ def publish_contract(
                 content_type=body.content_type,
                 max_bytes=settings.pact_max_bytes,
             )
-            contract = prepare_contract(document, content_type=content_type, verification_results=results)
+            contract = prepare_contract(
+                document,
+                content_type=content_type,
+                contract_type=body.contract_type,
+                verification_results=results,
+            )
         outcome = publish_provider_contract(
             db,
             tenant_id,
@@ -502,9 +532,10 @@ def publish_contract(
     response_class=HalJSONResponse,
     summary="Read a provider contract",
     description=(
-        "The provider contract a provider version published: `contentSha`, `oasVersion`, `operationCount`, "
-        "`contentType`, where it came from (`source`: `inline`, or `apiome` with the project and version it was "
-        "rendered from), the `verificationResults` sent with it, and the OpenAPI document in `content`.\n\n"
+        "The provider contract a provider version published: `contractType`, `contentSha`, `oasVersion` and "
+        "`operationCount` (`asyncapiVersion` and `messageCount` for an AsyncAPI contract), `contentType`, where it "
+        "came from (`source`: `inline`, or `apiome` with the project and version it was rendered from), the "
+        "`verificationResults` sent with it, and the document in `content`.\n\n"
         "`{provider}` is a pacticipant's handle, id or name. Requires `pacts:view`."
     ),
     responses={404: {"description": "`pacticipant-not-found` or `provider-contract-not-found`."}},

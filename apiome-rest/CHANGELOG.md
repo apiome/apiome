@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.852.0] - 2026-11-25
+
+### Added
+- **Message (async) pacts (PFX-3.6, #6936).** OpenAPI 1.676.0 (the provider-contract `PUT` / `GET`
+  descriptions and request body). No migration. A provider contract may now be an **AsyncAPI 2.x
+  or 3.x** document: `PUT …/pact-broker/contracts/provider/{p}/version/{v}` takes
+  `contractType: asyncapi` (also read from the document when `contractType` is omitted; inline
+  only — `asyncapi` with `apiomeVersion` is `422 provider-contract-unsupported`). It is checked
+  structurally (`app.provider_contract.validate_asyncapi_contract`: version, `info`, channels,
+  operations and every local `$ref`, each refusal located) and stored in the existing columns
+  (`oas_version` holds the AsyncAPI version, `operation_count` the message count); the contract
+  document reads `contractType`, `asyncapiVersion` and `messageCount`. The bi-directional store
+  compares such a contract with the pact's messages through the new pure engine
+  `app.pact_asyncapi_compare.compare_pact_to_asyncapi`: each Pact 3 `messages` entry and Pact 4
+  `Asynchronous/Messages` interaction is resolved onto a channel/message
+  (`app.pact_asyncapi_index`: metadata `channel` / `topic` / `destination` / `queue` …, address
+  templates, the description against key / `name` / `messageId` / `title`, only messages the
+  provider sends — AsyncAPI 3 `send`, AsyncAPI 2 `subscribe` — and, when several remain, the first
+  whose payload accepts the contents), then its content type, metadata against `headers`, contents
+  against a JSON Schema `payload` (response view of `app.pact_oas_schema`, which now reads AsyncAPI
+  documents) and its matching rules (Pact 4 `content` / `metadata`) are checked as PFX-2.2 does.
+  New codes (`MESSAGE_FAILURE_CLASSES`, `MESSAGE_WARNING_CLASSES`, `MESSAGE_FIDELITY_CLASSES`) are
+  published on the comparison-rules page; HTTP interactions (`interaction-not-message`) and Pact 4
+  `Synchronous/Messages` (`synchronous-message-not-compared`, deferred) are reported, never
+  dropped. The stored comparison reads `contractType: asyncapi` / `asyncapiVersion` and each
+  interaction a `message` object; an OpenAPI comparison serializes exactly as before. The PFX-2.5
+  fidelity report lists the five message checks for such a comparison. Golden corpus:
+  `tests/golden/pact_asyncapi_compare` (28 cases, AsyncAPI 3.0 and 2.6).
+
 ## [1.851.0] - 2026-11-25
 
 ### Added
