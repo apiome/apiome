@@ -28,6 +28,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Path, Request
 
+from .bidirectional_verification import KIND_BIDIRECTIONAL
 from .config import settings
 from .consumer_contract_store import actor_from_auth
 from .database import db
@@ -166,8 +167,10 @@ def _result_document(request: Request, tenant_slug: str, base: str, result: Veri
     """Render a result the way a Pact Broker returns one.
 
     Fields the broker leaves out when empty (``buildUrl``, the ``verifiedBy`` entries) are left out
-    here too. Apiome adds ``providerVersionBranch`` when the branch is known and, when a CTG-4.3
-    report is linked, a ``pb:provider-verification-report`` link to it.
+    here too. Apiome adds ``providerVersionBranch`` when the branch is known, ``kind`` (``native``
+    or ``bidirectional``) and, when a CTG-4.3 report is linked, a ``pb:provider-verification-report``
+    link to it. A bi-directional result (PFX-2.3) also carries the ``comparison`` payload and a
+    ``pb:provider-contract`` link to the contract it was compared with.
 
     Args:
         request: The request (for the API root of the report link).
@@ -202,6 +205,9 @@ def _result_document(request: Request, tenant_slug: str, base: str, result: Veri
         body["providerVersionBranch"] = result.provider_branch
     body["testResults"] = result.test_results
     body["verifiedBy"] = verified_by
+    body["kind"] = result.kind
+    if result.comparison is not None:
+        body["comparison"] = result.comparison
     links: Dict[str, Any] = {
         "self": {
             "title": "Verification result",
@@ -218,6 +224,15 @@ def _result_document(request: Request, tenant_slug: str, base: str, result: Veri
             "href": f"{_result_url(base, result)}/triggered-webhooks",
         },
     }
+    if result.kind == KIND_BIDIRECTIONAL:
+        links["pb:provider-contract"] = {
+            "title": "Provider contract",
+            "name": f"{result.provider_name} {result.provider_version}",
+            "href": (
+                f"{base}/contracts/provider/{quote(result.provider_slug, safe='')}"
+                f"/version/{quote(result.provider_version, safe='')}"
+            ),
+        }
     if result.report_id:
         links["pb:provider-verification-report"] = {
             "title": "Provider verification report (Apiome)",

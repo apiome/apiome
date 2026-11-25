@@ -3,7 +3,8 @@
 :func:`load_pending_evidence` reads, in two statements, what :func:`app.pact_pending.pact_is_pending`
 needs: each pact content's successful verifications by the provider (summarised per ``sha`` in
 SQL, so a provider with thousands of results returns one row per content), and when the
-verifying provider branch was first recorded.
+verifying provider branch was first recorded. Only native results count (PFX-2.3): a
+bi-directional comparison is not the provider's verifier passing.
 """
 
 from __future__ import annotations
@@ -32,6 +33,9 @@ _SUCCESSES_SELECT = """
     LEFT JOIN apiome.pacticipant_version_tag t
            ON t.version_id = r.provider_version_id AND t.pacticipant_id = r.provider_id
     WHERE r.provider_id = %s::uuid AND r.tenant_id = %s::uuid AND r.success
+      -- PFX-2.3: only a Pact verifier's result says the provider's build verified the pact; a
+      -- bi-directional comparison does not take a pact out of pending.
+      AND r.kind = 'native'
       -- PFX-1.11: a deleted provider version's results no longer count.
       AND EXISTS (SELECT 1 FROM apiome.pacticipant_version lr
                   WHERE lr.id = r.provider_version_id AND lr.deleted_at IS NULL)

@@ -206,6 +206,7 @@ def test_the_matrix_is_rendered_in_the_brokers_shape(store: Dict[str, MagicMock]
     assert row["verificationResult"] == {
         "success": True,
         "verifiedAt": "2026-11-24T10:05:00+00:00",
+        "kind": "native",
         "_links": {"self": {"href": f"{pair}/pact-version/{_SHA}/verification-results/3"}},
     }
     assert row["reason"] == {"code": "verified", "text": "verified"}
@@ -271,6 +272,24 @@ def test_a_result_says_whether_the_pact_was_pending_or_wip(store: Dict[str, Magi
     (verified,) = client.get(f"{_BASE}/matrix?{_CLI_QUERY}").json()["matrix"]
     assert verified["verificationResult"]["pending"] is False
     assert "wip" not in verified["verificationResult"]
+
+
+def test_a_bidirectional_result_is_marked_and_read_like_a_native_one(store: Dict[str, MagicMock]) -> None:
+    store["query"].return_value = _result(replace(_row(), verification_kind="bidirectional"))
+    body = client.get(f"{_BASE}/matrix?{_CLI_QUERY}").json()
+    (row,) = body["matrix"]
+    assert row["verificationResult"]["kind"] == "bidirectional"
+    assert row["verificationResult"]["success"] is True
+    # The same result URL serves both kinds.
+    assert row["verificationResult"]["_links"]["self"]["href"].endswith(f"/pact-version/{_SHA}/verification-results/3")
+    assert row["reason"] == {"code": "verified", "text": "verified by bi-directional comparison"}
+    assert body["summary"]["deployable"] is True
+
+    store["query"].return_value = _result(replace(_row(False), verification_kind="bidirectional"))
+    body = client.get(f"{_BASE}/can-i-deploy?pacticipant=Billing%20Service&version=2.0.0&environment=production").json()
+    assert body["summary"]["deployable"] is False
+    assert body["summary"]["reason"].startswith("The bi-directional comparison of the pact between")
+    assert body["notices"][-1]["code"] == "verification-failed"
 
 
 def test_can_i_deploy_asks_the_same_question(store: Dict[str, MagicMock]) -> None:

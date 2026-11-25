@@ -59,8 +59,12 @@ Apiome registers the provider version if it does not have it yet.
 | `testResults` | One entry per interaction, as the verifier sent it. A failed result keeps every mismatch. The Ruby verifier in the `pact-cli` image sends an object instead (`{"tests": [...], "summary": ...}`); Apiome keeps its `tests` list. |
 | `verifiedBy` | The verifier and the library around it (`Pact-Rust` 1.2.0 in pact-js 13). |
 | `providerVersionBranch` | Shown in the answer: the branch the provider version was recorded on last — the one the verifier recorded just before publishing. |
+| `kind` | Shown in the answer: `native` for a result a verifier published, `bidirectional` for one Apiome wrote by comparing the pact with a [provider contract](./bi-directional.mdx#read-the-comparison). A verifier cannot set it. |
 
 - **A result never changes.** Publishing again adds a new result; it does not replace one.
+- **Bi-directional results are numbered with yours.** When the provider also publishes a
+  [provider contract](./bi-directional.mdx), Apiome's comparisons take numbers in the same
+  sequence, and the latest result of either kind decides [can-i-deploy](./can-i-deploy.mdx#bi-directional-results).
 - **Results are numbered per pact version**: 1, 2, 3 … The answer is `201` with the result's URL
   in `Location`.
 - **The pending state is kept.** When the pact was fetched with selectors, the result records

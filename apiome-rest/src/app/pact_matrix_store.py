@@ -139,7 +139,7 @@ _ROW_COLUMNS = """
     pv.sha::text AS pact_sha, p.created_at AS pact_created_at, p.revision AS pact_revision,
     rv.id::text AS provider_version_id, rv.number AS provider_version_number, rv.seq AS provider_version_seq,
     r.number AS verification_number, r.seq AS verification_seq, r.success, r.created_at AS verified_at,
-    r.pact_pending, r.wip,
+    r.pact_pending, r.wip, r.kind AS verification_kind,
     GREATEST(cv.created_at, COALESCE(rv.created_at, cv.created_at)) AS last_action_at
 """
 
@@ -148,7 +148,7 @@ _ROW_NAMES = """
     consumer_id, consumer_slug, consumer_name, consumer_version_id, consumer_version_number, consumer_version_seq,
     provider_id, provider_slug, provider_name, pact_sha, pact_created_at, pact_revision,
     provider_version_id, provider_version_number, provider_version_seq,
-    verification_number, verification_seq, success, verified_at, pact_pending, wip, last_action_at
+    verification_number, verification_seq, success, verified_at, pact_pending, wip, verification_kind, last_action_at
 """
 
 _PUBLICATION_COLUMNS = (
@@ -575,6 +575,7 @@ def _row(row: Dict[str, Any]) -> MatrixRow:
         verified_at=_iso(row.get("verified_at")),
         pact_pending=row.get("pact_pending"),
         wip=bool(row.get("wip")),
+        verification_kind=row.get("verification_kind"),
     )
 
 

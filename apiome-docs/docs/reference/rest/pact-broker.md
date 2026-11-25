@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.666.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.667.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 66 operations
 
@@ -114,7 +114,9 @@ Register the provider's OpenAPI document — its **provider contract** — again
 - **Content is stored once.** The document is addressed by the SHA-256 of its canonical JSON (`contentSha`), so JSON, YAML and a rendered copy of one document are one contract.
 - **Write-once.** `201` for a new contract, `200` when the same contract and self-verification results are published again (nothing changes), `409` for anything different.
 
-`verificationResults` are stored as sent, with the report's SHA-256. Requires `pacts:create`, and `versions:view` with `apiomeVersion`.
+`verificationResults` are stored as sent, with the report's SHA-256.
+
+**Bi-directional comparison.** After the contract is stored it is compared with the pacts that need it — each consumer's main-branch pact, the pacts deployed or released, the latest pact of each consumer on the provider version's branch, and every pact compared before with a contract of that branch — and each comparison is stored as a verification result with `kind: bidirectional`, which the matrix and can-i-deploy read like a native one. `comparisons` in the response reports each pact. Requires `pacts:create`, and `versions:view` with `apiomeVersion`.
 
 Operation id: `publish_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__put`
 
@@ -149,8 +151,8 @@ Request body for publish a provider contract.
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 200 | Successful response for publish a provider contract. | `application/hal+json` any |
-| 201 | The contract was published for this provider version. | — |
+| 200 | The same contract was published again: nothing changed. `comparisons` reports the pacts compared with it, as for `201`. | `application/hal+json` any |
+| 201 | The contract was published for this provider version. `comparisons` reports the bi-directional comparisons the publish ran: the counts (`compared`, `alreadyCompared`, `errors`, `skipped`) and one entry per pact, with its `status`, `verdict` and `verificationNumber`. | — |
 | 409 | `provider-contract-conflict`: this provider version already published a different contract (or the same one with different self-verification results). Nothing was stored. | — |
 | 413 | `provider-contract-too-large`: the document or the request is over the size limit. | — |
 | 422 | `provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the document (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema error). `provider-contract-request-invalid` / `provider-contract-unsupported`: a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`: `apiomeVersion` names no project or version of this workspace. | — |
@@ -167,6 +169,7 @@ Publish every pact one build of a consumer produced, in one request — what `pa
 - **Content is stored once.** A pact identical to one an earlier consumer version published reuses that pact version (`pactVersionSha`), so the provider has one thing to verify.
 - **All or nothing.** If any contract is refused, nothing of the request is stored.
 - **Safe to repeat.** Publishing the same pacts for the same version again changes nothing. Publishing a *different* pact for a version that already has one is `409`.
+- **Bi-directional comparison.** When a provider has published a provider contract, each pact is compared with the contracts of its latest provider version, the head of each provider branch and every provider version deployed or released. Each comparison is stored as a verification result with `kind: bidirectional`; the response lists them in `comparisons` and as notices.
 
 Pact specification 1.x to 4.x is accepted and stored as published. `merge` conflict handling and non-Pact specifications are refused with `422 pact-publish-unsupported`.
 

@@ -31,6 +31,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, Depends, Request
 from pydantic import ValidationError
 
+from .bidirectional_store import compare_provider_contract
 from .config import settings
 from .consumer_contract_store import actor_from_auth
 from .database import db
@@ -147,7 +148,15 @@ _PUBLISH_BODY = {
 }
 
 _RESPONSES: Dict[int | str, Dict[str, Any]] = {
-    201: {"description": "The contract was published for this provider version."},
+    200: {
+        "description": "The same contract was published again: nothing changed. `comparisons` reports the pacts "
+        "compared with it, as for `201`."
+    },
+    201: {
+        "description": "The contract was published for this provider version. `comparisons` reports the "
+        "bi-directional comparisons the publish ran: the counts (`compared`, `alreadyCompared`, `errors`, "
+        "`skipped`) and one entry per pact, with its `status`, `verdict` and `verificationNumber`."
+    },
     409: {
         "description": "`provider-contract-conflict`: this provider version already published a different "
         "contract (or the same one with different self-verification results). Nothing was stored."
@@ -263,8 +272,13 @@ def _parse_body(raw: bytes) -> PublishProviderContractRequest:
         "(`contentSha`), so JSON, YAML and a rendered copy of one document are one contract.\n"
         "- **Write-once.** `201` for a new contract, `200` when the same contract and self-verification results "
         "are published again (nothing changes), `409` for anything different.\n\n"
-        "`verificationResults` are stored as sent, with the report's SHA-256. Requires `pacts:create`, and "
-        "`versions:view` with `apiomeVersion`."
+        "`verificationResults` are stored as sent, with the report's SHA-256.\n\n"
+        "**Bi-directional comparison.** After the contract is stored it is compared with the pacts that need it "
+        "— each consumer's main-branch pact, the pacts deployed or released, the latest pact of each consumer on "
+        "the provider version's branch, and every pact compared before with a contract of that branch — and each "
+        "comparison is stored as a verification result with `kind: bidirectional`, which the matrix and "
+        "can-i-deploy read like a native one. `comparisons` in the response reports each pact. Requires "
+        "`pacts:create`, and `versions:view` with `apiomeVersion`."
     ),
     openapi_extra={"requestBody": _PUBLISH_BODY},
     responses=_RESPONSES,
@@ -299,6 +313,7 @@ def publish_contract(
     user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.CREATE, target=provider)
     tenant_id = _tenant_id(auth_data)
     _enforce_publish_budget(tenant_id)
+    actor = actor_from_auth(auth_data, user_id)
     try:
         body = _parse_body(raw)
         results = stored_verification_results(body.verification_results)
@@ -319,17 +334,20 @@ def publish_contract(
             provider_name=provider,
             version_number=provider_version,
             contract=contract,
-            actor=actor_from_auth(auth_data, user_id),
+            actor=actor,
             branch=body.branch,
             tags=body.tags,
             build_url=body.build_url,
         )
     except (ProviderContractError, PacticipantValidationError) as exc:
         raise _http_error(exc) from exc
-    return HalJSONResponse(
-        _contract_document(_base_url(request, tenant_slug), outcome.contract),
-        status_code=201 if outcome.created else 200,
+    # PFX-2.3: compare the contract with the pacts that need it; the results land in the matrix.
+    comparisons = compare_provider_contract(
+        db, tenant_id, outcome.contract.provider_slug, outcome.contract.provider_version, actor=actor
     )
+    document = _contract_document(_base_url(request, tenant_slug), outcome.contract)
+    document["comparisons"] = comparisons.to_dict()
+    return HalJSONResponse(document, status_code=201 if outcome.created else 200)
 
 
 @router.get(

@@ -8,8 +8,9 @@ tags: [contracts, pact, ci, rest]
 **Can-i-deploy** answers one question before a deployment: *is this version compatible with what
 already runs there?* Apiome answers it from three things you already record: the
 [pacts](./publish-pacts.mdx) each consumer version published, the
-[verification results](./verification-results.mdx) of each provider version, and
-[what is deployed where](./environments.mdx). The `pact-broker can-i-deploy` command asks Apiome
+[verification results](./verification-results.mdx) of each provider version — including the
+[bi-directional](#bi-directional-results) ones Apiome writes when it compares a pact with a
+provider contract — and [what is deployed where](./environments.mdx). The `pact-broker can-i-deploy` command asks Apiome
 unchanged.
 
 There is no screen for the matrix yet. Use the CLI or the API.
@@ -75,7 +76,7 @@ Apiome finds every application the version has a pact with, takes the versions o
 - **Only the pacts of that version count.** A consumer version that no longer calls a provider has
   no pact with it, and that provider is not checked.
 - **The latest result decides.** When a provider version verified a pact more than once, the last
-  result is used.
+  result is used, whether a Pact verifier published it or Apiome's comparison wrote it.
 - **A pending pact still blocks the consumer.** A failed result of a
   [pending pact](./pending-and-wip.mdx) does not fail the provider's build, but the consumer
   cannot deploy against that provider version. The row's reason reads `pact is pending`, and its
@@ -97,7 +98,69 @@ has a `code` your scripts can branch on:
 | `no-verification-result` | There is no verified pact between version 2.0.0 of Billing Service and the version of Ledger API currently in production (5.1.0) | Unknown |
 
 Each row of the matrix has its own `reason`: `verified`, `verification failed`, `pact is pending`
-or `no verification result`.
+or `no verification result`. For a [bi-directional result](#bi-directional-results) the codes are
+the same and the text says so: `verified by bi-directional comparison` or
+`bi-directional comparison failed`.
+
+## Bi-directional results
+
+When a provider publishes its OpenAPI document as a [provider contract](./bi-directional.mdx),
+Apiome compares each consumer's pact with it, using the [comparison rules](./comparison-rules.mdx),
+and stores the outcome as a verification result. The matrix and can-i-deploy read that result
+**exactly as they read one a Pact verifier published**: a passing comparison counts as a successful
+verification, a failing one blocks the deployment, and a missing one makes the answer unknown.
+
+You do not ask for it. The comparison runs when either side publishes:
+
+| What is published | What it is compared with |
+| --- | --- |
+| A **pact** (`pact-broker publish`) | The contract of the provider's latest version, of the head of each provider branch, and of every provider version deployed or released. |
+| A **provider contract** | Each consumer's main-branch pact, every pact deployed or released, the latest pact of each consumer on the provider version's branch, and every pact compared before with a contract of that branch. |
+
+The last row is the **re-run**: when a new provider contract arrives on `main`, the pacts that were
+compared with `main`'s previous contract are compared with the new one too.
+
+**Each pact is compared with each provider version once.** A provider version's contract never
+changes, so publishing either side again compares nothing new. A new provider contract is a new
+provider version, so it gets its own results.
+
+### Read the kind of a result
+
+Every `verificationResult` in the matrix says how it was reached:
+
+```json
+"verificationResult": {
+  "success": false,
+  "verifiedAt": "2026-11-24T10:05:00+00:00",
+  "kind": "bidirectional",
+  "_links": { "self": { "href": "…/pact-version/4f1e…/verification-results/1" } }
+}
+```
+
+| `kind` | Means |
+| --- | --- |
+| `native` | A Pact verifier replayed the pact against the running provider and published the result. |
+| `bidirectional` | Apiome compared the pact with the provider version's contract. |
+
+A failing bi-directional result names the comparison in the answer:
+
+```text
+The bi-directional comparison of the pact between version 2.0.0 of Billing Service and the version
+of Ledger API currently in production (5.1.0) with its provider contract failed
+```
+
+Follow the row's `self` link to read the result. A bi-directional result carries the whole
+comparison in `comparison`, one entry per interaction in `testResults`, and a
+`pb:provider-contract` link to the contract it was compared with. See
+[Read the comparison](./bi-directional.mdx#read-the-comparison).
+
+- **A `partial` comparison passes.** Nothing in the provider contract contradicts the pact, but
+  something could not be compared in full. Read its fidelity notes in `comparison` before relying
+  on it.
+- **A native result after a comparison replaces it.** If the provider also runs a Pact verifier,
+  its later result for the same provider version decides, as any later result does.
+- **A comparison does not end a pact's pending period.** Only a Pact verifier's successful result
+  takes a pact out of [pending](./pending-and-wip.mdx).
 
 ## Wait for a result
 
@@ -244,5 +307,6 @@ A version that does not exist is not a refusal: the answer is no, with the code 
 
 - [Environments and deployments](./environments.mdx) — record what runs where.
 - [Publish verification results](./verification-results.mdx) — the results the answer is read from.
+- [Publish a provider contract](./bi-directional.mdx) — the contracts bi-directional results come from.
 - [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — the other gates a pipeline can run.
 - [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

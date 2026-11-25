@@ -24,6 +24,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
+from app.bidirectional_verification import ComparisonRun, RunEntry
 from app.config import settings
 from app.main import app
 from app.pact_broker_auth import validate_broker_authentication
@@ -149,8 +150,14 @@ def _auth() -> Iterator[None]:
 
 @pytest.fixture
 def allowed() -> Iterator[MagicMock]:
-    """Every permission granted; yields the ``enforce_permission`` mock."""
-    with patch(f"{_ROUTES}.enforce_permission", return_value="test-user-id") as enforce:
+    """Every permission granted; yields the ``enforce_permission`` mock.
+
+    The bi-directional comparison a publish runs (PFX-2.3) is stood in with an empty run.
+    """
+    with (
+        patch(f"{_ROUTES}.enforce_permission", return_value="test-user-id") as enforce,
+        patch(f"{_ROUTES}.compare_published_pacts", return_value=ComparisonRun()),
+    ):
         yield enforce
 
 
@@ -531,6 +538,61 @@ def test_bulk_publish_passes_the_version_details_and_answers_in_the_broker_shape
         ("Pact between Billing Service (1.0.0) and Ledger API", _SHA),
         ("Pact between Billing Service (1.0.0) and Tax API", "cd" * 32),
     ]
+
+
+def test_bulk_publish_reports_the_bidirectional_comparisons_it_ran(allowed: MagicMock) -> None:
+    run = ComparisonRun(
+        [
+            RunEntry("Billing Service", "1.0.0", "Ledger API", "p-1", _SHA, "compared", verdict="fail", number=1),
+            RunEntry("Billing Service", "1.0.0", "Ledger API", "p-0", _SHA, "already-compared", number=1),
+        ]
+    )
+    with (
+        patch(f"{_ROUTES}.publish_pacts", return_value=_outcome()) as publish,
+        patch(f"{_ROUTES}.compare_published_pacts", return_value=run) as compare,
+    ):
+        body = client.post(f"{_BASE}/contracts/publish", json=_bulk()).json()
+    args, kwargs = compare.call_args
+    assert args[1:] == (_TENANT, publish.return_value)
+    assert kwargs["actor"].user_id == "test-user-id"
+    assert body["notices"][-1] == {
+        "type": "error",
+        "text": "Bi-directional comparison of the pact between Billing Service 1.0.0 and the provider "
+        "contract of Ledger API p-1: fail.",
+    }
+    assert body["logs"][-1]["level"] == "error"
+    assert (body["comparisons"]["compared"], body["comparisons"]["alreadyCompared"]) == (1, 1)
+    assert body["comparisons"]["results"][0]["verificationNumber"] == 1
+
+
+def test_bulk_publish_without_provider_contracts_adds_nothing(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.publish_pacts", return_value=_outcome()):
+        body = client.post(f"{_BASE}/contracts/publish", json=_bulk()).json()
+    assert "comparisons" not in body
+
+
+def test_a_single_pact_publish_also_runs_the_comparisons(allowed: MagicMock) -> None:
+    with (
+        patch(f"{_ROUTES}.publish_pacts", return_value=_outcome()) as publish,
+        patch(f"{_ROUTES}.compare_published_pacts", return_value=ComparisonRun()) as compare,
+    ):
+        response = client.put(f"{_PAIR}/version/1.0.0", json=_DOCUMENT)
+    assert response.status_code == 201, response.text
+    assert compare.call_args.args[1:] == (_TENANT, publish.return_value)
+    assert "comparisons" not in response.json()
+
+
+def test_a_refused_publish_compares_nothing() -> None:
+    denial = HTTPException(status_code=403, detail="Permission denied")
+    with (
+        patch(f"{_ROUTES}.enforce_permission", side_effect=denial),
+        patch(f"{_ROUTES}.publish_pacts") as publish,
+        patch(f"{_ROUTES}.compare_published_pacts") as compare,
+    ):
+        assert client.post(f"{_BASE}/contracts/publish", json=_bulk()).status_code == 403
+        assert client.put(f"{_PAIR}/version/1.0.0", json=_DOCUMENT).status_code == 403
+    publish.assert_not_called()
+    compare.assert_not_called()
 
 
 def test_a_replaced_pact_is_reported_as_a_warning(allowed: MagicMock) -> None:

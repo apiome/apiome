@@ -61,6 +61,7 @@ _RESULT_SELECT = """
            r.verified_by_implementation, r.verified_by_version, r.verified_by_client_implementation,
            r.verified_by_client_version, r.verified_by_client_test_framework, r.pact_pending, r.wip,
            r.provider_verification_report_id::text AS provider_verification_report_id, r.created_at,
+           r.kind, r.comparison,
            c.slug AS consumer_slug, c.name AS consumer_name, pr.slug AS provider_slug, pr.name AS provider_name,
            pvn.number AS provider_version, pv.sha,
            (SELECT v.number FROM apiome.pact_publication p

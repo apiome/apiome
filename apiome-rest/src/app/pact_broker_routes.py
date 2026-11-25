@@ -49,6 +49,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
+from .bidirectional_store import compare_published_pacts
+from .bidirectional_verification import ComparisonRun, run_notices
 from .config import settings
 from .consumer_contract_store import actor_from_auth
 from .database import db
@@ -187,7 +189,7 @@ _STATUS_BY_CODE = {
 _publish_limiter = FixedWindowRateLimiter()
 
 #: The ``logs`` level of each ``notices`` type in a publish result.
-_LOG_LEVEL_BY_NOTICE = {"debug": "debug", "success": "info", "warning": "warn"}
+_LOG_LEVEL_BY_NOTICE = {"debug": "debug", "success": "info", "warning": "warn", "error": "error"}
 
 _PAIR_PATH = "/pacts/provider/{provider}/consumer/{consumer}"
 
@@ -757,21 +759,25 @@ def _publish_notices(base: str, outcome: PublishOutcome) -> List[Dict[str, str]]
     return notices
 
 
-def _publish_result(base: str, outcome: PublishOutcome) -> Dict[str, Any]:
+def _publish_result(base: str, outcome: PublishOutcome, comparisons: Optional[ComparisonRun] = None) -> Dict[str, Any]:
     """Render a bulk publish result the way a Pact Broker returns one.
 
     Args:
         base: The broker base URL.
         outcome: What the request stored.
+        comparisons: The bi-directional comparisons the publish ran (PFX-2.3), if any.
 
     Returns:
         The response body: ``notices`` (and the same lines as ``logs``), the embedded pacticipant
-        and version, and a link per pact.
+        and version, a link per pact and, when any provider has a contract, Apiome's
+        ``comparisons``.
     """
     version = outcome.version.version
     consumer = outcome.consumer
     notices = _publish_notices(base, outcome)
-    return {
+    if comparisons is not None:
+        notices += run_notices(comparisons)
+    body: Dict[str, Any] = {
         "notices": notices,
         # The older spelling of the same lines, which some Pact clients still read.
         "logs": [
@@ -812,6 +818,9 @@ def _publish_result(base: str, outcome: PublishOutcome) -> Dict[str, Any]:
             ],
         },
     }
+    if comparisons is not None and comparisons.entries:
+        body["comparisons"] = comparisons.to_dict()
+    return body
 
 
 def _read(
@@ -1020,7 +1029,12 @@ router.add_api_route(
         "verify.\n"
         "- **All or nothing.** If any contract is refused, nothing of the request is stored.\n"
         "- **Safe to repeat.** Publishing the same pacts for the same version again changes "
-        "nothing. Publishing a *different* pact for a version that already has one is `409`.\n\n"
+        "nothing. Publishing a *different* pact for a version that already has one is `409`.\n"
+        "- **Bi-directional comparison.** When a provider has published a provider contract, each pact "
+        "is compared with the contracts of its latest provider version, the head of each provider "
+        "branch and every provider version deployed or released. Each comparison is stored as a "
+        "verification result with `kind: bidirectional`; the response lists them in `comparisons` "
+        "and as notices.\n\n"
         "Pact specification 1.x to 4.x is accepted and stored as published. `merge` conflict "
         "handling and non-Pact specifications are refused with `422 pact-publish-unsupported`.\n\n"
         "The response carries `notices` (the lines the CLI prints) and a `pb:contracts` link per "
@@ -1090,7 +1104,8 @@ def publish_contracts(
         raise _http_error(exc) from exc
     base = _base_url(request, tenant_slug)
     fire_publish_events(db, tenant_id, base, outcome)
-    return HalJSONResponse(_publish_result(base, outcome))
+    comparisons = compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id))
+    return HalJSONResponse(_publish_result(base, outcome, comparisons))
 
 
 @router.put(
@@ -1165,6 +1180,8 @@ def publish_pact(
     published: PublishedPact = outcome.pacts[0]
     base = _base_url(request, tenant_slug)
     fire_publish_events(db, tenant_id, base, outcome)
+    # The comparisons are read in the matrix; this response stays the pact, as on a Pact Broker.
+    compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id))
     return HalJSONResponse(
         _pact_document(base, published.pact),
         status_code=201 if published.created else 200,
