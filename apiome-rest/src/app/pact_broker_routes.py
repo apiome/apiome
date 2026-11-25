@@ -126,6 +126,15 @@ from .pacticipant import (
 )
 from .pacticipant_store import get_pacticipant, get_version
 from .permissions import Action, Resource, enforce_permission
+from .provider_contract import (
+    CODE_CONTRACT_CONFLICT,
+    CODE_CONTRACT_INVALID,
+    CODE_CONTRACT_NOT_FOUND,
+    CODE_CONTRACT_TOO_LARGE,
+    CODE_REQUEST_INVALID,
+    CODE_SOURCE_NOT_FOUND,
+    CODE_UNSUPPORTED,
+)
 from .rate_limit import FixedWindowRateLimiter
 from .verification_result import CODE_REPORT_NOT_FOUND, CODE_VERIFICATION_INVALID, CODE_VERIFICATION_NOT_FOUND
 
@@ -165,6 +174,14 @@ _STATUS_BY_CODE = {
     CODE_NOT_DELETED: 409,
     CODE_RESTORE_CONFLICT: 409,
     CODE_VERSION_IN_USE: 409,
+    # PFX-2.1 (#6925): provider contracts.
+    CODE_CONTRACT_INVALID: 422,
+    CODE_REQUEST_INVALID: 422,
+    CODE_UNSUPPORTED: 422,
+    CODE_SOURCE_NOT_FOUND: 422,
+    CODE_CONTRACT_TOO_LARGE: 413,
+    CODE_CONTRACT_CONFLICT: 409,
+    CODE_CONTRACT_NOT_FOUND: 404,
 }
 
 _publish_limiter = FixedWindowRateLimiter()

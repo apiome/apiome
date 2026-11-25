@@ -51,6 +51,7 @@ matrix, [contract webhooks](./webhooks.mdx), public [pact badges](./badges.mdx),
 | **Integration** | A consumer and a provider that have a pact between them. A consumer needs its provider to be deployed; a provider does not need its consumers. |
 | **Contract webhook** | An HTTP request Apiome sends when something happens to a pact: it was published, its content changed, it needs verifying, or a verification finished. See [Contract webhooks](./webhooks.mdx). |
 | **Pact badge** | A public SVG (or shields.io) badge that says whether the pacts of an application bound to a public project are verified, failing or unknown. See [Pact badges](./badges.mdx). |
+| **Provider contract** | A provider version's OpenAPI document, published for bi-directional contract testing: a consumer's pact is checked against it instead of against a running provider. See [Publish a provider contract](./bi-directional.mdx). |
 | **Label** | A free-form name on a pacticipant (`team-billing`, `tier-1`) that groups applications. See [Labels, deletes and retention](./retention.mdx). |
 | **Soft delete** | How Apiome deletes a pacticipant or a version: it disappears from every read at once — its pacts, results and deployments with it — but can be **restored** until it is purged. |
 | **Grace period** | How long a deleted pacticipant or version can be restored: 30 days by default. |

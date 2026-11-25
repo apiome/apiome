@@ -1,0 +1,196 @@
+---
+title: Publish a provider contract
+description: Register a provider version's OpenAPI document for bi-directional contract testing.
+sidebar_position: 6.2
+tags: [contracts, pact, ci, rest, openapi]
+---
+
+Bi-directional contract testing checks a consumer's pact against the provider's **OpenAPI
+document** instead of replaying it against a running provider. That document, registered against
+a provider version, is the **provider contract**. Publish one from each provider build: upload the
+document, or name the Apiome version that describes the provider and let Apiome render it.
+
+This release stores provider contracts. Comparing them with your consumers' pacts, and showing the
+verdict in the matrix and in [can-i-deploy](./can-i-deploy.mdx), is not available yet. There is no
+screen for provider contracts.
+
+## Before you start
+
+You need:
+
+1. **The broker base URL** and **an API key** — the same ones you
+   [publish pacts](./publish-pacts.mdx#before-you-start) with. The key's member needs
+   **Pacts** → **Create** (the built-in **Editor** role has it).
+2. **An OpenAPI 3.0, 3.1 or 3.2 document** for the provider, in JSON or YAML — **or** an Apiome
+   project that describes it. Swagger 2.0 is not accepted: import it into Apiome and publish from
+   the project instead.
+
+You do **not** need to register the provider first. The first contract that names it registers
+it as a [pacticipant](./concepts.mdx).
+
+## Publish an OpenAPI document
+
+`PUT` the contract to `…/pact-broker/contracts/provider/<provider>/version/<provider version>`,
+with the document base64-encoded in `content`:
+
+```bash
+curl -X PUT \
+  "https://api.apiome.dev/v1/tenants/acme/pact-broker/contracts/provider/ledger-api/version/$GIT_COMMIT" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data @- <<EOF
+{
+  "contractType": "oas",
+  "contentType": "application/yaml",
+  "content": "$(base64 < openapi.yaml | tr -d '\n')",
+  "branch": "$GIT_BRANCH",
+  "buildUrl": "$CI_BUILD_URL"
+}
+EOF
+```
+
+| Field | What it is |
+| --- | --- |
+| `content` | The OpenAPI document, base64-encoded. |
+| `contentType` | `application/json` or `application/yaml`. Leave it out and Apiome reads a document that starts with `{` as JSON and anything else as YAML. |
+| `contractType` | `oas`, the only type accepted. It is the default. |
+| `branch`, `tags`, `buildUrl` | Recorded on the provider version, as when you [record a version](./concepts.mdx#the-rules-the-registry-keeps). |
+| `verificationResults` | The provider's self-verification results. See [Self-verification results](#self-verification-results). |
+
+**Use the commit SHA as the provider version.** A version's contract is fixed once published, so
+every build needs its own version number.
+
+## Publish from an Apiome version
+
+If an Apiome project describes the provider, send `apiomeVersion` instead of `content`. Apiome
+renders the version's OpenAPI 3.1 document — the same one `GET /v1/schema/<workspace>/<project>/<version>`
+serves — and stores it like an uploaded one:
+
+```json
+{ "apiomeVersion": "ledger-api@1.4.0", "branch": "main" }
+```
+
+| `apiomeVersion` | Renders |
+| --- | --- |
+| `ledger-api@1.4.0` | Version `1.4.0` of the project `ledger-api`. |
+| `ledger-api@latest` | The project's newest version. |
+| `ledger-api@<revision id>` | That revision of the project. |
+| `1.4.0` or `latest` | That version of the project the provider is **bound** to. |
+
+To use the short form, bind the provider to its project once:
+
+```bash
+curl -X PATCH "https://api.apiome.dev/v1/tenants/acme/pacticipants/ledger-api" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"project": "ledger-api"}'
+```
+
+Draft versions can be published. What is stored is a copy, so a later edit of the version does
+not change a published contract. The key's member also needs **Versions** → **View** (every
+built-in role has it).
+
+## Self-verification results
+
+A provider contract is only as good as the provider's agreement with it. Send the results of
+testing the provider against its own document (Schemathesis, Dredd, Newman, a JUnit report) with
+the contract:
+
+```json
+{
+  "content": "…",
+  "verificationResults": {
+    "success": true,
+    "content": "<the report, base64-encoded>",
+    "contentType": "application/xml",
+    "verifier": "schemathesis",
+    "verifierVersion": "3.39.0"
+  }
+}
+```
+
+`success` is required. Apiome stores the results as sent and records the report's SHA-256 and size
+next to them. It does not read the report yet.
+
+## What happens when you publish
+
+- **Only OpenAPI 3.x is a provider contract.** The document must declare `openapi: 3.0.x`, `3.1.x`
+  or `3.2.x` and validate against that version's schema.
+- **YAML is read as the JSON it stands for.** A status code written `200:` becomes the key `"200"`,
+  and an unquoted date such as `2026-11-01` becomes the text `"2026-11-01"`. A value JSON cannot
+  hold, such as `!!binary` or `.nan`, is refused with its location.
+- **The provider version is recorded** with its branch, tags and build URL. The provider is
+  registered if the workspace does not have it yet.
+- **Identical documents are stored once.** A contract is named by the SHA-256 of its canonical
+  JSON (`contentSha`). Key order and format do not matter: the same document sent as JSON, as YAML
+  or rendered from Apiome has one `contentSha`, and ten builds that publish it store it once.
+- **A contract is written once.** For a provider version that already has one:
+
+| You publish | Answer |
+| --- | --- |
+| Nothing yet for this version | **`201`** — the contract is stored. |
+| The same document with the same `verificationResults` | **`200`** — nothing changes. |
+| A different document, or different `verificationResults` | **`409 provider-contract-conflict`** — nothing is stored. Publish under a new provider version. |
+
+## Read a contract back
+
+`GET` the same URL. The answer describes the contract and carries the document in `content`:
+
+| Field | What it is |
+| --- | --- |
+| `providerVersion` | The provider version that published it. |
+| `contentSha` | The SHA-256 of the document's canonical JSON. |
+| `oasVersion`, `operationCount` | The `openapi` version it declares, and how many operations it has. |
+| `contentType` | How it was sent: `application/json`, `application/yaml`, or `application/json` when rendered from Apiome. |
+| `source` | `{"kind": "inline"}` for an uploaded document. For one rendered from Apiome, `kind` is `apiome`, with `project` and `version` as they were named at publishing, and their ids. |
+| `verificationResults` | The self-verification results, with `contentSha256` and `contentBytes` of the report, or `null`. |
+| `content` | The OpenAPI document, as JSON. |
+| `_links` | `self`, `pb:provider` and `pb:provider-version`. |
+
+Deleting the Apiome project or version a contract was rendered from does not delete the contract.
+Its `projectId` or `versionId` becomes `null`, and `project` and `version` still say where it came
+from. Deleting the provider version or the provider deletes its contract.
+
+## When a contract is refused
+
+Every refusal carries a stable `code` in `detail`. When the problem is in one place, `pointer` is
+its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901), in the OpenAPI document or in the request:
+
+```json
+{
+  "detail": {
+    "code": "provider-contract-invalid",
+    "message": "the OpenAPI document does not validate against the OpenAPI 3.1 schema (1 error(s)): /paths/~1invoices~1{id}/get/responses/404: 'description' is a required property",
+    "pointer": "/paths/~1invoices~1{id}/get/responses/404"
+  }
+}
+```
+
+| Status | Code | What to do |
+| --- | --- | --- |
+| `422` | `provider-contract-invalid` | The document is not an OpenAPI 3.x document. `pointer` is the place **in the document**: `/swagger` for Swagger 2.0, `/asyncapi` for AsyncAPI, `/openapi` for a missing or unsupported version, otherwise the first schema error. `""` means the whole document: it does not parse, or breaks a size or nesting limit. |
+| `422` | `provider-contract-request-invalid` | A field **in the request** is wrong: neither or both of `content` and `apiomeVersion`, content that is not base64, `verificationResults` without `success`. |
+| `422` | `provider-contract-unsupported` | A `contractType` other than `oas`, or a `contentType` that is neither JSON nor YAML. |
+| `422` | `provider-contract-source-not-found` | `apiomeVersion` names no project or version of this workspace, or names only a version for a provider that is not bound to a project. |
+| `409` | `provider-contract-conflict` | This provider version already has a different contract. Publish under a new version number. |
+| `413` | `provider-contract-too-large` | The document is over the size limit (`APIOME_PACT_MAX_BYTES`, 10 MiB unless your operator changed it). |
+| `429` | `pact-publish-rate-limited` | The workspace is over its publish budget, shared with pact publishing. Retry after the seconds in `Retry-After`. |
+| `404` | `provider-contract-not-found`, `pacticipant-not-found` | On a read: the version published no contract, or there is no such provider. |
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Read a provider contract | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Publish an uploaded document | `pacts:create` | — | ✓ | ✓ | ✓ |
+| Publish from an Apiome version | `pacts:create` and `versions:view` | — | ✓ | ✓ | ✓ |
+
+A restricted API key (one with scopes) cannot use these routes yet; use a full-access key from a
+member with the **Editor** role.
+
+## Related
+
+- [Publish and fetch pacts](./publish-pacts.mdx) — the consumer's side.
+- [Pact Broker concepts](./concepts.mdx) — pacticipants, versions and project bindings.
+- [Pact Broker compatibility](./compatibility.mdx) — the provider-contract route among the others.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

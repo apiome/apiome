@@ -54,6 +54,7 @@ __all__ = [
     "load_openapi_31_meta_schema",
     "load_openapi_32_meta_schema",
     "validate_openapi_document",
+    "openapi_document_errors_at",
     "assert_valid_openapi_document",
 ]
 
@@ -227,6 +228,39 @@ def validate_openapi_document(document: Any) -> List[Dict[str, str]]:
                 "keyword": str(error.validator),
             }
         )
+    return errors
+
+
+def _json_pointer(parts: Any) -> str:
+    """Render a jsonschema ``absolute_path`` as an RFC 6901 JSON Pointer (``""`` is the root)."""
+    return "".join("/" + str(part).replace("~", "~0").replace("/", "~1") for part in parts)
+
+
+def openapi_document_errors_at(document: Any) -> List[Dict[str, str]]:
+    """Validate like :func:`validate_openapi_document`, locating each error by JSON Pointer.
+
+    :func:`validate_openapi_document` joins path segments with ``/`` unescaped, so a path key such
+    as ``/pets/{id}`` cannot be told apart from nesting. This variant escapes each segment
+    (RFC 6901), so the location can be followed back into the document.
+
+    Args:
+        document: The candidate OpenAPI document.
+
+    Returns:
+        Errors ordered by location, one per (pointer, message), each with ``pointer`` (``""`` for
+        the root), ``message`` and ``keyword``. Empty when the document is valid.
+    """
+    errors: List[Dict[str, str]] = []
+    seen: set = set()
+    for error in sorted(
+        _validator_for(document).iter_errors(document),
+        key=lambda e: list(map(str, e.absolute_path)),
+    ):
+        pointer = _json_pointer(error.absolute_path)
+        if (pointer, error.message) in seen:
+            continue
+        seen.add((pointer, error.message))
+        errors.append({"pointer": pointer, "message": error.message, "keyword": str(error.validator)})
     return errors
 
 

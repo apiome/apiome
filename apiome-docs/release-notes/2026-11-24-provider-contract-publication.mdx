@@ -1,0 +1,38 @@
+---
+slug: provider-contract-publication
+title: "Publish a provider contract"
+description: "Register a provider version's OpenAPI document, the first step of bi-directional contract testing."
+authors: [apiome]
+---
+
+A provider build can now register its OpenAPI document against its version. That document is the
+**provider contract**, and it is what bi-directional contract testing checks your consumers' pacts
+against, instead of a running provider. See
+[Publish a provider contract](/ship/pact-broker/bi-directional).
+
+{/* truncate */}
+
+**Upload the document, or name the Apiome version.** `PUT` it to the broker with the provider
+version, or send `apiomeVersion` and Apiome renders the version's OpenAPI 3.1 document for you:
+
+```bash
+curl -X PUT \
+  "$PACT_BROKER_BASE_URL/contracts/provider/ledger-api/version/$GIT_COMMIT" \
+  -H "Authorization: Bearer $PACT_BROKER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"apiomeVersion": "ledger-api@latest", "branch": "main"}'
+```
+
+- **OpenAPI 3.0, 3.1 and 3.2, in JSON or YAML.** Swagger 2.0, AsyncAPI and documents that do not
+  validate are refused, with the place in the document that is wrong.
+- **Recorded with the build.** The provider version gets its branch, tags and build URL, and the
+  provider is registered the first time a contract names it. Self-verification results sent with
+  the contract are stored as sent.
+- **Stored once, written once.** The same document — as JSON, as YAML or rendered from Apiome — has
+  one `contentSha` and is stored once. Publishing the same contract again changes nothing; a
+  different contract for a version that already has one is refused.
+
+**Not yet available:** comparing provider contracts with consumers' pacts, and showing that verdict
+in the matrix and can-i-deploy.
+
+The endpoint is in the [Pact Broker API](/reference/rest/pact-broker) reference.
