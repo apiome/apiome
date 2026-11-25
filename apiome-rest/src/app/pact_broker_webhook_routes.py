@@ -918,6 +918,14 @@ def _scoped_routes(path: str, what: str, *, consumer: bool, provider: bool) -> N
         scoped_consumer, scoped_provider = names(request)
         return _create(request, tenant_slug, raw, auth_data, consumer=scoped_consumer, provider=scoped_provider)
 
+    # The handlers read the names from ``request.path_params``, so FastAPI does not see them as
+    # parameters; declare them so the OpenAPI document resolves every ``{placeholder}`` in the path.
+    path_parameters = [
+        {"name": name, "in": "path", "required": True, "schema": {"type": "string"}, "description": f"The {name}."}
+        for name, used in (("provider", provider), ("consumer", consumer))
+        if used
+    ]
+
     router.add_api_route(
         _PREFIX + path,
         read_scoped,
@@ -925,6 +933,7 @@ def _scoped_routes(path: str, what: str, *, consumer: bool, provider: bool) -> N
         response_class=HalJSONResponse,
         summary=f"List the webhooks of {what}",
         description=_SCOPED_LIST,
+        openapi_extra={"parameters": path_parameters},
         responses=_PAIR_NOT_FOUND,
     )
     router.add_api_route(
@@ -935,7 +944,7 @@ def _scoped_routes(path: str, what: str, *, consumer: bool, provider: bool) -> N
         status_code=201,
         summary=f"Create a webhook for {what}",
         description=_SCOPED_CREATE,
-        openapi_extra={"requestBody": _WEBHOOK_BODY},
+        openapi_extra={"requestBody": _WEBHOOK_BODY, "parameters": path_parameters},
         responses={**_PAIR_NOT_FOUND, **_WRITE_ERRORS},
     )
 

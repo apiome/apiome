@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.671.0",
+    "version": "1.671.1",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -47656,6 +47656,24 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The provider."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The consumer."
           }
         ],
         "responses": {
@@ -47743,6 +47761,24 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The provider."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The consumer."
           }
         ],
         "responses": {
@@ -48058,6 +48094,15 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The provider."
           }
         ],
         "responses": {
@@ -48145,6 +48190,15 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The provider."
           }
         ],
         "responses": {
@@ -48460,6 +48514,15 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The consumer."
           }
         ],
         "responses": {
@@ -48547,6 +48610,15 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The consumer."
           }
         ],
         "responses": {
@@ -48862,6 +48934,24 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The provider."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The consumer."
           }
         ],
         "responses": {
@@ -48949,6 +49039,24 @@
               "description": "X-Api-Key schema."
             },
             "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The provider."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The consumer."
           }
         ],
         "responses": {

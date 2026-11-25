@@ -595,11 +595,24 @@ def run_cli_suite(config: Config) -> None:
     golden_http(config, "not-implemented-unknown", "GET", "/no/such/resource", expect=501)
 
 
+def open_to_container(*dirs: Path) -> None:
+    """Make mounted project directories writable whatever uid the Docker daemon maps the container user to.
+
+    ``tempfile`` directories are ``0700``; on a runner whose daemon remaps uids (rootless or userns) the
+    container user then cannot create ``node_modules`` in the mount (EACCES).
+    """
+    for top in dirs:
+        top.chmod(0o777)
+        for path in top.rglob("*"):
+            path.chmod(0o777 if path.is_dir() else path.stat().st_mode | 0o666)
+
+
 def run_pact_js_suite(config: Config, work: Path) -> None:
     """pact-js: a PactV3 consumer test, CLI publish, the Rust-core ``Verifier`` publishing results."""
     step("pact-js consumer test (PactV3) → pact file")
     project = work / "pact-js"
     shutil.copytree(HERE / "pact-js", project)
+    open_to_container(work, project)
     user = f"{os.getuid()}:{os.getgid()}"
     common = ["-u", user, "-e", "HOME=/tmp", "-v", f"{project}:/work", "-w", "/work", NODE_IMAGE]
     docker([*common, "npm", "install", "--no-audit", "--no-fund"], label="npm install")
@@ -631,6 +644,7 @@ def run_pact_jvm_suite(config: Config, work: Path) -> None:
     step("pact-jvm consumer test → pactPublish → provider verification")
     project = work / "pact-jvm"
     shutil.copytree(HERE / "pact-jvm", project)
+    open_to_container(work, project)
     docker(
         [
             "-u",

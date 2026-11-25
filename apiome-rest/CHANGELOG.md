@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.847.1] - 2026-11-24
+
+### Fixed
+- The scoped Pact Broker webhook routes (`…/webhooks/provider/{provider}[/consumer/{consumer}]`,
+  `…/webhooks/consumer/{consumer}`, `…/pacts/provider/{p}/consumer/{c}/webhooks`) now declare their
+  path parameters in the OpenAPI document, so the catalog import no longer fails with "Path parameter
+  'consumer' … was not resolved". OpenAPI 1.671.0 → 1.671.1.
+
 ## [1.847.0] - 2026-11-24
 
 ### Added

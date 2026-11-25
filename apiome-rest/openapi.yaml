@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.671.0
+  version: 1.671.1
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -35283,6 +35283,18 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The consumer.
       responses:
         '200':
           description: Successful response for list the webhooks of an integration.
@@ -35338,6 +35350,18 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The consumer.
       responses:
         '201':
           description: Successful response for create a webhook for an integration.
@@ -35561,6 +35585,12 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider.
       responses:
         '200':
           description: Successful response for list the webhooks of a provider.
@@ -35616,6 +35646,12 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider.
       responses:
         '201':
           description: Successful response for create a webhook for a provider.
@@ -35839,6 +35875,12 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The consumer.
       responses:
         '200':
           description: Successful response for list the webhooks of a consumer.
@@ -35894,6 +35936,12 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The consumer.
       responses:
         '201':
           description: Successful response for create a webhook for a consumer.
@@ -36117,6 +36165,18 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The consumer.
       responses:
         '200':
           description: Successful response for list the webhooks of a pact.
@@ -36172,6 +36232,18 @@ paths:
           title: X-Api-Key
           description: X-Api-Key schema.
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The consumer.
       responses:
         '201':
           description: Successful response for create a webhook for a pact.
