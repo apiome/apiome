@@ -1,0 +1,253 @@
+---
+title: Verify a provider from Apiome
+description: Replay a provider's pacts against a verification target and publish the results.
+sidebar_position: 4.4
+tags: [contracts, pact, verification, rest]
+---
+
+Pact verification normally runs inside the provider's own test suite, with a Pact library. With
+**hosted verification**, Apiome does it for you. One request selects the pacts the provider must
+honour, replays every interaction against a running copy of the provider, and publishes a
+[verification result](./verification-results.mdx) for each pact. The results show in the matrix
+and in [can-i-deploy](./can-i-deploy.mdx), exactly like results from a Pact verifier.
+
+Use it when a provider has no Pact library, or when you want verification to run where the
+contracts live.
+
+## Before you start
+
+- A consumer has [published a pact](./publish-pacts.mdx) with the provider.
+- The provider runs somewhere Apiome can reach, and that deployment is registered as a
+  **verification target**. The target holds the base URL, the credentials and the policy:
+  timeouts, retries, and whether mutating methods are allowed. See
+  [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) and the
+  [Contract assurance REST reference](../../reference/rest/contract-assurance.md).
+- Your API key belongs to a member who holds **Pacts** → **Create** and
+  **Verification evidence** → **Create**. Create one on [API keys](../../workspace/api-keys.mdx).
+
+## Run a verification
+
+Send a `POST` with the target and the provider version you are verifying:
+
+```bash
+curl -X POST \
+  "$APIOME/v1/tenants/acme/pact-verifier/pacts/provider/ledger-api/verify" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_ref": "ledger-staging",
+    "provider_version": "4f1e2d0",
+    "provider_branch": "main",
+    "build_url": "https://ci.example.com/builds/77",
+    "selection": {
+      "consumerVersionSelectors": [{ "mainBranch": true }, { "deployedOrReleased": true }],
+      "includePendingStatus": true
+    }
+  }'
+```
+
+| Field | Required | What it does |
+| --- | --- | --- |
+| `target_ref` | Yes | The slug or id of the verification target to replay against. |
+| `provider_version` | Yes | The provider version being verified, usually the commit SHA. Results are recorded against it. |
+| `provider_branch` | No | The branch of that version. It is recorded on the version before a result is published, and used for `matchingBranch` selectors and pending pacts. |
+| `build_url` | No | The CI build, stored on each result. |
+| `selection` | No | Which pacts to verify. It is the body of [`for-verification`](./selectors.mdx), unchanged. Leave it out to get what a Pact verifier gets by default. |
+| `verification` | No | What the run may send. See [Mutating interactions](#mutating-interactions) and [Provider states](#provider-states). |
+| `publish` | No | `true` by default. `false` is a dry run: everything is replayed and reported, and nothing is published. |
+| `context` | No | Non-secret CI details (commit, workflow URL) stored with the evidence. |
+
+One run verifies at most 25 pacts. If your selectors choose more, the request is refused with
+`pact-verify-too-many-pacts`. Add a `consumer` to each selector and run once per consumer.
+
+## Read the result
+
+The answer is `200` for any run that happened, whatever it found. Read `success` and `outcome`:
+
+```json
+{
+  "provider": "ledger-api",
+  "provider_version": "4f1e2d0",
+  "provider_branch": "main",
+  "success": false,
+  "outcome": "failed",
+  "pacts": [
+    {
+      "consumer": "billing-service",
+      "consumer_version": "2.4.0",
+      "pact_version_sha": "3f1c…",
+      "outcome": "failed",
+      "counts": { "interactions": 2, "passed": 1, "failed": 1, "skipped": 0, "errored": 0, "unsupported": 0 },
+      "interactions": [
+        {
+          "description": "a request for invoice 1042",
+          "operation": "GET /invoices/1042",
+          "outcome": "failed",
+          "code": "pact-body-mismatch",
+          "mismatches": [
+            {
+              "attribute": "body",
+              "field": "/lines/1/sku",
+              "rule": "regex",
+              "expected": "a value matching /^SKU-\\d+$/",
+              "actual": "\"bad\"",
+              "description": "$.lines[1].sku: expected a value matching /^SKU-\\d+$/, got string \"bad\" (rule: regex)"
+            }
+          ]
+        }
+      ],
+      "published": true,
+      "result": { "number": 3, "success": false, "url": "…/verification-results/3" },
+      "evidence_run_id": "0b6f…"
+    }
+  ]
+}
+```
+
+| `outcome` | Meaning |
+| --- | --- |
+| `passed` | Every pact that is not pending passed. `success` is `true`. |
+| `failed` | A pact that is not pending failed. |
+| `incomplete` | Nothing failed, but at least one pact could not be fully replayed. |
+| `no-pacts` | The selectors chose no pact. |
+
+Exit your CI job on `success`. A [pending or work-in-progress pact](./pending-and-wip.mdx) that
+fails is reported and published as failed, but it does not turn `success` to `false`. A pact is
+treated as pending only when you send `"includePendingStatus": true`, as with a Pact verifier.
+
+Each mismatch names the interaction, the **field** (the header, or the JSON Pointer of the value
+in the response body), the **rule** that failed, and the expected and actual values.
+
+## What gets published
+
+Each pact gets its own outcome:
+
+| Pact outcome | When | Published |
+| --- | --- | --- |
+| `passed` | Every interaction was replayed and matched. | A successful verification result. |
+| `failed` | A replayed interaction did not match. | A failed verification result, with every mismatch. |
+| `incomplete` | Nothing failed, but an interaction was skipped, the target could not be reached, or the pact has an interaction Apiome cannot replay. | Nothing. `not_published_reason` is `run-incomplete`. |
+
+An incomplete run publishes nothing because it proves nothing. A success that skipped an
+interaction would let can-i-deploy approve a deployment that was never checked.
+
+Every pact's run is also stored as verification evidence, published or not. `evidence_run_id`
+names the run, with each request's assertions. Read it with `GET …/verification-runs/{run_id}`
+(see the [Contract assurance REST reference](../../reference/rest/contract-assurance.md)).
+
+A Pact 4 interaction the consumer marked `pending` is replayed and reported, but it never decides
+the pact's outcome.
+
+## How responses are matched
+
+Apiome replays each request exactly as the consumer recorded it, then compares the response:
+
+- **Status.** The recorded status, or the classes a Pact 4 `statusCode` rule allows.
+- **Headers.** Each recorded header must be present. Without a rule the value must be equal. A
+  `Content-Type` may add parameters such as `charset`. Other response headers are ignored.
+- **JSON body.** The response may have extra fields but not fewer. Without a rule a value must be
+  equal, and an array must have the same length. The most specific rule wins, and a `type` rule
+  also applies to everything beneath it.
+- **Other bodies.** Compared as text, or by a rule on the whole body (`$`).
+
+These matching rules are applied:
+
+| Rule | The value must |
+| --- | --- |
+| `equality` | Equal the example. |
+| `type` (with `min`, `max`) | Have the example's type. On an array, every item matches the example item, and the length is within `min` and `max`. |
+| `regex` | Match the expression. |
+| `include` | Contain the text. |
+| `integer`, `decimal`, `number` | Be a number of that kind. |
+| `boolean`, `null` | Be a boolean, or `null`. |
+| `notEmpty` | Not be empty. |
+| `semver` | Be a semantic version. |
+| `date`, `time`, `timestamp`, `datetime` | Have the shape of the rule's format, such as `yyyy-MM-dd'T'HH:mm:ssXXX`. The calendar is not checked. |
+| `values` | Be an object whose values match the examples, whatever its keys. |
+| `eachKey`, `eachValue` | Be an object whose every key, or every value, matches the nested rules. |
+| `arrayContains` | Be an array with at least one item matching each variant. |
+| `statusCode` | Be a status in the named class. |
+
+A rule Apiome cannot apply fails the interaction and names the rule. It never passes silently.
+This covers `contentType` on a binary body, a date format with a letter Apiome does not read, a
+regular expression that does not compile or runs longer than one second, and a rule on a field of
+a body that is not JSON. Response generators are ignored, as every verifier ignores them.
+
+## Mutating interactions
+
+By default a run sends only `GET`, `HEAD` and `OPTIONS`. An interaction with `POST`, `PUT`,
+`PATCH` or `DELETE` is sent only when both of these are true:
+
+1. The verification target's policy allows mutating methods.
+2. The request sets `"verification": { "allow_mutating": true }`.
+
+A run cannot widen the target's policy. If the target forbids mutating methods, the interaction
+is skipped with `mutating-method-blocked` whatever the request says, and the pact is `incomplete`.
+
+To send something safer than the consumer recorded, add a fixture. It replaces the query, the
+headers or the body of the request, and never changes what is expected:
+
+```json
+{
+  "verification": {
+    "allow_mutating": true,
+    "fixtures": [
+      { "operation_key": "POST /invoices", "body": { "customer": "verification-sandbox", "total": 1 } }
+    ]
+  }
+}
+```
+
+Fixture headers may not carry credentials. Authentication always comes from the target.
+
+## Provider states
+
+An interaction can assume a **provider state**, such as "invoice 1042 exists". Apiome cannot set
+provider states up yet, so these interactions are skipped with `provider-state-not-set-up` and the
+pact is `incomplete`.
+
+If your target already holds the data the pacts assume, set
+`"verification": { "replay_without_state_setup": true }`. The interactions are then replayed, and
+each one is marked `"states_set_up": false` in the response and in the published result.
+
+## Why an interaction was not replayed
+
+An interaction that is not replayed has `outcome` `skipped` or `errored`, a `code` and a `message`:
+
+| Code | Meaning | What to do |
+| --- | --- | --- |
+| `mutating-method-blocked` | The method is mutating, and the target's policy or the run does not allow it. | See [Mutating interactions](#mutating-interactions). |
+| `provider-state-not-set-up` | The interaction assumes a provider state. | See [Provider states](#provider-states). |
+| `pact-request-path-not-on-target` | The recorded path names a scheme or a host, or does not start with `/`. It is never sent, because it would leave the target. | Fix the path in the consumer's test. |
+| `transport-error`, `timeout` | The target could not be reached or did not answer in time. | Check the target, then run again. |
+
+Interactions Apiome cannot replay at all, such as message and plugin interactions, are listed
+under the pact's `unsupported` with a reason.
+
+## What can stop a run
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| `400` | `pact-selector-invalid` | A selector in `selection` is malformed or ambiguous. |
+| `400` | `pacticipant-invalid-version`, `pacticipant-invalid-branch`, `pacticipant-invalid-url` | The provider version, branch or build URL is malformed. |
+| `404` | `pacticipant-not-found` | No such provider in this workspace. |
+| `404` | `target-not-found` | No such verification target in this workspace. |
+| `422` | `target-disabled`, `target-protocol-mismatch` | The target is disabled, or it is not an HTTP target. |
+| `422` | `pact-verify-target-auth-unavailable` | The target's credential could not be read. |
+| `422` | `pact-verify-too-many-pacts` | The selectors chose more than 25 pacts. |
+
+Nothing is sent to the target when a run is stopped.
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Verify a provider from Apiome | `pacts:create` and `verification_evidence:create` | — | ✓ | ✓ | ✓ |
+
+## Related
+
+- [Compile a pact into a contract suite](./verification.mdx): the cases a run replays.
+- [Choose pacts with selectors](./selectors.mdx): what goes in `selection`.
+- [Publish verification results](./verification-results.mdx): how a result is stored and read.
+- [Pact Broker REST reference](../../reference/rest/pact-broker.md): the full request and response
+  schema.

@@ -11,10 +11,9 @@ published API version (see [Contract assurance](../../reference/rest/contract-as
 same pact version always gives the same suite, down to the byte, so a provider verification can
 name exactly what it checked.
 
-Compiling only reads the pact. It does not run anything and saves nothing. Hosted provider
-verification, where Apiome replays the suite against your provider and publishes the result, is
-not available yet. Until then, verify with your Pact verifier and
-[publish the results](./verification-results.mdx).
+Compiling only reads the pact. It does not run anything and saves nothing. To replay the suite
+against your provider and publish the result, see
+[Verify a provider from Apiome](./hosted-verification.mdx).
 
 ## Before you start
 
@@ -128,8 +127,9 @@ generated bodies, negative cases) do not apply to a pact.
 
 ## Related
 
-- [Publish verification results](./verification-results.mdx): how Pact verifiers report back
-  today.
+- [Verify a provider from Apiome](./hosted-verification.mdx): replay the suite against a running
+  provider and publish the result.
+- [Publish verification results](./verification-results.mdx): how Pact verifiers report back.
 - [Pact Broker concepts](./concepts.mdx): pacticipants, versions and pact versions.
 - [Pact Broker REST reference](../../reference/rest/pact-broker.md): the full request and response
   schema.
