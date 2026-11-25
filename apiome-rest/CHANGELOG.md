@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.851.0] - 2026-11-25
+
+### Added
+- **External-verifier result ingestion (PFX-3.5, #6935).** OpenAPI 1.675.0.
+  `POST /v1/tenants/{t}/pact-broker/pacts/provider/{p}/consumer/{c}/pact-version/{sha}/external-verification-results`
+  takes a report produced elsewhere — `pact_verifier_cli --json` output or JUnit XML — and stores it
+  as an ordinary verification result (the matrix, can-i-deploy, pending pacts and webhooks see it).
+  `providerApplicationVersion` is a query parameter, with `buildUrl`, `branch`, `tag`, `format`,
+  `verifier`, `verifierVersion` and `providerVerificationReportId`. The response is the stored
+  result plus an `ingestion` object (`format`, `interactions`, `success`, `notices`): every field
+  the reader could not use and every judgement it made is a notice with a JSON Pointer or
+  `//testcase[n]` location, never dropped. A skipped JUnit case is not verified and fails the
+  result; a report with no interactions, an empty body, a DTD or an unknown format is refused with
+  `422 pact-verification-invalid`. Requires `pacts:create`, tenant-scoped like every broker route.
+  `apiome pact publish-verification-results` is the CLI (apiome-cli 0.160.0).
+
 ## [1.850.0] - 2026-11-25
 
 ### Changed

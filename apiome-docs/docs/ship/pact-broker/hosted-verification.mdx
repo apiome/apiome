@@ -12,7 +12,8 @@ honour, replays every interaction against a running copy of the provider, and pu
 and in [can-i-deploy](./can-i-deploy.mdx), exactly like results from a Pact verifier.
 
 Use it when a provider has no Pact library, or when you want verification to run where the
-contracts live.
+contracts live. If verification already runs in your own CI, [send its
+report](./verification-results.mdx#send-a-report-from-your-own-ci) instead.
 
 ## Before you start
 
@@ -306,6 +307,7 @@ Nothing is sent to the target when a run is stopped.
 - [Compile a pact into a contract suite](./verification.mdx): the cases a run replays.
 - [Provider states](./provider-states.mdx): register the states a run sets up.
 - [Choose pacts with selectors](./selectors.mdx): what goes in `selection`.
-- [Publish verification results](./verification-results.mdx): how a result is stored and read.
+- [Publish verification results](./verification-results.mdx): how a result is stored and read, and
+  how to send a `pact_verifier_cli` or JUnit report from your own CI.
 - [Pact Broker REST reference](../../reference/rest/pact-broker.md): the full request and response
   schema.

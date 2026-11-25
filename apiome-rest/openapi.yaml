@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.674.0
+  version: 1.675.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -32262,6 +32262,233 @@ paths:
                   testFramework: jest
         description: Request body for publish a verification result (for-verification
           link).
+  ? /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/external-verification-results
+  : post:
+      tags:
+      - pact-broker
+      summary: Ingest a verification report produced elsewhere
+      description: 'Publish the result of a verification that ran **elsewhere** — the
+        report a team''s own CI already has — instead of asking Apiome''s hosted verifier
+        to replay the pact (PFX-3.5).
+
+
+        The body is the report itself, not a Pact Broker result:
+
+
+        - **`pact_verifier_cli --json`** output (`Content-Type: application/json`):
+        the verifier''s `result` / `errors` / `pendingErrors`, or a `pacts[].interactions[]`
+        listing;
+
+        - **JUnit XML** (`application/xml`): one `<testcase>` per interaction; a `<failure>`
+        or `<error>` fails it, a `<skipped>` case is not verified and makes the result
+        unsuccessful.
+
+
+        The format is taken from `format`, else the content type, else the body. The
+        report is mapped to the verification-result model of `POST …/verification-results`
+        and stored as an ordinary result, so the matrix, can-i-deploy, pending pacts
+        and webhooks see it. Nothing is dropped silently: the answer is the stored result
+        plus an `ingestion` object whose `notices` name, with a JSON Pointer or location,
+        every field the reader could not use and every judgement it made. A report with
+        no interactions is refused (`422 pact-verification-invalid`) rather than published
+        as a pass. The report is the verifier''s word: it is not cross-checked against
+        the interactions of the pact version.
+
+
+        `providerApplicationVersion` is required because neither format carries it.
+        `branch` and `tag` record the provider version first, as a verifier''s `PUT`
+        calls would. Requires `pacts:create`.'
+      operationId: ingest_external_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__external_verification_results_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sha
+          description: Sha schema.
+        description: Path parameter identifying the sha segment.
+      - name: providerApplicationVersion
+        in: query
+        required: true
+        schema:
+          type: string
+          description: The provider version the report verified (a commit SHA).
+          title: Providerapplicationversion
+        description: The provider version the report verified (a commit SHA).
+      - name: buildUrl
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestaverificationreportproducedelsewhebuild URL schema.
+          - type: 'null'
+            description: Ingestaverificationreportproducedelsewhebuild URL schema.
+          description: http(s) URL of the CI build.
+          title: Buildurl
+        description: http(s) URL of the CI build.
+      - name: branch
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestaverificationreportproducedelsewhebranch schema.
+          - type: 'null'
+            description: Ingestaverificationreportproducedelsewhebranch schema.
+          description: Record the provider version on this branch first.
+          title: Branch
+        description: Record the provider version on this branch first.
+      - name: tag
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: Ingestaverificationreportproducedelsewhetag schema.
+          - type: 'null'
+            description: Ingestaverificationreportproducedelsewhetag schema.
+          description: Tag the provider version first (repeatable).
+          title: Tag
+        description: Tag the provider version first (repeatable).
+      - name: format
+        in: query
+        required: false
+        schema:
+          type: string
+          description: One of auto, pact-verifier-json, junit; `auto` reads the content
+            type, then the body.
+          default: auto
+          title: Format
+        description: One of auto, pact-verifier-json, junit; `auto` reads the content
+          type, then the body.
+      - name: verifier
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestaverificationreportproducedelsewheverifier schema.
+          - type: 'null'
+            description: Ingestaverificationreportproducedelsewheverifier schema.
+          description: The verifier's name, recorded in `verifiedBy`.
+          title: Verifier
+        description: The verifier's name, recorded in `verifiedBy`.
+      - name: verifierVersion
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestaverificationreportproducedelsewheverifier Version schema.
+          - type: 'null'
+            description: Ingestaverificationreportproducedelsewheverifier Version schema.
+          description: The verifier's version, recorded in `verifiedBy`.
+          title: Verifierversion
+        description: The verifier's version, recorded in `verifiedBy`.
+      - name: providerVerificationReportId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestaverificationreportproducedelsewheprovider Verification
+              schema.
+          - type: 'null'
+            description: Ingestaverificationreportproducedelsewheprovider Verification
+              schema.
+          description: Link a CTG-4.3 provider verification report (a UUID).
+          title: Providerverificationreportid
+        description: Link a CTG-4.3 provider verification report (a UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestaverificationreportproducedelsewheauthorization schema.
+          - type: 'null'
+            description: Ingestaverificationreportproducedelsewheauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Ingestaverificationreportproducedelsewhe Xapikey schema.
+          - type: 'null'
+            description: Ingestaverificationreportproducedelsewhe Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: The stored result, with an `ingestion` object (`format`, `interactions`,
+            `notices`).
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for ingestaverificationreportproducedelsewheresponse201.
+        '404':
+          description: '`pacticipant-not-found` or `pact-not-found`: no such pair or
+            pact version.'
+        '422':
+          description: '`pact-verification-invalid`: the body is malformed (`detail.pointer`
+            names the field); `pact-verification-report-not-found`: `providerVerificationReportId`
+            is not this workspace''s.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Request body for ingestaverificationreportproducedelsewherequest.
+            example:
+              result: false
+              errors:
+              - interactionId: a1b2c3
+                description: a request for an invoice
+                mismatch:
+                  type: StatusMismatch
+                  description: expected 200 but was 404
+          application/xml:
+            schema:
+              type: string
+              description: Request body for ingestaverificationreportproducedelsewherequest.
+            example: <testsuite name='pact'><testcase name='a request'/></testsuite>
+        description: Request body for ingest a verification report produced elsewhere.
   ? /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results/latest
   : get:
       tags:

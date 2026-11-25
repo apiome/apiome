@@ -1,0 +1,22 @@
+---
+slug: pact-external-verification
+title: "Send a verifier report from your own CI"
+description: "Publish a pact_verifier_cli or JUnit report as a verification result, with the CLI or one request."
+authors: [apiome]
+---
+
+A verification that already ran in your pipeline now counts. Send the `pact_verifier_cli --json`
+report or a JUnit file and Apiome stores it as a verification result, so the matrix and
+can-i-deploy see it. See
+[Send a report from your own CI](/ship/pact-broker/verification-results#send-a-report-from-your-own-ci).
+
+{/* truncate */}
+
+- **One command.** `apiome pact publish-verification-results report.json --provider … --consumer …
+  --pact-version … --provider-app-version …` with `--branch`, `--tag` and `--build-url`.
+  `--fail-on-failure` exits 1 when the result is a failure.
+- **One request.** `POST …/pact-version/{sha}/external-verification-results` takes the report as
+  the body and the provider version as a query parameter.
+- **Nothing passes silently.** Every field Apiome could not use comes back as a notice with its
+  location. A skipped test case is never counted as verified, and a report that proves nothing is
+  refused rather than published as a pass.

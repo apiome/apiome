@@ -266,7 +266,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-3.5 · [#6935](https://github.com/apiome/apiome/issues/6935) | External-verifier result ingestion | Accept Pact-standard verifier output and JUnit | `contracts`,`pact`,`rest` | Y | N | S | apiome-rest |
 | PFX-3.6 · [#6936](https://github.com/apiome/apiome/issues/6936) | Message (async) pacts | Pact v3/v4 messages verified against AsyncAPI | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
 | PFX-3.7 | Plugin pacts: gRPC and GraphQL | Plugin-framework interactions on the XPC adapters | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
 
@@ -278,7 +277,7 @@ flowchart LR
 
 **✅ PFX-3.4 · #6934 Matching-rules engine — Complete** — the verifier's engine (`pact_value_match`) applies every Pact 2–4 matcher, published as `VERIFIER_MATCHERS` (the supported-rules table on `…/pact-broker/hosted-verification.mdx`): `type`, `regex` (full match, as the reference implementations), `include`, `number/integer/decimal`, `date/time/timestamp/datetime`, `minType/maxType/minMaxType`, `arrayContains`, `eachKey/eachValue`, `values`, `notEmpty`, `semver`, `boolean`, `null`, and `contentType` — detected from the bytes (`pact_content_type`, magic numbers then JSON / XML / text); on `$` of a non-JSON body it judges the whole body. Generators are ignored on verification. An explicitly empty response body (`null`, `""`, Pact 4 empty `content`) now requires an empty response (compiler version 5); `Accept` compares as media types. Table-driven tests run all 357 response vectors of the Pact specification test suite (v1–v4, vendored) plus supplementary v3/v4 vectors; XML is compared as text — stricter than the suite's XML match cases, never looser. *Deps:* 3.1. **Docs:** supported-rules table.
 
-**PFX-3.5 · #6935 External-verifier result ingestion** — endpoint and CLI for results produced elsewhere (pact_verifier_cli JSON, JUnit) mapped to the verification-result model. *Deps:* 1.4.
+**✅ PFX-3.5 · #6935 External-verifier result ingestion — Complete** — endpoint and CLI for results produced elsewhere (pact_verifier_cli JSON, JUnit) mapped to the verification-result model. *Deps:* 1.4. **Docs:** `…/pact-broker/verification-results.mdx`.
 
 **PFX-3.6 · #6936 Message pacts** — Pact v3/v4 message interactions resolved to AsyncAPI channels/messages (reuses the PCX event-catalogue and AsyncAPI adapter) and compared like 2.2; verifier for synchronous message handlers deferred. *Deps:* 2.2.
 

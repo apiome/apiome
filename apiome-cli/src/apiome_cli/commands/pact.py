@@ -11,6 +11,11 @@ changing the command name.
 turn a consumer surface declared in the UI picker into a Pact v4 file (sample values from the
 specification's examples) and write it, or publish it to the workspace's Pact Broker.
 
+``apiome pact publish-verification-results <report> --provider … --consumer … --pact-version …
+--provider-app-version …`` publishes the result of a verification that ran elsewhere
+(``pact_verifier_cli --json`` output or JUnit XML) as a verification result in the broker, so
+can-i-deploy sees it (PFX-3.5).
+
 Authentication is the usual ``APIOME_API_KEY`` / config path; the workspace is the configured
 tenant.
 """
@@ -36,6 +41,14 @@ from apiome_cli.client.pact_consumer_export import (
 )
 from apiome_cli.client.pact_consumer_export import (
     summary_lines as consumer_summary_lines,
+)
+from apiome_cli.client.pact_external_verification import (
+    REPORT_FORMATS,
+    external_results_path,
+    report_content_type,
+)
+from apiome_cli.client.pact_external_verification import (
+    summary_lines as verification_summary_lines,
 )
 from apiome_cli.client.pact_provider_contract import (
     build_publish_body,
@@ -298,3 +311,104 @@ def publish_consumer_contract(
         _write_pact(payload, output)
     _report(ctx, payload, to_stderr=False)
     raise typer.Exit(EXIT_ERROR if fail_on_findings and has_findings(payload) else EXIT_SUCCESS)
+
+
+@app.command("publish-verification-results")
+def publish_verification_results(
+    ctx: typer.Context,
+    report: Path = typer.Argument(
+        ...,
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="The report: pact_verifier_cli --json output, or JUnit XML.",
+    ),
+    provider: str = typer.Option(
+        ..., "--provider", help="The provider's name in the broker."
+    ),
+    consumer: str = typer.Option(
+        ..., "--consumer", help="The consumer's name in the broker."
+    ),
+    pact_version: str = typer.Option(
+        ..., "--pact-version", help="The verified pact version's SHA-256."
+    ),
+    provider_app_version: str = typer.Option(
+        ...,
+        "--provider-app-version",
+        "-a",
+        help="The provider build's version (a commit SHA is best).",
+    ),
+    branch: Optional[str] = typer.Option(
+        None, "--branch", help="The branch the provider build came from."
+    ),
+    tag: Optional[list[str]] = typer.Option(
+        None, "--tag", "-t", help="Tag the provider version (repeatable)."
+    ),
+    build_url: Optional[str] = typer.Option(
+        None, "--build-url", help="http(s) URL of the CI build."
+    ),
+    report_format: str = typer.Option(
+        "auto",
+        "--format",
+        help=f"The report's format ({', '.join(REPORT_FORMATS)}); auto reads the file name, then the body.",
+    ),
+    content_type: Optional[str] = typer.Option(
+        None,
+        "--content-type",
+        help="The report's media type; inferred from .json / .xml.",
+    ),
+    verifier: Optional[str] = typer.Option(
+        None, "--verifier", help="The tool that wrote the report."
+    ),
+    verifier_version: Optional[str] = typer.Option(
+        None, "--verifier-version", help="That tool's version."
+    ),
+    fail_on_failure: bool = typer.Option(
+        False,
+        "--fail-on-failure",
+        help="Exit 1 when the published result is a failure.",
+    ),
+) -> None:
+    """Publish a verification report produced elsewhere (POST …/external-verification-results).
+
+    Reads pact_verifier_cli --json output or JUnit XML on the server, stores it as a verification
+    result of the pact version and prints the verdict and every note about what could not be used.
+    Exits 2 when the server refuses (a malformed or empty report, an unknown pact version), and 1
+    with --fail-on-failure when the result is a failure.
+    """
+    if report_format not in REPORT_FORMATS:
+        raise typer.BadParameter(
+            f"must be one of {', '.join(REPORT_FORMATS)}", param_hint="--format"
+        )
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = RestClient(settings, verify=not insecure_from_context(ctx))
+    tenant_slug = require_tenant_slug(settings, client)
+    path = external_results_path(
+        tenant_slug,
+        provider,
+        consumer,
+        pact_version,
+        provider_app_version=provider_app_version,
+        build_url=build_url,
+        branch=branch,
+        tags=tag,
+        report_format=report_format,
+        verifier=verifier,
+        verifier_version=verifier_version,
+    )
+    response = client.post(
+        path,
+        content=report.read_bytes(),
+        headers={"Content-Type": report_content_type(report, content_type)},
+    )
+    payload = response.json()
+
+    if json_mode_from_context(ctx):
+        emit_json(payload)
+    else:
+        for line in verification_summary_lines(payload):
+            typer.echo(line)
+    raise typer.Exit(
+        EXIT_ERROR if fail_on_failure and not payload.get("success") else EXIT_SUCCESS
+    )

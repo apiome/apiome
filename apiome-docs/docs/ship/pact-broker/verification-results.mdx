@@ -101,6 +101,69 @@ curl -X POST \
 
 `<sha>` is the pact version: the `name` of the pact's `pb:pact-version` link.
 
+## Send a report from your own CI
+
+If your pipeline already runs `pact_verifier_cli`, or a test runner that writes JUnit, you do not
+need a Pact library to publish the result. Send the **report** and Apiome reads it into a
+verification result: the matrix, can-i-deploy, pending pacts and webhooks see it like any other.
+
+```bash
+# your usual pact_verifier_cli run, plus --json to write the report
+pact_verifier_cli --file pacts/billing-service-ledger-api.json … --json report.json
+
+apiome pact publish-verification-results report.json \
+  --provider "Ledger API" --consumer "Billing Service" \
+  --pact-version <sha> --provider-app-version "$GIT_SHA" \
+  --branch main --build-url "$CI_BUILD_URL"
+```
+
+The same request with curl. The version, build, branch and tags are query parameters because
+neither report format carries them:
+
+```bash
+curl -X POST \
+  "https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/ledger-api/consumer/billing-service/pact-version/<sha>/external-verification-results?providerApplicationVersion=4f1e2d0&branch=main" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data-binary @report.json
+```
+
+| Report | Send it as | How it is read |
+| --- | --- | --- |
+| `pact_verifier_cli --json` | `application/json` | The verifier's `result` is the verdict. Each entry of `errors` is a failed interaction with its mismatches; each entry of `pendingErrors` is kept and marked `pending`. A `pacts[].interactions[]` listing is read interaction by interaction. |
+| JUnit XML | `application/xml` | Each `<testcase>` is an interaction. A `<failure>` or `<error>` fails it and its message is the mismatch. A `<skipped>` case was not replayed, so it makes the result unsuccessful. |
+
+The format comes from the `format` query parameter (`auto`, `pact-verifier-json` or `junit`), then
+the content type, then the body. The other query parameters are `providerApplicationVersion`
+(required), `buildUrl`, `branch`, `tag` (repeatable), `verifier`, `verifierVersion` and
+`providerVerificationReportId`.
+
+The answer is `201` with the stored result, plus an `ingestion` object:
+
+```json
+{
+  "success": false,
+  "ingestion": {
+    "format": "pact-verifier-json",
+    "interactions": 1,
+    "notices": [
+      {"pointer": "/output", "reason": "12 line(s) of verifier log output are not stored"}
+    ]
+  }
+}
+```
+
+**Nothing is dropped silently.** Every field the reader could not use, and every judgement it made
+(a result flag contradicted by the failures listed beside it, an interaction with no name, a
+skipped case) is a notice with a JSON Pointer or a `//testcase[n]` location. The CLI prints them.
+A report with no interactions and no result flag, an empty body and XML that declares a DTD or
+entities are refused with `422 pact-verification-invalid` instead of being published as a pass.
+
+:::note
+Apiome records what the report says. It does not check that the report covers every interaction
+of the pact version, so keep the verifier's `--file` and the `<sha>` you publish for in step.
+:::
+
 ## Read results
 
 | To read | Request |
@@ -116,6 +179,7 @@ its pact with `pb:pact-version`.
 | Status | Code | What to do |
 | --- | --- | --- |
 | `422` | `pact-verification-invalid` | The body is malformed. `pointer` names the field — `/success` missing, `/testResults` not an array. |
+| `422` | `pact-verification-invalid` | An ingested report is empty, is neither JSON nor XML, proves nothing, or names an unknown `format`. |
 | `422` | `pact-verification-report-not-found` | `providerVerificationReportId` is not a report of this workspace. |
 | `400` | `pacticipant-invalid-version`, `pacticipant-invalid-url` | The provider version has a leading or trailing space, or `buildUrl` is not an http(s) URL. |
 | `404` | `pact-not-found`, `pacticipant-not-found` | No such pact version between the two applications. |
