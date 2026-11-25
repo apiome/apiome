@@ -269,6 +269,67 @@ dropped silently.
 An entry has `code`, `message` and `pactPointer`, and where they apply `reason`, `oasPointer`,
 `matcher` and the `constraint` a rule mapped to.
 
+## The fidelity report
+
+The fidelity report reads the stored comparison and lays it out per interaction, so a green verdict
+is never read as stronger than it is. Open it on the **Pact comparisons** page or read it from the
+API: see [Read the fidelity report](./bi-directional.mdx#read-the-fidelity-report).
+
+### Checks
+
+Every HTTP interaction gets the eight core checks, in the order they run. The two matching-rule
+checks appear when the interaction declares matching rules or generators.
+
+| Check | Covers |
+| --- | --- |
+| **Operation (method and path)** | The request resolves to a declared operation. |
+| **Path parameters** | The values in the path against the path parameters' schemas. |
+| **Query parameters** | Required, declared and valid query parameters. |
+| **Request headers** | Required, declared and valid request headers. |
+| **Request body** | Content type and body against the request schema. |
+| **Response status** | The expected status, its range or `default`, and `Accept`. |
+| **Response headers** | Expected response headers against the declared ones. |
+| **Response body** | Content type and body against the response schema. |
+| **Request / Response matching rules and generators** | Each rule mapped to the schema, and each generator. |
+
+Each check has one status:
+
+| Status | Meaning |
+| --- | --- |
+| **Compared** | The check ran and found nothing to report. |
+| **Partly compared** | The check ran, but a fidelity note says part of it was not compared in full. |
+| **Failed** | The check ran and found a contradiction (a [failure](#failures)). |
+| **Not run** | The check did not run. The reason says why: an earlier check failed (an unknown operation stops the rest), or the interaction has no HTTP exchange. |
+
+Every failure and warning code belongs to exactly one check, and every fidelity note names the
+check it belongs to (`check`), or `null` for a note about the whole interaction.
+
+### Two lists
+
+The [fidelity list](#the-fidelity-list) is split in two:
+
+| List | Codes |
+| --- | --- |
+| **Unsupported matching rules** (`unsupportedMatchingRules`) | `matching-rule-not-mapped`, `matching-rule-unverified`, `embedded-matcher-not-mapped`, `generator-not-applied` |
+| **Could not compare** (`couldNotCompare`) | `body-not-compared`, `parameter-not-compared`, `schema-not-usable`, `oneof-relaxed`, `interaction-not-http`, `findings-truncated` |
+
+A code the report does not know (from a newer engine) is still listed under **Could not compare**.
+
+### Strength
+
+The report's `strength` says how much the verdict is worth:
+
+| Strength | Shown as | When |
+| --- | --- | --- |
+| `full` | **Compared in full** | The verdict is `pass` and every core check of every interaction ran with nothing to report. |
+| `partial` | **Not everything compared** | Nothing contradicts the pact, but something was not compared in full or did not run. |
+| `failed` | **Contradicts the pact** | The verdict is `fail`. |
+| `none` | **Nothing compared** | The comparison could not run, the pact has no interactions, or none has an HTTP exchange. |
+
+An `unverified` verdict (see [above](#when-the-provider-contract-is-unverified)) keeps the
+comparison's own strength; `comparisonVerdict` holds the verdict before the evidence was weighed,
+and `selfVerification` the evidence status.
+
 ## What is not compared
 
 - **Security requirements.** Whether a request carries the credentials the operation's `security`

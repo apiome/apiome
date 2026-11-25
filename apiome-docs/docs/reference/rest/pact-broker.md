@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 66 operations."
+description: "REST endpoints tagged pact-broker: 68 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.668.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.669.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 66 operations
+Tag: `pact-broker` · 68 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2158,6 +2158,55 @@ Operation id: `execute_saved_webhook_v1_tenants__tenant_slug__pact_broker_webhoo
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 | 429 | `pact-webhook-test-rate-limited`: too many test runs; `Retry-After` says when to retry. | — |
 | 503 | `pact-webhook-secrets-unavailable`: the webhook's secrets cannot be opened. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-comparisons` {#list-comparisons-v1-tenants-tenant-slug-pact-comparisons-get}
+
+**List recent bi-directional comparisons**
+
+The workspace's most recent bi-directional verification results (PFX-2.3), newest first, each with its verdict, how strong it is (`full`, `partial`, `failed`, `none`), one sentence to read it by, and the counts of its fidelity report. Requires `pacts:view`.
+
+Operation id: `list_comparisons_v1_tenants__tenant_slug__pact_comparisons_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | How many to return. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list recent bi-directional comparisons. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-comparisons/{result_id}/fidelity` {#read-fidelity-v1-tenants-tenant-slug-pact-comparisons-result-id-fidelity-get}
+
+**Read the fidelity report of a bi-directional comparison**
+
+What a bi-directional comparison compared and what it could not: for every interaction the checks with their status (`compared`, `partial`, `failed`, `not-run` with the reason), the matching rules it could not prove, and the items it could not compare. A green verdict is only as strong as `strength` says. Requires `pacts:view`.
+
+Operation id: `read_fidelity_v1_tenants__tenant_slug__pact_comparisons__result_id__fidelity_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `result_id` | path | string | yes | Path parameter identifying the result id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the fidelity report of a bi-directional comparison. | `application/json` object |
+| 404 | `pact-verification-not-found`: no bi-directional result with that id in this workspace, or the result was published by a Pact verifier and has no comparison. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
 

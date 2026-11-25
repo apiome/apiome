@@ -43,6 +43,7 @@ from .pact_broker_routes import (
     _tenant_id,
     _version_document,
 )
+from .pact_comparison_routes import comparison_fidelity_path
 from .pact_publication import PactPublicationError
 from .pact_selectors import decode_metadata
 from .pact_webhook_events import fire_verification_events
@@ -170,7 +171,8 @@ def _result_document(request: Request, tenant_slug: str, base: str, result: Veri
     here too. Apiome adds ``providerVersionBranch`` when the branch is known, ``kind`` (``native``
     or ``bidirectional``) and, when a CTG-4.3 report is linked, a ``pb:provider-verification-report``
     link to it. A bi-directional result (PFX-2.3) also carries the ``comparison`` payload and a
-    ``pb:provider-contract`` link to the contract it was compared with.
+    ``pb:provider-contract`` link to the contract it was compared with, and an
+    ``apiome:comparison-fidelity`` link to its fidelity report (PFX-2.5).
 
     Args:
         request: The request (for the API root of the report link).
@@ -232,6 +234,11 @@ def _result_document(request: Request, tenant_slug: str, base: str, result: Veri
                 f"{base}/contracts/provider/{quote(result.provider_slug, safe='')}"
                 f"/version/{quote(result.provider_version, safe='')}"
             ),
+        }
+        # PFX-2.5 (#6929): what the comparison compared, and what it could not.
+        links["apiome:comparison-fidelity"] = {
+            "title": "Comparison fidelity report (Apiome)",
+            "href": f"{_api_root(request)}{comparison_fidelity_path(tenant_slug, result.id)}",
         }
     if result.report_id:
         links["pb:provider-verification-report"] = {

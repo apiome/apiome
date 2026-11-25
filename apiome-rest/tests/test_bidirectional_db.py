@@ -385,3 +385,24 @@ def test_the_database_keeps_a_kind_s_columns_together_and_one_comparison_per_pai
     assert refused("UPDATE apiome.verification_result SET comparison = '{}'::jsonb") is (
         psycopg2.errors.RestrictViolation
     )
+
+
+# --- PFX-2.5: the comparison list and fidelity report ---------------------------------------------
+
+
+def test_the_comparison_list_and_report_read_only_the_callers_workspace(production: Dict[str, Any]) -> None:
+    from app.pact_comparison_fidelity import build_fidelity_report
+    from app.pact_publication import PactPublicationError
+    from app.verification_result_store import get_bidirectional_result, list_bidirectional_results
+
+    _publish(production, "1.0.0")
+    tenant, other = production["seed"]["tenant"], production["other"]["tenant"]
+    [listed] = list_bidirectional_results(production["db"], tenant)
+    assert listed.kind == "bidirectional" and listed.consumer_version == "1.0.0"
+    assert list_bidirectional_results(production["db"], other) == []
+
+    record = get_bidirectional_result(production["db"], tenant, listed.id)
+    report = build_fidelity_report(record.comparison or {})
+    assert report["verdict"] == "pass" and report["strength"] in ("full", "partial")
+    with pytest.raises(PactPublicationError):
+        get_bidirectional_result(production["db"], other, listed.id)
