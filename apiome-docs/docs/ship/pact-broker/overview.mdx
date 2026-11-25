@@ -11,7 +11,9 @@ it unchanged: give them your workspace's **broker base URL**
 Consumers publish their pacts, providers verify them and report back, deploy jobs record what runs
 where, and `can-i-deploy` stops a release that would break something.
 
-All of it is served through the API and the Pact tools. There is no screen for pacts yet.
+All of it is served through the API and the Pact tools. The one screen so far is **Pact
+comparisons**, which shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
+each bi-directional comparison.
 
 ## When to use it
 
@@ -75,6 +77,15 @@ All of it is served through the API and the Pact tools. There is no screen for p
    [`pact-broker can-i-deploy`](./can-i-deploy.mdx) reads the matrix against what runs in the
    target environment and answers **yes**, **no** or **unknown**, with a reason for each
    integration. The job stops when the answer is not yes.
+
+**Bi-directional instead of a verifier.** A provider that does not run Pact verification publishes
+its OpenAPI document as a [provider contract](./bi-directional.mdx) instead, with
+[self-verification evidence](./bi-directional.mdx#self-verification-evidence) from a tool such as
+Schemathesis, Dredd or Newman. Apiome compares each pact with that document by the
+[comparison rules](./comparison-rules.mdx) as soon as either side publishes, and stores the verdict
+as a verification result, so steps 4 and 6 work the same way. A consumer without Pact tests can
+[export a pact](./bi-directional.mdx#consumers-without-a-pact-file) from the surface it declared in
+Apiome.
 
 Along the way, [badges](./badges.mdx) show the state of a public project's pacts, and
 [retention](./retention.mdx) keeps the registry small: it deletes old versions but keeps anything

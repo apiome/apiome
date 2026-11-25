@@ -131,7 +131,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 | Epic | Title | MVP issues | Issues |
 | --- | --- | --- | --- |
 | ✅ PFX-EPIC-1 | Pact Broker core: model, API, can-i-deploy | 1.1–1.9 | 11 |
-| PFX-EPIC-2 | Bi-directional contract testing | 2.1–2.4 | 6 |
+| ✅ PFX-EPIC-2 | Bi-directional contract testing | 2.1–2.4 | 6 |
 | PFX-EPIC-3 | Provider verification engine | 3.1–3.3 | 7 |
 | PFX-EPIC-4 | CLI, CI and client compatibility | 4.1–4.3 | 7 |
 | PFX-EPIC-5 | Contracts workspace UI | 5.1–5.4, 5.6 | 8 |
@@ -222,7 +222,11 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 
 **✅ PFX-1.11 · #6924 Pacticipant labels, version delete and cleanup — Complete** — labels, soft-delete of versions and pacticipants with audit, selector-based retention (keep latest N per branch, anything deployed/released, everything in the last D days) as a dry-run-first job. *Deps:* 1.1, 1.5. **Docs:** `…/pact-broker/retention.mdx`.
 
-### PFX-EPIC-2 · [#6908](https://github.com/apiome/apiome/issues/6908) — Bi-directional contract testing
+### ✅ PFX-EPIC-2 · [#6908](https://github.com/apiome/apiome/issues/6908) — Bi-directional contract testing
+
+✅ **Done** (2026-11-24).
+
+**Status.** All six issues of this epic are complete (PFX-2.6 #6930 was the last). #6908 brought `apiome-docs/docs/ship/pact-broker/overview.mdx` and `comparison-rules.mdx` up to date (the **Pact comparisons** screen, where bi-directional testing fits next to Pact verification), added the release-notes post `2026-11-24-bidirectional-contract-testing.mdx` and a What's new line.
 
 ```mermaid
 flowchart LR
