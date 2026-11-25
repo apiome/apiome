@@ -1,0 +1,60 @@
+{
+  "consumer": {"name": "Billing Service"},
+  "provider": {"name": "Ledger API"},
+  "interactions": [
+    {
+      "description": "a request for invoice 1042",
+      "providerStates": [{"name": "invoice 1042 exists", "params": {"id": 1042}}],
+      "request": {
+        "method": "GET",
+        "path": "/invoices/1042",
+        "headers": {"Accept": "application/json"}
+      },
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": {
+          "id": 1042,
+          "status": "open",
+          "total": 129.5,
+          "issuedAt": "2026-11-02T09:30:00+00:00",
+          "lines": [{"sku": "SKU-1", "quantity": 2}]
+        },
+        "matchingRules": {
+          "body": {
+            "$.id": {"combine": "AND", "matchers": [{"match": "integer"}]},
+            "$.status": {"combine": "AND", "matchers": [{"match": "regex", "regex": "^(open|paid|void)$"}]},
+            "$.total": {"combine": "AND", "matchers": [{"match": "decimal"}]},
+            "$.issuedAt": {
+              "combine": "AND",
+              "matchers": [{"match": "timestamp", "format": "yyyy-MM-dd'T'HH:mm:ssXXX"}]
+            },
+            "$.lines": {"combine": "AND", "matchers": [{"match": "type", "min": 1}]},
+            "$.lines[*].sku": {"combine": "AND", "matchers": [{"match": "regex", "regex": "^SKU-\\d+$"}]}
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [{"match": "regex", "regex": "application/json(;\\s?charset=[\\w-]+)?"}]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "a request for a missing invoice",
+      "request": {"method": "GET", "path": "/invoices/9999"},
+      "response": {
+        "status": 404,
+        "headers": {"Content-Type": "application/json"},
+        "body": {"error": "not found"},
+        "matchingRules": {"body": {"$.error": {"combine": "AND", "matchers": [{"match": "type"}]}}}
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {"version": "13.1.4"},
+    "pactRust": {"ffi": "0.4.22", "models": "1.2.3"},
+    "pactSpecification": {"version": "3.0.0"}
+  }
+}

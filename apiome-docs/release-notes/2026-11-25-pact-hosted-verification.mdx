@@ -1,0 +1,34 @@
+---
+slug: pact-hosted-verification
+title: "Verify a provider from Apiome"
+description: "Apiome replays a provider's pacts against a verification target and publishes the results."
+authors: [apiome]
+---
+
+A provider no longer needs a Pact library to be verified. One request to Apiome selects the pacts
+the provider must honour, replays every interaction against a running copy of the provider, and
+publishes a verification result for each pact. See
+[Verify a provider from Apiome](/ship/pact-broker/hosted-verification).
+
+{/* truncate */}
+
+- **One request, the whole loop.** `POST …/pact-verifier/pacts/provider/{provider}/verify` takes a
+  verification target, a provider version and branch, and the same consumer-version selectors a
+  Pact verifier sends. Pending and work-in-progress pacts are included when you ask for them.
+- **Results where can-i-deploy reads them.** A pact that passes or fails gets a verification result
+  against the provider version, with the outcome of every interaction. It shows in the matrix and
+  in can-i-deploy like a result from a Pact verifier, and it fires your contract webhooks.
+- **Failures you can act on.** Responses are compared under the pact's matching rules. Each
+  mismatch names the interaction, the field (a JSON Pointer into the response body, or the header),
+  the rule that failed, and the expected and actual values. A rule Apiome cannot apply fails the
+  interaction instead of passing silently.
+- **The target stays in charge.** Credentials, timeouts and the network policy come from the
+  verification target. Mutating interactions are sent only when the target allows mutating methods
+  and the run sets `allow_mutating`. A run cannot widen the target's policy.
+- **No unearned passes.** A run that skipped an interaction, could not reach the target, or met an
+  interaction it cannot replay is `incomplete` and publishes nothing. `publish: false` is a dry run.
+
+Interactions that assume a provider state are skipped for now, unless you set
+`replay_without_state_setup` because your target already holds the data. Setting provider states
+up from Apiome is not yet available. Pacts written by pact-js, pact-jvm and pact-go (specifications
+2, 3 and 4) are covered. Hosted verification needs `pacts:create` and `verification_evidence:create`.

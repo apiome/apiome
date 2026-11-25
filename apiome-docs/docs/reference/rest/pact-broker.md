@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 69 operations."
+description: "REST endpoints tagged pact-broker: 70 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.671.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.672.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 69 operations
+Tag: `pact-broker` · 70 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -1406,6 +1406,8 @@ Operation id: `read_scoped_v1_tenants__tenant_slug__pact_broker_pacts_provider__
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `provider` | path | string | yes | The provider. |
+| `consumer` | path | string | yes | The consumer. |
 
 **Responses**
 
@@ -1430,6 +1432,8 @@ Operation id: `post_scoped_v1_tenants__tenant_slug__pact_broker_pacts_provider__
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `provider` | path | string | yes | The provider. |
+| `consumer` | path | string | yes | The consumer. |
 
 **Request body** (required)
 
@@ -1803,6 +1807,7 @@ Operation id: `read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_consume
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `consumer` | path | string | yes | The consumer. |
 
 **Responses**
 
@@ -1827,6 +1832,7 @@ Operation id: `post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_consume
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `consumer` | path | string | yes | The consumer. |
 
 **Request body** (required)
 
@@ -1913,6 +1919,7 @@ Operation id: `read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provide
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `provider` | path | string | yes | The provider. |
 
 **Responses**
 
@@ -1937,6 +1944,7 @@ Operation id: `post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provide
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `provider` | path | string | yes | The provider. |
 
 **Request body** (required)
 
@@ -1980,6 +1988,8 @@ Operation id: `read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provide
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `provider` | path | string | yes | The provider. |
+| `consumer` | path | string | yes | The consumer. |
 
 **Responses**
 
@@ -2004,6 +2014,8 @@ Operation id: `post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provide
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+| `provider` | path | string | yes | The provider. |
+| `consumer` | path | string | yes | The consumer. |
 
 **Request body** (required)
 
@@ -2247,6 +2259,52 @@ Request body for compile a pact version into a contract suite.
 | 404 | `pacticipant-not-found` or `pact-not-found`: no such provider, consumer or pact version in this workspace. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify` {#verify-provider-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-verify-post}
+
+**Verify a provider against its pacts (hosted verifier)**
+
+Run provider verification from Apiome (PFX-3.2): select the pacts the provider must honour, replay each interaction against a registered verification target, and publish a verification result per pact — no Pact library on the provider's side.
+
+**Selection.** `selection` is the body of `…/pact-broker/pacts/provider/{provider}/for-verification`, unchanged (consumer-version selectors, pending and work-in-progress pacts). At most 25 pacts per run.
+
+**Replay.** Each pact is compiled into its contract suite (the manifest and digest of `POST …/pact-suites/…`) and replayed on the contract runner under the target's policy: SSRF guard, timeouts, retries (transport failures only) and credentials come from the target, never from this request.
+
+**Matching.** The status, the recorded headers and the body are compared under the pact's matching rules. Each mismatch names the interaction, the field (a JSON Pointer into the response body, or the header), the rule that failed, and the expected and actual values. A rule the verifier cannot apply fails the interaction; it never passes silently.
+
+**Mutating interactions** (`POST`, `PUT`, `PATCH`, `DELETE`) are sent only when the target's policy allows mutating methods **and** `verification.allow_mutating` is true. A run cannot widen the target's policy.
+
+**Provider states.** An interaction that names a provider state is skipped with `provider-state-not-set-up` unless `verification.replay_without_state_setup` is true (the target already holds the data).
+
+**Publishing.** A pact is `passed` when every interaction was replayed and matched, `failed` when one did not match, and `incomplete` when nothing failed but something was skipped, unreachable or cannot be replayed. `passed` and `failed` are published as verification results against `provider_version` (and `provider_branch`), and show in the matrix and can-i-deploy; `incomplete` publishes nothing. `publish: false` is a dry run.
+
+The answer is `200` for any run that happened; read `success` and `outcome`. Requires `pacts:create` and `verification_evidence:create`.
+
+Operation id: `verify_provider_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verify_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for verify a provider against its pacts (hosted verifier).
+
+- `application/json` — [`PactVerifyRequest`](#schema-pactverifyrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for verify a provider against its pacts (hosted verifier). | `application/json` [`PactVerifyResponse`](#schema-pactverifyresponse) |
+| 400 | `pact-selector-invalid`, or a malformed provider version, branch or build URL. | — |
+| 404 | `pacticipant-not-found` or `target-not-found` in this workspace. | — |
+| 422 | `pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`, or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`, a URL refusal). | — |
+
 ## Schemas used {#schemas-used}
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -2275,3 +2333,32 @@ The suite compiled from one pact version.
 | `provider` | string | yes | The provider's handle. |
 | `pact_version_sha` | string | yes | The pact version compiled. |
 | `manifest` | `ContractSuiteManifest` | yes | The compiled suite: one `pact_interaction` case per HTTP interaction, with `unsupported` and `findings` naming everything that could not be replayed. |
+
+### `PactVerifyRequest` {#schema-pactverifyrequest}
+
+Which pacts to verify, against which target, as which provider build.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `target_ref` | string | yes | Slug or id of the registered verification target (ECA-1.2) to replay against. |
+| `provider_version` | string | yes | The provider application version being verified (a commit SHA). Results are recorded against it. |
+| `provider_branch` | string or null | no | The branch of that provider version. Recorded on the version before a result is published, and used as `providerVersionBranch` for pending pacts and `matchingBranch` selectors when `selection` does not state one. |
+| `build_url` | string or null | no | http(s) URL of the CI build, stored on each result. |
+| `selection` | object | no | Which pacts to verify — the body of `POST …/pact-broker/pacts/provider/{provider}/for-verification`, unchanged: `consumerVersionSelectors`, `providerVersionBranch`, `providerVersionTags`, `includePendingStatus`, `includeWipPactsSince`. Empty selects what a Pact verifier gets by default. |
+| `verification` | `PactVerificationOptions` | no | What this run may send: the mutating-method opt-in, fixtures and the provider-state choice. |
+| `publish` | boolean | no | Publish a verification result for every pact whose run is conclusive (`passed` or `failed`). `false` is a dry run: everything is replayed and reported, nothing is published. |
+| `context` | object | no | Non-secret CI context (commit, workflow URL) stored with the evidence. Never credentials. |
+
+### `PactVerifyResponse` {#schema-pactverifyresponse}
+
+The outcome of one hosted verification.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `provider` | string | yes | The provider's handle. |
+| `provider_version` | string | yes | The provider version verified. |
+| `provider_branch` | string or null | no | Its branch, when stated. |
+| `target` | `VerifiedTarget` | yes | The verification target replayed against. |
+| `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed`. |
+| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed) or `no-pacts` (the selectors chose nothing). |
+| `pacts` | array of `PactVerification` | no | One entry per pact verified. |

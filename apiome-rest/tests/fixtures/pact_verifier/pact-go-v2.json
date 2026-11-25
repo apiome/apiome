@@ -1,0 +1,27 @@
+{
+  "consumer": {"name": "Reporting Job"},
+  "provider": {"name": "Ledger API"},
+  "interactions": [
+    {
+      "description": "a request for the ledger summary",
+      "providerState": "the ledger has entries",
+      "request": {"method": "GET", "path": "/summary", "query": "year=2026"},
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json; charset=utf-8"},
+        "body": {"year": 2026, "entries": [{"account": "4000", "balance": 12.5}], "currency": "EUR"},
+        "matchingRules": {
+          "$.body.year": {"match": "type"},
+          "$.body.entries": {"min": 1},
+          "$.body.entries[*].*": {"match": "type"},
+          "$.body.entries[*].account": {"match": "regex", "regex": "^\\d{4}$"}
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactGo": {"version": "v2.0.8"},
+    "pactRust": {"ffi": "0.4.16"},
+    "pactSpecification": {"version": "2.0.0"}
+  }
+}

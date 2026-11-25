@@ -28,6 +28,12 @@ Guarantees
   judged by its status code, then by its decoded message. A method is mutating unless it declares
   ``idempotency_level = NO_SIDE_EFFECTS``.
 
+* **A pact case is judged by the pact (PFX-3.2, #6932).** A case compiled from a pact interaction
+  carries no response schema; after its status matches, its headers and body are compared with the
+  response the consumer recorded, under the pact's matching rules
+  (:func:`app.pact_value_match.match_response`). Each mismatch is one assertion naming the field
+  (a JSON Pointer into the body, or the header), the rule that failed and both values.
+
 This module is pure relative to the platform store: it takes a manifest, a resolved target, an
 httpx client (or builds one), and optional auth headers. Compiling, resolving, and recording
 live in :mod:`app.contract_runner_service`.
@@ -36,18 +42,23 @@ A caller that needs finer control than "run every case" passes ``decisions`` to 
 — a per-case :class:`CaseDecision` that can skip a case with its own reason code or substitute a
 different request for it. Omitting the argument is exactly the ECA-2.1 behaviour; the provider
 verification layer (CTG-4.3) uses it to hold mutating cases back until a tenant supplies a fixture.
+
+A caller that must do something around each request passes ``hooks`` (:class:`CaseHooks`): the
+pact verifier uses it to put the provider into the state an interaction assumes. A run with hooks
+executes its cases one at a time, because a state set up for one case must not leak into another.
 """
 
 from __future__ import annotations
 
 import base64
 import json
+import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urljoin
 
 import httpx
@@ -59,10 +70,12 @@ from .contract_suite import (
     ContractCase,
     ContractSuiteManifest,
 )
+from .pact_value_match import PART_HEADER, match_response
 from .schema_instance_validation import validate_json_instance
 from .ssrf_guard import build_guarded_client
 from .verification_evidence import (
     ASSERTION_KIND_CUSTOM,
+    ASSERTION_KIND_HEADER,
     ASSERTION_KIND_RESPONSE_SCHEMA,
     ASSERTION_KIND_STATUS_CODE,
     ASSERTION_OUTCOME_FAILED,
@@ -88,12 +101,17 @@ from .verification_target import (
     VerificationPolicy,
 )
 
+logger = logging.getLogger(__name__)
+
 __all__ = [
     "FAILURE_AUTH_UNAVAILABLE",
+    "FAILURE_CASE_HOOK_FAILED",
     "FAILURE_GRAPHQL_ENVELOPE_INVALID",
     "FAILURE_GRAPHQL_ERRORS_MISSING",
     "FAILURE_GRAPHQL_ERRORS_PRESENT",
     "FAILURE_MUTATING_METHOD_BLOCKED",
+    "FAILURE_PACT_BODY_MISMATCH",
+    "FAILURE_PACT_HEADER_MISMATCH",
     "FAILURE_RESPONSE_SCHEMA_MISMATCH",
     "FAILURE_STATUS_MISMATCH",
     "FAILURE_TIMEOUT",
@@ -105,6 +123,7 @@ __all__ = [
     "SCHEMA_FINDING_LIMIT",
     "AuthResolutionError",
     "CaseDecision",
+    "CaseHooks",
     "SuiteRunResult",
     "is_mutating_case",
     "materialize_auth_headers",
@@ -128,6 +147,13 @@ FAILURE_GRAPHQL_ERRORS_PRESENT = "graphql-errors-present"
 FAILURE_GRAPHQL_ERRORS_MISSING = "graphql-errors-missing"
 #: A GraphQL case was answered with something that is not a JSON object.
 FAILURE_GRAPHQL_ENVELOPE_INVALID = "graphql-envelope-invalid"
+
+#: A pact case's response carries a header that is missing or does not match the pact.
+FAILURE_PACT_HEADER_MISMATCH = "pact-header-mismatch"
+#: A pact case's response body does not match the pact under its matching rules.
+FAILURE_PACT_BODY_MISMATCH = "pact-body-mismatch"
+#: A :class:`CaseHooks` ``before`` hook raised, so the case was not sent.
+FAILURE_CASE_HOOK_FAILED = "case-hook-failed"
 
 #: ``Accept`` sent with every GraphQL case: the GraphQL-over-HTTP media type, then plain JSON.
 GRAPHQL_ACCEPT = "application/graphql-response+json, application/json"
@@ -205,6 +231,29 @@ class CaseDecision:
     skip_code: Optional[str] = None
     skip_message: Optional[str] = None
     case: Optional[ContractCase] = None
+
+
+@dataclass(frozen=True)
+class CaseHooks:
+    """What a caller wants done around each case that is sent.
+
+    Hooks exist for work that must surround one request: the pact verifier (PFX-3.2) sets up the
+    provider state an interaction assumes before the request, and tears it down after. A run with
+    hooks executes one case at a time, whatever the target's ``max_concurrency``.
+
+    Attributes:
+        before: Called with the case about to be sent (after any :class:`CaseDecision`
+            substitution). Returning a decision with ``run=False`` records the case as ``skipped``
+            with that decision's code and message instead of sending it; ``None`` sends it. A hook
+            that raises skips the case with ``case-hook-failed``. It cannot widen anything: the
+            target policy's mutating-method gate is still checked afterwards.
+        after: Called with the case and its evidence record once the case has been sent (not for
+            a case ``before`` held back). An exception is logged and otherwise ignored — the
+            observation has already been made.
+    """
+
+    before: Optional[Callable[[ContractCase], Optional[CaseDecision]]] = None
+    after: Optional[Callable[[ContractCase, OperationResultInput], None]] = None
 
 
 def skipped_operation(
@@ -676,6 +725,50 @@ def _graphql_assertions(
     return [passed, *_response_schema_assertions(case, schemas=schemas, body=body.get("data"))]
 
 
+def _pact_assertions(case: ContractCase, response: httpx.Response) -> List[AssertionInput]:
+    """Judge a pact case's response against the response the consumer recorded.
+
+    Args:
+        case: A case compiled from a pact interaction (``case.pact`` is set).
+        response: The provider's response, whose status already matched.
+
+    Returns:
+        One failed assertion per mismatch — its ``subject`` the header name or the JSON Pointer
+        into the body (``$`` for the whole body), its ``message`` naming the rule — or, when
+        everything matches, one passed assertion for the headers and one for the body the pact
+        records. Empty when the pact records neither.
+    """
+    assert case.pact is not None
+    expectation = case.pact.response
+    mismatches = match_response(expectation, headers=dict(response.headers), content=response.content)
+    if mismatches:
+        return [
+            AssertionInput(
+                kind=ASSERTION_KIND_HEADER if item.part == PART_HEADER else ASSERTION_KIND_CUSTOM,
+                outcome=ASSERTION_OUTCOME_FAILED,
+                subject=_bounded(item.path if item.part == PART_HEADER else item.pointer or "$", _SUBJECT_LIMIT),
+                expected=_bounded(item.expected, _FIELD_LIMIT),
+                actual=_bounded(item.actual, _FIELD_LIMIT),
+                code=FAILURE_PACT_HEADER_MISMATCH if item.part == PART_HEADER else FAILURE_PACT_BODY_MISMATCH,
+                message=_bounded(item.message, _MESSAGE_LIMIT),
+            )
+            for item in mismatches
+        ]
+    passed: List[AssertionInput] = []
+    if expectation.headers:
+        passed.append(
+            AssertionInput(
+                kind=ASSERTION_KIND_HEADER,
+                outcome=ASSERTION_OUTCOME_PASSED,
+                subject="headers",
+                expected=", ".join(sorted(expectation.headers)),
+            )
+        )
+    if expectation.has_body:
+        passed.append(AssertionInput(kind=ASSERTION_KIND_CUSTOM, outcome=ASSERTION_OUTCOME_PASSED, subject="body"))
+    return passed
+
+
 def _parse_json_body(response: httpx.Response) -> Any:
     """Best-effort JSON parse; returns raw text when the body is not JSON."""
     if not response.content:
@@ -810,11 +903,12 @@ def _execute_case(
             assertions=assertions,
         )
 
-    body = _parse_json_body(response)
-    if case.protocol == PROTOCOL_GRAPHQL:
-        judged = _graphql_assertions(case, schemas=schemas, body=body)
+    if case.pact is not None:
+        judged = _pact_assertions(case, response)
+    elif case.protocol == PROTOCOL_GRAPHQL:
+        judged = _graphql_assertions(case, schemas=schemas, body=_parse_json_body(response))
     else:
-        judged = _response_schema_assertions(case, schemas=schemas, body=body)
+        judged = _response_schema_assertions(case, schemas=schemas, body=_parse_json_body(response))
     if judged:
         assertions.extend(judged)
         # The first failed assertion decides: a schema headline precedes its located
@@ -892,6 +986,7 @@ def run_suite(
     auth_headers: Optional[Mapping[str, str]] = None,
     client: Optional[httpx.Client] = None,
     decisions: Optional[Mapping[str, CaseDecision]] = None,
+    hooks: Optional[CaseHooks] = None,
 ) -> SuiteRunResult:
     """Execute every case in ``manifest`` against ``target``.
 
@@ -906,6 +1001,8 @@ def run_suite(
             skip a case with its own reason code, or substitute a different request for it — but
             never lifts the target policy's mutating-method gate, which every executed case is
             still checked against.
+        hooks: Optional :class:`CaseHooks` run around each case that is sent. With hooks the
+            cases run one at a time, in suite order.
 
     Returns:
         Timing plus one :class:`OperationResultInput` per case, in suite order.
@@ -924,6 +1021,9 @@ def run_suite(
     cases = list(manifest.cases)
     results: List[Optional[OperationResultInput]] = [None] * len(cases)
     concurrency = max(1, min(int(target.policy.max_concurrency), max(1, len(cases) or 1)))
+    if hooks is not None:
+        # What a hook sets up for one case must not be seen by another.
+        concurrency = 1
     rpc_transport: Optional[Any] = None
     if manifest.protocol == PROTOCOL_GRPC:
         from .contract_runner_rpc import build_rpc_transport
@@ -945,14 +1045,37 @@ def run_suite(
                     code=decision.skip_code or FAILURE_MUTATING_METHOD_BLOCKED,
                     message=decision.skip_message or "the caller held this case back",
                 )
-            return index, _execute_case(
-                case if decision is None or decision.case is None else decision.case,
+            chosen = case if decision is None or decision.case is None else decision.case
+            if hooks is not None and hooks.before is not None:
+                try:
+                    verdict = hooks.before(chosen)
+                except Exception as exc:  # noqa: BLE001 - a failed setup must not send the case
+                    logger.exception("contract runner: the before hook failed for case %s", case.case_id)
+                    verdict = CaseDecision(
+                        run=False,
+                        skip_code=FAILURE_CASE_HOOK_FAILED,
+                        skip_message=f"the case was not sent: its setup failed ({exc.__class__.__name__})",
+                    )
+                if verdict is not None and not verdict.run:
+                    return index, skipped_operation(
+                        case,
+                        code=verdict.skip_code or FAILURE_CASE_HOOK_FAILED,
+                        message=verdict.skip_message or "the case's setup held it back",
+                    )
+            result = _execute_case(
+                chosen,
                 target=target,
                 auth_headers=headers,
                 client=client,
                 schemas=manifest.schemas,
                 rpc_transport=rpc_transport,
             )
+            if hooks is not None and hooks.after is not None:
+                try:
+                    hooks.after(chosen, result)
+                except Exception:  # noqa: BLE001 - the observation is already made
+                    logger.exception("contract runner: the after hook failed for case %s", case.case_id)
+            return index, result
 
         with ThreadPoolExecutor(max_workers=concurrency) as pool:
             futures = [pool.submit(_run_one, i, case) for i, case in enumerate(cases)]

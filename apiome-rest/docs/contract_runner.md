@@ -144,3 +144,37 @@ evidence must be `failed` with `status-mismatch` or `response-schema-mismatch`.
 * CLI `apiome verify contract` — ECA-2.2 (#4733)
 * Policy evaluator — ECA-3.1 (#4734)
 * Portable mock runtime packaging — PMR
+
+## Pact cases and case hooks
+
+> apiome#6932 (PFX-3.2) — the hosted Pact verifier (`app.pact_verifier*`) runs on this runner.
+
+**A pact case is judged by the pact.** A case compiled from a pact interaction (`case.pact` set,
+`source: pact_interaction`) has no response schema. After its status matches
+`expect.status_codes`, the runner compares the response with `pact.response` under the pact's
+matching rules (`app.pact_value_match.match_response`):
+
+| Assertion | `kind` | `subject` | `code` when failed |
+| --- | --- | --- | --- |
+| A recorded header | `header` | The header name | `pact-header-mismatch` |
+| The body | `custom` | JSON Pointer into the response body (`$` for the whole body) | `pact-body-mismatch` |
+
+Each mismatch is one failed assertion with `expected`, `actual` and a `message` that ends with
+`(rule: <matcher>)`; `app.pact_value_match.mismatch_rule` reads the rule back. A rule the engine
+cannot apply is a mismatch, never a pass. When everything matches, one passed assertion is
+recorded for the headers and one for the body the pact records.
+
+**Hooks surround each case that is sent.** `run_suite(..., hooks=CaseHooks(before, after))`:
+
+- `before(case)` runs just before the request. Returning `CaseDecision(run=False, skip_code=…)`
+  records the case as `skipped` with that reason; raising skips it with `case-hook-failed`.
+- `after(case, result)` runs once the case has been sent; an exception is logged and ignored.
+- A run with hooks sends **one case at a time**, whatever the target's `max_concurrency`.
+- A hook cannot widen anything: the target policy's mutating-method gate is checked after it.
+
+The verifier uses hooks for provider states (`app.pact_verifier.state_hooks`): the
+`ProviderStateHandler` seam that the provider-state registry (PFX-3.3, #6933) implements.
+
+Tests: `tests/test_contract_runner_pact.py`, `tests/test_pact_value_match.py`,
+`tests/test_pact_verifier.py`, `tests/test_pact_verifier_service.py`,
+`tests/test_pact_verifier_routes.py`.

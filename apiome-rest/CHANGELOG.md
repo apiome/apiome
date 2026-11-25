@@ -6,6 +6,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.848.0] - 2026-11-25
+
+### Added
+- **Hosted provider verifier (PFX-3.2, #6932).** OpenAPI 1.672.0 (one new path, nine new schemas).
+  No migration.
+  - `POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify` verifies a provider
+    against its pacts from Apiome: it selects the pacts with the `for-verification` selectors
+    (PFX-1.3; `selection` is that body unchanged, pending and WIP pacts included), resolves a
+    registered verification target (ECA-1.2), compiles each pact into its contract suite (PFX-3.1,
+    same digest), replays it on the ECA-2.1 runner, records the run as ECA-1.3 evidence, and
+    publishes a verification result (PFX-1.4) per pact against `provider_version` /
+    `provider_branch`, queuing the contract webhooks. At most 25 pacts per run
+    (`pact-verify-too-many-pacts`). Requires `pacts:create` and `verification_evidence:create`. It
+    sits beside the Pact Broker surface (no Pact Broker client knows it), so the compatibility
+    catalog is unchanged.
+  - **Matching engine** (`app.pact_value_match`, pure): headers and bodies are compared under the
+    pact's matching rules with Pact's path-weight resolution and cascading type matchers —
+    `equality`, `type` (`min` / `max`), `regex`, `include`, `integer`, `decimal`, `number`,
+    `boolean`, `null`, `notEmpty`, `semver`, `date` / `time` / `timestamp` / `datetime` (shape of the
+    format), `values`, `eachKey`, `eachValue`, `arrayContains`, `AND` / `OR`. A rule that cannot be
+    applied (`contentType`, an unknown matcher, an unreadable date format, a regex that does not
+    compile or exceeds 1 s, a field rule on a non-JSON body) is a mismatch naming the rule. The
+    Pact specification test-suite vectors and the supported-rules table are PFX-3.4 (#6934).
+  - **Runner** (`app.contract_runner`): a case with a `pact` block is judged by the pact after its
+    status matches — one failed assertion per mismatch (`pact-header-mismatch`,
+    `pact-body-mismatch`) whose subject is the header or the JSON Pointer into the body and whose
+    message names the rule. `run_suite(..., hooks=CaseHooks(before, after))` surrounds each case
+    that is sent; a run with hooks sends one case at a time, and a hook cannot lift the target
+    policy's mutating-method gate.
+  - **A run cannot widen the target policy.** A mutating interaction is sent only when the target
+    allows mutating methods **and** `verification.allow_mutating` is true; otherwise it is skipped
+    with `mutating-method-blocked`. No fixture is required (the consumer recorded the request); a
+    CTG-4.3 `MutatingFixture` naming the operation is applied when given.
+  - **Provider states are a seam.** `app.pact_verifier.ProviderStateHandler` is what the
+    provider-state registry (PFX-3.3, #6933) will implement. Until then an interaction that names a
+    state is skipped with `provider-state-not-set-up`, unless
+    `verification.replay_without_state_setup` is true; replayed interactions are marked
+    `states_set_up: false`.
+  - **Only conclusive runs are published.** A pact is `passed` (everything replayed and matched),
+    `failed` (a replayed interaction did not match) or `incomplete` (nothing failed, but something
+    was skipped, unreachable or uncompilable). `incomplete` publishes nothing
+    (`not_published_reason: run-incomplete`); `publish: false` is a dry run. A pending or WIP pact
+    that fails is published as failed but does not fail the run, and is treated as pending only
+    when `selection.includePendingStatus` is set. A Pact 4 `pending` interaction never decides.
+  - Published `testResults` keep the Pact shape (`interactionDescription`, `interactionId`,
+    `success`, `mismatches[].attribute / identifier / description`) with `outcome`, `code`, `rule`,
+    `expected` and `actual` beside it; `verifiedBy.implementation` is `apiome-pact-verifier`.
+
 ## [1.847.1] - 2026-11-24
 
 ### Fixed

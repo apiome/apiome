@@ -1,0 +1,66 @@
+{
+  "consumer": {"name": "Orders UI"},
+  "provider": {"name": "Ledger API"},
+  "interactions": [
+    {
+      "type": "Synchronous/HTTP",
+      "key": "5a1c9e0b",
+      "description": "list open invoices",
+      "pending": false,
+      "request": {
+        "method": "GET",
+        "path": "/invoices",
+        "query": {"status": ["open"]}
+      },
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": ["application/json"]},
+        "body": {
+          "content": {
+            "invoices": [{"id": 1, "currency": "EUR", "tags": {"priority": "high"}}],
+            "page": {"number": 1, "last": false}
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "matchingRules": {
+          "body": {
+            "$.invoices": {"combine": "AND", "matchers": [{"match": "type", "min": 1}]},
+            "$.invoices[*].id": {"combine": "AND", "matchers": [{"match": "integer"}]},
+            "$.invoices[*].currency": {"combine": "AND", "matchers": [{"match": "regex", "regex": "^[A-Z]{3}$"}]},
+            "$.invoices[*].tags": {
+              "combine": "AND",
+              "matchers": [{"match": "eachValue", "rules": [{"match": "type"}], "value": "{\"priority\":\"high\"}"}]
+            },
+            "$.page.number": {"combine": "AND", "matchers": [{"match": "integer"}]},
+            "$.page.last": {"combine": "AND", "matchers": [{"match": "boolean"}]}
+          },
+          "status": {"combine": "AND", "matchers": [{"match": "statusCode", "status": "success"}]}
+        },
+        "generators": {"body": {"$.invoices[*].id": {"type": "RandomInt", "min": 1, "max": 1000}}}
+      }
+    },
+    {
+      "type": "Synchronous/HTTP",
+      "key": "77aa01ff",
+      "description": "create an invoice",
+      "request": {
+        "method": "POST",
+        "path": "/invoices",
+        "headers": {"Content-Type": ["application/json"]},
+        "body": {"content": {"customer": "acme", "total": 10}, "contentType": "application/json", "encoded": false}
+      },
+      "response": {
+        "status": 201,
+        "headers": {"Location": ["/invoices/1"]},
+        "matchingRules": {
+          "header": {"Location": {"combine": "AND", "matchers": [{"match": "regex", "regex": "^/invoices/\\d+$"}]}}
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {"version": "4.6.14"},
+    "pactSpecification": {"version": "4.0"}
+  }
+}

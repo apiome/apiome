@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.671.1
+  version: 1.672.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -32551,6 +32551,124 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for compileapactversionintoacontractsuiteresponse422.
+  /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify:
+    post:
+      tags:
+      - pact-broker
+      summary: Verify a provider against its pacts (hosted verifier)
+      description: 'Run provider verification from Apiome (PFX-3.2): select the pacts
+        the provider must honour, replay each interaction against a registered verification
+        target, and publish a verification result per pact — no Pact library on the
+        provider''s side.
+
+
+        **Selection.** `selection` is the body of `…/pact-broker/pacts/provider/{provider}/for-verification`,
+        unchanged (consumer-version selectors, pending and work-in-progress pacts).
+        At most 25 pacts per run.
+
+
+        **Replay.** Each pact is compiled into its contract suite (the manifest and
+        digest of `POST …/pact-suites/…`) and replayed on the contract runner under
+        the target''s policy: SSRF guard, timeouts, retries (transport failures only)
+        and credentials come from the target, never from this request.
+
+
+        **Matching.** The status, the recorded headers and the body are compared under
+        the pact''s matching rules. Each mismatch names the interaction, the field (a
+        JSON Pointer into the response body, or the header), the rule that failed, and
+        the expected and actual values. A rule the verifier cannot apply fails the interaction;
+        it never passes silently.
+
+
+        **Mutating interactions** (`POST`, `PUT`, `PATCH`, `DELETE`) are sent only when
+        the target''s policy allows mutating methods **and** `verification.allow_mutating`
+        is true. A run cannot widen the target''s policy.
+
+
+        **Provider states.** An interaction that names a provider state is skipped with
+        `provider-state-not-set-up` unless `verification.replay_without_state_setup`
+        is true (the target already holds the data).
+
+
+        **Publishing.** A pact is `passed` when every interaction was replayed and matched,
+        `failed` when one did not match, and `incomplete` when nothing failed but something
+        was skipped, unreachable or cannot be replayed. `passed` and `failed` are published
+        as verification results against `provider_version` (and `provider_branch`),
+        and show in the matrix and can-i-deploy; `incomplete` publishes nothing. `publish:
+        false` is a dry run.
+
+
+        The answer is `200` for any run that happened; read `success` and `outcome`.
+        Requires `pacts:create` and `verification_evidence:create`.'
+      operationId: verify_provider_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verify_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Verifyaprovideragainstitspactshostedveriauthorization schema.
+          - type: 'null'
+            description: Verifyaprovideragainstitspactshostedveriauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Verifyaprovideragainstitspactshostedveri Xapikey schema.
+          - type: 'null'
+            description: Verifyaprovideragainstitspactshostedveri Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PactVerifyRequest'
+              description: Request body for verifyaprovideragainstitspactshostedverirequest.
+        description: Request body for verify a provider against its pacts (hosted verifier).
+      responses:
+        '200':
+          description: Successful response for verify a provider against its pacts (hosted
+            verifier).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactVerifyResponse'
+                description: Response payload for verifyaprovideragainstitspactshostedveriresponse200.
+        '400':
+          description: '`pact-selector-invalid`, or a malformed provider version, branch
+            or build URL.'
+        '404':
+          description: '`pacticipant-not-found` or `target-not-found` in this workspace.'
+        '422':
+          description: '`pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`,
+            or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`,
+            a URL refusal).'
   /v1/tenants/{tenant_slug}/pact-broker/environments:
     get:
       tags:
@@ -148873,6 +148991,211 @@ components:
         \ when :attr:`expected` or :attr:`actual` was summarized rather than\n   \
         \     reproduced verbatim, so a caller never mistakes a summary for the real\
         \ value."
+    InteractionCounts:
+      properties:
+        interactions:
+          type: integer
+          title: Interactions
+          description: Interactions and messages the pact carries.
+          example: 1
+        passed:
+          type: integer
+          title: Passed
+          description: Replayed and matched.
+          default: 0
+          example: 1
+        failed:
+          type: integer
+          title: Failed
+          description: Replayed and did not match.
+          default: 0
+          example: 1
+        skipped:
+          type: integer
+          title: Skipped
+          description: Held back, with a reason.
+          default: 0
+          example: 1
+        errored:
+          type: integer
+          title: Errored
+          description: Could not be sent or answered (transport, timeout).
+          default: 0
+          example: 1
+        unsupported:
+          type: integer
+          title: Unsupported
+          description: Cannot be replayed at all (message, plugin, malformed).
+          default: 0
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - interactions
+      title: InteractionCounts
+      description: How one pact's interactions went.
+    InteractionMismatch:
+      properties:
+        attribute:
+          type: string
+          title: Attribute
+          description: '`status`, `header` or `body`.'
+          example: example
+        field:
+          type: string
+          title: Field
+          description: 'What disagreed: `status`, the header''s name, or the JSON Pointer
+            of the field in the response body (`/items/0/id`; `$` is the whole body).'
+          example: example
+        rule:
+          type: string
+          title: Rule
+          description: The matching rule that failed (`type`, `regex`, `statuscode` …);
+            `equality` where the pact declares none; `presence` for something missing.
+          example: documentation.schema-missing-description
+        expected:
+          anyOf:
+          - type: string
+            description: Interaction Mismatch schema.
+          - type: 'null'
+            description: Interaction Mismatch schema.
+          title: Expected
+          description: What the pact asks for.
+        actual:
+          anyOf:
+          - type: string
+            description: Interaction Mismatch schema.
+          - type: 'null'
+            description: Interaction Mismatch schema.
+          title: Actual
+          description: What the provider returned.
+        description:
+          type: string
+          title: Description
+          description: One sentence naming the field, the rule and the difference.
+          example: A pet available for adoption in the store.
+      additionalProperties: false
+      type: object
+      required:
+      - attribute
+      - field
+      - rule
+      - description
+      title: InteractionMismatch
+      description: One way a provider's response disagreed with the pact.
+    InteractionVerification:
+      properties:
+        case_id:
+          type: string
+          title: Case Id
+          description: The suite case replayed (PFX-3.1), so evidence traces back to it.
+          example: case_01h2xcejqtf3fz5y5j0v8k9m2p
+        description:
+          type: string
+          title: Description
+          description: The interaction's description.
+          example: A pet available for adoption in the store.
+        key:
+          anyOf:
+          - type: string
+            description: Interaction Verification schema.
+          - type: 'null'
+            description: Interaction Verification schema.
+          title: Key
+          description: The Pact 4 interaction `key`, when the pact has one.
+        pointer:
+          type: string
+          title: Pointer
+          description: JSON Pointer of the interaction in the pact document.
+          example: example
+        operation:
+          type: string
+          title: Operation
+          description: The request replayed (`GET /invoices/1042`).
+          example: GET
+        provider_states:
+          items:
+            type: string
+          type: array
+          title: Provider States
+          description: The provider states the interaction assumes, by name.
+          maxItems: 1000
+        states_set_up:
+          type: boolean
+          title: States Set Up
+          description: False when the interaction names provider states and was replayed
+            without their setup.
+          default: true
+          example: false
+        pending:
+          type: boolean
+          title: Pending
+          description: 'Whether the consumer marked the interaction `pending` (Pact 4):
+            it never decides the outcome.'
+          default: false
+          example: false
+        outcome:
+          type: string
+          title: Outcome
+          description: '`passed`, `failed`, `skipped` or `errored`.'
+          example: example
+        code:
+          anyOf:
+          - type: string
+            description: Interaction Verification schema.
+          - type: 'null'
+            description: Interaction Verification schema.
+          title: Code
+          description: 'Why it did not pass: `status-mismatch`, `pact-header-mismatch`,
+            `pact-body-mismatch`, `mutating-method-blocked`, `provider-state-not-set-up`,
+            `transport-error`, `timeout` …'
+        message:
+          anyOf:
+          - type: string
+            description: Interaction Verification schema.
+          - type: 'null'
+            description: Interaction Verification schema.
+          title: Message
+          description: The reason, in a sentence.
+        expected_status:
+          anyOf:
+          - type: string
+            description: Interaction Verification schema.
+          - type: 'null'
+            description: Interaction Verification schema.
+          title: Expected Status
+          description: The status the pact expects.
+        actual_status:
+          anyOf:
+          - type: integer
+            description: Interaction Verification schema.
+          - type: 'null'
+            description: Interaction Verification schema.
+          title: Actual Status
+          description: The status the provider returned.
+        duration_ms:
+          type: integer
+          title: Duration Ms
+          description: How long the request took.
+          default: 0
+          example: 1
+        mismatches:
+          items:
+            $ref: '#/components/schemas/InteractionMismatch'
+          type: array
+          title: Mismatches
+          description: Every expected-versus-actual difference found.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - case_id
+      - description
+      - pointer
+      - operation
+      - outcome
+      title: InteractionVerification
+      description: What replaying one interaction showed.
     InvalidatedEvidence:
       properties:
         verification_runs:
@@ -169003,6 +169326,274 @@ components:
       - manifest
       title: PactSuiteResponse
       description: The suite compiled from one pact version.
+    PactVerification:
+      properties:
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer's handle.
+          example: example
+        consumer_name:
+          type: string
+          title: Consumer Name
+          description: The consumer's display name.
+          example: Example
+        consumer_version:
+          type: string
+          title: Consumer Version
+          description: The latest consumer version that published this pact.
+          example: 1.0.0
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version verified.
+          example: 1.0.0
+        short_description:
+          type: string
+          title: Short Description
+          description: Why the pact was selected (`latest from branch main`).
+          example: Example description for documentation and mocks.
+        pending:
+          type: boolean
+          title: Pending
+          description: 'Whether the pact''s failure is excused for this run: it is pending
+            for this provider build and `selection.includePendingStatus` was set, or it
+            is a work-in-progress pact.'
+          example: false
+        wip:
+          type: boolean
+          title: Wip
+          description: Whether it was included as a work-in-progress pact.
+          default: false
+          example: false
+        suite_digest:
+          type: string
+          title: Suite Digest
+          description: Digest of the contract suite compiled from the pact (PFX-3.1).
+          example: example
+        outcome:
+          type: string
+          title: Outcome
+          description: '`passed`, `failed` or `incomplete`.'
+          example: example
+        counts:
+          $ref: '#/components/schemas/InteractionCounts'
+          description: How its interactions went.
+        interactions:
+          items:
+            $ref: '#/components/schemas/InteractionVerification'
+          type: array
+          title: Interactions
+          description: One entry per interaction replayed or held back, in the pact's
+            order.
+          maxItems: 1000
+        unsupported:
+          items:
+            $ref: '#/components/schemas/SuiteUnsupportedOperation'
+          type: array
+          title: Unsupported
+          description: Interactions that cannot be replayed at all (message, plugin, malformed),
+            each with its reason.
+          maxItems: 1000
+        published:
+          type: boolean
+          title: Published
+          description: Whether a verification result was published for this pact.
+          example: false
+        not_published_reason:
+          anyOf:
+          - type: string
+            description: Pact Verification schema.
+          - type: 'null'
+            description: Pact Verification schema.
+          title: Not Published Reason
+          description: '`run-incomplete` or `publish-disabled` when `published` is false.'
+        result:
+          anyOf:
+          - $ref: '#/components/schemas/PublishedResult'
+          - type: 'null'
+            description: Pact Verification schema.
+          description: The published result.
+        evidence_run_id:
+          anyOf:
+          - type: string
+            description: Pact Verification schema.
+          - type: 'null'
+            description: Pact Verification schema.
+          title: Evidence Run Id
+          description: The immutable evidence run (ECA-1.3) holding every request's assertions;
+            null if it could not be stored.
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      - consumer_name
+      - consumer_version
+      - pact_version_sha
+      - short_description
+      - pending
+      - suite_digest
+      - outcome
+      - counts
+      - published
+      title: PactVerification
+      description: What verifying one pact showed.
+    PactVerificationOptions:
+      properties:
+        allow_mutating:
+          type: boolean
+          title: Allow Mutating
+          description: Opt in to replaying interactions with a mutating method (`POST`,
+            `PUT`, `PATCH`, `DELETE`). Off by default. Even when on, they are sent only
+            if the verification target's own policy allows mutating methods — a run cannot
+            widen that policy.
+          default: false
+          example: false
+        fixtures:
+          items:
+            $ref: '#/components/schemas/MutatingFixture'
+          type: array
+          maxItems: 100
+          title: Fixtures
+          description: Optional replacements for the request of a mutating interaction
+            (query, headers, body), keyed by operation (`POST /invoices`) — to send something
+            safer than the consumer recorded. The expectation is never changed.
+        replay_without_state_setup:
+          type: boolean
+          title: Replay Without State Setup
+          description: 'Replay interactions that name a provider state even though nothing
+            sets the state up — for a target that already holds the data the pacts assume.
+            Off by default: such interactions are skipped with `provider-state-not-set-up`.'
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      title: PactVerificationOptions
+      description: How much of the target this verification is allowed to touch.
+    PactVerifyRequest:
+      properties:
+        target_ref:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Target Ref
+          description: Slug or id of the registered verification target (ECA-1.2) to replay
+            against.
+          example: example
+        provider_version:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Provider Version
+          description: The provider application version being verified (a commit SHA).
+            Results are recorded against it.
+          example: 1.0.0
+        provider_branch:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Request body for pact verify.
+          - type: 'null'
+            description: Request body for pact verify.
+          title: Provider Branch
+          description: The branch of that provider version. Recorded on the version before
+            a result is published, and used as `providerVersionBranch` for pending pacts
+            and `matchingBranch` selectors when `selection` does not state one.
+        build_url:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Request body for pact verify.
+          - type: 'null'
+            description: Request body for pact verify.
+          title: Build Url
+          description: http(s) URL of the CI build, stored on each result.
+        selection:
+          additionalProperties: true
+          type: object
+          title: Selection
+          description: 'Which pacts to verify — the body of `POST …/pact-broker/pacts/provider/{provider}/for-verification`,
+            unchanged: `consumerVersionSelectors`, `providerVersionBranch`, `providerVersionTags`,
+            `includePendingStatus`, `includeWipPactsSince`. Empty selects what a Pact
+            verifier gets by default.'
+        verification:
+          $ref: '#/components/schemas/PactVerificationOptions'
+          description: 'What this run may send: the mutating-method opt-in, fixtures and
+            the provider-state choice.'
+        publish:
+          type: boolean
+          title: Publish
+          description: 'Publish a verification result for every pact whose run is conclusive
+            (`passed` or `failed`). `false` is a dry run: everything is replayed and reported,
+            nothing is published.'
+          default: true
+          example: false
+        context:
+          additionalProperties: true
+          type: object
+          title: Context
+          description: Non-secret CI context (commit, workflow URL) stored with the evidence.
+            Never credentials.
+      additionalProperties: false
+      type: object
+      required:
+      - target_ref
+      - provider_version
+      title: PactVerifyRequest
+      description: Which pacts to verify, against which target, as which provider build.
+    PactVerifyResponse:
+      properties:
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        provider_version:
+          type: string
+          title: Provider Version
+          description: The provider version verified.
+          example: 1.0.0
+        provider_branch:
+          anyOf:
+          - type: string
+            description: Response payload for pact verify.
+          - type: 'null'
+            description: Response payload for pact verify.
+          title: Provider Branch
+          description: Its branch, when stated.
+        target:
+          $ref: '#/components/schemas/VerifiedTarget'
+          description: The verification target replayed against.
+        success:
+          type: boolean
+          title: Success
+          description: 'What a CI job should exit on: true when at least one pact was
+            verified and every pact that is not pending `passed`.'
+          example: false
+        outcome:
+          type: string
+          title: Outcome
+          description: '`passed`, `failed` (a non-pending pact failed), `incomplete` (none
+            failed, but one could not be fully replayed) or `no-pacts` (the selectors
+            chose nothing).'
+          example: example
+        pacts:
+          items:
+            $ref: '#/components/schemas/PactVerification'
+          type: array
+          title: Pacts
+          description: One entry per pact verified.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - provider
+      - provider_version
+      - target
+      - success
+      - outcome
+      title: PactVerifyResponse
+      description: The outcome of one hosted verification.
     PacticipantBranchListResponse:
       properties:
         branches:
@@ -175577,6 +176168,37 @@ components:
       - revision
       title: PublishResponse
       description: PublishResponse schema.
+    PublishedResult:
+      properties:
+        number:
+          type: integer
+          title: Number
+          description: Its number among the results of the pact version.
+          example: 1
+        success:
+          type: boolean
+          title: Success
+          description: Whether the pact was verified.
+          example: false
+        url:
+          type: string
+          title: Url
+          description: Where the result is read on the Pact Broker surface.
+          example: https://example.com/resource
+        triggered_webhooks:
+          type: integer
+          title: Triggered Webhooks
+          description: How many webhooks its publication queued.
+          default: 0
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - number
+      - success
+      - url
+      title: PublishedResult
+      description: The verification result a pact's run was published as.
     PurgeEstimateBody:
       properties:
         scopeKind:
@@ -206710,6 +207332,43 @@ components:
         \ older than this.\n    fail_on_unhealthy_run: Fail when the most recent run\
         \ failed or could not run, whatever its\n        age. A recent *failure* is\
         \ worse news than an old success, so it is judged first."
+    VerifiedTarget:
+      properties:
+        target_id:
+          type: string
+          title: Target Id
+          description: The target's id.
+          example: target_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: The target's handle.
+          example: pet-store
+        environment:
+          type: string
+          title: Environment
+          description: Its environment class.
+          example: example
+        base_url:
+          type: string
+          title: Base Url
+          description: The base URL the interactions were sent to.
+          example: https://example.com/resource
+        allow_mutating_methods:
+          type: boolean
+          title: Allow Mutating Methods
+          description: Whether the target's policy allows mutating methods.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - target_id
+      - slug
+      - environment
+      - base_url
+      - allow_mutating_methods
+      title: VerifiedTarget
+      description: The target the run replayed against, as it was resolved.
     VerifyResponse:
       properties:
         domain:

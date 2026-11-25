@@ -266,7 +266,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-3.2 · [#6932](https://github.com/apiome/apiome/issues/6932) | Provider verifier (replay with states) | Replay against a target, publish results to the broker | `contracts`,`pact`,`rest`,`mvp` | N | Y | XL | apiome-rest |
 | PFX-3.3 · [#6933](https://github.com/apiome/apiome/issues/6933) | Provider-state registry and setup | Declare states, state-change URL / handler, params | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-ui |
 | PFX-3.4 · [#6934](https://github.com/apiome/apiome/issues/6934) | Matching-rules engine | v2–v4 matching rules, generators, content types | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
 | PFX-3.5 · [#6935](https://github.com/apiome/apiome/issues/6935) | External-verifier result ingestion | Accept Pact-standard verifier output and JUnit | `contracts`,`pact`,`rest` | Y | N | S | apiome-rest |
@@ -275,11 +274,7 @@ flowchart LR
 
 **✅ PFX-3.1 · #6931 Pact → contract-suite compiler — Complete** — the ECA-1.1 compiler's case model gains a `pact` source: request, expected response, provider state, matching rules; manifest stays byte-identical per (pact version, options) with a `sha256:` digest. Unsupported semantics reported, never skipped. *Deps:* 1.2, ECA-1.1. **Docs:** reference regen; `…/pact-broker/verification.mdx`.
 
-**PFX-3.2 · #6932 Provider verifier**
-- **Problem:** Native Pact verification is run by provider-side language libraries; teams without them (or wanting hosted verification) need Apiome to do it.
-- **Solution/Scope:** `POST …/pacts/provider/{p}/verify` selects pacts through the PFX-1.3 selectors, replays them via the ECA-2.1 runner against a registered verification target (SSRF policy, mutation rules and fixtures from CTG-4.3 apply), applies provider states (3.3) and matching rules (3.4), and publishes a verification result (1.4) tagged with provider version/branch. Mutating interactions need the target policy to allow mutation **and** an explicit opt-in. Logs include expected-vs-actual diffs.
-- **Acceptance Criteria:** Verifies fixtures produced by pact-js/jvm/go; failures name the interaction, field pointer and rule; a run cannot widen target policy; results show in can-i-deploy.
-- **Dependencies:** 3.1, 3.3, 1.4. **Stack:** Python, existing runner. **Docs:** `…/pact-broker/hosted-verification.mdx`.
+**✅ PFX-3.2 · #6932 Provider verifier — Complete** — `POST …/pact-verifier/pacts/provider/{p}/verify` selects pacts through the PFX-1.3 selectors, replays them via the ECA-2.1 runner against a registered verification target (SSRF policy and mutation rules of the target apply; CTG-4.3 fixtures honoured), judges responses with the verifier's matching engine, and publishes a verification result (1.4) per pact tagged with provider version/branch. Mutating interactions need the target policy **and** an explicit opt-in; a run cannot widen target policy. Failures name the interaction, field pointer and rule. Shipped ahead of 3.3 and 3.4 by decision: provider states are a seam (`ProviderStateHandler`) — an interaction with a state is skipped with a reason unless the run opts to replay without setup — and the engine covers the core matchers, with the specification test-suite vectors left to 3.4. Only conclusive runs are published. *Deps:* 3.1, 1.4. **Docs:** `…/pact-broker/hosted-verification.mdx`.
 
 **PFX-3.3 · #6933 Provider-state registry** — states per provider (name, parameters, setup/teardown), state-change URL or a recorded fixture, per-target override; interactions with an unregistered state are flagged before a run. *Deps:* 1.1. **Docs:** screenshot `pact-provider-states`.
 

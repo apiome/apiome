@@ -1309,6 +1309,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['provider states', 'matching rules', 'generators', 'interactions', 'manifest', 'digest', 'replay', 'pact-suites'],
   },
   {
+    id: 'hosted-verification',
+    title: 'Verify a provider from Apiome',
+    summary: "Replay a provider's pacts against a verification target and publish the results.",
+    page: 'apiome-docs/docs/ship/pact-broker/hosted-verification.mdx',
+    section: 'reference',
+    keywords: ['hosted verifier', 'pact-verifier', 'mismatches', 'matching rules', 'mutating interactions', 'provider states', 'dry run', 'incomplete'],
+  },
+  {
     id: 'environments',
     title: 'Environments and deployments',
     summary: 'Record which version of each application runs in each environment.',
