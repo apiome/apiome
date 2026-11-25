@@ -44514,3 +44514,230 @@ tr[data-selected="true"] > td:first-child {
   flex-direction: column;
   gap: var(--space-2);
 }
+
+/* ===========================================================================
+   Pact comparisons and the comparison fidelity report — PFX-2.5 (#6929).
+   `.pcl-*` is the page (list + report), `.pcf-*` the report. A check's status
+   reads as an icon and a word; only a full comparison is green. Tokens only.
+   =========================================================================== */
+.pcl {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pcl__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pcl__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  text-align: start;
+  cursor: pointer;
+}
+
+.pcl__row:hover {
+  background: var(--bg-subtle);
+}
+
+.pcl__row[aria-pressed='true'] {
+  border-color: var(--border-focus);
+  background: var(--accent-soft);
+}
+
+.pcl__pair {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pcl__summary {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pcf {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pcf__head,
+.pcf__interaction-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pcf__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.pcf__pair,
+.pcf__note-meta,
+.pcf__check-reason {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pcf__statement {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pcf__counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.pcf__counter {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 7rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+}
+
+.pcf__counter-label {
+  color: var(--fg-muted);
+  font-size: var(--fs-2xs);
+}
+
+.pcf__counter-value {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pcf__counter[data-zero] .pcf__counter-value {
+  color: var(--fg-muted);
+}
+
+.pcf__error {
+  margin: 0;
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+}
+
+.pcf__interaction {
+  display: grid;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+.pcf__interaction-title,
+.pcf__notes-title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pcf__operation,
+.pcf__code,
+.pcf__pointer {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.pcf__checks,
+.pcf__note-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pcf__check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.pcf__icon {
+  flex: none;
+  align-self: center;
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  color: var(--fg-muted);
+}
+
+.pcf__check[data-status='compared'] .pcf__icon {
+  color: var(--ok-fg);
+}
+
+.pcf__check[data-status='partial'] .pcf__icon {
+  color: var(--warn-fg);
+}
+
+.pcf__check[data-status='failed'] .pcf__icon {
+  color: var(--danger-fg);
+}
+
+.pcf__check-label {
+  color: var(--fg);
+}
+
+.pcf__check-status {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.pcf__notes {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pcf__count {
+  color: var(--fg-muted);
+  font-weight: 400;
+}
+
+.pcf__note {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 2px solid var(--warn);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  font-size: var(--fs-sm);
+}
+
+.pcf__note-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

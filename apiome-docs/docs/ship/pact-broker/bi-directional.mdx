@@ -15,7 +15,8 @@ Apiome compares every pact that needs it with the contract, by the rules in
 stored as a verification result, and the matrix and [can-i-deploy](./can-i-deploy.mdx) read it
 like one a Pact verifier published. A contract counts only when the provider's
 [self-verification evidence](#self-verification-evidence) says the provider matches it. There is
-no screen for provider contracts.
+no screen for provider contracts; the **Pact comparisons** page shows each comparison's
+[fidelity report](#read-the-fidelity-report).
 
 ## Before you start
 
@@ -355,9 +356,56 @@ curl "$PACT_BROKER_BASE_URL/pacts/provider/ledger-api/consumer/billing-service/p
 | `verifiedBy.implementation` | `Apiome bi-directional comparison`. |
 | `comparison` | The whole comparison: `verdict`, `summary`, `providerContractSha`, `providerContractEvidence` (the contract's `selfVerification` at the time), and per interaction the checks run, the failures and warnings with their JSON Pointers, and the fidelity notes. An unverified one adds `comparisonVerdict` and `unverifiedPolicy`. |
 | `_links.pb:provider-contract` | The contract the pact was compared with. |
+| `_links.apiome:comparison-fidelity` | The result's [fidelity report](#read-the-fidelity-report): what was compared, and what was not. |
 
 How the matrix and can-i-deploy use these results is on
 [Can I deploy?](./can-i-deploy.mdx#bi-directional-results).
+
+## Read the fidelity report
+
+A `pass` means nothing that *was* compared contradicts the pact. The fidelity report says how much
+was compared: for every interaction, each check with its status, the matching rules the comparison
+could not prove, and the items it could not compare. Read it before you trust a green verdict.
+
+### In the app
+
+1. **Browse to** `/ade/dashboard/pacts/comparisons`. The **Pact comparisons** page lists the
+   workspace's most recent comparisons, newest first.
+2. Each row names the consumer and provider versions, the verdict *with* its strength (for example
+   **Pass (partial) · Not everything compared**) and the counts that matter.
+3. **Click a row** to open its report under the list. The first row opens on its own.
+
+<Screenshot id="pact-comparison-fidelity" alt="The comparison fidelity report: a partial pass, four interactions, each check marked Compared or Partly compared, and the unsupported matching rules and could-not-compare items listed with their pact pointers."/>
+
+The report shows:
+
+- the verdict beside its **strength**: only **Compared in full** is green;
+- one sentence to read the verdict by, and the counters **Interactions**, **Compared in full**,
+  **Failed**, **Unsupported rules**, **Not compared** and **Checks not run**;
+- per interaction, every check as an icon and a word: **Compared**, **Partly compared**, **Failed**
+  or **Not run** (a check that did not run says why);
+- **Unsupported matching rules** and **Could not compare**, each item with its code and its JSON
+  Pointer into the pact.
+
+What each status, strength and code means is on
+[Comparison rules](./comparison-rules.mdx#the-fidelity-report).
+
+### With the API
+
+List the recent comparisons, then read one report by the result's `id`:
+
+```bash
+curl "$APIOME_API_URL/v1/tenants/acme/pact-comparisons?limit=20" \
+  -H "X-API-Key: $APIOME_API_KEY"
+
+curl "$APIOME_API_URL/v1/tenants/acme/pact-comparisons/<resultId>/fidelity" \
+  -H "X-API-Key: $APIOME_API_KEY"
+```
+
+`limit` is 1 to 100 (default 50). Each list entry has `verdict`, `strength`, `statement`, the
+`summary` counts and `fidelityPath`. The report adds `interactions`, each with `checks`,
+`unsupportedMatchingRules` and `couldNotCompare`. A result a Pact verifier published has no
+comparison, so its report is a `404 pact-verification-not-found` that says so.
 
 ## Read a contract back
 
@@ -417,6 +465,7 @@ its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901), in the OpenAPI docum
 | Publish an uploaded document | `pacts:create` | — | ✓ | ✓ | ✓ |
 | Publish from an Apiome version | `pacts:create` and `versions:view` | — | ✓ | ✓ | ✓ |
 | Cite an Apiome provider-verification report | `pacts:create` and `verification_evidence:view` | — | ✓ | ✓ | ✓ |
+| List comparisons and read a fidelity report | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 
 A restricted API key (one with scopes) cannot use these routes yet; use a full-access key from a
 member with the **Editor** role.

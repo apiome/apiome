@@ -249,6 +249,13 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['backstage-import-report.html', 'import-wizard-compass.html'] },
   },
   {
+    // PFX-2.5 (#6929): a bi-directional comparison's fidelity report, dumped by
+    // `tests/pact-comparison-fidelity-ui.test.tsx`.
+    id: 'pact-comparison-fidelity',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-comparison-fidelity.html'] },
+  },
+  {
     // X3 (#6224): the released export surfaces of E1. The Source and Target steps (the target grid),
     // the several-targets Verify and the bulk dialog after a run are gated with the whole
     // `hive-export-studio` directory under the parity entry `export-studio`; this entry adds the

@@ -1330,7 +1330,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: "Register a provider version's OpenAPI document for bi-directional contract testing.",
     page: 'apiome-docs/docs/ship/pact-broker/bi-directional.mdx',
     section: 'reference',
-    keywords: ['bi-directional', 'PactFlow', 'OpenAPI', 'self-verification', 'apiomeVersion', 'contentSha', 'oas'],
+    keywords: ['bi-directional', 'PactFlow', 'OpenAPI', 'self-verification', 'apiomeVersion', 'contentSha', 'oas', 'pact comparisons', 'fidelity report'],
   },
   {
     id: 'comparison-rules',

@@ -1,0 +1,30 @@
+---
+slug: pact-comparison-fidelity
+title: "Comparison fidelity report"
+description: "Every bi-directional comparison now says what it compared, and what it could not."
+authors: [apiome]
+---
+
+A bi-directional `pass` means nothing that *was* compared contradicts the consumer's pact. The new
+**comparison fidelity report** says how much was compared, so a green verdict is never read as
+stronger than it is. See [Read the fidelity report](/ship/pact-broker/bi-directional#read-the-fidelity-report).
+
+{/* truncate */}
+
+- **The Pact comparisons page.** `/ade/dashboard/pacts/comparisons` lists the workspace's recent
+  comparisons, each with its verdict *and* its strength: **Compared in full**, **Not everything
+  compared**, **Contradicts the pact** or **Nothing compared**. Only a full comparison is green.
+- **Every check, with its status.** Each interaction lists the operation, parameter, header, body,
+  status and matching-rule checks as **Compared**, **Partly compared**, **Failed** or **Not run**.
+  A check that did not run says why, for example because the operation was unknown.
+- **Two lists of what was not compared.** **Unsupported matching rules** (unmapped or unproven
+  rules, embedded matchers, generators) and **Could not compare** (non-JSON bodies, unparsed
+  parameters, unusable schemas, a relaxed `oneOf`, message interactions), each item with its code
+  and its JSON Pointer into the pact. Nothing is dropped: an unknown code is still listed.
+- **The same report in the API.** `GET /v1/tenants/{tenant}/pact-comparisons` lists the recent
+  comparisons; `GET …/pact-comparisons/{resultId}/fidelity` reads one report. Each bi-directional
+  verification result links its report as `apiome:comparison-fidelity`. Both need `pacts:view`.
+
+The rules behind each status and strength are on
+[Comparison rules](/ship/pact-broker/comparison-rules#the-fidelity-report). There is no link to the
+page in the sidebar yet; it arrives with the Pact screens.

@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.845.0] - 2026-11-24
+
+### Added
+- **Comparison fidelity report for bi-directional results (PFX-2.5, #6929).** OpenAPI 1.669.0
+  (two new paths). Migration apiome-db V440 (one partial index).
+  - `app.pact_comparison_fidelity` (pure) reads a stored bi-directional comparison payload and
+    reports, per interaction, every check the engine knows with its status — `compared`,
+    `partial` (fidelity notes say part of it was not compared in full), `failed`, or `not-run`
+    with the reason (an earlier check failed, or the interaction has no HTTP exchange) — the
+    matching rules, embedded matchers and generators it could not prove
+    (`unsupportedMatchingRules`), and everything else it could not compare (`couldNotCompare`:
+    bodies, parameters, unusable schemas, relaxed `oneOf`, message interactions, truncated
+    findings). Every note carries the check it belongs to. The report's `strength` (`full`,
+    `partial`, `failed`, `none`) and `statement` say how much the verdict is worth: `full` only
+    when every core check ran with nothing to report. Every fidelity code is in exactly one group
+    and every failure/warning code belongs to one check (tests hold the tables together); an
+    unknown code is still listed under `couldNotCompare`, never dropped.
+  - `GET /v1/tenants/{tenant}/pact-comparisons?limit=` — the workspace's most recent
+    bi-directional results (1 … 100, default 50), each with verdict, strength, statement, counts
+    and `fidelityPath`. Read through the new `idx_verification_result_tenant_bidirectional`.
+  - `GET /v1/tenants/{tenant}/pact-comparisons/{resultId}/fidelity` — one result's report.
+    `404 pact-verification-not-found` for an unknown or foreign id, and for a native result (it
+    was published by a Pact verifier and has no comparison), with the reason.
+  - Both require `pacts:view` and read only the caller's tenant. A bi-directional result document
+    on the Pact Broker surface now links its report as `apiome:comparison-fidelity`.
+
 ## [1.844.0] - 2026-11-24
 
 ### Added

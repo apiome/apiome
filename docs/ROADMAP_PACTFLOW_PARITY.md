@@ -235,7 +235,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-2.5 · [#6929](https://github.com/apiome/apiome/issues/6929) | Comparison fidelity report | Show what was compared and what could not be (matching rules, oneOf, content types) | `contracts`,`pact`,`ui` | Y | N | M | apiome-rest, apiome-ui |
 | PFX-2.6 · [#6930](https://github.com/apiome/apiome/issues/6930) | Pact export from a declared consumer surface | Generate a Pact v4 file from a CTG-4.1 consumer contract | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest, apiome-cli |
 
 **✅ PFX-2.1 · #6925 Provider contract publication — Complete**
@@ -256,7 +255,7 @@ flowchart LR
 
 **✅ PFX-2.4 · #6928 Self-verification evidence — Complete** — the provider contract is trusted only if evidence says the provider matches it: accept (a) an Apiome **provider-verification report** (CTG-4.3) from a registered target, (b) uploaded third-party results (Schemathesis JUnit/JSON, Dredd, Postman/Newman, generic JUnit) with a size cap and content-type validation. Evidence kind, tool and digest recorded; a missing/failed evidence yields verdict "provider contract unverified" (configurable warn/fail). CLI: `apiome pact publish-provider-contract --evidence <file>`. *Deps:* 2.1; reuses CTG-4.3 reports. **Docs:** guide with one worked example per tool.
 
-**PFX-2.5 · #6929 Comparison fidelity report** — surfaced in API and UI: for every interaction the list of checks performed, unsupported matching rules, and "could not compare" items, so a green verdict is never read as stronger than it is (same honesty rule as CTG-4.3 coverage). *Deps:* 2.2. **Docs:** screenshot `pact-comparison-fidelity`.
+**✅ PFX-2.5 · #6929 Comparison fidelity report — Complete** — surfaced in API and UI: for every interaction the list of checks performed, unsupported matching rules, and "could not compare" items, so a green verdict is never read as stronger than it is (same honesty rule as CTG-4.3 coverage). *Deps:* 2.2. **Docs:** screenshot `pact-comparison-fidelity`.
 
 **PFX-2.6 · #6930 Pact export from a declared consumer surface** — consumers registered through the UI picker (not a pact file) can export a Pact v4 file (and publish it to the broker) generated from the operations/fields they declared, using OAS examples as the sample values. *Deps:* CTG-4.1, 1.2. **Docs:** how-to page.
 

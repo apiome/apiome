@@ -2836,6 +2836,16 @@
         "apiome-ui/src/app/components/ade/catalogFacts/CatalogFactsPanel.tsx",
         "apiome-ui/lib/catalog-facts.ts"
       ]
+    },
+    {
+      "id": "pact-comparison-fidelity",
+      "route": "/ade/dashboard/pacts/comparisons",
+      "waitFor": "[data-testid=\"pact-comparison-fidelity\"]",
+      "data": "fixture:hive-a11y/pact-comparison-fidelity.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactComparisons/ComparisonFidelityReport.tsx",
+        "apiome-ui/lib/pact-comparisons.ts"
+      ]
     }
   ]
 }

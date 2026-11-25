@@ -22,7 +22,7 @@ pass one bound to a rolled-back transaction.
 
 from __future__ import annotations
 
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
 import psycopg2
 from psycopg2.extras import Json
@@ -49,8 +49,10 @@ from .verification_result import (
 )
 
 __all__ = [
+    "get_bidirectional_result",
     "get_latest_verification_result",
     "get_verification_result",
+    "list_bidirectional_results",
     "publish_verification_result",
     "record_broker_version",
 ]
@@ -315,6 +317,67 @@ def get_latest_verification_result(
         (provider.id, consumer.id, _normalise_sha(sha)),
         missing=f"pact version '{sha}' has no verification results",
     )
+
+
+#: The most bi-directional results :func:`list_bidirectional_results` returns at once.
+MAX_BIDIRECTIONAL_LIST = 100
+
+
+def list_bidirectional_results(db: Any, tenant_id: str, limit: int = 50) -> List[VerificationResultRecord]:
+    """The workspace's most recent bi-directional results (PFX-2.5), newest first.
+
+    Read through ``idx_verification_result_tenant_bidirectional`` (apiome-db V440), so the list
+    never scans the native results.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant; nothing of another tenant is read.
+        limit: How many to return, clamped to 1 … :data:`MAX_BIDIRECTIONAL_LIST`.
+
+    Returns:
+        The results, each with its comparison payload.
+    """
+    bounded = max(1, min(int(limit), MAX_BIDIRECTIONAL_LIST))
+    rows = db.execute_query(
+        _RESULT_SELECT
+        + " WHERE r.tenant_id = %s::uuid AND r.kind = 'bidirectional' ORDER BY r.seq DESC LIMIT %s",
+        (tenant_id, bounded),
+    )
+    return [verification_result_from_row(dict(row)) for row in rows or []]
+
+
+def get_bidirectional_result(db: Any, tenant_id: str, result_id: str) -> VerificationResultRecord:
+    """Read one bi-directional result of the caller's tenant by its id (PFX-2.5).
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        result_id: The result's id (a UUID).
+
+    Returns:
+        The result, with its comparison payload.
+
+    Raises:
+        PactPublicationError: ``pact-verification-not-found`` for a malformed id, an id of another
+            tenant, or a native result (it has no comparison); the message says which, but never
+            whether another tenant has the id.
+    """
+    missing = f"this workspace has no bi-directional result '{result_id}'"
+    if not is_uuid_string(str(result_id)):
+        raise PactPublicationError(CODE_VERIFICATION_NOT_FOUND, missing)
+    record = _read_result(
+        db,
+        " WHERE r.id = %s::uuid AND r.tenant_id = %s::uuid",
+        (result_id, tenant_id),
+        missing=missing,
+    )
+    if record.kind != "bidirectional" or record.comparison is None:
+        raise PactPublicationError(
+            CODE_VERIFICATION_NOT_FOUND,
+            f"verification result '{result_id}' was published by a Pact verifier, not compared by Apiome, "
+            "so it has no comparison fidelity report",
+        )
+    return record
 
 
 def record_broker_version(

@@ -1,0 +1,453 @@
+{
+  "result": {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "number": 1,
+    "consumer": {
+      "name": "Billing Service",
+      "slug": "billing-service",
+      "version": "2.0.0"
+    },
+    "provider": {
+      "name": "Ledger API",
+      "slug": "ledger-api",
+      "version": "5.1.0",
+      "branch": "main"
+    },
+    "pactVersionSha": "abababababababababababababababababababababababababababababababab",
+    "success": true,
+    "createdAt": "2026-11-24T10:00:00+00:00"
+  },
+  "verdict": "partial",
+  "comparisonVerdict": "partial",
+  "strength": "partial",
+  "statement": "Passed, but not everything was compared: 1 of 4 interactions compared in full; 3 unsupported matching rules, 1 item not compared.",
+  "selfVerification": "verified",
+  "providerContractSha": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+  "consumer": "Billing Service",
+  "provider": "Ledger API",
+  "pactSpecification": "3.0.0",
+  "oasVersion": "3.1.0",
+  "summary": {
+    "interactions": 4,
+    "fullyCompared": 1,
+    "partial": 3,
+    "failed": 0,
+    "notCompared": 0,
+    "checksCompared": 31,
+    "checksPartial": 4,
+    "checksFailed": 0,
+    "checksNotRun": 0,
+    "unsupportedMatchingRules": 3,
+    "couldNotCompare": 1
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "a request for an invoice",
+      "pointer": "/interactions/0",
+      "verdict": "pass",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        {
+          "check": "request.operation",
+          "label": "Operation (method and path)",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.path-parameters",
+          "label": "Path parameters",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.query",
+          "label": "Query parameters",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.headers",
+          "label": "Request headers",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.body",
+          "label": "Request body",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.status",
+          "label": "Response status",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.headers",
+          "label": "Response headers",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.body",
+          "label": "Response body",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        }
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "unsupportedMatchingRules": [],
+      "couldNotCompare": [],
+      "failures": 0,
+      "warnings": 0
+    },
+    {
+      "index": 1,
+      "description": "a list of events",
+      "pointer": "/interactions/1",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/events",
+        "pointer": "/paths/~1events/get",
+        "operationId": "listEvents"
+      },
+      "checks": [
+        {
+          "check": "request.operation",
+          "label": "Operation (method and path)",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.path-parameters",
+          "label": "Path parameters",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.query",
+          "label": "Query parameters",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.headers",
+          "label": "Request headers",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.body",
+          "label": "Request body",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.status",
+          "label": "Response status",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.headers",
+          "label": "Response headers",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.body",
+          "label": "Response body",
+          "status": "partial",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 1
+        }
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "unsupportedMatchingRules": [],
+      "couldNotCompare": [
+        {
+          "code": "oneof-relaxed",
+          "message": "part of the expected body is described by a oneOf; with required properties lifted its branches cannot be told apart, so it was compared as anyOf",
+          "pactPointer": "/interactions/1/response/body",
+          "oasPointer": "/paths/~1events/get/responses/200/content/application~1json/schema",
+          "check": "response.body"
+        }
+      ],
+      "failures": 0,
+      "warnings": 0
+    },
+    {
+      "index": 2,
+      "description": "an invoice, matched on its status code",
+      "pointer": "/interactions/2",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        {
+          "check": "request.operation",
+          "label": "Operation (method and path)",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.path-parameters",
+          "label": "Path parameters",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.query",
+          "label": "Query parameters",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.headers",
+          "label": "Request headers",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.body",
+          "label": "Request body",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.status",
+          "label": "Response status",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.headers",
+          "label": "Response headers",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.body",
+          "label": "Response body",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.matching-rules",
+          "label": "Response matching rules and generators",
+          "status": "partial",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 1
+        }
+      ],
+      "matchingRules": {
+        "total": 1,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 1
+      },
+      "unsupportedMatchingRules": [
+        {
+          "code": "matching-rule-not-mapped",
+          "message": "the response status matching rule 'statuscode' has no lossless JSON Schema mapping (no-lossless-mapping); only its example was compared",
+          "pactPointer": "/interactions/2/response/matchingRules/status/matchers/0",
+          "reason": "no-lossless-mapping",
+          "matcher": "statuscode",
+          "check": "response.matching-rules"
+        }
+      ],
+      "couldNotCompare": [],
+      "failures": 0,
+      "warnings": 0
+    },
+    {
+      "index": 3,
+      "description": "an invoice with generated ids",
+      "pointer": "/interactions/3",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        {
+          "check": "request.operation",
+          "label": "Operation (method and path)",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.path-parameters",
+          "label": "Path parameters",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.query",
+          "label": "Query parameters",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.headers",
+          "label": "Request headers",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.body",
+          "label": "Request body",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.status",
+          "label": "Response status",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.headers",
+          "label": "Response headers",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "response.body",
+          "label": "Response body",
+          "status": "compared",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 0
+        },
+        {
+          "check": "request.matching-rules",
+          "label": "Request matching rules and generators",
+          "status": "partial",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 1
+        },
+        {
+          "check": "response.matching-rules",
+          "label": "Response matching rules and generators",
+          "status": "partial",
+          "failures": 0,
+          "warnings": 0,
+          "notes": 1
+        }
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "unsupportedMatchingRules": [
+        {
+          "code": "generator-not-applied",
+          "message": "the path generator 'ProviderState' replaces the example when the pact is verified; only the example was compared",
+          "pactPointer": "/interactions/3/request/generators/path",
+          "matcher": "ProviderState",
+          "check": "request.matching-rules"
+        },
+        {
+          "code": "generator-not-applied",
+          "message": "the body generator 'RandomInt' replaces the example when the pact is verified; only the example was compared",
+          "pactPointer": "/interactions/3/response/generators/body/$.id",
+          "matcher": "RandomInt",
+          "check": "response.matching-rules"
+        }
+      ],
+      "couldNotCompare": [],
+      "failures": 0,
+      "warnings": 0
+    }
+  ]
+}

@@ -159,6 +159,11 @@ def test_a_bidirectional_result_reads_back_with_its_comparison_and_contract(allo
         "name": "Ledger API 4f1e2d0",
         "href": f"{_ROOT}/contracts/provider/ledger-api/version/4f1e2d0",
     }
+    # PFX-2.5 (#6929): the result links its fidelity report.
+    assert body["_links"]["apiome:comparison-fidelity"] == {
+        "title": "Comparison fidelity report (Apiome)",
+        "href": "http://testserver/v1/tenants/acme/pact-comparisons/r-1/fidelity",
+    }
 
 
 def test_a_native_result_has_no_comparison(allowed: MagicMock) -> None:
@@ -166,6 +171,7 @@ def test_a_native_result_has_no_comparison(allowed: MagicMock) -> None:
         body = client.get(f"{_RESULTS}/1").json()
     assert body["kind"] == "native"
     assert "comparison" not in body and "pb:provider-contract" not in body["_links"]
+    assert "apiome:comparison-fidelity" not in body["_links"]
 
 
 def test_a_verifier_cannot_publish_a_bidirectional_result(allowed: MagicMock) -> None:
