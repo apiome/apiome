@@ -56,6 +56,11 @@ honesty hold for every protocol rather than being re-implemented per protocol.
   ``/{package.Service}/{Method}``, executed over Connect or native gRPC as the target declares.
   Streaming methods are listed under ``unsupported``.
 
+A **pact** is compiled too (PFX-3.1, #6931), by :mod:`app.contract_suite_pact`: each HTTP
+interaction a consumer recorded becomes one ``pact_interaction`` case carrying the request it
+sends and, in its ``pact`` block, the response it expects — provider states, matching rules and
+generators included. The manifest shape, findings, case ids and digest are this module's.
+
 Event paradigms, and RPC formats other than Protobuf, have no adapter yet. They fall through to
 the HTTP adapter, which reports them as unsupported rather than half-compiling them. Authentication is
 deliberately **not** compiled: a suite carries no credentials, so a specification with security
@@ -126,10 +131,12 @@ __all__ = [
     "CASE_SOURCE_NEGATIVE_MISSING_PARAMETER",
     "CASE_SOURCE_NEGATIVE_PARAMETER_TYPE",
     "CASE_SOURCE_NEGATIVE_UNKNOWN_FIELD",
+    "CASE_SOURCE_PACT_INTERACTION",
     "CONTRACT_SUITE_COMPILER_VERSION",
     "CONTRACT_SUITE_SCHEMA_VERSION",
     "FINDING_LEVELS",
     "MAX_OPERATIONS_CEILING",
+    "MAX_PACT_INTERACTIONS_CEILING",
     "MAX_SELECTION_DEPTH_CEILING",
     "NEGATIVE_CASE_SOURCES",
     "OUTCOME_CLIENT_ERROR",
@@ -140,14 +147,21 @@ __all__ = [
     "ContractCaseExpectation",
     "ContractCaseRequest",
     "ContractGraphqlRequest",
+    "ContractPactInteraction",
     "ContractRpcRequest",
     "ContractRequestParameter",
     "ContractSuiteManifest",
     "ContractSuiteOptions",
+    "PactGeneratorEntry",
+    "PactMatchingRuleEntry",
+    "PactProviderState",
+    "PactResponseExpectation",
+    "PactSuiteOptions",
     "ProtocolAdapter",
     "SuiteApiInfo",
     "SuiteFinding",
     "SuiteOperation",
+    "SuitePactInfo",
     "SuiteSourceInfo",
     "SuiteUnsupportedOperation",
     "canonical_manifest_bytes",
@@ -163,15 +177,18 @@ __all__ = [
 #: Envelope version of the manifest shape. Bumped when a field is added, removed, or given a
 #: new meaning, so a stored manifest can be read by the version of the code that wrote it.
 #: Version 2 (XPC-1.2) added ``protocol`` and ``unsupported`` to the manifest and ``protocol`` /
-#: ``graphql`` to every case. Version 3 (XPC-3.2) added ``rpc`` to every case.
-CONTRACT_SUITE_SCHEMA_VERSION = 3
+#: ``graphql`` to every case. Version 3 (XPC-3.2) added ``rpc`` to every case. Version 4 (PFX-3.1)
+#: added ``pact`` to every case and to the manifest, and made the manifest's ``options`` optional
+#: (a pact suite's options live under ``pact.options``).
+CONTRACT_SUITE_SCHEMA_VERSION = 4
 
 #: Version of the *compilation rules*. Bumped whenever the compiler would produce different
 #: cases for the same input — which changes the digest, and must, because a gate pinned to an
 #: old digest is no longer pinned to the same suite. Version 2 (XPC-1.2) added the GraphQL adapter
 #: and the ``negative_unknown_field`` source, which every manifest's ``counts`` now carries.
-#: Version 3 (XPC-3.2) compiles Protobuf versions through the gRPC/Connect adapter.
-CONTRACT_SUITE_COMPILER_VERSION = 3
+#: Version 3 (XPC-3.2) compiles Protobuf versions through the gRPC/Connect adapter. Version 4
+#: (PFX-3.1) added the ``pact_interaction`` source, which every manifest's ``counts`` now carries.
+CONTRACT_SUITE_COMPILER_VERSION = 4
 
 #: Hash the suite digest is computed with.
 SUITE_DIGEST_ALGORITHM = "sha256"
@@ -194,6 +211,8 @@ CASE_SOURCE_NEGATIVE_MISSING_PARAMETER = "negative_missing_parameter"
 CASE_SOURCE_NEGATIVE_PARAMETER_TYPE = "negative_parameter_type"
 #: A GraphQL document that selects a field the returned type does not declare.
 CASE_SOURCE_NEGATIVE_UNKNOWN_FIELD = "negative_unknown_field"
+#: One HTTP interaction a consumer recorded in a pact (PFX-3.1), replayed as recorded.
+CASE_SOURCE_PACT_INTERACTION = "pact_interaction"
 
 #: Every case source, in the order cases are emitted within one operation.
 CASE_SOURCES: Tuple[str, ...] = (
@@ -206,6 +225,7 @@ CASE_SOURCES: Tuple[str, ...] = (
     CASE_SOURCE_NEGATIVE_PARAMETER_TYPE,
     CASE_SOURCE_NEGATIVE_BODY_MUTATION,
     CASE_SOURCE_NEGATIVE_UNKNOWN_FIELD,
+    CASE_SOURCE_PACT_INTERACTION,
 )
 
 #: The sources whose cases are expected to be rejected by a conforming implementation. Public
@@ -267,6 +287,26 @@ CODE_SELECTION_DEPTH_LIMITED = "SELECTION_DEPTH_LIMITED"
 #: GraphQL: a nested field takes a required argument, so it cannot be selected without inventing
 #: a value for it, and was left out of the selection set.
 CODE_FIELD_ARGUMENTS_REQUIRED = "FIELD_ARGUMENTS_REQUIRED"
+#: Pact (PFX-3.1): an interaction with no readable request method and path, so nothing to send.
+CODE_PACT_INTERACTION_MALFORMED = "PACT_INTERACTION_MALFORMED"
+#: Pact: a Pact 4 plugin interaction (gRPC, protobuf, CSV …) — PFX-3.7, not a plain HTTP replay.
+CODE_PACT_PLUGIN_INTERACTION = "PACT_PLUGIN_INTERACTION"
+#: Pact: a request or response body whose content cannot be decoded (bad base64, invalid JSON).
+CODE_PACT_BODY_UNREADABLE = "PACT_BODY_UNREADABLE"
+#: Pact: a Pact 1 matcher embedded in a body (``json_class``), removed; its rule is not carried.
+CODE_PACT_EMBEDDED_MATCHER = "PACT_EMBEDDED_MATCHER"
+#: Pact: a matching rule whose matcher, location or path the suite cannot name.
+CODE_PACT_MATCHING_RULE_UNSUPPORTED = "PACT_MATCHING_RULE_UNSUPPORTED"
+#: Pact: a request generator — the suite sends the example, a verifier would substitute a value.
+CODE_PACT_REQUEST_GENERATOR = "PACT_REQUEST_GENERATOR"
+#: Pact: a response generator — ignored on verification, carried for completeness.
+CODE_PACT_RESPONSE_GENERATOR = "PACT_RESPONSE_GENERATOR"
+#: Pact: a provider state the runner must set up before the interactions that name it.
+CODE_PACT_PROVIDER_STATE = "PACT_PROVIDER_STATE"
+#: Pact: a provider state entry with no readable name, left out of the case's states.
+CODE_PACT_PROVIDER_STATE_UNREADABLE = "PACT_PROVIDER_STATE_UNREADABLE"
+#: Pact: the pact declares no specification version, or one this compiler does not know.
+CODE_PACT_SPECIFICATION_ASSUMED = "PACT_SPECIFICATION_ASSUMED"
 
 #: Every code this module can emit, sorted — the contract a consumer keys off.
 SUITE_FINDING_CODES: Tuple[str, ...] = tuple(
@@ -301,6 +341,16 @@ SUITE_FINDING_CODES: Tuple[str, ...] = tuple(
             CODE_OPERATION_NOT_SELECTED,
             CODE_SELECTION_DEPTH_LIMITED,
             CODE_FIELD_ARGUMENTS_REQUIRED,
+            CODE_PACT_INTERACTION_MALFORMED,
+            CODE_PACT_PLUGIN_INTERACTION,
+            CODE_PACT_BODY_UNREADABLE,
+            CODE_PACT_EMBEDDED_MATCHER,
+            CODE_PACT_MATCHING_RULE_UNSUPPORTED,
+            CODE_PACT_REQUEST_GENERATOR,
+            CODE_PACT_RESPONSE_GENERATOR,
+            CODE_PACT_PROVIDER_STATE,
+            CODE_PACT_PROVIDER_STATE_UNREADABLE,
+            CODE_PACT_SPECIFICATION_ASSUMED,
         }
     )
 )
@@ -505,7 +555,11 @@ class SuiteSourceInfo(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     kind: Optional[str] = Field(
-        default=None, description="`project` or `catalog` — which surface the artifact lives on."
+        default=None,
+        description=(
+            "`project` or `catalog` — which surface the artifact lives on — or `pact` for a "
+            "suite compiled from a pact version."
+        ),
     )
     reference: Optional[str] = Field(
         default=None, description="The reference the caller resolved (`project/petstore/1.0.0`)."
@@ -753,10 +807,189 @@ class ContractCase(BaseModel):
             "exactly when `protocol` is `grpc`; `request.body` carries the same message."
         ),
     )
+    pact: Optional["ContractPactInteraction"] = Field(
+        default=None,
+        description=(
+            "The pact interaction the case replays: provider states, the response the consumer "
+            "expects, and the matching rules and generators that widen it. Present exactly when "
+            "`source` is `pact_interaction`."
+        ),
+    )
     expect: ContractCaseExpectation = Field(description="What must come back.")
     tags: List[str] = Field(
         default_factory=list, description="The operation's tags, for filtered runs."
     )
+
+
+# ===========================================================================
+# Pact cases (PFX-3.1)
+# ===========================================================================
+
+#: Hard ceiling on the interactions one pact suite compiles, whatever the options ask for.
+MAX_PACT_INTERACTIONS_CEILING = MAX_OPERATIONS_CEILING
+
+
+class PactSuiteOptions(BaseModel):
+    """What to compile from a pact. Echoed on the manifest and hashed into its digest.
+
+    A pact is compiled as recorded — there is nothing to generate and no seed — so the options
+    only choose *which* interactions become cases.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    interactions: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Restrict compilation to these interactions, each named by its `description` or, "
+            "in a Pact 4 file, its `key`. Omit for every interaction. A name that matches "
+            "nothing is reported as a finding."
+        ),
+    )
+    max_interactions: int = Field(
+        default=500,
+        ge=1,
+        le=MAX_PACT_INTERACTIONS_CEILING,
+        description="Cap on compiled interactions; the ones past it are reported, not dropped silently.",
+    )
+
+    def normalized(self) -> "PactSuiteOptions":
+        """Return an equal-meaning copy whose fields are in canonical form.
+
+        ``interactions`` is a set, so it is sorted and de-duplicated: two callers naming the
+        same interactions in different orders get the same digest.
+
+        Returns:
+            The normalized options.
+        """
+        if self.interactions is None:
+            return self.model_copy(deep=True)
+        return self.model_copy(update={"interactions": sorted(set(self.interactions))}, deep=True)
+
+
+class SuitePactInfo(BaseModel):
+    """The pact version a suite was compiled from.
+
+    Only what the pact version's content address covers is recorded — never the consumer
+    version that happened to publish it, nor the document's ``metadata`` — so every consumer
+    version sharing the content gets the same, byte-identical suite.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    consumer: str = Field(description="The consumer pacticipant.")
+    provider: str = Field(description="The provider pacticipant.")
+    pact_version_sha: str = Field(
+        description="The pact version's content address (SHA-256 of its interactions and specification)."
+    )
+    specification_version: Optional[str] = Field(
+        default=None, description="The Pact specification version the pact declares, if any."
+    )
+    interaction_count: int = Field(
+        description="How many interactions and messages the pact carries, compiled or not."
+    )
+    options: PactSuiteOptions = Field(description="The options the suite was compiled with, normalized.")
+
+
+class PactProviderState(BaseModel):
+    """A state the provider must be in before an interaction is replayed."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(description="The state, as the consumer wrote it (`an invoice 1042 exists`).")
+    params: Dict[str, Any] = Field(
+        default_factory=dict, description="The state's parameters (Pact 3 and 4), sorted by name."
+    )
+
+
+class PactMatchingRuleEntry(BaseModel):
+    """One matching rule, in one shape whichever specification version filed it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    category: str = Field(description="`body`, `header`, `query`, `path`, `status` or `unknown`.")
+    path: str = Field(
+        description="The JSONPath of a body rule (`$.items[*].id`), the header or query name, or `\"\"`."
+    )
+    match: str = Field(description="The matcher, lowercase (`type`, `regex`, `statuscode` …).")
+    matcher: Dict[str, Any] = Field(description="The matcher object exactly as the pact wrote it.")
+    combine: str = Field(default="AND", description="`AND` or `OR` — how it combines with rules on the same path.")
+    pointer: str = Field(description="JSON Pointer of the matcher in the pact document.")
+
+
+class PactGeneratorEntry(BaseModel):
+    """One generator: a value the verifier substitutes for the example."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    category: str = Field(description="`body`, `header`, `query`, `path`, `status` or `method`.")
+    path: str = Field(description="The JSONPath or name it applies to, or `\"\"` for the path or status.")
+    type: Optional[str] = Field(default=None, description="The generator type (`RandomInt`, `ProviderState` …).")
+    generator: Dict[str, Any] = Field(description="The generator object exactly as the pact wrote it.")
+    pointer: str = Field(description="JSON Pointer of the generator in the pact document.")
+
+
+class PactResponseExpectation(BaseModel):
+    """The response the consumer recorded, before its matching rules widen it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Optional[int] = Field(
+        default=None, description="The recorded status; `null` when the pact records none (200 is assumed)."
+    )
+    headers: Dict[str, str] = Field(
+        default_factory=dict,
+        description="The recorded headers, as written (a Pact 4 list of values joined with `, `).",
+    )
+    has_body: bool = Field(default=False, description="Whether the pact records a response body.")
+    body: Optional[Any] = Field(default=None, description="The recorded body, embedded matchers removed.")
+    media_type: Optional[str] = Field(
+        default=None, description="The body's media type: the Pact 4 `contentType`, else the `Content-Type` header."
+    )
+    body_pointer: Optional[str] = Field(
+        default=None, description="JSON Pointer of the body's content in the pact document."
+    )
+    matching_rules: List[PactMatchingRuleEntry] = Field(
+        default_factory=list, description="The response's matching rules, sorted by category, path and position."
+    )
+    generators: List[PactGeneratorEntry] = Field(
+        default_factory=list,
+        description="The response's generators. A verifier ignores them; they are carried so nothing is lost.",
+    )
+
+
+class ContractPactInteraction(BaseModel):
+    """The pact interaction one case replays (PFX-3.1).
+
+    ``case.request`` is the request exactly as the consumer recorded it; this block is everything
+    else the verification needs: which interaction it is, the states to set up first, and the
+    response to compare against under the matching rules.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    index: int = Field(description="Position of the interaction in the pact's `interactions` array.")
+    key: Optional[str] = Field(default=None, description="The Pact 4 interaction `key`, when the pact writes one.")
+    description: str = Field(description="The interaction's description.")
+    pointer: str = Field(description="JSON Pointer of the interaction in the pact document.")
+    interaction_type: str = Field(
+        description="`Synchronous/HTTP` for a Pact 4 interaction that says so, `http` for Pact 1–3."
+    )
+    pending: bool = Field(
+        default=False, description="Whether the Pact 4 interaction is marked `pending` by the consumer."
+    )
+    provider_states: List[PactProviderState] = Field(
+        default_factory=list, description="States to set up before the request is sent, in recorded order."
+    )
+    request_matching_rules: List[PactMatchingRuleEntry] = Field(
+        default_factory=list,
+        description="The request's matching rules — what the consumer may vary; a replay sends the example.",
+    )
+    request_generators: List[PactGeneratorEntry] = Field(
+        default_factory=list,
+        description="The request's generators. The suite sends the example; a verifier may substitute.",
+    )
+    response: PactResponseExpectation = Field(description="The response the consumer expects.")
 
 
 class SuiteFinding(BaseModel):
@@ -806,8 +1039,12 @@ class ContractSuiteManifest(BaseModel):
     digest_algorithm: str = Field(
         default=SUITE_DIGEST_ALGORITHM, description="Hash used for `digest`."
     )
-    options: ContractSuiteOptions = Field(
-        description="The options this suite was compiled with, normalized."
+    options: Optional[ContractSuiteOptions] = Field(
+        default=None,
+        description=(
+            "The options a version's suite was compiled with, normalized. `null` for a suite "
+            "compiled from a pact, whose options are `pact.options`."
+        ),
     )
     protocol: str = Field(
         default=PROTOCOL_HTTP,
@@ -820,6 +1057,13 @@ class ContractSuiteManifest(BaseModel):
     api: SuiteApiInfo = Field(description="Identity of the compiled API.")
     source: Optional[SuiteSourceInfo] = Field(
         default=None, description="Where the compiled version came from."
+    )
+    pact: Optional["SuitePactInfo"] = Field(
+        default=None,
+        description=(
+            "The pact version the suite was compiled from, and the options it was compiled "
+            "with. Present exactly when the suite was compiled from a pact (PFX-3.1)."
+        ),
     )
     operations: List[SuiteOperation] = Field(
         default_factory=list, description="Covered operations, sorted by key."
@@ -856,6 +1100,10 @@ class ContractSuiteManifest(BaseModel):
             "`operations_skipped`, and `findings`."
         ),
     )
+
+
+ContractCase.model_rebuild()
+ContractSuiteManifest.model_rebuild()
 
 
 # ===========================================================================
@@ -2480,14 +2728,41 @@ def _sorted_findings(findings: Sequence[SuiteFinding]) -> List[SuiteFinding]:
 
 def _counts(compilation: _Compilation) -> Dict[str, int]:
     """Summarize the suite: one count per case source, plus the totals a reader looks at first."""
+    return _suite_counts(
+        compilation.cases,
+        operations_compiled=len(compilation.operations),
+        operations_skipped=compilation.dropped + len(set(compilation.skipped)),
+        findings=len(compilation.findings),
+    )
+
+
+def _suite_counts(
+    cases: Sequence[ContractCase],
+    *,
+    operations_compiled: int,
+    operations_skipped: int,
+    findings: int,
+) -> Dict[str, int]:
+    """Build a manifest's ``counts``, shared by the version and the pact compilers.
+
+    Args:
+        cases: Every compiled case.
+        operations_compiled: How many operations have cases.
+        operations_skipped: How many were left out (truncated or unsupported).
+        findings: How many findings the manifest carries.
+
+    Returns:
+        One count per case source, plus ``cases``, ``negative_cases``, ``operations_compiled``,
+        ``operations_skipped`` and ``findings`` — sorted by key.
+    """
     counts: Dict[str, int] = {source: 0 for source in CASE_SOURCES}
-    for case in compilation.cases:
+    for case in cases:
         counts[case.source] = counts.get(case.source, 0) + 1
-    counts["cases"] = len(compilation.cases)
+    counts["cases"] = len(cases)
     counts["negative_cases"] = sum(
         count for source, count in counts.items() if source in NEGATIVE_CASE_SOURCES
     )
-    counts["operations_compiled"] = len(compilation.operations)
-    counts["operations_skipped"] = compilation.dropped + len(set(compilation.skipped))
-    counts["findings"] = len(compilation.findings)
+    counts["operations_compiled"] = operations_compiled
+    counts["operations_skipped"] = operations_skipped
+    counts["findings"] = findings
     return {key: counts[key] for key in sorted(counts)}

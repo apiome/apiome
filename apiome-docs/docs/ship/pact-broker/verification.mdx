@@ -1,0 +1,135 @@
+---
+title: Compile a pact into a contract suite
+description: Turn a pact version into replayable verification cases with a fixed digest.
+sidebar_position: 4.2
+tags: [contracts, pact, verification, rest]
+---
+
+Apiome can turn a published pact into a **contract suite**: one replayable case for each HTTP
+interaction the consumer recorded. This is the same kind of suite Apiome compiles from a
+published API version (see [Contract assurance](../../reference/rest/contract-assurance.md)). The
+same pact version always gives the same suite, down to the byte, so a provider verification can
+name exactly what it checked.
+
+Compiling only reads the pact. It does not run anything and saves nothing. Hosted provider
+verification, where Apiome replays the suite against your provider and publishes the result, is
+not available yet. Until then, verify with your Pact verifier and
+[publish the results](./verification-results.mdx).
+
+## Before you start
+
+- The consumer has [published the pact](./publish-pacts.mdx) to your workspace.
+- You have the **pact version**: the SHA-256 that names the pact's content. It is the `name` of
+  the pact's `pb:pact-version` link (see [Read a pact](./publish-pacts.mdx)).
+- Your API key belongs to a member who holds **Pacts** → **View**. The built-in **Viewer** role
+  does. Create one on [API keys](../../workspace/api-keys.mdx).
+
+## Compile the suite
+
+Send a `POST` with the provider, the consumer and the pact version. The body is optional:
+
+```bash
+curl -X POST \
+  "$APIOME/v1/tenants/acme/pact-suites/provider/ledger-api/consumer/billing-service/pact-version/$PACT_SHA" \
+  -H "X-API-Key: $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"options": {}}'
+```
+
+The response names the pair and the pact version, and carries the suite in `manifest`:
+
+```json
+{
+  "consumer": "billing-service",
+  "provider": "ledger-api",
+  "pact_version_sha": "3f1c…",
+  "manifest": {
+    "digest": "sha256:9b2e…",
+    "pact": { "consumer": "Billing Service", "provider": "Ledger API", "interaction_count": 3, "…": "…" },
+    "cases": [ … ],
+    "unsupported": [ … ],
+    "findings": [ … ]
+  }
+}
+```
+
+An unknown provider, consumer or pact version, or one in another workspace, is a `404`. A pact
+version that is not 64 hexadecimal characters is a `422`.
+
+## What a case holds
+
+Each HTTP interaction becomes one case with `source: pact_interaction` and `synthetic: false`,
+because the consumer recorded it and Apiome made nothing up.
+
+| Part of the case | What it holds |
+| --- | --- |
+| `request` | The method, path, query, headers and body, exactly as the consumer recorded them. |
+| `expect.status_codes` | The recorded status, such as `200`. A Pact 4 `statusCode` rule widens it to a class: `success` becomes `2XX`, `error` becomes `4XX` and `5XX`. |
+| `pact.provider_states` | The states to set up before sending the request, with their parameters. |
+| `pact.response` | The response the consumer expects: status, headers, body and media type. |
+| `pact.response.matching_rules`, `pact.request_matching_rules` | Every matching rule, with its matcher exactly as written and its place in the pact file. |
+| `pact.response.generators`, `pact.request_generators` | Every generator, kept so nothing is lost. |
+| `pact.index`, `pact.key`, `pact.pointer` | Which interaction it is: its position, its Pact 4 `key` and where it sits in the file. |
+| `pact.pending` | Whether the consumer marked the Pact 4 interaction `pending`. The case is also tagged `pending`. |
+
+Apiome reads Pact specifications 1 to 4 the same way. A Pact 2 query string and a Pact 3 query
+object give the same parameters. A Pact 4 body object is unwrapped, and a base64 or JSON-text body
+is decoded. Cases are grouped by `METHOD path` and then keep the pact's own order.
+
+## The same pact gives the same suite
+
+The suite is built only from what the pact version covers: the interactions, the messages and
+the specification version. It also uses the consumer and provider, and the options you send. The
+consumer version that published the pact and the file's `metadata` are not used. So every
+consumer version that shares a pact version gets the same suite and the same `digest`.
+
+`digest` is `sha256:` followed by the SHA-256 of the suite's canonical bytes, taken with `digest`
+itself left blank. Change an option, or publish different content, and the digest changes.
+
+## What is reported instead of compiled
+
+Nothing is left out without a reason. An interaction Apiome cannot replay is listed under
+`unsupported` and also appears in `findings`. Something compiled less strictly than the pact asks
+is a `degraded` finding. Something the runner must provide is an `info` finding.
+
+| Code | Level | Meaning |
+| --- | --- | --- |
+| `UNSUPPORTED_OPERATION_KIND` | unsupported | A message interaction (Pact 3 `messages`, Pact 4 `Asynchronous/Messages` or `Synchronous/Messages`). There is no HTTP exchange to replay. |
+| `PACT_PLUGIN_INTERACTION` | unsupported | A Pact 4 plugin interaction (gRPC, protobuf, CSV). The plugin defines the exchange. |
+| `PACT_INTERACTION_MALFORMED` | unsupported | The interaction has no request method or path, so there is nothing to send. |
+| `PACT_BODY_UNREADABLE` | unsupported / degraded | A body that cannot be decoded. On the request, the case cannot be sent. On the response, only the status and headers can be compared. |
+| `PACT_EMBEDDED_MATCHER` | degraded | A Pact 1 matcher embedded in a body (`json_class`). The example values are kept, but the embedded rule is not. |
+| `PACT_MATCHING_RULE_UNSUPPORTED` | degraded | A matching rule with a matcher no Pact specification defines, a path that is not a JSONPath, or an unknown location. It is kept in the case. |
+| `PACT_REQUEST_GENERATOR` | degraded | The suite sends the recorded example where a verifier would generate a value. A `ProviderState` generator gets its value when the provider state is set up. |
+| `PACT_RESPONSE_GENERATOR` | info | Verifiers ignore response generators. The matching rules decide what the provider may return. |
+| `PACT_PROVIDER_STATE` | info | A provider state that must be set up before the interactions that name it. It is reported once for each state. |
+| `PACT_PROVIDER_STATE_UNREADABLE` | degraded | A provider state with no name. The interaction is replayed without it. |
+| `PACT_SPECIFICATION_ASSUMED` | info / degraded | The pact declares no specification version, or one Apiome does not know. |
+| `STATUS_UNDECLARED` | degraded | The response records no status. `200` is expected, which is what a Pact mock server answers. |
+| `OPERATION_NOT_SELECTED`, `OPERATION_LIMIT_REACHED` | info / degraded | An `interactions` name matched nothing, or `max_interactions` cut the suite short. |
+| `NO_CASES_COMPILED` | degraded | The pact has no HTTP interaction to replay. |
+
+## Options
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `interactions` | every interaction | Compile only these interactions, each named by its `description` or its Pact 4 `key`. The order does not change the digest. |
+| `max_interactions` | `500` | The most interactions to compile (up to 2,000). The rest are counted in `counts.operations_skipped` and reported. |
+
+The options are recorded in `manifest.pact.options`, and they change the digest. A suite compiled
+from a pact has `manifest.options` set to `null`, because the version-suite options (seed,
+generated bodies, negative cases) do not apply to a pact.
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Compile a pact into a contract suite | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+
+## Related
+
+- [Publish verification results](./verification-results.mdx): how Pact verifiers report back
+  today.
+- [Pact Broker concepts](./concepts.mdx): pacticipants, versions and pact versions.
+- [Pact Broker REST reference](../../reference/rest/pact-broker.md): the full request and response
+  schema.

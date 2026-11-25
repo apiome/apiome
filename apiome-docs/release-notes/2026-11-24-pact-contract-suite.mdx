@@ -1,0 +1,30 @@
+---
+slug: pact-contract-suite
+title: "Compile a pact into a contract suite"
+description: "A published pact version now compiles into replayable cases with a fixed digest."
+authors: [apiome]
+---
+
+Hosted provider verification starts here. Apiome can now turn a published pact into a **contract
+suite**: one replayable case for each HTTP interaction the consumer recorded, in the same manifest
+Apiome compiles from a published API version. See
+[Compile a pact into a contract suite](/ship/pact-broker/verification).
+
+{/* truncate */}
+
+- **One case per interaction.** `POST …/pact-suites/provider/{provider}/consumer/{consumer}/pact-version/{sha}`
+  returns cases with `source: pact_interaction`. Each one has the request exactly as recorded. Its
+  `pact` block holds the provider states with their parameters, the expected response, and every
+  matching rule and generator, whichever Pact specification (1 to 4) wrote the file.
+- **The same pact gives the same suite.** The suite is built only from what the pact version covers,
+  so every consumer version that published the same content gets byte-identical output and the same
+  `sha256:` digest. `interactions` and `max_interactions` choose what is compiled, and they are part
+  of the digest.
+- **Nothing dropped silently.** Message and plugin interactions, interactions with no method or path,
+  and request bodies that cannot be decoded are listed under `unsupported` with a reason. Embedded
+  Pact 1 matchers, unknown matchers and request generators are reported as compiled less strictly.
+  Each provider state the runner must set up is reported once.
+
+Compiling needs `pacts:view` and saves nothing. Contract-suite manifests are now version 4, so
+suites compiled from API versions also get a new digest. Running a pact suite against a provider
+and publishing the result is not yet available.

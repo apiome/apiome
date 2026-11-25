@@ -90,8 +90,9 @@ def test_other_rpc_formats_keep_the_http_adapter() -> None:
 def test_manifest_is_stamped_grpc_with_the_bumped_versions() -> None:
     manifest = compile_contract_suite(orders_api())
     assert manifest.protocol == PROTOCOL_GRPC
-    assert manifest.schema_version == CONTRACT_SUITE_SCHEMA_VERSION == 3
-    assert manifest.compiler_version == CONTRACT_SUITE_COMPILER_VERSION == 3
+    # Version 3 introduced the gRPC adapter; later versions (PFX-3.1's 4) keep it.
+    assert manifest.schema_version == CONTRACT_SUITE_SCHEMA_VERSION >= 3
+    assert manifest.compiler_version == CONTRACT_SUITE_COMPILER_VERSION >= 3
     assert {case.protocol for case in manifest.cases} == {PROTOCOL_GRPC}
 
 

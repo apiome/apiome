@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 68 operations."
+description: "REST endpoints tagged pact-broker: 69 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.670.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.671.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 68 operations
+Tag: `pact-broker` · 69 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2208,6 +2208,45 @@ Operation id: `read_fidelity_v1_tenants__tenant_slug__pact_comparisons__result_i
 | 404 | `pact-verification-not-found`: no bi-directional result with that id in this workspace, or the result was published by a Pact verifier and has no comparison. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/tenants/{tenant_slug}/pact-suites/provider/{provider}/consumer/{consumer}/pact-version/{sha}` {#compile-pact-version-suite-v1-tenants-tenant-slug-pact-suites-provider-provider-consumer-consumer-pact-version-sha-post}
+
+**Compile a pact version into a contract suite**
+
+Compile one pact version into an executable contract suite (PFX-3.1): one case per HTTP interaction, with `source: pact_interaction` and `synthetic: false`. A case's `request` is the request the consumer recorded; its `pact` block carries the provider states, the expected response (status, headers, body) and the matching rules and generators of both sides.
+
+**Deterministic per pact version.** The same pact version and the same options produce a byte-identical manifest and the same `sha256:` `digest`, whichever consumer version published it. `options.interactions` narrows the suite to named interactions (description or Pact 4 key); `options.max_interactions` caps it.
+
+**Nothing is skipped silently.** Message and plugin interactions, interactions with no method or path, and request bodies that cannot be decoded are listed under `unsupported` and in `findings`; embedded Pact 1 matchers, unknown matchers, request generators and unreadable response bodies are `degraded` findings; each provider state the runner must set up is an `info` finding.
+
+Nothing is persisted. Requires `pacts:view`.
+
+Operation id: `compile_pact_version_suite_v1_tenants__tenant_slug__pact_suites_provider__provider__consumer__consumer__pact_version__sha__post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | The pact version's SHA-256 (64 hex characters). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (optional)
+
+Request body for compile a pact version into a contract suite.
+
+- `application/json` — [`PactSuiteCompileRequest`](#schema-pactsuitecompilerequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for compile a pact version into a contract suite. | `application/json` [`PactSuiteResponse`](#schema-pactsuiteresponse) |
+| 404 | `pacticipant-not-found` or `pact-not-found`: no such provider, consumer or pact version in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -2217,3 +2256,22 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `PactSuiteCompileRequest` {#schema-pactsuitecompilerequest}
+
+What to compile from the pact version named in the URL. An empty body compiles everything.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `options` | `PactSuiteOptions` | no | Compiler options. They are echoed on the manifest (`pact.options`) and hashed into its digest, so the same pact version compiled with the same options always yields the same suite. |
+
+### `PactSuiteResponse` {#schema-pactsuiteresponse}
+
+The suite compiled from one pact version.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer` | string | yes | The consumer's handle. |
+| `provider` | string | yes | The provider's handle. |
+| `pact_version_sha` | string | yes | The pact version compiled. |
+| `manifest` | `ContractSuiteManifest` | yes | The compiled suite: one `pact_interaction` case per HTTP interaction, with `unsupported` and `findings` naming everything that could not be replayed. |

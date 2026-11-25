@@ -142,6 +142,7 @@ from .pact_broker_matrix_routes import router as pact_broker_matrix_router
 from .pact_broker_routes import router as pact_broker_router
 from .pact_broker_verification_routes import router as pact_broker_verification_router
 from .pact_comparison_routes import router as pact_comparison_router
+from .pact_suite_routes import router as pact_suite_router
 from .pact_broker_webhook_routes import router as pact_broker_webhook_router
 from .pact_badge_routes import router as pact_badge_router
 from .pact_broker_cleanup_routes import router as pact_broker_cleanup_router
@@ -573,6 +574,7 @@ app.include_router(pact_broker_compat_router)
 app.include_router(pact_broker_router)
 app.include_router(pact_broker_verification_router)
 app.include_router(pact_comparison_router)  # PFX-2.5 (#6929): comparison fidelity reports
+app.include_router(pact_suite_router)  # PFX-3.1 (#6931): pact version → contract suite
 app.include_router(pact_broker_environment_router)
 app.include_router(pact_broker_matrix_router)
 app.include_router(pact_broker_webhook_router)

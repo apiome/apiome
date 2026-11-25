@@ -266,7 +266,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-3.1 · [#6931](https://github.com/apiome/apiome/issues/6931) | Pact → contract-suite compiler | Compile pact interactions into ECA suite cases | `contracts`,`pact`,`rest`,`mvp` | N | Y | L | apiome-rest |
 | PFX-3.2 · [#6932](https://github.com/apiome/apiome/issues/6932) | Provider verifier (replay with states) | Replay against a target, publish results to the broker | `contracts`,`pact`,`rest`,`mvp` | N | Y | XL | apiome-rest |
 | PFX-3.3 · [#6933](https://github.com/apiome/apiome/issues/6933) | Provider-state registry and setup | Declare states, state-change URL / handler, params | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-ui |
 | PFX-3.4 · [#6934](https://github.com/apiome/apiome/issues/6934) | Matching-rules engine | v2–v4 matching rules, generators, content types | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
@@ -274,7 +273,7 @@ flowchart LR
 | PFX-3.6 · [#6936](https://github.com/apiome/apiome/issues/6936) | Message (async) pacts | Pact v3/v4 messages verified against AsyncAPI | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
 | PFX-3.7 | Plugin pacts: gRPC and GraphQL | Plugin-framework interactions on the XPC adapters | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
 
-**PFX-3.1 · #6931 Pact → contract-suite compiler** — the ECA-1.1 compiler's case model gains a `pact` source: request, expected response, provider state, matching rules; manifest stays byte-identical per (pact version, options) with a `sha256:` digest. Unsupported semantics reported, never skipped. *Deps:* 1.2, ECA-1.1. **Docs:** reference regen; `…/pact-broker/verification.mdx`.
+**✅ PFX-3.1 · #6931 Pact → contract-suite compiler — Complete** — the ECA-1.1 compiler's case model gains a `pact` source: request, expected response, provider state, matching rules; manifest stays byte-identical per (pact version, options) with a `sha256:` digest. Unsupported semantics reported, never skipped. *Deps:* 1.2, ECA-1.1. **Docs:** reference regen; `…/pact-broker/verification.mdx`.
 
 **PFX-3.2 · #6932 Provider verifier**
 - **Problem:** Native Pact verification is run by provider-side language libraries; teams without them (or wanting hosted verification) need Apiome to do it.
