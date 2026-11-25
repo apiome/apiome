@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.670.0
+  version: 1.671.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -32436,6 +32436,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readaverificationresultresponse422.
+  /v1/tenants/{tenant_slug}/pact-suites/provider/{provider}/consumer/{consumer}/pact-version/{sha}:
+    post:
+      tags:
+      - pact-broker
+      summary: Compile a pact version into a contract suite
+      description: 'Compile one pact version into an executable contract suite (PFX-3.1):
+        one case per HTTP interaction, with `source: pact_interaction` and `synthetic:
+        false`. A case''s `request` is the request the consumer recorded; its `pact`
+        block carries the provider states, the expected response (status, headers, body)
+        and the matching rules and generators of both sides.
+
+
+        **Deterministic per pact version.** The same pact version and the same options
+        produce a byte-identical manifest and the same `sha256:` `digest`, whichever
+        consumer version published it. `options.interactions` narrows the suite to named
+        interactions (description or Pact 4 key); `options.max_interactions` caps it.
+
+
+        **Nothing is skipped silently.** Message and plugin interactions, interactions
+        with no method or path, and request bodies that cannot be decoded are listed
+        under `unsupported` and in `findings`; embedded Pact 1 matchers, unknown matchers,
+        request generators and unreadable response bodies are `degraded` findings; each
+        provider state the runner must set up is an `info` finding.
+
+
+        Nothing is persisted. Requires `pacts:view`.'
+      operationId: compile_pact_version_suite_v1_tenants__tenant_slug__pact_suites_provider__provider__consumer__consumer__pact_version__sha__post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[0-9a-fA-F]{64}$
+          description: The pact version's SHA-256 (64 hex characters).
+          title: Sha
+        description: The pact version's SHA-256 (64 hex characters).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Compileapactversionintoacontractsuiteauthorization schema.
+          - type: 'null'
+            description: Compileapactversionintoacontractsuiteauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Compileapactversionintoacontractsuite Xapikey schema.
+          - type: 'null'
+            description: Compileapactversionintoacontractsuite Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PactSuiteCompileRequest'
+              default:
+                options:
+                  max_interactions: 500
+              description: Request body for compileapactversionintoacontractsuiterequest.
+        description: Request body for compile a pact version into a contract suite.
+      responses:
+        '200':
+          description: Successful response for compile a pact version into a contract
+            suite.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactSuiteResponse'
+                description: Response payload for compileapactversionintoacontractsuiteresponse200.
+        '404':
+          description: '`pacticipant-not-found` or `pact-not-found`: no such provider,
+            consumer or pact version in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for compileapactversionintoacontractsuiteresponse422.
   /v1/tenants/{tenant_slug}/pact-broker/environments:
     get:
       tags:
@@ -130378,9 +130493,9 @@ components:
         case_id:
           type: string
           title: Case Id
-          description: Stable identifier, derived from the operation, the source,
-            and what distinguishes this case from its siblings. The same version and
-            options always yield the same id.
+          description: Stable identifier, derived from the operation, the source, and
+            what distinguishes this case from its siblings. The same version and options
+            always yield the same id.
           example: case_01h2xcejqtf3fz5y5j0v8k9m2p
         operation_key:
           type: string
@@ -130404,8 +130519,8 @@ components:
           - type: 'null'
             description: Contract Case schema.
           title: Source Detail
-          description: What distinguishes this case within its source — an example
-            name, a mutation kind, or the parameter a negative case targets.
+          description: What distinguishes this case within its source — an example name,
+            a mutation kind, or the parameter a negative case targets.
         source_pointer:
           anyOf:
           - type: string
@@ -130413,8 +130528,8 @@ components:
           - type: 'null'
             description: Contract Case schema.
           title: Source Pointer
-          description: 'JSON Pointer to the case''s origin: into the source document
-            for a declared example, into the body for a generated violation.'
+          description: 'JSON Pointer to the case''s origin: into the source document for
+            a declared example, into the body for a generated violation.'
         title:
           type: string
           title: Title
@@ -130434,10 +130549,9 @@ components:
         protocol:
           type: string
           title: Protocol
-          description: 'Wire protocol the case is executed over: `http`, `graphql`
-            for a case whose request is a GraphQL document posted to the target URL,
-            or `grpc` for a unary call run over Connect or native gRPC as the target
-            declares.'
+          description: 'Wire protocol the case is executed over: `http`, `graphql` for
+            a case whose request is a GraphQL document posted to the target URL, or `grpc`
+            for a unary call run over Connect or native gRPC as the target declares.'
           default: http
           example: example
         request:
@@ -130448,17 +130562,25 @@ components:
           - $ref: '#/components/schemas/ContractGraphqlRequest'
           - type: 'null'
             description: Contract Case schema.
-          description: The GraphQL document, variables and operation name. Present
-            exactly when `protocol` is `graphql`; `request.body` carries the same
-            document as sent.
+          description: The GraphQL document, variables and operation name. Present exactly
+            when `protocol` is `graphql`; `request.body` carries the same document as
+            sent.
         rpc:
           anyOf:
           - $ref: '#/components/schemas/ContractRpcRequest'
           - type: 'null'
             description: Contract Case schema.
           description: 'The unary call: procedure, request message and expected status
-            code. Present exactly when `protocol` is `grpc`; `request.body` carries
-            the same message.'
+            code. Present exactly when `protocol` is `grpc`; `request.body` carries the
+            same message.'
+        pact:
+          anyOf:
+          - $ref: '#/components/schemas/ContractPactInteraction'
+          - type: 'null'
+            description: Contract Case schema.
+          description: 'The pact interaction the case replays: provider states, the response
+            the consumer expects, and the matching rules and generators that widen it.
+            Present exactly when `source` is `pact_interaction`.'
         expect:
           $ref: '#/components/schemas/ContractCaseExpectation'
           description: What must come back.
@@ -130482,8 +130604,7 @@ components:
       - request
       - expect
       title: ContractCase
-      description: 'One executable case: a request, its provenance, and its expected
-        outcome.'
+      description: 'One executable case: a request, its provenance, and its expected outcome.'
     ContractCaseExpectation:
       properties:
         outcome:
@@ -130633,6 +130754,88 @@ components:
 
         every GraphQL case is a ``POST`` and the HTTP verb says nothing about whether
         it writes.'
+    ContractPactInteraction:
+      properties:
+        index:
+          type: integer
+          title: Index
+          description: Position of the interaction in the pact's `interactions` array.
+          example: 1
+        key:
+          anyOf:
+          - type: string
+            description: Contract Pact Interaction schema.
+          - type: 'null'
+            description: Contract Pact Interaction schema.
+          title: Key
+          description: The Pact 4 interaction `key`, when the pact writes one.
+        description:
+          type: string
+          title: Description
+          description: The interaction's description.
+          example: A pet available for adoption in the store.
+        pointer:
+          type: string
+          title: Pointer
+          description: JSON Pointer of the interaction in the pact document.
+          example: example
+        interaction_type:
+          type: string
+          title: Interaction Type
+          description: '`Synchronous/HTTP` for a Pact 4 interaction that says so, `http`
+            for Pact 1–3.'
+          example: example
+        pending:
+          type: boolean
+          title: Pending
+          description: Whether the Pact 4 interaction is marked `pending` by the consumer.
+          default: false
+          example: false
+        provider_states:
+          items:
+            $ref: '#/components/schemas/PactProviderState'
+          type: array
+          title: Provider States
+          description: States to set up before the request is sent, in recorded order.
+          maxItems: 1000
+        request_matching_rules:
+          items:
+            $ref: '#/components/schemas/PactMatchingRuleEntry'
+          type: array
+          title: Request Matching Rules
+          description: The request's matching rules — what the consumer may vary; a replay
+            sends the example.
+          maxItems: 1000
+        request_generators:
+          items:
+            $ref: '#/components/schemas/PactGeneratorEntry'
+          type: array
+          title: Request Generators
+          description: The request's generators. The suite sends the example; a verifier
+            may substitute.
+          maxItems: 1000
+        response:
+          $ref: '#/components/schemas/PactResponseExpectation'
+          description: The response the consumer expects.
+      additionalProperties: false
+      type: object
+      required:
+      - index
+      - description
+      - pointer
+      - interaction_type
+      - response
+      title: ContractPactInteraction
+      description: 'The pact interaction one case replays (PFX-3.1).
+
+
+        ``case.request`` is the request exactly as the consumer recorded it; this block
+        is everything
+
+        else the verification needs: which interaction it is, the states to set up first,
+        and the
+
+        response to compare against under the matching rules.'
     ContractRequestParameter:
       properties:
         name:
@@ -130918,20 +131121,19 @@ components:
           type: integer
           title: Schema Version
           description: Manifest envelope version.
-          default: 3
+          default: 4
           example: 1
         compiler_version:
           type: integer
           title: Compiler Version
           description: Version of the compilation rules.
-          default: 3
+          default: 4
           example: 1
         digest:
           type: string
           title: Digest
           description: '`sha256:<hex>` over the canonical bytes of this manifest with
-            `digest` itself removed. Two suites with the same digest are the same
-            suite.'
+            `digest` itself removed. Two suites with the same digest are the same suite.'
           default: ''
           example: example
         digest_algorithm:
@@ -130941,14 +131143,18 @@ components:
           default: sha256
           example: example
         options:
-          $ref: '#/components/schemas/ContractSuiteOptions'
-          description: The options this suite was compiled with, normalized.
+          anyOf:
+          - $ref: '#/components/schemas/ContractSuiteOptions'
+          - type: 'null'
+            description: Contract Suite Manifest schema.
+          description: The options a version's suite was compiled with, normalized. `null`
+            for a suite compiled from a pact, whose options are `pact.options`.
         protocol:
           type: string
           title: Protocol
           description: Protocol of the adapter that compiled the suite — `http`, `graphql`,
-            or `grpc`. A run refuses a verification target that cannot speak it (a
-            `grpc` suite runs on a `grpc` or a `connect` target).
+            or `grpc`. A run refuses a verification target that cannot speak it (a `grpc`
+            suite runs on a `grpc` or a `connect` target).
           default: http
           example: example
         api:
@@ -130960,6 +131166,14 @@ components:
           - type: 'null'
             description: Contract Suite Manifest schema.
           description: Where the compiled version came from.
+        pact:
+          anyOf:
+          - $ref: '#/components/schemas/SuitePactInfo'
+          - type: 'null'
+            description: Contract Suite Manifest schema.
+          description: The pact version the suite was compiled from, and the options it
+            was compiled with. Present exactly when the suite was compiled from a pact
+            (PFX-3.1).
         operations:
           items:
             $ref: '#/components/schemas/SuiteOperation'
@@ -130981,41 +131195,38 @@ components:
             type: object
           type: object
           title: Schemas
-          description: Response schemas referenced by `expect.response_schema_id`,
-            keyed so identical types are carried once.
+          description: Response schemas referenced by `expect.response_schema_id`, keyed
+            so identical types are carried once.
         unsupported:
           items:
             $ref: '#/components/schemas/SuiteUnsupportedOperation'
           type: array
           title: Unsupported
-          description: Operations the version declares that no case covers by design
-            (a GraphQL subscription), sorted by key — listed so they are never silently
-            omitted.
+          description: Operations the version declares that no case covers by design (a
+            GraphQL subscription), sorted by key — listed so they are never silently omitted.
           maxItems: 1000
         findings:
           items:
             $ref: '#/components/schemas/SuiteFinding'
           type: array
           title: Findings
-          description: What was not compiled, and what was compiled weakly — sorted
-            by code, operation, then message. Never empty merely because the suite
-            is large.
+          description: What was not compiled, and what was compiled weakly — sorted by
+            code, operation, then message. Never empty merely because the suite is large.
           maxItems: 1000
         counts:
           additionalProperties:
             type: integer
           type: object
           title: Counts
-          description: Case counts by source, plus `cases`, `operations_compiled`,
-            `operations_skipped`, and `findings`.
+          description: Case counts by source, plus `cases`, `operations_compiled`, `operations_skipped`,
+            and `findings`.
       additionalProperties: false
       type: object
       required:
-      - options
       - api
       title: ContractSuiteManifest
-      description: 'The compiled suite: everything a runner needs, and everything
-        a reviewer should know.'
+      description: 'The compiled suite: everything a runner needs, and everything a reviewer
+        should know.'
     ContractSuiteOptions:
       properties:
         seed:
@@ -168418,6 +168629,45 @@ components:
       - pact
       title: PactExportResponse
       description: A generated pact and what it could not say.
+    PactGeneratorEntry:
+      properties:
+        category:
+          type: string
+          title: Category
+          description: '`body`, `header`, `query`, `path`, `status` or `method`.'
+          example: domain
+        path:
+          type: string
+          title: Path
+          description: The JSONPath or name it applies to, or `""` for the path or status.
+          example: /resources/{id}
+        type:
+          anyOf:
+          - type: string
+            description: Pact Generator Entry schema.
+          - type: 'null'
+            description: Pact Generator Entry schema.
+          title: Type
+          description: The generator type (`RandomInt`, `ProviderState` …).
+        generator:
+          additionalProperties: true
+          type: object
+          title: Generator
+          description: The generator object exactly as the pact wrote it.
+        pointer:
+          type: string
+          title: Pointer
+          description: JSON Pointer of the generator in the pact document.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - category
+      - path
+      - generator
+      - pointer
+      title: PactGeneratorEntry
+      description: 'One generator: a value the verifier substitutes for the example.'
     PactImportRequest:
       properties:
         pact:
@@ -168474,6 +168724,213 @@ components:
         \ import registers.\n    version: Version label, revision id, or ``latest``\
         \ to resolve the interactions against.\n    note: Free text explaining the\
         \ revision."
+    PactMatchingRuleEntry:
+      properties:
+        category:
+          type: string
+          title: Category
+          description: '`body`, `header`, `query`, `path`, `status` or `unknown`.'
+          example: domain
+        path:
+          type: string
+          title: Path
+          description: The JSONPath of a body rule (`$.items[*].id`), the header or query
+            name, or `""`.
+          example: /resources/{id}
+        match:
+          type: string
+          title: Match
+          description: The matcher, lowercase (`type`, `regex`, `statuscode` …).
+          example: example
+        matcher:
+          additionalProperties: true
+          type: object
+          title: Matcher
+          description: The matcher object exactly as the pact wrote it.
+        combine:
+          type: string
+          title: Combine
+          description: '`AND` or `OR` — how it combines with rules on the same path.'
+          default: AND
+          example: example
+        pointer:
+          type: string
+          title: Pointer
+          description: JSON Pointer of the matcher in the pact document.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - category
+      - path
+      - match
+      - matcher
+      - pointer
+      title: PactMatchingRuleEntry
+      description: One matching rule, in one shape whichever specification version filed
+        it.
+    PactProviderState:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The state, as the consumer wrote it (`an invoice 1042 exists`).
+          example: Pet
+        params:
+          additionalProperties: true
+          type: object
+          title: Params
+          description: The state's parameters (Pact 3 and 4), sorted by name.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: PactProviderState
+      description: A state the provider must be in before an interaction is replayed.
+    PactResponseExpectation:
+      properties:
+        status:
+          anyOf:
+          - type: integer
+            description: Response payload for pact response expectation.
+          - type: 'null'
+            description: Response payload for pact response expectation.
+          title: Status
+          description: The recorded status; `null` when the pact records none (200 is
+            assumed).
+        headers:
+          additionalProperties:
+            type: string
+          type: object
+          title: Headers
+          description: The recorded headers, as written (a Pact 4 list of values joined
+            with `, `).
+        has_body:
+          type: boolean
+          title: Has Body
+          description: Whether the pact records a response body.
+          default: false
+          example: true
+        body:
+          anyOf:
+          - description: Response payload for pact response expectation.
+          - type: 'null'
+            description: Response payload for pact response expectation.
+          title: Body
+          description: The recorded body, embedded matchers removed.
+        media_type:
+          anyOf:
+          - type: string
+            description: Response payload for pact response expectation.
+          - type: 'null'
+            description: Response payload for pact response expectation.
+          title: Media Type
+          description: 'The body''s media type: the Pact 4 `contentType`, else the `Content-Type`
+            header.'
+        body_pointer:
+          anyOf:
+          - type: string
+            description: Response payload for pact response expectation.
+          - type: 'null'
+            description: Response payload for pact response expectation.
+          title: Body Pointer
+          description: JSON Pointer of the body's content in the pact document.
+        matching_rules:
+          items:
+            $ref: '#/components/schemas/PactMatchingRuleEntry'
+          type: array
+          title: Matching Rules
+          description: The response's matching rules, sorted by category, path and position.
+          maxItems: 1000
+        generators:
+          items:
+            $ref: '#/components/schemas/PactGeneratorEntry'
+          type: array
+          title: Generators
+          description: The response's generators. A verifier ignores them; they are carried
+            so nothing is lost.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      title: PactResponseExpectation
+      description: The response the consumer recorded, before its matching rules widen
+        it.
+    PactSuiteCompileRequest:
+      properties:
+        options:
+          $ref: '#/components/schemas/PactSuiteOptions'
+          description: Compiler options. They are echoed on the manifest (`pact.options`)
+            and hashed into its digest, so the same pact version compiled with the same
+            options always yields the same suite.
+      additionalProperties: false
+      type: object
+      title: PactSuiteCompileRequest
+      description: What to compile from the pact version named in the URL. An empty body
+        compiles everything.
+    PactSuiteOptions:
+      properties:
+        interactions:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Pact Suite Options schema.
+          - type: 'null'
+            description: Pact Suite Options schema.
+          title: Interactions
+          description: Restrict compilation to these interactions, each named by its `description`
+            or, in a Pact 4 file, its `key`. Omit for every interaction. A name that matches
+            nothing is reported as a finding.
+        max_interactions:
+          type: integer
+          maximum: 2000.0
+          minimum: 1.0
+          title: Max Interactions
+          description: Cap on compiled interactions; the ones past it are reported, not
+            dropped silently.
+          default: 500
+          example: 1
+      additionalProperties: false
+      type: object
+      title: PactSuiteOptions
+      description: 'What to compile from a pact. Echoed on the manifest and hashed into
+        its digest.
+
+
+        A pact is compiled as recorded — there is nothing to generate and no seed — so
+        the options
+
+        only choose *which* interactions become cases.'
+    PactSuiteResponse:
+      properties:
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer's handle.
+          example: example
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version compiled.
+          example: 1.0.0
+        manifest:
+          $ref: '#/components/schemas/ContractSuiteManifest'
+          description: 'The compiled suite: one `pact_interaction` case per HTTP interaction,
+            with `unsupported` and `findings` naming everything that could not be replayed.'
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      - provider
+      - pact_version_sha
+      - manifest
+      title: PactSuiteResponse
+      description: The suite compiled from one pact version.
     PacticipantBranchListResponse:
       properties:
         branches:
@@ -195334,6 +195791,59 @@ components:
       - case_count
       title: SuiteOperation
       description: One operation the suite covers, and how much of it was compiled.
+    SuitePactInfo:
+      properties:
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer pacticipant.
+          example: example
+        provider:
+          type: string
+          title: Provider
+          description: The provider pacticipant.
+          example: example
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version's content address (SHA-256 of its interactions
+            and specification).
+          example: 1.0.0
+        specification_version:
+          anyOf:
+          - type: string
+            description: Suite Pact Info schema.
+          - type: 'null'
+            description: Suite Pact Info schema.
+          title: Specification Version
+          description: The Pact specification version the pact declares, if any.
+        interaction_count:
+          type: integer
+          title: Interaction Count
+          description: How many interactions and messages the pact carries, compiled or
+            not.
+          example: 1
+        options:
+          $ref: '#/components/schemas/PactSuiteOptions'
+          description: The options the suite was compiled with, normalized.
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      - provider
+      - pact_version_sha
+      - interaction_count
+      - options
+      title: SuitePactInfo
+      description: 'The pact version a suite was compiled from.
+
+
+        Only what the pact version''s content address covers is recorded — never the consumer
+
+        version that happened to publish it, nor the document''s ``metadata`` — so every
+        consumer
+
+        version sharing the content gets the same, byte-identical suite.'
     SuitePayloadModel:
       properties:
         name:
@@ -195776,8 +196286,8 @@ components:
           - type: 'null'
             description: Suite Source Info schema.
           title: Kind
-          description: '`project` or `catalog` — which surface the artifact lives
-            on.'
+          description: '`project` or `catalog` — which surface the artifact lives on —
+            or `pact` for a suite compiled from a pact version.'
         reference:
           anyOf:
           - type: string
@@ -195833,10 +196343,9 @@ components:
           - type: 'null'
             description: Suite Source Info schema.
           title: Published
-          description: Whether the resolved revision is published. `null` when the
-            caller did not establish it — never assumed. A suite compiled from an
-            unpublished revision is valid, but it is not a contract anyone has agreed
-            to.
+          description: Whether the resolved revision is published. `null` when the caller
+            did not establish it — never assumed. A suite compiled from an unpublished
+            revision is valid, but it is not a contract anyone has agreed to.
       additionalProperties: false
       type: object
       title: SuiteSourceInfo

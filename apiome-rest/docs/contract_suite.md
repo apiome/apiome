@@ -21,6 +21,9 @@ back, and where each case came from.
 | `app/contract_suite_graphql.py` | The GraphQL protocol adapter (XPC-1.2): one set of cases per root `query`/`mutation` field. |
 | `app/contract_suite_rpc.py` | The gRPC/Connect protocol adapter (XPC-3.2): one set of cases per unary Protobuf method. |
 | `app/contract_protocols.py` | The protocol vocabulary (`http`, `graphql`, `grpc`, `connect`) shared by the compiler, targets and evidence, and which target protocols can run each suite protocol. |
+| `app/contract_suite_pact.py` | The pact compiler (PFX-3.1): one `pact_interaction` case per HTTP interaction of a pact version. |
+| `app/pact_interaction_reader.py` | Reads a Pact interaction's query, headers and body in every specification version (shared with the bi-directional comparison). |
+| `app/pact_suite_routes.py` | `POST /v1/tenants/{tenant_slug}/pact-suites/provider/{p}/consumer/{c}/pact-version/{sha}`, gated on `pacts:view`. |
 | `app/contract_suite_examples.py` | Attributes a source document's declared examples to `(path, method, site)` by walking the IXH-5.4 example table. |
 | `app/contract_suite_service.py` | Resolves a version reference to its canonical model, looks up publication state, and returns the manifest. Writes nothing. |
 | `app/contract_suite_routes.py` | `POST /v1/tenants/{tenant}/contracts/{version_ref}/suite`, gated on `versions:view`. |
@@ -72,6 +75,7 @@ Case sources, in the order they are emitted per operation:
 | `negative_missing_parameter` | A required query parameter omitted. |
 | `negative_parameter_type` | A wrong-typed value for a non-string parameter. |
 | `negative_body_mutation` | A body violating exactly one schema constraint. |
+| `pact_interaction` | A pact interaction, replayed as the consumer recorded it (pact suites only — see below). |
 
 Parameter values follow the same preference order, and each records its `origin`: a declared
 example, then a declared `default`, then the first `enum` member, then a generated value.
@@ -192,6 +196,12 @@ methods** are listed under `unsupported` with the reason `unsupported: streaming
 `FORMAT_MISMATCH`. RPC formats other than Protobuf (Smithy, Thrift, JSON-RPC) keep the HTTP
 adapter.
 
+### Manifest version 4
+
+PFX-3.1 raised `schema_version` and `compiler_version` to **4**: every case gained `pact`, the
+manifest gained `pact`, `options` became optional (`null` for a pact suite), and `counts` gained
+`pact_interaction`. Every version suite therefore has a new digest.
+
 ### Manifest version 3
 
 XPC-3.2 raised `schema_version` and `compiler_version` to **3**: every case gained `rpc`, and
@@ -203,6 +213,53 @@ XPC-1.2 raised `schema_version` and `compiler_version` to **2**. The manifest ga
 and `unsupported`, every case gained `protocol` and `graphql`, the options gained
 `max_selection_depth`, and `counts` gained `negative_unknown_field`. A REST version compiled
 before and after therefore has a different digest, even though its cases mean the same thing.
+
+## Pact suites
+
+> apiome#6931 (PFX-3.1) — the input of hosted provider verification (PFX-3.2).
+
+`compile_pact_suite(document, consumer=…, provider=…, options=PactSuiteOptions(…))` compiles a
+parsed pact (specification 1–4) into the same manifest. It is not a protocol adapter: its input is
+a pact, not a canonical model.
+
+* **One case per HTTP interaction**, `source: pact_interaction`, `synthetic: false`, keyed
+  `METHOD path` and ordered by key then pact position. `request` is the recorded request: Pact 2
+  query strings and Pact 3/4 objects give the same parameters (`origin: pact`), a Pact 4 body object
+  is unwrapped (base64 / JSON text decoded), header value lists are joined with `, `.
+* **`case.pact`** carries the rest: `index`, `key`, `pointer`, `interaction_type`, `pending`,
+  `provider_states` (`{name, params}` from `providerStates`, `providerState` or `provider_state`),
+  `request_matching_rules`, `request_generators` and `response` (status, headers, body, media type,
+  body pointer, matching rules, generators). Rules are `parse_matching_rules` output: category,
+  path, lowercase `match`, the matcher as written, `combine`, pointer.
+* **`expect`**: the recorded status, or the classes of a Pact 4 `statusCode` rule (`success` →
+  `2XX`, `nonError` → `1XX`–`3XX`, `error` → `4XX`, `5XX`, or a list of codes); `client_error`
+  when every token is `4XX`, else `success`; `response_schema_id` is `null` — the response is
+  judged against `pact.response` under its matching rules (PFX-3.2 / PFX-3.4), not a schema.
+* **Determinism per pact version.** Only `pact_content_sha`'s inputs (interactions, messages,
+  specification version), the caller's pacticipant names and the options are read. The manifest's
+  `pact` block records `pact_version_sha`, `specification_version`, `interaction_count` and the
+  normalized `options` (`interactions` — descriptions or Pact 4 keys, sorted set — and
+  `max_interactions`); `manifest.options` is `null`.
+
+| Code | Level | When |
+|---|---|---|
+| `UNSUPPORTED_OPERATION_KIND` | unsupported | Message interaction (`messages`, `Asynchronous/Messages`, `Synchronous/Messages`) — PFX-3.6. |
+| `PACT_PLUGIN_INTERACTION` | unsupported | `pluginConfiguration`, `interactionMarkup`, or a non-HTTP `transport` — PFX-3.7. |
+| `PACT_INTERACTION_MALFORMED` | unsupported | Not an object, or no request method / string path. |
+| `PACT_BODY_UNREADABLE` | unsupported (request) / degraded (response) | Undecodable base64 or JSON text. |
+| `PACT_EMBEDDED_MATCHER` | degraded | `json_class` / `pact:matcher:type` stripped from a body. |
+| `PACT_MATCHING_RULE_UNSUPPORTED` | degraded | Unknown matcher (`KNOWN_MATCHERS`), unknown category, body path that is not a JSONPath, or an unreadable `statusCode` status. |
+| `PACT_REQUEST_GENERATOR` | degraded | The example is sent where a verifier would generate (a `ProviderState` generator needs PFX-3.3). |
+| `PACT_RESPONSE_GENERATOR` | info | Ignored on verification. |
+| `PACT_PROVIDER_STATE` | info | Once per distinct state, pointing at its first use. |
+| `PACT_PROVIDER_STATE_UNREADABLE` | degraded | A `providerStates` entry with no name. |
+| `PACT_SPECIFICATION_ASSUMED` | info / degraded | No specification version / an unknown major. |
+| `STATUS_UNDECLARED` | degraded | No response status; `200` expected. |
+
+Tests: `tests/test_contract_suite_pact.py` (every corpus pact under
+`tests/golden/pact_oas_compare/pacts` accounts for each interaction as a case or an `unsupported`
+entry) and `tests/test_pact_suite_routes.py` (permission, tenant scoping, error codes, byte-identity
+across consumer versions).
 
 ## What is deliberately not in a suite
 

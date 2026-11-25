@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.847.0] - 2026-11-24
+
+### Added
+- **Pact → contract-suite compiler (PFX-3.1, #6931).** OpenAPI 1.671.0 (one new path). No
+  migration.
+  - `app.contract_suite_pact` (pure) compiles a pact version into the ECA-1.1 contract-suite
+    manifest: one `pact_interaction` case per HTTP interaction (`synthetic: false`) carrying the
+    request exactly as recorded (Pact 2 query strings and Pact 3/4 query objects alike, Pact 4 body
+    objects unwrapped, header value lists joined) and a new `pact` block: interaction index, `key`,
+    pointer, `pending`, provider states with params (`providerStates`, `providerState`,
+    `provider_state`), the expected response (status, headers, body, media type) and every
+    matching rule and generator of both sides in one shape. A Pact 4 `statusCode` rule widens
+    `expect.status_codes` to status classes (`success` → `2XX`, `error` → `4XX`, `5XX`).
+  - Byte-identical per (pact version, options): only what `pact_content_sha` covers, the
+    pacticipant pair and the options are read — never `metadata` or the publishing consumer
+    version — and the manifest carries a `sha256:` digest. New `manifest.pact` block
+    (`consumer`, `provider`, `pact_version_sha`, `specification_version`, `interaction_count`,
+    `options`); options `interactions` (description or Pact 4 key, normalized to a sorted set)
+    and `max_interactions` (default 500, ceiling 2000).
+  - Nothing skipped silently: message and plugin interactions, malformed interactions and
+    undecodable request bodies are listed under `unsupported` and reported
+    (`UNSUPPORTED_OPERATION_KIND`, `PACT_PLUGIN_INTERACTION`, `PACT_INTERACTION_MALFORMED`,
+    `PACT_BODY_UNREADABLE`); embedded Pact 1 matchers, unknown matchers / paths / locations,
+    request generators, unreadable response bodies and nameless provider states are `degraded`
+    findings; each provider state, response generator and an undeclared specification version is
+    an `info` finding.
+  - `POST /v1/tenants/{tenant}/pact-suites/provider/{provider}/consumer/{consumer}/pact-version/{sha}`
+    — compile one pact version of the caller's workspace (`pacts:view`; 404 for an unknown or
+    foreign pacticipant or pact version, 422 for a malformed SHA or option). Pure read.
+  - Contract-suite manifest `schema_version` and `compiler_version` are now **4**: every case
+    gained `pact`, the manifest gained `pact`, `manifest.options` is `null` for a pact suite, and
+    `counts` gained `pact_interaction` — so existing version suites get a new digest.
+  - The Pact request/response readers shared by the bi-directional comparison moved to
+    `app.pact_interaction_reader`.
+
 ## [1.846.0] - 2026-11-24
 
 ### Added

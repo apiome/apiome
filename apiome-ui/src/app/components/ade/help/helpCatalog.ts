@@ -1301,6 +1301,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['publishVerificationResult', 'provider version', 'pact verifier', 'test results', 'provider branch', 'can-i-deploy', 'provider verification report'],
   },
   {
+    id: 'verification',
+    title: 'Compile a pact into a contract suite',
+    summary: 'Turn a pact version into replayable verification cases with a fixed digest.',
+    page: 'apiome-docs/docs/ship/pact-broker/verification.mdx',
+    section: 'reference',
+    keywords: ['provider states', 'matching rules', 'generators', 'interactions', 'manifest', 'digest', 'replay', 'pact-suites'],
+  },
+  {
     id: 'environments',
     title: 'Environments and deployments',
     summary: 'Record which version of each application runs in each environment.',
