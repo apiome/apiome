@@ -1,0 +1,52 @@
+---
+slug: bidirectional-contract-testing
+title: "Bi-directional contract testing"
+description: "Compare consumer pacts with a provider's OpenAPI document, backed by self-verification evidence."
+authors: [apiome]
+---
+
+Bi-directional contract testing is complete. A provider no longer has to replay every consumer's
+pact against a running build: it publishes its OpenAPI document as a
+[provider contract](/ship/pact-broker/bi-directional), with evidence from its own tests, and Apiome
+compares each consumer pact with that document. The verdict is a verification result, so the
+matrix and [can-i-deploy](/ship/pact-broker/can-i-deploy#bi-directional-results) read it like
+one a Pact verifier published.
+
+{/* truncate */}
+
+**Publish from the provider's build.** Send the document, or name the Apiome version that
+describes the provider, together with the report your API tests wrote:
+
+```bash
+apiome pact publish-provider-contract openapi.yaml \
+  --provider "Ledger API" \
+  --provider-app-version "$GIT_COMMIT" \
+  --branch "$GIT_BRANCH" \
+  --evidence reports/junit.xml \
+  --verifier schemathesis
+```
+
+**What the epic covers:**
+
+- **Provider contracts.** OpenAPI 3.0, 3.1 or 3.2, sent inline or rendered from an Apiome
+  `project@version`, stored once per distinct document — [Publish a provider contract](/ship/pact-broker/bi-directional).
+- **The comparison.** Each interaction's method, path, query, headers and bodies are checked
+  against the operation it resolves to; every failure names its place in the pact and the
+  document — [Comparison rules](/ship/pact-broker/comparison-rules).
+- **Verdicts that gate deploys.** The comparison runs when either side publishes, and each matrix
+  row says whether its result is `native` or `bidirectional` —
+  [Can I deploy?](/ship/pact-broker/can-i-deploy#bi-directional-results).
+- **Self-verification evidence.** A contract counts only when Schemathesis, Dredd, Newman, any
+  JUnit writer or an Apiome provider-verification report says the provider matches it; otherwise
+  the verdict is `unverified` —
+  [Self-verification evidence](/ship/pact-broker/bi-directional#self-verification-evidence).
+- **An honest green.** The **Pact comparisons** page and the fidelity report show every check
+  performed, the matching rules that could not be proven and what could not be compared, so
+  `partial` is never shown as `pass` —
+  [Read the fidelity report](/ship/pact-broker/bi-directional#read-the-fidelity-report).
+- **Consumers without Pact tests.** A consumer registered by picking operations and fields can
+  export and publish a Pact v4 file built from the specification's own examples —
+  [Consumers without a Pact file](/ship/pact-broker/bi-directional#consumers-without-a-pact-file).
+
+The [Pact Broker overview](/ship/pact-broker/overview) now shows where bi-directional testing fits
+next to Pact verification.

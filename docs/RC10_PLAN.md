@@ -44,7 +44,7 @@ bi-directional testing wired to Apiome's spec model.
 | Epic | Scope | Issues | MVP issues |
 | --- | --- | --- | --- |
 | ✅ PFX-EPIC-1 ([#6907](https://github.com/apiome/apiome/issues/6907), done 2026-11-24) | Broker core: pacticipants, publish/fetch, selectors, verification results, environments, matrix + can-i-deploy, pending/WIP, conformance suite, webhooks | 11 | 1.1–1.6, 1.8, 1.9 |
-| PFX-EPIC-2 | Bi-directional contract testing: provider contract, comparison engine, verdicts, self-verification evidence | 6 | 2.1–2.4 |
+| ✅ PFX-EPIC-2 ([#6908](https://github.com/apiome/apiome/issues/6908), done 2026-11-24) | Bi-directional contract testing: provider contract, comparison engine, verdicts, self-verification evidence | 6 | 2.1–2.4 |
 | PFX-EPIC-3 | Provider verification engine: pact→suite, hosted verifier, provider states, matching rules, message and plugin pacts | 7 | 3.1–3.3 |
 | PFX-EPIC-4 | CLI (`apiome pact`), broker-compatible auth, CI actions, commit statuses, MCP, Postman | 7 | 4.1–4.3 |
 | PFX-EPIC-5 | UI: pacticipants, pact viewer, matrix and can-i-deploy console, webhooks, environments | 8 | 5.1, 5.2, 5.4, 5.6 |
