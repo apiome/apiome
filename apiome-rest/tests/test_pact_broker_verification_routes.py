@@ -10,7 +10,9 @@ The routes of :mod:`app.pact_broker_verification_routes`, with the store faked
 * refusals map to their status: 422 with a pointer for a malformed body or an unknown report,
   404 for an unknown pact version or result;
 * the provider's branch and tag are recorded through ``PUT`` routes;
-* the pact and the pacticipant documents carry the links a Pact verifier follows.
+* the pact and the pacticipant documents carry the links a Pact verifier follows;
+* a report produced elsewhere (``pact_verifier_cli`` JSON, JUnit) is ingested as an ordinary result
+  with an ``ingestion`` report of its notices (PFX-3.5, #6935).
 """
 
 from __future__ import annotations
@@ -113,6 +115,7 @@ def allowed() -> Iterator[MagicMock]:
     [
         ("post", _RESULTS, "create"),
         ("post", f"{_PAIR}/pact-version/{_SHA}/metadata/czpbXQ/verification-results", "create"),
+        ("post", f"{_PAIR}/pact-version/{_SHA}/external-verification-results?providerApplicationVersion=1", "create"),
         ("get", f"{_RESULTS}/latest", "view"),
         ("get", f"{_RESULTS}/1", "view"),
         ("put", f"{_BASE}/pacticipants/ledger-api/branches/main/versions/4f1e2d0", "create"),
@@ -368,3 +371,104 @@ def test_a_pacticipant_links_to_its_branch_and_tag_templates(allowed: MagicMock)
     }
     assert links["pb:version-tag"]["href"] == f"{_ROOT}/pacticipants/ledger-api/versions/{{version}}/tags/{{tag}}"
     assert json.dumps(links)  # serialisable as sent
+
+
+# --- external reports (PFX-3.5) ----------------------------------------------------------------
+
+_INGEST = f"{_PAIR}/pact-version/{_SHA}/external-verification-results"
+_CLI_REPORT = {
+    "result": False,
+    "errors": [
+        {
+            "interactionId": "a1",
+            "description": "an invoice",
+            "mismatch": {"type": "StatusMismatch", "description": "404"},
+        }
+    ],
+    "output": ["log line"],
+}
+_JUNIT_REPORT = "<testsuite><testcase name='an invoice'/></testsuite>"
+
+
+def test_a_verifier_json_report_is_ingested_as_a_result(allowed: MagicMock) -> None:
+    with (
+        patch(f"{_ROUTES}.publish_verification_result", return_value=_result()) as publish,
+        patch(f"{_ROUTES}.record_broker_version") as record,
+    ):
+        response = client.post(
+            f"{_INGEST}?providerApplicationVersion=4f1e2d0&buildUrl=https://ci.example.com/1&branch=main&tag=prod&tag=qa&verifierVersion=1.4",
+            json=_CLI_REPORT,
+        )
+    assert response.status_code == 201, response.text
+    assert response.headers["location"] == f"{_PACT_VERSION_URL}/verification-results/1"
+    assert publish.call_args.args[1:5] == (_TENANT, "ledger-api", "billing-service", _SHA)  # tenant-scoped
+    checked = publish.call_args.args[5]
+    assert checked.success is False and checked.provider_version == "4f1e2d0"
+    assert checked.build_url == "https://ci.example.com/1"
+    assert checked.verified_by["implementation"] == "pact_verifier_cli" and checked.verified_by["version"] == "1.4"
+    assert checked.test_results[0]["interactionId"] == "a1"
+    assert record.call_args.kwargs["branch"] == "main" and record.call_args.kwargs["tags"] == ["prod", "qa"]
+    ingestion = response.json()["ingestion"]
+    assert ingestion["format"] == "pact-verifier-json" and ingestion["interactions"] == 1
+    assert ingestion["notices"] == [{"pointer": "/output", "reason": "1 line(s) of verifier log output are not stored"}]
+    assert response.json()["_links"]["self"]["href"].endswith("/verification-results/1")
+
+
+def test_a_junit_report_is_ingested(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.publish_verification_result", return_value=_result(success=True)) as publish:
+        response = client.post(
+            f"{_INGEST}?providerApplicationVersion=4f1e2d0&verifier=jest",
+            content=_JUNIT_REPORT,
+            headers={"content-type": "application/xml"},
+        )
+    assert response.status_code == 201, response.text
+    checked = publish.call_args.args[5]
+    assert checked.success is True and checked.verified_by["implementation"] == "jest"
+    assert response.json()["ingestion"]["format"] == "junit"
+
+
+def test_no_branch_or_tag_records_no_version(allowed: MagicMock) -> None:
+    with (
+        patch(f"{_ROUTES}.publish_verification_result", return_value=_result()),
+        patch(f"{_ROUTES}.record_broker_version") as record,
+    ):
+        client.post(f"{_INGEST}?providerApplicationVersion=1", json=_CLI_REPORT)
+    record.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("query", "kwargs", "pointer"),
+    [
+        ("providerApplicationVersion=1", {"content": b""}, ""),
+        ("providerApplicationVersion=1&format=tap", {"json": _CLI_REPORT}, "/format"),
+        ("providerApplicationVersion=1", {"json": {"pacts": []}}, ""),
+        (
+            "providerApplicationVersion=1&providerVerificationReportId=nope",
+            {"json": _CLI_REPORT},
+            "/providerVerificationReportId",
+        ),
+    ],
+)
+def test_a_bad_report_is_a_located_422_before_the_store(
+    allowed: MagicMock, query: str, kwargs: Dict[str, Any], pointer: str
+) -> None:
+    with patch(f"{_ROUTES}.publish_verification_result") as publish:
+        response = client.post(f"{_INGEST}?{query}", **kwargs)
+    assert response.status_code == 422, response.text
+    assert response.json()["detail"]["code"] == "pact-verification-invalid"
+    assert response.json()["detail"]["pointer"] == pointer
+    publish.assert_not_called()
+
+
+def test_the_provider_version_is_required(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.publish_verification_result") as publish:
+        response = client.post(_INGEST, json=_CLI_REPORT)
+    assert response.status_code == 422
+    publish.assert_not_called()
+
+
+def test_an_ingested_report_for_an_unknown_pact_is_a_404(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.publish_verification_result", side_effect=PactPublicationError(CODE_PACT_NOT_FOUND, "no")):
+        response = client.post(f"{_INGEST}?providerApplicationVersion=1", json=_CLI_REPORT)
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == CODE_PACT_NOT_FOUND

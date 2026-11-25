@@ -23,10 +23,11 @@ links and refusals read the same across the broker surface.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+import json
+from typing import Any, Dict, List, Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, Path, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 
 from .bidirectional_verification import KIND_BIDIRECTIONAL
 from .config import settings
@@ -44,12 +45,18 @@ from .pact_broker_routes import (
     _version_document,
 )
 from .pact_comparison_routes import comparison_fidelity_path
+from .pact_external_verification import (
+    FORMAT_AUTO,
+    FORMATS,
+    notices_as_dicts,
+    read_external_report,
+)
 from .pact_publication import PactPublicationError
 from .pact_selectors import decode_metadata
 from .pact_webhook_events import fire_verification_events
 from .pacticipant import PacticipantValidationError
 from .permissions import Action, Resource, enforce_permission
-from .verification_result import VerificationResultRecord, parse_verification_request
+from .verification_result import VerificationRequest, VerificationResultRecord, parse_verification_request
 from .verification_result_store import (
     get_latest_verification_result,
     get_verification_result,
@@ -413,9 +420,66 @@ def _publish(
             version; 422 for a malformed body or an unknown report; 403 without ``pacts:create``.
     """
     user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.CREATE, target=provider)
-    selection = decode_metadata(metadata)
     try:
         checked = parse_verification_request(raw)
+    except (PactPublicationError, PacticipantValidationError) as exc:
+        raise _http_error(exc) from exc
+    return _store_result(request, tenant_slug, provider, consumer, sha, checked, auth_data, user_id, metadata)
+
+
+def _store_result(
+    request: Request,
+    tenant_slug: str,
+    provider: str,
+    consumer: str,
+    sha: str,
+    checked: VerificationRequest,
+    auth_data: Dict[str, Any],
+    user_id: Optional[str],
+    metadata: Optional[str],
+    *,
+    branch: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    extra: Optional[Dict[str, Any]] = None,
+) -> HalJSONResponse:
+    """Store a checked result, fire its webhooks and render it.
+
+    Shared by the Pact verifier's publish (:func:`_publish`) and the ingestion of a report
+    produced elsewhere (:func:`ingest_external_result`).
+
+    Args:
+        request: The request.
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        consumer: The consumer's handle, id or name.
+        sha: The verified pact version.
+        checked: The checked result.
+        auth_data: The authenticated principal.
+        user_id: The permission check's user id.
+        metadata: The for-verification metadata segment, when the result was posted to that form.
+        branch: A branch to record the provider version on first, when the caller names one.
+        tags: Tags to put on the provider version first.
+        extra: Fields added to the response body (the ingestion's ``ingestion`` report).
+
+    Returns:
+        The stored result, ``201``, with its URL in ``Location``.
+
+    Raises:
+        HTTPException: 400/404/422 for a refusal of the store.
+    """
+    selection = decode_metadata(metadata)
+    actor = actor_from_auth(auth_data, user_id)
+    try:
+        if branch or tags:
+            record_broker_version(
+                db,
+                _tenant_id(auth_data),
+                provider,
+                checked.provider_version,
+                actor=actor,
+                branch=branch,
+                tags=tags or [],
+            )
         result = publish_verification_result(
             db,
             _tenant_id(auth_data),
@@ -423,7 +487,7 @@ def _publish(
             consumer,
             sha,
             checked,
-            actor=actor_from_auth(auth_data, user_id),
+            actor=actor,
             pact_pending=selection["pending"],
             wip=selection["wip"],
         )
@@ -431,11 +495,10 @@ def _publish(
         raise _http_error(exc) from exc
     base = _base_url(request, tenant_slug)
     fire_verification_events(db, _tenant_id(auth_data), base, result)
-    return HalJSONResponse(
-        _result_document(request, tenant_slug, base, result),
-        status_code=201,
-        headers={"Location": _result_url(base, result)},
-    )
+    document = _result_document(request, tenant_slug, base, result)
+    if extra:
+        document.update(extra)
+    return HalJSONResponse(document, status_code=201, headers={"Location": _result_url(base, result)})
 
 
 _PUBLISH_DESCRIPTION = (
@@ -527,6 +590,158 @@ def publish_result_with_metadata(
         The stored result.
     """
     return _publish(request, tenant_slug, provider, consumer, sha, raw, auth_data, metadata)
+
+
+_INGEST_DESCRIPTION = (
+    "Publish the result of a verification that ran **elsewhere** — the report a team's own CI "
+    "already has — instead of asking Apiome's hosted verifier to replay the pact (PFX-3.5).\n\n"
+    "The body is the report itself, not a Pact Broker result:\n\n"
+    "- **`pact_verifier_cli --json`** output (`Content-Type: application/json`): the verifier's "
+    "`result` / `errors` / `pendingErrors`, or a `pacts[].interactions[]` listing;\n"
+    "- **JUnit XML** (`application/xml`): one `<testcase>` per interaction; a `<failure>` or "
+    "`<error>` fails it, a `<skipped>` case is not verified and makes the result unsuccessful.\n\n"
+    "The format is taken from `format`, else the content type, else the body. The report is mapped "
+    "to the verification-result model of `POST …/verification-results` and stored as an ordinary "
+    "result, so the matrix, can-i-deploy, pending pacts and webhooks see it. Nothing is dropped "
+    "silently: the answer is the stored result plus an `ingestion` object whose `notices` name, "
+    "with a JSON Pointer or location, every field the reader could not use and every judgement it "
+    "made. A report with no interactions is refused (`422 pact-verification-invalid`) rather than "
+    "published as a pass. The report is the verifier's word: it is not cross-checked against the "
+    "interactions of the pact version.\n\n"
+    "`providerApplicationVersion` is required because neither format carries it. `branch` and "
+    "`tag` record the provider version first, as a verifier's `PUT` calls would. Requires "
+    "`pacts:create`."
+)
+
+_INGEST_BODY = {
+    "required": True,
+    "content": {
+        "application/json": {
+            "schema": {"type": "object", "additionalProperties": True},
+            "example": {
+                "result": False,
+                "errors": [
+                    {
+                        "interactionId": "a1b2c3",
+                        "description": "a request for an invoice",
+                        "mismatch": {"type": "StatusMismatch", "description": "expected 200 but was 404"},
+                    }
+                ],
+            },
+        },
+        "application/xml": {
+            "schema": {"type": "string"},
+            "example": "<testsuite name='pact'><testcase name='a request'/></testsuite>",
+        },
+    },
+}
+
+
+@router.post(
+    _PACT_VERSION_PATH + "/external-verification-results",
+    response_class=HalJSONResponse,
+    status_code=201,
+    summary="Ingest a verification report produced elsewhere",
+    description=_INGEST_DESCRIPTION,
+    openapi_extra={"requestBody": _INGEST_BODY},
+    responses={
+        **_RESULT_ERRORS,
+        201: {"description": "The stored result, with an `ingestion` object (`format`, `interactions`, `notices`)."},
+    },
+)
+def ingest_external_result(
+    tenant_slug: str,
+    provider: str,
+    consumer: str,
+    sha: str,
+    request: Request,
+    provider_application_version: str = Query(
+        alias="providerApplicationVersion", description="The provider version the report verified (a commit SHA)."
+    ),
+    build_url: Optional[str] = Query(default=None, alias="buildUrl", description="http(s) URL of the CI build."),
+    branch: Optional[str] = Query(default=None, description="Record the provider version on this branch first."),
+    tag: Optional[List[str]] = Query(default=None, description="Tag the provider version first (repeatable)."),
+    report_format: str = Query(
+        default=FORMAT_AUTO,
+        alias="format",
+        description=f"One of {', '.join(FORMATS)}; `auto` reads the content type, then the body.",
+    ),
+    verifier: Optional[str] = Query(default=None, description="The verifier's name, recorded in `verifiedBy`."),
+    verifier_version: Optional[str] = Query(
+        default=None, alias="verifierVersion", description="The verifier's version, recorded in `verifiedBy`."
+    ),
+    report_id: Optional[str] = Query(
+        default=None,
+        alias="providerVerificationReportId",
+        description="Link a CTG-4.3 provider verification report (a UUID).",
+    ),
+    raw: bytes = Depends(_read_pact_body),
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> HalJSONResponse:
+    """Ingest a ``pact_verifier_cli`` JSON or JUnit report as a verification result.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        provider: The provider's handle, id or name.
+        consumer: The consumer's handle, id or name.
+        sha: The pact version's SHA-256.
+        request: The request.
+        provider_application_version: The verified provider version.
+        build_url: The CI build, when sent.
+        branch: A branch to record the provider version on.
+        tag: Tags to put on the provider version.
+        report_format: ``auto``, ``pact-verifier-json`` or ``junit``.
+        verifier: ``verifiedBy.implementation``; defaults to the format's.
+        verifier_version: ``verifiedBy.version``.
+        report_id: A linked CTG-4.3 report.
+        raw: The report, already size-limited.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The stored result and its ``ingestion`` report, ``201``.
+
+    Raises:
+        HTTPException: 400/422 for a malformed version, URL, format or report; 404 for an unknown
+            pair or pact version; 403 without ``pacts:create``.
+    """
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.CREATE, target=provider)
+    try:
+        report = read_external_report(raw, content_type=request.headers.get("content-type"), fmt=report_format)
+        # The shared parser checks the version, URL and report id exactly as a verifier's publish does.
+        checked = parse_verification_request(
+            json.dumps(
+                {
+                    "success": report.success,
+                    "providerApplicationVersion": provider_application_version,
+                    "buildUrl": build_url,
+                    "testResults": report.test_results,
+                    "verifiedBy": {"implementation": verifier or report.implementation, "version": verifier_version},
+                    "providerVerificationReportId": report_id,
+                }
+            ).encode("utf-8")
+        )
+    except (PactPublicationError, PacticipantValidationError) as exc:
+        raise _http_error(exc) from exc
+    ingestion = {
+        "format": report.format,
+        "interactions": len(report.test_results),
+        "success": report.success,
+        "notices": notices_as_dicts(report.notices),
+    }
+    return _store_result(
+        request,
+        tenant_slug,
+        provider,
+        consumer,
+        sha,
+        checked,
+        auth_data,
+        user_id,
+        None,
+        branch=branch,
+        tags=tag,
+        extra={"ingestion": ingestion},
+    )
 
 
 def _read_result(request: Request, tenant_slug: str, auth_data: Dict[str, Any], load: Any) -> HalJSONResponse:

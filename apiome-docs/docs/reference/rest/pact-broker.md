@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 76 operations."
+description: "REST endpoints tagged pact-broker: 77 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.674.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.675.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 76 operations
+Tag: `pact-broker` · 77 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -1076,6 +1076,57 @@ Operation id: `read_pact_version_v1_tenants__tenant_slug__pact_broker_pacts_prov
 | --- | --- | --- |
 | 200 | Successful response for read a pact by its content version. | `application/hal+json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/external-verification-results` {#ingest-external-result-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-external-verification-results-post}
+
+**Ingest a verification report produced elsewhere**
+
+Publish the result of a verification that ran **elsewhere** — the report a team's own CI already has — instead of asking Apiome's hosted verifier to replay the pact (PFX-3.5).
+
+The body is the report itself, not a Pact Broker result:
+
+- **`pact_verifier_cli --json`** output (`Content-Type: application/json`): the verifier's `result` / `errors` / `pendingErrors`, or a `pacts[].interactions[]` listing;
+- **JUnit XML** (`application/xml`): one `<testcase>` per interaction; a `<failure>` or `<error>` fails it, a `<skipped>` case is not verified and makes the result unsuccessful.
+
+The format is taken from `format`, else the content type, else the body. The report is mapped to the verification-result model of `POST …/verification-results` and stored as an ordinary result, so the matrix, can-i-deploy, pending pacts and webhooks see it. Nothing is dropped silently: the answer is the stored result plus an `ingestion` object whose `notices` name, with a JSON Pointer or location, every field the reader could not use and every judgement it made. A report with no interactions is refused (`422 pact-verification-invalid`) rather than published as a pass. The report is the verifier's word: it is not cross-checked against the interactions of the pact version.
+
+`providerApplicationVersion` is required because neither format carries it. `branch` and `tag` record the provider version first, as a verifier's `PUT` calls would. Requires `pacts:create`.
+
+Operation id: `ingest_external_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__external_verification_results_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | Path parameter identifying the sha segment. |
+| `providerApplicationVersion` | query | string | yes | The provider version the report verified (a commit SHA). |
+| `buildUrl` | query | string or null | no | http(s) URL of the CI build. |
+| `branch` | query | string or null | no | Record the provider version on this branch first. |
+| `tag` | query | array of string or null | no | Tag the provider version first (repeatable). |
+| `format` | query | string | no | One of auto, pact-verifier-json, junit; `auto` reads the content type, then the body. |
+| `verifier` | query | string or null | no | The verifier's name, recorded in `verifiedBy`. |
+| `verifierVersion` | query | string or null | no | The verifier's version, recorded in `verifiedBy`. |
+| `providerVerificationReportId` | query | string or null | no | Link a CTG-4.3 provider verification report (a UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for ingest a verification report produced elsewhere.
+
+- `application/json` — object
+- `application/xml` — string
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | The stored result, with an `ingestion` object (`format`, `interactions`, `notices`). | `application/hal+json` any |
+| 404 | `pacticipant-not-found` or `pact-not-found`: no such pair or pact version. | — |
+| 422 | `pact-verification-invalid`: the body is malformed (`detail.pointer` names the field); `pact-verification-report-not-found`: `providerVerificationReportId` is not this workspace's. | — |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}` {#read-pact-version-with-metadata-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-pact-version-sha-metadata-metadata-get}
 
