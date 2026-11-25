@@ -30,7 +30,7 @@ is sent.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -42,6 +42,9 @@ from .contract_suite_pact import compile_pact_suite
 from .mcp_credentials import load_endpoint_auth_headers
 from .pact_broker_verification_routes import _result_url
 from .pact_pending_store import load_pending_evidence
+from .pact_provider_state import registry_of
+from .pact_provider_state_handler import RegistryStateHandler
+from .pact_provider_state_store import list_states
 from .pact_publication import PactRecord
 from .pact_publication_store import get_pact_by_sha, list_pact_candidates
 from .pact_selectors import (
@@ -94,7 +97,9 @@ __all__ = [
     "PactVerifyResponse",
     "PublishedResult",
     "VerifiedTarget",
+    "compile_stored_pact",
     "provider_state_handler",
+    "select_provider_pacts",
     "verify_provider_pacts",
 ]
 
@@ -247,6 +252,13 @@ class PactVerification(BaseModel):
             "The immutable evidence run (ECA-1.3) holding every request's assertions; null if it could not be stored."
         ),
     )
+    state_teardown_failures: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Provider-state teardowns that failed after their interaction, each with its reason "
+            "(PFX-3.3). The interactions' results stand; the target may still hold the state."
+        ),
+    )
 
 
 class PactVerifyResponse(BaseModel):
@@ -279,12 +291,16 @@ class PactVerifyResponse(BaseModel):
 
 
 def provider_state_handler(
-    db: Any, tenant_id: str, provider: PacticipantRecord, target: ResolvedTarget
-) -> Optional[ProviderStateHandler]:
-    """The handler that sets this provider's states up on this target, if one is registered.
+    db: Any,
+    tenant_id: str,
+    provider: PacticipantRecord,
+    target: ResolvedTarget,
+    auth_headers: Optional[Dict[str, str]] = None,
+) -> Optional[RegistryStateHandler]:
+    """The handler that sets this provider's registered states up on this target (PFX-3.3).
 
-    The provider-state registry is PFX-3.3 (#6933). Until it lands there is nothing to look up, so
-    this returns ``None`` and an interaction with a provider state is skipped unless the run sets
+    A provider with no registered state gets ``None``: an interaction with a provider state is
+    then skipped with ``provider-state-not-set-up`` unless the run sets
     ``replay_without_state_setup`` (:func:`app.pact_verifier.plan_pact_run`).
 
     Args:
@@ -292,12 +308,15 @@ def provider_state_handler(
         tenant_id: The caller's tenant.
         provider: The provider being verified.
         target: The resolved verification target.
+        auth_headers: The target's materialised credential headers.
 
     Returns:
-        ``None``.
+        The registry's handler, or ``None`` when the provider has registered no state.
     """
-    _ = (db, tenant_id, provider, target)
-    return None
+    states = list_states(db, tenant_id, provider)
+    if not states:
+        return None
+    return RegistryStateHandler(registry_of(states), target, auth_headers or {})
 
 
 # =============================================================================================
@@ -324,7 +343,33 @@ def _selection(request: PactVerifyRequest, branch: Optional[str]) -> ForVerifica
     return parse_for_verification_request(body or None)
 
 
-def _compile(pact: PactRecord) -> ContractSuiteManifest:
+def select_provider_pacts(
+    db: Any, tenant_id: str, provider_ref: str, query: ForVerificationQuery
+) -> Tuple[PacticipantRecord, List[VerifiablePact]]:
+    """The pacts a for-verification query chooses for a provider, work in progress included.
+
+    Shared by the verifier and the provider-state check (PFX-3.3), so both see the same pacts.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider_ref: The provider's handle, id or name.
+        query: The checked for-verification query.
+
+    Returns:
+        ``(provider, selected)``.
+
+    Raises:
+        PacticipantValidationError: ``pacticipant-not-found`` for an unknown provider.
+    """
+    provider, candidates = list_pact_candidates(db, tenant_id, provider_ref)
+    evidence = load_pending_evidence(db, tenant_id, provider.id, query.provider_version_branch)
+    selected = select_verifiable_pacts(candidates, query, evidence)
+    selected += select_wip_pacts(candidates, selected, query, evidence)
+    return provider, selected
+
+
+def compile_stored_pact(pact: PactRecord) -> ContractSuiteManifest:
     """Compile a stored pact exactly as ``POST …/pact-suites/…`` does, so the digests agree."""
     return compile_pact_suite(
         pact.content,
@@ -437,14 +482,23 @@ def _verify_one(
     """
     candidate = selected.candidate
     pact = get_pact_by_sha(db, tenant_id, provider.slug, candidate.consumer_slug, candidate.sha)
-    manifest = _compile(pact)
+    manifest = compile_stored_pact(pact)
     plan = plan_pact_run(
         manifest,
         request.verification,
         target_allows_mutating=target.policy.allow_mutating_methods,
         has_state_handler=handler is not None,
+        state_issue=getattr(handler, "issue", None),
     )
-    run = run_suite(manifest, target, auth_headers=auth_headers, decisions=plan.decisions, hooks=state_hooks(handler))
+    run = run_suite(
+        manifest,
+        target,
+        auth_headers=auth_headers,
+        decisions=plan.decisions,
+        hooks=state_hooks(handler, plan.states_assumed),
+    )
+    drain = getattr(handler, "drain_teardown_failures", None)
+    teardown_failures: List[str] = list(drain()) if callable(drain) else []
     interactions = interaction_results(manifest, run.operations, states_assumed=plan.states_assumed)
     outcome = pact_outcome(interactions, manifest.unsupported)
     evidence_run_id = _record_evidence(tenant_id, request, manifest, run, target_actor, pact)
@@ -492,6 +546,7 @@ def _verify_one(
         not_published_reason=reason,
         result=published,
         evidence_run_id=evidence_run_id,
+        state_teardown_failures=teardown_failures,
     )
 
 
@@ -574,10 +629,7 @@ def verify_provider_pacts(
     request = request.model_copy(update={"provider_version": version})
 
     query = _selection(request, branch)
-    provider, candidates = list_pact_candidates(db, tenant_id, provider_ref)
-    evidence = load_pending_evidence(db, tenant_id, provider.id, query.provider_version_branch)
-    selected = select_verifiable_pacts(candidates, query, evidence)
-    selected += select_wip_pacts(candidates, selected, query, evidence)
+    provider, selected = select_provider_pacts(db, tenant_id, provider_ref, query)
     if len(selected) > MAX_PACTS_PER_RUN:
         raise PactVerifierError(
             CODE_TOO_MANY_PACTS,
@@ -600,8 +652,9 @@ def verify_provider_pacts(
         # carries it; the version itself is recorded by the publication.
         record_broker_version(db, tenant_id, provider.slug, version, actor=actor, branch=branch)
 
-    handler = state_handler or provider_state_handler(db, tenant_id, provider, target)
-    pacts = [
+    handler = state_handler or provider_state_handler(db, tenant_id, provider, target, auth_headers)
+    try:
+        pacts = [
         _verify_one(
             db,
             tenant_id,
@@ -615,10 +668,14 @@ def verify_provider_pacts(
             target_actor=target_actor,
             broker_base=broker_base,
             build_url=build_url,
-            pending=_excused(pact, query),
-        )
-        for pact in selected
-    ]
+                pending=_excused(pact, query),
+            )
+            for pact in selected
+        ]
+    finally:
+        close = getattr(handler, "close", None)
+        if callable(close):
+            close()
     outcome = _run_outcome(pacts)
     return PactVerifyResponse(
         provider=provider.slug,

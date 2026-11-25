@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 70 operations."
+description: "REST endpoints tagged pact-broker: 76 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.672.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.673.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 70 operations
+Tag: `pact-broker` · 76 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2305,6 +2305,193 @@ Request body for verify a provider against its pacts (hosted verifier).
 | 404 | `pacticipant-not-found` or `target-not-found` in this workspace. | — |
 | 422 | `pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`, or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`, a URL refusal). | — |
 
+## `GET /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states` {#list-states-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-get}
+
+**List a provider's registered provider states**
+
+The provider states the provider has registered (PFX-3.3), by name, each with its parameters, its default setup and its per-target overrides. Requires `pacts:view`.
+
+Operation id: `list_states_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list a provider's registered provider states. | `application/json` array of [`ProviderStateRecord`](#schema-providerstaterecord) |
+| 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states` {#create-state-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-post}
+
+**Register a provider state**
+
+Register a state the provider's pacts name, and how the hosted verifier sets it up (PFX-3.3).
+
+**Name** — exactly as consumers write it (`an invoice 1042 exists`); unique per provider.
+
+**Parameters** — `[{name, required, default, description}]`. An interaction that leaves out a required parameter without a default is held back with `provider-state-param-missing`; one that passes an undeclared parameter is reported, and the parameter passed on.
+
+**Setup** — `{kind: "state_change", url, teardown}` posts the Pact state-change body `{state, params, action}` to `url`: a path is sent to the verification target with its credential, an absolute http(s) URL through the SSRF guard with none. `{kind: "fixture", requests, teardown_requests}` sends recorded requests to the target, `${param}` substituted; empty `requests` means the target already holds the data. Credentials are never stored in a fixture.
+
+**Overrides** — `[{target_ref, setup}]`: a different setup on one verification target.
+
+Requires `pacts:create`.
+
+Operation id: `create_state_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for register a provider state.
+
+- `application/json` — [`ProviderStateInput`](#schema-providerstateinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for register a provider state. | `application/json` [`ProviderStateRecord`](#schema-providerstaterecord) |
+| 403 | The credential lacks the `pacts` permission this route needs. | — |
+| 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
+| 409 | `provider-state-name-taken`. | — |
+| 422 | `provider-state-invalid`, with a JSON Pointer to the place. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states/check` {#check-states-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-check-post}
+
+**Check a provider's pacts against its provider states**
+
+Before a hosted verification (PFX-3.3): select the pacts a run would (`selection`, as on `…/verify`), and report every provider state their interactions name — registered or not, the setup it would use on `target_ref`, and each problem: `provider-state-not-registered`, `provider-state-param-missing`, `provider-state-setup-blocked` (blocking — the run holds the interaction back) and `provider-state-param-undeclared` (a warning). `ready` is true when nothing blocks. Nothing is sent to the target. Requires `pacts:view`.
+
+Operation id: `check_states_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states_check_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for check a provider's pacts against its provider states.
+
+- `application/json` — [`StateCheckRequest`](#schema-statecheckrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for check a provider's pacts against its provider states. | `application/json` [`StateCheckResponse`](#schema-statecheckresponse) |
+| 400 | `pact-selector-invalid`. | — |
+| 403 | The credential lacks the `pacts` permission this route needs. | — |
+| 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
+| 422 | `pact-verify-too-many-pacts`. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states/{state_id}` {#get-state-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-state-id-get}
+
+**Read a provider state**
+
+One registered provider state (PFX-3.3). Requires `pacts:view`.
+
+Operation id: `get_state_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states__state_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `state_id` | path | string | yes | Path parameter identifying the state id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a provider state. | `application/json` [`ProviderStateRecord`](#schema-providerstaterecord) |
+| 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states/{state_id}` {#replace-state-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-state-id-put}
+
+**Replace a provider state**
+
+Replace a registered state's name, parameters, setup and overrides (PFX-3.3); the body is the one `POST` takes, and the overrides it lists replace the stored ones. Requires `pacts:edit`.
+
+Operation id: `replace_state_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states__state_id__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `state_id` | path | string | yes | Path parameter identifying the state id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for replace a provider state.
+
+- `application/json` — [`ProviderStateInput`](#schema-providerstateinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for replace a provider state. | `application/json` [`ProviderStateRecord`](#schema-providerstaterecord) |
+| 403 | The credential lacks the `pacts` permission this route needs. | — |
+| 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
+| 409 | `provider-state-name-taken`. | — |
+| 422 | `provider-state-invalid`, with a JSON Pointer to the place. | — |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states/{state_id}` {#delete-state-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-state-id-delete}
+
+**Delete a provider state**
+
+Delete a registered state and its overrides (PFX-3.3). Interactions that name it are then held back with `provider-state-not-registered`. Requires `pacts:delete`.
+
+Operation id: `delete_state_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states__state_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `state_id` | path | string | yes | Path parameter identifying the state id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a provider state. | — |
+| 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -2362,3 +2549,55 @@ The outcome of one hosted verification.
 | `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed`. |
 | `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed) or `no-pacts` (the selectors chose nothing). |
 | `pacts` | array of `PactVerification` | no | One entry per pact verified. |
+
+### `ProviderStateInput` {#schema-providerstateinput}
+
+The body that registers or replaces a provider state.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | The state exactly as consumers write it (`an invoice 1042 exists`). |
+| `description` | string or null | no | What the state means. |
+| `parameters` | array of `StateParameter` | no | The parameters the state takes. |
+| `setup` | `StateSetup` | yes | How the state is set up by default. |
+| `overrides` | array of `StateOverrideInput` | no | Per-target setups, replacing the default on that target. |
+
+### `ProviderStateRecord` {#schema-providerstaterecord}
+
+A registered provider state, as stored.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | The state's id. |
+| `provider` | string | yes | The provider's handle. |
+| `name` | string | yes | The state, as consumers write it. |
+| `description` | string or null | no | What it means. |
+| `parameters` | array of `StateParameter` | no | The parameters it takes. |
+| `setup` | `StateSetup` | yes | The default setup. |
+| `overrides` | array of `StateOverrideRecord` | no | Per-target setups. |
+| `created_at` | string (date-time) | yes | When it was registered. |
+| `updated_at` | string (date-time) | yes | When it last changed. |
+
+### `StateCheckRequest` {#schema-statecheckrequest}
+
+Which pacts to check, and on which target.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `selection` | object | no | Which pacts — the `selection` of the verify request (the body of `…/for-verification`), unchanged. Empty selects what a Pact verifier gets by default. |
+| `target_ref` | string or null | no | Slug or id of the verification target the run would use: its overrides are chosen and its mutating-method policy checked. Omit to check the default setups. |
+
+### `StateCheckResponse` {#schema-statecheckresponse}
+
+Whether a provider can set up every state its pacts name.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `provider` | string | yes | The provider's handle. |
+| `target` | string or null | no | The target checked against, when one was named. |
+| `ready` | boolean | yes | True when no interaction would be held back for its provider states. |
+| `pacts` | integer | yes | How many pacts the selection chose. |
+| `blocking` | integer | yes | How many blocking problems were found. |
+| `warnings` | integer | yes | How many warnings were found. |
+| `states` | array of `StateCheckEntry` | no | Every state the selected interactions name; unregistered ones first. |
+| `unused` | array of string | no | Registered states no selected interaction names. |

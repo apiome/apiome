@@ -2846,6 +2846,17 @@
         "apiome-ui/src/app/components/ade/pactComparisons/ComparisonFidelityReport.tsx",
         "apiome-ui/lib/pact-comparisons.ts"
       ]
+    },
+    {
+      "id": "pact-provider-states",
+      "route": "/ade/dashboard/pacts/provider-states",
+      "waitFor": "[data-testid=\"pps-registered\"]",
+      "data": "fixture:hive-a11y/pact-provider-states.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactProviderStates/ProviderStatesPanels.tsx",
+        "apiome-ui/src/app/components/ade/pactProviderStates/ProviderStatesClient.tsx",
+        "apiome-ui/lib/pact-provider-states.ts"
+      ]
     }
   ]
 }

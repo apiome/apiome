@@ -64,7 +64,7 @@ because the consumer recorded it and Apiome made nothing up.
 | --- | --- |
 | `request` | The method, path, query, headers and body, exactly as the consumer recorded them. |
 | `expect.status_codes` | The recorded status, such as `200`. A Pact 4 `statusCode` rule widens it to a class: `success` becomes `2XX`, `error` becomes `4XX` and `5XX`. |
-| `pact.provider_states` | The states to set up before sending the request, with their parameters. |
+| `pact.provider_states` | The states to set up before sending the request, with their parameters. Register how each is set up in the [provider-state registry](./provider-states.mdx). |
 | `pact.response` | The response the consumer expects: status, headers, body and media type. |
 | `pact.response.matching_rules`, `pact.request_matching_rules` | Every matching rule, with its matcher exactly as written and its place in the pact file. |
 | `pact.response.generators`, `pact.request_generators` | Every generator, kept so nothing is lost. |
@@ -99,7 +99,7 @@ is a `degraded` finding. Something the runner must provide is an `info` finding.
 | `PACT_BODY_UNREADABLE` | unsupported / degraded | A body that cannot be decoded. On the request, the case cannot be sent. On the response, only the status and headers can be compared. |
 | `PACT_EMBEDDED_MATCHER` | degraded | A Pact 1 matcher embedded in a body (`json_class`). The example values are kept, but the embedded rule is not. |
 | `PACT_MATCHING_RULE_UNSUPPORTED` | degraded | A matching rule with a matcher no Pact specification defines, a path that is not a JSONPath, or an unknown location. It is kept in the case. |
-| `PACT_REQUEST_GENERATOR` | degraded | The suite sends the recorded example where a verifier would generate a value. A `ProviderState` generator gets its value when the provider state is set up. |
+| `PACT_REQUEST_GENERATOR` | degraded | The suite sends the recorded example where a verifier would generate a value. A `ProviderState` generator is not filled in from the [provider state](./provider-states.mdx#during-a-run) either: the recorded example is sent. |
 | `PACT_RESPONSE_GENERATOR` | info | Verifiers ignore response generators. The matching rules decide what the provider may return. |
 | `PACT_PROVIDER_STATE` | info | A provider state that must be set up before the interactions that name it. It is reported once for each state. |
 | `PACT_PROVIDER_STATE_UNREADABLE` | degraded | A provider state with no name. The interaction is replayed without it. |

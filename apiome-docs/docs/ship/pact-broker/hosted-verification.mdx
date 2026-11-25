@@ -202,13 +202,23 @@ Fixture headers may not carry credentials. Authentication always comes from the 
 
 ## Provider states
 
-An interaction can assume a **provider state**, such as "invoice 1042 exists". Apiome cannot set
-provider states up yet, so these interactions are skipped with `provider-state-not-set-up` and the
-pact is `incomplete`.
+An interaction can assume a **provider state**, such as "invoice 1042 exists". Register the
+provider's states, with how each one is set up, in the [provider-state registry](./provider-states.mdx).
+The run then sets each interaction's states up before it is replayed and tears them down after.
+
+Before anything is sent, an interaction whose states cannot be set up is held back: a state that
+is not registered, a required parameter the interaction leaves out, or a setup the target's policy
+forbids. Check a provider's pacts for these with `POST …/provider-states/check` before you run
+(see [Check before a run](./provider-states.mdx#check-before-a-run)). A provider that has
+registered no state at all skips every interaction with a state, with `provider-state-not-set-up`.
 
 If your target already holds the data the pacts assume, set
-`"verification": { "replay_without_state_setup": true }`. The interactions are then replayed, and
-each one is marked `"states_set_up": false` in the response and in the published result.
+`"verification": { "replay_without_state_setup": true }`. The interactions that could not be set
+up are then replayed anyway, and each one is marked `"states_set_up": false` in the response and
+in the published result.
+
+A teardown that fails does not change the result. It is listed in the pact's
+`state_teardown_failures`.
 
 ## Why an interaction was not replayed
 
@@ -217,7 +227,11 @@ An interaction that is not replayed has `outcome` `skipped` or `errored`, a `cod
 | Code | Meaning | What to do |
 | --- | --- | --- |
 | `mutating-method-blocked` | The method is mutating, and the target's policy or the run does not allow it. | See [Mutating interactions](#mutating-interactions). |
-| `provider-state-not-set-up` | The interaction assumes a provider state. | See [Provider states](#provider-states). |
+| `provider-state-not-set-up` | The interaction assumes a provider state, and the provider has registered none. | [Register its states](./provider-states.mdx#register-a-state). |
+| `provider-state-not-registered` | The interaction names a state the provider has not registered. | Register the state, or ask the consumer to use a registered name. |
+| `provider-state-param-missing` | The interaction leaves out a parameter the state requires. | Give the parameter a `default`, or ask the consumer to add it. |
+| `provider-state-setup-blocked` | Setting the state up sends a mutating request to a target that forbids it. | Use a state-change URL off the target, or a target that allows it. |
+| `provider-state-setup-failed` | A setup call answered outside `2xx` or could not be sent. The message names the state and the call. | Check the state-change endpoint or the fixture, then run again. |
 | `pact-request-path-not-on-target` | The recorded path names a scheme or a host, or does not start with `/`. It is never sent, because it would leave the target. | Fix the path in the consumer's test. |
 | `transport-error`, `timeout` | The target could not be reached or did not answer in time. | Check the target, then run again. |
 
@@ -247,6 +261,7 @@ Nothing is sent to the target when a run is stopped.
 ## Related
 
 - [Compile a pact into a contract suite](./verification.mdx): the cases a run replays.
+- [Provider states](./provider-states.mdx): register the states a run sets up.
 - [Choose pacts with selectors](./selectors.mdx): what goes in `selection`.
 - [Publish verification results](./verification-results.mdx): how a result is stored and read.
 - [Pact Broker REST reference](../../reference/rest/pact-broker.md): the full request and response

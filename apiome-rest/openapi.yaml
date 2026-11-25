@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.672.0
+  version: 1.673.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -32669,6 +32669,491 @@ paths:
           description: '`pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`,
             or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`,
             a URL refusal).'
+  /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states:
+    get:
+      tags:
+      - pact-broker
+      summary: List a provider's registered provider states
+      description: The provider states the provider has registered (PFX-3.3), by name,
+        each with its parameters, its default setup and its per-target overrides. Requires
+        `pacts:view`.
+      operationId: list_states_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprovidersregisteredproviderstatesauthorization schema.
+          - type: 'null'
+            description: Listaprovidersregisteredproviderstatesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprovidersregisteredproviderstates Xapikey schema.
+          - type: 'null'
+            description: Listaprovidersregisteredproviderstates Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a provider's registered provider
+            states.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProviderStateRecord'
+                title: Response List States Route V1 Tenants  Tenant Slug  Pact Verifier
+                  Providers  Provider  Provider States Get
+                description: Response List States Route V1 Tenants  Tenant Slug  Pact
+                  Verifier Providers  Provider  Provider States Get schema.
+        '404':
+          description: '`pacticipant-not-found` or `provider-state-not-found` in this
+            workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaprovidersregisteredproviderstatesresponse422.
+    post:
+      tags:
+      - pact-broker
+      summary: Register a provider state
+      description: 'Register a state the provider''s pacts name, and how the hosted
+        verifier sets it up (PFX-3.3).
+
+
+        **Name** — exactly as consumers write it (`an invoice 1042 exists`); unique
+        per provider.
+
+
+        **Parameters** — `[{name, required, default, description}]`. An interaction
+        that leaves out a required parameter without a default is held back with `provider-state-param-missing`;
+        one that passes an undeclared parameter is reported, and the parameter passed
+        on.
+
+
+        **Setup** — `{kind: "state_change", url, teardown}` posts the Pact state-change
+        body `{state, params, action}` to `url`: a path is sent to the verification
+        target with its credential, an absolute http(s) URL through the SSRF guard with
+        none. `{kind: "fixture", requests, teardown_requests}` sends recorded requests
+        to the target, `${param}` substituted; empty `requests` means the target already
+        holds the data. Credentials are never stored in a fixture.
+
+
+        **Overrides** — `[{target_ref, setup}]`: a different setup on one verification
+        target.
+
+
+        Requires `pacts:create`.'
+      operationId: create_state_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Registeraproviderstateauthorization schema.
+          - type: 'null'
+            description: Registeraproviderstateauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Registeraproviderstate Xapikey schema.
+          - type: 'null'
+            description: Registeraproviderstate Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderStateInput'
+              description: Request body for registeraproviderstaterequest.
+        description: Request body for register a provider state.
+      responses:
+        '201':
+          description: Successful response for register a provider state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderStateRecord'
+                description: Response payload for registeraproviderstateresponse201.
+        '403':
+          description: The credential lacks the `pacts` permission this route needs.
+        '404':
+          description: '`pacticipant-not-found` or `provider-state-not-found` in this
+            workspace.'
+        '409':
+          description: '`provider-state-name-taken`.'
+        '422':
+          description: '`provider-state-invalid`, with a JSON Pointer to the place.'
+  /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states/check:
+    post:
+      tags:
+      - pact-broker
+      summary: Check a provider's pacts against its provider states
+      description: 'Before a hosted verification (PFX-3.3): select the pacts a run would
+        (`selection`, as on `…/verify`), and report every provider state their interactions
+        name — registered or not, the setup it would use on `target_ref`, and each problem:
+        `provider-state-not-registered`, `provider-state-param-missing`, `provider-state-setup-blocked`
+        (blocking — the run holds the interaction back) and `provider-state-param-undeclared`
+        (a warning). `ready` is true when nothing blocks. Nothing is sent to the target.
+        Requires `pacts:view`.'
+      operationId: check_states_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states_check_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Checkaproviderspactsagainstitsproviderstauthorization schema.
+          - type: 'null'
+            description: Checkaproviderspactsagainstitsproviderstauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Checkaproviderspactsagainstitsproviderst Xapikey schema.
+          - type: 'null'
+            description: Checkaproviderspactsagainstitsproviderst Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateCheckRequest'
+              description: Request body for checkaproviderspactsagainstitsproviderstrequest.
+        description: Request body for check a provider's pacts against its provider
+          states.
+      responses:
+        '200':
+          description: Successful response for check a provider's pacts against its
+            provider states.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateCheckResponse'
+                description: Response payload for checkaproviderspactsagainstitsproviderstresponse200.
+        '403':
+          description: The credential lacks the `pacts` permission this route needs.
+        '404':
+          description: '`pacticipant-not-found` or `provider-state-not-found` in this
+            workspace.'
+        '400':
+          description: '`pact-selector-invalid`.'
+        '422':
+          description: '`pact-verify-too-many-pacts`.'
+  /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states/{state_id}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a provider state
+      description: One registered provider state (PFX-3.3). Requires `pacts:view`.
+      operationId: get_state_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states__state_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: state_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: State Id
+          description: State Id schema.
+        description: Path parameter identifying the state id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaproviderstateauthorization schema.
+          - type: 'null'
+            description: Readaproviderstateauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaproviderstate Xapikey schema.
+          - type: 'null'
+            description: Readaproviderstate Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a provider state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderStateRecord'
+                description: Response payload for readaproviderstateresponse200.
+        '404':
+          description: '`pacticipant-not-found` or `provider-state-not-found` in this
+            workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readaproviderstateresponse422.
+    put:
+      tags:
+      - pact-broker
+      summary: Replace a provider state
+      description: Replace a registered state's name, parameters, setup and overrides
+        (PFX-3.3); the body is the one `POST` takes, and the overrides it lists replace
+        the stored ones. Requires `pacts:edit`.
+      operationId: replace_state_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states__state_id__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: state_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: State Id
+          description: State Id schema.
+        description: Path parameter identifying the state id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceaproviderstateauthorization schema.
+          - type: 'null'
+            description: Replaceaproviderstateauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Replaceaproviderstate Xapikey schema.
+          - type: 'null'
+            description: Replaceaproviderstate Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderStateInput'
+              description: Request body for replaceaproviderstaterequest.
+        description: Request body for replace a provider state.
+      responses:
+        '200':
+          description: Successful response for replace a provider state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderStateRecord'
+                description: Response payload for replaceaproviderstateresponse200.
+        '403':
+          description: The credential lacks the `pacts` permission this route needs.
+        '404':
+          description: '`pacticipant-not-found` or `provider-state-not-found` in this
+            workspace.'
+        '409':
+          description: '`provider-state-name-taken`.'
+        '422':
+          description: '`provider-state-invalid`, with a JSON Pointer to the place.'
+    delete:
+      tags:
+      - pact-broker
+      summary: Delete a provider state
+      description: Delete a registered state and its overrides (PFX-3.3). Interactions
+        that name it are then held back with `provider-state-not-registered`. Requires
+        `pacts:delete`.
+      operationId: delete_state_route_v1_tenants__tenant_slug__pact_verifier_providers__provider__provider_states__state_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: state_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: State Id
+          description: State Id schema.
+        description: Path parameter identifying the state id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteaproviderstateauthorization schema.
+          - type: 'null'
+            description: Deleteaproviderstateauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteaproviderstate Xapikey schema.
+          - type: 'null'
+            description: Deleteaproviderstate Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete a provider state.
+        '404':
+          description: '`pacticipant-not-found` or `provider-state-not-found` in this
+            workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteaproviderstateresponse422.
   /v1/tenants/{tenant_slug}/pact-broker/environments:
     get:
       tags:
@@ -149148,7 +149633,8 @@ components:
           title: Code
           description: 'Why it did not pass: `status-mismatch`, `pact-header-mismatch`,
             `pact-body-mismatch`, `mutating-method-blocked`, `provider-state-not-set-up`,
-            `transport-error`, `timeout` …'
+            `provider-state-not-registered`, `provider-state-param-missing`, `provider-state-setup-blocked`,
+            `provider-state-setup-failed`, `transport-error`, `timeout` …'
         message:
           anyOf:
           - type: string
@@ -169423,6 +169909,15 @@ components:
           title: Evidence Run Id
           description: The immutable evidence run (ECA-1.3) holding every request's assertions;
             null if it could not be stored.
+        state_teardown_failures:
+          items:
+            type: string
+          type: array
+          title: State Teardown Failures
+          description: Provider-state teardowns that failed after their interaction, each
+            with its reason (PFX-3.3). The interactions' results stand; the target may
+            still hold the state.
+          maxItems: 1000
       additionalProperties: false
       type: object
       required:
@@ -169462,8 +169957,10 @@ components:
           type: boolean
           title: Replay Without State Setup
           description: 'Replay interactions that name a provider state even though nothing
-            sets the state up — for a target that already holds the data the pacts assume.
-            Off by default: such interactions are skipped with `provider-state-not-set-up`.'
+            sets the state up — no state is registered, or the registry cannot set this
+            one up — for a target that already holds the data the pacts assume. Off by
+            default: such interactions are skipped with `provider-state-not-set-up` or
+            the registry''s reason.'
           default: false
           example: false
       additionalProperties: false
@@ -215927,6 +216424,505 @@ components:
       - policyVersion
       title: WriteRuleResponse
       description: The outcome of a rule write.
+    FixtureRequest:
+      properties:
+        method:
+          type: string
+          title: Method
+          description: '`GET`, `POST`, `PUT`, `PATCH`, `DELETE` or `HEAD`.'
+          example: example
+        path:
+          type: string
+          maxLength: 2000
+          title: Path
+          description: A path on the target (`/test-data/invoices/${id}`).
+          example: /resources/{id}
+        headers:
+          additionalProperties:
+            type: string
+          type: object
+          title: Headers
+          description: 'Request headers. Credentials are refused: the target''s own credential
+            is sent.'
+        body:
+          anyOf:
+          - description: Request body for fixture.
+          - type: 'null'
+            description: Request body for fixture.
+          title: Body
+          description: A JSON body, sent as `application/json`.
+      additionalProperties: false
+      type: object
+      required:
+      - method
+      - path
+      title: FixtureRequest
+      description: One request of a recorded fixture, sent to the verification target.
+    ProviderStateInput:
+      properties:
+        name:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Name
+          description: The state exactly as consumers write it (`an invoice 1042 exists`).
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            maxLength: 1000
+            description: Provider State Input schema.
+          - type: 'null'
+            description: Provider State Input schema.
+          title: Description
+          description: What the state means.
+        parameters:
+          items:
+            $ref: '#/components/schemas/StateParameter'
+          type: array
+          title: Parameters
+          description: The parameters the state takes.
+          maxItems: 1000
+        setup:
+          $ref: '#/components/schemas/StateSetup'
+          description: How the state is set up by default.
+        overrides:
+          items:
+            $ref: '#/components/schemas/StateOverrideInput'
+          type: array
+          title: Overrides
+          description: Per-target setups, replacing the default on that target.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - setup
+      title: ProviderStateInput
+      description: The body that registers or replaces a provider state.
+    ProviderStateRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: The state's id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        name:
+          type: string
+          title: Name
+          description: The state, as consumers write it.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: Provider State schema.
+          - type: 'null'
+            description: Provider State schema.
+          title: Description
+          description: What it means.
+        parameters:
+          items:
+            $ref: '#/components/schemas/StateParameter'
+          type: array
+          title: Parameters
+          description: The parameters it takes.
+          maxItems: 1000
+        setup:
+          $ref: '#/components/schemas/StateSetup'
+          description: The default setup.
+        overrides:
+          items:
+            $ref: '#/components/schemas/StateOverrideRecord'
+          type: array
+          title: Overrides
+          description: Per-target setups.
+          maxItems: 1000
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: When it was registered.
+          example: '2026-07-12T00:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: When it last changed.
+          example: '2026-07-12T00:00:00Z'
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - provider
+      - name
+      - setup
+      - created_at
+      - updated_at
+      title: ProviderStateRecord
+      description: A registered provider state, as stored.
+    StateCheckEntry:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The state, as the interactions write it.
+          example: Pet
+        registered:
+          type: boolean
+          title: Registered
+          description: Whether the provider has registered it.
+          example: false
+        state_id:
+          anyOf:
+          - type: string
+            description: State Check Entry schema.
+          - type: 'null'
+            description: State Check Entry schema.
+          title: State Id
+          description: The registered state's id.
+        setup_kind:
+          anyOf:
+          - type: string
+            description: State Check Entry schema.
+          - type: 'null'
+            description: State Check Entry schema.
+          title: Setup Kind
+          description: '`state_change` or `fixture` — the setup used on the target (or
+            the default).'
+        overridden:
+          type: boolean
+          title: Overridden
+          description: Whether the target has its own setup for the state.
+          default: false
+          example: false
+        interactions:
+          type: integer
+          title: Interactions
+          description: How many selected interactions name it.
+          example: 1
+        uses:
+          items:
+            $ref: '#/components/schemas/StateUse'
+          type: array
+          title: Uses
+          description: The interactions, the first 20.
+          maxItems: 1000
+        problems:
+          items:
+            $ref: '#/components/schemas/StateProblem'
+          type: array
+          title: Problems
+          description: What would hold an interaction back, or is worth knowing.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - registered
+      - interactions
+      title: StateCheckEntry
+      description: One provider state the selected pacts name.
+    StateCheckRequest:
+      properties:
+        selection:
+          additionalProperties: true
+          type: object
+          title: Selection
+          description: Which pacts — the `selection` of the verify request (the body of
+            `…/for-verification`), unchanged. Empty selects what a Pact verifier gets
+            by default.
+        target_ref:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Request body for state check.
+          - type: 'null'
+            description: Request body for state check.
+          title: Target Ref
+          description: 'Slug or id of the verification target the run would use: its overrides
+            are chosen and its mutating-method policy checked. Omit to check the default
+            setups.'
+      additionalProperties: false
+      type: object
+      title: StateCheckRequest
+      description: Which pacts to check, and on which target.
+    StateCheckResponse:
+      properties:
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        target:
+          anyOf:
+          - type: string
+            description: Response payload for state check.
+          - type: 'null'
+            description: Response payload for state check.
+          title: Target
+          description: The target checked against, when one was named.
+        ready:
+          type: boolean
+          title: Ready
+          description: True when no interaction would be held back for its provider states.
+          example: false
+        pacts:
+          type: integer
+          title: Pacts
+          description: How many pacts the selection chose.
+          example: 1
+        blocking:
+          type: integer
+          title: Blocking
+          description: How many blocking problems were found.
+          example: 1
+        warnings:
+          type: integer
+          title: Warnings
+          description: How many warnings were found.
+          example: 1
+        states:
+          items:
+            $ref: '#/components/schemas/StateCheckEntry'
+          type: array
+          title: States
+          description: Every state the selected interactions name; unregistered ones first.
+          maxItems: 1000
+        unused:
+          items:
+            type: string
+          type: array
+          title: Unused
+          description: Registered states no selected interaction names.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - provider
+      - ready
+      - pacts
+      - blocking
+      - warnings
+      title: StateCheckResponse
+      description: Whether a provider can set up every state its pacts name.
+    StateOverrideInput:
+      properties:
+        target_ref:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Target Ref
+          description: Slug or id of the verification target.
+          example: example
+        setup:
+          $ref: '#/components/schemas/StateSetup'
+          description: The setup used on that target instead of the default.
+      additionalProperties: false
+      type: object
+      required:
+      - target_ref
+      - setup
+      title: StateOverrideInput
+      description: A different setup for the state on one verification target.
+    StateOverrideRecord:
+      properties:
+        target_id:
+          type: string
+          title: Target Id
+          description: The verification target's id.
+          example: target_01h2xcejqtf3fz5y5j0v8k9m2p
+        target_slug:
+          type: string
+          title: Target Slug
+          description: Its handle.
+          example: example-resource
+        setup:
+          $ref: '#/components/schemas/StateSetup'
+          description: The setup used on that target.
+      additionalProperties: false
+      type: object
+      required:
+      - target_id
+      - target_slug
+      - setup
+      title: StateOverrideRecord
+      description: A stored per-target setup.
+    StateParameter:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The parameter's name, as interactions write it in `params` (`id`).
+          example: Pet
+        required:
+          type: boolean
+          title: Required
+          description: Whether an interaction must supply it (a `default` satisfies it).
+          default: false
+          example: false
+        default:
+          anyOf:
+          - description: State Parameter schema.
+          - type: 'null'
+            description: State Parameter schema.
+          title: Default
+          description: The value used when an interaction does not supply one.
+        description:
+          anyOf:
+          - type: string
+            maxLength: 500
+            description: State Parameter schema.
+          - type: 'null'
+            description: State Parameter schema.
+          title: Description
+          description: What it means.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      title: StateParameter
+      description: One parameter a state takes.
+    StateProblem:
+      properties:
+        code:
+          type: string
+          title: Code
+          description: '`provider-state-not-registered`, `provider-state-param-missing`,
+            `provider-state-param-undeclared` or `provider-state-setup-blocked`.'
+          example: example
+        severity:
+          type: string
+          title: Severity
+          description: '`blocking` (the interaction is held back) or `warning` (it still
+            runs).'
+          example: warning
+        state:
+          type: string
+          title: State
+          description: The state concerned.
+          example: example
+        parameter:
+          anyOf:
+          - type: string
+            description: State Problem schema.
+          - type: 'null'
+            description: State Problem schema.
+          title: Parameter
+          description: The parameter concerned, when there is one.
+        message:
+          type: string
+          title: Message
+          description: What is wrong and what to do, in a sentence.
+          example: Example validation message.
+        consumer:
+          anyOf:
+          - type: string
+            description: State Problem schema.
+          - type: 'null'
+            description: State Problem schema.
+          title: Consumer
+          description: The consumer whose interaction it is (the check only).
+        interaction:
+          anyOf:
+          - type: string
+            description: State Problem schema.
+          - type: 'null'
+            description: State Problem schema.
+          title: Interaction
+          description: The interaction's description (the check only).
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - severity
+      - state
+      - message
+      title: StateProblem
+      description: One reason a state named by an interaction cannot be set up as written.
+    StateSetup:
+      properties:
+        kind:
+          type: string
+          enum:
+          - state_change
+          - fixture
+          title: Kind
+          description: '`state_change` or `fixture`.'
+          example: state_change
+        url:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            description: State Setup schema.
+          - type: 'null'
+            description: State Setup schema.
+          title: Url
+          description: '`state_change` only: a path on the verification target (`/_pact/provider-states`,
+            sent with the target''s credential) or an absolute http(s) URL (SSRF-guarded,
+            no credential).'
+        teardown:
+          type: boolean
+          title: Teardown
+          description: '`state_change` only: also call the URL with `action: teardown`
+            after the interaction.'
+          default: true
+          example: false
+        requests:
+          items:
+            $ref: '#/components/schemas/FixtureRequest'
+          type: array
+          title: Requests
+          description: '`fixture` only: the requests that put the target into the state.
+            Empty: it already is.'
+          maxItems: 1000
+        teardown_requests:
+          items:
+            $ref: '#/components/schemas/FixtureRequest'
+          type: array
+          title: Teardown Requests
+          description: '`fixture` only: the requests that take it out again.'
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      title: StateSetup
+      description: How a state is set up — a state-change call or a recorded fixture.
+    StateUse:
+      properties:
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer's handle.
+          example: example
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version.
+          example: 1.0.0
+        interaction:
+          type: string
+          title: Interaction
+          description: The interaction's description.
+          example: example
+        params:
+          additionalProperties: true
+          type: object
+          title: Params
+          description: The parameters it passes.
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      - pact_version_sha
+      - interaction
+      title: StateUse
+      description: One interaction that names a state.
   securitySchemes:
     Bearer:
       type: http
