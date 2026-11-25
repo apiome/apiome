@@ -1,0 +1,26 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "order created, second attempt",
+      "metadata": {
+        "channel": "orderCreated",
+        "attempt": "3"
+      },
+      "contents": {
+        "id": 5,
+        "status": "shipped"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

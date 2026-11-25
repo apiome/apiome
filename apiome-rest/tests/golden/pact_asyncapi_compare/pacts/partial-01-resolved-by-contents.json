@@ -1,0 +1,25 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "a shipping notice",
+      "metadata": {
+        "topic": "orders.events"
+      },
+      "contents": {
+        "orderId": 1,
+        "trackingNumber": "1Z999"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

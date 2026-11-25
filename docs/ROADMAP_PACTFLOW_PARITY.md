@@ -266,7 +266,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-3.6 · [#6936](https://github.com/apiome/apiome/issues/6936) | Message (async) pacts | Pact v3/v4 messages verified against AsyncAPI | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
 | PFX-3.7 | Plugin pacts: gRPC and GraphQL | Plugin-framework interactions on the XPC adapters | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
 
 **✅ PFX-3.1 · #6931 Pact → contract-suite compiler — Complete** — the ECA-1.1 compiler's case model gains a `pact` source: request, expected response, provider state, matching rules; manifest stays byte-identical per (pact version, options) with a `sha256:` digest. Unsupported semantics reported, never skipped. *Deps:* 1.2, ECA-1.1. **Docs:** reference regen; `…/pact-broker/verification.mdx`.
@@ -279,7 +278,7 @@ flowchart LR
 
 **✅ PFX-3.5 · #6935 External-verifier result ingestion — Complete** — endpoint and CLI for results produced elsewhere (pact_verifier_cli JSON, JUnit) mapped to the verification-result model. *Deps:* 1.4. **Docs:** `…/pact-broker/verification-results.mdx`.
 
-**PFX-3.6 · #6936 Message pacts** — Pact v3/v4 message interactions resolved to AsyncAPI channels/messages (reuses the PCX event-catalogue and AsyncAPI adapter) and compared like 2.2; verifier for synchronous message handlers deferred. *Deps:* 2.2.
+**✅ PFX-3.6 · #6936 Message pacts — Complete** — Pact v3 `messages` and v4 `Asynchronous/Messages` compared with an **AsyncAPI 2.x / 3.x provider contract** (`contractType: asyncapi`, read from the document when omitted, inline only; structural check, no migration) by `pact_asyncapi_compare` like 2.2: resolved onto a channel/message (`pact_asyncapi_index`: metadata destination, address templates, message name, only messages the provider sends, first payload match), then content type, metadata against `headers`, contents against a JSON Schema `payload` (reuses the AsyncAPI payload helpers) and matching rules. New message codes on the comparison-rules page; HTTP interactions and Pact 4 `Synchronous/Messages` are reported as not compared (synchronous handlers deferred). The fidelity report lists the message checks. Golden corpus of 28 cases. *Deps:* 2.2. **Docs:** `…/pact-broker/message-pacts.mdx`, comparison-rules section.
 
 **PFX-3.7 · #6937 Plugin pacts: gRPC and GraphQL** — Pact plugin-framework interactions mapped onto XPC-1.2/3.2 adapters and the XPC-1.6 GraphQL consumer-contract model. *Deps:* 3.2, XPC-1.6 #5733.
 

@@ -1,0 +1,54 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "interactions": [
+    {
+      "type": "Asynchronous/Messages",
+      "key": "4f1a2b3c",
+      "pending": false,
+      "description": "an order created message",
+      "contents": {
+        "content": {
+          "id": 3,
+          "status": "paid",
+          "lines": []
+        },
+        "contentType": "application/json",
+        "encoded": false
+      },
+      "metadata": {
+        "contentType": "application/json",
+        "destination": "orders.us.created"
+      },
+      "matchingRules": {
+        "content": {
+          "$.id": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "number"
+              }
+            ]
+          }
+        }
+      },
+      "providerStates": [
+        {
+          "name": "an order exists"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.6.17"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

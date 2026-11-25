@@ -1,0 +1,24 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "ExternalEvent",
+      "metadata": {
+        "topic": "external.events"
+      },
+      "contents": {
+        "x": 1
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

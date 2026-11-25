@@ -1,0 +1,68 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "InvoiceAvro",
+      "pointer": "/messages/0",
+      "verdict": "partial",
+      "operation": null,
+      "message": {
+        "channel": "invoices",
+        "address": "invoices",
+        "message": "InvoiceAvro",
+        "pointer": "/channels/invoices/messages/InvoiceAvro",
+        "resolvedPointer": "/channels/invoices/messages/InvoiceAvro",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "body-not-compared",
+          "message": "the payload of 'InvoiceAvro' is written in 'application/vnd.apache.avro', not JSON Schema, so the contents were not validated against it",
+          "pactPointer": "/messages/0/contents",
+          "reason": "schema-format",
+          "oasPointer": "/channels/invoices/messages/InvoiceAvro/payload/schema"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "OrderCreated",
+      "metadata": {
+        "contentType": "application/xml"
+      },
+      "contents": {
+        "id": 1,
+        "status": "new"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

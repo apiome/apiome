@@ -1,0 +1,96 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "4.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 4,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "generator-not-applied",
+      "matching-rule-not-mapped",
+      "matching-rule-unverified"
+    ],
+    "matchingRules": {
+      "total": 3,
+      "verified": 0,
+      "unverified": 1,
+      "notMapped": 2
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "OrderCreated",
+      "pointer": "/interactions/0",
+      "verdict": "partial",
+      "operation": null,
+      "message": {
+        "channel": "orderCreated",
+        "address": "orders.{region}.created",
+        "message": "OrderCreated",
+        "pointer": "/channels/orderCreated/messages/OrderCreated",
+        "resolvedPointer": "/components/messages/OrderCreated",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body",
+        "message.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 3,
+        "verified": 0,
+        "unverified": 1,
+        "notMapped": 2
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-unverified",
+          "message": "the message body matching rule 'regex' at $.customer is not proven by the provider's schema (pattern-not-guaranteed)",
+          "pactPointer": "/interactions/0/matchingRules/content/$.customer/matchers/0",
+          "reason": "pattern-not-guaranteed",
+          "oasPointer": "/components/schemas/Order/properties/customer",
+          "matcher": "regex",
+          "constraint": {
+            "type": "string",
+            "pattern": "^[a-z]+$"
+          }
+        },
+        {
+          "code": "matching-rule-not-mapped",
+          "message": "the message body matching rule 'integer' at $.id has no lossless JSON Schema mapping (combined-with-or); only its example was compared",
+          "pactPointer": "/interactions/0/matchingRules/content/$.id/matchers/0",
+          "reason": "combined-with-or",
+          "matcher": "integer"
+        },
+        {
+          "code": "matching-rule-not-mapped",
+          "message": "the message body matching rule 'type' at $.id has no lossless JSON Schema mapping (combined-with-or); only its example was compared",
+          "pactPointer": "/interactions/0/matchingRules/content/$.id/matchers/1",
+          "reason": "combined-with-or",
+          "matcher": "type"
+        },
+        {
+          "code": "generator-not-applied",
+          "message": "the content generator 'RandomInt' replaces the example when the pact is verified; only the example was compared",
+          "pactPointer": "/interactions/0/generators/content/$.id",
+          "matcher": "RandomInt"
+        }
+      ]
+    }
+  ]
+}

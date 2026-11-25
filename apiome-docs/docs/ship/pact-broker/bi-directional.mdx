@@ -27,7 +27,8 @@ You need:
    **Pacts** → **Create** (the built-in **Editor** role has it).
 2. **An OpenAPI 3.0, 3.1 or 3.2 document** for the provider, in JSON or YAML — **or** an Apiome
    project that describes it. Swagger 2.0 is not accepted: import it into Apiome and publish from
-   the project instead.
+   the project instead. For a provider that sends messages, publish its **AsyncAPI 2.x or 3.x**
+   document instead: see [Message pacts](./message-pacts.mdx).
 3. **A self-verification report** from a tool that tested the provider against that document —
    Schemathesis, Dredd, Newman or any JUnit writer — or an Apiome provider-verification report.
 
@@ -57,9 +58,9 @@ EOF
 
 | Field | What it is |
 | --- | --- |
-| `content` | The OpenAPI document, base64-encoded. |
+| `content` | The OpenAPI (or AsyncAPI) document, base64-encoded. |
 | `contentType` | `application/json` or `application/yaml`. Leave it out and Apiome reads a document that starts with `{` as JSON and anything else as YAML. |
-| `contractType` | `oas`, the only type accepted. It is the default. |
+| `contractType` | `oas` for an OpenAPI document, or `asyncapi` for an AsyncAPI document compared with [message pacts](./message-pacts.mdx). Leave it out and Apiome reads it from the document. |
 | `branch`, `tags`, `buildUrl` | Recorded on the provider version, as when you [record a version](./concepts.mdx#the-rules-the-registry-keeps). |
 | `verificationResults` | The provider's self-verification evidence. See [Self-verification evidence](#self-verification-evidence). |
 
@@ -415,7 +416,8 @@ comparison, so its report is a `404 pact-verification-not-found` that says so.
 | --- | --- |
 | `providerVersion` | The provider version that published it. |
 | `contentSha` | The SHA-256 of the document's canonical JSON. |
-| `oasVersion`, `operationCount` | The `openapi` version it declares, and how many operations it has. |
+| `contractType` | `oas` or `asyncapi`. |
+| `oasVersion`, `operationCount` | The `openapi` version it declares, and how many operations it has. An AsyncAPI contract has `asyncapiVersion` and `messageCount` instead. |
 | `contentType` | How it was sent: `application/json`, `application/yaml`, or `application/json` when rendered from Apiome. |
 | `source` | `{"kind": "inline"}` for an uploaded document. For one rendered from Apiome, `kind` is `apiome`, with `project` and `version` as they were named at publishing, and their ids. |
 | `verificationResults` | The self-verification results as sent, with `contentSha256` and `contentBytes` of the report and the `evidence` Apiome read, or `null`. |
@@ -444,9 +446,9 @@ its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901), in the OpenAPI docum
 
 | Status | Code | What to do |
 | --- | --- | --- |
-| `422` | `provider-contract-invalid` | The document is not an OpenAPI 3.x document. `pointer` is the place **in the document**: `/swagger` for Swagger 2.0, `/asyncapi` for AsyncAPI, `/openapi` for a missing or unsupported version, otherwise the first schema error. `""` means the whole document: it does not parse, or breaks a size or nesting limit. |
+| `422` | `provider-contract-invalid` | The document is not an OpenAPI 3.x document. `pointer` is the place **in the document**: `/swagger` for Swagger 2.0, `/asyncapi` for an AsyncAPI document sent with `contractType: oas` (send `asyncapi`, or leave it out), `/openapi` for a missing or unsupported version, otherwise the first schema error. `""` means the whole document: it does not parse, or breaks a size or nesting limit. For an AsyncAPI contract, see [What is checked when you publish](./message-pacts.mdx#what-is-checked-when-you-publish). |
 | `422` | `provider-contract-request-invalid` | A field **in the request** is wrong: neither or both of `content` and `apiomeVersion`, content that is not base64, `verificationResults` without `success` (and without a report id), both a report and a report id, or a report id that is not a UUID. |
-| `422` | `provider-contract-unsupported` | A `contractType` other than `oas`, or a `contentType` that is neither JSON nor YAML. |
+| `422` | `provider-contract-unsupported` | A `contractType` other than `oas` or `asyncapi`, `asyncapi` with `apiomeVersion` (send an AsyncAPI contract inline), or a `contentType` that is neither JSON nor YAML. |
 | `422` | `provider-contract-source-not-found` | `apiomeVersion` names no project or version of this workspace, or names only a version for a provider that is not bound to a project. |
 | `422` | `provider-contract-evidence-unsupported` | The report's `contentType` is not one a report is read as (`pointer` is `/verificationResults/contentType`). |
 | `422` | `provider-contract-evidence-invalid` | The report is not what its type says: XML that does not parse, is not JUnit or declares a DTD; JSON or NDJSON that does not parse; text that is not UTF-8. `message` says where. |
@@ -586,6 +588,7 @@ member with the **Editor** role.
 
 ## Related
 
+- [Message pacts](./message-pacts.mdx) — compare message pacts with an AsyncAPI provider contract.
 - [Comparison rules](./comparison-rules.mdx) — how a pact is compared with a provider contract.
 - [Can I deploy?](./can-i-deploy.mdx#bi-directional-results) — how bi-directional results decide a deployment.
 - [Publish and fetch pacts](./publish-pacts.mdx) — the consumer's side.

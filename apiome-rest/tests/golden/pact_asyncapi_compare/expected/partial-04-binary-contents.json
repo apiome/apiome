@@ -1,0 +1,68 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "InvoicePdf",
+      "pointer": "/messages/0",
+      "verdict": "partial",
+      "operation": null,
+      "message": {
+        "channel": "invoices",
+        "address": "invoices",
+        "message": "InvoicePdf",
+        "pointer": "/channels/invoices/messages/InvoicePdf",
+        "resolvedPointer": "/channels/invoices/messages/InvoicePdf",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "body-not-compared",
+          "message": "the message contents are 'application/pdf', which is not JSON, so they were not validated against a schema",
+          "pactPointer": "/messages/0/contents",
+          "reason": "content-type",
+          "oasPointer": "/channels/invoices/messages/InvoicePdf/payload"
+        }
+      ]
+    }
+  ]
+}

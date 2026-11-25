@@ -1,0 +1,71 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {"title": "Streetlights", "version": "1.0.0"},
+  "defaultContentType": "application/json",
+  "channels": {
+    "smartylighting/streetlights/{streetlightId}/lighting/measured": {
+      "parameters": {"streetlightId": {"schema": {"type": "string"}}},
+      "subscribe": {
+        "operationId": "sendLightMeasurement",
+        "message": {"$ref": "#/components/messages/lightMeasured"}
+      }
+    },
+    "smartylighting/streetlights/{streetlightId}/command/turnon": {
+      "parameters": {"streetlightId": {"schema": {"type": "string"}}},
+      "publish": {
+        "operationId": "receiveTurnOn",
+        "message": {"$ref": "#/components/messages/turnOnOff"}
+      }
+    },
+    "smartylighting/streetlights/{streetlightId}/command/alerts": {
+      "subscribe": {
+        "operationId": "sendAlert",
+        "message": {
+          "oneOf": [
+            {"$ref": "#/components/messages/dimLight"},
+            {"$ref": "#/components/messages/lampFailure"}
+          ]
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "lightMeasured": {
+        "name": "lightMeasured",
+        "title": "Light measured",
+        "contentType": "application/json",
+        "payload": {"$ref": "#/components/schemas/lightMeasuredPayload"}
+      },
+      "turnOnOff": {
+        "name": "turnOnOff",
+        "payload": {"type": "object", "properties": {"command": {"type": "string", "enum": ["on", "off"]}}}
+      },
+      "dimLight": {
+        "name": "dimLight",
+        "payload": {
+          "type": "object",
+          "required": ["percentage"],
+          "properties": {"percentage": {"type": "integer", "minimum": 0, "maximum": 100}}
+        }
+      },
+      "lampFailure": {
+        "name": "lampFailure",
+        "payload": {
+          "type": "object",
+          "required": ["code"],
+          "properties": {"code": {"type": "string", "pattern": "^E[0-9]{3}$"}}
+        }
+      }
+    },
+    "schemas": {
+      "lightMeasuredPayload": {
+        "type": "object",
+        "properties": {
+          "lumens": {"type": "integer", "minimum": 0},
+          "sentAt": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "verdict": "pass",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 1,
+    "partial": 0,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "order created, second attempt",
+      "pointer": "/messages/0",
+      "verdict": "pass",
+      "operation": null,
+      "message": {
+        "channel": "orderCreated",
+        "address": "orders.{region}.created",
+        "message": "OrderCreated",
+        "pointer": "/channels/orderCreated/messages/OrderCreated",
+        "resolvedPointer": "/components/messages/OrderCreated",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

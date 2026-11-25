@@ -1,0 +1,25 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "an audit entry",
+      "metadata": {
+        "topic": "audit.log"
+      },
+      "contents": {
+        "actor": "alice",
+        "action": "refund"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

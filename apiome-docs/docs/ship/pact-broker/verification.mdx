@@ -93,7 +93,7 @@ is a `degraded` finding. Something the runner must provide is an `info` finding.
 
 | Code | Level | Meaning |
 | --- | --- | --- |
-| `UNSUPPORTED_OPERATION_KIND` | unsupported | A message interaction (Pact 3 `messages`, Pact 4 `Asynchronous/Messages` or `Synchronous/Messages`). There is no HTTP exchange to replay. |
+| `UNSUPPORTED_OPERATION_KIND` | unsupported | A message interaction (Pact 3 `messages`, Pact 4 `Asynchronous/Messages` or `Synchronous/Messages`). There is no HTTP exchange to replay. Asynchronous messages are checked against the provider's AsyncAPI document instead: see [Message pacts](./message-pacts.mdx). |
 | `PACT_PLUGIN_INTERACTION` | unsupported | A Pact 4 plugin interaction (gRPC, protobuf, CSV). The plugin defines the exchange. |
 | `PACT_INTERACTION_MALFORMED` | unsupported | The interaction has no request method or path, so there is nothing to send. |
 | `PACT_BODY_UNREADABLE` | unsupported / degraded / info | A body that cannot be decoded. On the request, the case cannot be sent. On the response, only the status and headers can be compared — unless a `contentType` rule on `$` judges the body by its bytes, which is `info` (see [Supported matching rules](./hosted-verification.mdx#supported-matching-rules)). |

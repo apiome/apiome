@@ -246,20 +246,65 @@ def _transform_document(
             _transform_document(value, oas30=oas30, relax=relax, probe_one_of=probe_one_of)
 
 
+#: AsyncAPI keys whose value is one schema: a message's ``payload`` and ``headers``. A
+#: ``payload`` may instead be an AsyncAPI 3 Multi Format Schema Object (``{schemaFormat, schema}``).
+_ASYNCAPI_SCHEMA_KEYS = ("payload", "headers")
+
+
+def _transform_asyncapi_document(node: Any, *, relax: bool, probe_one_of: bool = False) -> None:
+    """Rewrite every schema an AsyncAPI document holds, in place — PFX-3.6 (#6936).
+
+    An AsyncAPI document keeps its schemas under a message's ``payload`` and ``headers`` and under
+    ``components.schemas``; everything else (channels, operations, servers, bindings) is walked
+    to find them. The AsyncAPI Schema Object is a JSON Schema superset with no ``nullable``, so
+    only the view rewrite applies (never the OpenAPI 3.0 dialect lift).
+
+    Args:
+        node: A node of the document outside any schema.
+        relax: Whether to build the response view (the one a message is checked in).
+        probe_one_of: Build the probe view (see :data:`RESPONSE_PROBE`).
+    """
+    if isinstance(node, list):
+        for item in node:
+            _transform_asyncapi_document(item, relax=relax, probe_one_of=probe_one_of)
+        return
+    if not isinstance(node, dict):
+        return
+    for key, value in node.items():
+        if key in _DATA_KEYS or key.startswith("x-") or key == "bindings":
+            continue
+        if key in _ASYNCAPI_SCHEMA_KEYS and isinstance(value, dict):
+            target = value.get("schema") if "schemaFormat" in value and "schema" in value else value
+            _transform_schema(
+                target, oas30=False, relax=relax, value_position=True, probe_one_of=probe_one_of
+            )
+        elif key == "schemas" and isinstance(value, dict):
+            for schema in value.values():
+                _transform_schema(
+                    schema, oas30=False, relax=relax, value_position=False, probe_one_of=probe_one_of
+                )
+        else:
+            _transform_asyncapi_document(value, relax=relax, probe_one_of=probe_one_of)
+
+
 class ProviderSchemas:
     """One provider OpenAPI document, ready to validate values and to be asked about its shape.
 
     Built once per comparison. The published document is never mutated: each view is a copy.
+    An AsyncAPI document (PFX-3.6) is read the same way once ``asyncapi`` is set: its schemas
+    are found under ``payload`` / ``headers`` / ``components.schemas`` instead of ``schema``.
     """
 
-    def __init__(self, document: Dict[str, Any]) -> None:
+    def __init__(self, document: Dict[str, Any], *, asyncapi: bool = False) -> None:
         """Prepare both views of a document.
 
         Args:
-            document: The provider's OpenAPI 3.x document.
+            document: The provider's OpenAPI 3.x document, or its AsyncAPI 2.x / 3.x document.
+            asyncapi: Whether ``document`` is an AsyncAPI document.
         """
         self.index = SpecIndex(document)
-        self.oas30 = str(document.get("openapi", "")).strip().startswith("3.0")
+        self.asyncapi = asyncapi
+        self.oas30 = not asyncapi and str(document.get("openapi", "")).strip().startswith("3.0")
         self._document = document
         self._views: Dict[str, Dict[str, Any]] = {}
         self._registries: Dict[str, Registry] = {}
@@ -282,12 +327,17 @@ class ProviderSchemas:
         """
         if side not in self._views:
             view = copy.deepcopy(self._document)
-            _transform_document(
-                view,
-                oas30=self.oas30,
-                relax=side != REQUEST,
-                probe_one_of=side == RESPONSE_PROBE,
-            )
+            if self.asyncapi:
+                _transform_asyncapi_document(
+                    view, relax=side != REQUEST, probe_one_of=side == RESPONSE_PROBE
+                )
+            else:
+                _transform_document(
+                    view,
+                    oas30=self.oas30,
+                    relax=side != REQUEST,
+                    probe_one_of=side == RESPONSE_PROBE,
+                )
             self._views[side] = view
         return self._views[side]
 
@@ -330,7 +380,8 @@ class ProviderSchemas:
         """Validate a value against the schema at a pointer of the document.
 
         Args:
-            side: :data:`REQUEST` or :data:`RESPONSE` — which view the schema is read in.
+            side: :data:`REQUEST` or :data:`RESPONSE` — which view the schema is read in. Any
+                other side (``message``) reads the response view.
             pointer: JSON Pointer of the schema node in the document.
             instance: The parsed JSON value.
 
@@ -341,6 +392,9 @@ class ProviderSchemas:
             be used at all (it does not compile, or needs a ``$ref`` outside the document):
             the value was **not** checked, which the caller must report, never assume a pass.
         """
+        # Any side other than the request one (a message, PFX-3.6) is read as a response: the
+        # provider produces it and the consumer reads it.
+        side = side if side in (REQUEST, RESPONSE_PROBE) else RESPONSE
         wrapper = {"$ref": f"{self._uri(side)}#{quote(pointer, safe=_FRAGMENT_SAFE)}"}
         try:
             result = validate_json_instance(

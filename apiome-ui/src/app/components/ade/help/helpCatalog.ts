@@ -1317,6 +1317,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['hosted verifier', 'pact-verifier', 'mismatches', 'matching rules', 'mutating interactions', 'provider states', 'dry run', 'incomplete'],
   },
   {
+    id: 'message-pacts',
+    title: 'Message pacts',
+    summary: "Check a consumer's message pact against the provider's AsyncAPI document.",
+    page: 'apiome-docs/docs/ship/pact-broker/message-pacts.mdx',
+    section: 'reference',
+    keywords: ['asyncapi', 'kafka', 'topic', 'channel', 'asynchronous', 'event', 'queue', 'bi-directional'],
+  },
+  {
     id: 'provider-states',
     title: 'Provider states',
     summary: "Register the states a provider's pacts name, and how Apiome sets them up.",

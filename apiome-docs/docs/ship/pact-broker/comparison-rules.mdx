@@ -1,15 +1,16 @@
 ---
 title: Comparison rules
-description: How a consumer's pact is compared with a provider's OpenAPI document, rule by rule.
+description: How a consumer's pact is compared with a provider's OpenAPI or AsyncAPI document.
 sidebar_position: 6.3
-tags: [contracts, pact, openapi, reference]
+tags: [contracts, pact, openapi, asyncapi, reference]
 ---
 
 Bi-directional contract testing decides whether a provider can serve a consumer **without running
 either**. The consumer publishes a [pact](./publish-pacts.mdx), the provider publishes its OpenAPI
 document as a [provider contract](./bi-directional.mdx), and Apiome compares the two. This page is
 the complete rule set of that comparison: what is checked, what each failure means, and how Pact
-matching rules are read.
+matching rules are read. A message pact compared with an AsyncAPI document follows the same rules,
+with its own checks and codes: see [Message pacts and AsyncAPI](#message-pacts-and-asyncapi).
 
 Apiome runs the comparison whenever a pact or a provider contract is published, and stores each
 verdict as a verification result that the matrix and [can-i-deploy](./can-i-deploy.mdx#bi-directional-results)
@@ -312,7 +313,7 @@ The [fidelity list](#the-fidelity-list) is split in two:
 | List | Codes |
 | --- | --- |
 | **Unsupported matching rules** (`unsupportedMatchingRules`) | `matching-rule-not-mapped`, `matching-rule-unverified`, `embedded-matcher-not-mapped`, `generator-not-applied` |
-| **Could not compare** (`couldNotCompare`) | `body-not-compared`, `parameter-not-compared`, `schema-not-usable`, `oneof-relaxed`, `interaction-not-http`, `findings-truncated` |
+| **Could not compare** (`couldNotCompare`) | `body-not-compared`, `parameter-not-compared`, `schema-not-usable`, `oneof-relaxed`, `interaction-not-http`, `findings-truncated`, and the message codes `message-direction-undeclared`, `message-resolved-by-contents`, `metadata-not-compared`, `interaction-not-message`, `synchronous-message-not-compared` |
 
 A code the report does not know (from a newer engine) is still listed under **Could not compare**.
 
@@ -325,7 +326,7 @@ The report's `strength` says how much the verdict is worth:
 | `full` | **Compared in full** | The verdict is `pass` and every core check of every interaction ran with nothing to report. |
 | `partial` | **Not everything compared** | Nothing contradicts the pact, but something was not compared in full or did not run. |
 | `failed` | **Contradicts the pact** | The verdict is `fail`. |
-| `none` | **Nothing compared** | The comparison could not run, the pact has no interactions, or none has an HTTP exchange. |
+| `none` | **Nothing compared** | The comparison could not run, the pact has no interactions, or none is the kind the contract describes (an HTTP exchange for OpenAPI, a message for AsyncAPI). |
 
 An `unverified` verdict (see [above](#when-the-provider-contract-is-unverified)) keeps the
 comparison's own strength; `comparisonVerdict` holds the verdict before the evidence was weighed,
@@ -351,6 +352,66 @@ when you read its verdict:
 Generated from the same specification it is compared with, the pact normally passes. It fails when the
 provider's contract has since dropped or changed something the consumer declared.
 
+## Message pacts and AsyncAPI
+
+When the provider contract is an AsyncAPI 2.x or 3.x document, the pact's messages (Pact 3
+`messages`, Pact 4 `Asynchronous/Messages`) are compared with it instead. How a message is matched
+to a message of the document, and why, is on [Message pacts](./message-pacts.mdx). The verdict,
+the fidelity list and the matching-rule mappings are the ones above; the checks and codes are
+these.
+
+### Message checks
+
+| Check | Covers |
+| --- | --- |
+| **Channel and message** (`message.channel`) | The message resolves to a message the provider sends. |
+| **Content type** (`message.content-type`) | The message's content type against the declared one. |
+| **Metadata (message headers)** (`message.metadata`) | Each metadata entry against the message's `headers` schema. |
+| **Message contents** (`message.body`) | The contents against the `payload`, read like a response body. |
+| **Matching rules and generators** (`message.matching-rules`) | Each rule mapped to the payload or headers schema, and each generator. |
+
+An interaction the contract does not describe — an HTTP or plugin interaction, or a synchronous
+message — has every message check **Not run**.
+
+### Message failures
+
+| Code | Meaning |
+| --- | --- |
+| `message.channel.unknown` | The message's metadata names a channel, topic or queue the provider declares no channel for. |
+| `message.unknown` | No message the provider declares (on the named channel) accepts the pact's message. |
+| `message.ambiguous` | The pact names neither a channel nor a declared message, and more messages could match than are tried one by one. |
+| `message.not-sent` | The provider declares the message only as one it receives, never as one it sends. |
+| `message.content-type.mismatch` | The message's content type is not the one the provider declares for the message. |
+| `message.metadata.invalid` | A metadata value does not satisfy the message's `headers` schema. |
+| `message.body.nullable-mismatch` | The consumer expects `null` where the provider's payload schema does not allow it. |
+| `message.body.unknown-property` | The consumer expects a property the provider's payload schema does not declare. |
+| `message.body.schema-mismatch` | The message contents break another keyword of the provider's payload schema. |
+
+At most 50 candidate messages are tried one by one (`message.ambiguous` past that); name the
+channel in the message's metadata to narrow it.
+
+### Message warnings
+
+| Code | Meaning |
+| --- | --- |
+| `message.metadata.undeclared` | The message's metadata carries an entry the message's `headers` schema does not declare. |
+
+### Message fidelity codes
+
+The fidelity codes `matching-rule-not-mapped`, `matching-rule-unverified`,
+`embedded-matcher-not-mapped`, `generator-not-applied`, `body-not-compared`, `schema-not-usable`,
+`oneof-relaxed` and `findings-truncated` mean what the [fidelity list](#the-fidelity-list) says.
+`body-not-compared` also covers a payload written in Avro, Protobuf or another language that is not
+JSON Schema (`reason: schema-format`). The message comparison adds:
+
+| Code | What was not compared in full |
+| --- | --- |
+| `message-direction-undeclared` | The provider's document does not say whether it sends or receives the message; it was compared as a message the provider sends. |
+| `message-resolved-by-contents` | The pact named no declared message, so it was matched to the first message whose payload accepts its contents. |
+| `metadata-not-compared` | A metadata value was not validated: the `headers` schema combines schemas there, or declares no schema at all. |
+| `interaction-not-message` | An HTTP or plugin interaction has no message to compare with an AsyncAPI document. |
+| `synchronous-message-not-compared` | A Pact 4 synchronous message (a request and its reply) is not compared yet. |
+
 ## What is not compared
 
 - **Security requirements.** Whether a request carries the credentials the operation's `security`
@@ -366,6 +427,7 @@ provider's contract has since dropped or changed something the consumer declared
 ## Related
 
 - [Publish a provider contract](./bi-directional.mdx) — the provider's side of the comparison.
+- [Message pacts](./message-pacts.mdx) — message pacts compared with an AsyncAPI document.
 - [Publish and fetch pacts](./publish-pacts.mdx) — the consumer's side.
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions and contracts.
 - [can-i-deploy](./can-i-deploy.mdx) — where the verdict will be used.

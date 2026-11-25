@@ -1,0 +1,175 @@
+---
+title: Message pacts
+description: Check a consumer's message pact against the provider's AsyncAPI document.
+sidebar_position: 6.4
+tags: [contracts, pact, asyncapi, messaging, rest]
+---
+
+A **message pact** describes the messages a consumer reads from a queue, a topic or an event bus:
+a Pact 3 pact with a `messages` array, or a Pact 4 pact whose interactions are
+`Asynchronous/Messages`. Apiome checks such a pact against the provider's **AsyncAPI document**,
+the same way [bi-directional contract testing](./bi-directional.mdx) checks an HTTP pact against an
+OpenAPI document: neither side has to run.
+
+The provider publishes its AsyncAPI 2.x or 3.x document as its
+[provider contract](./bi-directional.mdx). From then on, every message pact that needs it is
+compared as soon as either side publishes, and each verdict is stored as a verification result
+that the matrix and [can-i-deploy](./can-i-deploy.mdx) read like any other.
+
+## Before you start
+
+- The consumer [publishes its message pact](./publish-pacts.mdx) the usual way. Nothing changes
+  on the consumer side.
+- The provider has an **AsyncAPI 2.x or 3.x document**, in JSON or YAML, that lists the messages
+  it sends.
+- Your API key's member holds **Pacts** → **Create** to publish the contract, and **Pacts** →
+  **View** to read results. The built-in **Editor** role has both.
+
+## Publish the AsyncAPI document
+
+`PUT` the document to the same URL as an OpenAPI contract, with `contractType` set to
+`asyncapi`:
+
+```bash
+curl -X PUT \
+  "https://api.apiome.dev/v1/tenants/acme/pact-broker/contracts/provider/orders-service/version/$GIT_COMMIT" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data @- <<EOF
+{
+  "contractType": "asyncapi",
+  "contentType": "application/yaml",
+  "content": "$(base64 < asyncapi.yaml | tr -d '\n')",
+  "branch": "$GIT_BRANCH",
+  "buildUrl": "$CI_BUILD_URL"
+}
+EOF
+```
+
+You can leave `contractType` out: a document that declares `asyncapi` is read as one. The
+branch, tags, build URL and [self-verification evidence](./bi-directional.mdx#self-verification-evidence)
+work exactly as for an OpenAPI contract.
+
+An AsyncAPI contract is always sent inline. Naming an Apiome version with `apiomeVersion` and
+`contractType: asyncapi` is refused with `provider-contract-unsupported`.
+
+### What is checked when you publish
+
+Apiome checks the parts of the document the comparison reads:
+
+| Check | Refused at |
+| --- | --- |
+| The document declares `asyncapi` 2.x or 3.x. | `/asyncapi` |
+| `info` has a `title` and a `version`. | `/info` |
+| `channels` is an object of channels (AsyncAPI 2 requires it), and each channel is an object. | `/channels`, `/channels/<id>` |
+| An AsyncAPI 3 channel's `messages` is an object; an AsyncAPI 2 `publish` or `subscribe` is an operation object. | `/channels/<id>/messages`, `/channels/<id>/publish` |
+| Every AsyncAPI 3 operation has `action` `send` or `receive`. | `/operations/<id>/action` |
+| Every `$ref` inside the document names something. | the `$ref` itself |
+
+A reference to another document is accepted; the comparison reports a payload it cannot read.
+The full AsyncAPI specification check is not run when you publish. The answer reads
+`contractType: asyncapi`, `asyncapiVersion` and `messageCount` instead of `oasVersion` and
+`operationCount`.
+
+## How a message is matched to the document
+
+A Pact message names no operation, so Apiome first finds the message of the document it
+describes:
+
+1. **The channel.** If the message's metadata names where it travels — `channel`, `topic`,
+   `destination`, `queue`, `subject`, `address`, `routingKey` or `kafka_topic`, in that order —
+   only the channels with that id or address are considered. A `{parameter}` in an address stands
+   for one segment, so `orders.eu.created` matches `orders.{region}.created`. A name that matches
+   no channel fails with `message.channel.unknown`.
+2. **The name.** If the pact's `description` is a message's key, `name`, `messageId` or `title`
+   (case does not matter), only that message is considered.
+3. **Who sends it.** A message pact describes what the provider sends. In AsyncAPI 3 that is a
+   `send` operation; in AsyncAPI 2 it is the channel's `subscribe` operation. A message the
+   provider only receives fails with `message.not-sent`. A message no operation mentions is
+   compared as sent, and the result says so.
+4. **The contents.** If several messages are left, each is tried in the order of the document and
+   the first whose payload accepts the message wins. The result names the message and notes that
+   it was matched by contents. If none accepts it, the message fails with `message.unknown`.
+
+**Name the channel and the message.** Put the topic in the message's metadata and use the
+AsyncAPI message name as the description, and the match never depends on the contents.
+
+## What is compared
+
+Each message is checked in this order:
+
+| Check | What it compares |
+| --- | --- |
+| **Channel and message** | The match described above. |
+| **Content type** | The message's `contentType` (Pact 4 contents, or `contentType` metadata) against the message's `contentType`, or the document's `defaultContentType`. |
+| **Metadata (message headers)** | Each metadata entry against the message's `headers` schema. The channel and content-type entries are not headers and are skipped. A text value is also read as the number or boolean the schema asks for, because most transports carry headers as text. |
+| **Message contents** | The contents against the message's `payload`, read like a response: the consumer may read fewer fields than the provider sends, never a field it does not declare. |
+| **Matching rules and generators** | Pact 3 `body` and Pact 4 `content` rules against the payload, and `metadata` rules against the `headers` schema, mapped as in [Comparison rules](./comparison-rules.mdx#matching-rules). |
+
+A metadata entry the `headers` schema does not declare is only a warning: metadata also carries
+transport details, such as a Kafka key, that no AsyncAPI document describes.
+
+The payload is compared when it is JSON Schema: the AsyncAPI Schema Object, or a payload whose
+`schemaFormat` is JSON Schema. An Avro or Protobuf payload, and contents that are not JSON, are
+listed as not compared.
+
+Every code a message comparison can report is listed in
+[Comparison rules](./comparison-rules.mdx#message-pacts-and-asyncapi).
+
+## Read the result
+
+A message comparison is stored and read like any bi-directional comparison: see
+[Read the comparison](./bi-directional.mdx#read-the-comparison). Each interaction carries a
+`message` object instead of an `operation`:
+
+```json
+{
+  "description": "an order created event",
+  "verdict": "pass",
+  "operation": null,
+  "message": {
+    "channel": "orderCreated",
+    "address": "orders.{region}.created",
+    "message": "OrderCreated",
+    "pointer": "/channels/orderCreated/messages/OrderCreated",
+    "resolvedPointer": "/components/messages/OrderCreated",
+    "action": "send"
+  },
+  "checks": ["message.channel", "message.content-type", "message.metadata", "message.body"]
+}
+```
+
+Pointers in failures (`oasPointer`, `resolvedPointer`) point into the AsyncAPI document. The
+comparison itself reads `contractType: asyncapi` and `asyncapiVersion`. The
+[fidelity report](./comparison-rules.mdx#the-fidelity-report) on the **Pact comparisons** page
+lists the five message checks instead of the HTTP ones.
+
+## What is not compared
+
+- **HTTP and plugin interactions** of a pact that mixes them with messages. They are listed with
+  `interaction-not-message`. A provider version has one contract, so a mixed pact is compared with
+  whichever kind the provider published, and the other kind is listed as not compared.
+- **Synchronous messages** (Pact 4 `Synchronous/Messages`, a request and its reply). They are
+  listed with `synchronous-message-not-compared`, and the hosted verifier does not replay them
+  either.
+- **Provider states**, and whether the provider really sends what its document says. That is the
+  job of the provider's self-verification evidence.
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Publish an AsyncAPI provider contract | `pacts:create` | | ✓ | ✓ | ✓ |
+| Read a contract or a comparison | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+
+Every contract and comparison belongs to one workspace; another workspace's key cannot read or
+compare it.
+
+## Related
+
+- [Publish a provider contract](./bi-directional.mdx): the OpenAPI side, and self-verification
+  evidence.
+- [Comparison rules](./comparison-rules.mdx): every check, code and matching-rule mapping.
+- [Publish and fetch pacts](./publish-pacts.mdx): the consumer's side.
+- [Pact Broker REST reference](../../reference/rest/pact-broker.md): the full request and response
+  schema.

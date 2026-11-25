@@ -1,0 +1,24 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "a refund",
+      "metadata": {
+        "topic": "refunds"
+      },
+      "contents": {
+        "id": 1
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

@@ -311,6 +311,9 @@ class _Comparison:
 class _InteractionRun:
     """The comparison of one interaction: the checks, in order, and what each one found."""
 
+    #: Whether matching rules are read as a message's (``content`` / ``metadata``, PFX-3.6).
+    message_rules = False
+
     def __init__(
         self, shared: _Comparison, index: int, interaction: Mapping[str, Any], pointer: str
     ) -> None:
@@ -1108,7 +1111,9 @@ class _InteractionRun:
             section: The pact ``request`` or ``response`` object.
             pointer: JSON Pointer of that object.
         """
-        rules = parse_matching_rules(section.get("matchingRules"), f"{pointer}/matchingRules")
+        rules = parse_matching_rules(
+            section.get("matchingRules"), f"{pointer}/matchingRules", message=self.message_rules
+        )
         if not rules:
             return
         self.result.checks.append(f"{side}.matching-rules")

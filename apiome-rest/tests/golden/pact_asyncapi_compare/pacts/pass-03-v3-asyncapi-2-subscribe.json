@@ -1,0 +1,25 @@
+{
+  "consumer": {
+    "name": "dashboard"
+  },
+  "provider": {
+    "name": "streetlights"
+  },
+  "messages": [
+    {
+      "description": "a light measurement",
+      "metadata": {
+        "destination": "smartylighting/streetlights/42/lighting/measured"
+      },
+      "contents": {
+        "lumens": 310,
+        "sentAt": "2026-11-25T03:00:00Z"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

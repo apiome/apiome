@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.675.0
+  version: 1.676.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -37571,18 +37571,20 @@ paths:
       tags:
       - pact-broker
       summary: Publish a provider contract
-      description: 'Register the provider''s OpenAPI document — its **provider contract**
-        — against a provider version, for bi-directional contract testing. Send the
-        document inline in `content` (base64; JSON or YAML, PactFlow''s shape) **or**
-        name an Apiome version in `apiomeVersion` (`ledger-api@1.4.0`) to render it
-        from the canonical model with the exporter `GET /v1/schema/…` uses (OpenAPI
+      description: 'Register the provider''s OpenAPI (or AsyncAPI) document — its **provider
+        contract** — against a provider version, for bi-directional contract testing.
+        Send the document inline in `content` (base64; JSON or YAML, PactFlow''s shape)
+        **or** name an Apiome version in `apiomeVersion` (`ledger-api@1.4.0`) to render
+        it from the canonical model with the exporter `GET /v1/schema/…` uses (OpenAPI
         3.1). With a provider bound to its Apiome project, `apiomeVersion` may be just
         the version, and `latest` is the project''s newest.
 
 
-        - **Only OpenAPI 3.0, 3.1 and 3.2.** The document must validate against its
-        version''s meta-schema. Swagger 2.0, AsyncAPI and anything else are `422 provider-contract-invalid`,
-        with `detail.pointer` locating the problem.
+        - **OpenAPI 3.0, 3.1 and 3.2**, validated against its version''s meta-schema
+        — or, for message pacts, **AsyncAPI 2.x and 3.x** (`contractType: asyncapi`,
+        read from the document when omitted; inline only), checked for its version,
+        `info`, channels, operations and local `$ref`s. Swagger 2.0 and anything else
+        are `422 provider-contract-invalid`, with `detail.pointer` locating the problem.
 
         - **The provider is registered on first use**, and the version is recorded with
         its `branch`, `tags` and `buildUrl`, as `PUT …/pacticipants/{ref}/versions/{number}`
@@ -37695,11 +37697,13 @@ paths:
             report is over `APIOME_PACT_EVIDENCE_MAX_BYTES`.'
         '422':
           description: '`provider-contract-invalid`: the document is not OpenAPI 3.0,
-            3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the
-            document (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema
-            error). `provider-contract-request-invalid` / `provider-contract-unsupported`:
-            a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`:
-            `apiomeVersion` names no project or version of this workspace. `provider-contract-evidence-unsupported`:
+            3.1 or 3.2 (or, as `contractType: asyncapi`, not AsyncAPI 2.x / 3.x) — `detail.pointer`
+            is the JSON Pointer of the problem in the document (`/swagger` for Swagger
+            2.0, `/openapi`, `/asyncapi`, the first meta-schema error, or the first
+            structural problem of an AsyncAPI document). `provider-contract-request-invalid`
+            / `provider-contract-unsupported`: a field of the request (`detail.pointer`
+            locates it). `provider-contract-source-not-found`: `apiomeVersion` names
+            no project or version of this workspace. `provider-contract-evidence-unsupported`:
             the report''s `contentType` is not one a report is read as. `provider-contract-evidence-invalid`:
             the report is not what its type says (XML that does not parse or is not
             JUnit, a DTD, JSON that is not JSON, text that is not UTF-8). `provider-contract-evidence-report-not-found`:
@@ -37716,15 +37720,18 @@ paths:
               properties:
                 content:
                   type: string
-                  description: The OpenAPI 3.x document (JSON or YAML), base64-encoded.
-                    Send this or `apiomeVersion`.
+                  description: The OpenAPI 3.x or AsyncAPI 2.x / 3.x document (JSON
+                    or YAML), base64-encoded. Send this or `apiomeVersion`.
                   example: example
                 contractType:
                   type: string
                   enum:
                   - oas
-                  default: oas
-                  description: Contract Type.
+                  - asyncapi
+                  description: '`oas` for an OpenAPI 3.x document (HTTP pacts), `asyncapi`
+                    for an AsyncAPI 2.x / 3.x document (message pacts). Read from the
+                    document when omitted. An AsyncAPI contract is always sent inline
+                    in `content`.'
                   example: oas
                 contentType:
                   type: string
@@ -37830,15 +37837,23 @@ paths:
                 value:
                   apiomeVersion: ledger-api@1.4.0
                   branch: main
+              asyncapi:
+                summary: An uploaded AsyncAPI document, for message pacts
+                value:
+                  contractType: asyncapi
+                  contentType: application/yaml
+                  content: YXN5bmNhcGk6IDMuMC4wCmluZm86CiAgdGl0bGU6IE9yZGVycwogIHZlcnNpb246IDEuMC4wCmNoYW5uZWxzOiB7fQo=
+                  branch: main
         description: Request body for publish a provider contract.
     get:
       tags:
       - pact-broker
       summary: Read a provider contract
-      description: 'The provider contract a provider version published: `contentSha`,
-        `oasVersion`, `operationCount`, `contentType`, where it came from (`source`:
-        `inline`, or `apiome` with the project and version it was rendered from), the
-        `verificationResults` sent with it, and the OpenAPI document in `content`.
+      description: 'The provider contract a provider version published: `contractType`,
+        `contentSha`, `oasVersion` and `operationCount` (`asyncapiVersion` and `messageCount`
+        for an AsyncAPI contract), `contentType`, where it came from (`source`: `inline`,
+        or `apiome` with the project and version it was rendered from), the `verificationResults`
+        sent with it, and the document in `content`.
 
 
         `{provider}` is a pacticipant''s handle, id or name. Requires `pacts:view`.'

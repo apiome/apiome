@@ -1,0 +1,24 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "InvoiceAvro",
+      "metadata": {
+        "topic": "invoices"
+      },
+      "contents": {
+        "id": 1
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

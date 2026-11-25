@@ -1,0 +1,24 @@
+---
+slug: pact-message-pacts
+title: "Message pacts against AsyncAPI"
+description: "Check a consumer's message pact against the provider's AsyncAPI document, without running either."
+authors: [apiome]
+---
+
+A provider that sends messages can now be checked against its consumers the bi-directional way.
+Publish its AsyncAPI 2.x or 3.x document as its provider contract, and every consumer's message
+pact is compared with it as soon as either side publishes; the verdict goes to the matrix and
+can-i-deploy. See [Message pacts](/ship/pact-broker/message-pacts).
+
+{/* truncate */}
+
+- **Same endpoint.** `PUT …/pact-broker/contracts/provider/<provider>/version/<version>` with
+  `contractType: asyncapi`, or with no `contractType` at all.
+- **Each message is matched to the document.** By the topic or channel in its metadata, by its
+  name, and only among the messages the provider sends. The result says which message it was
+  compared with.
+- **Contents, headers and content type.** The contents are checked against the payload, the
+  metadata against the message headers, and Pact matching rules as for HTTP pacts.
+- **Nothing passes silently.** An Avro payload, a synchronous message or an HTTP interaction is
+  listed as not compared, with the reason. See
+  [Comparison rules](/ship/pact-broker/comparison-rules#message-pacts-and-asyncapi).

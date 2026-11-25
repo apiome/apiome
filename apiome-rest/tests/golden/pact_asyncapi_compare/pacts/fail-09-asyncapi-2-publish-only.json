@@ -1,0 +1,24 @@
+{
+  "consumer": {
+    "name": "dashboard"
+  },
+  "provider": {
+    "name": "streetlights"
+  },
+  "messages": [
+    {
+      "description": "turnOnOff",
+      "metadata": {
+        "topic": "smartylighting/streetlights/1/command/turnon"
+      },
+      "contents": {
+        "command": "on"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "an order created event",
+      "providerStates": [
+        {
+          "name": "an order exists"
+        }
+      ],
+      "metaData": {
+        "topic": "orders.eu.created",
+        "contentType": "application/json",
+        "traceId": "0123456789abcdef"
+      },
+      "contents": {
+        "id": 1001,
+        "customer": "acme",
+        "status": "new",
+        "total": 42.5,
+        "placedAt": "2026-11-25T10:00:00Z",
+        "lines": [
+          {
+            "sku": "A-1",
+            "quantity": 2
+          }
+        ]
+      },
+      "matchingRules": {
+        "body": {
+          "$.id": {
+            "matchers": [
+              {
+                "match": "integer"
+              }
+            ]
+          },
+          "$.lines": {
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

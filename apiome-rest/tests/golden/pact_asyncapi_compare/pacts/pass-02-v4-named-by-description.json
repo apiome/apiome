@@ -1,0 +1,52 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "interactions": [
+    {
+      "type": "Asynchronous/Messages",
+      "description": "OrderCreated",
+      "contents": {
+        "content": {
+          "id": 7,
+          "status": "paid"
+        },
+        "contentType": "application/json",
+        "encoded": false
+      },
+      "metadata": {
+        "attempt": 2
+      },
+      "matchingRules": {
+        "content": {
+          "$.id": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "integer"
+              }
+            ]
+          }
+        },
+        "metadata": {
+          "attempt": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "integer"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "interactions": [
+    {
+      "type": "Synchronous/HTTP",
+      "description": "get an order",
+      "request": {
+        "method": "GET",
+        "path": "/orders/1"
+      },
+      "response": {
+        "status": 200
+      }
+    },
+    {
+      "type": "Synchronous/Messages",
+      "description": "price an order",
+      "request": {
+        "contents": {
+          "content": {
+            "id": 1
+          }
+        }
+      },
+      "response": [
+        {
+          "contents": {
+            "content": {
+              "price": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Asynchronous/Messages",
+      "description": "OrderCreated",
+      "contents": {
+        "content": {
+          "id": 1,
+          "status": "new"
+        },
+        "contentType": "application/json",
+        "encoded": false
+      },
+      "metadata": {}
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

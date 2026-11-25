@@ -59,7 +59,11 @@ def _checks(report: Dict[str, Any], index: int = 0) -> Dict[str, Dict[str, Any]]
 
 
 def test_every_fidelity_code_is_in_exactly_one_group() -> None:
-    assert set(MATCHING_RULE_CODES) | set(NOT_COMPARED_CODES) == set(FIDELITY_CLASSES)
+    from app.pact_asyncapi_compare import MESSAGE_FIDELITY_CLASSES
+
+    assert set(MATCHING_RULE_CODES) | set(NOT_COMPARED_CODES) == set(FIDELITY_CLASSES) | set(
+        MESSAGE_FIDELITY_CLASSES
+    )
     assert set(MATCHING_RULE_CODES) & set(NOT_COMPARED_CODES) == set()
 
 

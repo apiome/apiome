@@ -1,0 +1,28 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "Shipment",
+      "metadata": {
+        "topic": "shipments",
+        "carrier": "ups"
+      },
+      "contents": {
+        "parcel": {
+          "kind": "box",
+          "weight": 1.5
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

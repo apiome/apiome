@@ -1,0 +1,67 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "message-direction-undeclared"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "an audit entry",
+      "pointer": "/messages/0",
+      "verdict": "partial",
+      "operation": null,
+      "message": {
+        "channel": "audit",
+        "address": "audit.log",
+        "message": "AuditEntry",
+        "pointer": "/channels/audit/messages/AuditEntry",
+        "resolvedPointer": "/channels/audit/messages/AuditEntry",
+        "action": null
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "message-direction-undeclared",
+          "message": "the provider's document does not say whether it sends 'AuditEntry' on 'audit'; it was compared as a message the provider sends",
+          "pactPointer": "/messages/0",
+          "oasPointer": "/channels/audit/messages/AuditEntry"
+        }
+      ]
+    }
+  ]
+}

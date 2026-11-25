@@ -1,0 +1,24 @@
+{
+  "consumer": {
+    "name": "billing-service"
+  },
+  "provider": {
+    "name": "orders-service"
+  },
+  "messages": [
+    {
+      "description": "Heartbeat",
+      "metadata": {
+        "topic": "heartbeat"
+      },
+      "contents": {
+        "at": "now"
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

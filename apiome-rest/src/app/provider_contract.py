@@ -7,12 +7,14 @@ provider version of the broker's model (:mod:`app.pacticipant`), is the **provid
 :mod:`app.provider_contract_source` renders one from an Apiome version, and
 :mod:`app.provider_contract_routes` is the REST surface.
 
-**Only OpenAPI 3.x is a provider contract.** A document is accepted when it parses (JSON or YAML,
-under the DCW-0.2 resource limits of :mod:`app.safe_oas_parse`), declares ``openapi: 3.0.x``,
-``3.1.x`` or ``3.2.x``, and validates against that version's bundled meta-schema
-(:mod:`app.openapi_validator`). Swagger 2.0, AsyncAPI and anything else are refused. Every refusal
-names the place (a JSON Pointer into the document, or into the request body) so the publisher can
-find it.
+**OpenAPI 3.x, or AsyncAPI 2.x / 3.x.** A document is accepted when it parses (JSON or YAML,
+under the DCW-0.2 resource limits of :mod:`app.safe_oas_parse`) and either declares ``openapi:
+3.0.x``, ``3.1.x`` or ``3.2.x`` and validates against that version's bundled meta-schema
+(:mod:`app.openapi_validator`), or — ``contractType: asyncapi``, PFX-3.6 (#6936), for message
+pacts — declares ``asyncapi: 2.x`` or ``3.x`` and passes the structural check of
+:func:`validate_asyncapi_contract` (version, ``info``, channels, operations and every local
+``$ref``). Swagger 2.0 and anything else are refused. Every refusal names the place (a JSON Pointer
+into the document, or into the request body) so the publisher can find it.
 
 **YAML is read as the JSON it stands for.** A mapping key YAML reads as a number or a boolean
 (``200:`` under ``responses``) becomes the string the OpenAPI document means (``"200"``), and an
@@ -38,7 +40,9 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .asyncapi_parser import is_supported_asyncapi_version
 from .openapi_validator import openapi_document_errors_at
+from .pact_asyncapi_index import AsyncApiIndex
 from .revision_deprecation import is_uuid_string as _is_uuid
 from .safe_oas_parse import safe_oas_parse
 
@@ -50,6 +54,9 @@ __all__ = [
     "CODE_REQUEST_INVALID",
     "CODE_SOURCE_NOT_FOUND",
     "CODE_UNSUPPORTED",
+    "CONTRACT_TYPE_ASYNCAPI",
+    "CONTRACT_TYPE_OAS",
+    "CONTRACT_TYPES",
     "JSON_CONTENT_TYPE",
     "SOURCE_APIOME",
     "SOURCE_INLINE",
@@ -62,6 +69,7 @@ __all__ = [
     "SelfVerificationResults",
     "check_request",
     "contract_record_from_row",
+    "contract_type_of",
     "decode_base64",
     "parse_apiome_reference",
     "parse_openapi",
@@ -69,6 +77,8 @@ __all__ = [
     "provider_contract_sha",
     "sent_verification_results",
     "stored_verification_results",
+    "validate_asyncapi_contract",
+    "validate_contract",
     "validate_openapi_contract",
 ]
 
@@ -88,13 +98,32 @@ SOURCE_APIOME = "apiome"
 JSON_CONTENT_TYPE = "application/json"
 
 #: Media types read as JSON, and as YAML. Parameters (``; charset=utf-8``) are ignored.
-_JSON_TYPES = frozenset({"application/json", "application/vnd.oai.openapi+json", "text/json"})
+_JSON_TYPES = frozenset(
+    {"application/json", "application/vnd.oai.openapi+json", "application/vnd.aai.asyncapi+json", "text/json"}
+)
 _YAML_TYPES = frozenset(
-    {"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml", "application/vnd.oai.openapi"}
+    {
+        "application/yaml",
+        "application/x-yaml",
+        "text/yaml",
+        "text/x-yaml",
+        "application/vnd.oai.openapi",
+        "application/vnd.aai.asyncapi",
+        "application/vnd.aai.asyncapi+yaml",
+    }
 )
 
-#: The only contract type this endpoint takes (PactFlow's ``contractType``).
-_CONTRACT_TYPE_OAS = "oas"
+#: An OpenAPI provider contract (PactFlow's ``contractType: oas``), compared with HTTP pacts.
+CONTRACT_TYPE_OAS = "oas"
+#: An AsyncAPI provider contract (PFX-3.6), compared with message pacts.
+CONTRACT_TYPE_ASYNCAPI = "asyncapi"
+#: The contract types the endpoint takes.
+CONTRACT_TYPES = (CONTRACT_TYPE_OAS, CONTRACT_TYPE_ASYNCAPI)
+
+#: AsyncAPI 3 operation actions.
+_ASYNCAPI_ACTIONS = ("send", "receive")
+#: The most local ``$ref`` problems the AsyncAPI check looks at before refusing.
+_MAX_REF_WALK = 200_000
 
 #: OpenAPI operation keys of a path item.
 _HTTP_METHODS = ("get", "put", "post", "delete", "options", "head", "patch", "trace", "query")
@@ -279,7 +308,8 @@ def validate_openapi_contract(document: Mapping[str, Any], *, label: str = "the 
     if "asyncapi" in document:
         raise _invalid(
             "/asyncapi",
-            "an AsyncAPI document is not a provider contract; a provider contract is OpenAPI 3.x",
+            "this is an AsyncAPI document, but the contract type is 'oas'; publish it with contractType "
+            "'asyncapi' (or leave contractType out)",
             label=label,
         )
     version = document.get("openapi")
@@ -308,6 +338,150 @@ def validate_openapi_contract(document: Mapping[str, Any], *, label: str = "the 
             pointer=first["pointer"],
         )
     return version.strip()
+
+
+def _local_ref_errors(document: Mapping[str, Any]) -> Optional[Tuple[str, str]]:
+    """The first in-document ``$ref`` that names nothing, in document order.
+
+    Args:
+        document: The parsed document.
+
+    Returns:
+        ``(pointer of the $ref, its value)``, or ``None`` when every local reference resolves.
+        References to other documents are not followed (and not refused).
+    """
+    stack: List[Tuple[str, Any]] = [("", document)]
+    budget = _MAX_REF_WALK
+    while stack and budget > 0:
+        pointer, node = stack.pop()
+        budget -= 1
+        if isinstance(node, dict):
+            ref = node.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#"):
+                target: Any = document
+                for token in [part.replace("~1", "/").replace("~0", "~") for part in ref[1:].split("/")[1:]]:
+                    if isinstance(target, dict) and token in target:
+                        target = target[token]
+                    elif isinstance(target, list) and token.isdigit() and int(token) < len(target):
+                        target = target[int(token)]
+                    else:
+                        return f"{pointer}/$ref", ref
+            for key in reversed(list(node)):
+                if key not in ("examples", "example", "default", "const", "enum"):
+                    stack.append((f"{pointer}/{_escape(key)}", node[key]))
+        elif isinstance(node, list):
+            stack.extend((f"{pointer}/{index}", item) for index, item in reversed(list(enumerate(node))))
+    return None
+
+
+def validate_asyncapi_contract(document: Mapping[str, Any], *, label: str = "the AsyncAPI document") -> str:
+    """Check that a parsed document is an AsyncAPI document a provider contract can be — PFX-3.6.
+
+    The check is structural, not the full AsyncAPI specification (that validator is the
+    JavaScript ``@asyncapi/parser`` the import path runs): what the message comparison
+    (:mod:`app.pact_asyncapi_compare`) reads must be there and be the right shape.
+
+    Args:
+        document: The parsed document.
+        label: How refusals name the document.
+
+    Returns:
+        The ``asyncapi`` version it declares.
+
+    Raises:
+        ProviderContractError: ``provider-contract-invalid`` located at ``/openapi`` or
+            ``/swagger`` for an HTTP document, ``/asyncapi`` for a missing or unsupported version,
+            ``/info`` for missing title or version, ``/channels`` (or a channel, its messages, or
+            an AsyncAPI 2 operation) that is not an object, ``/operations/…/action`` that is neither
+            ``send`` nor ``receive``, and the first local ``$ref`` that names nothing.
+    """
+    for key in ("openapi", "swagger"):
+        if key in document:
+            raise _invalid(
+                f"/{key}",
+                "this is an HTTP API description, but the contract type is 'asyncapi'; publish it with "
+                "contractType 'oas'",
+                label=label,
+            )
+    version = document.get("asyncapi")
+    if not isinstance(version, str) or not is_supported_asyncapi_version(version.strip()):
+        raise _invalid(
+            "/asyncapi",
+            f"AsyncAPI '{version}' is not supported; an AsyncAPI provider contract declares 'asyncapi' 2.x or 3.x",
+            label=label,
+        )
+    major = version.strip().split(".", 1)[0]
+    info = document.get("info")
+    if not isinstance(info, dict) or not all(isinstance(info.get(key), str) for key in ("title", "version")):
+        raise _invalid("/info", "an AsyncAPI document carries 'info' with a 'title' and a 'version'", label=label)
+    channels = document.get("channels", {} if major == "3" else None)
+    if not isinstance(channels, dict):
+        raise _invalid("/channels", "'channels' must be an object of channels", label=label)
+    for name, channel in channels.items():
+        where = f"/channels/{_escape(name)}"
+        if not isinstance(channel, dict):
+            raise _invalid(where, "a channel must be an object", label=label)
+        if major == "3" and "messages" in channel and not isinstance(channel["messages"], dict):
+            raise _invalid(f"{where}/messages", "a channel's 'messages' must be an object of messages", label=label)
+        if major == "2":
+            for verb in ("publish", "subscribe"):
+                if verb in channel and not isinstance(channel[verb], dict):
+                    raise _invalid(f"{where}/{verb}", f"'{verb}' must be an operation object", label=label)
+    if major == "3":
+        operations = document.get("operations", {})
+        if not isinstance(operations, dict):
+            raise _invalid("/operations", "'operations' must be an object of operations", label=label)
+        for name, operation in operations.items():
+            where = f"/operations/{_escape(name)}"
+            if not isinstance(operation, dict):
+                raise _invalid(where, "an operation must be an object", label=label)
+            if "$ref" not in operation and operation.get("action") not in _ASYNCAPI_ACTIONS:
+                raise _invalid(f"{where}/action", "an operation's 'action' is 'send' or 'receive'", label=label)
+    broken = _local_ref_errors(document)
+    if broken is not None:
+        raise _invalid(broken[0], f"the reference '{broken[1]}' names nothing in the document", label=label)
+    return version.strip()
+
+
+def contract_type_of(document: Mapping[str, Any]) -> str:
+    """The contract type of a parsed (or stored) document: ``asyncapi`` or ``oas``.
+
+    Args:
+        document: The document.
+
+    Returns:
+        :data:`CONTRACT_TYPE_ASYNCAPI` when it declares ``asyncapi``, else :data:`CONTRACT_TYPE_OAS`.
+    """
+    return CONTRACT_TYPE_ASYNCAPI if isinstance(document, Mapping) and "asyncapi" in document else CONTRACT_TYPE_OAS
+
+
+def validate_contract(
+    document: Mapping[str, Any], contract_type: Optional[str], *, label: Optional[str] = None
+) -> Tuple[str, str]:
+    """Validate a document as the contract type the request names, or the one it declares.
+
+    Args:
+        document: The parsed document.
+        contract_type: ``oas``, ``asyncapi`` or ``None`` (read from the document: ``asyncapi``
+            when it declares one, else ``oas``).
+        label: How refusals name the document; a default per type when ``None``.
+
+    Returns:
+        ``(contract type, version)`` — the version is ``openapi`` or ``asyncapi``.
+
+    Raises:
+        ProviderContractError: ``provider-contract-invalid`` (:func:`validate_openapi_contract`,
+            :func:`validate_asyncapi_contract`).
+    """
+    kind = (contract_type or "").strip().lower() or contract_type_of(document)
+    if kind == CONTRACT_TYPE_ASYNCAPI:
+        return kind, validate_asyncapi_contract(document, label=label or "the AsyncAPI document")
+    return CONTRACT_TYPE_OAS, validate_openapi_contract(document, label=label or "the OpenAPI document")
+
+
+def _message_count(document: Mapping[str, Any]) -> int:
+    """How many messages an AsyncAPI document's channels declare."""
+    return len(AsyncApiIndex(document).messages)
 
 
 def provider_contract_sha(document: Mapping[str, Any]) -> str:
@@ -377,8 +551,9 @@ class PublishProviderContractRequest(BaseModel):
     render it from (``apiomeVersion``) — exactly one.
 
     Attributes:
-        content: The OpenAPI document, base64-encoded.
-        contract_type: ``contractType`` — always ``oas``.
+        content: The OpenAPI or AsyncAPI document, base64-encoded.
+        contract_type: ``contractType`` — ``oas`` or ``asyncapi`` (PFX-3.6); read from the
+            document when omitted.
         content_type: ``contentType`` — how ``content`` is encoded (JSON or YAML).
         apiome_version: ``apiomeVersion`` — ``<project>@<version>``, or just ``<version>`` when the
             provider is bound to a project. ``latest`` names the project's newest version.
@@ -390,8 +565,12 @@ class PublishProviderContractRequest(BaseModel):
 
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    content: Optional[str] = Field(default=None, description="The OpenAPI document, base64-encoded.")
-    contract_type: str = Field(default="oas", alias="contractType", description="Only `oas` is accepted.")
+    content: Optional[str] = Field(default=None, description="The OpenAPI or AsyncAPI document, base64-encoded.")
+    contract_type: Optional[str] = Field(
+        default=None,
+        alias="contractType",
+        description="`oas` or `asyncapi`; read from the document when omitted.",
+    )
     content_type: Optional[str] = Field(
         default=None,
         alias="contentType",
@@ -488,19 +667,28 @@ def check_request(body: PublishProviderContractRequest) -> None:
 
     Raises:
         ProviderContractError: ``provider-contract-unsupported`` for a contract type other than
-            ``oas``; ``provider-contract-request-invalid`` when the request sends both or neither of
+            ``oas`` and ``asyncapi``, and for ``asyncapi`` with ``apiomeVersion`` (an AsyncAPI contract
+            is sent inline); ``provider-contract-request-invalid`` when the request sends both or neither of
             ``content`` and ``apiomeVersion``, a ``contentType`` other than JSON with
             ``apiomeVersion``, both a report and a report id in ``verificationResults``, a report id
             that is not a UUID, or no ``success`` without a report id.
     """
-    if body.contract_type.strip().lower() != _CONTRACT_TYPE_OAS:
+    kind = (body.contract_type or "").strip().lower()
+    if body.contract_type is not None and kind not in CONTRACT_TYPES:
         raise ProviderContractError(
             CODE_UNSUPPORTED,
-            f"contractType '{body.contract_type}' is not supported; a provider contract is 'oas'",
+            f"contractType '{body.contract_type}' is not supported; a provider contract is 'oas' or 'asyncapi'",
             pointer="/contractType",
         )
     has_content = body.content is not None
     has_reference = body.apiome_version is not None
+    if kind == CONTRACT_TYPE_ASYNCAPI and has_reference:
+        raise ProviderContractError(
+            CODE_UNSUPPORTED,
+            "an AsyncAPI provider contract cannot be rendered from an Apiome version yet; send the AsyncAPI "
+            "document inline in 'content'",
+            pointer="/apiomeVersion",
+        )
     if has_content == has_reference:
         raise ProviderContractError(
             CODE_REQUEST_INVALID,
@@ -603,10 +791,11 @@ class ProviderContractToStore:
     """One validated provider contract, ready to be written.
 
     Attributes:
-        document: The OpenAPI document.
+        document: The OpenAPI or AsyncAPI document.
         sha: Its content address (:func:`provider_contract_sha`).
-        oas_version: The ``openapi`` version it declares.
-        operation_count: How many operations it declares.
+        oas_version: The ``openapi`` version it declares — or, for an AsyncAPI contract, the
+            ``asyncapi`` version (the column holds the document's version either way).
+        operation_count: How many operations it declares (for AsyncAPI: how many messages).
         content_type: The media type it was sent (or rendered) as.
         source: :data:`SOURCE_INLINE` or :data:`SOURCE_APIOME`.
         source_project_id: For an Apiome source, the project's id.
@@ -633,6 +822,7 @@ def prepare_contract(
     document: Dict[str, Any],
     *,
     content_type: str,
+    contract_type: Optional[str] = None,
     verification_results: Optional[Dict[str, Any]] = None,
     source: str = SOURCE_INLINE,
     source_project_id: Optional[str] = None,
@@ -643,8 +833,9 @@ def prepare_contract(
     """Validate a parsed document and address it.
 
     Args:
-        document: The parsed OpenAPI document.
+        document: The parsed OpenAPI or AsyncAPI document.
         content_type: The media type it was sent or rendered as.
+        contract_type: ``oas``, ``asyncapi``, or ``None`` to read it from the document.
         verification_results: The self-verification results as stored.
         source: Where it came from.
         source_project_id: For an Apiome source, the project's id.
@@ -657,19 +848,19 @@ def prepare_contract(
 
     Raises:
         ProviderContractError: ``provider-contract-invalid`` with a pointer
-            (:func:`validate_openapi_contract`).
+            (:func:`validate_contract`).
     """
     label = (
         f"the document rendered from {source_project_slug}@{source_version_label}"
         if source == SOURCE_APIOME
-        else "the OpenAPI document"
+        else None
     )
-    oas_version = validate_openapi_contract(document, label=label)
+    kind, version = validate_contract(document, contract_type, label=label)
     return ProviderContractToStore(
         document=document,
         sha=provider_contract_sha(document),
-        oas_version=oas_version,
-        operation_count=_operation_count(document),
+        oas_version=version,
+        operation_count=_message_count(document) if kind == CONTRACT_TYPE_ASYNCAPI else _operation_count(document),
         content_type=content_type,
         source=source,
         source_project_id=source_project_id,
@@ -693,9 +884,10 @@ class ProviderContractRecord(BaseModel):
         provider_name: The provider's display name.
         provider_version: The provider version number that published it.
         sha: The content address of the document.
-        content: The OpenAPI document.
-        oas_version: The ``openapi`` version it declares.
-        operation_count: How many operations it declares.
+        content: The OpenAPI or AsyncAPI document.
+        oas_version: The ``openapi`` version it declares (the ``asyncapi`` version for an
+            AsyncAPI contract).
+        operation_count: How many operations it declares (messages, for AsyncAPI).
         content_type: The media type it was sent or rendered as.
         source: ``inline`` or ``apiome``.
         source_project_slug: For an Apiome source, the project's slug at publication.
@@ -723,6 +915,11 @@ class ProviderContractRecord(BaseModel):
     source_version_id: Optional[str] = None
     verification_results: Optional[Dict[str, Any]] = None
     created_at: Optional[str] = None
+
+    @property
+    def contract_type(self) -> str:
+        """``asyncapi`` for an AsyncAPI document, else ``oas`` (read from the stored content)."""
+        return contract_type_of(self.content)
 
 
 class PublishedProviderContract(BaseModel):

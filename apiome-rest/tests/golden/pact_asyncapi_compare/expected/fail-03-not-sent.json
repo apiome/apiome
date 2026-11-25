@@ -1,0 +1,57 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "billing-service",
+  "provider": "orders-service",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "3.0.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 1,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "message.not-sent"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "PaymentRequested",
+      "pointer": "/messages/0",
+      "verdict": "fail",
+      "operation": null,
+      "checks": [
+        "message.channel"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "message.not-sent",
+          "message": "the provider declares message 'PaymentRequested' on 'paymentRequests' only as one it receives; a message pact needs a message the provider sends",
+          "pactPointer": "/messages/0",
+          "oasPointer": "/channels/paymentRequests/messages/PaymentRequested",
+          "resolvedPointer": "/channels/paymentRequests/messages/PaymentRequested"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

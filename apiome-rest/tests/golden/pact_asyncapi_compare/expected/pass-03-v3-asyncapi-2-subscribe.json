@@ -1,0 +1,58 @@
+{
+  "verdict": "pass",
+  "success": true,
+  "consumer": "dashboard",
+  "provider": "streetlights",
+  "pactSpecification": "3.0.0",
+  "contractType": "asyncapi",
+  "asyncapiVersion": "2.6.0",
+  "summary": {
+    "interactions": 1,
+    "passed": 1,
+    "partial": 0,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "a light measurement",
+      "pointer": "/messages/0",
+      "verdict": "pass",
+      "operation": null,
+      "message": {
+        "channel": "smartylighting/streetlights/{streetlightId}/lighting/measured",
+        "address": "smartylighting/streetlights/{streetlightId}/lighting/measured",
+        "message": "lightMeasured",
+        "pointer": "/channels/smartylighting~1streetlights~1{streetlightId}~1lighting~1measured/subscribe/message",
+        "resolvedPointer": "/components/messages/lightMeasured",
+        "action": "send"
+      },
+      "checks": [
+        "message.channel",
+        "message.content-type",
+        "message.metadata",
+        "message.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

@@ -52,6 +52,7 @@ each bi-directional comparison.
 | Ask whether a version is safe to deploy | [Can I deploy?](./can-i-deploy.mdx) |
 | Register a provider's OpenAPI document for bi-directional contract testing | [Publish a provider contract](./bi-directional.mdx) |
 | See how a pact is compared with a provider's OpenAPI document | [Comparison rules](./comparison-rules.mdx) |
+| Check message pacts against a provider's AsyncAPI document | [Message pacts](./message-pacts.mdx) |
 | Start CI when a pact needs verifying or a verification finishes | [Contract webhooks](./webhooks.mdx) |
 | Show in a README whether a public project's pacts are verified | [Pact badges](./badges.mdx) |
 | Group applications, undo a delete, clean up old versions | [Labels, deletes and retention](./retention.mdx) |
@@ -88,7 +89,8 @@ Schemathesis, Dredd or Newman. Apiome compares each pact with that document by t
 [comparison rules](./comparison-rules.mdx) as soon as either side publishes, and stores the verdict
 as a verification result, so steps 4 and 6 work the same way. A consumer without Pact tests can
 [export a pact](./bi-directional.mdx#consumers-without-a-pact-file) from the surface it declared in
-Apiome.
+Apiome. A provider that sends messages publishes its AsyncAPI document instead, and its consumers'
+[message pacts](./message-pacts.mdx) are compared with it the same way.
 
 Along the way, [badges](./badges.mdx) show the state of a public project's pacts, and
 [retention](./retention.mdx) keeps the registry small: it deletes old versions but keeps anything
