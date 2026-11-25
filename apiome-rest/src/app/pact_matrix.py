@@ -47,7 +47,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import parse_qsl
 
-from .bidirectional_verification import KIND_BIDIRECTIONAL
+from .bidirectional_verification import KIND_BIDIRECTIONAL, VERDICT_UNVERIFIED
 from .pact_publication import PactPublicationError
 
 __all__ = [
@@ -70,6 +70,7 @@ __all__ = [
     "Verdict",
     "apply_latestby",
     "apply_success_filter",
+    "WARNING_PROVIDER_CONTRACT_UNVERIFIED",
     "deployment_verdict",
     "expand_unverified",
     "ignores",
@@ -117,6 +118,16 @@ _BIDIRECTIONAL_REASON_TEXT = {
     REASON_VERIFIED: "verified by bi-directional comparison",
     REASON_FAILED: "bi-directional comparison failed",
 }
+
+#: The same, when the provider contract had no passing self-verification evidence (PFX-2.4).
+_UNVERIFIED_REASON_TEXT = {
+    REASON_VERIFIED: "verified by bi-directional comparison; provider contract unverified",
+    REASON_FAILED: "bi-directional comparison failed: provider contract unverified",
+    REASON_PENDING: "pact is pending; provider contract unverified",
+}
+
+#: The warning code of a deployable verdict that leans on an unverified provider contract.
+WARNING_PROVIDER_CONTRACT_UNVERIFIED = "provider-contract-unverified"
 
 _NESTED_KEY = re.compile(r"^(?P<name>[A-Za-z]+)\[(?P<index>\d*)\](?:\[(?P<key>[A-Za-z]+)\])?$")
 
@@ -631,6 +642,9 @@ class MatrixRow:
         verification_kind: ``native`` (a Pact verifier published the result) or ``bidirectional``
             (Apiome compared the pact with the provider contract, PFX-2.3); ``None`` without a
             result. The verdict reads both kinds the same way.
+        comparison_verdict: For a bi-directional result, the comparison's verdict (``pass``,
+            ``partial``, ``fail`` or ``unverified`` — the provider contract had no passing
+            self-verification evidence, PFX-2.4); ``None`` otherwise.
     """
 
     consumer_id: str
@@ -655,11 +669,17 @@ class MatrixRow:
     pact_pending: Optional[bool] = None
     wip: bool = False
     verification_kind: Optional[str] = None
+    comparison_verdict: Optional[str] = None
 
     @property
     def bidirectional(self) -> bool:
         """Whether the row's result is a bi-directional comparison."""
         return self.verification_kind == KIND_BIDIRECTIONAL
+
+    @property
+    def provider_contract_unverified(self) -> bool:
+        """Whether the row's bi-directional result compared a provider contract without passing evidence."""
+        return self.bidirectional and self.comparison_verdict == VERDICT_UNVERIFIED
 
 
 @dataclass(frozen=True)
@@ -690,7 +710,8 @@ def row_reason(row: MatrixRow) -> Dict[str, str]:
         ``{"code", "text"}`` — ``verified``; ``pact-pending`` ("pact is pending": the result failed
         but the pact was pending for that provider build, so the build did not fail);
         ``verification-failed``; or ``no-verification-result``. A bi-directional result keeps the
-        code and says so in the text ("verified by bi-directional comparison").
+        code and says so in the text ("verified by bi-directional comparison"), and says when its
+        provider contract was unverified ("…; provider contract unverified").
     """
     if row.success is None:
         code = REASON_NO_RESULT
@@ -698,7 +719,10 @@ def row_reason(row: MatrixRow) -> Dict[str, str]:
         code = REASON_VERIFIED
     else:
         code = REASON_PENDING if row.pact_pending else REASON_FAILED
-    texts = _BIDIRECTIONAL_REASON_TEXT if row.bidirectional else {}
+    if row.provider_contract_unverified:
+        texts = _UNVERIFIED_REASON_TEXT
+    else:
+        texts = _BIDIRECTIONAL_REASON_TEXT if row.bidirectional else {}
     return {"code": code, "text": texts.get(code, _ROW_REASON_TEXT[code])}
 
 
@@ -993,6 +1017,19 @@ def _warnings(result: MatrixResult) -> List[Reason]:
                 "will not be reliable.",
             )
         )
+    # PFX-2.4: a passing bi-directional result whose provider contract had no passing
+    # self-verification evidence (the ``warn`` policy) counts, but is said to be unverified.
+    for row in result.considered_rows:
+        if row.provider_contract_unverified and row.success:
+            warnings.append(
+                Reason(
+                    "warning",
+                    WARNING_PROVIDER_CONTRACT_UNVERIFIED,
+                    f"WARN: The provider contract of {row.provider_name} {row.provider_version_number} has no "
+                    f"passing self-verification evidence, so its bi-directional comparison with "
+                    f"{row.consumer_name} {row.consumer_version_number} is unverified.",
+                )
+            )
     return warnings
 
 

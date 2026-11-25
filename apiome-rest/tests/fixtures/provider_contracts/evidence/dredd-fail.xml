@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Dredd Tests" tests="1" failures="1" errors="0" skip="0" timestamp="Wed, 25 Nov 2026 03:21:40 GMT" time="0.022">
+<testcase name="GET (200) /invoices/abc1" time="0.021"><failure><![CDATA[Message:
+body: At '/total' Missing required property: total
+
+Request:
+method: GET
+uri: /invoices/abc1
+headers: 
+    Accept: application/json
+    User-Agent: Dredd/14.1.0 (Darwin 27.2.0; arm64)
+
+body: 
+
+
+Expected:
+headers: 
+    Content-Type: application/json
+
+body: 
+{
+  "id": "abc1",
+  "total": 12
+}
+statusCode: 200
+
+Actual:
+statusCode: 200
+headers: 
+    server: BaseHTTP/0.6 Python/3.9.6
+    date: Wed, 25 Nov 2026 03:21:40 GMT
+    content-type: application/json
+    content-length: 14
+
+bodyEncoding: utf-8
+body: 
+{
+  "id": "abc1"
+}
+]]></failure></testcase>
+</testsuite>

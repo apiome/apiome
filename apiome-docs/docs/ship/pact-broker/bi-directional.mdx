@@ -13,7 +13,9 @@ document, or name the Apiome version that describes the provider and let Apiome 
 Apiome compares every pact that needs it with the contract, by the rules in
 [Comparison rules](./comparison-rules.mdx), as soon as either side publishes. Each comparison is
 stored as a verification result, and the matrix and [can-i-deploy](./can-i-deploy.mdx) read it
-like one a Pact verifier published. There is no screen for provider contracts.
+like one a Pact verifier published. A contract counts only when the provider's
+[self-verification evidence](#self-verification-evidence) says the provider matches it. There is
+no screen for provider contracts.
 
 ## Before you start
 
@@ -25,6 +27,8 @@ You need:
 2. **An OpenAPI 3.0, 3.1 or 3.2 document** for the provider, in JSON or YAML — **or** an Apiome
    project that describes it. Swagger 2.0 is not accepted: import it into Apiome and publish from
    the project instead.
+3. **A self-verification report** from a tool that tested the provider against that document —
+   Schemathesis, Dredd, Newman or any JUnit writer — or an Apiome provider-verification report.
 
 You do **not** need to register the provider first. The first contract that names it registers
 it as a [pacticipant](./concepts.mdx).
@@ -56,7 +60,7 @@ EOF
 | `contentType` | `application/json` or `application/yaml`. Leave it out and Apiome reads a document that starts with `{` as JSON and anything else as YAML. |
 | `contractType` | `oas`, the only type accepted. It is the default. |
 | `branch`, `tags`, `buildUrl` | Recorded on the provider version, as when you [record a version](./concepts.mdx#the-rules-the-registry-keeps). |
-| `verificationResults` | The provider's self-verification results. See [Self-verification results](#self-verification-results). |
+| `verificationResults` | The provider's self-verification evidence. See [Self-verification evidence](#self-verification-evidence). |
 
 **Use the commit SHA as the provider version.** A version's contract is fixed once published, so
 every build needs its own version number.
@@ -91,11 +95,109 @@ Draft versions can be published. What is stored is a copy, so a later edit of th
 not change a published contract. The key's member also needs **Versions** → **View** (every
 built-in role has it).
 
-## Self-verification results
+## Self-verification evidence
 
-A provider contract is only as good as the provider's agreement with it. Send the results of
-testing the provider against its own document (Schemathesis, Dredd, Newman, a JUnit report) with
-the contract:
+A provider contract is only as good as the provider's agreement with it. **Apiome trusts a
+provider contract only when evidence says the provider matches it.** Send that evidence with the
+contract in `verificationResults`: the report of a tool that tested the provider against its own
+document, or an Apiome provider-verification report. Apiome reads the report when you publish and
+records what it proved in `selfVerification`.
+
+### Publish with the CLI
+
+The quickest way is `apiome pact publish-provider-contract`. It base64-encodes the files and names
+their media types from the file extension:
+
+```bash
+apiome pact publish-provider-contract openapi.yaml \
+  --provider "Ledger API" \
+  --provider-app-version "$GIT_COMMIT" \
+  --branch "$GIT_BRANCH" \
+  --build-url "$CI_BUILD_URL" \
+  --evidence reports/junit.xml \
+  --verifier schemathesis
+```
+
+| Option | What it sends |
+| --- | --- |
+| `--evidence <file>` | The report, as `verificationResults.content`. `.xml` is sent as JUnit, `.json` as JSON, `.ndjson` or `.jsonl` as NDJSON, `.txt` or `.log` as plain text. `--evidence-content-type` overrides the guess. |
+| `--evidence-report <id>` | An Apiome provider-verification report instead of a file. |
+| `--verification-exit-code <n>` | `success`: `true` for `0`. Leave it out and a report file counts as passing unless the report shows failures. |
+| `--verifier`, `--verifier-version` | The tool that wrote the report. Apiome detects Schemathesis, Dredd and Newman reports itself. |
+| `--apiome-version <project>@<version>` | Render the contract from an Apiome version instead of the file. |
+| `--fail-on-unverified` | Exit `1` when the contract is not trusted, so the build fails. |
+
+The command prints what the evidence proved. The options follow PactFlow's
+`pactflow publish-provider-contract`, so a pipeline moves over by changing the command name. The
+full list is on the [`apiome pact` reference](../../reference/cli/pact.md).
+
+### One example per tool
+
+Each example tests the provider at `$PROVIDER_URL` against `openapi.yaml`, then publishes the
+contract with the report.
+
+**Schemathesis — JUnit XML.** Write the report with `--report junit`:
+
+```bash
+st run openapi.yaml --url "$PROVIDER_URL" --report junit --report-dir reports
+apiome pact publish-provider-contract openapi.yaml --provider "Ledger API" \
+  --provider-app-version "$GIT_COMMIT" --branch "$GIT_BRANCH" \
+  --evidence reports/junit-*.xml --verifier schemathesis
+```
+
+**Schemathesis — NDJSON.** `--report ndjson` writes one event per line. Apiome counts each
+finished scenario, and needs the event that says the run completed:
+
+```bash
+st run openapi.yaml --url "$PROVIDER_URL" --report ndjson --report-dir reports
+apiome pact publish-provider-contract openapi.yaml --provider "Ledger API" \
+  --provider-app-version "$GIT_COMMIT" --evidence reports/ndjson-*.ndjson
+```
+
+**Dredd — xunit.** Dredd's `xunit` reporter writes JUnit XML:
+
+```bash
+dredd openapi.yaml "$PROVIDER_URL" --reporter xunit --output reports/dredd.xml
+apiome pact publish-provider-contract openapi.yaml --provider "Ledger API" \
+  --provider-app-version "$GIT_COMMIT" --evidence reports/dredd.xml --verifier dredd
+```
+
+**Postman / Newman — JSON.** Run the collection with the `json` reporter. Each assertion is a test;
+a failed request or test script counts as an error:
+
+```bash
+newman run ledger.postman_collection.json --env-var "base=$PROVIDER_URL" \
+  -r json --reporter-json-export reports/newman.json
+apiome pact publish-provider-contract openapi.yaml --provider "Ledger API" \
+  --provider-app-version "$GIT_COMMIT" --evidence reports/newman.json --verifier newman
+```
+
+Newman's `-r junit` report works too. Send it like the Dredd one.
+
+**Any other tool — JUnit XML.** Any JUnit report is read the same way. Apiome counts the
+`<testcase>` elements, not the totals on `<testsuite>`:
+
+```bash
+apiome pact publish-provider-contract openapi.yaml --provider "Ledger API" \
+  --provider-app-version "$GIT_COMMIT" --evidence build/test-results/contract.xml --verifier rest-assured
+```
+
+**Apiome provider verification.** If you run Apiome's own [provider verification](../contract-testing-and-ci-gates.mdx)
+against a registered verification target, cite its report instead of uploading a file. Publish
+the contract from the same Apiome version the report verified:
+
+```bash
+apiome pact publish-provider-contract --apiome-version ledger-api@1.4.0 \
+  --provider "Ledger API" --provider-app-version "$GIT_COMMIT" \
+  --evidence-report 6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b
+```
+
+The key's member needs **Verification evidence** → **View** to cite a report (every built-in role
+has it). Apiome looks the report up in your workspace only.
+
+### Send it in the request
+
+Without the CLI, put the same fields in `verificationResults`:
 
 ```json
 {
@@ -105,13 +207,65 @@ the contract:
     "content": "<the report, base64-encoded>",
     "contentType": "application/xml",
     "verifier": "schemathesis",
-    "verifierVersion": "3.39.0"
+    "verifierVersion": "4.34.2"
   }
 }
 ```
 
-`success` is required. Apiome stores the results as sent and records the report's SHA-256 and size
-next to them. It does not read the report yet.
+| Field | What it is |
+| --- | --- |
+| `content` | The report, base64-encoded. At most `APIOME_PACT_EVIDENCE_MAX_BYTES` once decoded (5 MiB unless your operator changed it). |
+| `contentType` | `application/xml` or `text/xml` (JUnit), `application/json` (Newman), `application/x-ndjson` (Schemathesis NDJSON), or `text/plain`. Leave it out and Apiome guesses from the first bytes. |
+| `providerVerificationReportId` | An Apiome provider-verification report, instead of `content`. Send one or the other. |
+| `success` | Whether the tool passed. Required, except with `providerVerificationReportId`: the report says. |
+| `verifier`, `verifierVersion` | The tool and its version. |
+
+### What the evidence proves
+
+The answer to a publish, and a read of the contract, carry `selfVerification`:
+
+```json
+"selfVerification": {
+  "status": "failed",
+  "kind": "junit",
+  "tool": "dredd",
+  "digest": "sha256:5e0f…",
+  "contentType": "application/xml",
+  "summary": { "tests": 1, "passed": 0, "failed": 1, "errors": 0, "skipped": 0 },
+  "reasons": ["the report records 1 failed and 0 errored of 1 tests although success: true was sent"],
+  "providerContractVerified": false,
+  "unverifiedPolicy": "warn"
+}
+```
+
+| `status` | Means |
+| --- | --- |
+| `verified` | Apiome read the report. It ran tests, and none failed or errored. The contract is trusted. |
+| `failed` | The report records failed or errored tests, or `success` was `false`. A failure in the report wins over `success: true`. |
+| `inconclusive` | Evidence was sent but proves nothing: a `text/plain` report or a JSON shape Apiome does not read, a report that ran no tests, a Schemathesis run that did not finish, a `success` flag without a report, or an Apiome report of a different project or version than the contract. `reasons` says which. |
+| `missing` | No `verificationResults` were sent. |
+
+`kind` is `junit`, `newman-json`, `schemathesis-ndjson`, `apiome-provider-verification`, or
+`unreadable`. `digest` is the SHA-256 of the report as sent, so you can match it to a CI
+artifact. For an Apiome report, `reportId`, `target` and `coverage` say which run it was. `notes`
+tells you something worth knowing even when the evidence is verified, such as a `verifier` that
+does not match the report.
+
+### An unverified contract
+
+A contract whose status is anything but `verified` is **unverified**. Its comparisons are still
+run and stored, but their verdict reads **`unverified`** (a `fail` stays `fail`), and
+`comparison.comparisonVerdict` keeps what the comparison found. What happens next is set by your
+operator with `APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT`:
+
+| Policy | The comparison result | can-i-deploy |
+| --- | --- | --- |
+| `warn` (default) | Keeps the comparison's `success`, plus a test result with a `provider-contract-unverified` warning. | Answers as before, with a `provider-contract-unverified` warning. |
+| `fail` | Fails, with a `provider-contract-unverified` mismatch. | Says no. |
+
+The policy is applied when the comparison runs and stored with it, so `unverifiedPolicy` in
+`comparison` says which one decided the result. To fix an unverified contract, publish it again
+under a **new provider version**, with passing evidence.
 
 ## What happens when you publish
 
@@ -133,6 +287,8 @@ next to them. It does not read the report yet.
 | The same document with the same `verificationResults` | **`200`** — nothing changes. |
 | A different document, or different `verificationResults` | **`409 provider-contract-conflict`** — nothing is stored. Publish under a new provider version. |
 
+What Apiome read from the evidence is not part of the match: the same `verificationResults` sent again is the same publish.
+
 ## What is compared when you publish
 
 The answer to a publish lists the comparisons it ran in `comparisons`:
@@ -152,6 +308,7 @@ The answer to a publish lists the comparisons it ran in `comparisons`:
       "pactVersionSha": "9b2c…",
       "status": "compared",
       "verdict": "pass",
+      "success": true,
       "verificationNumber": 1
     }
   ]
@@ -171,7 +328,7 @@ A consumer that publishes a pact later is compared then: its publish answer carr
 
 | `status` | Means |
 | --- | --- |
-| `compared` | The comparison ran and its result is stored. `verdict` is `pass`, `partial` or `fail`. |
+| `compared` | The comparison ran and its result is stored. `verdict` is `pass`, `partial`, `fail`, or `unverified` when the contract has no passing [evidence](#an-unverified-contract). `success` is the stored result's. |
 | `already-compared` | This pact was compared with this provider version before. Nothing new is stored. |
 | `error` | The result could not be stored. `reason` says why. Publish the contract again to retry. |
 | `skipped` | Over the limit of 50 pacts per contract publish (20 provider versions per pact). `reason` says so. |
@@ -192,11 +349,11 @@ curl "$PACT_BROKER_BASE_URL/pacts/provider/ledger-api/consumer/billing-service/p
 | Field | What it is |
 | --- | --- |
 | `kind` | `bidirectional`. A result a Pact verifier published reads `native`. |
-| `success` | `false` only for a `fail` verdict. A `partial` verdict passes. |
+| `success` | `false` for a `fail` verdict, and for an `unverified` one under the `fail` policy. A `partial` verdict passes. |
 | `providerApplicationVersion` | The provider version whose contract was compared. |
 | `testResults` | One entry per interaction, with its `verdict` and, when it failed, a `mismatches` entry per failure (`attribute` is the failure code). |
 | `verifiedBy.implementation` | `Apiome bi-directional comparison`. |
-| `comparison` | The whole comparison: `verdict`, `summary`, `providerContractSha`, and per interaction the checks run, the failures and warnings with their JSON Pointers, and the fidelity notes. |
+| `comparison` | The whole comparison: `verdict`, `summary`, `providerContractSha`, `providerContractEvidence` (the contract's `selfVerification` at the time), and per interaction the checks run, the failures and warnings with their JSON Pointers, and the fidelity notes. An unverified one adds `comparisonVerdict` and `unverifiedPolicy`. |
 | `_links.pb:provider-contract` | The contract the pact was compared with. |
 
 How the matrix and can-i-deploy use these results is on
@@ -213,7 +370,8 @@ How the matrix and can-i-deploy use these results is on
 | `oasVersion`, `operationCount` | The `openapi` version it declares, and how many operations it has. |
 | `contentType` | How it was sent: `application/json`, `application/yaml`, or `application/json` when rendered from Apiome. |
 | `source` | `{"kind": "inline"}` for an uploaded document. For one rendered from Apiome, `kind` is `apiome`, with `project` and `version` as they were named at publishing, and their ids. |
-| `verificationResults` | The self-verification results, with `contentSha256` and `contentBytes` of the report, or `null`. |
+| `verificationResults` | The self-verification results as sent, with `contentSha256` and `contentBytes` of the report and the `evidence` Apiome read, or `null`. |
+| `selfVerification` | What the evidence proved. See [What the evidence proves](#what-the-evidence-proves). |
 | `content` | The OpenAPI document, as JSON. |
 | `_links` | `self`, `pb:provider` and `pb:provider-version`. |
 
@@ -239,11 +397,15 @@ its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901), in the OpenAPI docum
 | Status | Code | What to do |
 | --- | --- | --- |
 | `422` | `provider-contract-invalid` | The document is not an OpenAPI 3.x document. `pointer` is the place **in the document**: `/swagger` for Swagger 2.0, `/asyncapi` for AsyncAPI, `/openapi` for a missing or unsupported version, otherwise the first schema error. `""` means the whole document: it does not parse, or breaks a size or nesting limit. |
-| `422` | `provider-contract-request-invalid` | A field **in the request** is wrong: neither or both of `content` and `apiomeVersion`, content that is not base64, `verificationResults` without `success`. |
+| `422` | `provider-contract-request-invalid` | A field **in the request** is wrong: neither or both of `content` and `apiomeVersion`, content that is not base64, `verificationResults` without `success` (and without a report id), both a report and a report id, or a report id that is not a UUID. |
 | `422` | `provider-contract-unsupported` | A `contractType` other than `oas`, or a `contentType` that is neither JSON nor YAML. |
 | `422` | `provider-contract-source-not-found` | `apiomeVersion` names no project or version of this workspace, or names only a version for a provider that is not bound to a project. |
+| `422` | `provider-contract-evidence-unsupported` | The report's `contentType` is not one a report is read as (`pointer` is `/verificationResults/contentType`). |
+| `422` | `provider-contract-evidence-invalid` | The report is not what its type says: XML that does not parse, is not JUnit or declares a DTD; JSON or NDJSON that does not parse; text that is not UTF-8. `message` says where. |
+| `422` | `provider-contract-evidence-report-not-found` | `providerVerificationReportId` names no provider-verification report of this workspace. |
 | `409` | `provider-contract-conflict` | This provider version already has a different contract. Publish under a new version number. |
 | `413` | `provider-contract-too-large` | The document is over the size limit (`APIOME_PACT_MAX_BYTES`, 10 MiB unless your operator changed it). |
+| `413` | `provider-contract-evidence-too-large` | The report is over `APIOME_PACT_EVIDENCE_MAX_BYTES` (5 MiB unless your operator changed it). |
 | `429` | `pact-publish-rate-limited` | The workspace is over its publish budget, shared with pact publishing. Retry after the seconds in `Retry-After`. |
 | `404` | `provider-contract-not-found`, `pacticipant-not-found` | On a read: the version published no contract, or there is no such provider. |
 
@@ -254,6 +416,7 @@ its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901), in the OpenAPI docum
 | Read a provider contract | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | Publish an uploaded document | `pacts:create` | — | ✓ | ✓ | ✓ |
 | Publish from an Apiome version | `pacts:create` and `versions:view` | — | ✓ | ✓ | ✓ |
+| Cite an Apiome provider-verification report | `pacts:create` and `verification_evidence:view` | — | ✓ | ✓ | ✓ |
 
 A restricted API key (one with scopes) cannot use these routes yet; use a full-access key from a
 member with the **Editor** role.

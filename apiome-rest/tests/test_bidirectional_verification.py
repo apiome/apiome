@@ -21,12 +21,14 @@ from app.bidirectional_verification import (
     ComparisonRun,
     ContractTarget,
     RunEntry,
+    apply_evidence_policy,
     error_comparison,
     run_notices,
     select_contract_targets,
     stored_comparison,
 )
 from app.pact_oas_compare import compare_pact_to_oas
+from app.provider_contract_evidence import Evidence, EvidenceSummary
 
 FIXTURES = Path(__file__).parent / "fixtures" / "provider_contracts"
 SHA = "c" * 64
@@ -226,3 +228,57 @@ def test_notices_name_each_pair_and_stay_quiet_about_repeats() -> None:
 def test_an_empty_run_prints_nothing() -> None:
     assert run_notices(ComparisonRun()) == []
     assert ComparisonRun().to_dict()["results"] == []
+
+
+# --- PFX-2.4: the provider contract's self-verification evidence -------------------------------
+
+_VERIFIED = Evidence(status="verified", kind="junit", tool="dredd", summary=EvidenceSummary(1, 1))
+_FAILED = Evidence(status="failed", kind="junit", tool="dredd", reasons=("the report records 1 failed",))
+
+
+def _passing() -> Any:
+    return stored_comparison(compare_pact_to_oas(_pact({"id": 42, "total": 1999}), _oas()), contract_sha="b" * 64)
+
+
+def test_verified_evidence_leaves_the_comparison_and_records_the_evidence() -> None:
+    stored = apply_evidence_policy(_passing(), _VERIFIED, "fail")
+    assert (stored.success, stored.verdict) == (True, "pass")
+    assert stored.payload["providerContractEvidence"]["status"] == "verified"
+    assert "comparisonVerdict" not in stored.payload
+    assert len(stored.test_results) == len(_passing().test_results)
+
+
+def test_unverified_evidence_warns_under_warn() -> None:
+    stored = apply_evidence_policy(_passing(), _FAILED, "warn")
+    assert (stored.success, stored.verdict) == (True, "unverified")
+    assert (stored.payload["verdict"], stored.payload["comparisonVerdict"], stored.payload["unverifiedPolicy"]) == (
+        "unverified",
+        "pass",
+        "warn",
+    )
+    last = stored.test_results[-1]
+    assert last["success"] is True and last["warnings"][0]["attribute"] == "provider-contract-unverified"
+    assert "the report records 1 failed" in last["warnings"][0]["description"]
+
+
+def test_unverified_evidence_fails_under_fail() -> None:
+    stored = apply_evidence_policy(_passing(), None, "fail")
+    assert (stored.success, stored.verdict) == (False, "unverified")
+    assert stored.payload["success"] is False
+    assert stored.payload["providerContractEvidence"]["status"] == "missing"
+    assert stored.test_results[-1]["mismatches"][0]["attribute"] == "provider-contract-unverified"
+
+
+def test_a_failed_comparison_stays_failed_when_unverified() -> None:
+    failing = stored_comparison(compare_pact_to_oas(_pact({"id": 42, "total": "lots"}), _oas()), contract_sha="b" * 64)
+    stored = apply_evidence_policy(failing, None, "warn")
+    assert (stored.success, stored.verdict, stored.payload["comparisonVerdict"]) == (False, "fail", "fail")
+
+
+def test_an_unverified_notice_is_a_warning_or_an_error_by_success() -> None:
+    warned = _entry(STATUS_COMPARED, verdict="unverified", number=1, success=True)
+    failed = _entry(STATUS_COMPARED, verdict="unverified", number=2, success=False)
+    notices = run_notices(ComparisonRun([warned, failed]))
+    assert [n["type"] for n in notices] == ["warning", "error"]
+    assert "no passing self-verification evidence" in notices[0]["text"]
+    assert warned.to_dict()["success"] is True

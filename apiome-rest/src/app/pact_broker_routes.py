@@ -137,6 +137,12 @@ from .provider_contract import (
     CODE_SOURCE_NOT_FOUND,
     CODE_UNSUPPORTED,
 )
+from .provider_contract_evidence import (
+    CODE_EVIDENCE_INVALID,
+    CODE_EVIDENCE_REPORT_NOT_FOUND,
+    CODE_EVIDENCE_TOO_LARGE,
+    CODE_EVIDENCE_UNSUPPORTED,
+)
 from .rate_limit import FixedWindowRateLimiter
 from .verification_result import CODE_REPORT_NOT_FOUND, CODE_VERIFICATION_INVALID, CODE_VERIFICATION_NOT_FOUND
 
@@ -184,6 +190,11 @@ _STATUS_BY_CODE = {
     CODE_CONTRACT_TOO_LARGE: 413,
     CODE_CONTRACT_CONFLICT: 409,
     CODE_CONTRACT_NOT_FOUND: 404,
+    # PFX-2.4 (#6928): self-verification evidence.
+    CODE_EVIDENCE_INVALID: 422,
+    CODE_EVIDENCE_UNSUPPORTED: 422,
+    CODE_EVIDENCE_REPORT_NOT_FOUND: 422,
+    CODE_EVIDENCE_TOO_LARGE: 413,
 }
 
 _publish_limiter = FixedWindowRateLimiter()

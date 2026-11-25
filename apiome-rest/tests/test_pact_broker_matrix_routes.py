@@ -292,6 +292,25 @@ def test_a_bidirectional_result_is_marked_and_read_like_a_native_one(store: Dict
     assert body["notices"][-1]["code"] == "verification-failed"
 
 
+def test_an_unverified_provider_contract_is_marked_and_warned_about(store: Dict[str, MagicMock]) -> None:
+    # PFX-2.4: the row says the provider contract had no passing self-verification evidence.
+    row = replace(_row(), verification_kind="bidirectional", comparison_verdict="unverified")
+    store["query"].return_value = _result(row)
+    body = client.get(f"{_BASE}/matrix?{_CLI_QUERY}").json()
+    (matrix_row,) = body["matrix"]
+    assert matrix_row["verificationResult"]["providerContractVerified"] is False
+    assert matrix_row["reason"]["text"] == "verified by bi-directional comparison; provider contract unverified"
+    assert any(notice.get("code") == "provider-contract-unverified" for notice in body["notices"])
+
+    store["query"].return_value = _result(replace(row, comparison_verdict="pass"))
+    (verified,) = client.get(f"{_BASE}/matrix?{_CLI_QUERY}").json()["matrix"]
+    assert verified["verificationResult"]["providerContractVerified"] is True
+
+    store["query"].return_value = _result(_row())
+    (native,) = client.get(f"{_BASE}/matrix?{_CLI_QUERY}").json()["matrix"]
+    assert "providerContractVerified" not in native["verificationResult"]
+
+
 def test_can_i_deploy_asks_the_same_question(store: Dict[str, MagicMock]) -> None:
     response = client.get(
         f"{_BASE}/can-i-deploy",

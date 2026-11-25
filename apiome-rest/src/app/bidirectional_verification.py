@@ -16,6 +16,9 @@ This module holds the parts with no database:
   ``fail``: a ``partial`` verdict passes, and its fidelity notes travel with it), Pact-shaped
   ``testResults`` so a Pact client reading the result sees one entry per interaction, and the
   comparison payload itself;
+* **whether the provider contract is trusted** (:func:`apply_evidence_policy`, PFX-2.4): a
+  contract without passing self-verification evidence (:mod:`app.provider_contract_evidence`) is
+  *unverified*; its comparisons read verdict ``unverified`` and, under the ``fail`` policy, fail;
 * **what the caller is told** (:class:`ComparisonRun`, :func:`run_notices`): one entry per pair,
   including the ones that were already compared, could not be stored, or went over the limit, so
   nothing is dropped without a reason.
@@ -25,17 +28,21 @@ The database side is :mod:`app.bidirectional_store`.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .pact_oas_result import VERDICT_FAIL, ComparisonResult
+from .provider_contract_evidence import Evidence, missing_evidence
 
 __all__ = [
+    "CODE_UNVERIFIED",
     "ENGINE_NAME",
     "KIND_BIDIRECTIONAL",
     "KIND_NATIVE",
     "MAX_CONTRACTS_PER_PACT",
     "MAX_PACTS_PER_CONTRACT",
+    "POLICY_FAIL",
+    "POLICY_WARN",
     "STATUS_ALREADY_COMPARED",
     "STATUS_COMPARED",
     "STATUS_ERROR",
@@ -45,10 +52,13 @@ __all__ = [
     "RunEntry",
     "SelectedTarget",
     "StoredComparison",
+    "VERDICT_UNVERIFIED",
+    "apply_evidence_policy",
     "error_comparison",
     "run_notices",
     "select_contract_targets",
     "stored_comparison",
+    "unverified_message",
 ]
 
 #: A result a Pact verifier published (PFX-1.4).
@@ -76,6 +86,15 @@ STATUS_SKIPPED = "skipped"
 #: The code of a stored comparison that could not be run at all.
 CODE_NOT_COMPARABLE = "comparison-not-possible"
 
+#: The verdict of a comparison whose provider contract has no passing self-verification evidence
+#: (PFX-2.4). A ``fail`` comparison stays ``fail``: the stronger finding is kept.
+VERDICT_UNVERIFIED = "unverified"
+#: The code that says so, in test results and notices.
+CODE_UNVERIFIED = "provider-contract-unverified"
+#: ``APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT``: an unverified contract only warns, or fails.
+POLICY_WARN = "warn"
+POLICY_FAIL = "fail"
+
 #: The most mismatches one test result lists (the comparison payload keeps them all).
 _MAX_MISMATCHES = 50
 
@@ -97,6 +116,7 @@ class ContractTarget:
         contract_sha: The contract's content address.
         branches: The branches the version was recorded on.
         environments: The environments it is currently deployed to or released in.
+        evidence: The contract's self-verification evidence (PFX-2.4); ``None`` reads as missing.
     """
 
     version_id: str
@@ -106,6 +126,7 @@ class ContractTarget:
     contract_sha: str
     branches: Tuple[str, ...] = ()
     environments: Tuple[str, ...] = ()
+    evidence: Optional[Evidence] = field(default=None, compare=False)
 
 
 @dataclass
@@ -249,6 +270,64 @@ def error_comparison(message: str, *, contract_sha: str) -> StoredComparison:
     return StoredComparison(success=False, verdict=VERDICT_FAIL, test_results=[test_result], payload=payload)
 
 
+def unverified_message(evidence: Evidence) -> str:
+    """Why a provider contract is unverified, in one sentence.
+
+    Args:
+        evidence: The contract's evidence (not ``verified``).
+
+    Returns:
+        ``the provider contract is unverified (self-verification evidence missing): <reasons>``.
+    """
+    reasons = "; ".join(evidence.reasons) or "no passing self-verification evidence"
+    return f"the provider contract is unverified (self-verification evidence {evidence.status}): {reasons}"
+
+
+def apply_evidence_policy(stored: StoredComparison, evidence: Optional[Evidence], policy: str) -> StoredComparison:
+    """Weigh a comparison by the provider contract's self-verification evidence (PFX-2.4).
+
+    The comparison says whether the contract satisfies the pact; the evidence says whether the
+    provider satisfies the contract. Both are needed to trust a green verdict.
+
+    Args:
+        stored: The comparison as :func:`stored_comparison` (or :func:`error_comparison`) made it.
+        evidence: The contract's evidence; ``None`` is missing evidence.
+        policy: :data:`POLICY_WARN` or :data:`POLICY_FAIL`.
+
+    Returns:
+        With ``verified`` evidence, the comparison unchanged but for ``providerContractEvidence``
+        in the payload. Otherwise: verdict ``unverified`` (a ``fail`` stays ``fail``), the
+        comparison's own verdict kept as ``comparisonVerdict``, the policy as
+        ``unverifiedPolicy``, one more test result naming :data:`CODE_UNVERIFIED` and why, and
+        ``success`` kept under ``warn`` but ``False`` under ``fail``.
+    """
+    evidence = evidence or missing_evidence()
+    payload = dict(stored.payload)
+    payload["providerContractEvidence"] = evidence.to_dict()
+    if evidence.verified:
+        return replace(stored, payload=payload)
+    fail = policy == POLICY_FAIL
+    verdict = VERDICT_FAIL if stored.verdict == VERDICT_FAIL else VERDICT_UNVERIFIED
+    success = stored.success and not fail
+    message = unverified_message(evidence)
+    payload.update(
+        verdict=verdict,
+        success=success,
+        comparisonVerdict=stored.verdict,
+        unverifiedPolicy=POLICY_FAIL if fail else POLICY_WARN,
+    )
+    finding = {"attribute": CODE_UNVERIFIED, "description": message}
+    test_result: Dict[str, Any] = {
+        "interactionDescription": None,
+        "success": not fail,
+        "verdict": VERDICT_UNVERIFIED,
+        ("mismatches" if fail else "warnings"): [finding],
+    }
+    return StoredComparison(
+        success=success, verdict=verdict, test_results=[*stored.test_results, test_result], payload=payload
+    )
+
+
 # ---------------------------------------------------------------------------------------------
 # What the caller is told
 # ---------------------------------------------------------------------------------------------
@@ -266,9 +345,10 @@ class RunEntry:
         sha: The pact version.
         status: :data:`STATUS_COMPARED`, :data:`STATUS_ALREADY_COMPARED`, :data:`STATUS_ERROR` or
             :data:`STATUS_SKIPPED`.
-        verdict: ``pass``, ``partial`` or ``fail`` for a compared pair.
+        verdict: ``pass``, ``partial``, ``fail`` or ``unverified`` for a compared pair.
         number: The stored result's number within its pact version.
         reason: Why a pair was not compared, or why it was selected.
+        success: The stored result's ``success``, when known.
     """
 
     consumer: str
@@ -280,6 +360,7 @@ class RunEntry:
     verdict: Optional[str] = None
     number: Optional[int] = None
     reason: Optional[str] = None
+    success: Optional[bool] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize for an API response (camelCase, unset fields left out)."""
@@ -291,6 +372,7 @@ class RunEntry:
             "pactVersionSha": self.sha,
             "status": self.status,
             "verdict": self.verdict,
+            "success": self.success,
             "verificationNumber": self.number,
             "reason": self.reason,
         }
@@ -341,8 +423,16 @@ def run_notices(run: ComparisonRun) -> List[Dict[str, str]]:
     notices: List[Dict[str, str]] = []
     for entry in run.entries:
         if entry.status == STATUS_COMPARED:
-            kind = "success" if entry.verdict != VERDICT_FAIL else "error"
-            notices.append({"type": kind, "text": f"Bi-directional comparison of {_pair(entry)}: {entry.verdict}."})
+            if entry.verdict == VERDICT_UNVERIFIED:
+                kind = "error" if entry.success is False else "warning"
+                text = (
+                    f"Bi-directional comparison of {_pair(entry)}: unverified — the provider contract has no "
+                    f"passing self-verification evidence."
+                )
+            else:
+                kind = "success" if entry.verdict != VERDICT_FAIL else "error"
+                text = f"Bi-directional comparison of {_pair(entry)}: {entry.verdict}."
+            notices.append({"type": kind, "text": text})
         elif entry.status == STATUS_ERROR:
             notices.append(
                 {

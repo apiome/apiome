@@ -32,6 +32,7 @@ from app.provider_contract import (
     parse_openapi,
     prepare_contract,
     provider_contract_sha,
+    sent_verification_results,
     stored_verification_results,
     validate_openapi_contract,
 )
@@ -294,6 +295,39 @@ class TestCheckRequest:
         error = _refusal(check_request, _request(apiomeVersion="ledger@1", contentType="application/yaml"))
         assert (error.code, error.pointer) == (CODE_REQUEST_INVALID, "/contentType")
 
+    # PFX-2.4 (#6928): the shape of verificationResults.
+    _REPORT_ID = "6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b"
+
+    def test_a_report_id_alone_is_accepted_without_success(self) -> None:
+        check_request(_request(content="e30=", verificationResults={"providerVerificationReportId": self._REPORT_ID}))
+
+    def test_a_report_and_a_report_id_together_are_refused(self) -> None:
+        error = _refusal(
+            check_request,
+            _request(
+                content="e30=",
+                verificationResults={
+                    "success": True,
+                    "content": "e30=",
+                    "providerVerificationReportId": self._REPORT_ID,
+                },
+            ),
+        )
+        assert (error.code, error.pointer) == (CODE_REQUEST_INVALID, "/verificationResults")
+
+    def test_a_report_id_that_is_not_a_uuid_is_refused(self) -> None:
+        error = _refusal(
+            check_request, _request(content="e30=", verificationResults={"providerVerificationReportId": "latest"})
+        )
+        assert (error.code, error.pointer) == (
+            CODE_REQUEST_INVALID,
+            "/verificationResults/providerVerificationReportId",
+        )
+
+    def test_success_is_required_without_a_report_id(self) -> None:
+        error = _refusal(check_request, _request(content="e30=", verificationResults={"content": "e30="}))
+        assert (error.code, error.pointer) == (CODE_REQUEST_INVALID, "/verificationResults/success")
+
 
 class TestApiomeReference:
     @pytest.mark.parametrize(
@@ -324,7 +358,7 @@ class TestBase64AndResults:
         assert (error.code, error.pointer) == (CODE_REQUEST_INVALID, "/content")
 
     def test_no_results_store_nothing(self) -> None:
-        assert stored_verification_results(None) is None
+        assert stored_verification_results(None, {"status": "missing"}) is None
 
     def test_results_are_stored_as_sent_with_the_report_digest(self) -> None:
         report = b"<testsuite tests='3' failures='0'/>"
@@ -338,7 +372,7 @@ class TestBase64AndResults:
                 "verifierVersion": "3.39.0",
             },
         )
-        stored = stored_verification_results(body.verification_results)
+        stored = stored_verification_results(body.verification_results, {"status": "verified"})
         assert stored is not None
         assert stored["success"] is True
         assert (stored["verifier"], stored["verifierVersion"], stored["contentType"]) == (
@@ -351,7 +385,8 @@ class TestBase64AndResults:
 
     def test_results_without_a_report_carry_no_digest(self) -> None:
         stored = stored_verification_results(
-            _request(content="e30=", verificationResults={"success": False}).verification_results
+            _request(content="e30=", verificationResults={"success": False}).verification_results,
+            {"status": "failed"},
         )
         assert stored == {
             "success": False,
@@ -359,11 +394,28 @@ class TestBase64AndResults:
             "verifierVersion": None,
             "contentType": None,
             "content": None,
+            "evidence": {"status": "failed"},
         }
+
+    def test_a_named_report_is_stored_lower_cased(self) -> None:
+        report_id = "6F1C2B3A-4D5E-4F60-8A7B-9C0D1E2F3A4B"
+        stored = stored_verification_results(
+            _request(
+                content="e30=", verificationResults={"providerVerificationReportId": report_id}
+            ).verification_results,
+            {"status": "verified"},
+        )
+        assert stored is not None
+        assert stored["providerVerificationReportId"] == report_id.lower()
+        assert stored["success"] is None
+
+    def test_sent_results_leave_out_the_evidence(self) -> None:
+        assert sent_verification_results(None) is None
+        assert sent_verification_results({"success": True, "evidence": {"status": "verified"}}) == {"success": True}
 
     def test_a_report_that_is_not_base64_is_refused(self) -> None:
         body = _request(content="e30=", verificationResults={"success": True, "content": "%%%"})
-        error = _refusal(stored_verification_results, body.verification_results)
+        error = _refusal(stored_verification_results, body.verification_results, {})
         assert error.pointer == "/verificationResults/content"
 
 

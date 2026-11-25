@@ -1,7 +1,7 @@
 import hashlib
 import hmac
 import logging
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -994,6 +994,24 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices(
             "APIOME_PACT_DELETION_GRACE_DAYS",
             "pact_deletion_grace_days",
+        ),
+    )
+    # PFX-2.4 (#6928): the largest self-verification report a provider contract may carry, in bytes
+    # (decoded). A Schemathesis NDJSON stream of a large API is the biggest thing sent here.
+    pact_evidence_max_bytes: int = Field(
+        default=5 * 1024 * 1024,
+        ge=1024,
+        validation_alias=AliasChoices("APIOME_PACT_EVIDENCE_MAX_BYTES", "pact_evidence_max_bytes"),
+    )
+    # PFX-2.4 (#6928): what a bi-directional comparison does when the provider contract has no
+    # passing self-verification evidence (missing, failed or inconclusive). ``warn``: the verdict
+    # reads ``unverified`` but the result keeps the comparison's success, and can-i-deploy warns.
+    # ``fail``: the result fails, so can-i-deploy says no.
+    pact_unverified_provider_contract: Literal["warn", "fail"] = Field(
+        default="warn",
+        validation_alias=AliasChoices(
+            "APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT",
+            "pact_unverified_provider_contract",
         ),
     )
 

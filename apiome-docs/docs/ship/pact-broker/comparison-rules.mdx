@@ -30,6 +30,23 @@ interactions.
 A `partial` verdict is a success with caveats. It is never reported as `pass`, so that a green
 result is not read as stronger than the evidence behind it.
 
+### When the provider contract is unverified
+
+The comparison trusts the provider's document. Apiome trusts the document only when the provider
+sent [self-verification evidence](./bi-directional.mdx#self-verification-evidence) that it
+passed. Without it — no report, a failing report, or one that proves nothing — the stored verdict
+is **`unverified`**:
+
+| Comparison found | Evidence | Stored verdict | `success` |
+| --- | --- | --- | --- |
+| `pass` or `partial` | `verified` | `pass` or `partial` | `true` |
+| `pass` or `partial` | anything else | `unverified` | `true` under the `warn` policy, `false` under `fail` |
+| `fail` | any | `fail` | `false` |
+
+`comparison.comparisonVerdict` keeps what the comparison found, and
+`comparison.providerContractEvidence` the evidence it was weighed against. The policy is set by
+`APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT` (`warn` unless your operator changed it).
+
 ## What is compared
 
 For every interaction, in this order:
@@ -261,7 +278,8 @@ An entry has `code`, `message` and `pactPointer`, and where they apply `reason`,
 - **Bodies that are not JSON**: form data, XML, text and binary (listed as `body-not-compared`).
 - **Provider states.** The comparison does not know which data a state sets up.
 - **Whether the provider behaves as its document says.** That is the job of the provider's
-  [self-verification results](./bi-directional.mdx#self-verification-results).
+  [self-verification evidence](./bi-directional.mdx#self-verification-evidence). Without passing
+  evidence the verdict reads `unverified` (see below).
 
 ## Related
 

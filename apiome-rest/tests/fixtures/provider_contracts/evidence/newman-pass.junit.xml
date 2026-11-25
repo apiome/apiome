@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Ledger API" tests="2" time="0.011">
+  <testsuite name="Get invoice" id="af604c33-2ac2-47f2-ad77-68715ed57169" timestamp="2026-11-25T03:21:12.539Z" tests="2" failures="0" errors="0" time="0.010">
+    <testcase name="status is 200" time="0.010" classname="GetInvoice"/>
+    <testcase name="total is an integer" time="0.010" classname="GetInvoice"/>
+  </testsuite>
+  <testsuite name="Missing invoice" id="286c8c6f-2333-4ca9-be0d-73d5fb64c68b" timestamp="2026-11-25T03:21:12.539Z" tests="1" failures="0" errors="0" time="0.001">
+    <testcase name="status is 404" time="0.001" classname="MissingInvoice"/>
+  </testsuite>
+</testsuites>

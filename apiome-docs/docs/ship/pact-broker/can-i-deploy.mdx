@@ -162,6 +162,27 @@ comparison in `comparison`, one entry per interaction in `testResults`, and a
 - **A comparison does not end a pact's pending period.** Only a Pact verifier's successful result
   takes a pact out of [pending](./pending-and-wip.mdx).
 
+### An unverified provider contract
+
+A bi-directional result is only as good as the provider contract behind it. When the provider
+published its contract without passing
+[self-verification evidence](./bi-directional.mdx#self-verification-evidence), the row says so:
+
+```json
+"verificationResult": {
+  "success": true,
+  "kind": "bidirectional",
+  "providerContractVerified": false
+},
+"reason": { "code": "verified", "text": "verified by bi-directional comparison; provider contract unverified" }
+```
+
+Under the default `warn` policy the result still counts, and the answer carries a
+`provider-contract-unverified` warning naming the provider version. Under the `fail` policy
+(`APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT=fail`) the result fails, the row reads
+`bi-directional comparison failed: provider contract unverified`, and can-i-deploy says no.
+`providerContractVerified` is on every bi-directional row; a native row does not have it.
+
 ## Wait for a result
 
 A consumer's pipeline often asks before the provider has finished verifying the new pact. Tell the

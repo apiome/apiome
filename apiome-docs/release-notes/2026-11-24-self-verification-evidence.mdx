@@ -1,0 +1,32 @@
+---
+slug: self-verification-evidence
+title: "Self-verification evidence for provider contracts"
+description: "A provider contract is trusted only when the provider's own test report says it holds."
+authors: [apiome]
+---
+
+Bi-directional contract testing compares consumer pacts with the provider's OpenAPI document, so a
+green verdict is only as good as that document. A [provider contract](/ship/pact-broker/bi-directional#self-verification-evidence)
+is now **trusted only when evidence says the provider matches it**: the report of the tool that
+tested the provider against its own document, sent with the contract.
+
+{/* truncate */}
+
+- **Real reports are read.** Schemathesis (`--report junit` or `--report ndjson`), Dredd
+  (`--reporter xunit`), Postman/Newman (`-r json` or `-r junit`) and any other JUnit writer. Or
+  cite an Apiome provider-verification report run against a registered verification target.
+- **What it proved is recorded.** `selfVerification` gives the status — `verified`, `failed`,
+  `inconclusive` or `missing` — with the report's kind, tool, SHA-256 digest, test counts and the
+  reasons. A failure in the report wins over `success: true`, and a report Apiome cannot read is
+  stored as `inconclusive` with the reason, never ignored.
+- **Unverified contracts are marked.** Their comparisons read verdict `unverified`. By default
+  can-i-deploy still counts them and warns (`provider-contract-unverified`); with the `fail`
+  policy (`APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT=fail`) they fail and block the deploy. Each
+  bi-directional matrix row says `providerContractVerified`.
+- **Bad input is refused with its location.** A report over 5 MiB, a media type no report is
+  written in, or XML and JSON that do not parse are refused, and nothing is stored.
+- **One command from CI.** `apiome pact publish-provider-contract openapi.yaml --provider … --provider-app-version … --evidence reports/junit.xml`
+  sends the contract and its report and prints the verdict. `--fail-on-unverified` fails the build
+  when the contract is not trusted.
+
+There is no screen for it. Use the CLI or the API.
