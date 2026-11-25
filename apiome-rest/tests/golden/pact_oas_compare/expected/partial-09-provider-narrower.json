@@ -1,0 +1,73 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "2.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "matchingRules": {
+      "total": 1,
+      "verified": 0,
+      "unverified": 1,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "create",
+      "pointer": "/interactions/0",
+      "verdict": "partial",
+      "operation": {
+        "method": "post",
+        "path": "/invoices",
+        "pointer": "/paths/~1invoices/post",
+        "operationId": "createInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "request.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 1,
+        "verified": 0,
+        "unverified": 1,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-unverified",
+          "message": "the request body matching rule 'type' at $.currency is not proven by the provider's schema (provider-narrower)",
+          "pactPointer": "/interactions/0/request/matchingRules/$.body.currency",
+          "reason": "provider-narrower",
+          "oasPointer": "/components/schemas/InvoiceCreate/properties/currency",
+          "matcher": "type",
+          "constraint": {
+            "type": "string"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1333,6 +1333,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['bi-directional', 'PactFlow', 'OpenAPI', 'self-verification', 'apiomeVersion', 'contentSha', 'oas'],
   },
   {
+    id: 'comparison-rules',
+    title: 'Comparison rules',
+    summary: "How a consumer's pact is compared with a provider's OpenAPI document, rule by rule.",
+    page: 'apiome-docs/docs/ship/pact-broker/comparison-rules.mdx',
+    section: 'reference',
+    keywords: ['bi-directional', 'matching', 'fidelity', 'verdict', 'partial', 'nullable', 'unknown-property', 'oneOf', 'JSON Pointer'],
+  },
+  {
     id: 'webhooks',
     title: 'Contract webhooks',
     summary: 'Tell your CI when a pact needs verifying and when a verification finishes.',

@@ -1,0 +1,84 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "3.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 3,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "request.body.required-mismatch",
+      "request.body.schema-mismatch",
+      "response.status.undeclared"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "create",
+      "pointer": "/interactions/0",
+      "verdict": "fail",
+      "operation": {
+        "method": "post",
+        "path": "/invoices",
+        "pointer": "/paths/~1invoices/post",
+        "operationId": "createInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "request.body.required-mismatch",
+          "message": "the request body leaves out 'customerId', which the provider requires",
+          "pactPointer": "/interactions/0/request/body",
+          "oasPointer": "/paths/~1invoices/post/requestBody/content/application~1json/schema/required",
+          "resolvedPointer": "/components/schemas/InvoiceCreate/required",
+          "keyword": "required"
+        },
+        {
+          "code": "request.body.schema-mismatch",
+          "message": "the request body at /lines does not satisfy the provider's schema (minItems)",
+          "pactPointer": "/interactions/0/request/body/lines",
+          "oasPointer": "/paths/~1invoices/post/requestBody/content/application~1json/schema/properties/lines/minItems",
+          "resolvedPointer": "/components/schemas/InvoiceCreate/properties/lines/minItems",
+          "keyword": "minItems"
+        },
+        {
+          "code": "response.status.undeclared",
+          "message": "the consumer expects status 500, which POST /invoices does not declare",
+          "pactPointer": "/interactions/0/response/status",
+          "oasPointer": "/paths/~1invoices/post/responses",
+          "resolvedPointer": "/paths/~1invoices/post/responses"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

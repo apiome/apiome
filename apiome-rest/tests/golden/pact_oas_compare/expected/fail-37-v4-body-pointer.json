@@ -1,0 +1,69 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "4.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 1,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "response.body.unknown-property"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "get",
+      "pointer": "/interactions/0",
+      "verdict": "fail",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body expects property 'balance', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/content/balance",
+          "oasPointer": "/paths/~1invoices~1{invoiceId}/get/responses/200/content/application~1json/schema/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/Invoice",
+          "keyword": "unevaluatedProperties"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

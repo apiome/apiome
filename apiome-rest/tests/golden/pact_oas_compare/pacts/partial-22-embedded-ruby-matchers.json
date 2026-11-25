@@ -1,0 +1,46 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "get",
+      "request": {
+        "method": "GET",
+        "path": "/invoices/1042"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": {
+            "json_class": "Pact::SomethingLike",
+            "contents": 1042
+          },
+          "number": {
+            "json_class": "Pact::Term",
+            "data": {
+              "generate": "INV-1042",
+              "matcher": {
+                "json_class": "Regexp",
+                "o": 0,
+                "s": "INV-\\d+"
+              }
+            },
+            "contents": "INV-1042"
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "1.0.0"
+    }
+  }
+}

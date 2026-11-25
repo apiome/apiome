@@ -1,0 +1,42 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "search",
+      "request": {
+        "method": "GET",
+        "path": "/search",
+        "query": {
+          "filter[status]": [
+            "open"
+          ],
+          "filter": [
+            "x"
+          ],
+          "q": [
+            "{}"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "total": 3
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

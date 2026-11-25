@@ -1,0 +1,50 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "storefront"
+  },
+  "interactions": [
+    {
+      "description": "create cart",
+      "request": {
+        "method": "POST",
+        "path": "/carts",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "items": [
+            {
+              "sku": "ABC-1",
+              "quantity": 1
+            }
+          ],
+          "coupon": null
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": "c1",
+          "total": 19.5,
+          "items": [
+            {
+              "sku": "ABC-1",
+              "quantity": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

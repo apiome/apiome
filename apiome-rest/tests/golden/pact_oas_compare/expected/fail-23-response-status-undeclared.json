@@ -1,0 +1,66 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "2.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 1,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "response.status.undeclared"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "get",
+      "pointer": "/interactions/0",
+      "verdict": "fail",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "response.status.undeclared",
+          "message": "the consumer expects status 410, which GET /invoices/{invoiceId} does not declare",
+          "pactPointer": "/interactions/0/response/status",
+          "oasPointer": "/paths/~1invoices~1{invoiceId}/get/responses",
+          "resolvedPointer": "/paths/~1invoices~1{invoiceId}/get/responses"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

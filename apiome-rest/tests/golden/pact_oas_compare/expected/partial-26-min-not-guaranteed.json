@@ -1,0 +1,74 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "3.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "matchingRules": {
+      "total": 1,
+      "verified": 0,
+      "unverified": 1,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "list",
+      "pointer": "/interactions/0",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/invoices",
+        "pointer": "/paths/~1invoices/get",
+        "operationId": "listInvoices"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "response.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 1,
+        "verified": 0,
+        "unverified": 1,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-unverified",
+          "message": "the response body matching rule 'type' at $.items is not proven by the provider's schema (bounds-not-guaranteed)",
+          "pactPointer": "/interactions/0/response/matchingRules/body/$.items/matchers/0",
+          "reason": "bounds-not-guaranteed",
+          "oasPointer": "/components/schemas/InvoicePage/properties/items",
+          "matcher": "type",
+          "constraint": {
+            "type": "array",
+            "minItems": 1
+          }
+        }
+      ]
+    }
+  ]
+}

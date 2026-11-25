@@ -1,0 +1,32 @@
+---
+slug: pact-comparison-rules
+title: "Cross-contract comparison engine"
+description: "How a consumer's pact is compared with a provider's OpenAPI document is now fixed and published."
+authors: [apiome]
+---
+
+Bi-directional contract testing compares a consumer's pact with the provider's OpenAPI document
+instead of replaying it against a running provider. The engine that makes that comparison is
+built, and its complete rule set is published in
+[Comparison rules](/ship/pact-broker/comparison-rules).
+
+{/* truncate */}
+
+- **Every interaction is checked end to end.** The request's method and path are resolved to an
+  operation; path, query and header parameters and the request body are validated against the
+  provider's schemas; the expected status, headers and body are validated against the response.
+- **Requests and responses are read differently.** A request must satisfy the schema as written.
+  A response may use fewer properties than the provider returns, but never one the provider does
+  not declare.
+- **Failures are named and located.** Each of the 24 failure codes, such as
+  `request.operation.unknown`, `response.status.undeclared` and `response.body.unknown-property`,
+  comes with a JSON Pointer into the pact and into the OpenAPI document, through any `$ref`.
+- **Matching rules are read, not ignored.** Rules of Pact 2, 3 and 4 are mapped to JSON Schema
+  constraints (`type`, `regex`, `integer`, `equality` and more) and checked against the provider's
+  schema. A rule that has no exact mapping, such as `date` or `eachKey`, is listed with the reason.
+- **Three verdicts.** `pass`, `fail`, and `partial`: nothing contradicts the pact, but something
+  could not be compared in full. A `partial` result is never reported as `pass`.
+- **OpenAPI 3.0, 3.1 and 3.2**, and pacts written by pact-js, pact-jvm and pact-go.
+
+**Not yet available:** running the comparison for you, and showing its verdict in the matrix and
+can-i-deploy. There is no screen and no endpoint for it in this release.

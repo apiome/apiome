@@ -1,0 +1,96 @@
+{
+  "openapi": "3.1.0",
+  "info": {"title": "Storefront API", "version": "2.0.0"},
+  "servers": [{"url": "https://shop.example/api/v2"}],
+  "paths": {
+    "/products/{sku}": {
+      "get": {
+        "operationId": "getProduct",
+        "parameters": [
+          {"name": "sku", "in": "path", "required": true, "schema": {"type": "string", "pattern": "^[A-Z]{3}-\\d+$"}},
+          {"name": "currency", "in": "query", "schema": {"const": "USD"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "The product.",
+            "headers": {"ETag": {"schema": {"type": "string"}}},
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Product"}}}
+          },
+          "default": {
+            "description": "An error.",
+            "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}
+          }
+        }
+      }
+    },
+    "/carts": {
+      "post": {
+        "operationId": "createCart",
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CartCreate"}}}
+        },
+        "responses": {
+          "201": {
+            "description": "The cart.",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Cart"}}}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "properties": {"title": {"type": "string"}, "status": {"type": "integer"}}
+      },
+      "Product": {
+        "type": "object",
+        "required": ["sku", "name", "price"],
+        "properties": {
+          "sku": {"type": "string"},
+          "name": {"type": "string", "minLength": 1},
+          "kind": {"const": "physical"},
+          "price": {"type": "number", "exclusiveMinimum": 0},
+          "discontinuedAt": {"type": ["string", "null"]},
+          "dimensions": {
+            "type": "array",
+            "prefixItems": [{"type": "number"}, {"type": "number"}, {"type": "number"}],
+            "items": false
+          },
+          "tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "attributes": {"type": "object", "additionalProperties": true}
+        }
+      },
+      "CartCreate": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "required": ["sku", "quantity"],
+              "properties": {
+                "sku": {"type": "string"},
+                "quantity": {"type": "integer", "minimum": 1}
+              }
+            }
+          },
+          "coupon": {"type": ["string", "null"], "minLength": 4}
+        }
+      },
+      "Cart": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "total": {"type": "number"},
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/CartCreate/properties/items/items"}}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-worker-go",
+  "provider": "ledger-api",
+  "pactSpecification": "4.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 2,
+    "passed": 0,
+    "partial": 2,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 2,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped"
+    ],
+    "matchingRules": {
+      "total": 12,
+      "verified": 10,
+      "unverified": 0,
+      "notMapped": 2
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "a request for invoice 1042",
+      "pointer": "/interactions/0",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "response.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 7,
+        "verified": 6,
+        "unverified": 0,
+        "notMapped": 1
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-not-mapped",
+          "message": "the response body matching rule 'decimal' at $.total has no lossless JSON Schema mapping (no-lossless-mapping); only its example was compared",
+          "pactPointer": "/interactions/0/response/matchingRules/body/$.total/matchers/0",
+          "reason": "no-lossless-mapping",
+          "matcher": "decimal"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "description": "a request to record a payment",
+      "pointer": "/interactions/1",
+      "verdict": "partial",
+      "operation": {
+        "method": "post",
+        "path": "/invoices/{invoiceId}/payments",
+        "pointer": "/paths/~1invoices~1{invoiceId}~1payments/post",
+        "operationId": "recordPayment"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "request.matching-rules",
+        "response.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 5,
+        "verified": 4,
+        "unverified": 0,
+        "notMapped": 1
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-not-mapped",
+          "message": "the request body matching rule 'decimal' at $.amount has no lossless JSON Schema mapping (no-lossless-mapping); only its example was compared",
+          "pactPointer": "/interactions/1/request/matchingRules/body/$.amount/matchers/0",
+          "reason": "no-lossless-mapping",
+          "matcher": "decimal"
+        }
+      ]
+    }
+  ]
+}

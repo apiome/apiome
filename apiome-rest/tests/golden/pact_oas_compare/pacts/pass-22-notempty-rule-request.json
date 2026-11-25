@@ -1,0 +1,71 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "create",
+      "request": {
+        "method": "POST",
+        "path": "/invoices",
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "body": {
+          "content": {
+            "customerId": 7,
+            "currency": "USD",
+            "lines": [
+              {
+                "sku": "SKU-1",
+                "quantity": 2
+              }
+            ],
+            "memo": "x"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "matchingRules": {
+          "body": {
+            "$.memo": {
+              "matchers": [
+                {
+                  "match": "notEmpty"
+                }
+              ],
+              "combine": "AND"
+            }
+          }
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "body": {
+          "content": {
+            "id": 1043,
+            "status": "draft"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        }
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

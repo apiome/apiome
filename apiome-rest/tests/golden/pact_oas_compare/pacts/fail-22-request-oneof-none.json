@@ -1,0 +1,31 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "publish",
+      "request": {
+        "method": "POST",
+        "path": "/events",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "type": "refund.issued"
+        }
+      },
+      "response": {
+        "status": 202
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

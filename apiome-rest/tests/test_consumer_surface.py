@@ -561,3 +561,63 @@ def test_a_malformed_handle_is_refused_with_a_stable_code(slug: str) -> None:
     with pytest.raises(ConsumerValidationError) as caught:
         validate_slug(slug)
     assert caught.value.code == "consumer-invalid-slug"
+
+
+# =============================================================================================
+# Helpers the cross-contract comparison reuses — PFX-2.2 (#6926)
+# =============================================================================================
+
+
+def _pfx_index() -> SpecIndex:
+    return SpecIndex(
+        {
+            "openapi": "3.0.3",
+            "servers": [{"url": "https://api.example.com/v1"}],
+            "paths": {
+                "/pets/{petId}/toys/{toyId}": {"get": {"responses": {}}},
+                "/pets/mine": {"get": {"responses": {}}},
+                "/pets": {"post": {"requestBody": {"$ref": "#/components/requestBodies/Pet"}}},
+            },
+            "components": {"requestBodies": {"Pet": {"required": True}}},
+        }
+    )
+
+
+def test_match_path_names_the_template_whatever_the_method() -> None:
+    index = _pfx_index()
+
+    assert index.match_path("/v1/pets/7/toys/9") == "/pets/{petId}/toys/{toyId}"
+    assert index.match_path("/pets/mine") == "/pets/mine"
+    assert index.match_path("/pets") == "/pets"
+    assert index.match_path("/owners/1") is None
+    assert index.match_path("") is None
+
+
+def test_path_parameters_reads_the_template_variables() -> None:
+    index = _pfx_index()
+    entry = index.match_operation("get", "/v1/pets/7/toys/red%20ball")
+
+    assert entry is not None
+    assert index.path_parameters(entry, "/v1/pets/7/toys/red%20ball") == {"petId": "7", "toyId": "red ball"}
+    assert index.path_parameters(entry, "/pets/7/toys/9?verbose=1") == {"petId": "7", "toyId": "9"}
+    # A path that does not fit the operation's template yields nothing rather than a guess.
+    assert index.path_parameters(entry, "/pets/7") == {}
+    assert index.path_parameters(entry, "/pets/7/games/9") == {}
+    literal = index.match_operation("get", "/pets/mine")
+    assert literal is not None
+    assert index.path_parameters(literal, "/pets/mine") == {}
+
+
+def test_resolve_reference_and_node_at() -> None:
+    index = _pfx_index()
+    entry = index.match_operation("post", "/pets")
+    assert entry is not None
+
+    assert index.resolve_reference(entry.operation["requestBody"]) == (
+        {"required": True},
+        "/components/requestBodies/Pet",
+    )
+    assert index.resolve_reference({"required": False}) == ({"required": False}, None)
+    assert index.node_at("/paths/~1pets~1mine/get") == {"responses": {}}
+    assert index.node_at("/paths/~1nowhere") is None
+    assert index.node_at("")["openapi"] == "3.0.3"

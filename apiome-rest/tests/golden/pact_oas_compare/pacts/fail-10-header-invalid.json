@@ -1,0 +1,39 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "aging",
+      "request": {
+        "method": "GET",
+        "path": "/reports/aging",
+        "query": {
+          "asOf": [
+            "2026-11-01"
+          ]
+        },
+        "headers": {
+          "x-tenant": "Acme Corp"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "asOf": "2026-11-01"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

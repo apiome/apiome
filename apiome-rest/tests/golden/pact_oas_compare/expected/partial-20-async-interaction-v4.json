@@ -1,0 +1,83 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "4.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 2,
+    "passed": 1,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "interaction-not-http"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "get",
+      "pointer": "/interactions/0",
+      "verdict": "pass",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": []
+    },
+    {
+      "index": 1,
+      "description": "invoice created event",
+      "pointer": "/interactions/1",
+      "verdict": "partial",
+      "operation": null,
+      "checks": [],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "interaction-not-http",
+          "message": "interaction type 'Asynchronous/Messages' carries no HTTP exchange, so there is nothing to compare with an OpenAPI document",
+          "pactPointer": "/interactions/1"
+        }
+      ]
+    }
+  ]
+}

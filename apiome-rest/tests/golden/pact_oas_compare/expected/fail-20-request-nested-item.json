@@ -1,0 +1,69 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "2.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 1,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "request.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "create",
+      "pointer": "/interactions/0",
+      "verdict": "fail",
+      "operation": {
+        "method": "post",
+        "path": "/invoices",
+        "pointer": "/paths/~1invoices/post",
+        "operationId": "createInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "request.body.schema-mismatch",
+          "message": "the request body at /lines/0/quantity does not satisfy the provider's schema (minimum)",
+          "pactPointer": "/interactions/0/request/body/lines/0/quantity",
+          "oasPointer": "/paths/~1invoices/post/requestBody/content/application~1json/schema/properties/lines/items/properties/quantity/minimum",
+          "resolvedPointer": "/components/schemas/InvoiceLine/properties/quantity/minimum",
+          "keyword": "minimum"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

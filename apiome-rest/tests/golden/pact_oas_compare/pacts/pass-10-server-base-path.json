@@ -1,0 +1,38 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "storefront"
+  },
+  "interactions": [
+    {
+      "description": "get product",
+      "request": {
+        "method": "GET",
+        "path": "/api/v2/products/ABC-1",
+        "query": {
+          "currency": [
+            "USD"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "sku": "ABC-1",
+          "name": "Lamp",
+          "price": 19.5
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

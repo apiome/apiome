@@ -1,0 +1,39 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "pay",
+      "request": {
+        "method": "POST",
+        "path": "/invoices/1042/payments",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "amount": 0,
+          "method": "card"
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": 88,
+          "status": "settled"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "get invoice",
+      "request": {
+        "method": "GET",
+        "path": "/invoices/1042",
+        "headers": {
+          "Accept": [
+            "application/json"
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "body": {
+          "content": {
+            "id": 1042,
+            "number": "INV-1042",
+            "status": "open",
+            "total": 129.5,
+            "currency": "USD",
+            "lines": [
+              {
+                "sku": "SKU-1",
+                "quantity": 2
+              }
+            ]
+          },
+          "contentType": "application/json",
+          "encoded": false
+        }
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

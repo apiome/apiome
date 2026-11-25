@@ -1,0 +1,52 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "3.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "interaction-not-http"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "invoice created",
+      "pointer": "/messages/0",
+      "verdict": "partial",
+      "operation": null,
+      "checks": [],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "interaction-not-http",
+          "message": "interaction type 'Asynchronous/Messages' carries no HTTP exchange, so there is nothing to compare with an OpenAPI document",
+          "pactPointer": "/messages/0"
+        }
+      ]
+    }
+  ]
+}

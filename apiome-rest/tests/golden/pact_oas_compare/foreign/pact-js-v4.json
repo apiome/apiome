@@ -1,0 +1,174 @@
+{
+  "consumer": {
+    "name": "billing-mobile-js"
+  },
+  "interactions": [
+    {
+      "description": "a request for invoice 1042",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "invoice 1042 exists"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Accept": [
+            "application/json"
+          ]
+        },
+        "method": "GET",
+        "path": "/invoices/1042"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "customer": {
+              "id": 7,
+              "name": "Acme Corp"
+            },
+            "id": 1042,
+            "lines": [
+              {
+                "quantity": 2,
+                "sku": "SKU-1"
+              },
+              {
+                "quantity": 2,
+                "sku": "SKU-1"
+              }
+            ],
+            "number": "INV-1042",
+            "paid": false,
+            "status": "open"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.customer.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.customer.name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.lines": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$.lines[*].quantity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                },
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.lines[*].sku": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.number": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "^INV-\\d{4}$"
+                }
+              ]
+            },
+            "$.paid": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.status": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a request to void invoice 1042",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "invoice 1042 exists"
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "path": "/invoices/1042"
+      },
+      "response": {
+        "status": 204
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "17.1.4"
+    },
+    "pactRust": {
+      "ffi": "0.5.8",
+      "models": "1.3.16"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "ledger-api"
+  }
+}

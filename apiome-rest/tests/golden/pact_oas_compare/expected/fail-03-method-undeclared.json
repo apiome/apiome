@@ -1,0 +1,56 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "2.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 1,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [
+      "request.method.undeclared"
+    ],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "patch",
+      "pointer": "/interactions/0",
+      "verdict": "fail",
+      "operation": null,
+      "checks": [
+        "request.operation"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "request.method.undeclared",
+          "message": "the provider declares /invoices/{invoiceId} but not with PATCH",
+          "pactPointer": "/interactions/0/request/method",
+          "oasPointer": "/paths/~1invoices~1{invoiceId}",
+          "resolvedPointer": "/paths/~1invoices~1{invoiceId}"
+        }
+      ],
+      "warnings": [],
+      "fidelity": []
+    }
+  ]
+}

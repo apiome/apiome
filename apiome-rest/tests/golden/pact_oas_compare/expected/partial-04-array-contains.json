@@ -1,0 +1,76 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "4.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 2,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped",
+      "oneof-relaxed"
+    ],
+    "matchingRules": {
+      "total": 1,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 1
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "events",
+      "pointer": "/interactions/0",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/events",
+        "pointer": "/paths/~1events/get",
+        "operationId": "listEvents"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "response.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 1,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 1
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "oneof-relaxed",
+          "message": "part of the expected body is described by a oneOf; with required properties lifted its branches cannot be told apart, so it was compared as anyOf",
+          "pactPointer": "/interactions/0/response/body/content",
+          "oasPointer": "/paths/~1events/get/responses/200/content/application~1json/schema"
+        },
+        {
+          "code": "matching-rule-not-mapped",
+          "message": "the response body matching rule 'arraycontains' at $ has no lossless JSON Schema mapping (no-lossless-mapping); only its example was compared",
+          "pactPointer": "/interactions/0/response/matchingRules/body/$/matchers/0",
+          "reason": "no-lossless-mapping",
+          "matcher": "arraycontains"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "verdict": "pass",
+  "success": true,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "2.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 0,
+    "passed": 0,
+    "partial": 0,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 0,
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": []
+}
