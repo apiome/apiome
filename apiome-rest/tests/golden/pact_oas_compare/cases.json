@@ -1,0 +1,1176 @@
+[
+  {
+    "id": "pass-01-get-invoice-v2",
+    "title": "Plain example, Pact 2",
+    "pact": "pacts/pass-01-get-invoice-v2.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-02-list-query-string-v2",
+    "title": "Pact 2 query string, enum and integer parameters",
+    "pact": "pacts/pass-02-list-query-string-v2.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-03-create-invoice-v3",
+    "title": "Request body with every required property",
+    "pact": "pacts/pass-03-create-invoice-v3.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-04-delete-no-content",
+    "title": "A 204 with no body",
+    "pact": "pacts/pass-04-delete-no-content.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-05-v4-body-wrapper",
+    "title": "Pact 4 body object and list headers",
+    "pact": "pacts/pass-05-v4-body-wrapper.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-06-type-rule-response-v2",
+    "title": "Type rules the provider's types prove",
+    "pact": "pacts/pass-06-type-rule-response-v2.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-07-regex-rule-same-pattern",
+    "title": "A regex the provider declares as its pattern",
+    "pact": "pacts/pass-07-regex-rule-same-pattern.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-08-type-rule-request",
+    "title": "A request type rule on an unconstrained property",
+    "pact": "pacts/pass-08-type-rule-request.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-09-status-range",
+    "title": "A status covered by 2XX",
+    "pact": "pacts/pass-09-status-range.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-10-server-base-path",
+    "title": "A path under the server's base path, OpenAPI 3.1",
+    "pact": "pacts/pass-10-server-base-path.json",
+    "provider": "providers/storefront-3.1.json",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-11-null-in-type-array",
+    "title": "null where OpenAPI 3.1 lists it as a type",
+    "pact": "pacts/pass-11-null-in-type-array.json",
+    "provider": "providers/storefront-3.1.json",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-12-nullable-3-0",
+    "title": "null where OpenAPI 3.0 says nullable",
+    "pact": "pacts/pass-12-nullable-3-0.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-13-allof-response",
+    "title": "Properties from both branches of an allOf",
+    "pact": "pacts/pass-13-allof-response.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-14-array-query-and-required-header",
+    "title": "A comma-separated array parameter and a required header",
+    "pact": "pacts/pass-14-array-query-and-required-header.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-15-equality-rule-request",
+    "title": "An equality rule in a request",
+    "pact": "pacts/pass-15-equality-rule-request.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-16-min-array-rule",
+    "title": "A minimum array length the provider's minItems proves",
+    "pact": "pacts/pass-16-min-array-rule.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-17-integer-rule",
+    "title": "Integer rules on integer properties",
+    "pact": "pacts/pass-17-integer-rule.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-18-response-header",
+    "title": "A declared response header with a valid value",
+    "pact": "pacts/pass-18-response-header.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-19-referenced-response",
+    "title": "A 404 declared through a response $ref",
+    "pact": "pacts/pass-19-referenced-response.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-20-include-rule-request",
+    "title": "An include rule in a request on a free string",
+    "pact": "pacts/pass-20-include-rule-request.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-21-boolean-rule-v4",
+    "title": "A Pact 4 boolean rule",
+    "pact": "pacts/pass-21-boolean-rule-v4.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-22-notempty-rule-request",
+    "title": "A Pact 4 notEmpty rule in a request",
+    "pact": "pacts/pass-22-notempty-rule-request.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-23-oneof-request",
+    "title": "A request body matching exactly one oneOf branch",
+    "pact": "pacts/pass-23-oneof-request.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-24-oneof-not-reached",
+    "title": "A response whose schema has a oneOf the body never reaches",
+    "pact": "pacts/pass-24-oneof-not-reached.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-25-open-object",
+    "title": "Any property under additionalProperties",
+    "pact": "pacts/pass-25-open-object.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-26-explicitly-open-3-1",
+    "title": "additionalProperties: true lets the consumer read anything",
+    "pact": "pacts/pass-26-explicitly-open-3-1.json",
+    "provider": "providers/storefront-3.1.json",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-27-no-interactions",
+    "title": "A pact with no interactions",
+    "pact": "pacts/pass-27-no-interactions.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-28-subset-of-required",
+    "title": "A consumer that reads two of six required properties",
+    "pact": "pacts/pass-28-subset-of-required.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-29-warning-undeclared-query",
+    "title": "An undeclared query parameter is a warning",
+    "pact": "pacts/pass-29-warning-undeclared-query.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": [
+      "request.query.undeclared"
+    ]
+  },
+  {
+    "id": "pass-30-warning-undeclared-header",
+    "title": "An undeclared request header is a warning",
+    "pact": "pacts/pass-30-warning-undeclared-header.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": [
+      "request.header.undeclared"
+    ]
+  },
+  {
+    "id": "pass-31-warning-default-status",
+    "title": "A status covered only by default is a warning",
+    "pact": "pacts/pass-31-warning-default-status.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": [
+      "response.status.default"
+    ]
+  },
+  {
+    "id": "pass-32-prefix-items-3-1",
+    "title": "A tuple described with prefixItems",
+    "pact": "pacts/pass-32-prefix-items-3-1.json",
+    "provider": "providers/storefront-3.1.json",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "pass-33-ref-into-schema-3-1",
+    "title": "A $ref to a nested schema",
+    "pact": "pacts/pass-33-ref-into-schema-3-1.json",
+    "provider": "providers/storefront-3.1.json",
+    "verdict": "pass",
+    "failureCodes": [],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-01-interaction-malformed",
+    "title": "A request with no path",
+    "pact": "pacts/fail-01-interaction-malformed.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "interaction.malformed"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-02-operation-unknown",
+    "title": "A path the provider does not declare",
+    "pact": "pacts/fail-02-operation-unknown.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.operation.unknown"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-03-method-undeclared",
+    "title": "A declared path with an undeclared method",
+    "pact": "pacts/fail-03-method-undeclared.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.method.undeclared"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-04-path-parameter-invalid",
+    "title": "Text where the path parameter is an integer",
+    "pact": "pacts/fail-04-path-parameter-invalid.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.path-parameter.invalid"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-05-query-required-missing",
+    "title": "A required query parameter left out",
+    "pact": "pacts/fail-05-query-required-missing.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.query.required-missing"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-06-query-invalid-enum",
+    "title": "A query value outside the enum",
+    "pact": "pacts/fail-06-query-invalid-enum.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.query.invalid"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-07-query-invalid-range",
+    "title": "A query value above the maximum",
+    "pact": "pacts/fail-07-query-invalid-range.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.query.invalid"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-08-query-array-item-invalid",
+    "title": "A bad item in a comma-separated array parameter",
+    "pact": "pacts/fail-08-query-array-item-invalid.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.query.invalid"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-09-header-required-missing",
+    "title": "A required header left out",
+    "pact": "pacts/fail-09-header-required-missing.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.header.required-missing"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-10-header-invalid",
+    "title": "A header value that breaks its pattern",
+    "pact": "pacts/fail-10-header-invalid.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.header.invalid"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-11-request-content-type",
+    "title": "XML sent to a JSON-only operation",
+    "pact": "pacts/fail-11-request-content-type.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.content-type.undeclared"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-12-accept-unsatisfiable",
+    "title": "Accepting only XML from a JSON response",
+    "pact": "pacts/fail-12-accept-unsatisfiable.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.accept.unsatisfiable"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-13-request-body-undeclared",
+    "title": "A body sent to an operation without one",
+    "pact": "pacts/fail-13-request-body-undeclared.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.undeclared"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-14-request-body-required-missing",
+    "title": "No body where one is required",
+    "pact": "pacts/fail-14-request-body-required-missing.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.required-missing"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-15-request-required-mismatch",
+    "title": "A request body without required properties",
+    "pact": "pacts/fail-15-request-required-mismatch.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.required-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-16-request-nullable-mismatch",
+    "title": "null sent to a non-nullable property",
+    "pact": "pacts/fail-16-request-nullable-mismatch.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.nullable-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-17-request-unknown-property",
+    "title": "A property the closed request schema refuses",
+    "pact": "pacts/fail-17-request-unknown-property.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.unknown-property"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-18-request-schema-type",
+    "title": "A string where the request schema wants an integer",
+    "pact": "pacts/fail-18-request-schema-type.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-19-request-schema-enum",
+    "title": "A currency outside the enum",
+    "pact": "pacts/fail-19-request-schema-enum.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-20-request-nested-item",
+    "title": "A bad value inside an array item reached through $ref",
+    "pact": "pacts/fail-20-request-nested-item.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-21-request-exclusive-minimum-3-0",
+    "title": "Zero under OpenAPI 3.0 exclusiveMinimum: true",
+    "pact": "pacts/fail-21-request-exclusive-minimum-3-0.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-22-request-oneof-none",
+    "title": "A request body no oneOf branch accepts",
+    "pact": "pacts/fail-22-request-oneof-none.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-23-response-status-undeclared",
+    "title": "A status the operation does not declare",
+    "pact": "pacts/fail-23-response-status-undeclared.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.status.undeclared"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-24-response-header-undeclared",
+    "title": "An expected response header the provider does not declare",
+    "pact": "pacts/fail-24-response-header-undeclared.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.header.undeclared"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-25-response-header-invalid",
+    "title": "A response header value that breaks its schema",
+    "pact": "pacts/fail-25-response-header-invalid.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.header.invalid"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-26-response-content-type",
+    "title": "JSON expected from a PDF-only response",
+    "pact": "pacts/fail-26-response-content-type.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.content-type.undeclared"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-27-response-body-undeclared",
+    "title": "A body expected from a 204",
+    "pact": "pacts/fail-27-response-body-undeclared.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.undeclared"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-28-response-nullable-mismatch",
+    "title": "null expected where the provider never returns it",
+    "pact": "pacts/fail-28-response-nullable-mismatch.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.nullable-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-29-response-unknown-property",
+    "title": "A property the response schema does not declare",
+    "pact": "pacts/fail-29-response-unknown-property.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.unknown-property"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-30-response-unknown-nested",
+    "title": "An undeclared property inside a referenced object",
+    "pact": "pacts/fail-30-response-unknown-nested.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.unknown-property"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-31-response-unknown-in-array",
+    "title": "An undeclared property in array items",
+    "pact": "pacts/fail-31-response-unknown-in-array.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.unknown-property"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-32-response-unknown-under-allof",
+    "title": "An undeclared property on an allOf schema",
+    "pact": "pacts/fail-32-response-unknown-under-allof.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.unknown-property"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-33-response-schema-type",
+    "title": "A string expected where the provider returns an integer",
+    "pact": "pacts/fail-33-response-schema-type.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-34-response-schema-pattern",
+    "title": "An example the provider's pattern rules out",
+    "pact": "pacts/fail-34-response-schema-pattern.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-35-response-const-3-1",
+    "title": "A value other than the provider's const",
+    "pact": "pacts/fail-35-response-const-3-1.json",
+    "provider": "providers/storefront-3.1.json",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-36-mixed-interactions",
+    "title": "One interaction passes, one fails",
+    "pact": "pacts/fail-36-mixed-interactions.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.operation.unknown"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-37-v4-body-pointer",
+    "title": "A Pact 4 failure points inside body.content",
+    "pact": "pacts/fail-37-v4-body-pointer.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.unknown-property"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-38-findings-truncated",
+    "title": "More failures than one interaction lists",
+    "pact": "pacts/fail-38-findings-truncated.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.unknown-property"
+    ],
+    "fidelityCodes": [
+      "findings-truncated"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-41-typed-additional-property",
+    "title": "A value that breaks the schema of additionalProperties",
+    "pact": "pacts/fail-41-typed-additional-property.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "response.body.schema-mismatch"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-39-several-classes",
+    "title": "Request and response failures in one interaction",
+    "pact": "pacts/fail-39-several-classes.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.body.required-mismatch",
+      "request.body.schema-mismatch",
+      "response.status.undeclared"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "fail-40-path-pattern-3-1",
+    "title": "A path value that breaks the parameter's pattern",
+    "pact": "pacts/fail-40-path-pattern-3-1.json",
+    "provider": "providers/storefront-3.1.json",
+    "verdict": "fail",
+    "failureCodes": [
+      "request.path-parameter.invalid"
+    ],
+    "fidelityCodes": [],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-01-date-time-rules",
+    "title": "Date, time and timestamp rules have no mapping",
+    "pact": "pacts/partial-01-date-time-rules.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-02-decimal-rule",
+    "title": "A decimal rule has no mapping",
+    "pact": "pacts/partial-02-decimal-rule.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-03-each-key-each-value",
+    "title": "eachKey and eachValue nest rules",
+    "pact": "pacts/partial-03-each-key-each-value.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-04-array-contains",
+    "title": "arrayContains has no mapping",
+    "pact": "pacts/partial-04-array-contains.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped",
+      "oneof-relaxed"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-05-or-combined",
+    "title": "Matchers combined with OR",
+    "pact": "pacts/partial-05-or-combined.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-06-status-code-rule",
+    "title": "A Pact 4 status code rule",
+    "pact": "pacts/partial-06-status-code-rule.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-07-nullable-under-type-rule",
+    "title": "A type rule on a field the provider may return as null",
+    "pact": "pacts/partial-07-nullable-under-type-rule.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-08-pattern-not-guaranteed",
+    "title": "A regex the provider's schema does not declare",
+    "pact": "pacts/partial-08-pattern-not-guaranteed.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-09-provider-narrower",
+    "title": "A request type rule on a property the provider limits to an enum",
+    "pact": "pacts/partial-09-provider-narrower.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-10-rule-into-oneof",
+    "title": "A rule whose path crosses a oneOf",
+    "pact": "pacts/partial-10-rule-into-oneof.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified",
+      "oneof-relaxed"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-11-rule-path-not-in-example",
+    "title": "A rule that selects nothing in the example",
+    "pact": "pacts/partial-11-rule-path-not-in-example.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-12-header-and-path-rules",
+    "title": "Rules on the path and on an undeclared header",
+    "pact": "pacts/partial-12-header-and-path-rules.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "warningCodes": [
+      "request.header.undeclared"
+    ]
+  },
+  {
+    "id": "partial-13-generators",
+    "title": "Generators replace examples at verification time",
+    "pact": "pacts/partial-13-generators.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "generator-not-applied"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-14-csv-request-body",
+    "title": "A CSV request body is not validated",
+    "pact": "pacts/partial-14-csv-request-body.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-15-pdf-response-body",
+    "title": "A binary response body is not validated",
+    "pact": "pacts/partial-15-pdf-response-body.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-16-media-type-without-schema",
+    "title": "A media type the provider gives no schema",
+    "pact": "pacts/partial-16-media-type-without-schema.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-17-parameters-not-parsed",
+    "title": "deepObject and content parameters are not parsed",
+    "pact": "pacts/partial-17-parameters-not-parsed.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "parameter-not-compared"
+    ],
+    "warningCodes": [
+      "request.query.undeclared"
+    ]
+  },
+  {
+    "id": "partial-18-external-ref",
+    "title": "A schema behind a $ref to another file",
+    "pact": "pacts/partial-18-external-ref.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "schema-not-usable"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-19-oneof-relaxed",
+    "title": "A response body described by a oneOf is compared as anyOf",
+    "pact": "pacts/partial-19-oneof-relaxed.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "oneof-relaxed"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-20-async-interaction-v4",
+    "title": "A Pact 4 asynchronous message next to an HTTP interaction",
+    "pact": "pacts/partial-20-async-interaction-v4.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "interaction-not-http"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-21-message-pact-v3",
+    "title": "A Pact 3 message pact",
+    "pact": "pacts/partial-21-message-pact-v3.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "interaction-not-http"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-22-embedded-ruby-matchers",
+    "title": "Pact 1 matchers embedded in the body",
+    "pact": "pacts/partial-22-embedded-ruby-matchers.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "embedded-matcher-not-mapped"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-23-type-cascade",
+    "title": "A type rule on an object cascades to a nullable property",
+    "pact": "pacts/partial-23-type-cascade.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-24-undecodable-body-v4",
+    "title": "Base64 content that is not text, under a JSON content type",
+    "pact": "pacts/partial-24-undecodable-body-v4.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "body-not-compared"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-25-equality-in-response",
+    "title": "An equality rule the provider does not fix with const",
+    "pact": "pacts/partial-25-equality-in-response.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-26-min-not-guaranteed",
+    "title": "A minimum length the provider does not promise",
+    "pact": "pacts/partial-26-min-not-guaranteed.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-27-semver-and-content-type",
+    "title": "semver and contentType rules",
+    "pact": "pacts/partial-27-semver-and-content-type.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped"
+    ],
+    "warningCodes": []
+  },
+  {
+    "id": "partial-28-cascade-stops-at-specific-rule",
+    "title": "A cascade handed over to a verified rule, and an unknown matcher",
+    "pact": "pacts/partial-28-cascade-stops-at-specific-rule.json",
+    "provider": "providers/ledger-api-3.0.yaml",
+    "verdict": "partial",
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-not-mapped"
+    ],
+    "warningCodes": []
+  }
+]

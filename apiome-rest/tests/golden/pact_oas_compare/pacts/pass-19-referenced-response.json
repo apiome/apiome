@@ -1,0 +1,32 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "missing",
+      "request": {
+        "method": "GET",
+        "path": "/invoices/9999"
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "code": "not_found",
+          "message": "Invoice 9999 was not found"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

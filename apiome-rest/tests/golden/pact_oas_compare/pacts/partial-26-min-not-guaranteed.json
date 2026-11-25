@@ -1,0 +1,49 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "list",
+      "request": {
+        "method": "GET",
+        "path": "/invoices"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "items": [
+            {
+              "id": 1,
+              "status": "open"
+            }
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.items": {
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ],
+              "combine": "AND"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

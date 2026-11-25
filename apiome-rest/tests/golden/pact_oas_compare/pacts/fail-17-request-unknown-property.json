@@ -1,0 +1,39 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "replace",
+      "request": {
+        "method": "PUT",
+        "path": "/customers/cus_a1",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "name": "Acme",
+          "vatNumber": "X1"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": 7,
+          "name": "Acme"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

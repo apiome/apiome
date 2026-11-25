@@ -1,0 +1,25 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "refunds",
+      "request": {
+        "method": "GET",
+        "path": "/refunds/1"
+      },
+      "response": {
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

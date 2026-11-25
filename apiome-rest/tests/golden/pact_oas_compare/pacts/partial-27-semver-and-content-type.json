@@ -1,0 +1,59 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "health",
+      "request": {
+        "method": "GET",
+        "path": "/health"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": [
+            "application/json"
+          ]
+        },
+        "body": {
+          "content": {
+            "status": "1.4.0"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "matchingRules": {
+          "body": {
+            "$.status": {
+              "matchers": [
+                {
+                  "match": "semver"
+                }
+              ],
+              "combine": "AND"
+            },
+            "$": {
+              "matchers": [
+                {
+                  "match": "contentType",
+                  "value": "application/json"
+                }
+              ],
+              "combine": "AND"
+            }
+          }
+        }
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

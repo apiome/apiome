@@ -1,0 +1,229 @@
+{
+  "verdict": "fail",
+  "success": false,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "2.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 0,
+    "failed": 1,
+    "failures": 20,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [
+      "response.body.unknown-property"
+    ],
+    "fidelityCodes": [
+      "findings-truncated"
+    ],
+    "matchingRules": {
+      "total": 0,
+      "verified": 0,
+      "unverified": 0,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "list",
+      "pointer": "/interactions/0",
+      "verdict": "fail",
+      "operation": {
+        "method": "get",
+        "path": "/invoices",
+        "pointer": "/paths/~1invoices/get",
+        "operationId": "listInvoices"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body"
+      ],
+      "matchingRules": {
+        "total": 0,
+        "verified": 0,
+        "unverified": 0,
+        "notMapped": 0
+      },
+      "failures": [
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/0 expects property 'extra0', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/0/extra0",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/1 expects property 'extra1', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/1/extra1",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/2 expects property 'extra2', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/2/extra2",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/3 expects property 'extra3', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/3/extra3",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/4 expects property 'extra4', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/4/extra4",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/5 expects property 'extra5', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/5/extra5",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/6 expects property 'extra6', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/6/extra6",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/7 expects property 'extra7', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/7/extra7",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/8 expects property 'extra8', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/8/extra8",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/9 expects property 'extra9', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/9/extra9",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/10 expects property 'extra10', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/10/extra10",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/11 expects property 'extra11', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/11/extra11",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/12 expects property 'extra12', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/12/extra12",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/13 expects property 'extra13', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/13/extra13",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/14 expects property 'extra14', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/14/extra14",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/15 expects property 'extra15', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/15/extra15",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/16 expects property 'extra16', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/16/extra16",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/17 expects property 'extra17', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/17/extra17",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/18 expects property 'extra18', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/18/extra18",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        },
+        {
+          "code": "response.body.unknown-property",
+          "message": "the response body at /items/19 expects property 'extra19', which the provider does not declare",
+          "pactPointer": "/interactions/0/response/body/items/19/extra19",
+          "oasPointer": "/paths/~1invoices/get/responses/200/content/application~1json/schema/properties/items/items/unevaluatedProperties",
+          "resolvedPointer": "/components/schemas/InvoiceSummary",
+          "keyword": "unevaluatedProperties"
+        }
+      ],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "findings-truncated",
+          "message": "40 more failure(s) in this interaction are not listed",
+          "pactPointer": "/interactions/0"
+        }
+      ]
+    }
+  ]
+}

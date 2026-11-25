@@ -1,0 +1,332 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "list",
+      "request": {
+        "method": "GET",
+        "path": "/invoices"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "items": [
+            {
+              "id": 0,
+              "status": "open",
+              "extra0": 1
+            },
+            {
+              "id": 1,
+              "status": "open",
+              "extra1": 1
+            },
+            {
+              "id": 2,
+              "status": "open",
+              "extra2": 1
+            },
+            {
+              "id": 3,
+              "status": "open",
+              "extra3": 1
+            },
+            {
+              "id": 4,
+              "status": "open",
+              "extra4": 1
+            },
+            {
+              "id": 5,
+              "status": "open",
+              "extra5": 1
+            },
+            {
+              "id": 6,
+              "status": "open",
+              "extra6": 1
+            },
+            {
+              "id": 7,
+              "status": "open",
+              "extra7": 1
+            },
+            {
+              "id": 8,
+              "status": "open",
+              "extra8": 1
+            },
+            {
+              "id": 9,
+              "status": "open",
+              "extra9": 1
+            },
+            {
+              "id": 10,
+              "status": "open",
+              "extra10": 1
+            },
+            {
+              "id": 11,
+              "status": "open",
+              "extra11": 1
+            },
+            {
+              "id": 12,
+              "status": "open",
+              "extra12": 1
+            },
+            {
+              "id": 13,
+              "status": "open",
+              "extra13": 1
+            },
+            {
+              "id": 14,
+              "status": "open",
+              "extra14": 1
+            },
+            {
+              "id": 15,
+              "status": "open",
+              "extra15": 1
+            },
+            {
+              "id": 16,
+              "status": "open",
+              "extra16": 1
+            },
+            {
+              "id": 17,
+              "status": "open",
+              "extra17": 1
+            },
+            {
+              "id": 18,
+              "status": "open",
+              "extra18": 1
+            },
+            {
+              "id": 19,
+              "status": "open",
+              "extra19": 1
+            },
+            {
+              "id": 20,
+              "status": "open",
+              "extra20": 1
+            },
+            {
+              "id": 21,
+              "status": "open",
+              "extra21": 1
+            },
+            {
+              "id": 22,
+              "status": "open",
+              "extra22": 1
+            },
+            {
+              "id": 23,
+              "status": "open",
+              "extra23": 1
+            },
+            {
+              "id": 24,
+              "status": "open",
+              "extra24": 1
+            },
+            {
+              "id": 25,
+              "status": "open",
+              "extra25": 1
+            },
+            {
+              "id": 26,
+              "status": "open",
+              "extra26": 1
+            },
+            {
+              "id": 27,
+              "status": "open",
+              "extra27": 1
+            },
+            {
+              "id": 28,
+              "status": "open",
+              "extra28": 1
+            },
+            {
+              "id": 29,
+              "status": "open",
+              "extra29": 1
+            },
+            {
+              "id": 30,
+              "status": "open",
+              "extra30": 1
+            },
+            {
+              "id": 31,
+              "status": "open",
+              "extra31": 1
+            },
+            {
+              "id": 32,
+              "status": "open",
+              "extra32": 1
+            },
+            {
+              "id": 33,
+              "status": "open",
+              "extra33": 1
+            },
+            {
+              "id": 34,
+              "status": "open",
+              "extra34": 1
+            },
+            {
+              "id": 35,
+              "status": "open",
+              "extra35": 1
+            },
+            {
+              "id": 36,
+              "status": "open",
+              "extra36": 1
+            },
+            {
+              "id": 37,
+              "status": "open",
+              "extra37": 1
+            },
+            {
+              "id": 38,
+              "status": "open",
+              "extra38": 1
+            },
+            {
+              "id": 39,
+              "status": "open",
+              "extra39": 1
+            },
+            {
+              "id": 40,
+              "status": "open",
+              "extra40": 1
+            },
+            {
+              "id": 41,
+              "status": "open",
+              "extra41": 1
+            },
+            {
+              "id": 42,
+              "status": "open",
+              "extra42": 1
+            },
+            {
+              "id": 43,
+              "status": "open",
+              "extra43": 1
+            },
+            {
+              "id": 44,
+              "status": "open",
+              "extra44": 1
+            },
+            {
+              "id": 45,
+              "status": "open",
+              "extra45": 1
+            },
+            {
+              "id": 46,
+              "status": "open",
+              "extra46": 1
+            },
+            {
+              "id": 47,
+              "status": "open",
+              "extra47": 1
+            },
+            {
+              "id": 48,
+              "status": "open",
+              "extra48": 1
+            },
+            {
+              "id": 49,
+              "status": "open",
+              "extra49": 1
+            },
+            {
+              "id": 50,
+              "status": "open",
+              "extra50": 1
+            },
+            {
+              "id": 51,
+              "status": "open",
+              "extra51": 1
+            },
+            {
+              "id": 52,
+              "status": "open",
+              "extra52": 1
+            },
+            {
+              "id": 53,
+              "status": "open",
+              "extra53": 1
+            },
+            {
+              "id": 54,
+              "status": "open",
+              "extra54": 1
+            },
+            {
+              "id": 55,
+              "status": "open",
+              "extra55": 1
+            },
+            {
+              "id": 56,
+              "status": "open",
+              "extra56": 1
+            },
+            {
+              "id": 57,
+              "status": "open",
+              "extra57": 1
+            },
+            {
+              "id": 58,
+              "status": "open",
+              "extra58": 1
+            },
+            {
+              "id": 59,
+              "status": "open",
+              "extra59": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

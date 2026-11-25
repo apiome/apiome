@@ -10,9 +10,10 @@ document** instead of replaying it against a running provider. That document, re
 a provider version, is the **provider contract**. Publish one from each provider build: upload the
 document, or name the Apiome version that describes the provider and let Apiome render it.
 
-This release stores provider contracts. Comparing them with your consumers' pacts, and showing the
-verdict in the matrix and in [can-i-deploy](./can-i-deploy.mdx), is not available yet. There is no
-screen for provider contracts.
+This release stores provider contracts. The rules a pact is compared with one by are fixed and
+published in [Comparison rules](./comparison-rules.mdx). Running that comparison for you, and
+showing the verdict in the matrix and in [can-i-deploy](./can-i-deploy.mdx), is not available yet.
+There is no screen for provider contracts.
 
 ## Before you start
 
@@ -190,6 +191,7 @@ member with the **Editor** role.
 
 ## Related
 
+- [Comparison rules](./comparison-rules.mdx) — how a pact is compared with a provider contract.
 - [Publish and fetch pacts](./publish-pacts.mdx) — the consumer's side.
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions and project bindings.
 - [Pact Broker compatibility](./compatibility.mdx) — the provider-contract route among the others.

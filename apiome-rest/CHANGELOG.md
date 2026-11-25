@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.842.0] - 2026-11-24
+
+### Added
+- **Cross-contract comparison engine (PFX-2.2, #6926).** OpenAPI 1.666.0 (version only; no route
+  changes). No migration.
+  - `app.pact_oas_compare.compare_pact_to_oas(pact, oas)` decides whether a provider's OpenAPI 3.0,
+    3.1 or 3.2 document satisfies every interaction of a Pact 1 to 4 pact, without running the
+    provider. Pure: two parsed documents in, one `ComparisonResult` out; equal inputs serialize to
+    equal JSON. Nothing calls it yet: PFX-2.3 stores its result as a verification result and
+    PFX-2.5 surfaces the fidelity list.
+  - Per interaction: the operation is resolved with `SpecIndex.match_operation` (the CTG-4.1 path
+    templating); path, query and header parameters and the request body are validated against the
+    schemas as written; the status must be declared (exact, `2XX` or `default`); response headers
+    and body are validated with `required` lifted and undeclared properties refused
+    (`unevaluatedProperties: false`), `oneOf` read as `anyOf`. Validation goes through the IXH-5.1
+    validator under JSON Schema 2020-12; an OpenAPI 3.0 document has `nullable` and the boolean
+    `exclusiveMinimum` / `exclusiveMaximum` read into it first (`app.pact_oas_schema`).
+  - 24 named failure classes (`request.operation.unknown`, `response.status.undeclared`,
+    `request.body.required-mismatch`, `response.body.nullable-mismatch`,
+    `response.body.unknown-property` …), each with `pactPointer`, an operation-anchored
+    `oasPointer` in the CTG-1.1 vocabulary and the `resolvedPointer` behind any `$ref`. Three
+    warning classes never change the verdict.
+  - Matching rules of Pact 2, 3 and 4 are mapped to JSON Schema constraints where that is lossless
+    (`type`, `equality`, `regex`, `include`, `integer`, `number`, `boolean`, `null`, `notEmpty`) and
+    checked against the provider's schema at the rule's path: not narrower than the rule in a
+    request, not broader in a response (`app.pact_matching_rules`). Rules that do not map
+    (`decimal`, `date`, `time`, `timestamp`, `datetime`, `semver`, `values`, `eachKey`, `eachValue`,
+    `arrayContains`, `contentType`, `statusCode`, `OR` combinations) and mapped rules the schema
+    does not prove are recorded in the fidelity list with a reason, never dropped. So are
+    generators, non-JSON bodies, unparsed parameter styles, unusable schemas and message
+    interactions.
+  - Verdict `fail` on any failure, `partial` when nothing fails but the fidelity list is not empty,
+    `pass` otherwise.
+  - Corpus `tests/golden/pact_oas_compare`: 102 pact / OpenAPI pairs with intended verdicts (every
+    failure, warning and fidelity class; Pact 1 to 4; OpenAPI 3.0 and 3.1) and four pacts written
+    by pact-js 17.1.4, pact-jvm 4.6.17 and pact-go v2. A 1 MB pact compares in about 0.3 s.
+  - `SpecIndex` gains `match_path`, `path_parameters`, `resolve_reference` and `node_at`;
+    `pact_contract_import` exports `interaction_is_http` and `unwrap_matcher`.
+
 ## [1.841.0] - 2026-11-24
 
 ### Added

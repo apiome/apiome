@@ -1,0 +1,39 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "pay",
+      "request": {
+        "method": "POST",
+        "path": "/invoices/1042/payments",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "amount": 10,
+          "method": "card"
+        }
+      },
+      "response": {
+        "status": 409,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "code": "conflict",
+          "message": "Already paid"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

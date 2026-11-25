@@ -1,0 +1,36 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "type": "Synchronous/HTTP",
+      "description": "pdf",
+      "request": {
+        "method": "GET",
+        "path": "/invoices/1042/pdf"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": [
+            "application/pdf"
+          ]
+        },
+        "body": {
+          "content": "JVBERi0xLjcg//4=",
+          "contentType": "application/pdf",
+          "encoded": "base64"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  }
+}

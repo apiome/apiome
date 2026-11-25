@@ -1,0 +1,45 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "create",
+      "request": {
+        "method": "POST",
+        "path": "/invoices",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "customerId": 7,
+          "currency": "GBP",
+          "lines": [
+            {
+              "sku": "SKU-1",
+              "quantity": 2
+            }
+          ]
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": 1043,
+          "status": "draft"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

@@ -1,0 +1,494 @@
+openapi: 3.0.3
+info:
+  title: Ledger API
+  version: 1.4.0
+servers:
+  - url: https://api.ledger.example
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        2XX:
+          description: The service answers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+  /invoices:
+    get:
+      operationId: listInvoices
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, paid, draft]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: X-Request-Id
+          in: header
+          schema:
+            type: string
+            minLength: 8
+      responses:
+        '200':
+          description: A page of invoices.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoicePage'
+    post:
+      operationId: createInvoice
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreate'
+      responses:
+        '201':
+          description: The invoice was created.
+          headers:
+            Location:
+              schema:
+                type: string
+                pattern: '^/invoices/\d+$'
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                minimum: 0
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceSummary'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /invoices/{invoiceId}:
+    parameters:
+      - $ref: '#/components/parameters/InvoiceId'
+    get:
+      operationId: getInvoice
+      responses:
+        '200':
+          description: The invoice.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: voidInvoice
+      responses:
+        '204':
+          description: The invoice was voided.
+        '404':
+          $ref: '#/components/responses/Problem'
+  /invoices/{invoiceId}/payments:
+    parameters:
+      - $ref: '#/components/parameters/InvoiceId'
+    post:
+      operationId: recordPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+      responses:
+        '201':
+          description: The payment was recorded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentReceipt'
+        default:
+          $ref: '#/components/responses/Problem'
+  /invoices/{invoiceId}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/InvoiceId'
+    get:
+      operationId: getInvoicePdf
+      responses:
+        '200':
+          description: The rendered invoice.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /reports/aging:
+    get:
+      operationId: getAgingReport
+      parameters:
+        - name: asOf
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}-\d{2}$'
+        - name: buckets
+          in: query
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              minimum: 1
+        - name: X-Tenant
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: '^[a-z0-9-]+$'
+      responses:
+        '200':
+          description: The aging report.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  asOf:
+                    type: string
+                  buckets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        days:
+                          type: integer
+                        amount:
+                          type: number
+                          minimum: 0
+                          exclusiveMinimum: false
+  /customers/{customerId}:
+    parameters:
+      - name: customerId
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^cus_[a-z0-9]+$'
+    get:
+      operationId: getCustomer
+      responses:
+        '200':
+          description: The customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+    put:
+      operationId: replaceCustomer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdate'
+      responses:
+        '200':
+          description: The customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+  /events:
+    get:
+      operationId: listEvents
+      responses:
+        '200':
+          description: Recent events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+    post:
+      operationId: publishEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '202':
+          description: Accepted.
+  /exports:
+    post:
+      operationId: startExport
+      requestBody:
+        content:
+          text/csv:
+            schema:
+              type: string
+      responses:
+        '202':
+          description: The export started.
+  /notes:
+    post:
+      operationId: addNote
+      requestBody:
+        content:
+          application/json: {}
+      responses:
+        '201':
+          description: The note was stored.
+          content:
+            application/json: {}
+  /legacy/ledgers:
+    get:
+      operationId: listLegacyLedgers
+      responses:
+        '200':
+          description: Ledgers described in another file.
+          content:
+            application/json:
+              schema:
+                $ref: './legacy.yaml#/components/schemas/LedgerList'
+  /search:
+    get:
+      operationId: search
+      parameters:
+        - name: filter
+          in: query
+          style: deepObject
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+        - name: q
+          in: query
+          content:
+            application/json:
+              schema:
+                type: object
+      responses:
+        '200':
+          description: Matches.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+components:
+  parameters:
+    InvoiceId:
+      name: invoiceId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    Problem:
+      description: The request could not be served.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    Problem:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              reason:
+                type: string
+    Money:
+      type: number
+      minimum: 0
+    InvoiceSummary:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [open, paid, draft, void]
+    InvoicePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceSummary'
+        nextCursor:
+          type: string
+          nullable: true
+    Invoice:
+      type: object
+      required: [id, number, status, total, currency, lines]
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+          pattern: '^INV-\d{4}$'
+        status:
+          type: string
+        total:
+          $ref: '#/components/schemas/Money'
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        paid:
+          type: boolean
+        issuedAt:
+          type: string
+          format: date-time
+        dueAt:
+          type: string
+          format: date-time
+          nullable: true
+        customer:
+          $ref: '#/components/schemas/Party'
+        lines:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/InvoiceLine'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    InvoiceLine:
+      type: object
+      required: [sku, quantity]
+      properties:
+        sku:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          $ref: '#/components/schemas/Money'
+    InvoiceCreate:
+      type: object
+      required: [customerId, currency, lines]
+      properties:
+        customerId:
+          type: integer
+        currency:
+          type: string
+          enum: [USD, EUR, JPY]
+        memo:
+          type: string
+        lines:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/InvoiceLine'
+    Payment:
+      type: object
+      required: [amount, method]
+      properties:
+        amount:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        method:
+          type: string
+          pattern: '^(card|transfer)$'
+        reference:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    PaymentReceipt:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+    Party:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    Customer:
+      allOf:
+        - $ref: '#/components/schemas/Party'
+        - type: object
+          properties:
+            creditLimit:
+              $ref: '#/components/schemas/Money'
+            tier:
+              type: string
+              enum: [standard, gold]
+    CustomerUpdate:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        tier:
+          type: string
+          enum: [standard, gold]
+    Event:
+      oneOf:
+        - $ref: '#/components/schemas/InvoiceEvent'
+        - $ref: '#/components/schemas/PaymentEvent'
+    InvoiceEvent:
+      type: object
+      required: [type, invoiceId]
+      properties:
+        type:
+          type: string
+          enum: [invoice.created, invoice.voided]
+        invoiceId:
+          type: integer
+    PaymentEvent:
+      type: object
+      required: [type, paymentId]
+      properties:
+        type:
+          type: string
+          enum: [payment.settled]
+        paymentId:
+          type: integer
+        amount:
+          $ref: '#/components/schemas/Money'

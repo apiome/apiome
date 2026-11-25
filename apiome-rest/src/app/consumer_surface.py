@@ -42,7 +42,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 from .change_taxonomy_enum import json_pointer_escape, json_pointer_join
 from .consumer_contract import (
@@ -410,6 +410,72 @@ class SpecIndex:
             if self._match_template(candidate) is not None:
                 return True
         return False
+
+    def match_path(self, path: str) -> Optional[str]:
+        """The declared path template a path belongs to, whatever the method.
+
+        Args:
+            path: A path template or a concrete path as a client sent it.
+
+        Returns:
+            The template (``/pets/{petId}``), or ``None`` when no declared path matches.
+        """
+        for candidate in self._path_candidates(path):
+            if self.declares_path(candidate):
+                return candidate
+            template = self._match_template(candidate)
+            if template is not None:
+                return template
+        return None
+
+    def path_parameters(self, entry: _OperationEntry, path: str) -> Dict[str, str]:
+        """The values a concrete path gives an operation's path template variables.
+
+        Args:
+            entry: The operation the path was matched to (:meth:`match_operation`).
+            path: The concrete path as a client sent it, with or without a server base path.
+
+        Returns:
+            Variable name to percent-decoded value (``{"petId": "42"}`` for ``/pets/42`` on
+            ``/pets/{petId}``); empty when the path does not fit the template.
+        """
+        declared = [segment for segment in entry.path.split("/") if segment != ""]
+        for candidate in self._path_candidates(path):
+            actual = [segment for segment in candidate.split("/") if segment != ""]
+            if len(actual) != len(declared):
+                continue
+            values: Dict[str, str] = {}
+            for template_segment, segment in zip(declared, actual):
+                if template_segment.startswith("{") and template_segment.endswith("}"):
+                    values[template_segment[1:-1]] = unquote(segment)
+                elif template_segment != segment:
+                    break
+            else:
+                return values
+        return {}
+
+    def resolve_reference(self, node: Any) -> Tuple[Any, Optional[str]]:
+        """Follow a node's local ``$ref`` chain to the node it names.
+
+        Args:
+            node: Any document node, which may be a ``{"$ref": "#/..."}`` wrapper.
+
+        Returns:
+            ``(resolved_node, resolved_pointer)``; the pointer is ``None`` when the node was
+            not a reference. See :meth:`_resolve_node` for what is and is not followed.
+        """
+        return self._resolve_node(node)
+
+    def node_at(self, pointer: str) -> Optional[Any]:
+        """Read a node of the indexed document by JSON Pointer.
+
+        Args:
+            pointer: An RFC 6901 pointer (``""`` is the document itself).
+
+        Returns:
+            The node, or ``None`` when any segment is missing.
+        """
+        return _dereference(self._document, pointer)
 
     def _path_candidates(self, path: str) -> List[str]:
         """The path spellings to try, most literal first.

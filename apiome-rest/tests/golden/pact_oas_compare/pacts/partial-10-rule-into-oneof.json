@@ -1,0 +1,39 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "events",
+      "request": {
+        "method": "GET",
+        "path": "/events"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": [
+          {
+            "type": "payment.settled",
+            "paymentId": 88
+          }
+        ],
+        "matchingRules": {
+          "$.body[*].paymentId": {
+            "match": "type"
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

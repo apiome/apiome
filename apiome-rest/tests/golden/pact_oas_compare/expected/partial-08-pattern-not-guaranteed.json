@@ -1,0 +1,74 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "corpus-consumer",
+  "provider": "ledger",
+  "pactSpecification": "2.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 1,
+    "passed": 0,
+    "partial": 1,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 1,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "matching-rule-unverified"
+    ],
+    "matchingRules": {
+      "total": 1,
+      "verified": 0,
+      "unverified": 1,
+      "notMapped": 0
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "get",
+      "pointer": "/interactions/0",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "response.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 1,
+        "verified": 0,
+        "unverified": 1,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-unverified",
+          "message": "the response body matching rule 'regex' at $.status is not proven by the provider's schema (pattern-not-guaranteed)",
+          "pactPointer": "/interactions/0/response/matchingRules/$.body.status",
+          "reason": "pattern-not-guaranteed",
+          "oasPointer": "/components/schemas/Invoice/properties/status",
+          "matcher": "regex",
+          "constraint": {
+            "type": "string",
+            "pattern": "^(open|paid)$"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "export",
+      "request": {
+        "method": "POST",
+        "path": "/exports",
+        "headers": {
+          "Content-Type": "text/csv"
+        },
+        "body": "id,total\n1,2\n"
+      },
+      "response": {
+        "status": 202
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

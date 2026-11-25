@@ -1,0 +1,22 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "messages": [
+    {
+      "description": "invoice created",
+      "contents": {
+        "invoiceId": 1042
+      }
+    }
+  ]
+}

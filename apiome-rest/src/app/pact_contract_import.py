@@ -65,10 +65,12 @@ __all__ = [
     "MAX_PACT_BYTES",
     "PactImportResult",
     "import_pact",
+    "interaction_is_http",
     "parse_pact_document",
     "pact_consumer_name",
     "pact_provider_name",
     "pact_specification_version",
+    "unwrap_matcher",
 ]
 
 #: Hard cap on the uploaded document, mirroring the CTG-1.2 inline-spec guard. A Pact file is a
@@ -225,7 +227,7 @@ def pact_specification_version(document: Mapping[str, Any]) -> Optional[str]:
     return str(version).strip() if isinstance(version, str) and version.strip() else None
 
 
-def _unwrap_matcher(node: Any) -> Any:
+def unwrap_matcher(node: Any) -> Any:
     """Strip a Pact matcher wrapper from a value, if there is one.
 
     Args:
@@ -267,7 +269,7 @@ def _body_paths(body: Any) -> List[str]:
     def walk(node: Any, prefix: str, depth: int) -> None:
         if depth > MAX_BODY_DEPTH or len(seen) >= MAX_BODY_FIELDS:
             return
-        current = _unwrap_matcher(node)
+        current = unwrap_matcher(node)
         if isinstance(current, list):
             for element in current:
                 walk(element, prefix, depth + 1)
@@ -307,7 +309,7 @@ def _query_names(query: Any) -> List[str]:
     return []
 
 
-def _interaction_is_http(interaction: Mapping[str, Any]) -> bool:
+def interaction_is_http(interaction: Mapping[str, Any]) -> bool:
     """Whether a v4 interaction carries an HTTP exchange.
 
     Args:
@@ -348,7 +350,7 @@ def import_pact(document: Mapping[str, Any], index: SpecIndex) -> PactImportResu
         description = interaction.get("description")
         description_text = str(description) if isinstance(description, str) else None
 
-        if not _interaction_is_http(interaction):
+        if not interaction_is_http(interaction):
             unresolved.append(
                 UnresolvedInteraction(
                     reason="interaction-not-http",

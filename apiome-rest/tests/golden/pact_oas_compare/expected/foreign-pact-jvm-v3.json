@@ -1,0 +1,198 @@
+{
+  "verdict": "partial",
+  "success": true,
+  "consumer": "billing-batch-jvm",
+  "provider": "ledger-api",
+  "pactSpecification": "3.0.0",
+  "oasVersion": "3.0.3",
+  "summary": {
+    "interactions": 3,
+    "passed": 0,
+    "partial": 3,
+    "failed": 0,
+    "failures": 0,
+    "warnings": 0,
+    "fidelity": 7,
+    "failureCodes": [],
+    "fidelityCodes": [
+      "generator-not-applied",
+      "matching-rule-not-mapped",
+      "matching-rule-unverified"
+    ],
+    "matchingRules": {
+      "total": 22,
+      "verified": 16,
+      "unverified": 4,
+      "notMapped": 2
+    }
+  },
+  "interactions": [
+    {
+      "index": 0,
+      "description": "a request to create an invoice",
+      "pointer": "/interactions/0",
+      "verdict": "partial",
+      "operation": {
+        "method": "post",
+        "path": "/invoices",
+        "pointer": "/paths/~1invoices/post",
+        "operationId": "createInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "request.matching-rules",
+        "response.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 6,
+        "verified": 4,
+        "unverified": 2,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-unverified",
+          "message": "the request body matching rule 'type' at $.lines is not proven by the provider's schema (provider-narrower)",
+          "pactPointer": "/interactions/0/request/matchingRules/body/$.lines/matchers/0",
+          "reason": "provider-narrower",
+          "oasPointer": "/components/schemas/InvoiceCreate/properties/lines",
+          "matcher": "type",
+          "constraint": {
+            "type": "array"
+          }
+        },
+        {
+          "code": "matching-rule-unverified",
+          "message": "the request body matching rule 'integer' at $.lines[*].quantity is not proven by the provider's schema (provider-narrower)",
+          "pactPointer": "/interactions/0/request/matchingRules/body/$.lines[*].quantity/matchers/0",
+          "reason": "provider-narrower",
+          "oasPointer": "/components/schemas/InvoiceLine/properties/quantity",
+          "matcher": "integer",
+          "constraint": {
+            "type": "integer"
+          }
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "description": "a request for invoice 1042",
+      "pointer": "/interactions/1",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/invoices/{invoiceId}",
+        "pointer": "/paths/~1invoices~1{invoiceId}/get",
+        "operationId": "getInvoice"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "response.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 11,
+        "verified": 9,
+        "unverified": 0,
+        "notMapped": 2
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-not-mapped",
+          "message": "the response body matching rule 'timestamp' at $.issuedAt has no lossless JSON Schema mapping (no-lossless-mapping); only its example was compared",
+          "pactPointer": "/interactions/1/response/matchingRules/body/$.issuedAt/matchers/0",
+          "reason": "no-lossless-mapping",
+          "matcher": "timestamp"
+        },
+        {
+          "code": "matching-rule-not-mapped",
+          "message": "the response body matching rule 'decimal' at $.total has no lossless JSON Schema mapping (no-lossless-mapping); only its example was compared",
+          "pactPointer": "/interactions/1/response/matchingRules/body/$.total/matchers/0",
+          "reason": "no-lossless-mapping",
+          "matcher": "decimal"
+        },
+        {
+          "code": "generator-not-applied",
+          "message": "the body generator 'DateTime' replaces the example when the pact is verified; only the example was compared",
+          "pactPointer": "/interactions/1/response/generators/body/$.issuedAt",
+          "matcher": "DateTime"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "description": "a search for open invoices",
+      "pointer": "/interactions/2",
+      "verdict": "partial",
+      "operation": {
+        "method": "get",
+        "path": "/invoices",
+        "pointer": "/paths/~1invoices/get",
+        "operationId": "listInvoices"
+      },
+      "checks": [
+        "request.operation",
+        "request.path-parameters",
+        "request.query",
+        "request.headers",
+        "request.body",
+        "response.status",
+        "response.headers",
+        "response.body",
+        "request.matching-rules",
+        "response.matching-rules"
+      ],
+      "matchingRules": {
+        "total": 5,
+        "verified": 3,
+        "unverified": 2,
+        "notMapped": 0
+      },
+      "failures": [],
+      "warnings": [],
+      "fidelity": [
+        {
+          "code": "matching-rule-unverified",
+          "message": "the request query matching rule 'regex' at limit is not proven by the provider's schema (provider-narrower)",
+          "pactPointer": "/interactions/2/request/matchingRules/query/limit/matchers/0",
+          "reason": "provider-narrower",
+          "oasPointer": "/paths/~1invoices/get/parameters/1/schema",
+          "matcher": "regex",
+          "constraint": {
+            "type": "string",
+            "pattern": "\\d+"
+          }
+        },
+        {
+          "code": "matching-rule-unverified",
+          "message": "the request query matching rule 'regex' at status is not proven by the provider's schema (provider-narrower)",
+          "pactPointer": "/interactions/2/request/matchingRules/query/status/matchers/0",
+          "reason": "provider-narrower",
+          "oasPointer": "/paths/~1invoices/get/parameters/0/schema",
+          "matcher": "regex",
+          "constraint": {
+            "type": "string",
+            "pattern": "open|paid|draft"
+          }
+        }
+      ]
+    }
+  ]
+}

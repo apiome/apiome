@@ -1,0 +1,270 @@
+---
+title: Comparison rules
+description: How a consumer's pact is compared with a provider's OpenAPI document, rule by rule.
+sidebar_position: 6.3
+tags: [contracts, pact, openapi, reference]
+---
+
+Bi-directional contract testing decides whether a provider can serve a consumer **without running
+either**. The consumer publishes a [pact](./publish-pacts.mdx), the provider publishes its OpenAPI
+document as a [provider contract](./bi-directional.mdx), and Apiome compares the two. This page is
+the complete rule set of that comparison: what is checked, what each failure means, and how Pact
+matching rules are read.
+
+The comparison is not run for you yet. Apiome stores pacts and provider contracts today; the
+verdict will appear in the matrix and in [can-i-deploy](./can-i-deploy.mdx) in a later release.
+There is no screen and no endpoint for it in this one.
+
+## The verdict
+
+Each interaction of the pact is compared on its own, then the pact gets the worst result of its
+interactions.
+
+| Verdict | Meaning |
+| --- | --- |
+| **`pass`** | Every part of every interaction was compared, and the provider's document satisfies it. |
+| **`partial`** | Nothing contradicts the pact, but something could not be compared in full. Each gap is listed in the [fidelity list](#the-fidelity-list). |
+| **`fail`** | The provider's document contradicts at least one interaction. Each contradiction is a [failure](#failures). |
+
+A `partial` verdict is a success with caveats. It is never reported as `pass`, so that a green
+result is not read as stronger than the evidence behind it.
+
+## What is compared
+
+For every interaction, in this order:
+
+| Step | The pact's | Is compared with the provider's |
+| --- | --- | --- |
+| 1. Operation | Request method and path, such as `GET /invoices/1042` | Declared paths. `/invoices/1042` resolves to `/invoices/{invoiceId}`, with or without a server base path. A literal path wins over a templated one. |
+| 2. Path parameters | The values in the path | Each path parameter's `schema`. |
+| 3. Query | The query string (Pact 2) or query object (Pact 3 and 4) | Each query parameter's `schema` and `required`. |
+| 4. Request headers | The request headers | Each header parameter's `schema` and `required`. |
+| 5. Request body | The body and its content type | The operation's `requestBody`: `required`, the declared media types, and the schema of the matching one. |
+| 6. Status | The expected status | The operation's `responses`: the exact code, then its range (`2XX`), then `default`. |
+| 7. Response headers | The expected headers | The response's `headers` and their schemas. |
+| 8. Response body | The expected body and its content type | The response's `content`: the declared media types, and the schema of the matching one. |
+| 9. Matching rules | Every rule of the request and the response | The schema at the rule's path. See [Matching rules](#matching-rules). |
+
+If step 1 finds no operation, steps 2 to 8 are skipped and the interaction fails. If step 6 finds
+no response, steps 7 and 8 are skipped.
+
+Parameters travel as text, so `limit=25` is read as the integer `25` for a schema of
+`type: integer` and as the string `"25"` for one of `type: string`. An array parameter is split on
+commas, or read from repeated query parameters when it is `explode: true`.
+
+## Requests and responses are read differently
+
+A request is something the consumer **sends**; a response is something it **reads**. The same
+schema is therefore held against them in two ways.
+
+| | Request | Response |
+| --- | --- | --- |
+| **`required`** | Enforced. A request that leaves out a required property is refused by the provider. | Not enforced. A consumer may read two of the six properties the provider returns. |
+| **Undeclared properties** | Allowed, unless the provider set `additionalProperties: false`. | Refused, unless the provider opened the object with `additionalProperties`. A consumer that reads a property the provider never declares will break. |
+| **`oneOf`** | Exactly one branch must accept the body. | Compared as `anyOf`: at least one branch must accept it. With `required` not enforced, branches often cannot be told apart. Listed as `oneof-relaxed`. |
+
+An **optional** response property the consumer reads is not a failure: the provider declares it,
+and the comparison cannot know whether it is sent.
+
+### OpenAPI 3.0, 3.1 and 3.2
+
+Every schema is validated as JSON Schema 2020-12. An OpenAPI 3.0 document is read into it first:
+
+- `nullable: true` next to a `type` adds `null` to the type.
+- `exclusiveMinimum: true` and `exclusiveMaximum: true` become the numeric forms of 2020-12.
+
+A `$ref` is followed inside the document only. A schema that needs a `$ref` to another file is not
+used; the value it describes is listed as `schema-not-usable`, never treated as valid.
+
+## Failures
+
+Every failure has a stable `code`, a sentence in `message`, and three
+[JSON Pointers](https://www.rfc-editor.org/rfc/rfc6901):
+
+| Field | Points at |
+| --- | --- |
+| `pactPointer` | The offending part of the pact, such as `/interactions/0/response/body/customer/email`. |
+| `oasPointer` | The place in the OpenAPI document, written from the operation down, as if every `$ref` were inlined. |
+| `resolvedPointer` | The same place where it actually lives, such as `/components/schemas/Party`. This is the node to edit. |
+
+A schema failure also carries `keyword` (the JSON Schema keyword that failed) and `detail` (the
+validator's own message).
+
+| Code | The provider's document contradicts the pact because |
+| --- | --- |
+| `interaction.malformed` | The interaction's request declares no method or no path. |
+| `request.operation.unknown` | The provider declares no operation on the request's path. |
+| `request.method.undeclared` | The provider declares the path, but not with the request's method. |
+| `request.path-parameter.invalid` | A value in the request's path does not satisfy the path parameter's schema. |
+| `request.query.required-missing` | The request leaves out a query parameter the provider requires. |
+| `request.query.invalid` | A query parameter's value does not satisfy its schema. |
+| `request.header.required-missing` | The request leaves out a header the provider requires. |
+| `request.header.invalid` | A request header's value does not satisfy its schema. |
+| `request.content-type.undeclared` | The request's content type is not one the operation's request body declares. |
+| `request.accept.unsatisfiable` | The request's `Accept` header matches none of the media types the response declares. |
+| `request.body.undeclared` | The request sends a body to an operation that declares none. |
+| `request.body.required-missing` | The request has no body, but the operation's request body is required. |
+| `request.body.required-mismatch` | The request body leaves out a property the provider requires. |
+| `request.body.nullable-mismatch` | The request body sends `null` where the provider does not declare the value nullable. |
+| `request.body.unknown-property` | The request body sends a property the provider's schema does not accept. |
+| `request.body.schema-mismatch` | The request body breaks another keyword of the provider's schema (`type`, `enum`, `pattern`, a range …). |
+| `response.status.undeclared` | The operation declares neither the expected status, its range (`2XX`) nor `default`. |
+| `response.header.undeclared` | The consumer expects a response header the provider does not declare. |
+| `response.header.invalid` | An expected response header's value does not satisfy the declared schema. |
+| `response.content-type.undeclared` | The expected response content type is not one the response declares. |
+| `response.body.undeclared` | The consumer expects a response body, but the response declares no content. |
+| `response.body.nullable-mismatch` | The consumer expects `null` where the provider does not declare the value nullable. |
+| `response.body.unknown-property` | The consumer expects a property the provider's response schema does not declare. |
+| `response.body.schema-mismatch` | The expected response body breaks another keyword of the provider's schema. |
+
+A failure in a path, query or header parameter names it as `<in>:<name>` in `oasPointer`, such as
+`/paths/~1invoices~1{invoiceId}/get/parameters/path:invoiceId`.
+
+At most 50 failures are listed per interaction. Any more are counted in a `findings-truncated`
+entry of the fidelity list.
+
+### An example
+
+A consumer expects `customer.email` in an invoice, and the provider's `Party` schema has no such
+property:
+
+```json
+{
+  "code": "response.body.unknown-property",
+  "message": "the response body at /customer expects property 'email', which the provider does not declare",
+  "pactPointer": "/interactions/0/response/body/customer/email",
+  "oasPointer": "/paths/~1invoices~1{invoiceId}/get/responses/200/content/application~1json/schema/properties/customer/unevaluatedProperties",
+  "resolvedPointer": "/components/schemas/Party",
+  "keyword": "unevaluatedProperties",
+  "detail": "Unevaluated properties are not allowed ('email' was unexpected)"
+}
+```
+
+## Warnings
+
+A warning never changes the verdict.
+
+| Code | Meaning |
+| --- | --- |
+| `request.query.undeclared` | The request sends a query parameter the provider does not declare. |
+| `request.header.undeclared` | The request sends a header the provider does not declare. |
+| `response.status.default` | The expected status is covered only by the operation's `default` response. |
+
+`Accept`, `Authorization`, `Content-Type`, `User-Agent` and the other headers every HTTP client
+sends are not reported as undeclared.
+
+## Matching rules
+
+An example says "the consumer saw this value". A matching rule widens that to "any value like this
+one". Comparing only the example would ignore the widening, so each rule is turned into the JSON
+Schema constraint that says the same thing, and the provider's schema at the rule's path is asked
+to **prove** it:
+
+- **In a request**, the consumer may send any value the rule allows. The provider's schema must
+  accept all of them: it may not be narrower than the rule.
+- **In a response**, the consumer accepts only what the rule allows. The provider's schema must
+  promise nothing else: it may not be broader than the rule.
+
+Rules are read from Pact specification 2 (`$.body.items[*].id`), 3 and 4 (`body`, `header`,
+`query`, `path` and `status` categories).
+
+### Matchers that are mapped
+
+| Matcher | Pact | JSON Schema constraint | Notes |
+| --- | --- | --- | --- |
+| `type` | 2, 3, 4 | `{"type": <type of the example>}` | Cascades to every value below it that has no rule of its own. A number example allows any number in a response and an integer in a request. With `min` / `max` on an array it adds `minItems` / `maxItems`. |
+| `equality` | 2, 3, 4 | `{"const": <the example>}` | Stops a `type` cascade. |
+| `regex` | 2, 3, 4 | `{"type": "string", "pattern": <regex>}` | The expression as written. |
+| `include` | 3, 4 | `{"type": "string", "pattern": <escaped value>}` | The substring, escaped so that it is matched literally. |
+| `integer` | 3, 4 | `{"type": "integer"}` | — |
+| `number` | 3, 4 | `{"type": "number"}` | — |
+| `boolean` | 4 | `{"type": "boolean"}` | — |
+| `null` | 3, 4 | `{"type": "null"}` | — |
+| `notEmpty` | 4 | `{"minLength": 1}, {"minItems": 1} or {"minProperties": 1}` | By the type of the example, together with that type. |
+
+### Matchers that are not mapped
+
+These have no JSON Schema constraint that says the same thing without loss. The example is still
+validated, and the rule is listed as `matching-rule-not-mapped`.
+
+| Matcher | Pact | Why it has no mapping |
+| --- | --- | --- |
+| `decimal` | 3, 4 | JSON Schema cannot require a number to have a fractional part. |
+| `date` / `time` / `timestamp` / `datetime` | 3, 4 | The format is a Java date pattern, which JSON Schema `format` cannot express. |
+| `semver` | 4 | No JSON Schema keyword describes a semantic version. |
+| `values` / `eachKey` / `eachValue` | 3, 4 | The rule nests further rules for keys and values. |
+| `arrayContains` | 4 | Each variant carries its own nested rules. |
+| `contentType` | 3, 4 | Compares bytes by sniffed media type. |
+| `statusCode` | 4 | Applies to the response status, which is compared by example. |
+
+A matcher the engine does not know is treated the same way, with one of these reasons:
+
+| `reason` | Meaning |
+| --- | --- |
+| `no-lossless-mapping` | No JSON Schema constraint says what the matcher says. |
+| `combined-with-or` | Several matchers are combined with `OR`. |
+| `path-not-understood` | The rule's path is not a JSONPath the engine reads. |
+| `unknown-location` | The rule is filed under a part of the message the engine does not know. |
+
+### When a mapped rule is not proven
+
+A mapped rule the provider's schema does not prove is listed as `matching-rule-unverified`, with
+the constraint it mapped to and one of these reasons. It is not a failure: the example itself was
+validated.
+
+| `reason` | The rule is not proven because |
+| --- | --- |
+| `no-provider-schema` | The provider declares no schema where the rule applies: the body was not compared, or the header, query or path parameter is not declared. |
+| `path-not-in-example` | The rule's path selects nothing in the example. |
+| `path-not-declared` | The provider's schema declares nothing at the rule's path. |
+| `composition` | The provider's schema at the rule's path is combined with `allOf`, `anyOf`, `oneOf`, `not` or `if`; the engine does not reason across combinations. |
+| `provider-narrower` | Request: the provider's schema refuses some values the rule lets the consumer send (an `enum`, a `pattern`, a length or range limit, another type). |
+| `provider-nullable` | Response: the provider may return `null` where the rule expects a value. |
+| `provider-broader` | Response: the provider may return a type the rule does not accept. |
+| `provider-type-undeclared` | Response: the provider's schema declares no `type` here. |
+| `pattern-not-guaranteed` | Response: the provider's schema does not declare the rule's expression as its `pattern`. |
+| `value-not-guaranteed` | Response: the provider's schema does not fix the value with `const`. |
+| `bounds-not-guaranteed` | Response: the provider's schema does not promise the length the rule requires. |
+| `budget-exhausted` | The pact's rules apply at more than 100,000 locations; the rules past that were not checked. |
+
+A regular expression is proven only by the same expression as the schema's `pattern`. Apiome does
+not evaluate a pact's expression against the provider's values.
+
+## The fidelity list
+
+Everything the comparison could not vouch for is recorded here, per interaction. Nothing is
+dropped silently.
+
+| Code | What was not compared in full |
+| --- | --- |
+| `matching-rule-not-mapped` | A matching rule has no lossless JSON Schema mapping; only its example was compared. |
+| `matching-rule-unverified` | A matching rule was mapped, but the provider's schema does not prove it. |
+| `embedded-matcher-not-mapped` | A body carries a matcher embedded in the example (Pact 1 Ruby style); its value was compared, the matcher was not. |
+| `generator-not-applied` | A generator replaces the example at verification time; only the example was compared. |
+| `body-not-compared` | A body was not validated: its content type is not JSON, it could not be decoded, the provider declares no schema for it, or it nests too deeply. |
+| `parameter-not-compared` | A parameter or header was not validated: it declares no `schema`, is an object, or uses a `style` the engine does not parse. |
+| `schema-not-usable` | A provider schema could not be evaluated (it does not compile, or needs a `$ref` outside the document). |
+| `oneof-relaxed` | Part of the expected response body is described by a `oneOf`. With `required` lifted its branches cannot be told apart, so it was compared as `anyOf`. |
+| `interaction-not-http` | A message interaction has no HTTP exchange to compare with an OpenAPI document. |
+| `findings-truncated` | An interaction produced more failures than are listed. |
+
+An entry has `code`, `message` and `pactPointer`, and where they apply `reason`, `oasPointer`,
+`matcher` and the `constraint` a rule mapped to.
+
+## What is not compared
+
+- **Security requirements.** Whether a request carries the credentials the operation's `security`
+  asks for.
+- **Cookies**, and parameters that are objects or use the `deepObject`, `pipeDelimited`,
+  `spaceDelimited`, `matrix` or `label` styles (listed as `parameter-not-compared`).
+- **Bodies that are not JSON**: form data, XML, text and binary (listed as `body-not-compared`).
+- **Provider states.** The comparison does not know which data a state sets up.
+- **Whether the provider behaves as its document says.** That is the job of the provider's
+  [self-verification results](./bi-directional.mdx#self-verification-results).
+
+## Related
+
+- [Publish a provider contract](./bi-directional.mdx) — the provider's side of the comparison.
+- [Publish and fetch pacts](./publish-pacts.mdx) — the consumer's side.
+- [Pact Broker concepts](./concepts.mdx) — pacticipants, versions and contracts.
+- [can-i-deploy](./can-i-deploy.mdx) — where the verdict will be used.

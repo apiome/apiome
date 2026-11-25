@@ -1,0 +1,32 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "create",
+      "request": {
+        "method": "POST",
+        "path": "/invoices",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "currency": "USD",
+          "lines": []
+        }
+      },
+      "response": {
+        "status": 500
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "consumer": {
+    "name": "corpus-consumer"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "get",
+      "request": {
+        "method": "GET",
+        "path": "/invoices/1042",
+        "headers": {
+          "Accept": "application/xml"
+        }
+      },
+      "response": {
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}
