@@ -1,0 +1,55 @@
+# A provider contract in OpenAPI 3.0 YAML (PFX-2.1, #6925). Unquoted status codes and dates are
+# what YAML authors write; the publisher reads them as the JSON strings they stand for.
+openapi: 3.0.3
+info:
+  title: Ledger API
+  version: 1.4.0
+paths:
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: The invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+              example:
+                id: 42
+                total: 1999
+                issued: 2026-11-01
+        404:
+          description: No such invoice
+  /invoices:
+    post:
+      operationId: createInvoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+      responses:
+        201:
+          description: Created
+components:
+  schemas:
+    Invoice:
+      type: object
+      required: [id, total]
+      properties:
+        id:
+          type: integer
+        total:
+          type: integer
+          nullable: true
+        issued:
+          type: string
+          format: date

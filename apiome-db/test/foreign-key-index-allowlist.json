@@ -126,6 +126,7 @@
     "projects.projects_creator_id_fkey": "users-reference",
     "property_templates.property_templates_created_by_fkey": "users-reference",
     "provider_check_runs.provider_check_runs_created_by_fkey": "users-reference",
+    "provider_contract_publication.provider_contract_publication_created_by_fkey": "users-reference",
     "provider_verification_report.provider_verification_report_created_by_fkey": "users-reference",
     "registry_audit.registry_audit_actor_id_fkey": "users-reference",
     "released_version.released_version_created_by_fkey": "users-reference",

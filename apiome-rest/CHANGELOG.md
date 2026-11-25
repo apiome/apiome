@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.841.0] - 2026-11-24
+
+### Added
+- **Provider contract publication (PFX-2.1, #6925).** OpenAPI 1.665.0. Migration `V438`.
+  - `PUT /v1/tenants/{t}/pact-broker/contracts/provider/{p}/version/{v}` publishes a provider
+    version's OpenAPI document for bi-directional contract testing: inline (`content`, base64 JSON
+    or YAML, PactFlow's shape) **or** by reference (`apiomeVersion: "<project>@<version>"`,
+    rendered with the `GET /v1/schema` exporter as OpenAPI 3.1). A provider bound to its project may
+    name just the version, and `latest` is the project's newest. `branch`, `tags` and `buildUrl` are
+    recorded on the provider version; `verificationResults` (PFX-2.4) are stored as sent with the
+    report's SHA-256. `GET` on the same URL reads it back with `contentSha`, `oasVersion`,
+    `operationCount`, `source` and the document.
+  - Only OpenAPI 3.0, 3.1 and 3.2 that validate against their meta-schema are accepted; Swagger 2.0,
+    AsyncAPI and other input are `422 provider-contract-invalid` with a JSON Pointer
+    (`/swagger`, `/asyncapi`, `/openapi`, or the first meta-schema error). YAML keys and dates are
+    read as the JSON they stand for; binary and non-finite values are refused with their location.
+  - Stored write-once with a hash: the SHA-256 of the canonical JSON dedupes across provider
+    versions and formats; the same contract again is `200`, a different one `409
+    provider-contract-conflict`. New codes `provider-contract-request-invalid`, `-unsupported`,
+    `-source-not-found`, `-too-large`, `-not-found`. Publishing needs `pacts:create` (and
+    `versions:view` with `apiomeVersion`), reading `pacts:view`; shares the pact publish budget.
+  - The Pact Broker compatibility catalog lists the route under a new **Provider contracts
+    (PactFlow)** group. `app.openapi_validator.openapi_document_errors_at` locates meta-schema
+    errors by escaped JSON Pointer.
+
 ## [1.840.0] - 2026-11-24
 
 ### Added

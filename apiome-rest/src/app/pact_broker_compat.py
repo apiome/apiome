@@ -89,6 +89,7 @@ GROUPS = (
     "Badges",
     "Labels",
     "Other",
+    "Provider contracts (PactFlow)",
 )
 
 _ISSUES = "https://github.com/apiome/apiome/issues/"
@@ -236,7 +237,8 @@ _VERSION = "/pacticipants/{pacticipant}/versions/{version}"
 _BRANCH = "/pacticipants/{pacticipant}/branches/{branch}"
 
 _G_INDEX, _G_PACTS, _G_HISTORY, _G_RESULTS, _G_PARTICIPANTS, _G_BRANCHES = GROUPS[:6]
-_G_ENVIRONMENTS, _G_MATRIX, _G_WEBHOOKS, _G_BADGES, _G_LABELS, _G_OTHER = GROUPS[6:]
+_G_ENVIRONMENTS, _G_MATRIX, _G_WEBHOOKS, _G_BADGES, _G_LABELS, _G_OTHER = GROUPS[6:12]
+_G_PROVIDER_CONTRACTS = GROUPS[12]
 
 #: The catalog — every resource of the Pact Broker API, in the order of the page.
 ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
@@ -873,6 +875,16 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
     _e(_G_OTHER, "/groups/{pacticipant}", "Network graph data", "GET", note="See PFX-5.3 (#6947)."),
     _e(_G_OTHER, "/metrics", "Row counts", "GET", note="Apiome reports usage under `/v1/ops`."),
     _e(_G_OTHER, "/test/error", "Error test", "GET POST", note="A Pact Broker diagnostic."),
+    # Provider contracts (PactFlow's bi-directional contract testing) ----------------------------
+    _e(
+        _G_PROVIDER_CONTRACTS,
+        "/contracts/provider/{provider}/version/{providerVersion}",
+        "The OpenAPI provider contract of a provider version",
+        "GET PUT",
+        "GET PUT",
+        used_by="PactFlow's provider-contract publishing API",
+        note="Also takes `apiomeVersion` to render the contract from an Apiome version (PFX-2.1, #6925).",
+    ),
 )
 
 

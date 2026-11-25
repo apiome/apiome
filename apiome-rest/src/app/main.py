@@ -145,6 +145,7 @@ from .pact_badge_routes import router as pact_badge_router
 from .pact_broker_cleanup_routes import router as pact_broker_cleanup_router
 from .pact_retention_routes import router as pact_retention_router
 from .pacticipant_routes import router as pacticipant_router
+from .provider_contract_routes import router as provider_contract_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
 from .primitives_lifecycle_routes import router as primitives_lifecycle_router
@@ -573,6 +574,7 @@ app.include_router(pact_broker_matrix_router)
 app.include_router(pact_broker_webhook_router)
 app.include_router(pact_badge_router)  # PFX-1.10 (#6923): public pact badges
 app.include_router(pact_broker_cleanup_router)  # PFX-1.11 (#6924): labels and deletes
+app.include_router(provider_contract_router)  # PFX-2.1 (#6925): provider contracts
 app.include_router(pact_broker_fallback_router)
 # consumer_binding_router: RDG-1.8 consumer bindings + declared-vs-observed runtime edges under
 # /v1/tenants/{t}/projects/{p}/consumers/{c}/bindings|runtime (#5765).

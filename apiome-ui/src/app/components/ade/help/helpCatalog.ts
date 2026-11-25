@@ -1325,6 +1325,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['matrix', 'retry-while-unknown', 'to-environment', 'ignore', 'verdict', 'contract required', 'pending pact', 'exit code'],
   },
   {
+    id: 'bi-directional',
+    title: 'Publish a provider contract',
+    summary: "Register a provider version's OpenAPI document for bi-directional contract testing.",
+    page: 'apiome-docs/docs/ship/pact-broker/bi-directional.mdx',
+    section: 'reference',
+    keywords: ['bi-directional', 'PactFlow', 'OpenAPI', 'self-verification', 'apiomeVersion', 'contentSha', 'oas'],
+  },
+  {
     id: 'webhooks',
     title: 'Contract webhooks',
     summary: 'Tell your CI when a pact needs verifying and when a verification finishes.',

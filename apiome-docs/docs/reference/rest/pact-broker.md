@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 64 operations."
+description: "REST endpoints tagged pact-broker: 66 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.664.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.665.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 64 operations
+Tag: `pact-broker` · 66 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -74,6 +74,87 @@ Operation id: `read_can_i_deploy_v1_tenants__tenant_slug__pact_broker_can_i_depl
 | 200 | The verdict and the rows it was reached from. `summary.deployable` is `true`, `false`, or `null` when a verification result is missing — then `Retry-After` says when to ask again. | `application/hal+json` any |
 | 400 | `pact-matrix-invalid`: the query is malformed, or names a pacticipant or an environment that does not exist. `detail.pointer` names the parameter. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-broker/contracts/provider/{provider}/version/{provider_version}` {#read-contract-v1-tenants-tenant-slug-pact-broker-contracts-provider-provider-version-provider-version-get}
+
+**Read a provider contract**
+
+The provider contract a provider version published: `contentSha`, `oasVersion`, `operationCount`, `contentType`, where it came from (`source`: `inline`, or `apiome` with the project and version it was rendered from), the `verificationResults` sent with it, and the OpenAPI document in `content`.
+
+`{provider}` is a pacticipant's handle, id or name. Requires `pacts:view`.
+
+Operation id: `read_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `provider_version` | path | string | yes | Path parameter identifying the provider version segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a provider contract. | `application/hal+json` any |
+| 404 | `pacticipant-not-found` or `provider-contract-not-found`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-broker/contracts/provider/{provider}/version/{provider_version}` {#publish-contract-v1-tenants-tenant-slug-pact-broker-contracts-provider-provider-version-provider-version-put}
+
+**Publish a provider contract**
+
+Register the provider's OpenAPI document — its **provider contract** — against a provider version, for bi-directional contract testing. Send the document inline in `content` (base64; JSON or YAML, PactFlow's shape) **or** name an Apiome version in `apiomeVersion` (`ledger-api@1.4.0`) to render it from the canonical model with the exporter `GET /v1/schema/…` uses (OpenAPI 3.1). With a provider bound to its Apiome project, `apiomeVersion` may be just the version, and `latest` is the project's newest.
+
+- **Only OpenAPI 3.0, 3.1 and 3.2.** The document must validate against its version's meta-schema. Swagger 2.0, AsyncAPI and anything else are `422 provider-contract-invalid`, with `detail.pointer` locating the problem.
+- **The provider is registered on first use**, and the version is recorded with its `branch`, `tags` and `buildUrl`, as `PUT …/pacticipants/{ref}/versions/{number}` does.
+- **Content is stored once.** The document is addressed by the SHA-256 of its canonical JSON (`contentSha`), so JSON, YAML and a rendered copy of one document are one contract.
+- **Write-once.** `201` for a new contract, `200` when the same contract and self-verification results are published again (nothing changes), `409` for anything different.
+
+`verificationResults` are stored as sent, with the report's SHA-256. Requires `pacts:create`, and `versions:view` with `apiomeVersion`.
+
+Operation id: `publish_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `provider_version` | path | string | yes | Path parameter identifying the provider version segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for publish a provider contract.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `content` | string | no | The OpenAPI 3.x document (JSON or YAML), base64-encoded. Send this or `apiomeVersion`. |
+| `contractType` | enum `"oas"` | no | Contract Type. |
+| `contentType` | string | no | How `content` is encoded: `application/json` or `application/yaml`. Sniffed when omitted. |
+| `apiomeVersion` | string | no | `<project>@<version>`: render the contract from an Apiome version instead of sending it. `<version>` alone uses the project the provider is bound to; `latest` is the project's newest version. Send this or `content`. |
+| `branch` | string | no | The repository branch the version was built from. |
+| `tags` | array of string | no | Tags for the provider version (at most 50). |
+| `buildUrl` | string | no | http(s) URL of the CI build. |
+| `verificationResults` | object | no | The provider's self-verification results (PFX-2.4), stored as sent. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for publish a provider contract. | `application/hal+json` any |
+| 201 | The contract was published for this provider version. | — |
+| 409 | `provider-contract-conflict`: this provider version already published a different contract (or the same one with different self-verification results). Nothing was stored. | — |
+| 413 | `provider-contract-too-large`: the document or the request is over the size limit. | — |
+| 422 | `provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the document (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema error). `provider-contract-request-invalid` / `provider-contract-unsupported`: a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`: `apiomeVersion` names no project or version of this workspace. | — |
+| 429 | `pact-publish-rate-limited`: over the workspace's publish budget; see `Retry-After`. | — |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-broker/contracts/publish` {#publish-contracts-v1-tenants-tenant-slug-pact-broker-contracts-publish-post}
 

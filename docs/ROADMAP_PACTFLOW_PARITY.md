@@ -235,14 +235,13 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-2.1 · [#6925](https://github.com/apiome/apiome/issues/6925) | Provider contract publication | Publish an Apiome version (or an uploaded OAS) as the provider contract | `contracts`,`pact`,`rest`,`mvp` | N | Y | M | apiome-rest |
 | PFX-2.2 · [#6926](https://github.com/apiome/apiome/issues/6926) | Cross-contract comparison engine | Pact interaction vs OAS operation: path, method, status, headers, body schema | `contracts`,`pact`,`rest`,`mvp` | N | Y | XL | apiome-rest |
 | PFX-2.3 · [#6927](https://github.com/apiome/apiome/issues/6927) | Bi-directional verdicts in the matrix | Comparison results stored as verification results with details | `contracts`,`pact`,`rest`,`mvp` | N | Y | M | apiome-rest |
 | PFX-2.4 · [#6928](https://github.com/apiome/apiome/issues/6928) | Self-verification evidence | Require evidence the provider honours its OAS (runner, uploaded reports) | `contracts`,`pact`,`rest`,`mvp` | Y | Y | L | apiome-rest, apiome-cli |
 | PFX-2.5 · [#6929](https://github.com/apiome/apiome/issues/6929) | Comparison fidelity report | Show what was compared and what could not be (matching rules, oneOf, content types) | `contracts`,`pact`,`ui` | Y | N | M | apiome-rest, apiome-ui |
 | PFX-2.6 · [#6930](https://github.com/apiome/apiome/issues/6930) | Pact export from a declared consumer surface | Generate a Pact v4 file from a CTG-4.1 consumer contract | `contracts`,`pact`,`rest` | Y | N | M | apiome-rest, apiome-cli |
 
-**PFX-2.1 · #6925 Provider contract publication**
+**✅ PFX-2.1 · #6925 Provider contract publication — Complete**
 - **Problem:** Bi-directional testing needs the provider's OpenAPI registered against a provider version, tying it to the broker's version/branch model.
 - **Solution/Scope:** `PUT /contracts/provider/{p}/version/{v}` accepting an inline OAS or a reference to an Apiome `project@version` (preferred: the canonical model emits OAS 3.x via the existing exporter), content type, branch, tags, build URL, self-verification results (2.4). Stored write-once with a hash; a provider pacticipant bound to an Apiome project resolves `latest`.
 - **Acceptance Criteria:** Publishing by reference and inline both work; hash dedupes; non-OAS inputs rejected with the located reason; fixtures for 3.0 and 3.1.

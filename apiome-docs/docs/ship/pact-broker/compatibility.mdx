@@ -76,7 +76,7 @@ that pact, version or pacticipant does not exist.
 
 {/* pact-broker-compat:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_pact_broker_compat_doc.py */}
 
-Checked against Pact Broker **2.124.0**: 102 endpoints — **38** supported, **6** partial, **0** planned, **58** not planned.
+Checked against Pact Broker **2.124.0**: 103 endpoints — **39** supported, **6** partial, **0** planned, **58** not planned.
 
 ### Index
 
@@ -239,6 +239,12 @@ Checked against Pact Broker **2.124.0**: 102 endpoints — **38** supported, **6
 | `/groups/{pacticipant}` — Network graph data | — | `GET` | — Not planned | See PFX-5.3 (#6947). |
 | `/metrics` — Row counts | — | `GET` | — Not planned | Apiome reports usage under `/v1/ops`. |
 | `/test/error` — Error test | — | `GET` `POST` | — Not planned | A Pact Broker diagnostic. |
+
+### Provider contracts (PactFlow)
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/contracts/provider/{provider}/version/{providerVersion}` — The OpenAPI provider contract of a provider version | `GET` `PUT` | — | ✅ Supported | Used by PactFlow's provider-contract publishing API. Also takes `apiomeVersion` to render the contract from an Apiome version (PFX-2.1, #6925). |
 
 {/* pact-broker-compat:end */}
 

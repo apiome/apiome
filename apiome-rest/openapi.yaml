@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.664.0
+  version: 1.665.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -36307,6 +36307,286 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for executionlogofatriggeredwebhookresponse422.
+  /v1/tenants/{tenant_slug}/pact-broker/contracts/provider/{provider}/version/{provider_version}:
+    put:
+      tags:
+      - pact-broker
+      summary: Publish a provider contract
+      description: 'Register the provider''s OpenAPI document — its **provider contract**
+        — against a provider version, for bi-directional contract testing. Send the
+        document inline in `content` (base64; JSON or YAML, PactFlow''s shape) **or**
+        name an Apiome version in `apiomeVersion` (`ledger-api@1.4.0`) to render it
+        from the canonical model with the exporter `GET /v1/schema/…` uses (OpenAPI
+        3.1). With a provider bound to its Apiome project, `apiomeVersion` may be
+        just the version, and `latest` is the project''s newest.
+
+
+        - **Only OpenAPI 3.0, 3.1 and 3.2.** The document must validate against its
+        version''s meta-schema. Swagger 2.0, AsyncAPI and anything else are `422 provider-contract-invalid`,
+        with `detail.pointer` locating the problem.
+
+        - **The provider is registered on first use**, and the version is recorded
+        with its `branch`, `tags` and `buildUrl`, as `PUT …/pacticipants/{ref}/versions/{number}`
+        does.
+
+        - **Content is stored once.** The document is addressed by the SHA-256 of
+        its canonical JSON (`contentSha`), so JSON, YAML and a rendered copy of one
+        document are one contract.
+
+        - **Write-once.** `201` for a new contract, `200` when the same contract and
+        self-verification results are published again (nothing changes), `409` for
+        anything different.
+
+
+        `verificationResults` are stored as sent, with the report''s SHA-256. Requires
+        `pacts:create`, and `versions:view` with `apiomeVersion`.'
+      operationId: publish_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: provider_version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Version
+          description: Provider Version schema.
+        description: Path parameter identifying the provider version segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaprovidercontractauthorization schema.
+          - type: 'null'
+            description: Publishaprovidercontractauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaprovidercontract Xapikey schema.
+          - type: 'null'
+            description: Publishaprovidercontract Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for publish a provider contract.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for publishaprovidercontractresponse200.
+        '201':
+          description: The contract was published for this provider version.
+        '409':
+          description: '`provider-contract-conflict`: this provider version already
+            published a different contract (or the same one with different self-verification
+            results). Nothing was stored.'
+        '413':
+          description: '`provider-contract-too-large`: the document or the request
+            is over the size limit.'
+        '422':
+          description: '`provider-contract-invalid`: the document is not OpenAPI 3.0,
+            3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the
+            document (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema
+            error). `provider-contract-request-invalid` / `provider-contract-unsupported`:
+            a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`:
+            `apiomeVersion` names no project or version of this workspace.'
+        '429':
+          description: '`pact-publish-rate-limited`: over the workspace''s publish
+            budget; see `Retry-After`.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: The OpenAPI 3.x document (JSON or YAML), base64-encoded.
+                    Send this or `apiomeVersion`.
+                  example: example
+                contractType:
+                  type: string
+                  enum:
+                  - oas
+                  default: oas
+                  description: Contract Type.
+                  example: oas
+                contentType:
+                  type: string
+                  description: 'How `content` is encoded: `application/json` or `application/yaml`.
+                    Sniffed when omitted.'
+                  example: example
+                apiomeVersion:
+                  type: string
+                  description: '`<project>@<version>`: render the contract from an
+                    Apiome version instead of sending it. `<version>` alone uses the
+                    project the provider is bound to; `latest` is the project''s newest
+                    version. Send this or `content`.'
+                  example: 1.0.0
+                branch:
+                  type: string
+                  description: The repository branch the version was built from.
+                  example: example
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: Tags for the provider version (at most 50).
+                  maxItems: 1000
+                buildUrl:
+                  type: string
+                  description: http(s) URL of the CI build.
+                  example: example
+                verificationResults:
+                  type: object
+                  required:
+                  - success
+                  description: The provider's self-verification results (PFX-2.4),
+                    stored as sent.
+                  properties:
+                    success:
+                      type: boolean
+                      description: Success.
+                      example: false
+                    content:
+                      type: string
+                      description: The verifier's report, base64-encoded.
+                      example: example
+                    contentType:
+                      type: string
+                      description: Content Type.
+                      example: example
+                    verifier:
+                      type: string
+                      examples:
+                      - schemathesis
+                      description: Verifier.
+                    verifierVersion:
+                      type: string
+                      description: Verifier Version.
+                      example: 1.0.0
+              description: Request body for publishaprovidercontractrequest.
+            examples:
+              inline:
+                summary: An uploaded OpenAPI document
+                value:
+                  contractType: oas
+                  contentType: application/yaml
+                  content: b3BlbmFwaTogMy4xLjAKaW5mbzoKICB0aXRsZTogTGVkZ2VyIEFQSQogIHZlcnNpb246IDEuNC4wCnBhdGhzOiB7fQo=
+                  branch: main
+                  buildUrl: https://ci.example.com/builds/4813
+                  verificationResults:
+                    success: true
+                    verifier: schemathesis
+              reference:
+                summary: Rendered from an Apiome version
+                value:
+                  apiomeVersion: ledger-api@1.4.0
+                  branch: main
+        description: Request body for publish a provider contract.
+    get:
+      tags:
+      - pact-broker
+      summary: Read a provider contract
+      description: 'The provider contract a provider version published: `contentSha`,
+        `oasVersion`, `operationCount`, `contentType`, where it came from (`source`:
+        `inline`, or `apiome` with the project and version it was rendered from),
+        the `verificationResults` sent with it, and the OpenAPI document in `content`.
+
+
+        `{provider}` is a pacticipant''s handle, id or name. Requires `pacts:view`.'
+      operationId: read_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: provider_version
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider Version
+          description: Provider Version schema.
+        description: Path parameter identifying the provider version segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaprovidercontractauthorization schema.
+          - type: 'null'
+            description: Readaprovidercontractauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaprovidercontract Xapikey schema.
+          - type: 'null'
+            description: Readaprovidercontract Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a provider contract.
+          content:
+            application/hal+json:
+              schema:
+                description: Response payload for readaprovidercontractresponse200.
+        '404':
+          description: '`pacticipant-not-found` or `provider-contract-not-found`.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readaprovidercontractresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings:
     get:
       tags:
