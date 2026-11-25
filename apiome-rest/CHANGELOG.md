@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.850.0] - 2026-11-25
+
+### Changed
+- **Matching-rules engine (PFX-3.4, #6934).** OpenAPI 1.674.0 (descriptions of
+  `PactResponseExpectation.has_body` / `body` only). No migration, no new path. The hosted
+  verifier's engine (`app.pact_value_match`) now applies every matcher of Pact specifications
+  2–4, published as `VERIFIER_MATCHERS` (the supported-rules table on the hosted-verification
+  docs page), and is run against every **response** case of the Pact specification test suite,
+  v1–v4 (357 vectors vendored in `tests/fixtures/pact_spec_vectors`, MIT), plus supplementary
+  vectors for the v3/v4 matchers and generators (`tests/test_pact_spec_vectors.py`).
+  - **`contentType`** is applied instead of failing as "cannot be applied": the type is detected
+    from the bytes (new `app.pact_content_type`: magic numbers for common image, document,
+    archive, font, audio and video formats, then JSON / XML / text), never from the response's
+    `Content-Type`. On `$` of a non-JSON body it judges the whole body (the recorded binary
+    example is not compared); on `$` of a JSON body it checks the bytes and the fields are still
+    compared; on a JSON string it inspects the string.
+  - **`regex` is a full match**, as the reference implementations apply it (spec vector
+    "plain text regex matching that does not match"). A pact expression that relied on matching
+    a prefix now fails with the `regex` rule named.
+  - **`Accept`** is compared as a list of media types like `Content-Type` (parameter values
+    ignore case; the media type keeps it).
+  - **Explicitly empty response body.** A pact recording `"body": null`, `""` or a Pact 4 body
+    with empty `content` now compiles to `has_body: true, body: ""` and accepts only an empty
+    response body (previously any body). A pact with no `body` key still accepts any body.
+    `CONTRACT_SUITE_COMPILER_VERSION` 4 → 5, so pact-suite digests change once.
+  - `PACT_BODY_UNREADABLE` on an undecodable response body under a `contentType` rule on `$` is
+    `info` (the verifier judges it by its bytes) instead of `degraded`.
+  - XML bodies are still compared as text, and rules on XML elements still fail as "not JSON":
+    stricter than the suite's XML match cases, never looser.
+
 ## [1.849.0] - 2026-11-25
 
 ### Added

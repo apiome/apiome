@@ -143,35 +143,78 @@ the pact's outcome.
 Apiome replays each request exactly as the consumer recorded it, then compares the response:
 
 - **Status.** The recorded status, or the classes a Pact 4 `statusCode` rule allows.
-- **Headers.** Each recorded header must be present. Without a rule the value must be equal. A
-  `Content-Type` may add parameters such as `charset`. Other response headers are ignored.
+- **Headers.** Each recorded header must be present. Without a rule the value must be equal,
+  ignoring the spaces after commas. `Content-Type` and `Accept` are compared as media types: the
+  provider may add parameters such as `charset`, and parameter values ignore case. Other response
+  headers are ignored.
 - **JSON body.** The response may have extra fields but not fewer. Without a rule a value must be
   equal, and an array must have the same length. The most specific rule wins, and a `type` rule
   also applies to everything beneath it.
-- **Other bodies.** Compared as text, or by a rule on the whole body (`$`).
+- **Empty body.** A pact that records an empty body (`""` or `null`) accepts only an empty
+  response body. A pact that records no body at all accepts any body.
+- **Binary body.** An image, a PDF or another binary body is judged by a `contentType` rule on
+  `$`. Apiome reads the bytes the provider sends, not its `Content-Type` header, so any JPEG
+  matches `image/jpeg`.
+- **Other bodies.** Compared as text, or by a rule on the whole body (`$`). XML is compared as
+  text too.
 
-These matching rules are applied:
+### Supported matching rules
 
-| Rule | The value must |
-| --- | --- |
-| `equality` | Equal the example. |
-| `type` (with `min`, `max`) | Have the example's type. On an array, every item matches the example item, and the length is within `min` and `max`. |
-| `regex` | Match the expression. |
-| `include` | Contain the text. |
-| `integer`, `decimal`, `number` | Be a number of that kind. |
-| `boolean`, `null` | Be a boolean, or `null`. |
-| `notEmpty` | Not be empty. |
-| `semver` | Be a semantic version. |
-| `date`, `time`, `timestamp`, `datetime` | Have the shape of the rule's format, such as `yyyy-MM-dd'T'HH:mm:ssXXX`. The calendar is not checked. |
-| `values` | Be an object whose values match the examples, whatever its keys. |
-| `eachKey`, `eachValue` | Be an object whose every key, or every value, matches the nested rules. |
-| `arrayContains` | Be an array with at least one item matching each variant. |
-| `statusCode` | Be a status in the named class. |
+Every matching rule of Pact specifications 2, 3 and 4 is applied. Rules combine with `AND` or
+`OR`, as the pact says.
+
+| Matcher | Pact | What the verifier checks |
+| --- | --- | --- |
+| `equality` | 2, 3, 4 | The value equals the example; stops a type cascade. |
+| `type` | 2, 3, 4 | The value has the example's JSON type; cascades to every value beneath it, and an array may have any length with every item like the first example item. |
+| `minType` | 2, 3, 4 | A `type` match, and an array has at least `min` items. |
+| `maxType` | 2, 3, 4 | A `type` match, and an array has at most `max` items. |
+| `minMaxType` | 3, 4 | A `type` match with both bounds. |
+| `regex` | 2, 3, 4 | The value, as text, matches the whole expression. |
+| `include` | 3, 4 | The value, as text, contains the string. |
+| `number` | 3, 4 | The value is a JSON number. |
+| `integer` | 3, 4 | The value is a number written without a decimal point (`2`, not `2.0`). |
+| `decimal` | 3, 4 | The value is a number written with a decimal point (`2.5`, `2.0`). |
+| `boolean` | 3, 4 | The value is `true` or `false`. |
+| `null` | 3, 4 | The value is `null`. |
+| `date` | 3, 4 | The value has the shape of the rule's Java date format (default `yyyy-MM-dd`). |
+| `time` | 3, 4 | Likewise for a time format (default `HH:mm:ss`). |
+| `timestamp` | 3, 4 | Likewise for a timestamp format (default `yyyy-MM-dd'T'HH:mm:ss`). |
+| `datetime` | 4 | The Pact 4 name of `timestamp`. |
+| `values` | 3, 4 | An object whose keys are free and whose values match the example values. |
+| `eachKey` | 4 | Every key of the object satisfies the nested rules. |
+| `eachValue` | 4 | Every value of the object satisfies the nested rules. |
+| `arrayContains` | 4 | For every variant, some item of the array matches it under its own rules. |
+| `notEmpty` | 4 | The value is not empty (`""`, `[]`, `{}`, `null`) and has the example's type. |
+| `semver` | 4 | The value is a semantic version (`1.2.3`, `1.2.3-rc.1`). |
+| `contentType` | 3, 4 | The content's type, detected from its bytes (magic number, then JSON / XML / text), is the one named. On `$` it reads the whole body; a non-JSON body is then judged by it alone. |
+| `statusCode` | 4 | The status is in the named class (`success`, `clientError` …) or list of codes. |
+
+A `contentType` rule recognises these types from their bytes: PNG, JPEG, GIF, WebP, BMP, TIFF,
+ICO, AVIF, HEIC, PDF, ZIP, gzip, bzip2, 7-Zip, WebAssembly, WOFF, WOFF2, MP3, WAV, Ogg, FLAC,
+MP4 and QuickTime. Bytes with no known signature are JSON, XML or plain text when they are UTF-8
+text, and `application/octet-stream` otherwise. A type ending in `+json` or `+xml` matches JSON or
+XML content, and any `text/…` type matches text.
+
+**Generators** are ignored on verification. They tell a mock server or a consumer test how to fill
+a value in; the matching rules alone decide what the provider may return.
+
+The engine is tested against every response case of the
+[Pact specification test suite](https://github.com/pact-foundation/pact-specification), versions
+1 to 4, and agrees with all of them except XML cases that expect a match: because XML is compared
+as text, a reordered attribute or an extra element fails. It never passes an XML case the suite
+expects to fail.
+
+### Rules that cannot be applied
 
 A rule Apiome cannot apply fails the interaction and names the rule. It never passes silently.
-This covers `contentType` on a binary body, a date format with a letter Apiome does not read, a
-regular expression that does not compile or runs longer than one second, and a rule on a field of
-a body that is not JSON. Response generators are ignored, as every verifier ignores them.
+This covers:
+
+- a date format with a letter Apiome does not read;
+- a regular expression that does not compile, or that runs longer than one second;
+- a rule on a field of a body that is not JSON, including an element of an XML body;
+- a `contentType` rule that names no type, or another rule on a binary body that is not text;
+- a matcher no Pact specification defines.
 
 ## Mutating interactions
 

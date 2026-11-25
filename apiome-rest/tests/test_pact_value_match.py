@@ -1,4 +1,4 @@
-"""Unit tests for the verifier's matching engine — PFX-3.2 (#6932).
+"""Unit tests for the verifier's matching engine — PFX-3.2 (#6932), PFX-3.4 (#6934).
 
 :mod:`app.pact_value_match` decides whether a live response satisfies a pact's example under its
 matching rules. Covered here:
@@ -14,17 +14,20 @@ matching rules. Covered here:
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pytest
 
 from app.contract_suite import PactMatchingRuleEntry, PactResponseExpectation
+from app.contract_suite_pact import KNOWN_MATCHERS
 from app.pact_value_match import (
     MAX_MISMATCHES,
     PART_BODY,
     PART_HEADER,
     RULE_EQUALITY,
     RULE_PRESENCE,
+    VERIFIER_MATCHERS,
     Mismatch,
     date_format_pattern,
     match_body,
@@ -206,8 +209,8 @@ def test_a_wildcard_field_rule_reaches_every_field() -> None:
 
 def test_and_needs_every_matcher_and_or_needs_one() -> None:
     both = [
-        _rule("$.v", {"match": "regex", "regex": "^a"}, n=0),
-        _rule("$.v", {"match": "regex", "regex": "z$"}, n=1),
+        _rule("$.v", {"match": "regex", "regex": "a."}, n=0),
+        _rule("$.v", {"match": "regex", "regex": ".z"}, n=1),
     ]
     assert [m.rule for m in _body({"v": "az"}, {"v": "ab"}, both)] == ["regex"]
     either = [rule.model_copy(update={"combine": "OR"}) for rule in both]
@@ -249,7 +252,7 @@ def test_array_contains_needs_one_item_per_variant() -> None:
             "variants": [
                 {
                     "index": 0,
-                    "rules": {"$.href": {"combine": "AND", "matchers": [{"match": "regex", "regex": "^/a/"}]}},
+                    "rules": {"$.href": {"combine": "AND", "matchers": [{"match": "regex", "regex": "^/a/.*"}]}},
                 },
                 {"index": 1, "rules": {}},
             ],
@@ -271,7 +274,7 @@ def test_array_contains_needs_one_item_per_variant() -> None:
 @pytest.mark.parametrize(
     "matcher, fragment",
     [
-        ({"match": "contentType", "value": "image/png"}, "cannot be applied"),
+        ({"match": "contentType"}, "names no content type"),
         ({"match": "telepathy"}, "is not one this verifier applies"),
         ({"match": "regex", "regex": "("}, "does not compile"),
         ({"match": "regex"}, "states no regex"),
@@ -296,7 +299,7 @@ def test_a_runaway_regex_is_stopped_and_reported(monkeypatch: pytest.MonkeyPatch
         assert timeout > 0
         raise TimeoutError
 
-    monkeypatch.setattr(engine.regex, "search", never_finishes)
+    monkeypatch.setattr(engine.regex, "fullmatch", never_finishes)
     rules = [_rule("$.v", {"match": "regex", "regex": "^(a+)+$"})]
     (mismatch,) = _body({"v": "aa"}, {"v": "a" * 40 + "!"}, rules)
     assert "did not finish" in mismatch.message
@@ -347,8 +350,89 @@ def test_a_text_body_is_compared_as_text_or_by_a_rule_on_the_whole_body() -> Non
     plain = _expect("hello world", media_type="text/plain")
     assert match_body(plain, b"hello world", "text/plain") == []
     assert [m.rule for m in match_body(plain, b"goodbye", "text/plain")] == [RULE_EQUALITY]
-    ruled = _expect("hello world", [_rule("$", {"match": "regex", "regex": "^hello"})], media_type="text/plain")
+    ruled = _expect("hello world", [_rule("$", {"match": "regex", "regex": "^hello.*"})], media_type="text/plain")
     assert match_body(ruled, b"hello there", "text/plain") == []
+
+
+def test_a_regex_must_match_the_whole_value() -> None:
+    # Pact applies a regex to the whole value, as the specification test suite requires
+    # (v3/v4 "plain text regex matching that does not match").
+    prefix = [_rule("$.v", {"match": "regex", "regex": "alligator named .{4}"})]
+    assert _body({"v": "alligator named mary"}, {"v": "alligator named mary"}, prefix) == []
+    (mismatch,) = _body({"v": "alligator named mary"}, {"v": "alligator named brent"}, prefix)
+    assert mismatch.rule == "regex"
+    header = [_rule("Location", {"match": "regex", "regex": "/invoices/\\d+"}, category="header")]
+    assert match_headers({"Location": "/invoices/1"}, header, {"location": "/invoices/12"}) == []
+    assert len(match_headers({"Location": "/invoices/1"}, header, {"location": "/invoices/12/lines"})) == 1
+
+
+# ---------------------------------------------------------------------------
+# Empty bodies and the contentType matcher (PFX-3.4)
+# ---------------------------------------------------------------------------
+
+
+def test_an_explicitly_empty_body_accepts_only_an_empty_body() -> None:
+    empty = PactResponseExpectation(status=200, has_body=True, body="", media_type="application/json")
+    assert match_body(empty, b"", "application/json") == []
+    assert match_body(empty, b"  \n", "application/json") == []
+    (mismatch,) = match_body(empty, b'{"a":1}', "application/json")
+    assert (mismatch.rule, mismatch.expected) == (RULE_EQUALITY, "an empty body")
+    assert "7 byte(s)" in mismatch.message
+
+
+PNG_BYTES = bytes.fromhex("89504e470d0a1a0a0000000d49484452")
+JPEG_BYTES = bytes.fromhex("ffd8ffe000104a464946000101")
+
+
+def _image(
+    value: str, *, combine: str = "AND", extra: Optional[List[PactMatchingRuleEntry]] = None
+) -> PactResponseExpectation:
+    """A binary expectation (its example undecodable) judged by a contentType rule on ``$``."""
+    rules = [_rule("$", {"match": "contentType", "value": value}, combine=combine)] + (extra or [])
+    return PactResponseExpectation(status=200, has_body=True, body=None, media_type="image/png", matching_rules=rules)
+
+
+def test_content_type_on_the_whole_body_is_judged_by_its_bytes() -> None:
+    assert match_body(_image("image/png"), PNG_BYTES, "image/png") == []
+    # The header the provider sends does not count; the bytes do.
+    (mismatch,) = match_body(_image("image/png"), JPEG_BYTES, "image/png")
+    assert (mismatch.rule, mismatch.path, mismatch.pointer) == ("contenttype", "$", "")
+    assert "detected image/jpeg" in mismatch.message
+    assert mismatch.actual == '"13 byte(s) of image/jpeg"'
+
+
+def test_content_type_with_a_regex_on_a_binary_body_reports_the_regex() -> None:
+    both = _image("image/png", extra=[_rule("$", {"match": "regex", "regex": ".*"}, n=1)])
+    (mismatch,) = match_body(both, PNG_BYTES + b"\xff\xfe", "image/png")
+    assert mismatch.rule == "regex"
+    assert "not UTF-8 text" in mismatch.message
+    either = _image("image/png", combine="OR", extra=[_rule("$", {"match": "regex", "regex": ".*"}, combine="OR", n=1)])
+    assert match_body(either, PNG_BYTES + b"\xff\xfe", "image/png") == []
+
+
+def test_content_type_on_a_text_body_and_on_a_json_string() -> None:
+    text = PactResponseExpectation(
+        status=200,
+        has_body=True,
+        body="a,b\n1,2",
+        media_type="text/csv",
+        matching_rules=[_rule("$", {"match": "contentType", "value": "text/csv"})],
+    )
+    assert match_body(text, b"x,y\n3,4", "text/csv") == []
+    assert [m.rule for m in match_body(text, PNG_BYTES, "text/csv")] == ["contenttype"]
+    on_value = [_rule("$.doc", {"match": "contentType", "value": "application/json"})]
+    assert _body({"doc": "{}"}, {"doc": '{"a": [1]}'}, on_value) == []
+    assert "detected text/plain" in _body({"doc": "{}"}, {"doc": "plain"}, on_value)[0].message
+    assert "with no content" in _body({"doc": "{}"}, {"doc": {"a": 1}}, on_value)[0].message
+
+
+def test_accept_compares_parameters_without_case_but_the_type_with_it() -> None:
+    assert (
+        match_headers({"Accept": "application/json;charset=utf-8"}, [], {"accept": "application/json; charset=UTF-8"})
+        == []
+    )
+    assert len(match_headers({"Accept": "alligators"}, [], {"accept": "Alligators"})) == 1
+    assert len(match_headers({"Accept": "a, b"}, [], {"accept": "b, a"})) == 1
 
 
 def test_a_field_rule_on_a_text_body_cannot_be_applied() -> None:
@@ -456,3 +540,52 @@ def test_mismatch_rule_reads_only_a_trailing_rule() -> None:
     assert mismatch_rule("$.a: bad (rule: mintype)") == "mintype"
     assert mismatch_rule("no rule here") is None
     assert mismatch_rule(None) is None
+
+
+# ---------------------------------------------------------------------------
+# The published supported-rules table (PFX-3.4)
+# ---------------------------------------------------------------------------
+
+HOSTED_VERIFICATION_PAGE = (
+    Path(__file__).resolve().parents[2] / "apiome-docs" / "docs" / "ship" / "pact-broker" / "hosted-verification.mdx"
+)
+
+
+def test_the_supported_rules_table_covers_every_known_matcher() -> None:
+    listed = {row.matcher.lower() for row in VERIFIER_MATCHERS}
+    assert listed == set(KNOWN_MATCHERS)
+    assert len(listed) == len(VERIFIER_MATCHERS), "a matcher is listed twice"
+
+
+@pytest.mark.skipif(not HOSTED_VERIFICATION_PAGE.exists(), reason="the docs site is not in this checkout")
+def test_the_hosted_verification_page_publishes_the_table() -> None:
+    page = HOSTED_VERIFICATION_PAGE.read_text()
+    for row in VERIFIER_MATCHERS:
+        assert f"| `{row.matcher}` | {row.versions} | {row.checks} |" in page, row.matcher
+
+
+@pytest.mark.parametrize("row", VERIFIER_MATCHERS, ids=lambda row: row.matcher)
+def test_every_listed_matcher_is_applied_not_refused(row: Any) -> None:
+    # A matcher in the table must never fall through to "not one this verifier applies".
+    kind = row.matcher.lower()
+    if kind == "statuscode":
+        return  # judged by the runner from the case's status codes, not by this engine
+    matcher: Dict[str, Any] = {"match": row.matcher, "regex": ".*", "value": "x", "rules": [{"match": "type"}]}
+    matcher["variants"] = [{"index": 0, "rules": {}}]
+    found = _body(
+        {"v": ["x"] if kind == "arraycontains" else "x"},
+        {"v": ["x"] if kind == "arraycontains" else "x"},
+        [_rule("$.v", matcher)],
+    )
+    assert not any("is not one this verifier applies" in m.message for m in found), found
+
+
+def test_content_type_on_a_whole_json_body_reads_the_bytes_and_still_compares_fields() -> None:
+    rules = [_rule("$", {"match": "contentType", "value": "application/json"})]
+    assert _body({"id": 1}, {"id": 1, "more": True}, rules) == []
+    (field,) = _body({"id": 1}, {"id": 2}, rules)
+    assert (field.pointer, field.rule) == ("/id", RULE_EQUALITY)
+    wrong = [_rule("$", {"match": "contentType", "value": "application/xml"})]
+    (mismatch,) = _body({"id": 1}, {"id": 1}, wrong)
+    assert (mismatch.rule, mismatch.pointer) == ("contenttype", "")
+    assert "detected application/json" in mismatch.message

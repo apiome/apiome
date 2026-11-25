@@ -1,0 +1,27 @@
+---
+slug: pact-matching-rules
+title: "Every Pact matching rule in hosted verification"
+description: "The hosted verifier applies every Pact 2–4 matching rule, checked against the specification suite."
+authors: [apiome]
+---
+
+The hosted verifier now applies every matching rule of Pact specifications 2, 3 and 4, and it is
+tested against every response case of the Pact specification test suite. See
+[Supported matching rules](/ship/pact-broker/hosted-verification#supported-matching-rules).
+
+{/* truncate */}
+
+- **Binary responses.** A `contentType` rule judges an image, a PDF or another binary response
+  by its bytes, not by the `Content-Type` header the provider sends. Any JPEG matches
+  `image/jpeg`; a PNG does not.
+- **The same answers as other verifiers.** A `regex` must match the whole value, not just a part
+  of it. A pact that records an empty body (`""` or `null`) accepts only an empty response. An
+  `Accept` header ignores the case of its parameters, as `Content-Type` already did.
+- **Generators are ignored.** They tell a mock server how to fill a value in; the matching rules
+  alone decide what the provider may return.
+- **Nothing passes silently.** A rule Apiome cannot apply, such as a rule on an element of an XML
+  body, still fails the interaction and names the rule.
+
+A pact whose `regex` only matched part of a value, or that recorded `"body": null` for a response
+that has a body, now fails where it passed before. Fix the expression, or remove the empty body
+from the consumer's test.
