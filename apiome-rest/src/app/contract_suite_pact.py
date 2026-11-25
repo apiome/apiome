@@ -605,7 +605,17 @@ def _response(
         The expectation, rules and generators included.
     """
     body = read_body(response, pointer, compilation.v4)
-    if body.problem:
+    rules = _rules(compilation, key, response, pointer)
+    if body.problem and _has_root_content_type_rule(rules):
+        compilation.report(
+            CODE_PACT_BODY_UNREADABLE,
+            FINDING_INFO,
+            f"the expected response body cannot be decoded ({body.problem}); it is judged by its "
+            "contentType rule, which inspects the bytes the provider returns",
+            operation_key=key,
+            pointer=body.pointer,
+        )
+    elif body.problem:
         compilation.report(
             CODE_PACT_BODY_UNREADABLE,
             FINDING_DEGRADED,
@@ -621,13 +631,27 @@ def _response(
     return PactResponseExpectation(
         status=status if isinstance(status, int) and not isinstance(status, bool) else None,
         headers={name: value for name, value in sorted(headers.values())},
-        has_body=body.present,
-        body=body.value if body.present and not body.problem else None,
+        # An explicitly empty body ("body": null, or a Pact 4 empty content) is recorded as "" so a
+        # verifier requires an empty response body instead of accepting any (PFX-3.4).
+        has_body=body.present or body.empty,
+        body="" if body.empty else body.value if body.present and not body.problem else None,
         media_type=body.media_type or media_type_of(headers.get("content-type", ("", ""))[1]),
         body_pointer=body.pointer or None,
-        matching_rules=_rules(compilation, key, response, pointer),
+        matching_rules=rules,
         generators=_generators(compilation, key, response, pointer, side="response"),
     )
+
+
+def _has_root_content_type_rule(rules: Sequence[PactMatchingRuleEntry]) -> bool:
+    """Whether a response's rules judge its whole body by content type (``contentType`` on ``$``).
+
+    Args:
+        rules: The response's matching rules.
+
+    Returns:
+        ``True`` when a body rule on ``$`` is a ``contentType`` matcher.
+    """
+    return any(rule.category == "body" and rule.path.strip() == "$" and rule.match == "contenttype" for rule in rules)
 
 
 def _status_tokens(

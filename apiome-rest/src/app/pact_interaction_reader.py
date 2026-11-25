@@ -148,6 +148,10 @@ class PactBody:
         pointer: JSON Pointer of the body's content in the pact document.
         problem: Why the content could not be decoded, when it could not.
         embedded: Whether embedded matchers were stripped from it.
+        empty: Whether the pact records the body as explicitly empty — ``"body": null``, or a
+            Pact 4 body whose ``content`` is ``null`` or ``""`` (PFX-3.4). ``present`` is false
+            for such a body (a request sends none), but a response expectation reads it as "the
+            body must be empty", as the Pact specification test suite requires.
     """
 
     present: bool
@@ -156,6 +160,7 @@ class PactBody:
     pointer: str = ""
     problem: Optional[str] = None
     embedded: bool = False
+    empty: bool = False
 
 
 def read_body(section: Mapping[str, Any], pointer: str, v4: bool) -> PactBody:
@@ -172,13 +177,13 @@ def read_body(section: Mapping[str, Any], pointer: str, v4: bool) -> PactBody:
     """
     raw = section.get("body")
     if raw is None:
-        return PactBody(present=False)
+        return PactBody(present=False, empty="body" in section)
     if v4 and isinstance(raw, dict) and "content" in raw and set(raw) <= V4_BODY_KEYS:
         content = raw["content"]
         media_type = media_type_of(raw.get("contentType"))
         where = f"{pointer}/body/content"
         if content is None or content == "":
-            return PactBody(present=False)
+            return PactBody(present=False, empty=True)
         encoded = raw.get("encoded")
         encoding = encoded.strip().lower() if isinstance(encoded, str) else ""
         if encoding == "base64" and isinstance(content, str):

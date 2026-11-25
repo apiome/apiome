@@ -17,19 +17,26 @@ How a response is compared
   length. A rule is found by the Pact path-weight algorithm (the most specific path wins) and the
   type matchers **cascade** to everything beneath them, so ``$.items`` matched by type makes every
   item match the recorded item's shape.
-* **Other bodies.** Compared as text: equal, or matched by a rule on ``$``.
+* **Other bodies.** Compared as text: equal, or matched by a rule on ``$``. XML is text here too:
+  rules on its elements are reported, never applied loosely.
+* **Empty bodies.** A pact recording an explicitly empty body (``""``, ``null``) accepts only an
+  empty response body (PFX-3.4).
+* **Binary bodies.** Judged by a ``contentType`` rule on ``$``, which reads the bytes
+  (:mod:`app.pact_content_type`); the recorded example is not compared (PFX-3.4).
 
 What is applied
 ---------------
-``equality``, ``type`` (with ``min`` / ``max``), ``regex``, ``include``, ``integer``, ``decimal``,
-``number``, ``boolean``, ``null``, ``notEmpty``, ``semver``, ``date`` / ``time`` / ``timestamp`` /
-``datetime`` (by the shape of their format), ``values``, ``eachKey``, ``eachValue`` and
-``arrayContains``, combined with ``AND`` or ``OR`` as the pact says.
+Every matcher of Pact specifications 2–4, listed with what it checks in
+:data:`VERIFIER_MATCHERS` (the table the documentation publishes), combined with ``AND`` or
+``OR`` as the pact says. Generators are ignored: they say how a mock or a test fills a value in,
+and the matching rules alone decide what a provider may return (the compiler reports each one).
+A ``regex`` matches the whole value, as the reference implementations apply it. The Pact
+specification test suite (response cases, v1–v4) runs against this engine in
+``tests/test_pact_spec_vectors.py``.
 
-**Nothing passes silently.** A rule this engine cannot apply — ``contentType`` on a binary body, a
-date format with a letter it does not know, a regex that does not compile or runs too long, a rule
-below ``$`` on a non-JSON body — is a mismatch naming the rule, never a pass. The full table and
-the Pact specification test-suite vectors arrive with PFX-3.4 (#6934).
+**Nothing passes silently.** A rule this engine cannot apply — a date format with a letter it
+does not know, a regex that does not compile or runs too long, a rule below ``$`` on a non-JSON
+body, a ``contentType`` naming no type — is a mismatch naming the rule, never a pass.
 
 Every mismatch names the field (``path`` as the pact writes it, ``pointer`` as a JSON Pointer into
 the response body), the ``rule`` that failed and where the pact declares it (``rule_pointer``).
@@ -45,11 +52,13 @@ import regex
 
 from .change_taxonomy_enum import json_pointer_escape
 from .contract_suite import PactMatchingRuleEntry, PactResponseExpectation
+from .pact_content_type import content_type_matches, detect_content_type
 from .pact_interaction_reader import is_json_media_type, media_type_of
 from .pact_matching_rules import _matcher_kind, parse_matching_rules, parse_path
 
 __all__ = [
     "MAX_MISMATCHES",
+    "VERIFIER_MATCHERS",
     "PART_BODY",
     "PART_HEADER",
     "RULE_EQUALITY",
@@ -98,6 +107,64 @@ _DEFAULT_FORMATS = {
     "timestamp": "yyyy-MM-dd'T'HH:mm:ss",
     "datetime": "yyyy-MM-dd'T'HH:mm:ss",
 }
+
+
+@dataclass(frozen=True)
+class VerifierMatcher:
+    """One matcher as the verifier applies it — a row of the published supported-rules table.
+
+    Attributes:
+        matcher: The ``match`` value as a pact writes it (``minType`` …).
+        versions: The Pact specification versions that define it.
+        checks: What the verifier checks, in one sentence.
+    """
+
+    matcher: str
+    versions: str
+    checks: str
+
+
+#: Every matcher the verifier applies, in documentation order. This table **is** the supported-
+#: rules table on the hosted-verification page; the tests hold the two, and the compiler's
+#: ``KNOWN_MATCHERS``, together.
+VERIFIER_MATCHERS: Tuple[VerifierMatcher, ...] = (
+    VerifierMatcher("equality", "2, 3, 4", "The value equals the example; stops a type cascade."),
+    VerifierMatcher(
+        "type",
+        "2, 3, 4",
+        "The value has the example's JSON type; cascades to every value beneath it, and an array may "
+        "have any length with every item like the first example item.",
+    ),
+    VerifierMatcher("minType", "2, 3, 4", "A `type` match, and an array has at least `min` items."),
+    VerifierMatcher("maxType", "2, 3, 4", "A `type` match, and an array has at most `max` items."),
+    VerifierMatcher("minMaxType", "3, 4", "A `type` match with both bounds."),
+    VerifierMatcher("regex", "2, 3, 4", "The value, as text, matches the whole expression."),
+    VerifierMatcher("include", "3, 4", "The value, as text, contains the string."),
+    VerifierMatcher("number", "3, 4", "The value is a JSON number."),
+    VerifierMatcher("integer", "3, 4", "The value is a number written without a decimal point (`2`, not `2.0`)."),
+    VerifierMatcher("decimal", "3, 4", "The value is a number written with a decimal point (`2.5`, `2.0`)."),
+    VerifierMatcher("boolean", "3, 4", "The value is `true` or `false`."),
+    VerifierMatcher("null", "3, 4", "The value is `null`."),
+    VerifierMatcher("date", "3, 4", "The value has the shape of the rule's Java date format (default `yyyy-MM-dd`)."),
+    VerifierMatcher("time", "3, 4", "Likewise for a time format (default `HH:mm:ss`)."),
+    VerifierMatcher("timestamp", "3, 4", "Likewise for a timestamp format (default `yyyy-MM-dd'T'HH:mm:ss`)."),
+    VerifierMatcher("datetime", "4", "The Pact 4 name of `timestamp`."),
+    VerifierMatcher("values", "3, 4", "An object whose keys are free and whose values match the example values."),
+    VerifierMatcher("eachKey", "4", "Every key of the object satisfies the nested rules."),
+    VerifierMatcher("eachValue", "4", "Every value of the object satisfies the nested rules."),
+    VerifierMatcher("arrayContains", "4", "For every variant, some item of the array matches it under its own rules."),
+    VerifierMatcher("notEmpty", "4", 'The value is not empty (`""`, `[]`, `{}`, `null`) and has the example\'s type.'),
+    VerifierMatcher("semver", "4", "The value is a semantic version (`1.2.3`, `1.2.3-rc.1`)."),
+    VerifierMatcher(
+        "contentType",
+        "3, 4",
+        "The content's type, detected from its bytes (magic number, then JSON / XML / text), is the "
+        "one named. On `$` it reads the whole body; a non-JSON body is then judged by it alone.",
+    ),
+    VerifierMatcher(
+        "statusCode", "4", "The status is in the named class (`success`, `clientError` …) or list of codes."
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -226,12 +293,17 @@ def _text(value: Any) -> Optional[str]:
     return None
 
 
-def _search(pattern: str, subject: str) -> Tuple[Optional[bool], Optional[str]]:
-    """Search ``subject`` for ``pattern`` without letting either run away.
+def _full_match(pattern: str, subject: str) -> Tuple[Optional[bool], Optional[str]]:
+    """Match the **whole** of ``subject`` against ``pattern`` without letting either run away.
+
+    Pact's ``regex`` matcher is a full match, as the reference implementations apply it: the
+    expression ``alligator named .{4}`` does not match ``alligator named brent`` even though it
+    matches a prefix of it (Pact specification test suite, v3/v4 "plain text regex matching that
+    does not match"). Anchors the pact writes (``^…$``) are harmless.
 
     Args:
         pattern: The regular expression, as the pact wrote it.
-        subject: The text to search.
+        subject: The text to match.
 
     Returns:
         ``(matched, problem)`` — ``matched`` is ``None`` and ``problem`` says why when the
@@ -242,7 +314,7 @@ def _search(pattern: str, subject: str) -> Tuple[Optional[bool], Optional[str]]:
     if len(subject) > _REGEX_SUBJECT_LIMIT:
         return None, f"the value is longer than {_REGEX_SUBJECT_LIMIT} characters"
     try:
-        return regex.search(pattern, subject, timeout=_REGEX_TIMEOUT_SECONDS) is not None, None
+        return regex.fullmatch(pattern, subject, timeout=_REGEX_TIMEOUT_SECONDS) is not None, None
     except TimeoutError:
         return None, f"the expression did not finish within {_REGEX_TIMEOUT_SECONDS:g} s"
     except regex.error as exc:
@@ -461,13 +533,15 @@ class _BodyRules:
 class _BodyMatch:
     """One comparison of a JSON body: the rules, and the mismatches found so far."""
 
-    def __init__(self, rules: _BodyRules) -> None:
+    def __init__(self, rules: _BodyRules, raw: Optional[bytes] = None) -> None:
         """Start a comparison.
 
         Args:
             rules: The body rules to apply.
+            raw: The body received, undecoded — what a ``contentType`` rule on ``$`` inspects.
         """
         self.rules = rules
+        self.raw = raw
 
     # -- reporting ----------------------------------------------------------------------------
 
@@ -556,6 +630,16 @@ class _BodyMatch:
             return self._each(rule, expected, actual, tokens)
         if kind == "arraycontains":
             return self._array_contains(rule, expected, actual, tokens)
+        if kind == "contenttype" and not tokens and self.raw is not None:
+            # On the whole JSON body: the bytes must be of the type, and the fields are still
+            # compared with the example under their own rules.
+            problem = _content_type_problem(matcher, self.raw)
+            found = (
+                []
+                if problem is None
+                else [self._miss(tokens, kind, rule.pointer, problem[0], actual, problem[1], raw_expected=True)]
+            )
+            return found + self._structural(expected, actual, tokens, RULE_EQUALITY, None, typed=False)
         problem = _scalar_problem(kind, matcher, actual)
         if problem is None:
             return []
@@ -899,7 +983,7 @@ def _scalar_problem(
             return ("a regex", "the rule states no regex, so it cannot be applied")
         if text is None:
             return (f"a value matching /{pattern}/", f"expected a value matching /{pattern}/, {got}")
-        matched, problem = _search(pattern, text)
+        matched, problem = _full_match(pattern, text)
         if matched is None:
             return (f"a value matching /{pattern}/", f"the regex cannot be applied: {problem}")
         return None if matched else (f"a value matching /{pattern}/", f"expected a value matching /{pattern}/, {got}")
@@ -929,11 +1013,28 @@ def _scalar_problem(
         ok = isinstance(actual, str) and regex.match(pattern, actual) is not None
         return None if ok else (f"a {kind} like {fmt}", f"expected a {kind} formatted {fmt}, {got}")
     if kind == "contenttype":
-        return (
-            "content of the declared type",
-            "content-type matching inspects binary content, which this verifier does not do, so it cannot be applied",
-        )
+        return _content_type_problem(matcher, None if text is None else text.encode("utf-8"))
     return (f"the matcher '{kind}'", f"the matcher '{kind}' is not one this verifier applies, so it cannot be applied")
+
+
+def _content_type_problem(matcher: Mapping[str, Any], data: Optional[bytes]) -> Optional[Tuple[str, str]]:
+    """Check content against a ``contentType`` matcher, by the type its bytes show.
+
+    Args:
+        matcher: The matcher object; its ``value`` names the media type.
+        data: The content — a whole body, or a string value encoded as UTF-8. ``None`` for a value
+            that has no bytes to inspect (an object, an array, ``null``).
+
+    Returns:
+        ``None`` when the detected type is the one named; otherwise ``(expected, clause)``.
+    """
+    wanted = matcher.get("value")
+    if not isinstance(wanted, str) or not wanted.strip():
+        return ("a content type", "the rule names no content type, so it cannot be applied")
+    if data is None:
+        return (f"content of type {wanted}", f"expected content of type {wanted}, got a value with no content")
+    matched, detected = content_type_matches(data, wanted)
+    return None if matched else (f"content of type {wanted}", f"expected content of type {wanted}, detected {detected}")
 
 
 # =============================================================================================
@@ -944,6 +1045,38 @@ def _scalar_problem(
 def _normal_header(value: str) -> str:
     """A header value with the spacing around its commas removed."""
     return ",".join(part.strip() for part in value.split(","))
+
+
+#: Headers whose value is a list of media types with parameters, compared as media types.
+_MEDIA_TYPE_HEADERS = frozenset({"content-type", "accept"})
+
+
+def _media_types_equal(expected: str, actual: str, *, header: str) -> bool:
+    """Whether two ``Content-Type`` or ``Accept`` values agree.
+
+    Each comma-separated media type is compared in order with :func:`_content_type_equal`, so
+    ``application/json;charset=utf-8`` equals ``application/json; charset=UTF-8``. In ``Accept``
+    the media type itself keeps its case (``alligators`` is not ``Alligators``, per the Pact
+    specification test suite); only its parameters are compared without it.
+
+    Args:
+        expected: The recorded value.
+        actual: The value received.
+        header: The header's lowercase name.
+
+    Returns:
+        Whether both list the same number of media types and each pair agrees.
+    """
+    wanted = [part for part in expected.split(",") if part.strip()]
+    got = [part for part in actual.split(",") if part.strip()]
+    if len(wanted) != len(got):
+        return False
+    for w, g in zip(wanted, got):
+        if header == "accept" and w.split(";", 1)[0].strip() != g.split(";", 1)[0].strip():
+            return False
+        if not _content_type_equal(w, g):
+            return False
+    return True
 
 
 def _content_type_equal(expected: str, actual: str) -> bool:
@@ -1004,8 +1137,8 @@ def match_headers(
         declared = by_name.get(name.lower())
         if not declared:
             same = (
-                _content_type_equal(wanted, value)
-                if name.lower() == "content-type"
+                _media_types_equal(wanted, value, header=name.lower())
+                if name.lower() in _MEDIA_TYPE_HEADERS
                 else _normal_header(wanted) == _normal_header(value)
             )
             if not same:
@@ -1074,6 +1207,73 @@ def _decode(content: bytes) -> Optional[str]:
         return None
 
 
+def _is_empty(content: bytes) -> bool:
+    """Whether a received body is empty: no bytes, or only whitespace."""
+    return not content.strip()
+
+
+def _judge_by_root_rules(whole: "_BodyMatch", group: _RuleGroup, expected: Any, content: bytes) -> List[Mismatch]:
+    """Judge a non-JSON body by the rules filed on ``$`` alone — how ``contentType`` is applied.
+
+    A ``contentType`` rule inspects the bytes (:func:`app.pact_content_type.detect_content_type`);
+    any other rule in the group is applied to the body as text, and cannot be applied to a body
+    that is not UTF-8. The recorded example is not compared: it is one instance of the type.
+
+    Args:
+        whole: The comparison, for building mismatches.
+        group: The rule group on ``$``.
+        expected: The recorded body (text), or ``None`` when the pact's example is binary.
+        content: The body received, undecoded.
+
+    Returns:
+        The mismatches, combined by the group's ``AND`` / ``OR``.
+    """
+    text = _decode(content)
+    outcomes: List[List[Mismatch]] = []
+    for rule in group.rules:
+        if rule.kind == "contenttype":
+            problem = _content_type_problem(rule.matcher, content)
+            outcomes.append(
+                []
+                if problem is None
+                else [
+                    whole._miss(
+                        (),
+                        rule.kind,
+                        rule.pointer,
+                        problem[0],
+                        _content_summary(content),
+                        problem[1],
+                        raw_expected=True,
+                    )
+                ]
+            )
+        elif text is None:
+            outcomes.append(
+                [
+                    whole._miss(
+                        (),
+                        rule.kind,
+                        rule.pointer,
+                        "text content",
+                        _content_summary(content),
+                        "the body is not UTF-8 text, so this rule cannot be applied to it",
+                        raw_expected=True,
+                    )
+                ]
+            )
+        else:
+            outcomes.append(whole.apply(rule, expected if isinstance(expected, str) else "", text, (), exact=True))
+    if group.combine == "OR":
+        return [] if any(not found for found in outcomes) else [m for found in outcomes for m in found]
+    return [m for found in outcomes for m in found]
+
+
+def _content_summary(content: bytes) -> str:
+    """A body named for a message by its size and detected type, never by its bytes."""
+    return f"{len(content)} byte(s) of {detect_content_type(content)}"
+
+
 def match_body(
     expectation: PactResponseExpectation, content: bytes, content_type: Optional[str] = None
 ) -> List[Mismatch]:
@@ -1086,12 +1286,14 @@ def match_body(
 
     Returns:
         The mismatches, at most :data:`MAX_MISMATCHES`. Empty when the pact records no body (any
-        body is then acceptable) or the body matches.
+        body is then acceptable) or the body matches. A pact that records an **empty** body
+        (``""`` or ``null``) accepts only an empty one. A non-JSON body with a ``contentType``
+        rule on ``$`` is judged by the rules on ``$`` alone (:func:`_judge_by_root_rules`).
     """
     if not expectation.has_body:
         return []
     rules = _BodyRules(expectation.matching_rules)
-    whole = _BodyMatch(rules)
+    whole = _BodyMatch(rules, content)
     found: List[Mismatch] = [
         whole._miss(
             (),
@@ -1104,7 +1306,30 @@ def match_body(
         )
         for entry in rules.unreadable
     ]
-    if expectation.body is None:
+    expected = expectation.body
+    if expected == "":
+        if not _is_empty(content):
+            found.append(
+                whole._miss(
+                    (),
+                    RULE_EQUALITY,
+                    None,
+                    "an empty body",
+                    _content_summary(content),
+                    f"expected an empty body, got {len(content)} byte(s)",
+                    raw_expected=True,
+                )
+            )
+        return found[:MAX_MISMATCHES]
+
+    as_json = is_json_media_type(expectation.media_type) or (expected is not None and not isinstance(expected, str))
+    root = next((group for group in rules.groups if not group.steps), None)
+    if not as_json and root is not None and any(rule.kind == "contenttype" for rule in root.rules):
+        found.extend(_non_json_field_rules(whole, rules, expectation))
+        found.extend(_judge_by_root_rules(whole, root, expected, content))
+        return found[:MAX_MISMATCHES]
+
+    if expected is None:
         found.append(
             whole._miss(
                 (),
@@ -1116,10 +1341,8 @@ def match_body(
                 raw_expected=True,
             )
         )
-        return found
+        return found[:MAX_MISMATCHES]
 
-    expected = expectation.body
-    as_json = not isinstance(expected, str) or is_json_media_type(expectation.media_type)
     text = _decode(content)
     if as_json:
         if text is None or not text.strip():
@@ -1148,20 +1371,7 @@ def match_body(
         return found[:MAX_MISMATCHES]
 
     # A non-JSON body is compared as text; only a rule on the whole body can be applied to it.
-    for group in rules.groups:
-        if group.steps:
-            found.extend(
-                whole._miss(
-                    (),
-                    rule.kind,
-                    rule.pointer,
-                    "a JSON body",
-                    media_type_of(expectation.media_type) or "text",
-                    "the rule addresses a field of a body that is not JSON, so it cannot be applied",
-                    raw_expected=True,
-                )
-                for rule in group.rules
-            )
+    found.extend(_non_json_field_rules(whole, rules, expectation))
     if text is None:
         found.append(
             whole._miss(
@@ -1171,6 +1381,38 @@ def match_body(
         return found[:MAX_MISMATCHES]
     found.extend(whole.compare(expected, text, ()))
     return found[:MAX_MISMATCHES]
+
+
+def _non_json_field_rules(
+    whole: "_BodyMatch", rules: _BodyRules, expectation: PactResponseExpectation
+) -> List[Mismatch]:
+    """Report every rule below ``$`` of a body that is not JSON: it addresses a field there is none of.
+
+    XML bodies are compared as text (their field rules land here too), so a rule on an XML
+    element is reported, never silently passed.
+
+    Args:
+        whole: The comparison, for building mismatches.
+        rules: The body rules.
+        expectation: The expected response, for its media type.
+
+    Returns:
+        One mismatch per such rule.
+    """
+    return [
+        whole._miss(
+            (),
+            rule.kind,
+            rule.pointer,
+            "a JSON body",
+            media_type_of(expectation.media_type) or "text",
+            "the rule addresses a field of a body that is not JSON, so it cannot be applied",
+            raw_expected=True,
+        )
+        for group in rules.groups
+        if group.steps
+        for rule in group.rules
+    ]
 
 
 def match_response(

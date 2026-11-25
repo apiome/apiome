@@ -65,7 +65,7 @@ because the consumer recorded it and Apiome made nothing up.
 | `request` | The method, path, query, headers and body, exactly as the consumer recorded them. |
 | `expect.status_codes` | The recorded status, such as `200`. A Pact 4 `statusCode` rule widens it to a class: `success` becomes `2XX`, `error` becomes `4XX` and `5XX`. |
 | `pact.provider_states` | The states to set up before sending the request, with their parameters. Register how each is set up in the [provider-state registry](./provider-states.mdx). |
-| `pact.response` | The response the consumer expects: status, headers, body and media type. |
+| `pact.response` | The response the consumer expects: status, headers, body and media type. A body the pact records as empty (`""`, `null`, or a Pact 4 body with empty `content`) is `has_body: true` with `body: ""`, so the response must be empty too. |
 | `pact.response.matching_rules`, `pact.request_matching_rules` | Every matching rule, with its matcher exactly as written and its place in the pact file. |
 | `pact.response.generators`, `pact.request_generators` | Every generator, kept so nothing is lost. |
 | `pact.index`, `pact.key`, `pact.pointer` | Which interaction it is: its position, its Pact 4 `key` and where it sits in the file. |
@@ -96,7 +96,7 @@ is a `degraded` finding. Something the runner must provide is an `info` finding.
 | `UNSUPPORTED_OPERATION_KIND` | unsupported | A message interaction (Pact 3 `messages`, Pact 4 `Asynchronous/Messages` or `Synchronous/Messages`). There is no HTTP exchange to replay. |
 | `PACT_PLUGIN_INTERACTION` | unsupported | A Pact 4 plugin interaction (gRPC, protobuf, CSV). The plugin defines the exchange. |
 | `PACT_INTERACTION_MALFORMED` | unsupported | The interaction has no request method or path, so there is nothing to send. |
-| `PACT_BODY_UNREADABLE` | unsupported / degraded | A body that cannot be decoded. On the request, the case cannot be sent. On the response, only the status and headers can be compared. |
+| `PACT_BODY_UNREADABLE` | unsupported / degraded / info | A body that cannot be decoded. On the request, the case cannot be sent. On the response, only the status and headers can be compared — unless a `contentType` rule on `$` judges the body by its bytes, which is `info` (see [Supported matching rules](./hosted-verification.mdx#supported-matching-rules)). |
 | `PACT_EMBEDDED_MATCHER` | degraded | A Pact 1 matcher embedded in a body (`json_class`). The example values are kept, but the embedded rule is not. |
 | `PACT_MATCHING_RULE_UNSUPPORTED` | degraded | A matching rule with a matcher no Pact specification defines, a path that is not a JSONPath, or an unknown location. It is kept in the case. |
 | `PACT_REQUEST_GENERATOR` | degraded | The suite sends the recorded example where a verifier would generate a value. A `ProviderState` generator is not filled in from the [provider state](./provider-states.mdx#during-a-run) either: the recorded example is sent. |

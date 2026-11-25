@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.673.0",
+    "version": "1.674.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -226113,7 +226113,7 @@
           "has_body": {
             "type": "boolean",
             "title": "Has Body",
-            "description": "Whether the pact records a response body.",
+            "description": "Whether the pact records a response body. `false`: any body is accepted.",
             "default": false,
             "example": true
           },
@@ -226128,7 +226128,7 @@
               }
             ],
             "title": "Body",
-            "description": "The recorded body, embedded matchers removed."
+            "description": "The recorded body, embedded matchers removed. `\"\"` when the pact records an empty body (`\"\"`, `null`, or a Pact 4 body with empty `content`): the response must then be empty."
           },
           "media_type": {
             "anyOf": [

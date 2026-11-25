@@ -452,6 +452,48 @@ def test_an_undecodable_request_body_is_unsupported_and_a_response_body_degraded
     assert degraded.level == FINDING_DEGRADED
 
 
+def test_a_binary_response_body_under_a_content_type_rule_is_info_not_degraded() -> None:
+    # PFX-3.4: the verifier judges such a body by its bytes, so nothing is lost.
+    image = {"content": "/9j/4AAQ", "contentType": "image/jpeg", "encoded": "base64"}
+    rules = {"body": {"$": {"combine": "AND", "matchers": [{"match": "contentType", "value": "image/jpeg"}]}}}
+    manifest = _compile(_pact([_get(response={"status": 200, "body": image, "matchingRules": rules})], version="4.0"))
+    finding = next(f for f in manifest.findings if f.code == CODE_PACT_BODY_UNREADABLE)
+    assert finding.level == FINDING_INFO
+    assert "contentType rule" in finding.message
+    (rule,) = manifest.cases[0].pact.response.matching_rules
+    assert (rule.path, rule.match) == ("$", "contenttype")
+
+
+@pytest.mark.parametrize(
+    ("version", "body"),
+    [
+        ("3.0.0", None),
+        ("2.0.0", None),
+        ("4.0", {"content": None, "contentType": "application/json", "encoded": False}),
+        ("4.0", {"content": "", "contentType": "text/plain", "encoded": False}),
+    ],
+)
+def test_an_explicitly_empty_response_body_is_an_empty_expectation(version: str, body: Any) -> None:
+    # PFX-3.4 (Pact specification suite, "non empty body found when empty expected"): the
+    # response must be empty, not anything.
+    interaction = _get(response={"status": 200, "body": body})
+    if version.startswith("4"):
+        interaction["type"] = "Synchronous/HTTP"
+    expectation = _compile(_pact([interaction], version=version)).cases[0].pact.response
+    assert (expectation.has_body, expectation.body) == (True, "")
+
+
+def test_a_response_with_no_body_key_still_accepts_any_body() -> None:
+    expectation = _compile(_pact([_get(response={"status": 204})])).cases[0].pact.response
+    assert (expectation.has_body, expectation.body) == (False, None)
+
+
+def test_an_explicitly_empty_request_body_sends_none() -> None:
+    interaction = _get(request={"method": "POST", "path": "/x", "body": None})
+    request = _compile(_pact([interaction])).cases[0].request
+    assert request.has_body is False
+
+
 def test_a_pact_with_no_interactions_reports_no_cases() -> None:
     manifest = _compile(_pact([]))
     assert manifest.cases == [] and CODE_NO_CASES_COMPILED in _codes(manifest)
@@ -526,7 +568,7 @@ def test_the_manifest_identifies_its_pact_version() -> None:
     manifest = _compile(document)
 
     assert manifest.schema_version == CONTRACT_SUITE_SCHEMA_VERSION == 4
-    assert manifest.compiler_version == CONTRACT_SUITE_COMPILER_VERSION == 4
+    assert manifest.compiler_version == CONTRACT_SUITE_COMPILER_VERSION == 5
     assert manifest.options is None
     assert manifest.protocol == "http"
     assert manifest.api.name == "ledger" and manifest.api.format == "pact-3.0.0"

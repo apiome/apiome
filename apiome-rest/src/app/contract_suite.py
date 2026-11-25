@@ -188,7 +188,10 @@ CONTRACT_SUITE_SCHEMA_VERSION = 4
 #: and the ``negative_unknown_field`` source, which every manifest's ``counts`` now carries.
 #: Version 3 (XPC-3.2) compiles Protobuf versions through the gRPC/Connect adapter. Version 4
 #: (PFX-3.1) added the ``pact_interaction`` source, which every manifest's ``counts`` now carries.
-CONTRACT_SUITE_COMPILER_VERSION = 4
+#: Version 5 (PFX-3.4) records a pact response whose body is explicitly empty (``"body": null``,
+#: a Pact 4 empty ``content``) as an empty body the response must match, instead of no body, and
+#: reports an undecodable binary body under a ``contentType`` rule as ``info``.
+CONTRACT_SUITE_COMPILER_VERSION = 5
 
 #: Hash the suite digest is computed with.
 SUITE_DIGEST_ALGORITHM = "sha256"
@@ -941,8 +944,17 @@ class PactResponseExpectation(BaseModel):
         default_factory=dict,
         description="The recorded headers, as written (a Pact 4 list of values joined with `, `).",
     )
-    has_body: bool = Field(default=False, description="Whether the pact records a response body.")
-    body: Optional[Any] = Field(default=None, description="The recorded body, embedded matchers removed.")
+    has_body: bool = Field(
+        default=False,
+        description="Whether the pact records a response body. `false`: any body is accepted.",
+    )
+    body: Optional[Any] = Field(
+        default=None,
+        description=(
+            "The recorded body, embedded matchers removed. `\"\"` when the pact records an empty body "
+            "(`\"\"`, `null`, or a Pact 4 body with empty `content`): the response must then be empty."
+        ),
+    )
     media_type: Optional[str] = Field(
         default=None, description="The body's media type: the Pact 4 `contentType`, else the `Content-Type` header."
     )
