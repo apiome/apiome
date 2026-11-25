@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites errors="0" failures="1" skipped="0" tests="1" time="0.041651">
+  <testsuite name="schemathesis" hostname="ci-runner" errors="0" failures="1" skipped="0" tests="1" time="0.041651">
+    <testcase name="GET /invoices/{id}" time="0.041651">
+      <failure type="failure" message="ST108">1. Test Case ID: tFTUPL
+
+- ST108 Response violates schema
+
+    "12" is not of type "integer"
+
+    Validated against the response schema for status code 200.
+
+    Schema at /properties/total:
+
+        {
+            "type": "integer"
+        }
+
+    Value:
+
+        "12"
+
+[200] OK:
+
+    `{"id": "0", "total": "12"}`
+
+Reproduce with:
+
+    curl -X GET http://127.0.0.1:18082/invoices/0</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

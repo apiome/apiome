@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.667.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.668.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 66 operations
 
@@ -114,9 +114,9 @@ Register the provider's OpenAPI document — its **provider contract** — again
 - **Content is stored once.** The document is addressed by the SHA-256 of its canonical JSON (`contentSha`), so JSON, YAML and a rendered copy of one document are one contract.
 - **Write-once.** `201` for a new contract, `200` when the same contract and self-verification results are published again (nothing changes), `409` for anything different.
 
-`verificationResults` are stored as sent, with the report's SHA-256.
+**Self-verification evidence.** The contract is trusted only when evidence says the provider matches it. `verificationResults` carries a report — JUnit XML (Schemathesis, Dredd, Newman or any JUnit writer), Newman JSON or Schemathesis NDJSON, at most `APIOME_PACT_EVIDENCE_MAX_BYTES` — or names an Apiome provider-verification report in `providerVerificationReportId`. The report is read and recorded with its kind, tool and SHA-256 digest in `selfVerification`: `verified`, `failed`, `inconclusive` (unreadable, nothing executed, or an Apiome report of another version) or `missing`. Without `verified` evidence the contract is unverified: its comparisons read verdict `unverified`, and under `APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT=fail` they fail.
 
-**Bi-directional comparison.** After the contract is stored it is compared with the pacts that need it — each consumer's main-branch pact, the pacts deployed or released, the latest pact of each consumer on the provider version's branch, and every pact compared before with a contract of that branch — and each comparison is stored as a verification result with `kind: bidirectional`, which the matrix and can-i-deploy read like a native one. `comparisons` in the response reports each pact. Requires `pacts:create`, and `versions:view` with `apiomeVersion`.
+**Bi-directional comparison.** After the contract is stored it is compared with the pacts that need it — each consumer's main-branch pact, the pacts deployed or released, the latest pact of each consumer on the provider version's branch, and every pact compared before with a contract of that branch — and each comparison is stored as a verification result with `kind: bidirectional`, which the matrix and can-i-deploy read like a native one. `comparisons` in the response reports each pact. Requires `pacts:create`, `versions:view` with `apiomeVersion`, and `verification_evidence:view` with `providerVerificationReportId`.
 
 Operation id: `publish_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__put`
 
@@ -145,17 +145,17 @@ Request body for publish a provider contract.
 | `branch` | string | no | The repository branch the version was built from. |
 | `tags` | array of string | no | Tags for the provider version (at most 50). |
 | `buildUrl` | string | no | http(s) URL of the CI build. |
-| `verificationResults` | object | no | The provider's self-verification results (PFX-2.4), stored as sent. |
+| `verificationResults` | object | no | The provider's self-verification (PFX-2.4): a report in `content`, or an Apiome provider-verification report in `providerVerificationReportId` — not both. Read into `selfVerification`; without passing evidence the contract is unverified. |
 
 **Responses**
 
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | The same contract was published again: nothing changed. `comparisons` reports the pacts compared with it, as for `201`. | `application/hal+json` any |
-| 201 | The contract was published for this provider version. `comparisons` reports the bi-directional comparisons the publish ran: the counts (`compared`, `alreadyCompared`, `errors`, `skipped`) and one entry per pact, with its `status`, `verdict` and `verificationNumber`. | — |
+| 201 | The contract was published for this provider version. `selfVerification` says what the evidence proved (`status` `verified`, `failed`, `inconclusive` or `missing`, with `kind`, `tool`, `digest`, `summary` and `reasons`) and whether the contract is `providerContractVerified`. `comparisons` reports the bi-directional comparisons the publish ran: the counts (`compared`, `alreadyCompared`, `errors`, `skipped`) and one entry per pact, with its `status`, `verdict` (`unverified` when the contract has no passing evidence), `success` and `verificationNumber`. | — |
 | 409 | `provider-contract-conflict`: this provider version already published a different contract (or the same one with different self-verification results). Nothing was stored. | — |
-| 413 | `provider-contract-too-large`: the document or the request is over the size limit. | — |
-| 422 | `provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the document (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema error). `provider-contract-request-invalid` / `provider-contract-unsupported`: a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`: `apiomeVersion` names no project or version of this workspace. | — |
+| 413 | `provider-contract-too-large`: the document or the request is over the size limit. `provider-contract-evidence-too-large`: the self-verification report is over `APIOME_PACT_EVIDENCE_MAX_BYTES`. | — |
+| 422 | `provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the document (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema error). `provider-contract-request-invalid` / `provider-contract-unsupported`: a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`: `apiomeVersion` names no project or version of this workspace. `provider-contract-evidence-unsupported`: the report's `contentType` is not one a report is read as. `provider-contract-evidence-invalid`: the report is not what its type says (XML that does not parse or is not JUnit, a DTD, JSON that is not JSON, text that is not UTF-8). `provider-contract-evidence-report-not-found`: `providerVerificationReportId` names no report of this workspace. | — |
 | 429 | `pact-publish-rate-limited`: over the workspace's publish budget; see `Retry-After`. | — |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-broker/contracts/publish` {#publish-contracts-v1-tenants-tenant-slug-pact-broker-contracts-publish-post}

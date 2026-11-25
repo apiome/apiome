@@ -886,7 +886,10 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         note=(
             "Also takes `apiomeVersion` to render the contract from an Apiome version (PFX-2.1, #6925). "
             "Publishing compares the contract with the pacts that need it and stores bi-directional "
-            "verification results; the answer lists them in `comparisons` (PFX-2.3, #6927)."
+            "verification results; the answer lists them in `comparisons` (PFX-2.3, #6927). "
+            "`verificationResults` is read — JUnit, Newman JSON, Schemathesis NDJSON, or an Apiome "
+            "report via `providerVerificationReportId` — into `selfVerification`; a contract without "
+            "passing evidence is unverified (PFX-2.4, #6928)."
         ),
     ),
 )

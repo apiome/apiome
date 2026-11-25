@@ -30,6 +30,7 @@ from apiome_cli.commands import (
     mcp,
     mock,
     operations,
+    pact,
     paths,
     primitives,
     projects,
@@ -102,6 +103,7 @@ app.add_typer(paths.app, name="paths")
 app.add_typer(lint.app, name="lint")
 app.add_typer(compat.app, name="compat")
 app.add_typer(contract.app, name="contract")
+app.add_typer(pact.app, name="pact")
 app.add_typer(verify.app, name="verify")
 app.add_typer(checks.app, name="checks")
 app.add_typer(catalog.app, name="catalog")

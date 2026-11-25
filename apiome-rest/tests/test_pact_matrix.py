@@ -442,6 +442,44 @@ def test_a_bidirectional_row_says_how_it_was_verified() -> None:
     assert not _row(verification_kind="native").bidirectional
 
 
+def test_an_unverified_provider_contract_is_said_in_the_row_text() -> None:
+    # PFX-2.4: same codes; the text says the provider contract had no passing evidence.
+    row = _row(verification_kind="bidirectional", comparison_verdict="unverified")
+    assert row.provider_contract_unverified
+    assert row_reason(row) == {
+        "code": "verified",
+        "text": "verified by bi-directional comparison; provider contract unverified",
+    }
+    failed = _row(success=False, verification_kind="bidirectional", comparison_verdict="unverified")
+    assert row_reason(failed)["text"] == "bi-directional comparison failed: provider contract unverified"
+    assert not _row(verification_kind="bidirectional", comparison_verdict="pass").provider_contract_unverified
+    assert not _row(verification_kind="native", comparison_verdict="unverified").provider_contract_unverified
+
+
+def test_a_deployable_verdict_on_an_unverified_contract_warns() -> None:
+    verdict = deployment_verdict(
+        _deploy_foo(
+            [_row("1", "4", True, verification_kind="bidirectional", comparison_verdict="unverified")],
+            _bar_in_production("4"),
+        )
+    )
+    assert verdict.deployable is True
+    warnings = [r for r in verdict.reasons if r.code == "provider-contract-unverified"]
+    assert [r.type for r in warnings] == ["warning"]
+    assert "has no passing self-verification evidence" in warnings[0].text
+
+
+def test_a_failed_unverified_result_is_an_error_not_a_warning() -> None:
+    verdict = deployment_verdict(
+        _deploy_foo(
+            [_row("1", "4", False, verification_kind="bidirectional", comparison_verdict="unverified")],
+            _bar_in_production("4"),
+        )
+    )
+    assert verdict.deployable is False
+    assert not [r for r in verdict.reasons if r.code == "provider-contract-unverified"]
+
+
 def test_unknown() -> None:
     verdict = deployment_verdict(_deploy_foo([_row("1", None)], _bar_in_production("4")))
     assert verdict.deployable is None and verdict.unknown

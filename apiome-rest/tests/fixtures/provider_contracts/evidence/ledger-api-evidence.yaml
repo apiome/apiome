@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info: {title: Ledger API, version: 1.4.0}
+paths:
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, pattern: '^[a-z0-9]{1,8}$'}}
+      responses:
+        '200':
+          description: The invoice
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, total]
+                properties:
+                  id: {type: string}
+                  total: {type: integer}
+        '404': {description: Not found}

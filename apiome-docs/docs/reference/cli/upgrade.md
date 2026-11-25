@@ -1,7 +1,7 @@
 ---
 title: "apiome upgrade"
 description: "Plan an upgrade to OpenAPI 3.0, 3.1 or 3.2, listing every change."
-sidebar_position: 41
+sidebar_position: 42
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

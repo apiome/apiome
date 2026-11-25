@@ -39,6 +39,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from .openapi_validator import openapi_document_errors_at
+from .revision_deprecation import is_uuid_string as _is_uuid
 from .safe_oas_parse import safe_oas_parse
 
 __all__ = [
@@ -66,6 +67,7 @@ __all__ = [
     "parse_openapi",
     "prepare_contract",
     "provider_contract_sha",
+    "sent_verification_results",
     "stored_verification_results",
     "validate_openapi_contract",
 ]
@@ -330,26 +332,41 @@ def provider_contract_sha(document: Mapping[str, Any]) -> str:
 class SelfVerificationResults(BaseModel):
     """The results of checking the provider against its own contract, sent with it.
 
-    The wire names are PactFlow's (camelCase). What they prove — and whether a contract without
-    them is trusted — is PFX-2.4 (#6928); this ticket stores them as sent.
+    The wire names are PactFlow's (camelCase), plus ``providerVerificationReportId`` for an Apiome
+    report. What they prove is read by :mod:`app.provider_contract_evidence` (PFX-2.4, #6928):
+    either a third-party report in ``content``, or an Apiome provider-verification report
+    (CTG-4.3) named by its id — not both.
 
     Attributes:
-        success: Whether the provider passed its self-verification.
+        success: Whether the provider passed its self-verification. Required with ``content`` or
+            without a report; with ``providerVerificationReportId`` the report says, and a flag
+            that disagrees with it fails the evidence.
         content: The verifier's report, base64-encoded.
-        content_type: ``contentType`` — the report's media type (``text/plain``,
-            ``application/xml`` for JUnit).
+        content_type: ``contentType`` — the report's media type (``application/xml`` for JUnit,
+            ``application/json`` for Newman, ``application/x-ndjson`` for Schemathesis NDJSON,
+            ``text/plain`` for a report Apiome stores without reading).
         verifier: The tool that produced it (``schemathesis``, ``dredd``, ``newman``).
         verifier_version: ``verifierVersion`` — that tool's version.
+        report_id: ``providerVerificationReportId`` — an Apiome provider-verification report of
+            this workspace.
     """
 
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
-    success: bool = Field(description="Whether the provider passed its self-verification.")
+    success: Optional[bool] = Field(
+        default=None,
+        description="Whether the provider passed its self-verification. Optional with providerVerificationReportId.",
+    )
     content: Optional[str] = Field(default=None, description="The verifier's report, base64-encoded.")
     content_type: Optional[str] = Field(default=None, alias="contentType", description="The report's media type.")
     verifier: Optional[str] = Field(default=None, description="The tool that produced the report.")
     verifier_version: Optional[str] = Field(
         default=None, alias="verifierVersion", description="The version of that tool."
+    )
+    report_id: Optional[str] = Field(
+        default=None,
+        alias="providerVerificationReportId",
+        description="An Apiome provider-verification report (CTG-4.3) of this workspace, instead of content.",
     )
 
 
@@ -472,8 +489,9 @@ def check_request(body: PublishProviderContractRequest) -> None:
     Raises:
         ProviderContractError: ``provider-contract-unsupported`` for a contract type other than
             ``oas``; ``provider-contract-request-invalid`` when the request sends both or neither of
-            ``content`` and ``apiomeVersion``, or a ``contentType`` other than JSON with
-            ``apiomeVersion``.
+            ``content`` and ``apiomeVersion``, a ``contentType`` other than JSON with
+            ``apiomeVersion``, both a report and a report id in ``verificationResults``, a report id
+            that is not a UUID, or no ``success`` without a report id.
     """
     if body.contract_type.strip().lower() != _CONTRACT_TYPE_OAS:
         raise ProviderContractError(
@@ -496,18 +514,43 @@ def check_request(body: PublishProviderContractRequest) -> None:
             f"version is always application/json — leave contentType out",
             pointer="/contentType",
         )
+    results = body.verification_results
+    if results is not None:
+        if results.report_id is not None and results.content is not None:
+            raise ProviderContractError(
+                CODE_REQUEST_INVALID,
+                "send the self-verification report in 'content' or name an Apiome report in "
+                "'providerVerificationReportId' — not both",
+                pointer="/verificationResults",
+            )
+        if results.report_id is not None and not _is_uuid(results.report_id):
+            raise ProviderContractError(
+                CODE_REQUEST_INVALID,
+                "providerVerificationReportId must be a report id (a UUID)",
+                pointer="/verificationResults/providerVerificationReportId",
+            )
+        if results.report_id is None and results.success is None:
+            raise ProviderContractError(
+                CODE_REQUEST_INVALID,
+                "verificationResults.success is required unless providerVerificationReportId names an Apiome report",
+                pointer="/verificationResults/success",
+            )
 
 
-def stored_verification_results(results: Optional[SelfVerificationResults]) -> Optional[Dict[str, Any]]:
-    """The self-verification results as they are stored: what was sent, plus the report's digest.
+def stored_verification_results(
+    results: Optional[SelfVerificationResults], evidence: Mapping[str, Any]
+) -> Optional[Dict[str, Any]]:
+    """The self-verification results as they are stored: what was sent, its digest and its evidence.
 
     Args:
         results: The request's ``verificationResults``, if any.
+        evidence: What :mod:`app.provider_contract_evidence` read from them (``Evidence.to_dict()``).
 
     Returns:
         ``None`` without results; otherwise ``success``, ``verifier``, ``verifierVersion``,
         ``contentType``, ``content`` (still base64) and, with content, ``contentSha256`` and
-        ``contentBytes`` of the decoded report.
+        ``contentBytes`` of the decoded report; ``providerVerificationReportId`` when one was named;
+        and ``evidence``.
 
     Raises:
         ProviderContractError: ``provider-contract-request-invalid`` (pointer
@@ -526,7 +569,28 @@ def stored_verification_results(results: Optional[SelfVerificationResults]) -> O
         report = decode_base64(results.content, "/verificationResults/content", "the verification results content")
         stored["contentSha256"] = hashlib.sha256(report).hexdigest()
         stored["contentBytes"] = len(report)
+    if results.report_id is not None:
+        stored["providerVerificationReportId"] = results.report_id.strip().lower()
+    stored["evidence"] = dict(evidence)
     return stored
+
+
+def sent_verification_results(stored: Optional[Mapping[str, Any]]) -> Optional[Dict[str, Any]]:
+    """The part of stored results the publisher sent, without what Apiome read from them.
+
+    Two publishes of one provider version are "the same" when they sent the same thing; the
+    ``evidence`` Apiome derives is left out so a publication stored before PFX-2.4 (without it)
+    still matches a republish of the same results.
+
+    Args:
+        stored: Stored ``verification_results``, or ``None``.
+
+    Returns:
+        A copy without ``evidence``, or ``None``.
+    """
+    if stored is None:
+        return None
+    return {key: value for key, value in stored.items() if key != "evidence"}
 
 
 # ---------------------------------------------------------------------------------------------

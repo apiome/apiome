@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.844.0] - 2026-11-24
+
+### Added
+- **Self-verification evidence for provider contracts (PFX-2.4, #6928).** OpenAPI 1.668.0 (the
+  provider-contract route's request body, responses and description). No migration: the evidence
+  is stored in `provider_contract_publication.verification_results` (V438).
+  - `app.provider_contract_evidence` (pure) reads `verificationResults`: JUnit XML (Schemathesis
+    `--report junit`, Dredd `--reporter xunit`, Newman `-r junit`, any JUnit writer; counted from
+    `<testcase>` elements, DTDs refused via defusedxml), Newman JSON (`run.stats`), Schemathesis
+    NDJSON (`ScenarioFinished` / `EngineFinished` events), or an Apiome provider-verification
+    report (CTG-4.3) named by the new `verificationResults.providerVerificationReportId` and read
+    in the caller's tenant (needs `verification_evidence:view`). The result — `status`
+    (`verified` | `failed` | `inconclusive` | `missing`), `kind`, `tool`, `toolVersion`, `digest`
+    (`sha256:` of the report as sent), `summary` counts, `reasons`, `notes`, and for an Apiome
+    report `reportId`, `target` and `coverage` — is stored as `verificationResults.evidence` and
+    returned as `selfVerification` (with `providerContractVerified` and `unverifiedPolicy`) by
+    `PUT` and `GET …/contracts/provider/{p}/version/{v}`. A failure in the report wins over
+    `success: true`; `text/plain`, unknown JSON, a run with nothing executed, a flag without a
+    report, and an Apiome report of another version than the contract are `inconclusive`.
+  - `verificationResults.success` is now optional with `providerVerificationReportId`.
+    New refusals: `422 provider-contract-evidence-unsupported` (media type),
+    `422 provider-contract-evidence-invalid` (content not what its type says),
+    `422 provider-contract-evidence-report-not-found`, `413 provider-contract-evidence-too-large`
+    (`APIOME_PACT_EVIDENCE_MAX_BYTES`, default 5 MiB). Nothing is stored on a refusal.
+  - Republishing compares only what was sent, so a PFX-2.1 publication (without `evidence`) still
+    answers `200` to the same results.
+  - Bi-directional comparisons weigh the contract's evidence
+    (`app.bidirectional_verification.apply_evidence_policy`): without `verified` evidence the stored
+    verdict is `unverified` (a `fail` stays `fail`), `comparison` adds `providerContractEvidence`,
+    `comparisonVerdict` and `unverifiedPolicy`, and `testResults` gains a
+    `provider-contract-unverified` entry. `APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT` = `warn`
+    (default; `success` kept) or `fail` (`success: false`). Publications from before PFX-2.4 have
+    their report read when compared. Run entries carry `success`; an unverified comparison's notice
+    is a `warning` or an `error`.
+  - The matrix reads `comparison->>'verdict'`: a bi-directional row's `verificationResult` carries
+    `providerContractVerified`, its reason text adds "provider contract unverified", and a
+    deployable verdict leaning on one adds a `provider-contract-unverified` warning.
+
 ## [1.843.0] - 2026-11-24
 
 ### Added

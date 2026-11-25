@@ -27,6 +27,7 @@ from app.pact_publication import PactRecord, PublishedPact
 from app.pact_publication_store import PublishOutcome
 from app.pact_selectors import PactCandidate
 from app.pacticipant import PacticipantRecord
+from app.provider_contract_evidence import STATUS_VERIFIED, Evidence, EvidenceSummary
 
 FIXTURES = Path(__file__).parent / "fixtures" / "provider_contracts"
 ACTOR = ConsumerActor(user_id=None, label="ci@example.com", kind="api_key")
@@ -60,8 +61,14 @@ PROVIDER = _pacticipant("ledger-api", "Ledger API", "prov-id")
 CONSUMER = _pacticipant("billing-service", "Billing Service", "cons-id")
 
 
-def _target(version: str = "p-1", seq: int = 1, branches: tuple = ("main",)) -> ContractTarget:
-    return ContractTarget(f"v-{version}", version, seq, f"c-{version}", "b" * 64, branches)
+#: Passing self-verification evidence (PFX-2.4): a contract with it is trusted.
+VERIFIED = Evidence(status=STATUS_VERIFIED, kind="junit", tool="dredd", summary=EvidenceSummary(1, 1))
+
+
+def _target(
+    version: str = "p-1", seq: int = 1, branches: tuple = ("main",), evidence: Optional[Evidence] = VERIFIED
+) -> ContractTarget:
+    return ContractTarget(f"v-{version}", version, seq, f"c-{version}", "b" * 64, branches, evidence=evidence)
 
 
 class _Cursor:
@@ -139,7 +146,63 @@ def test_a_pair_is_compared_and_stored_as_a_bidirectional_result() -> None:
     assert params[10:13] == ("Apiome bi-directional comparison", "bidirectional", "c-p-1")
     assert params[12 + 1].adapted["verdict"] == "pass"
     assert params[12 + 1].adapted["providerContractSha"] == "b" * 64
+    assert params[12 + 1].adapted["providerContractEvidence"]["status"] == "verified"
     assert any("FOR UPDATE" in sql for sql in db.statements)
+
+
+# --- PFX-2.4: the provider contract's evidence ------------------------------------------------
+
+
+def test_a_contract_without_evidence_reads_unverified_and_passes_under_warn() -> None:
+    db = _FakeDb()
+    with patch.object(store.settings, "pact_unverified_provider_contract", "warn"):
+        entry = _pair(db, _target(evidence=None))
+    assert (entry.status, entry.verdict, entry.success) == ("compared", "unverified", True)
+    [params] = db.inserted
+    assert params[6] is True
+    payload = params[13].adapted
+    assert (payload["verdict"], payload["comparisonVerdict"], payload["unverifiedPolicy"]) == (
+        "unverified",
+        "pass",
+        "warn",
+    )
+    assert payload["providerContractEvidence"]["status"] == "missing"
+    assert params[9].adapted[-1]["warnings"][0]["attribute"] == "provider-contract-unverified"
+
+
+def test_a_contract_without_evidence_fails_under_fail() -> None:
+    db = _FakeDb()
+    with patch.object(store.settings, "pact_unverified_provider_contract", "fail"):
+        entry = _pair(db, _target(evidence=None))
+    assert (entry.verdict, entry.success) == ("unverified", False)
+    assert db.inserted[0][6] is False
+    assert db.inserted[0][9].adapted[-1]["mismatches"][0]["attribute"] == "provider-contract-unverified"
+
+
+def test_contract_targets_read_their_evidence() -> None:
+    db = _FakeDb()
+    db.targets = [
+        {
+            "version_id": "v1",
+            "version_number": "1",
+            "version_seq": 1,
+            "contract_id": "c1",
+            "sha": "b" * 64,
+            "verification_results": {"evidence": {"status": "failed", "reasons": ["2 failed"]}},
+        },
+        {
+            "version_id": "v2",
+            "version_number": "2",
+            "version_seq": 2,
+            "contract_id": "c2",
+            "sha": "b" * 64,
+            "verification_results": None,
+        },
+    ]
+    first, second = store.list_contract_targets(db, PROVIDER.id)
+    assert first.evidence is not None and (first.evidence.status, first.evidence.reasons) == ("failed", ("2 failed",))
+    assert second.evidence is not None and second.evidence.status == "missing"
+    assert any("? 'evidence'" in sql for sql in db.statements)
 
 
 def test_a_failing_pair_is_stored_as_a_failed_result() -> None:

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites errors="0" failures="0" skipped="0" tests="1" time="0.039254">
+  <testsuite name="schemathesis" hostname="ci-runner" errors="0" failures="0" skipped="0" tests="1" time="0.039254">
+    <testcase name="GET /invoices/{id}" time="0.039254" />
+  </testsuite>
+</testsuites>

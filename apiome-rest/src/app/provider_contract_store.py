@@ -42,6 +42,7 @@ from .provider_contract import (
     ProviderContractToStore,
     PublishedProviderContract,
     contract_record_from_row,
+    sent_verification_results,
 )
 from .revision_deprecation import is_uuid_string
 
@@ -179,7 +180,11 @@ def publish_provider_contract(
         created = cursor.fetchone() is not None
         cursor.execute(_CONTRACT_SELECT + " AND p.provider_version_id = %s::uuid", (provider.id, version.version.id))
         stored = contract_record_from_row(dict(cursor.fetchone()))
-        if not created and (stored.sha != contract.sha or stored.verification_results != contract.verification_results):
+        if not created and (
+            stored.sha != contract.sha
+            or sent_verification_results(stored.verification_results)
+            != sent_verification_results(contract.verification_results)
+        ):
             what = "contract" if stored.sha != contract.sha else "self-verification results"
             raise ProviderContractError(
                 CODE_CONTRACT_CONFLICT,

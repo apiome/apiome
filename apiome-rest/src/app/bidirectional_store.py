@@ -31,6 +31,7 @@ rows, and the result row is tied to the pact, provider and contract by V434/V439
 
 from __future__ import annotations
 
+import json
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -50,16 +51,19 @@ from .bidirectional_verification import (
     ContractTarget,
     RunEntry,
     StoredComparison,
+    apply_evidence_policy,
     error_comparison,
     select_contract_targets,
     stored_comparison,
 )
+from .config import settings
 from .consumer_contract_store import ConsumerActor
 from .pact_oas_compare import PactOasCompareError, compare_pact_to_oas
 from .pact_publication_store import PublishOutcome, list_pact_candidates
 from .pact_selectors import ConsumerVersionSelector, ForVerificationQuery, PactCandidate, select_verifiable_pacts
 from .pacticipant import PacticipantRecord
 from .pacticipant_store import get_pacticipant
+from .provider_contract_evidence import evidence_of
 from .revision_deprecation import is_uuid_string
 
 __all__ = [
@@ -75,6 +79,11 @@ logger = logging.getLogger(__name__)
 _TARGETS_SELECT = """
     SELECT v.id::text AS version_id, v.number AS version_number, v.seq AS version_seq,
            c.id::text AS contract_id, c.sha,
+           -- PFX-2.4: the evidence read at publish time; a publication from before then has none,
+           -- and its results (with the report) are read again. Never the report of a newer one.
+           CASE WHEN p.verification_results ? 'evidence'
+                THEN jsonb_build_object('evidence', p.verification_results->'evidence')
+                ELSE p.verification_results END AS verification_results,
            COALESCE(
                (SELECT array_agg(b.name ORDER BY b.name)
                 FROM apiome.pacticipant_branch_version bv
@@ -118,7 +127,7 @@ _PACT_VERSION_SELECT = """
 """
 
 _EXISTING_SELECT = """
-    SELECT number, comparison->>'verdict' AS verdict FROM apiome.verification_result
+    SELECT number, success, comparison->>'verdict' AS verdict FROM apiome.verification_result
     WHERE pact_version_id = %s::uuid AND provider_version_id = %s::uuid AND kind = 'bidirectional'
 """
 
@@ -168,9 +177,22 @@ def list_contract_targets(db: Any, provider_id: str) -> List[ContractTarget]:
             contract_sha=str(row["sha"]).strip(),
             branches=tuple(row.get("branches") or ()),
             environments=tuple(row.get("environments") or ()),
+            evidence=evidence_of(
+                _json_object(row.get("verification_results")), max_bytes=settings.pact_evidence_max_bytes
+            ),
         )
         for row in rows
     ]
+
+
+def _json_object(value: Any) -> Optional[Dict[str, Any]]:
+    """A JSONB column as a dict (psycopg2 decodes it; a string is parsed), else ``None``."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except ValueError:
+            return None
+    return value if isinstance(value, dict) else None
 
 
 @dataclass(frozen=True)
@@ -213,12 +235,17 @@ class _Documents:
         )
 
 
-def _compare(pact: Any, contract: Any, contract_sha: str) -> StoredComparison:
-    """Compare, turning an input the engine refuses into a stored failure with its reason."""
+def _compare(pact: Any, contract: Any, target: ContractTarget) -> StoredComparison:
+    """Compare, turning an input the engine refuses into a stored failure with its reason.
+
+    The result is weighed by the contract's self-verification evidence under the configured
+    policy (PFX-2.4, ``APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT``).
+    """
     try:
-        return stored_comparison(compare_pact_to_oas(pact, contract), contract_sha=contract_sha)
+        stored = stored_comparison(compare_pact_to_oas(pact, contract), contract_sha=target.contract_sha)
     except PactOasCompareError as exc:
-        return error_comparison(str(exc), contract_sha=contract_sha)
+        stored = error_comparison(str(exc), contract_sha=target.contract_sha)
+    return apply_evidence_policy(stored, target.evidence, settings.pact_unverified_provider_contract)
 
 
 def _compare_pair(
@@ -265,8 +292,13 @@ def _compare_pair(
         existing = db.execute_query(_EXISTING_SELECT, (pact_version_id, target.version_id)) or []
         if existing:
             row = existing[0]
-            return entry(STATUS_ALREADY_COMPARED, verdict=row.get("verdict"), number=int(row["number"]))
-        stored = _compare(documents.pact(pact_version_id), documents.contract(target.contract_id), target.contract_sha)
+            return entry(
+                STATUS_ALREADY_COMPARED,
+                verdict=row.get("verdict"),
+                number=int(row["number"]),
+                success=row.get("success"),
+            )
+        stored = _compare(documents.pact(pact_version_id), documents.contract(target.contract_id), target)
 
         def work(cursor: Any) -> Optional[int]:
             # The row lock serialises numbering with native results published at the same time.
@@ -307,7 +339,7 @@ def _compare_pair(
     if number is None:
         # Another publish stored this pair between the check and the insert.
         return entry(STATUS_ALREADY_COMPARED)
-    return entry(STATUS_COMPARED, verdict=stored.verdict, number=number)
+    return entry(STATUS_COMPARED, verdict=stored.verdict, number=number, success=stored.success)
 
 
 def _skipped(provider: PacticipantRecord, pact: _Pact, target: ContractTarget, limit: int, what: str) -> RunEntry:

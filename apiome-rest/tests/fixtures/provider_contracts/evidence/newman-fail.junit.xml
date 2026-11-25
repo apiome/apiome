@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Ledger API" tests="2" time="0.012">
+  <testsuite name="Get invoice" id="497ea5ab-cdaf-449d-929e-b0df85a7ffb3" timestamp="2026-11-25T03:21:12.756Z" tests="2" failures="1" errors="0" time="0.011">
+    <testcase name="status is 200" time="0.011" classname="GetInvoice"/>
+    <testcase name="total is an integer" time="0.011" classname="GetInvoice">
+      <failure type="AssertionFailure" message="expected false to be true">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 5497abe7-65c0-4674-a1cf-5566115fc3f3.]]>
+        <![CDATA[Collection name: Ledger API.]]>
+        <![CDATA[Request name: Get invoice.]]>
+        <![CDATA[Test description: total is an integer.]]>
+        <![CDATA[Error message: expected false to be true.]]>
+        <![CDATA[Stacktrace: AssertionError: expected false to be true
+   at Object.eval sandbox-script.js:2:1).]]>
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="Missing invoice" id="f46300f3-337a-4388-a2bd-f7b526a38e13" timestamp="2026-11-25T03:21:12.756Z" tests="1" failures="0" errors="0" time="0.001">
+    <testcase name="status is 404" time="0.001" classname="MissingInvoice"/>
+  </testsuite>
+</testsuites>

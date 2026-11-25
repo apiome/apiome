@@ -309,6 +309,8 @@ def _row_document(base: str, row: MatrixRow, details: Dict[str, Dict[str, Any]],
             "verifiedAt": row.verified_at,
             # PFX-2.3: how the result was reached — a Pact verifier, or Apiome's comparison.
             "kind": row.verification_kind or KIND_NATIVE,
+            # PFX-2.4: whether a bi-directional result's provider contract had passing evidence.
+            **({"providerContractVerified": not row.provider_contract_unverified} if row.bidirectional else {}),
             **_pending_fields(row),
             "_links": {
                 "self": {"href": f"{pair}/pact-version/{row.pact_sha}/verification-results/{row.verification_number}"}

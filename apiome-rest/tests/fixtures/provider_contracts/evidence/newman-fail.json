@@ -1,0 +1,624 @@
+{
+  "collection": {
+    "item": [
+      {
+        "id": "497ea5ab-cdaf-449d-929e-b0df85a7ffb3",
+        "name": "Get invoice",
+        "request": {
+          "url": {
+            "path": [
+              "invoices",
+              "abc1"
+            ],
+            "host": [
+              "{{base}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "method": "GET"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "c1021a7a-8c14-44d1-a854-747ef94cc027",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                "pm.test('total is an integer', () => pm.expect(Number.isInteger(pm.response.json().total)).to.be.true);"
+              ],
+              "_lastExecutionId": "aaf81a93-cf63-4543-b395-4e50d143dcfd"
+            }
+          }
+        ]
+      },
+      {
+        "id": "f46300f3-337a-4388-a2bd-f7b526a38e13",
+        "name": "Missing invoice",
+        "request": {
+          "url": {
+            "path": [
+              "invoices",
+              "NOPE"
+            ],
+            "host": [
+              "{{base}}"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "method": "GET"
+        },
+        "response": [],
+        "event": [
+          {
+            "listen": "test",
+            "script": {
+              "id": "6d8f1db9-4c28-43e8-ae5f-770ca571e3b5",
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('status is 404', () => pm.response.to.have.status(404));"
+              ],
+              "_lastExecutionId": "55ac8af1-5ec0-49fe-a529-0b994d308245"
+            }
+          }
+        ]
+      }
+    ],
+    "event": [],
+    "variable": [],
+    "info": {
+      "_postman_id": "5497abe7-65c0-4674-a1cf-5566115fc3f3",
+      "name": "Ledger API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    }
+  },
+  "environment": {
+    "id": "a2e8a0c2-5907-4a30-8bfa-ff23b36f424c",
+    "values": [
+      {
+        "type": "any",
+        "value": "http://127.0.0.1:18082",
+        "key": "base"
+      }
+    ]
+  },
+  "globals": {
+    "id": "b868a968-ee61-4d86-aaba-92dc74d8fc0f",
+    "values": []
+  },
+  "run": {
+    "stats": {
+      "iterations": {
+        "total": 1,
+        "pending": 0,
+        "failed": 0
+      },
+      "items": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "scripts": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequests": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "requests": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "tests": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "assertions": {
+        "total": 3,
+        "pending": 0,
+        "failed": 1
+      },
+      "testScripts": {
+        "total": 2,
+        "pending": 0,
+        "failed": 0
+      },
+      "prerequestScripts": {
+        "total": 0,
+        "pending": 0,
+        "failed": 0
+      }
+    },
+    "timings": {
+      "responseAverage": 6,
+      "responseMin": 1,
+      "responseMax": 11,
+      "responseSd": 5,
+      "dnsAverage": 0,
+      "dnsMin": 0,
+      "dnsMax": 0,
+      "dnsSd": 0,
+      "firstByteAverage": 0,
+      "firstByteMin": 0,
+      "firstByteMax": 0,
+      "firstByteSd": 0,
+      "started": 1795576872756,
+      "completed": 1795576872789
+    },
+    "executions": [
+      {
+        "cursor": {
+          "position": 0,
+          "iteration": 0,
+          "length": 2,
+          "cycles": 1,
+          "empty": false,
+          "eof": false,
+          "bof": true,
+          "cr": false,
+          "ref": "d0972c9d-aa67-44c6-bc26-3fd3eb971bb3",
+          "httpRequestId": "90574fe9-2005-4fdb-beb2-127ee6df11ea"
+        },
+        "item": {
+          "id": "497ea5ab-cdaf-449d-929e-b0df85a7ffb3",
+          "name": "Get invoice",
+          "request": {
+            "url": {
+              "path": [
+                "invoices",
+                "abc1"
+              ],
+              "host": [
+                "{{base}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "c1021a7a-8c14-44d1-a854-747ef94cc027",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('total is an integer', () => pm.expect(Number.isInteger(pm.response.json().total)).to.be.true);"
+                ],
+                "_lastExecutionId": "aaf81a93-cf63-4543-b395-4e50d143dcfd"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "18082",
+            "path": [
+              "invoices",
+              "abc1"
+            ],
+            "host": [
+              "127",
+              "0",
+              "0",
+              "1"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "f673f451-487f-4e13-84e7-1f7b5871b055",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "127.0.0.1:18082",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "GET"
+        },
+        "response": {
+          "id": "85a279a5-a727-40d2-a22a-84bd89d77d02",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Server",
+              "value": "BaseHTTP/0.6 Python/3.9.6"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 25 Nov 2026 03:21:12 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Content-Length",
+              "value": "29"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": [
+              123,
+              34,
+              105,
+              100,
+              34,
+              58,
+              32,
+              34,
+              97,
+              98,
+              99,
+              49,
+              34,
+              44,
+              32,
+              34,
+              116,
+              111,
+              116,
+              97,
+              108,
+              34,
+              58,
+              32,
+              34,
+              49,
+              50,
+              34,
+              125
+            ]
+          },
+          "cookie": [],
+          "responseTime": 11,
+          "responseSize": 29
+        },
+        "id": "497ea5ab-cdaf-449d-929e-b0df85a7ffb3",
+        "assertions": [
+          {
+            "assertion": "status is 200",
+            "skipped": false
+          },
+          {
+            "assertion": "total is an integer",
+            "skipped": false,
+            "error": {
+              "name": "AssertionError",
+              "index": 1,
+              "test": "total is an integer",
+              "message": "expected false to be true",
+              "stack": "AssertionError: expected false to be true\n   at Object.eval sandbox-script.js:2:1)"
+            }
+          }
+        ]
+      },
+      {
+        "cursor": {
+          "ref": "f135d645-0d8a-4ac1-9dc9-4d6154e7f510",
+          "length": 2,
+          "cycles": 1,
+          "position": 1,
+          "iteration": 0,
+          "httpRequestId": "579f8fe7-f19e-40ed-b3af-c95a93618af8"
+        },
+        "item": {
+          "id": "f46300f3-337a-4388-a2bd-f7b526a38e13",
+          "name": "Missing invoice",
+          "request": {
+            "url": {
+              "path": [
+                "invoices",
+                "NOPE"
+              ],
+              "host": [
+                "{{base}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "6d8f1db9-4c28-43e8-ae5f-770ca571e3b5",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                ],
+                "_lastExecutionId": "55ac8af1-5ec0-49fe-a529-0b994d308245"
+              }
+            }
+          ]
+        },
+        "request": {
+          "url": {
+            "protocol": "http",
+            "port": "18082",
+            "path": [
+              "invoices",
+              "NOPE"
+            ],
+            "host": [
+              "127",
+              "0",
+              "0",
+              "1"
+            ],
+            "query": [],
+            "variable": []
+          },
+          "header": [
+            {
+              "key": "User-Agent",
+              "value": "PostmanRuntime/7.39.1",
+              "system": true
+            },
+            {
+              "key": "Accept",
+              "value": "*/*",
+              "system": true
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-cache",
+              "system": true
+            },
+            {
+              "key": "Postman-Token",
+              "value": "59265c1d-8be2-439f-82c6-86bfe5474c29",
+              "system": true
+            },
+            {
+              "key": "Host",
+              "value": "127.0.0.1:18082",
+              "system": true
+            },
+            {
+              "key": "Accept-Encoding",
+              "value": "gzip, deflate, br",
+              "system": true
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive",
+              "system": true
+            }
+          ],
+          "method": "GET"
+        },
+        "response": {
+          "id": "6091df3c-ef72-43f8-8547-d6e8fdbe82bf",
+          "status": "Not Found",
+          "code": 404,
+          "header": [
+            {
+              "key": "Server",
+              "value": "BaseHTTP/0.6 Python/3.9.6"
+            },
+            {
+              "key": "Date",
+              "value": "Wed, 25 Nov 2026 03:21:12 GMT"
+            },
+            {
+              "key": "Content-Length",
+              "value": "0"
+            }
+          ],
+          "stream": {
+            "type": "Buffer",
+            "data": []
+          },
+          "cookie": [],
+          "responseTime": 1,
+          "responseSize": 0
+        },
+        "id": "f46300f3-337a-4388-a2bd-f7b526a38e13",
+        "assertions": [
+          {
+            "assertion": "status is 404",
+            "skipped": false
+          }
+        ]
+      }
+    ],
+    "transfers": {
+      "responseTotal": 29
+    },
+    "failures": [
+      {
+        "error": {
+          "name": "AssertionError",
+          "index": 1,
+          "test": "total is an integer",
+          "message": "expected false to be true",
+          "stack": "AssertionError: expected false to be true\n   at Object.eval sandbox-script.js:2:1)",
+          "checksum": "4c0ab676592fce5103cd2fd2030b0d93",
+          "id": "c13b2630-75e2-4778-aacd-d830c36249b0",
+          "timestamp": 1795576872777,
+          "stacktrace": [
+            {
+              "fileName": "sandbox-script.js",
+              "lineNumber": 2,
+              "functionName": "Object.eval",
+              "typeName": "Object",
+              "methodName": "eval",
+              "columnNumber": 1,
+              "native": false
+            }
+          ]
+        },
+        "at": "assertion:1 in test-script",
+        "source": {
+          "id": "497ea5ab-cdaf-449d-929e-b0df85a7ffb3",
+          "name": "Get invoice",
+          "request": {
+            "url": {
+              "path": [
+                "invoices",
+                "abc1"
+              ],
+              "host": [
+                "{{base}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "method": "GET"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "c1021a7a-8c14-44d1-a854-747ef94cc027",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('total is an integer', () => pm.expect(Number.isInteger(pm.response.json().total)).to.be.true);"
+                ],
+                "_lastExecutionId": "aaf81a93-cf63-4543-b395-4e50d143dcfd"
+              }
+            }
+          ]
+        },
+        "parent": {
+          "item": [
+            {
+              "id": "497ea5ab-cdaf-449d-929e-b0df85a7ffb3",
+              "name": "Get invoice",
+              "request": {
+                "url": {
+                  "path": [
+                    "invoices",
+                    "abc1"
+                  ],
+                  "host": [
+                    "{{base}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "method": "GET"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "c1021a7a-8c14-44d1-a854-747ef94cc027",
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                      "pm.test('total is an integer', () => pm.expect(Number.isInteger(pm.response.json().total)).to.be.true);"
+                    ],
+                    "_lastExecutionId": "aaf81a93-cf63-4543-b395-4e50d143dcfd"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "f46300f3-337a-4388-a2bd-f7b526a38e13",
+              "name": "Missing invoice",
+              "request": {
+                "url": {
+                  "path": [
+                    "invoices",
+                    "NOPE"
+                  ],
+                  "host": [
+                    "{{base}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "method": "GET"
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "id": "6d8f1db9-4c28-43e8-ae5f-770ca571e3b5",
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                    ],
+                    "_lastExecutionId": "55ac8af1-5ec0-49fe-a529-0b994d308245"
+                  }
+                }
+              ]
+            }
+          ],
+          "event": [],
+          "variable": [],
+          "info": {
+            "_postman_id": "5497abe7-65c0-4674-a1cf-5566115fc3f3",
+            "name": "Ledger API",
+            "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+          }
+        },
+        "cursor": {
+          "position": 0,
+          "iteration": 0,
+          "length": 2,
+          "cycles": 1,
+          "empty": false,
+          "eof": false,
+          "bof": true,
+          "cr": false,
+          "ref": "d0972c9d-aa67-44c6-bc26-3fd3eb971bb3",
+          "httpRequestId": "90574fe9-2005-4fdb-beb2-127ee6df11ea",
+          "scriptId": "c1021a7a-8c14-44d1-a854-747ef94cc027",
+          "execution": "aaf81a93-cf63-4543-b395-4e50d143dcfd"
+        }
+      }
+    ],
+    "error": null
+  }
+}

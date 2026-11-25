@@ -20,9 +20,10 @@ Skipped when no database is reachable or V439 is not applied.
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List, Optional
 from unittest.mock import patch
 
 import psycopg2
@@ -67,13 +68,33 @@ def _oas() -> Dict[str, Any]:
     return json.loads((FIXTURES / "ledger-api-3.1.json").read_bytes())
 
 
-def _contract(stack: Dict[str, Any], version: str, branch: str = "main", document: Any = None) -> Dict[str, Any]:
+#: A passing Dredd report (PFX-2.4): the self-verification evidence every contract here carries
+#: unless a test says otherwise.
+_PASSING_EVIDENCE = {
+    "success": True,
+    "verifier": "dredd",
+    "contentType": "application/xml",
+    "content": base64.b64encode((FIXTURES / "evidence" / "dredd-pass.xml").read_bytes()).decode(),
+}
+
+
+def _contract(
+    stack: Dict[str, Any],
+    version: str,
+    branch: str = "main",
+    document: Any = None,
+    evidence: Optional[Dict[str, Any]] = _PASSING_EVIDENCE,
+) -> Dict[str, Any]:
     """Ledger API ``version`` publishes its provider contract; returns the response body."""
     raw = json.dumps(document or _oas()).encode()
-    response = stack["client"].put(
-        f"{BASE}/contracts/provider/Ledger API/version/{version}",
-        json={"content": base64.b64encode(raw).decode(), "contentType": "application/json", "branch": branch},
-    )
+    body: Dict[str, Any] = {
+        "content": base64.b64encode(raw).decode(),
+        "contentType": "application/json",
+        "branch": branch,
+    }
+    if evidence is not None:
+        body["verificationResults"] = evidence
+    response = stack["client"].put(f"{BASE}/contracts/provider/Ledger API/version/{version}", json=body)
     assert response.status_code in (200, 201), response.text
     return response.json()
 
@@ -159,6 +180,85 @@ def test_a_contract_published_after_the_pact_is_compared_and_reads_back(bdct: Di
         {"interactionDescription": "a request for an invoice", "success": True, "verdict": "pass"}
     ]
     assert document["_links"]["pb:provider-contract"]["href"].endswith("/contracts/provider/ledger-api/version/p-1")
+
+
+# --- PFX-2.4: self-verification evidence ---------------------------------------------------------
+
+
+@pytest.fixture
+def unverified(bdct: Dict[str, Any]) -> Dict[str, Any]:
+    """Production runs Ledger API p-1, whose contract was published without evidence."""
+    environment_db._create_environment(bdct, "production", production=True)
+    body = _contract(bdct, "p-1", evidence=None)
+    assert body["selfVerification"]["status"] == "missing"
+    assert body["selfVerification"]["providerContractVerified"] is False
+    matrix_db._deploy(bdct, "Ledger API", "p-1")
+    return bdct
+
+
+def test_an_unverified_contract_warns_but_deploys_under_warn(unverified: Dict[str, Any]) -> None:
+    with patch("app.bidirectional_store.settings.pact_unverified_provider_contract", "warn"):
+        body = _publish(unverified, "1.0.0")
+    [entry] = body["comparisons"]["results"]
+    assert (entry["verdict"], entry["success"]) == ("unverified", True)
+    assert body["notices"][-1]["type"] == "warning"
+    [row] = _rows(unverified)
+    assert (row["success"], row["verdict"]) == (True, "unverified")
+
+    matrix = matrix_db._cli(unverified, "Billing Service", "1.0.0").json()
+    assert matrix["summary"]["deployable"] is True
+    [line] = matrix["matrix"]
+    assert line["verificationResult"]["providerContractVerified"] is False
+    assert line["reason"]["text"] == "verified by bi-directional comparison; provider contract unverified"
+    assert any(notice.get("code") == "provider-contract-unverified" for notice in matrix["notices"])
+
+
+def test_an_unverified_contract_stops_the_deploy_under_fail(unverified: Dict[str, Any]) -> None:
+    with patch("app.bidirectional_store.settings.pact_unverified_provider_contract", "fail"):
+        body = _publish(unverified, "1.0.0")
+    assert body["comparisons"]["results"][0]["success"] is False
+    assert body["notices"][-1]["type"] == "error"
+    matrix = matrix_db._cli(unverified, "Billing Service", "1.0.0").json()
+    assert matrix["summary"]["deployable"] is False
+    assert matrix["matrix"][0]["reason"]["text"] == "bi-directional comparison failed: provider contract unverified"
+
+
+def test_a_failing_self_verification_is_recorded_with_its_digest(bdct: Dict[str, Any]) -> None:
+    raw = (FIXTURES / "evidence" / "schemathesis-fail.junit.xml").read_bytes()
+    evidence = {
+        "success": True,
+        "verifier": "schemathesis",
+        "contentType": "application/xml",
+        "content": base64.b64encode(raw).decode(),
+    }
+    body = _contract(bdct, "p-1", evidence=evidence)
+    verification = body["selfVerification"]
+    assert (verification["status"], verification["kind"], verification["tool"]) == ("failed", "junit", "schemathesis")
+    assert verification["digest"] == "sha256:" + hashlib.sha256(raw).hexdigest()
+    again = bdct["client"].get(f"{BASE}/contracts/provider/Ledger API/version/p-1").json()
+    assert again["selfVerification"] == verification
+
+
+def test_a_contract_published_before_evidence_republishes_as_the_same(bdct: Dict[str, Any]) -> None:
+    # A PFX-2.1 publication stored no `evidence`; publishing the same results again is still a no-op.
+    _contract(bdct, "p-1")
+    bdct["cursor"].execute(
+        "UPDATE apiome.provider_contract_publication SET verification_results = verification_results - 'evidence' "
+        "WHERE tenant_id = %s::uuid",
+        (bdct["seed"]["tenant"],),
+    )
+    raw = json.dumps(_oas()).encode()
+    response = bdct["client"].put(
+        f"{BASE}/contracts/provider/Ledger API/version/p-1",
+        json={
+            "content": base64.b64encode(raw).decode(),
+            "contentType": "application/json",
+            "branch": "main",
+            "verificationResults": _PASSING_EVIDENCE,
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["selfVerification"]["status"] == "verified"
 
 
 def test_a_failing_comparison_stops_the_deploy_and_says_why(production: Dict[str, Any]) -> None:
