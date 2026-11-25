@@ -11,9 +11,10 @@ document as a [provider contract](./bi-directional.mdx), and Apiome compares the
 the complete rule set of that comparison: what is checked, what each failure means, and how Pact
 matching rules are read.
 
-The comparison is not run for you yet. Apiome stores pacts and provider contracts today; the
-verdict will appear in the matrix and in [can-i-deploy](./can-i-deploy.mdx) in a later release.
-There is no screen and no endpoint for it in this one.
+Apiome runs the comparison whenever a pact or a provider contract is published, and stores each
+verdict as a verification result that the matrix and [can-i-deploy](./can-i-deploy.mdx#bi-directional-results)
+read like any other. `fail` is a failed result; `pass` and `partial` are successful ones. There is
+no screen for it.
 
 ## The verdict
 

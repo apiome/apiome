@@ -68,6 +68,9 @@ results count depends on what the verifier sends:
 | neither | … **any** provider version has verified it. |
 
 - **Only successes count.** A failed result never ends the pending state.
+- **Only a verifier's results count.** A successful
+  [bi-directional comparison](./can-i-deploy.mdx#bi-directional-results) with the provider's
+  contract does not end the pending state: it is not the provider's build passing the pact.
 - **Changed content starts pending again.** A consumer version that republishes content that has
   already been verified is not pending.
 - **New branches inherit what came before them.** A pact verified on `main` is not pending for a

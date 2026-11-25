@@ -28,6 +28,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Request
 
+from .bidirectional_verification import KIND_NATIVE
 from .database import db
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_routes import (
@@ -171,7 +172,7 @@ _MATRIX_EXAMPLE = {
             "consumer": {"name": "Billing Service", "version": {"number": "2.0.0", "branch": "main"}},
             "provider": {"name": "Ledger API", "version": {"number": "5.1.0", "branch": "main"}},
             "pact": {"createdAt": "2026-11-24T10:00:00+00:00"},
-            "verificationResult": {"success": False, "verifiedAt": "2026-11-24T10:05:00+00:00"},
+            "verificationResult": {"success": False, "verifiedAt": "2026-11-24T10:05:00+00:00", "kind": "native"},
             "reason": {"code": "verification-failed", "text": "verification failed"},
         }
     ],
@@ -291,7 +292,8 @@ def _row_document(base: str, row: MatrixRow, details: Dict[str, Dict[str, Any]],
 
     Returns:
         ``consumer``, ``provider`` (its ``version`` ``null`` without a result), ``pact``,
-        ``verificationResult`` (``null`` without one; with ``pending`` and ``wip`` when known),
+        ``verificationResult`` (``null`` without one; with its ``kind`` — ``native`` or
+        ``bidirectional`` — and ``pending`` and ``wip`` when known),
         Apiome's ``reason``, and ``ignored`` when set.
     """
     pair = _pair_url(base, row.provider_slug, row.consumer_slug)
@@ -305,6 +307,8 @@ def _row_document(base: str, row: MatrixRow, details: Dict[str, Dict[str, Any]],
         verification = {
             "success": row.success,
             "verifiedAt": row.verified_at,
+            # PFX-2.3: how the result was reached — a Pact verifier, or Apiome's comparison.
+            "kind": row.verification_kind or KIND_NATIVE,
             **_pending_fields(row),
             "_links": {
                 "self": {"href": f"{pair}/pact-version/{row.pact_sha}/verification-results/{row.verification_number}"}

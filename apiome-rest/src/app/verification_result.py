@@ -213,6 +213,9 @@ class VerificationResultRecord(BaseModel):
         wip: Whether the pact was fetched as a work-in-progress pact.
         report_id: The linked CTG-4.3 conformance report, if any.
         created_at: When it was published (the broker's ``verificationDate``).
+        kind: ``native`` (a Pact verifier published it) or ``bidirectional`` (Apiome compared the
+            pact with the provider version's contract, PFX-2.3).
+        comparison: For ``bidirectional``, the comparison payload; ``None`` otherwise.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -235,6 +238,8 @@ class VerificationResultRecord(BaseModel):
     wip: bool = False
     report_id: Optional[str] = None
     created_at: Optional[str] = None
+    kind: str = "native"
+    comparison: Optional[Dict[str, Any]] = None
 
 
 def _iso(value: Any) -> Optional[str]:
@@ -242,6 +247,13 @@ def _iso(value: Any) -> Optional[str]:
     if value is None:
         return None
     return value.isoformat() if hasattr(value, "isoformat") else str(value)
+
+
+def _json_object(value: Any) -> Optional[Dict[str, Any]]:
+    """A JSONB object column as a dict: psycopg2 returns it parsed, a stand-in may return text."""
+    if isinstance(value, str):
+        value = json.loads(value)
+    return value if isinstance(value, dict) else None
 
 
 def verification_result_from_row(row: Mapping[str, Any]) -> VerificationResultRecord:
@@ -278,4 +290,6 @@ def verification_result_from_row(row: Mapping[str, Any]) -> VerificationResultRe
         wip=bool(row.get("wip")),
         report_id=str(row["provider_verification_report_id"]) if row.get("provider_verification_report_id") else None,
         created_at=_iso(row.get("created_at")),
+        kind=str(row.get("kind") or "native"),
+        comparison=_json_object(row.get("comparison")),
     )

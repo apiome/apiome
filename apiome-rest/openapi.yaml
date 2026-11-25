@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.666.0
+  version: 1.667.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -29868,12 +29868,16 @@ paths:
         published reuses that pact version (`pactVersionSha`), so the provider has one
         thing to verify.
 
-        - **All or nothing.** If any contract is refused, nothing of the request is
-        stored.
+        - **All or nothing.** If any contract is refused, nothing of the request is stored.
 
         - **Safe to repeat.** Publishing the same pacts for the same version again changes
-        nothing. Publishing a *different* pact for a version that already has one is
-        `409`.
+        nothing. Publishing a *different* pact for a version that already has one is `409`.
+
+        - **Bi-directional comparison.** When a provider has published a provider contract,
+        each pact is compared with the contracts of its latest provider version, the head
+        of each provider branch and every provider version deployed or released. Each
+        comparison is stored as a verification result with `kind: bidirectional`; the
+        response lists them in `comparisons` and as notices.
 
 
         Pact specification 1.x to 4.x is accepted and stored as published. `merge` conflict
@@ -29932,8 +29936,8 @@ paths:
           description: '`pact-too-large`: the document or the request is over the size
             limit.'
         '422':
-          description: '`pact-invalid`: the document is not a pact. `detail.pointer`
-            is the JSON Pointer of the first problem in the document (for example `/interactions/2/request/method`)
+          description: '`pact-invalid`: the document is not a pact. `detail.pointer` is
+            the JSON Pointer of the first problem in the document (for example `/interactions/2/request/method`)
             and `detail.message` says what is wrong there.'
         '429':
           description: '`pact-publish-rate-limited`: over the workspace''s publish budget;
@@ -33509,15 +33513,13 @@ paths:
       tags:
       - pact-broker
       summary: Query the matrix
-      description: 'The matrix: which consumer versions were verified against which
-        provider versions, and the verdict on deploying the versions asked about.
-        This is the Pact Broker''s `GET /matrix`, and what `pact-broker can-i-deploy`
-        calls.
+      description: 'The matrix: which consumer versions were verified against which provider
+        versions, and the verdict on deploying the versions asked about. This is the Pact
+        Broker''s `GET /matrix`, and what `pact-broker can-i-deploy` calls.
 
 
-        - **Selectors** (`q[][pacticipant]` …) name the versions in question. One
-        selector with a destination asks *can I deploy this?*; two or more ask *do
-        these work together?*
+        - **Selectors** (`q[][pacticipant]` …) name the versions in question. One selector
+        with a destination asks *can I deploy this?*; two or more ask *do these work together?*
 
         - **Destination**: `environment` checks against every version currently deployed
         to or released in that environment; `tag` with `latest=true` against the latest
@@ -33526,23 +33528,23 @@ paths:
         The other pacticipants are worked out from the pacts.
 
         - **Verdict** (`summary.deployable`): `true` when every row that counts succeeded
-        (or nothing depends on the version); `false` when a verification failed or
-        a named version does not exist; `null` when a result is missing. A consumer
-        needs its providers to be there; a provider does not need its consumers.
+        (or nothing depends on the version); `false` when a verification failed or a named
+        version does not exist; `null` when a result is missing. A consumer needs its
+        providers to be there; a provider does not need its consumers.
 
         - **Reasons**: `summary.reason` and `notices` use the Pact Broker''s wording.
         Each notice has a `code` and each row a `reason` (`verified`, `verification-failed`,
-        `pact-pending`, `no-verification-result`); `no-pact` is the notice when the
-        environment requires a contract and the version has none.
+        `pact-pending`, `no-verification-result`); `no-pact` is the notice when the environment
+        requires a contract and the version has none.
 
-        - **Ignore**: rows of an `ignore[][pacticipant]` are returned with `ignored:
-        true` and do not count.
+        - **Ignore**: rows of an `ignore[][pacticipant]` are returned with `ignored: true`
+        and do not count.
 
         - **Retry while unknown**: a `null` verdict comes with `Retry-After`.
 
 
-        Always `200` when the query is valid — read `summary.deployable`, not the
-        status. Requires `pacts:view`.'
+        Always `200` when the query is valid — read `summary.deployable`, not the status.
+        Requires `pacts:view`.'
       operationId: read_matrix_v1_tenants__tenant_slug__pact_broker_matrix_get
       parameters:
       - name: tenant_slug
@@ -33564,8 +33566,8 @@ paths:
             description: Querythematrixauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -33581,8 +33583,8 @@ paths:
       - name: q[][pacticipant]
         in: query
         required: false
-        description: A pacticipant to put in the matrix. Repeat `q[][pacticipant]`
-          (each followed by its own `q[][version]`, `q[][latest]`, `q[][tag]`, `q[][branch]`,
+        description: A pacticipant to put in the matrix. Repeat `q[][pacticipant]` (each
+          followed by its own `q[][version]`, `q[][latest]`, `q[][tag]`, `q[][branch]`,
           `q[][environment]` or `q[][mainBranch]`) for several.
         schema:
           type: array
@@ -33628,8 +33630,8 @@ paths:
       - name: q[][environment]
         in: query
         required: false
-        description: Versions currently deployed to, or released and supported in,
-          this environment.
+        description: Versions currently deployed to, or released and supported in, this
+          environment.
         schema:
           type: array
           items:
@@ -33670,8 +33672,8 @@ paths:
       - name: environment
         in: query
         required: false
-        description: 'The destination: check against every version currently in this
-          environment (`can-i-deploy --to-environment`).'
+        description: 'The destination: check against every version currently in this environment
+          (`can-i-deploy --to-environment`).'
         schema:
           type: string
           description: Querythematrixenvironment schema.
@@ -33710,8 +33712,8 @@ paths:
       - name: success[]
         in: query
         required: false
-        description: 'Keep only rows with this result: `true`, `false`, or empty for
-          rows without a result.'
+        description: 'Keep only rows with this result: `true`, `false`, or empty for rows
+          without a result.'
         schema:
           type: array
           items:
@@ -33720,8 +33722,8 @@ paths:
       responses:
         '200':
           description: The verdict and the rows it was reached from. `summary.deployable`
-            is `true`, `false`, or `null` when a verification result is missing —
-            then `Retry-After` says when to ask again.
+            is `true`, `false`, or `null` when a verification result is missing — then
+            `Retry-After` says when to ask again.
           content:
             application/hal+json:
               schema:
@@ -33730,8 +33732,8 @@ paths:
                 summary:
                   deployable: false
                   reason: The verification for the pact between version 2.0.0 of Billing
-                    Service and the version of Ledger API currently in production
-                    (5.1.0) failed
+                    Service and the version of Ledger API currently in production (5.1.0)
+                    failed
                   success: 0
                   failed: 1
                   unknown: 0
@@ -33739,8 +33741,8 @@ paths:
                 - type: error
                   code: verification-failed
                   text: The verification for the pact between version 2.0.0 of Billing
-                    Service and the version of Ledger API currently in production
-                    (5.1.0) failed
+                    Service and the version of Ledger API currently in production (5.1.0)
+                    failed
                 matrix:
                 - consumer:
                     name: Billing Service
@@ -33757,19 +33759,19 @@ paths:
                   verificationResult:
                     success: false
                     verifiedAt: '2026-11-24T10:05:00+00:00'
+                    kind: native
                   reason:
                     code: verification-failed
                     text: verification failed
           headers:
             Retry-After:
-              description: Seconds to wait before asking again. Sent only while the
-                verdict is unknown.
+              description: Seconds to wait before asking again. Sent only while the verdict
+                is unknown.
               schema:
                 type: integer
         '400':
-          description: '`pact-matrix-invalid`: the query is malformed, or names a
-            pacticipant or an environment that does not exist. `detail.pointer` names
-            the parameter.'
+          description: '`pact-matrix-invalid`: the query is malformed, or names a pacticipant
+            or an environment that does not exist. `detail.pointer` names the parameter.'
         '422':
           description: Validation Error
           content:
@@ -33789,14 +33791,14 @@ paths:
         `pacticipant` and `version` name what is being deployed. `toEnvironment` names
         where: the version is checked against every version of its providers and consumers
         currently deployed to or released in that environment. `to` names a tag instead:
-        it is checked against the latest version of each with that tag. Give exactly
-        one of the two. `ignore` leaves a pacticipant out of the verdict.
+        it is checked against the latest version of each with that tag. Give exactly one
+        of the two. `ignore` leaves a pacticipant out of the verdict.
 
 
-        The answer is the matrix document of `GET …/matrix`: `summary.deployable`
-        is `true`, `false`, or `null` (a verification result is missing; `Retry-After`
-        says when to ask again). An environment marked `contractRequired` refuses
-        a version that has no pact at all (`no-pact`).
+        The answer is the matrix document of `GET …/matrix`: `summary.deployable` is `true`,
+        `false`, or `null` (a verification result is missing; `Retry-After` says when
+        to ask again). An environment marked `contractRequired` refuses a version that
+        has no pact at all (`no-pact`).
 
 
         Always `200` when the query is valid. Requires `pacts:view`.'
@@ -33821,8 +33823,8 @@ paths:
             description: Can Ideployauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -33852,8 +33854,7 @@ paths:
       - name: toEnvironment
         in: query
         required: false
-        description: The environment being deployed to. `environment` is accepted
-          too.
+        description: The environment being deployed to. `environment` is accepted too.
         schema:
           type: string
           description: Can Ideployto Environment schema.
@@ -33869,8 +33870,7 @@ paths:
         in: query
         required: false
         description: A pacticipant whose rows do not count towards the verdict. Repeat
-          for several; `ignore[][pacticipant]` with `ignore[][version]` ignores one
-          version.
+          for several; `ignore[][pacticipant]` with `ignore[][version]` ignores one version.
         schema:
           type: array
           items:
@@ -33879,8 +33879,8 @@ paths:
       responses:
         '200':
           description: The verdict and the rows it was reached from. `summary.deployable`
-            is `true`, `false`, or `null` when a verification result is missing —
-            then `Retry-After` says when to ask again.
+            is `true`, `false`, or `null` when a verification result is missing — then
+            `Retry-After` says when to ask again.
           content:
             application/hal+json:
               schema:
@@ -33889,8 +33889,8 @@ paths:
                 summary:
                   deployable: false
                   reason: The verification for the pact between version 2.0.0 of Billing
-                    Service and the version of Ledger API currently in production
-                    (5.1.0) failed
+                    Service and the version of Ledger API currently in production (5.1.0)
+                    failed
                   success: 0
                   failed: 1
                   unknown: 0
@@ -33898,8 +33898,8 @@ paths:
                 - type: error
                   code: verification-failed
                   text: The verification for the pact between version 2.0.0 of Billing
-                    Service and the version of Ledger API currently in production
-                    (5.1.0) failed
+                    Service and the version of Ledger API currently in production (5.1.0)
+                    failed
                 matrix:
                 - consumer:
                     name: Billing Service
@@ -33916,19 +33916,19 @@ paths:
                   verificationResult:
                     success: false
                     verifiedAt: '2026-11-24T10:05:00+00:00'
+                    kind: native
                   reason:
                     code: verification-failed
                     text: verification failed
           headers:
             Retry-After:
-              description: Seconds to wait before asking again. Sent only while the
-                verdict is unknown.
+              description: Seconds to wait before asking again. Sent only while the verdict
+                is unknown.
               schema:
                 type: integer
         '400':
-          description: '`pact-matrix-invalid`: the query is malformed, or names a
-            pacticipant or an environment that does not exist. `detail.pointer` names
-            the parameter.'
+          description: '`pact-matrix-invalid`: the query is malformed, or names a pacticipant
+            or an environment that does not exist. `detail.pointer` names the parameter.'
         '422':
           description: Validation Error
           content:
@@ -36313,33 +36313,40 @@ paths:
       - pact-broker
       summary: Publish a provider contract
       description: 'Register the provider''s OpenAPI document — its **provider contract**
-        — against a provider version, for bi-directional contract testing. Send the
-        document inline in `content` (base64; JSON or YAML, PactFlow''s shape) **or**
-        name an Apiome version in `apiomeVersion` (`ledger-api@1.4.0`) to render it
-        from the canonical model with the exporter `GET /v1/schema/…` uses (OpenAPI
-        3.1). With a provider bound to its Apiome project, `apiomeVersion` may be
-        just the version, and `latest` is the project''s newest.
+        — against a provider version, for bi-directional contract testing. Send the document
+        inline in `content` (base64; JSON or YAML, PactFlow''s shape) **or** name an Apiome
+        version in `apiomeVersion` (`ledger-api@1.4.0`) to render it from the canonical
+        model with the exporter `GET /v1/schema/…` uses (OpenAPI 3.1). With a provider
+        bound to its Apiome project, `apiomeVersion` may be just the version, and `latest`
+        is the project''s newest.
 
 
-        - **Only OpenAPI 3.0, 3.1 and 3.2.** The document must validate against its
-        version''s meta-schema. Swagger 2.0, AsyncAPI and anything else are `422 provider-contract-invalid`,
+        - **Only OpenAPI 3.0, 3.1 and 3.2.** The document must validate against its version''s
+        meta-schema. Swagger 2.0, AsyncAPI and anything else are `422 provider-contract-invalid`,
         with `detail.pointer` locating the problem.
 
-        - **The provider is registered on first use**, and the version is recorded
-        with its `branch`, `tags` and `buildUrl`, as `PUT …/pacticipants/{ref}/versions/{number}`
+        - **The provider is registered on first use**, and the version is recorded with
+        its `branch`, `tags` and `buildUrl`, as `PUT …/pacticipants/{ref}/versions/{number}`
         does.
 
-        - **Content is stored once.** The document is addressed by the SHA-256 of
-        its canonical JSON (`contentSha`), so JSON, YAML and a rendered copy of one
-        document are one contract.
+        - **Content is stored once.** The document is addressed by the SHA-256 of its
+        canonical JSON (`contentSha`), so JSON, YAML and a rendered copy of one document
+        are one contract.
 
-        - **Write-once.** `201` for a new contract, `200` when the same contract and
-        self-verification results are published again (nothing changes), `409` for
-        anything different.
+        - **Write-once.** `201` for a new contract, `200` when the same contract and self-verification
+        results are published again (nothing changes), `409` for anything different.
 
 
-        `verificationResults` are stored as sent, with the report''s SHA-256. Requires
-        `pacts:create`, and `versions:view` with `apiomeVersion`.'
+        `verificationResults` are stored as sent, with the report''s SHA-256.
+
+
+        **Bi-directional comparison.** After the contract is stored it is compared with
+        the pacts that need it — each consumer''s main-branch pact, the pacts deployed
+        or released, the latest pact of each consumer on the provider version''s branch,
+        and every pact compared before with a contract of that branch — and each comparison
+        is stored as a verification result with `kind: bidirectional`, which the matrix
+        and can-i-deploy read like a native one. `comparisons` in the response reports
+        each pact. Requires `pacts:create`, and `versions:view` with `apiomeVersion`.'
       operationId: publish_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__put
       parameters:
       - name: tenant_slug
@@ -36377,8 +36384,8 @@ paths:
             description: Publishaprovidercontractauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization:
-          Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -36393,30 +36400,34 @@ paths:
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
       responses:
         '200':
-          description: Successful response for publish a provider contract.
+          description: 'The same contract was published again: nothing changed. `comparisons`
+            reports the pacts compared with it, as for `201`.'
           content:
             application/hal+json:
               schema:
                 description: Response payload for publishaprovidercontractresponse200.
         '201':
-          description: The contract was published for this provider version.
+          description: 'The contract was published for this provider version. `comparisons`
+            reports the bi-directional comparisons the publish ran: the counts (`compared`,
+            `alreadyCompared`, `errors`, `skipped`) and one entry per pact, with its `status`,
+            `verdict` and `verificationNumber`.'
         '409':
-          description: '`provider-contract-conflict`: this provider version already
-            published a different contract (or the same one with different self-verification
-            results). Nothing was stored.'
+          description: '`provider-contract-conflict`: this provider version already published
+            a different contract (or the same one with different self-verification results).
+            Nothing was stored.'
         '413':
-          description: '`provider-contract-too-large`: the document or the request
-            is over the size limit.'
+          description: '`provider-contract-too-large`: the document or the request is
+            over the size limit.'
         '422':
           description: '`provider-contract-invalid`: the document is not OpenAPI 3.0,
-            3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the
-            document (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema
-            error). `provider-contract-request-invalid` / `provider-contract-unsupported`:
-            a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`:
+            3.1 or 3.2 — `detail.pointer` is the JSON Pointer of the problem in the document
+            (`/swagger` for Swagger 2.0, `/openapi`, or the first meta-schema error).
+            `provider-contract-request-invalid` / `provider-contract-unsupported`: a field
+            of the request (`detail.pointer` locates it). `provider-contract-source-not-found`:
             `apiomeVersion` names no project or version of this workspace.'
         '429':
-          description: '`pact-publish-rate-limited`: over the workspace''s publish
-            budget; see `Retry-After`.'
+          description: '`pact-publish-rate-limited`: over the workspace''s publish budget;
+            see `Retry-After`.'
       requestBody:
         required: true
         content:
@@ -36443,10 +36454,10 @@ paths:
                   example: example
                 apiomeVersion:
                   type: string
-                  description: '`<project>@<version>`: render the contract from an
-                    Apiome version instead of sending it. `<version>` alone uses the
-                    project the provider is bound to; `latest` is the project''s newest
-                    version. Send this or `content`.'
+                  description: '`<project>@<version>`: render the contract from an Apiome
+                    version instead of sending it. `<version>` alone uses the project
+                    the provider is bound to; `latest` is the project''s newest version.
+                    Send this or `content`.'
                   example: 1.0.0
                 branch:
                   type: string
@@ -36466,8 +36477,8 @@ paths:
                   type: object
                   required:
                   - success
-                  description: The provider's self-verification results (PFX-2.4),
-                    stored as sent.
+                  description: The provider's self-verification results (PFX-2.4), stored
+                    as sent.
                   properties:
                     success:
                       type: boolean

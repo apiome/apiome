@@ -1,0 +1,31 @@
+---
+slug: bidirectional-verdicts
+title: "Bi-directional verdicts in the matrix"
+description: "Pacts are now compared with provider contracts, and can-i-deploy reads the verdict."
+authors: [apiome]
+---
+
+Bi-directional contract testing now decides deployments. When a provider publishes its OpenAPI
+document as a [provider contract](/ship/pact-broker/bi-directional), Apiome compares each
+consumer pact that needs it with that document and stores the outcome as a verification result.
+[Can-i-deploy](/ship/pact-broker/can-i-deploy#bi-directional-results) and the matrix read it
+exactly like a result from a Pact verifier.
+
+{/* truncate */}
+
+- **It runs when either side publishes.** A new pact is compared with the contracts of the
+  provider's latest version, of each branch head and of every version deployed or released. A new
+  contract is compared with each consumer's main-branch pact, every pact deployed or released, the
+  pacts on the same branch, and the pacts that branch's previous contract was compared with.
+- **One verdict, two kinds.** A failing comparison stops `pact-broker can-i-deploy`, with a reason
+  that names the comparison. Each matrix row's `verificationResult.kind` reads `native` or
+  `bidirectional`, and the latest result of either kind decides.
+- **The comparison is kept.** Read the result to see every interaction's failures with their
+  JSON Pointers, the fidelity notes of a `partial` verdict, and a link to the contract it was
+  compared with.
+- **Each pair is compared once.** Republishing either side compares nothing again, and the publish
+  answer lists every comparison it ran, or why it did not.
+- **Pending stays with your verifier.** A successful comparison does not take a pact out of
+  pending; only a Pact verifier's success does.
+
+There is no screen for it. Use the CLI or the API.

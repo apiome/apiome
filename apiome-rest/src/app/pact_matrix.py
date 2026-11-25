@@ -47,6 +47,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import parse_qsl
 
+from .bidirectional_verification import KIND_BIDIRECTIONAL
 from .pact_publication import PactPublicationError
 
 __all__ = [
@@ -109,6 +110,12 @@ _ROW_REASON_TEXT = {
     REASON_FAILED: "verification failed",
     REASON_PENDING: "pact is pending",
     REASON_NO_RESULT: "no verification result",
+}
+
+#: The short text of a row whose result is a bi-directional comparison (PFX-2.3). Same codes.
+_BIDIRECTIONAL_REASON_TEXT = {
+    REASON_VERIFIED: "verified by bi-directional comparison",
+    REASON_FAILED: "bi-directional comparison failed",
 }
 
 _NESTED_KEY = re.compile(r"^(?P<name>[A-Za-z]+)\[(?P<index>\d*)\](?:\[(?P<key>[A-Za-z]+)\])?$")
@@ -621,6 +628,9 @@ class MatrixRow:
         verified_at: When the result was published (ISO 8601).
         pact_pending: Whether the verifier was told the pact was pending for that build.
         wip: Whether the pact was verified as a work-in-progress pact.
+        verification_kind: ``native`` (a Pact verifier published the result) or ``bidirectional``
+            (Apiome compared the pact with the provider contract, PFX-2.3); ``None`` without a
+            result. The verdict reads both kinds the same way.
     """
 
     consumer_id: str
@@ -644,6 +654,12 @@ class MatrixRow:
     verified_at: Optional[str] = None
     pact_pending: Optional[bool] = None
     wip: bool = False
+    verification_kind: Optional[str] = None
+
+    @property
+    def bidirectional(self) -> bool:
+        """Whether the row's result is a bi-directional comparison."""
+        return self.verification_kind == KIND_BIDIRECTIONAL
 
 
 @dataclass(frozen=True)
@@ -673,7 +689,8 @@ def row_reason(row: MatrixRow) -> Dict[str, str]:
     Returns:
         ``{"code", "text"}`` — ``verified``; ``pact-pending`` ("pact is pending": the result failed
         but the pact was pending for that provider build, so the build did not fail);
-        ``verification-failed``; or ``no-verification-result``.
+        ``verification-failed``; or ``no-verification-result``. A bi-directional result keeps the
+        code and says so in the text ("verified by bi-directional comparison").
     """
     if row.success is None:
         code = REASON_NO_RESULT
@@ -681,7 +698,8 @@ def row_reason(row: MatrixRow) -> Dict[str, str]:
         code = REASON_VERIFIED
     else:
         code = REASON_PENDING if row.pact_pending else REASON_FAILED
-    return {"code": code, "text": _ROW_REASON_TEXT[code]}
+    texts = _BIDIRECTIONAL_REASON_TEXT if row.bidirectional else {}
+    return {"code": code, "text": texts.get(code, _ROW_REASON_TEXT[code])}
 
 
 def _latest_of(rows: Sequence[MatrixRow]) -> MatrixRow:
@@ -763,6 +781,7 @@ def expand_unverified(rows: Sequence[MatrixRow], selectors: Sequence[ResolvedSel
                 verified_at=None,
                 pact_pending=None,
                 wip=False,
+                verification_kind=None,
             )
             for selector in several[provider_id]
             if selector.version_id not in verified
@@ -1047,11 +1066,15 @@ def deployment_verdict(result: MatrixResult) -> Verdict:
             Reason(
                 "error",
                 row_reason(row)["code"],
-                "The verification for the pact between "
+                (
+                    "The bi-directional comparison of the pact between "
+                    if row.bidirectional
+                    else "The verification for the pact between "
+                )
                 + between(
                     row.consumer_name, row.consumer_version_number, row.provider_name, row.provider_version_number
                 )
-                + " failed",
+                + (" with its provider contract failed" if row.bidirectional else " failed"),
             )
             for row in failed_rows
         ]

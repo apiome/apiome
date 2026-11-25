@@ -10,10 +10,10 @@ document** instead of replaying it against a running provider. That document, re
 a provider version, is the **provider contract**. Publish one from each provider build: upload the
 document, or name the Apiome version that describes the provider and let Apiome render it.
 
-This release stores provider contracts. The rules a pact is compared with one by are fixed and
-published in [Comparison rules](./comparison-rules.mdx). Running that comparison for you, and
-showing the verdict in the matrix and in [can-i-deploy](./can-i-deploy.mdx), is not available yet.
-There is no screen for provider contracts.
+Apiome compares every pact that needs it with the contract, by the rules in
+[Comparison rules](./comparison-rules.mdx), as soon as either side publishes. Each comparison is
+stored as a verification result, and the matrix and [can-i-deploy](./can-i-deploy.mdx) read it
+like one a Pact verifier published. There is no screen for provider contracts.
 
 ## Before you start
 
@@ -133,6 +133,75 @@ next to them. It does not read the report yet.
 | The same document with the same `verificationResults` | **`200`** — nothing changes. |
 | A different document, or different `verificationResults` | **`409 provider-contract-conflict`** — nothing is stored. Publish under a new provider version. |
 
+## What is compared when you publish
+
+The answer to a publish lists the comparisons it ran in `comparisons`:
+
+```json
+"comparisons": {
+  "compared": 1,
+  "alreadyCompared": 0,
+  "errors": 0,
+  "skipped": 0,
+  "results": [
+    {
+      "consumer": "Billing Service",
+      "consumerVersion": "2.0.0",
+      "provider": "Ledger API",
+      "providerVersion": "4f1e2d0",
+      "pactVersionSha": "9b2c…",
+      "status": "compared",
+      "verdict": "pass",
+      "verificationNumber": 1
+    }
+  ]
+}
+```
+
+A contract is compared with:
+
+1. each consumer's latest pact from its main branch (its latest pact, if it has none there);
+2. every pact of a consumer version currently deployed or released;
+3. the latest pact of each consumer on the provider version's branch;
+4. every pact that was compared with an earlier contract of that branch, so a new contract on
+   `main` re-runs what `main`'s previous contract was compared with.
+
+A consumer that publishes a pact later is compared then: its publish answer carries the same
+`comparisons`, and `pact-broker publish` prints one line per comparison.
+
+| `status` | Means |
+| --- | --- |
+| `compared` | The comparison ran and its result is stored. `verdict` is `pass`, `partial` or `fail`. |
+| `already-compared` | This pact was compared with this provider version before. Nothing new is stored. |
+| `error` | The result could not be stored. `reason` says why. Publish the contract again to retry. |
+| `skipped` | Over the limit of 50 pacts per contract publish (20 provider versions per pact). `reason` says so. |
+
+A pact and a contract that cannot be compared at all are stored as a **failed** result whose
+`comparison.error` gives the reason. The same inputs would fail the same way again.
+
+## Read the comparison
+
+Each comparison is a [verification result](./verification-results.mdx) of the pact, numbered with
+the others. Read it at `verificationNumber`, or follow the row's link in the matrix:
+
+```bash
+curl "$PACT_BROKER_BASE_URL/pacts/provider/ledger-api/consumer/billing-service/pact-version/<sha>/verification-results/1" \
+  -H "Authorization: Bearer $PACT_BROKER_TOKEN"
+```
+
+| Field | What it is |
+| --- | --- |
+| `kind` | `bidirectional`. A result a Pact verifier published reads `native`. |
+| `success` | `false` only for a `fail` verdict. A `partial` verdict passes. |
+| `providerApplicationVersion` | The provider version whose contract was compared. |
+| `testResults` | One entry per interaction, with its `verdict` and, when it failed, a `mismatches` entry per failure (`attribute` is the failure code). |
+| `verifiedBy.implementation` | `Apiome bi-directional comparison`. |
+| `comparison` | The whole comparison: `verdict`, `summary`, `providerContractSha`, and per interaction the checks run, the failures and warnings with their JSON Pointers, and the fidelity notes. |
+| `_links.pb:provider-contract` | The contract the pact was compared with. |
+
+How the matrix and can-i-deploy use these results is on
+[Can I deploy?](./can-i-deploy.mdx#bi-directional-results).
+
 ## Read a contract back
 
 `GET` the same URL. The answer describes the contract and carries the document in `content`:
@@ -192,6 +261,7 @@ member with the **Editor** role.
 ## Related
 
 - [Comparison rules](./comparison-rules.mdx) — how a pact is compared with a provider contract.
+- [Can I deploy?](./can-i-deploy.mdx#bi-directional-results) — how bi-directional results decide a deployment.
 - [Publish and fetch pacts](./publish-pacts.mdx) — the consumer's side.
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions and project bindings.
 - [Pact Broker compatibility](./compatibility.mdx) — the provider-contract route among the others.

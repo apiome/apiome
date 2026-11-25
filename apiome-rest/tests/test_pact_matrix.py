@@ -406,6 +406,42 @@ def test_fail() -> None:
     assert verdict.counts == {"success": 0, "failed": 1, "unknown": 0}
 
 
+def test_a_bidirectional_result_counts_exactly_as_a_native_one() -> None:
+    # PFX-2.3: same verdict, same codes and counts; the wording names the comparison.
+    passed = deployment_verdict(
+        _deploy_foo([_row("1", "4", True, verification_kind="bidirectional")], _bar_in_production("4"))
+    )
+    native = deployment_verdict(_deploy_foo([_row("1", "4", True)], _bar_in_production("4")))
+    assert (passed.deployable, passed.counts, passed.reasons) == (native.deployable, native.counts, native.reasons)
+
+    failed = deployment_verdict(
+        _deploy_foo([_row("1", "4", False, verification_kind="bidirectional")], _bar_in_production("4"))
+    )
+    assert failed.deployable is False
+    assert failed.reason == (
+        "The bi-directional comparison of the pact between version 1 of Foo and "
+        "the version of Bar currently in production (4) with its provider contract failed"
+    )
+    assert [(r.type, r.code) for r in failed.reasons] == [("error", "verification-failed")]
+    assert failed.counts == {"success": 0, "failed": 1, "unknown": 0}
+
+
+def test_a_bidirectional_row_says_how_it_was_verified() -> None:
+    assert row_reason(_row(verification_kind="bidirectional")) == {
+        "code": "verified",
+        "text": "verified by bi-directional comparison",
+    }
+    assert row_reason(_row(success=False, verification_kind="bidirectional")) == {
+        "code": "verification-failed",
+        "text": "bi-directional comparison failed",
+    }
+    assert row_reason(_row(provider_version=None, success=None, verification_kind=None))["code"] == (
+        "no-verification-result"
+    )
+    assert _row(verification_kind="bidirectional").bidirectional
+    assert not _row(verification_kind="native").bidirectional
+
+
 def test_unknown() -> None:
     verdict = deployment_verdict(_deploy_foo([_row("1", None)], _bar_in_production("4")))
     assert verdict.deployable is None and verdict.unknown

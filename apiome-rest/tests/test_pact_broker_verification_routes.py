@@ -136,6 +136,47 @@ def test_every_route_is_gated_on_pacts(method: str, path: str, action: str) -> N
     record.assert_not_called()
 
 
+# --- bi-directional results (PFX-2.3) ---------------------------------------------------------
+
+
+def test_a_bidirectional_result_reads_back_with_its_comparison_and_contract(allowed: MagicMock) -> None:
+    comparison = {"verdict": "fail", "success": False, "providerContractSha": "cd" * 32, "interactions": []}
+    result = _result(
+        kind="bidirectional",
+        comparison=comparison,
+        build_url=None,
+        verified_by={"implementation": "Apiome bi-directional comparison"},
+    )
+    with patch(f"{_ROUTES}.get_verification_result", return_value=result):
+        response = client.get(f"{_RESULTS}/1")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["kind"] == "bidirectional"
+    assert body["comparison"] == comparison
+    assert body["verifiedBy"] == {"implementation": "Apiome bi-directional comparison"}
+    assert body["_links"]["pb:provider-contract"] == {
+        "title": "Provider contract",
+        "name": "Ledger API 4f1e2d0",
+        "href": f"{_ROOT}/contracts/provider/ledger-api/version/4f1e2d0",
+    }
+
+
+def test_a_native_result_has_no_comparison(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.get_verification_result", return_value=_result()):
+        body = client.get(f"{_RESULTS}/1").json()
+    assert body["kind"] == "native"
+    assert "comparison" not in body and "pb:provider-contract" not in body["_links"]
+
+
+def test_a_verifier_cannot_publish_a_bidirectional_result(allowed: MagicMock) -> None:
+    # `kind` and `comparison` are Apiome's to write: a verifier's body cannot set them.
+    with patch(f"{_ROUTES}.publish_verification_result", return_value=_result()) as publish:
+        response = client.post(_RESULTS, json={**_BODY, "kind": "bidirectional", "comparison": {"verdict": "pass"}})
+    assert response.status_code == 201, response.text
+    assert not hasattr(publish.call_args.args[5], "kind")
+    assert response.json()["kind"] == "native"
+
+
 # --- publishing --------------------------------------------------------------------------------
 
 
@@ -159,6 +200,7 @@ def test_a_result_is_published_in_the_brokers_shape(allowed: MagicMock) -> None:
         "providerVersionBranch": "main",
         "testResults": _BODY["testResults"],
         "verifiedBy": {"implementation": "Pact-Rust", "version": "1.2.0"},
+        "kind": "native",
         "_links": {
             "self": {
                 "title": "Verification result",

@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.843.0] - 2026-11-24
+
+### Added
+- **Bi-directional verdicts in the matrix (PFX-2.3, #6927).** OpenAPI 1.667.0 (descriptions and
+  the matrix example only; no new route). Migration `V439`.
+  - `verification_result` gains `kind` (`native` | `bidirectional`, every existing row `native`),
+    `provider_contract_id` (referenced by `(id, provider_id)`, cascading) and `comparison` (JSONB).
+    A CHECK keeps a kind's columns together; a partial unique index compares each pact version with
+    each provider version once.
+  - The PFX-2.2 engine now runs when either side publishes (`app.bidirectional_store`). A pact
+    (`POST …/contracts/publish`, `PUT …/pacts/provider/{p}/consumer/{c}/version/{v}`) is compared
+    with the contracts of the provider's latest version, each branch head and every version deployed
+    or released. A provider contract (`PUT …/contracts/provider/{p}/version/{v}`) is compared with
+    the broker's default selectors' pacts, the latest pact of each consumer on the provider
+    version's branch, and every pact compared before with a contract of that branch (the re-run
+    when a new contract arrives for the branch). Limits: 20 provider versions per pact, 50 pacts per
+    contract; what is left out is reported as `skipped`.
+  - Each comparison is stored as a verification result numbered with the native ones:
+    `success` is `false` only for a `fail` verdict, `testResults` holds one Pact-shaped entry per
+    interaction (failures as `mismatches`), `verifiedBy.implementation` is
+    `Apiome bi-directional comparison`, and `comparison` holds the full payload with
+    `providerContractSha`. Inputs the engine refuses are stored as a failure with
+    `comparison.error` (`comparison-not-possible`); a pair that cannot be written is logged and
+    reported with status `error`. A comparison never fails the publish.
+  - The provider-contract publish answer and the bulk pact publish answer carry `comparisons`
+    (`compared`, `alreadyCompared`, `errors`, `skipped`, and one entry per pair with `status`,
+    `verdict` and `verificationNumber`); the bulk publish adds one notice per comparison
+    (`error` notices map to `error` logs).
+  - The matrix and can-i-deploy read bi-directional results exactly as native ones and mark each
+    row's `verificationResult.kind`. Codes are unchanged; the row reason reads
+    `verified by bi-directional comparison` / `bi-directional comparison failed`, and a failed
+    comparison's notice reads "The bi-directional comparison of the pact between … with its
+    provider contract failed". A verification result read back carries `kind`, and for a
+    bi-directional one `comparison` and a `pb:provider-contract` link.
+  - Only native successes take a pact out of pending (`pact_pending_store`).
+
 ## [1.842.0] - 2026-11-24
 
 ### Added

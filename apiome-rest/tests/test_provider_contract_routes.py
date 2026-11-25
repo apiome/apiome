@@ -26,6 +26,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
+from app.bidirectional_verification import ComparisonRun, RunEntry
 from app.config import settings
 from app.main import app
 from app.pact_broker_auth import validate_broker_authentication
@@ -98,8 +99,71 @@ def allowed() -> Iterator[MagicMock]:
 
 @pytest.fixture
 def store() -> Iterator[MagicMock]:
-    with patch(f"{_ROUTES}.publish_provider_contract", return_value=_published()) as publish:
+    """The store stood in; the comparisons a publish runs (PFX-2.3) are an empty run."""
+    with (
+        patch(f"{_ROUTES}.publish_provider_contract", return_value=_published()) as publish,
+        patch(f"{_ROUTES}.compare_provider_contract", return_value=ComparisonRun()),
+    ):
         yield publish
+
+
+class TestBidirectionalComparisons:
+    def test_a_publish_reports_the_comparisons_it_ran(self, allowed: MagicMock, store: MagicMock) -> None:
+        run = ComparisonRun(
+            [
+                RunEntry("Billing Service", "2.0.0", "Ledger API", "1.4.0", "ab" * 32, "compared", "pass", 1),
+                RunEntry("Web", "0.3.0", "Ledger API", "1.4.0", "ef" * 32, "skipped", reason="over the limit"),
+            ]
+        )
+        with patch(f"{_ROUTES}.compare_provider_contract", return_value=run) as compare:
+            response = client.put(_URL, json={"content": _b64(json.dumps(_oas31()).encode())})
+        assert response.status_code == 201, response.text
+        args, kwargs = compare.call_args
+        assert args[1:] == (_TENANT, "ledger-api", "1.4.0")
+        assert kwargs["actor"].user_id == "test-user-id"
+        comparisons = response.json()["comparisons"]
+        assert (comparisons["compared"], comparisons["skipped"]) == (1, 1)
+        assert comparisons["results"][0] == {
+            "consumer": "Billing Service",
+            "consumerVersion": "2.0.0",
+            "provider": "Ledger API",
+            "providerVersion": "1.4.0",
+            "pactVersionSha": "ab" * 32,
+            "status": "compared",
+            "verdict": "pass",
+            "verificationNumber": 1,
+        }
+
+    def test_a_republish_still_reports_comparisons(self, allowed: MagicMock) -> None:
+        with (
+            patch(f"{_ROUTES}.publish_provider_contract", return_value=_published(created=False)),
+            patch(f"{_ROUTES}.compare_provider_contract", return_value=ComparisonRun()) as compare,
+        ):
+            response = client.put(_URL, json={"content": _b64(json.dumps(_oas31()).encode())})
+        assert response.status_code == 200
+        compare.assert_called_once()
+        assert response.json()["comparisons"]["results"] == []
+
+    def test_a_refused_publish_compares_nothing(self) -> None:
+        with (
+            patch(f"{_ROUTES}.enforce_permission", side_effect=_deny("pacts")),
+            patch(f"{_ROUTES}.publish_provider_contract") as publish,
+            patch(f"{_ROUTES}.compare_provider_contract") as compare,
+        ):
+            response = client.put(_URL, json={"content": _b64(json.dumps(_oas31()).encode())})
+        assert response.status_code == 403
+        publish.assert_not_called()
+        compare.assert_not_called()
+
+    def test_an_invalid_contract_compares_nothing(self, allowed: MagicMock) -> None:
+        with (
+            patch(f"{_ROUTES}.publish_provider_contract") as publish,
+            patch(f"{_ROUTES}.compare_provider_contract") as compare,
+        ):
+            response = client.put(_URL, json={"content": _b64(b'{"swagger": "2.0"}')})
+        assert response.status_code == 422
+        publish.assert_not_called()
+        compare.assert_not_called()
 
 
 def _stored_contract(store: MagicMock) -> ProviderContractToStore:
