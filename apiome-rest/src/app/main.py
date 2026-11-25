@@ -60,6 +60,7 @@ from .compatibility_routes import router as compatibility_router
 from .compatibility_rules_routes import router as compatibility_rules_router
 from .config import settings
 from .consumer_contract_routes import router as consumer_contract_router
+from .consumer_pact_export_routes import router as consumer_pact_export_router
 from .consumer_binding_routes import router as consumer_binding_router
 from .consumption_index_routes import router as consumption_index_router
 from .contract_runner_routes import router as contract_runner_router
@@ -559,6 +560,7 @@ app.include_router(agent_invocation_export_router)
 app.include_router(verification_evidence_router)
 app.include_router(classified_diff_router)
 app.include_router(consumer_contract_router)
+app.include_router(consumer_pact_export_router)
 # Pact Broker registry (PFX-1.1, #6914): pacticipants, versions, branches and tags.
 app.include_router(pacticipant_router)
 # PFX-1.11 (#6924): selector-based cleanup of pacticipant versions (dry run first).

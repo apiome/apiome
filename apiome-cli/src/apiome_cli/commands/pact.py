@@ -1,4 +1,4 @@
-"""Pact Broker commands — ``apiome pact`` (PFX-2.4, #6928).
+"""Pact Broker commands — ``apiome pact`` (PFX-2.4, #6928; PFX-2.6, #6930).
 
 ``apiome pact publish-provider-contract <openapi-file> --provider … --provider-app-version …
 --evidence <report>`` publishes a provider contract for bi-directional contract testing, with the
@@ -6,6 +6,10 @@ evidence that the provider honours it. The flags follow PactFlow's ``pactflow
 publish-provider-contract`` where they overlap (``--provider-app-version``, ``--branch``, ``--tag``,
 ``--build-url``, ``--verification-exit-code``, ``--verifier``), so a pipeline moves over by
 changing the command name.
+
+``apiome pact export-consumer-contract`` / ``publish-consumer-contract --project … --consumer …``
+turn a consumer surface declared in the UI picker into a Pact v4 file (sample values from the
+specification's examples) and write it, or publish it to the workspace's Pact Broker.
 
 Authentication is the usual ``APIOME_API_KEY`` / config path; the workspace is the configured
 tenant.
@@ -17,10 +21,22 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
 
+import json
+
 import typer
 
 from apiome_cli.cli_context import insecure_from_context, settings_from_context
 from apiome_cli.client.http import RestClient
+from apiome_cli.client.pact_consumer_export import (
+    build_publish_body as build_consumer_publish_body,
+)
+from apiome_cli.client.pact_consumer_export import (
+    consumer_pact_path,
+    has_findings,
+)
+from apiome_cli.client.pact_consumer_export import (
+    summary_lines as consumer_summary_lines,
+)
 from apiome_cli.client.pact_provider_contract import (
     build_publish_body,
     build_verification_results,
@@ -37,7 +53,7 @@ from apiome_cli.output import emit_json, json_mode_from_context
 
 app = typer.Typer(
     name="pact",
-    help="Pact Broker: publish provider contracts for bi-directional contract testing.",
+    help="Pact Broker: publish provider contracts, and export consumer surfaces as Pact files.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -165,3 +181,120 @@ def publish_provider_contract(
         for line in summary_lines(payload, created=response.status_code == 201):
             typer.echo(line)
     raise typer.Exit(EXIT_ERROR if fail_on_unverified and not is_verified(payload) else EXIT_SUCCESS)
+
+
+def _write_pact(payload: dict, output: Optional[Path]) -> None:
+    """Write the generated Pact document to ``output``, or to stdout when it is ``None``."""
+    text = json.dumps(payload.get("pact") or {}, indent=2, sort_keys=False) + "\n"
+    if output is None:
+        typer.echo(text, nl=False)
+    else:
+        output.write_text(text, encoding="utf-8")
+
+
+def _report(ctx: typer.Context, payload: dict, *, to_stderr: bool) -> None:
+    """Print the response (JSON mode) or its summary lines."""
+    if json_mode_from_context(ctx):
+        emit_json(payload)
+        return
+    for line in consumer_summary_lines(payload):
+        typer.echo(line, err=to_stderr)
+
+
+@app.command("export-consumer-contract")
+def export_consumer_contract(
+    ctx: typer.Context,
+    project: str = typer.Option(..., "--project", "-p", help="The project the consumer consumes (slug or id)."),
+    consumer: str = typer.Option(..., "--consumer", "-c", help="The consumer (slug or id)."),
+    revision: Optional[int] = typer.Option(
+        None, "--revision", min=1, help="A contract revision; defaults to the current one."
+    ),
+    provider: Optional[str] = typer.Option(
+        None, "--provider", help="The provider pacticipant name; defaults to the project's bound pacticipant."
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", dir_okay=False, writable=True, help="Write the Pact file here instead of stdout."
+    ),
+    fail_on_findings: bool = typer.Option(
+        False, "--fail-on-findings", help="Exit 1 when any value was invented or anything was left out."
+    ),
+) -> None:
+    """Export a picker-declared consumer surface as a Pact v4 file (GET …/consumers/{c}/pact).
+
+    The pact carries one interaction per declared operation and response status, only the declared
+    fields, and the specification's examples as sample values. Prints the findings — every value
+    that had to be invented (placeholder) and everything left out (omitted), with a reason. Without
+    --output the Pact JSON goes to stdout and the summary to stderr. Exits 2 when the server refuses
+    (a contract imported from a Pact file, or one that yields no interaction), and 1 with
+    --fail-on-findings when there are findings.
+    """
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = RestClient(settings, verify=not insecure_from_context(ctx))
+    tenant_slug = require_tenant_slug(settings, client)
+    payload = client.get(
+        consumer_pact_path(tenant_slug, project, consumer, revision=revision, provider=provider)
+    ).json()
+
+    if json_mode_from_context(ctx):
+        if output is not None:
+            _write_pact(payload, output)
+        emit_json(payload)
+    else:
+        _write_pact(payload, output)
+        _report(ctx, payload, to_stderr=output is None)
+        if output is not None:
+            typer.echo(f"  wrote {output}")
+    raise typer.Exit(EXIT_ERROR if fail_on_findings and has_findings(payload) else EXIT_SUCCESS)
+
+
+@app.command("publish-consumer-contract")
+def publish_consumer_contract(
+    ctx: typer.Context,
+    project: str = typer.Option(..., "--project", "-p", help="The project the consumer consumes (slug or id)."),
+    consumer: str = typer.Option(..., "--consumer", "-c", help="The consumer (slug or id)."),
+    consumer_app_version: str = typer.Option(
+        ..., "--consumer-app-version", "-a", help="The consumer build's version (a commit SHA is best)."
+    ),
+    branch: Optional[str] = typer.Option(None, "--branch", help="The branch the build came from."),
+    tag: Optional[list[str]] = typer.Option(None, "--tag", "-t", help="Tag the consumer version (repeatable)."),
+    build_url: Optional[str] = typer.Option(None, "--build-url", help="http(s) URL of the CI build."),
+    revision: Optional[int] = typer.Option(
+        None, "--revision", min=1, help="A contract revision; defaults to the current one."
+    ),
+    provider: Optional[str] = typer.Option(
+        None, "--provider", help="The provider pacticipant name; defaults to the project's bound pacticipant."
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", dir_okay=False, writable=True, help="Also write the published Pact file here."
+    ),
+    fail_on_findings: bool = typer.Option(
+        False, "--fail-on-findings", help="Exit 1 when any value was invented or anything was left out."
+    ),
+) -> None:
+    """Publish a picker-declared consumer surface to the Pact Broker (POST …/consumers/{c}/pact/publish).
+
+    Generates the same Pact v4 file as export-consumer-contract and publishes it for the consumer
+    version, as `pact-broker publish` would: branch, tags and build URL are recorded and the
+    bi-directional comparisons run. Prints the findings and the broker's notices. Exits 2 when the
+    server refuses (409 when that version already published a different pact), and 1 with
+    --fail-on-findings when there are findings.
+    """
+    body = build_consumer_publish_body(
+        consumer_app_version=consumer_app_version,
+        branch=branch,
+        tags=tag,
+        build_url=build_url,
+        revision=revision,
+        provider=provider,
+    )
+    settings = settings_from_context(ctx)
+    require_api_key(settings)
+    client = RestClient(settings, verify=not insecure_from_context(ctx))
+    tenant_slug = require_tenant_slug(settings, client)
+    payload = client.post(consumer_pact_path(tenant_slug, project, consumer, publish=True), json=body).json()
+
+    if output is not None:
+        _write_pact(payload, output)
+    _report(ctx, payload, to_stderr=False)
+    raise typer.Exit(EXIT_ERROR if fail_on_findings and has_findings(payload) else EXIT_SUCCESS)

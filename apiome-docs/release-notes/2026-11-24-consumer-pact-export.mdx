@@ -1,0 +1,34 @@
+---
+slug: consumer-pact-export
+title: "Pact export from a declared consumer surface"
+description: "Consumers declared in the picker can now export and publish a Pact v4 file."
+authors: [apiome]
+---
+
+A consumer you registered by picking operations and fields has no contract test suite, and so no
+pact. Apiome now writes one for it: a **Pact v4 file** generated from what it declared, with the
+specification's own examples as the sample values. Publish it and the consumer takes part in the
+matrix, can-i-deploy and bi-directional comparisons. See
+[Consumers without a Pact file](/ship/pact-broker/bi-directional#consumers-without-a-pact-file).
+
+{/* truncate */}
+
+- **Export.** `apiome pact export-consumer-contract --project pets --consumer web-app -o pact.json`
+  (or `GET …/projects/{project}/consumers/{consumer}/pact`) writes one interaction per declared
+  operation and response status, carrying only the declared fields. Response bodies are matched
+  by type, so the provider must return the same shape, not the example values.
+- **Publish.** `apiome pact publish-consumer-contract … --consumer-app-version "$GIT_COMMIT"`
+  (or `POST …/consumers/{consumer}/pact/publish`) publishes it to the workspace's Pact Broker with
+  the branch, tags and build URL, and runs the bi-directional comparisons.
+- **Nothing dropped silently.** Every value that had to be invented (`placeholder`: no example, a
+  `2XX` range) and everything that could not be written (`omitted`: a `default` response, a non-JSON
+  body, a field the specification no longer has) is listed with its reason.
+  `--fail-on-findings` turns them into a failing CI step.
+- **The right names.** The pact names the pacticipants bound to the consumer and the project, so
+  it lands on the applications you already have.
+- **Pact v4 bodies are read correctly on import.** Importing a v4 Pact file into a consumer
+  contract now reads each body out of its `content` wrapper, so its fields are declared instead of
+  being reported as unresolved `content` and `contentType` fields.
+
+Export needs `consumer_contracts:view` and `pacts:view`; publishing needs `pacts:create`. Only a
+picker-declared contract is exported: one imported from a Pact file already has its pact.

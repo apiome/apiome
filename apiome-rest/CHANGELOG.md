@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.846.0] - 2026-11-24
+
+### Added
+- **Pact export from a declared consumer surface (PFX-2.6, #6930).** OpenAPI 1.670.0 (two new
+  paths). No migration.
+  - `app.consumer_pact_export` (pure) turns a picker-declared (`manual`) consumer contract revision
+    into a Pact v4 document: one `Synchronous/HTTP` interaction per declared operation and response
+    status, only the declared fields, sample values from the specification's examples (media-type
+    `example` / `examples`, then the schema's `example`, `examples`, `default`, `const`, first
+    `enum`, then an enclosing object's; parameters read their own first), the first server URL's
+    base path, and a cascading `type` matcher at `$` on every response body. Deterministic: the
+    same revision gives the same pact (one `pact_version` however often it is published).
+  - Nothing dropped: `findings` lists every `placeholder` (`no-example`, `status-range`,
+    `complex-parameter-value`) and every `omitted` item (`contract-unresolved`,
+    `operation-not-found`, `field-not-found`, `parameter-not-declared`, `status-default`,
+    `status-not-numeric`, `no-response-declared`, `media-type-not-json`, `media-type-conflict`).
+  - `GET /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/pact?revision=&provider=` —
+    the pact with its findings (`consumer_contracts:view` + `pacts:view`).
+  - `POST …/consumers/{consumer}/pact/publish` — generate and publish for `consumer_version` with
+    `branch`, `tags`, `build_url`, exactly as `contracts/publish` does (webhooks, bi-directional
+    comparisons, publish rate limit); the broker's publish result is returned in `publish`
+    (`consumer_contracts:view` + `pacts:create`).
+  - The pact names the pacticipant bound to the consumer (else the consumer's handle) and the one
+    bound to the project (else the project's handle, or `provider`); several bound providers is
+    `409 consumer-pact-export-provider-ambiguous`. A `pact` or `agent` revision is
+    `422 consumer-pact-export-unsupported-source`, one without a specification version
+    `422 consumer-pact-export-no-version`, one that yields no interaction
+    `422 consumer-pact-export-empty` with its findings. Every read is tenant-scoped.
+
+### Fixed
+- **Pact v4 bodies on consumer-contract import (CTG-4.1).** `POST …/consumer-pact-imports` read a
+  v4 body object (`{"contentType", "encoded", "content"}`) as the body, so its fields came back as
+  unresolved `content` / `contentType`. The body is now read out of the wrapper (JSON text and
+  base64 content are decoded); v1–v3 bodies are read as before.
+
 ## [1.845.0] - 2026-11-24
 
 ### Added

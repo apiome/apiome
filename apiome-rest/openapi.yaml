@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.669.0
+  version: 1.670.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -28116,6 +28116,248 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for importa pactfileintoaconsumercontractresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/pact:
+    get:
+      tags:
+      - consumer-contracts
+      summary: Export a consumer's declared surface as a Pact v4 file
+      description: 'Generate a Pact v4 document from a consumer contract revision declared
+        through the picker.
+
+
+        Each declared operation becomes one `Synchronous/HTTP` interaction per response
+        status the consumer reads, carrying only the declared fields. Sample values
+        are the specification''s own examples (media-type `example` / `examples`, then
+        the schema''s `example`, `examples`, `default`, `const` or first `enum` value,
+        then a parameter''s `example`). Response bodies carry a cascading `type` matcher
+        at `$`, so the provider must return the same shape, not the same values.
+
+
+        **Nothing is dropped silently.** `findings` lists every value that had to be
+        invented (`placeholder`, e.g. `no-example`, `status-range`) and everything that
+        could not be written (`omitted`, e.g. `field-not-found`, `status-default`, `media-type-not-json`,
+        `contract-unresolved`).
+
+
+        `consumer.name` is the pacticipant bound to this consumer, else the consumer''s
+        handle. `provider.name` is `provider` when given, else the one pacticipant bound
+        to the project, else the project''s handle; several bound pacticipants without
+        `provider` is `409 consumer-pact-export-provider-ambiguous`.
+
+
+        Only a picker-declared (`manual`) revision is exported: a revision from a Pact
+        file or an agent is `422 consumer-pact-export-unsupported-source`, and a revision
+        that yields no interaction is `422 consumer-pact-export-empty` with its findings.
+
+
+        Requires `consumer_contracts:view` and `pacts:view`.'
+      operationId: export_consumer_pact_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__pact_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: consumer_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Ref
+          description: Consumer Ref schema.
+        description: Path parameter identifying the consumer ref segment.
+      - name: revision
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            minimum: 1
+            description: Exportaconsumersdeclaredsurfaceasa Pactv4revision schema.
+          - type: 'null'
+            description: Exportaconsumersdeclaredsurfaceasa Pactv4revision schema.
+          description: A contract revision; defaults to the current one.
+          title: Revision
+        description: A contract revision; defaults to the current one.
+      - name: provider
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Exportaconsumersdeclaredsurfaceasa Pactv4provider schema.
+          - type: 'null'
+            description: Exportaconsumersdeclaredsurfaceasa Pactv4provider schema.
+          description: The provider pacticipant name.
+          title: Provider
+        description: The provider pacticipant name.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Exportaconsumersdeclaredsurfaceasa Pactv4authorization schema.
+          - type: 'null'
+            description: Exportaconsumersdeclaredsurfaceasa Pactv4authorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Exportaconsumersdeclaredsurfaceasa Pactv4 Xapikey schema.
+          - type: 'null'
+            description: Exportaconsumersdeclaredsurfaceasa Pactv4 Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for export a consumer's declared surface
+            as a pact v4 file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactExportResponse'
+                description: Response payload for exportaconsumersdeclaredsurfaceasa
+                  pactv4response200.
+        '409':
+          description: Several pacticipants are bound to the project.
+        '422':
+          description: Not exportable.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/pact/publish:
+    post:
+      tags:
+      - consumer-contracts
+      summary: Publish a consumer's declared surface to the Pact Broker
+      description: 'Generate the Pact v4 document of a picker-declared contract revision
+        (as `GET …/pact` does) and publish it for a consumer version, exactly as `POST
+        …/pact-broker/contracts/publish` would: the consumer and provider are registered
+        as pacticipants on first use, the version is recorded with its branch and tags,
+        identical content is stored once, a different pact for a version that already
+        has one is `409 pact-content-conflict`, and bi-directional comparisons run against
+        the provider''s contracts. The workspace''s publish rate limit applies.
+
+
+        Each declared operation becomes one `Synchronous/HTTP` interaction per response
+        status the consumer reads, carrying only the declared fields. Sample values
+        are the specification''s own examples (media-type `example` / `examples`, then
+        the schema''s `example`, `examples`, `default`, `const` or first `enum` value,
+        then a parameter''s `example`). Response bodies carry a cascading `type` matcher
+        at `$`, so the provider must return the same shape, not the same values.
+
+
+        **Nothing is dropped silently.** `findings` lists every value that had to be
+        invented (`placeholder`, e.g. `no-example`, `status-range`) and everything that
+        could not be written (`omitted`, e.g. `field-not-found`, `status-default`, `media-type-not-json`,
+        `contract-unresolved`).
+
+
+        `consumer.name` is the pacticipant bound to this consumer, else the consumer''s
+        handle. `provider.name` is `provider` when given, else the one pacticipant bound
+        to the project, else the project''s handle; several bound pacticipants without
+        `provider` is `409 consumer-pact-export-provider-ambiguous`.
+
+
+        Only a picker-declared (`manual`) revision is exported: a revision from a Pact
+        file or an agent is `422 consumer-pact-export-unsupported-source`, and a revision
+        that yields no interaction is `422 consumer-pact-export-empty` with its findings.
+
+
+        Requires `consumer_contracts:view` and `pacts:create`.'
+      operationId: publish_consumer_pact_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__pact_publish_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: consumer_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer Ref
+          description: Consumer Ref schema.
+        description: Path parameter identifying the consumer ref segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaconsumersdeclaredsurfacetothe Pacauthorization schema.
+          - type: 'null'
+            description: Publishaconsumersdeclaredsurfacetothe Pacauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Publishaconsumersdeclaredsurfacetothe Pac Xapikey schema.
+          - type: 'null'
+            description: Publishaconsumersdeclaredsurfacetothe Pac Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PactExportPublishRequest'
+              description: Request body for publishaconsumersdeclaredsurfacetothe pacrequest.
+        description: Request body for publish a consumer's declared surface to the pact
+          broker.
+      responses:
+        '200':
+          description: Successful response for publish a consumer's declared surface
+            to the pact broker.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactExportPublishResponse'
+                description: Response payload for publishaconsumersdeclaredsurfacetothe
+                  pacresponse200.
+        '409':
+          description: Ambiguous provider, or changed content for a published version.
+        '422':
+          description: Not exportable.
+        '429':
+          description: Over the publish budget.
   /v1/tenants/{tenant_slug}/pacticipants:
     get:
       tags:
@@ -137351,6 +137593,80 @@ components:
         construct
 
         classes vs the target''s capability profile (see :func:`classify_tier`).'
+    ExportFinding:
+      properties:
+        outcome:
+          type: string
+          title: Outcome
+          description: placeholder | omitted.
+          example: example
+        reason:
+          type: string
+          title: Reason
+          description: 'One of: no-example, status-range, complex-parameter-value, contract-unresolved,
+            operation-not-found, field-not-found, parameter-not-declared, status-default,
+            status-not-numeric, no-response-declared, media-type-not-json, media-type-conflict.'
+          example: example
+        message:
+          type: string
+          title: Message
+          description: What happened.
+          example: Example validation message.
+        method:
+          anyOf:
+          - type: string
+            description: Export Finding schema.
+          - type: 'null'
+            description: Export Finding schema.
+          title: Method
+          description: Operation method, upper case.
+        path:
+          anyOf:
+          - type: string
+            description: Export Finding schema.
+          - type: 'null'
+            description: Export Finding schema.
+          title: Path
+          description: Operation path template.
+        status:
+          anyOf:
+          - type: string
+            description: Export Finding schema.
+          - type: 'null'
+            description: Export Finding schema.
+          title: Status
+          description: Response status involved.
+        location:
+          anyOf:
+          - type: string
+            description: Export Finding schema.
+          - type: 'null'
+            description: Export Finding schema.
+          title: Location
+          description: response | request | parameter.
+        field:
+          anyOf:
+          - type: string
+            description: Export Finding schema.
+          - type: 'null'
+            description: Export Finding schema.
+          title: Field
+          description: Field data path or parameter name.
+      additionalProperties: false
+      type: object
+      required:
+      - outcome
+      - reason
+      - message
+      title: ExportFinding
+      description: "One place the generated pact is weaker than, or different from, the\
+        \ declared surface.\n\nAttributes:\n    outcome: ``placeholder`` (a value was\
+        \ invented) or ``omitted`` (nothing was written).\n    reason: One of :data:`EXPORT_REASONS`.\n\
+        \    message: What happened, for a person.\n    method: The operation's method,\
+        \ upper case, when the finding is about one.\n    path: The operation's path template.\n\
+        \    status: The response status involved, when there is one.\n    location: ``response``,\
+        \ ``request`` or ``parameter``, for a field-level finding.\n    field: The field's\
+        \ dotted data path or parameter name."
     ExportGitDeliveryRunListResponse:
       properties:
         runs:
@@ -167865,6 +168181,243 @@ components:
       title: OwnershipPolicyInput
       description: 'A policy change. Omitted fields are left alone; ``unowned_findings_team:
         null`` clears it.'
+    PactExportPublishRequest:
+      properties:
+        consumer_version:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Consumer Version
+          description: The consumer build's version.
+          example: 1.0.0
+        branch:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Request body for pact export publish.
+          - type: 'null'
+            description: Request body for pact export publish.
+          title: Branch
+          description: The branch it was built from.
+        tags:
+          items:
+            type: string
+          type: array
+          maxItems: 50
+          title: Tags
+          description: Tags for the consumer version.
+        build_url:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            description: Request body for pact export publish.
+          - type: 'null'
+            description: Request body for pact export publish.
+          title: Build Url
+          description: http(s) URL of the CI build.
+        revision:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+            description: Request body for pact export publish.
+          - type: 'null'
+            description: Request body for pact export publish.
+          title: Revision
+          description: A contract revision; defaults to the current one.
+        provider:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Request body for pact export publish.
+          - type: 'null'
+            description: Request body for pact export publish.
+          title: Provider
+          description: The provider pacticipant name; see the export endpoint.
+      additionalProperties: false
+      type: object
+      required:
+      - consumer_version
+      title: PactExportPublishRequest
+      description: Publish the generated pact for one consumer version.
+    PactExportPublishResponse:
+      properties:
+        consumer_name:
+          type: string
+          title: Consumer Name
+          description: '`consumer.name` in the pact (the pacticipant it publishes as).'
+          example: Example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: '`provider.name` in the pact.'
+          example: Example
+        consumer_pacticipant_bound:
+          type: boolean
+          title: Consumer Pacticipant Bound
+          description: Whether the consumer name is that of a pacticipant bound to this
+            consumer.
+          example: false
+        provider_pacticipant_bound:
+          type: boolean
+          title: Provider Pacticipant Bound
+          description: Whether the provider name is that of the pacticipant bound to this
+            project.
+          example: false
+        revision:
+          type: integer
+          title: Revision
+          description: The contract revision the pact was generated from.
+          example: 1
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: The specification revision the examples were read from.
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Response payload for pact export publish.
+          - type: 'null'
+            description: Response payload for pact export publish.
+          title: Version Label
+          description: That revision's label.
+        interaction_count:
+          type: integer
+          title: Interaction Count
+          description: How many interactions the pact carries.
+          example: 1
+        placeholder_count:
+          type: integer
+          title: Placeholder Count
+          description: How many values were invented because no example exists.
+          example: 1
+        omitted_count:
+          type: integer
+          title: Omitted Count
+          description: How many declared items could not be written at all.
+          example: 1
+        findings:
+          items:
+            $ref: '#/components/schemas/ExportFinding'
+          type: array
+          title: Findings
+          description: Every placeholder and omission, with a stable reason code. Never
+            silently empty.
+          maxItems: 1000
+        pact:
+          additionalProperties: true
+          type: object
+          title: Pact
+          description: The Pact v4 document.
+        publish:
+          additionalProperties: true
+          type: object
+          title: Publish
+          description: 'The Pact Broker publish result, exactly as `POST …/pact-broker/contracts/publish`
+            returns it: `notices`, the embedded pacticipant and version, `pb:contracts`
+            and, when the provider has a provider contract, `comparisons`.'
+      additionalProperties: false
+      type: object
+      required:
+      - consumer_name
+      - provider_name
+      - consumer_pacticipant_bound
+      - provider_pacticipant_bound
+      - revision
+      - version_record_id
+      - interaction_count
+      - placeholder_count
+      - omitted_count
+      - pact
+      - publish
+      title: PactExportPublishResponse
+      description: The generated pact, plus what the broker stored and the comparisons
+        it ran.
+    PactExportResponse:
+      properties:
+        consumer_name:
+          type: string
+          title: Consumer Name
+          description: '`consumer.name` in the pact (the pacticipant it publishes as).'
+          example: Example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: '`provider.name` in the pact.'
+          example: Example
+        consumer_pacticipant_bound:
+          type: boolean
+          title: Consumer Pacticipant Bound
+          description: Whether the consumer name is that of a pacticipant bound to this
+            consumer.
+          example: false
+        provider_pacticipant_bound:
+          type: boolean
+          title: Provider Pacticipant Bound
+          description: Whether the provider name is that of the pacticipant bound to this
+            project.
+          example: false
+        revision:
+          type: integer
+          title: Revision
+          description: The contract revision the pact was generated from.
+          example: 1
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: The specification revision the examples were read from.
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Response payload for pact export.
+          - type: 'null'
+            description: Response payload for pact export.
+          title: Version Label
+          description: That revision's label.
+        interaction_count:
+          type: integer
+          title: Interaction Count
+          description: How many interactions the pact carries.
+          example: 1
+        placeholder_count:
+          type: integer
+          title: Placeholder Count
+          description: How many values were invented because no example exists.
+          example: 1
+        omitted_count:
+          type: integer
+          title: Omitted Count
+          description: How many declared items could not be written at all.
+          example: 1
+        findings:
+          items:
+            $ref: '#/components/schemas/ExportFinding'
+          type: array
+          title: Findings
+          description: Every placeholder and omission, with a stable reason code. Never
+            silently empty.
+          maxItems: 1000
+        pact:
+          additionalProperties: true
+          type: object
+          title: Pact
+          description: The Pact v4 document.
+      additionalProperties: false
+      type: object
+      required:
+      - consumer_name
+      - provider_name
+      - consumer_pacticipant_bound
+      - provider_pacticipant_bound
+      - revision
+      - version_record_id
+      - interaction_count
+      - placeholder_count
+      - omitted_count
+      - pact
+      title: PactExportResponse
+      description: A generated pact and what it could not say.
     PactImportRequest:
       properties:
         pact:

@@ -1,6 +1,6 @@
 ---
 title: "Consumer contracts"
-description: "REST endpoints tagged consumer-contracts: 18 operations."
+description: "REST endpoints tagged consumer-contracts: 20 operations."
 sidebar_position: 29
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.669.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.670.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `consumer-contracts` · 18 operations
+Tag: `consumer-contracts` · 20 operations
 
 ## `POST /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-pact-imports` {#import-pact-contract-v1-tenants-tenant-slug-projects-project-ref-consumer-pact-imports-post}
 
@@ -557,6 +557,87 @@ Operation id: `list_contract_revisions_v1_tenants__tenant_slug__projects__projec
 | 200 | Successful response for list a consumer's contract history. | `application/json` [`ContractRevisionsResponse`](#schema-contractrevisionsresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/pact` {#export-consumer-pact-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-pact-get}
+
+**Export a consumer's declared surface as a Pact v4 file**
+
+Generate a Pact v4 document from a consumer contract revision declared through the picker.
+
+Each declared operation becomes one `Synchronous/HTTP` interaction per response status the consumer reads, carrying only the declared fields. Sample values are the specification's own examples (media-type `example` / `examples`, then the schema's `example`, `examples`, `default`, `const` or first `enum` value, then a parameter's `example`). Response bodies carry a cascading `type` matcher at `$`, so the provider must return the same shape, not the same values.
+
+**Nothing is dropped silently.** `findings` lists every value that had to be invented (`placeholder`, e.g. `no-example`, `status-range`) and everything that could not be written (`omitted`, e.g. `field-not-found`, `status-default`, `media-type-not-json`, `contract-unresolved`).
+
+`consumer.name` is the pacticipant bound to this consumer, else the consumer's handle. `provider.name` is `provider` when given, else the one pacticipant bound to the project, else the project's handle; several bound pacticipants without `provider` is `409 consumer-pact-export-provider-ambiguous`.
+
+Only a picker-declared (`manual`) revision is exported: a revision from a Pact file or an agent is `422 consumer-pact-export-unsupported-source`, and a revision that yields no interaction is `422 consumer-pact-export-empty` with its findings.
+
+Requires `consumer_contracts:view` and `pacts:view`.
+
+Operation id: `export_consumer_pact_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__pact_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `consumer_ref` | path | string | yes | Path parameter identifying the consumer ref segment. |
+| `revision` | query | integer or null | no | A contract revision; defaults to the current one. |
+| `provider` | query | string or null | no | The provider pacticipant name. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for export a consumer's declared surface as a pact v4 file. | `application/json` [`PactExportResponse`](#schema-pactexportresponse) |
+| 409 | Several pacticipants are bound to the project. | — |
+| 422 | Not exportable. | — |
+
+## `POST /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/pact/publish` {#publish-consumer-pact-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-pact-publish-post}
+
+**Publish a consumer's declared surface to the Pact Broker**
+
+Generate the Pact v4 document of a picker-declared contract revision (as `GET …/pact` does) and publish it for a consumer version, exactly as `POST …/pact-broker/contracts/publish` would: the consumer and provider are registered as pacticipants on first use, the version is recorded with its branch and tags, identical content is stored once, a different pact for a version that already has one is `409 pact-content-conflict`, and bi-directional comparisons run against the provider's contracts. The workspace's publish rate limit applies.
+
+Each declared operation becomes one `Synchronous/HTTP` interaction per response status the consumer reads, carrying only the declared fields. Sample values are the specification's own examples (media-type `example` / `examples`, then the schema's `example`, `examples`, `default`, `const` or first `enum` value, then a parameter's `example`). Response bodies carry a cascading `type` matcher at `$`, so the provider must return the same shape, not the same values.
+
+**Nothing is dropped silently.** `findings` lists every value that had to be invented (`placeholder`, e.g. `no-example`, `status-range`) and everything that could not be written (`omitted`, e.g. `field-not-found`, `status-default`, `media-type-not-json`, `contract-unresolved`).
+
+`consumer.name` is the pacticipant bound to this consumer, else the consumer's handle. `provider.name` is `provider` when given, else the one pacticipant bound to the project, else the project's handle; several bound pacticipants without `provider` is `409 consumer-pact-export-provider-ambiguous`.
+
+Only a picker-declared (`manual`) revision is exported: a revision from a Pact file or an agent is `422 consumer-pact-export-unsupported-source`, and a revision that yields no interaction is `422 consumer-pact-export-empty` with its findings.
+
+Requires `consumer_contracts:view` and `pacts:create`.
+
+Operation id: `publish_consumer_pact_v1_tenants__tenant_slug__projects__project_ref__consumers__consumer_ref__pact_publish_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `consumer_ref` | path | string | yes | Path parameter identifying the consumer ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for publish a consumer's declared surface to the pact broker.
+
+- `application/json` — [`PactExportPublishRequest`](#schema-pactexportpublishrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for publish a consumer's declared surface to the pact broker. | `application/json` [`PactExportPublishResponse`](#schema-pactexportpublishresponse) |
+| 409 | Ambiguous provider, or changed content for a published version. | — |
+| 422 | Not exportable. | — |
+| 429 | Over the publish budget. | — |
+
 ## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/runtime` {#read-consumer-runtime-v1-tenants-tenant-slug-projects-project-ref-consumers-consumer-ref-runtime-get}
 
 **Compare a consumer's contract with its observed traffic**
@@ -876,6 +957,58 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `PactExportPublishRequest` {#schema-pactexportpublishrequest}
+
+Publish the generated pact for one consumer version.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer_version` | string | yes | The consumer build's version. |
+| `branch` | string or null | no | The branch it was built from. |
+| `tags` | array of string | no | Tags for the consumer version. |
+| `build_url` | string or null | no | http(s) URL of the CI build. |
+| `revision` | integer or null | no | A contract revision; defaults to the current one. |
+| `provider` | string or null | no | The provider pacticipant name; see the export endpoint. |
+
+### `PactExportPublishResponse` {#schema-pactexportpublishresponse}
+
+The generated pact, plus what the broker stored and the comparisons it ran.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer_name` | string | yes | `consumer.name` in the pact (the pacticipant it publishes as). |
+| `provider_name` | string | yes | `provider.name` in the pact. |
+| `consumer_pacticipant_bound` | boolean | yes | Whether the consumer name is that of a pacticipant bound to this consumer. |
+| `provider_pacticipant_bound` | boolean | yes | Whether the provider name is that of the pacticipant bound to this project. |
+| `revision` | integer | yes | The contract revision the pact was generated from. |
+| `version_record_id` | string | yes | The specification revision the examples were read from. |
+| `version_label` | string or null | no | That revision's label. |
+| `interaction_count` | integer | yes | How many interactions the pact carries. |
+| `placeholder_count` | integer | yes | How many values were invented because no example exists. |
+| `omitted_count` | integer | yes | How many declared items could not be written at all. |
+| `findings` | array of `ExportFinding` | no | Every placeholder and omission, with a stable reason code. Never silently empty. |
+| `pact` | object | yes | The Pact v4 document. |
+| `publish` | object | yes | The Pact Broker publish result, exactly as `POST …/pact-broker/contracts/publish` returns it: `notices`, the embedded pacticipant and version, `pb:contracts` and, when the provider has a provider contract, `comparisons`. |
+
+### `PactExportResponse` {#schema-pactexportresponse}
+
+A generated pact and what it could not say.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer_name` | string | yes | `consumer.name` in the pact (the pacticipant it publishes as). |
+| `provider_name` | string | yes | `provider.name` in the pact. |
+| `consumer_pacticipant_bound` | boolean | yes | Whether the consumer name is that of a pacticipant bound to this consumer. |
+| `provider_pacticipant_bound` | boolean | yes | Whether the provider name is that of the pacticipant bound to this project. |
+| `revision` | integer | yes | The contract revision the pact was generated from. |
+| `version_record_id` | string | yes | The specification revision the examples were read from. |
+| `version_label` | string or null | no | That revision's label. |
+| `interaction_count` | integer | yes | How many interactions the pact carries. |
+| `placeholder_count` | integer | yes | How many values were invented because no example exists. |
+| `omitted_count` | integer | yes | How many declared items could not be written at all. |
+| `findings` | array of `ExportFinding` | no | Every placeholder and omission, with a stable reason code. Never silently empty. |
+| `pact` | object | yes | The Pact v4 document. |
 
 ### `PactImportRequest` {#schema-pactimportrequest}
 

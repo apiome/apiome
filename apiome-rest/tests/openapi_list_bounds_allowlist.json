@@ -134,6 +134,7 @@
     "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-surface": "single-resource",
     "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-usage": "single-resource",
     "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/contract": "single-resource",
+    "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/pact": "single-resource",
     "/v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/runtime": "single-resource",
     "/v1/tenants/{tenant_slug}/projects/{project_ref}/merge-requests/{merge_request_id}": "single-resource",
     "/v1/tenants/{tenant_slug}/projects/{project_ref}/pr-back/repositories": "bounded-by-parent",
