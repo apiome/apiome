@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.676.0
+  version: 1.677.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -131479,17 +131479,19 @@ components:
           - $ref: '#/components/schemas/ContractGraphqlRequest'
           - type: 'null'
             description: Contract Case schema.
-          description: The GraphQL document, variables and operation name. Present exactly
-            when `protocol` is `graphql`; `request.body` carries the same document as
-            sent.
+          description: The GraphQL document, variables and operation name. Present when
+            `protocol` is `graphql` (`request.body` carries the same document as sent),
+            and on a pact case replaying a GraphQL-over-HTTP interaction (PFX-3.7), whose
+            `protocol` stays `http`.
         rpc:
           anyOf:
           - $ref: '#/components/schemas/ContractRpcRequest'
           - type: 'null'
             description: Contract Case schema.
           description: 'The unary call: procedure, request message and expected status
-            code. Present exactly when `protocol` is `grpc`; `request.body` carries the
-            same message.'
+            code. Present exactly when `protocol` is `grpc` — compiled from a protobuf
+            version, or from a pact''s protobuf-plugin interaction (PFX-3.7); `request.body`
+            carries the same message.'
         pact:
           anyOf:
           - $ref: '#/components/schemas/ContractPactInteraction'
@@ -131700,7 +131702,8 @@ components:
           type: string
           title: Interaction Type
           description: '`Synchronous/HTTP` for a Pact 4 interaction that says so, `http`
-            for Pact 1–3.'
+            for Pact 1–3, `Synchronous/Messages` for a gRPC call the protobuf plugin recorded
+            (PFX-3.7).'
           example: example
         pending:
           type: boolean
@@ -170218,8 +170221,9 @@ components:
           maxLength: 200
           minLength: 1
           title: Target Ref
-          description: Slug or id of the registered verification target (ECA-1.2) to replay
-            against.
+          description: 'Slug or id of the registered verification target (ECA-1.2) to
+            replay against: an `http` target for HTTP interactions, a `grpc` or `connect`
+            target for gRPC calls recorded by the Pact protobuf plugin.'
           example: example
         provider_version:
           type: string
@@ -208095,6 +208099,14 @@ components:
           title: Base Url
           description: The base URL the interactions were sent to.
           example: https://example.com/resource
+        protocol:
+          type: string
+          title: Protocol
+          description: 'The target''s protocol: `http` replays HTTP interactions (GraphQL-over-HTTP
+            included); `grpc` or `connect` replays the gRPC calls the Pact protobuf plugin
+            recorded. What the target cannot speak is skipped with `pact-interaction-protocol-mismatch`.'
+          default: http
+          example: example
         allow_mutating_methods:
           type: boolean
           title: Allow Mutating Methods

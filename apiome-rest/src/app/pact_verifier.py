@@ -12,6 +12,8 @@ a plan and a verdict out. :mod:`app.pact_verifier_service` does the fetching, se
 ==============================================  ==========================================
 Interaction                                     Decision
 ==============================================  ==========================================
+gRPC call, target is not ``grpc``/``connect``   skip ``pact-interaction-protocol-mismatch``
+HTTP request, target is ``grpc``/``connect``    skip ``pact-interaction-protocol-mismatch``
 Recorded path is not a path on the target       skip ``pact-request-path-not-on-target``
 Mutating, target policy forbids it              skip ``mutating-method-blocked``
 Mutating, run did not opt in                    skip ``mutating-method-blocked``
@@ -25,6 +27,12 @@ A pact is written by a consumer; the target and its credentials belong to the pr
 recorded path must be a path — ``/invoices/1042`` — and one that names a scheme or a host
 (``https://elsewhere/…``, ``//elsewhere/…``) is never sent: joined onto the target it would leave it,
 carrying the target's credentials.
+
+A pact may mix HTTP interactions with gRPC calls the protobuf plugin recorded (PFX-3.7); one
+target speaks one protocol, so what it cannot speak is held back with the reason — the pact is
+then ``incomplete`` on that target, never silently green. A GraphQL-over-HTTP interaction is an
+HTTP interaction whose *operation type* decides whether it is mutating; a gRPC call is mutating
+unless its method declares ``idempotency_level = NO_SIDE_EFFECTS``.
 
 A mutating interaction needs **both** the ECA-1.2 target policy to allow mutating methods *and*
 the run's ``allow_mutating`` — and the policy is checked first, so a run can only ever be narrower
@@ -62,6 +70,7 @@ from typing import Any, Callable, Collection, Dict, List, Optional, Protocol, Se
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .contract_protocols import PROTOCOL_CONNECT, PROTOCOL_GRPC, PROTOCOL_HTTP
 from .contract_runner import (
     FAILURE_MUTATING_METHOD_BLOCKED,
     FAILURE_PACT_HEADER_MISMATCH,
@@ -98,6 +107,8 @@ __all__ = [
     "OUTCOME_PASSED",
     "SKIP_MUTATING_BLOCKED",
     "SKIP_PATH_NOT_ON_TARGET",
+    "SKIP_PROTOCOL_MISMATCH",
+    "VERIFIABLE_TARGET_PROTOCOLS",
     "SKIP_STATE_NOT_SET_UP",
     "SKIP_STATE_SETUP_FAILED",
     "VERIFIER_NAME",
@@ -127,6 +138,14 @@ MAX_PACTS_PER_RUN = 25
 SKIP_MUTATING_BLOCKED = FAILURE_MUTATING_METHOD_BLOCKED
 #: An interaction's recorded path is not a path on the target (it names a scheme or a host).
 SKIP_PATH_NOT_ON_TARGET = "pact-request-path-not-on-target"
+#: The interaction speaks another protocol than the target: a gRPC call on an HTTP target, or an
+#: HTTP request on a gRPC / Connect target (PFX-3.7).
+SKIP_PROTOCOL_MISMATCH = "pact-interaction-protocol-mismatch"
+#: Target protocols a pact can be verified on: HTTP interactions on ``http``, gRPC calls on
+#: ``grpc`` or ``connect``.
+VERIFIABLE_TARGET_PROTOCOLS = (PROTOCOL_HTTP, PROTOCOL_GRPC, PROTOCOL_CONNECT)
+#: Target protocols that carry gRPC calls.
+_RPC_TARGET_PROTOCOLS = frozenset({PROTOCOL_GRPC, PROTOCOL_CONNECT})
 #: An interaction names a provider state and nothing is registered that can set it up.
 SKIP_STATE_NOT_SET_UP = "provider-state-not-set-up"
 #: A provider-state handler was asked to set a state up and could not.
@@ -251,6 +270,7 @@ def plan_pact_run(
     target_allows_mutating: bool,
     has_state_handler: bool = False,
     state_issue: Optional[Callable[[Sequence[PactProviderState]], Optional[Tuple[str, str]]]] = None,
+    target_protocol: str = PROTOCOL_HTTP,
 ) -> PactRunPlan:
     """Decide, interaction by interaction, what this verification is allowed to send.
 
@@ -265,6 +285,8 @@ def plan_pact_run(
         state_issue: With a handler, why an interaction's states cannot be set up —
             ``(code, message)`` or ``None`` — asked before anything is sent (the registry's
             :meth:`~app.pact_provider_state_handler.RegistryStateHandler.issue`).
+        target_protocol: The target's protocol (``http``, ``grpc`` or ``connect``): a case of
+            the other kind is held back with :data:`SKIP_PROTOCOL_MISMATCH`.
 
     Returns:
         The :class:`PactRunPlan` to hand to :func:`app.contract_runner.run_suite`.
@@ -273,9 +295,24 @@ def plan_pact_run(
     by_case = {(f.operation_key, f.case_id): f for f in options.fixtures if f.case_id}
     by_operation = {f.operation_key: f for f in options.fixtures if not f.case_id}
 
+    rpc_target = target_protocol in _RPC_TARGET_PROTOCOLS
     for case in manifest.cases:
-        method = case.request.method.upper()
         path = case.request.path
+        rpc_case = case.protocol == PROTOCOL_GRPC
+        if rpc_case != rpc_target:
+            _skip(
+                plan,
+                case,
+                SKIP_PROTOCOL_MISMATCH,
+                (
+                    f"the gRPC call {case.operation_key} was not sent: the verification target speaks "
+                    f"'{target_protocol}'; verify it against a grpc or connect target."
+                    if rpc_case
+                    else f"the HTTP request {case.operation_key} was not sent: the verification target "
+                    f"speaks '{target_protocol}'; verify it against an http target."
+                ),
+            )
+            continue
         if not path.startswith("/") or path.startswith("//") or "\\" in path:
             _skip(
                 plan,
@@ -286,12 +323,13 @@ def plan_pact_run(
             )
             continue
         mutating = is_mutating_case(case)
+        what = _mutating_subject(case)
         if mutating and not target_allows_mutating:
             _skip(
                 plan,
                 case,
                 SKIP_MUTATING_BLOCKED,
-                f"{method} was not sent: the verification target's policy has "
+                f"{what} was not sent: the verification target's policy has "
                 "allow_mutating_methods=false, which a run cannot override.",
             )
             continue
@@ -300,7 +338,7 @@ def plan_pact_run(
                 plan,
                 case,
                 SKIP_MUTATING_BLOCKED,
-                f"{method} was not sent: this run did not opt in to mutating methods (allow_mutating=false).",
+                f"{what} was not sent: this run did not opt in to mutating methods (allow_mutating=false).",
             )
             continue
 
@@ -331,6 +369,26 @@ def plan_pact_run(
             plan.decisions[case.case_id] = CaseDecision(run=True, case=apply_fixture(case, fixture))
             plan.fixtures_applied += 1
     return plan
+
+
+def _mutating_subject(case: ContractCase) -> str:
+    """How a held-back mutating case is named in its skip reason.
+
+    Args:
+        case: The case.
+
+    Returns:
+        ``POST``; ``the GraphQL mutation 'CreateUser'``; or, for a gRPC call, its procedure and
+        why it counts as mutating.
+    """
+    if case.graphql is not None:
+        return f"the GraphQL mutation '{case.graphql.operationName or case.graphql.field}'"
+    if case.rpc is not None:
+        return (
+            f"the gRPC call {case.rpc.procedure} (its method does not declare "
+            "idempotency_level = NO_SIDE_EFFECTS)"
+        )
+    return case.request.method.upper()
 
 
 def state_hooks(

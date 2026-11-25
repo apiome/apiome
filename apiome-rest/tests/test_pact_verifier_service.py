@@ -426,7 +426,8 @@ def test_an_unresolvable_target_stops_the_run() -> None:
     assert api.sent == [] and broker.published == [] and broker.branch_versions == []
 
 
-def test_the_target_is_resolved_for_http_by_the_acting_principal() -> None:
+def test_the_target_is_resolved_for_a_pact_run_by_the_acting_principal() -> None:
+    # PFX-3.7: a pact run takes an http, grpc or connect target, so it asks for "pact".
     seen: Dict[str, Any] = {}
 
     def resolve(tenant_id: str, ref: str, *, actor: Any, protocol: str, **_kwargs: Any):
@@ -434,7 +435,7 @@ def test_the_target_is_resolved_for_http_by_the_acting_principal() -> None:
         return target(allow_mutating=True)
 
     _verify(_Broker([PACT_GO]), LedgerApi(), resolve=resolve)
-    assert (seen["tenant"], seen["ref"], seen["protocol"]) == (_TENANT, "ledger-staging", "http")
+    assert (seen["tenant"], seen["ref"], seen["protocol"]) == (_TENANT, "ledger-staging", "pact")
     assert (seen["actor"].user_id, seen["actor"].kind) == (_ACTOR.user_id, "api_key")
 
 

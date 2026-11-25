@@ -31,12 +31,19 @@ its message validated with :mod:`app.schema_instance_validation` against the man
 response missing a required field fails with a JSON Pointer into the message, exactly as an HTTP
 response-schema failure does.
 
+A case compiled from a pact's protobuf-plugin interaction (PFX-3.7, ``case.pact`` set) is judged
+the way the consumer recorded it instead: the status against the recorded ``grpc-status`` (``ok``
+when none), then the decoded message against the recorded one under the pact's matching rules
+(:func:`app.pact_value_match.match_body`, the verifier's engine), each mismatch located by a JSON
+Pointer into the message.
+
 Transport failures (connect errors, timeouts, ``UNAVAILABLE``, ``DEADLINE_EXCEEDED``) are retried
 under the policy's ``retry_attempts``; a status or schema mismatch never is.
 """
 
 from __future__ import annotations
 
+import json
 import threading
 import time
 from dataclasses import dataclass
@@ -57,11 +64,13 @@ from .contract_runner import (
     _join_url,
     _parse_json_body,
     _response_schema_assertions,
+    pact_mismatch_assertions,
     skipped_operation,
 )
 from .contract_suite import ContractCase
 from .contract_suite_rpc import RPC_CODE_OK
 from .grpc_reflection import GrpcReflectionError, discover_endpoint
+from .pact_value_match import match_body
 from .ssrf_guard import SSRFError, validate_host
 from .verification_evidence import (
     ASSERTION_KIND_CUSTOM,
@@ -595,7 +604,26 @@ def _rpc_assertions(
                 ),
             ),
         ]
+    if case.pact is not None:
+        return [status, *_pact_message_assertions(case, reply.body)]
     return [status, *_response_schema_assertions(case, schemas=schemas, body=reply.body)]
+
+
+def _pact_message_assertions(case: ContractCase, body: Dict[str, Any]) -> List[AssertionInput]:
+    """Compare a reply with the message a pact's protobuf-plugin interaction records (PFX-3.7).
+
+    Args:
+        case: A ``grpc`` case compiled from a pact (``case.pact`` set).
+        body: The decoded reply, protobuf-JSON.
+
+    Returns:
+        One failed assertion per mismatch, or the passed body assertion; empty when the consumer
+        recorded no message.
+    """
+    assert case.pact is not None
+    expectation = case.pact.response
+    content = json.dumps(body, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return pact_mismatch_assertions(expectation, match_body(expectation, content, "application/json"))
 
 
 def execute_rpc_case(

@@ -7,7 +7,9 @@ verifier would in CI — without a Pact library on the provider's side:
    (:mod:`app.pact_selectors`, PFX-1.3), pending and work-in-progress pacts included when asked.
 2. **Resolve** the registered verification target (:mod:`app.verification_target_store`, ECA-1.2):
    this is where the SSRF guard, the private-network approval, the credential *reference* and the
-   mutating-method policy live. Nothing in a request can change them.
+   mutating-method policy live. Nothing in a request can change them. An ``http`` target replays
+   the HTTP interactions; a ``grpc`` or ``connect`` target the gRPC calls the Pact protobuf
+   plugin recorded (PFX-3.7) — whatever the target cannot speak is held back, with the reason.
 3. For each pact: **compile** it into a contract suite (:mod:`app.contract_suite_pact`, PFX-3.1 —
    the same manifest, the same digest, as ``POST …/pact-suites/…``), **plan** what may be sent
    (:func:`app.pact_verifier.plan_pact_run`), **replay** it on the ECA-2.1 runner
@@ -35,7 +37,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from pydantic import BaseModel, ConfigDict, Field
 
 from .consumer_contract_store import ConsumerActor
-from .contract_protocols import PROTOCOL_HTTP
+from .contract_protocols import PACT_VERIFICATION
 from .contract_runner import AuthResolutionError, materialize_auth_headers, run_suite
 from .contract_suite import ContractSuiteManifest, PactSuiteOptions, SuiteSourceInfo, SuiteUnsupportedOperation
 from .contract_suite_pact import compile_pact_suite
@@ -143,7 +145,11 @@ class PactVerifyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     target_ref: str = Field(
-        description="Slug or id of the registered verification target (ECA-1.2) to replay against.",
+        description=(
+            "Slug or id of the registered verification target (ECA-1.2) to replay against: an "
+            "`http` target for HTTP interactions, a `grpc` or `connect` target for gRPC calls "
+            "recorded by the Pact protobuf plugin."
+        ),
         min_length=1,
         max_length=200,
     )
@@ -199,6 +205,14 @@ class VerifiedTarget(BaseModel):
     slug: str = Field(description="The target's handle.")
     environment: str = Field(description="Its environment class.")
     base_url: str = Field(description="The base URL the interactions were sent to.")
+    protocol: str = Field(
+        default="http",
+        description=(
+            "The target's protocol: `http` replays HTTP interactions (GraphQL-over-HTTP included); "
+            "`grpc` or `connect` replays the gRPC calls the Pact protobuf plugin recorded. What the "
+            "target cannot speak is skipped with `pact-interaction-protocol-mismatch`."
+        ),
+    )
     allow_mutating_methods: bool = Field(description="Whether the target's policy allows mutating methods.")
 
 
@@ -489,6 +503,7 @@ def _verify_one(
         target_allows_mutating=target.policy.allow_mutating_methods,
         has_state_handler=handler is not None,
         state_issue=getattr(handler, "issue", None),
+        target_protocol=target.protocol,
     )
     run = run_suite(
         manifest,
@@ -638,7 +653,8 @@ def verify_provider_pacts(
         )
 
     target_actor = TargetActor(user_id=actor.user_id, label=actor.label, kind=actor.kind)
-    target = resolve_target(tenant_id, request.target_ref, actor=target_actor, protocol=PROTOCOL_HTTP)
+    # An http target replays HTTP interactions, a grpc / connect one the gRPC calls (PFX-3.7).
+    target = resolve_target(tenant_id, request.target_ref, actor=target_actor, protocol=PACT_VERIFICATION)
     stored_headers: Optional[Dict[str, str]] = None
     if target.auth.kind == AUTH_KIND_STORED and target.auth.ref:
         stored_headers = load_endpoint_auth_headers(target.auth.ref)
@@ -686,6 +702,7 @@ def verify_provider_pacts(
             slug=target.slug,
             environment=target.environment,
             base_url=target.base_url,
+            protocol=target.protocol,
             allow_mutating_methods=target.policy.allow_mutating_methods,
         ),
         success=outcome == OUTCOME_PASSED,

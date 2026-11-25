@@ -139,6 +139,23 @@ def test_a_missing_permission_is_a_403_before_anything_runs(denied: Resource, se
     service.assert_not_called()
 
 
+def test_a_grpc_target_run_reports_the_target_protocol_under_the_same_gates(allowed: MagicMock) -> None:
+    # PFX-3.7: a gRPC / Connect target is resolved like any other — pacts:create on the provider,
+    # the tenant from the credential — and the response names the protocol it replayed over.
+    grpc = _response()
+    grpc.target.protocol = "connect"
+    with patch(f"{_ROUTES}.verify_provider_pacts", return_value=grpc) as verify:
+        answer = client.post("/v1/tenants/other-tenant/pact-verifier/pacts/provider/ledger-api/verify", json=_BODY)
+    assert answer.status_code == 200
+    assert answer.json()["target"]["protocol"] == "connect"
+    assert verify.call_args.args[1] == _TENANT
+    assert allowed.call_args_list[0].args[2:4] == (Resource.PACTS, Action.CREATE)
+
+
+def test_the_target_protocol_defaults_to_http() -> None:
+    assert _response().target.protocol == "http"
+
+
 @pytest.mark.parametrize("outcome", ["failed", "incomplete", "no-pacts"])
 def test_a_run_that_happened_is_a_200_whatever_it_found(allowed: MagicMock, outcome: str) -> None:
     with patch(f"{_ROUTES}.verify_provider_pacts", return_value=_response(outcome)):

@@ -6,7 +6,7 @@ tags: [contracts, pact, verification, rest]
 ---
 
 Apiome can turn a published pact into a **contract suite**: one replayable case for each HTTP
-interaction the consumer recorded. This is the same kind of suite Apiome compiles from a
+interaction the consumer recorded, and for each gRPC call the Pact protobuf plugin recorded. This is the same kind of suite Apiome compiles from a
 published API version (see [Contract assurance](../../reference/rest/contract-assurance.md)). The
 same pact version always gives the same suite, down to the byte, so a provider verification can
 name exactly what it checked.
@@ -73,7 +73,60 @@ because the consumer recorded it and Apiome made nothing up.
 
 Apiome reads Pact specifications 1 to 4 the same way. A Pact 2 query string and a Pact 3 query
 object give the same parameters. A Pact 4 body object is unwrapped, and a base64 or JSON-text body
-is decoded. Cases are grouped by `METHOD path` and then keep the pact's own order.
+is decoded. Cases are grouped by `METHOD path` (a gRPC call by `package.Service.Method`) and then
+keep the pact's own order.
+
+## gRPC and GraphQL interactions
+
+Pact has no gRPC or GraphQL transport of its own. Consumer tests record them in two ways, and
+Apiome reads both.
+
+### gRPC calls from the protobuf plugin
+
+The [Pact protobuf plugin](https://github.com/pactflow/pact-protobuf-plugin) records a gRPC call
+as a Pact 4 `Synchronous/Messages` interaction with `transport: grpc`. It also files the `.proto`
+definitions, compiled, in the pact's `metadata.plugins`. Apiome reads the call through those
+definitions and compiles it into the same kind of case it compiles from a published Protobuf
+version:
+
+| Part of the case | What it holds |
+| --- | --- |
+| `protocol` | `grpc`. |
+| `operation_key` | `package.Service.Method`, such as `acme.orders.v1.Orders.GetOrder`. |
+| `rpc.procedure` | The call that is made: `/acme.orders.v1.Orders/GetOrder`. |
+| `rpc.message` | The request the consumer recorded, decoded to protobuf JSON: JSON field names (`orderId` for `order_id`), enums by name, 64-bit integers as strings. |
+| `rpc.expect_code` | `ok`, or the `grpc-status` the consumer recorded (`not_found`). |
+| `rpc.idempotency_level` | From the method's options. Only a `no_side_effects` method is sent without the mutating opt-in. |
+| `pact.response.body` | The reply the consumer expects, decoded the same way. An error reply records no body. |
+| `pact.response.matching_rules` | The reply's rules, with each path renamed to JSON field names (`$.total_cents` becomes `$.totalCents`). |
+
+A suite whose cases are all gRPC calls has `protocol: grpc` and runs on a `grpc` or `connect`
+verification target. A pact that mixes HTTP interactions and gRPC calls has `protocol: http` and
+carries both kinds of case. See
+[gRPC and GraphQL pacts](./hosted-verification.mdx#grpc-and-graphql-pacts) for how a run treats
+them.
+
+Protobuf JSON writes `int64` and the other 64-bit integer types as decimal strings. An `integer` or
+`number` rule on such a field would fail every correct reply, so it is applied as a digits-only
+regular expression instead, and reported as a `PACT_PLUGIN_PARTIAL` info finding.
+
+### GraphQL over HTTP
+
+A GraphQL operation is an ordinary HTTP interaction: a `POST` of `query`, `variables` and
+`operationName`, a `GET` with those as query parameters, or a `POST` of an `application/graphql`
+body. pact-js `GraphQLInteraction` writes this shape. Apiome recognises one when its `query` is a
+GraphQL document, and adds the operation to the case:
+
+| Part of the case | What it holds |
+| --- | --- |
+| `graphql.query`, `graphql.variables`, `graphql.operationName` | The operation, as recorded. |
+| `graphql.operation_type` | `query` or `mutation`. It decides whether the case is mutating, because every GraphQL operation is a `POST`. |
+| `graphql.field` | The first root field the operation selects. |
+| `tags` | `pact` and `graphql`. |
+
+The case keeps its HTTP request, so it is replayed on the recorded path, such as `/graphql`. A
+`query` that is not GraphQL, such as a search box sending `{"query": "red shoes"}`, is left alone.
+A GraphQL subscription cannot be replayed as one request and is listed under `unsupported`.
 
 ## The same pact gives the same suite
 
@@ -81,6 +134,10 @@ The suite is built only from what the pact version covers: the interactions, the
 the specification version. It also uses the consumer and provider, and the options you send. The
 consumer version that published the pact and the file's `metadata` are not used. So every
 consumer version that shares a pact version gets the same suite and the same `digest`.
+
+The one thing read from `metadata` is the protobuf plugin's compiled `.proto` definitions. Each
+gRPC call names them by their `descriptorKey`, which the plugin derives from the definitions and
+which is part of the interactions, so the suite still depends only on the pact version.
 
 `digest` is `sha256:` followed by the SHA-256 of the suite's canonical bytes, taken with `digest`
 itself left blank. Change an option, or publish different content, and the digest changes.
@@ -93,8 +150,12 @@ is a `degraded` finding. Something the runner must provide is an `info` finding.
 
 | Code | Level | Meaning |
 | --- | --- | --- |
-| `UNSUPPORTED_OPERATION_KIND` | unsupported | A message interaction (Pact 3 `messages`, Pact 4 `Asynchronous/Messages` or `Synchronous/Messages`). There is no HTTP exchange to replay. Asynchronous messages are checked against the provider's AsyncAPI document instead: see [Message pacts](./message-pacts.mdx). |
-| `PACT_PLUGIN_INTERACTION` | unsupported | A Pact 4 plugin interaction (gRPC, protobuf, CSV). The plugin defines the exchange. |
+| `UNSUPPORTED_OPERATION_KIND` | unsupported | A message interaction (Pact 3 `messages`, Pact 4 `Asynchronous/Messages`, or a `Synchronous/Messages` interaction that is not a gRPC call). There is no HTTP exchange to replay. Asynchronous messages are checked against the provider's AsyncAPI document instead: see [Message pacts](./message-pacts.mdx). |
+| `PACT_PLUGIN_INTERACTION` | unsupported | A plugin interaction Apiome cannot replay: a plugin other than protobuf (CSV, Avro), a protobuf body over HTTP, or a gRPC call whose definitions, method or content cannot be read. The reason names the plugin, or the problem: `grpc-descriptors-missing`, `grpc-method-not-found` or `grpc-content-unreadable`. |
+| `UNSUPPORTED_STREAMING` | unsupported | A streaming gRPC method (`grpc-streaming`), or a GraphQL subscription. One request and one reply cannot express a stream. |
+| `PACT_PLUGIN_PARTIAL` | degraded / info | Part of a gRPC call is carried less strictly than the pact says: request metadata is not sent, and response metadata, metadata rules and `grpc-message` are not compared. Only the first of several responses is compared. As `info`, a numeric rule on a 64-bit integer field applied as a regular expression. |
+| `PACT_GRAPHQL_UNREADABLE` | degraded | The request carries a GraphQL operation that cannot be read: a document that does not parse on a `…/graphql` path, several operations and no `operationName`, or variables that are not an object. It is replayed as plain HTTP, and its method decides whether it is mutating. |
+| `PACT_GRAPHQL_SELECTIONS_NOT_MAPPED` | info | The pact's GraphQL operations are verified, but the fields they select are not yet mapped onto consumer contracts (see the [Consumer contracts REST reference](../../reference/rest/consumer-contracts.md)), so consumer impact on a classified diff does not see them. Reported once for each pact. |
 | `PACT_INTERACTION_MALFORMED` | unsupported | The interaction has no request method or path, so there is nothing to send. |
 | `PACT_BODY_UNREADABLE` | unsupported / degraded / info | A body that cannot be decoded. On the request, the case cannot be sent. On the response, only the status and headers can be compared — unless a `contentType` rule on `$` judges the body by its bytes, which is `info` (see [Supported matching rules](./hosted-verification.mdx#supported-matching-rules)). |
 | `PACT_EMBEDDED_MATCHER` | degraded | A Pact 1 matcher embedded in a body (`json_class`). The example values are kept, but the embedded rule is not. |
@@ -106,7 +167,7 @@ is a `degraded` finding. Something the runner must provide is an `info` finding.
 | `PACT_SPECIFICATION_ASSUMED` | info / degraded | The pact declares no specification version, or one Apiome does not know. |
 | `STATUS_UNDECLARED` | degraded | The response records no status. `200` is expected, which is what a Pact mock server answers. |
 | `OPERATION_NOT_SELECTED`, `OPERATION_LIMIT_REACHED` | info / degraded | An `interactions` name matched nothing, or `max_interactions` cut the suite short. |
-| `NO_CASES_COMPILED` | degraded | The pact has no HTTP interaction to replay. |
+| `NO_CASES_COMPILED` | degraded | The pact has no HTTP interaction or gRPC call to replay. |
 
 ## Options
 

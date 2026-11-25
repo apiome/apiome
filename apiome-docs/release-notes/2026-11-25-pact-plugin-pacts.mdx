@@ -1,0 +1,27 @@
+---
+slug: pact-plugin-pacts
+title: "Plugin pacts: gRPC and GraphQL"
+description: "Hosted verification now replays gRPC calls from the protobuf plugin and GraphQL operations."
+authors: [apiome]
+---
+
+Hosted verification now replays two kinds of pact it used to list as unsupported. A gRPC call
+that the Pact protobuf plugin recorded is replayed against a `grpc` or `connect` verification
+target. A GraphQL operation recorded as an HTTP interaction is replayed as GraphQL. See
+[gRPC and GraphQL pacts](/ship/pact-broker/hosted-verification#grpc-and-graphql-pacts).
+
+{/* truncate */}
+
+- **gRPC from the protobuf plugin.** Apiome reads each call through the `.proto` definitions the
+  plugin files in the pact, then compares the reply's status and message with what the consumer
+  recorded, under the pact's matching rules. A mismatch names the field, such as `/totalCents`.
+- **The same endpoint.** `POST …/pact-verifier/pacts/provider/<provider>/verify` now takes a
+  `grpc` or `connect` target as well as an `http` one, and the response says which protocol it
+  used.
+- **GraphQL by operation type.** A GraphQL `query` is no longer held back as a mutating `POST`; a
+  `mutation` still needs the mutating opt-in. A reply with `errors` the consumer did not record
+  fails.
+- **Nothing passes silently.** A streaming method, a subscription, a plugin other than protobuf,
+  or a call whose definitions are missing is listed as unsupported with the reason. A mixed pact
+  run on one target is `incomplete`, never green. Mapping GraphQL selections onto consumer
+  contracts comes with GraphQL consumer contracts.
