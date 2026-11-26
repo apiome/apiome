@@ -199,6 +199,11 @@ describe('PacticipantDetailClient', () => {
       'href',
       '/ade/dashboard/pacts/pacticipants/billing-service/network',
     );
+    // A provider of at least one pact (PFX-5.5): its Verification page.
+    expect(screen.getByTestId('ppx-verification-link')).toHaveAttribute(
+      'href',
+      '/ade/dashboard/pacts/pacticipants/billing-service/verification',
+    );
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipant-detail', container.innerHTML);
   });
@@ -237,6 +242,7 @@ describe('PacticipantDetailClient', () => {
     expect(await screen.findByTestId('ppx-pacts-empty')).toHaveTextContent('apiome pact publish');
     // No integration, so no network to draw.
     expect(screen.queryByTestId('ppx-network-link')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ppx-verification-link')).not.toBeInTheDocument();
   });
 
   it('says when the pacticipant does not exist, with the way back', async () => {

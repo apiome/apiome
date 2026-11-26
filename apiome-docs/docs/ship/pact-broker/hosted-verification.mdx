@@ -141,6 +141,11 @@ names the run, with each request's assertions. Read it with `GET …/verificatio
 A Pact 4 interaction the consumer marked `pending` is replayed and reported, but it never decides
 the pact's outcome.
 
+Each published result records how it came to be (`trigger: hosted`), how long the run took
+(`duration_ms`) and its evidence run (`evidence_run_id`). They show on the provider's
+[Verification page](./verification-console.mdx), which can also **Re-run** one pact and **Verify all
+stale** pacts with this verifier, from the app or with `POST …/reverify` and `POST …/verify-stale`.
+
 ## How responses are matched
 
 Apiome replays each request exactly as the consumer recorded it, then compares the response:
@@ -363,6 +368,8 @@ Nothing is sent to the target when a run is stopped.
 
 - [Compile a pact into a contract suite](./verification.mdx): the cases a run replays.
 - [Provider states](./provider-states.mdx): register the states a run sets up.
+- [Verification results and re-runs](./verification-console.mdx): read the results, re-run a pact,
+  verify the stale ones.
 - [Choose pacts with selectors](./selectors.mdx): what goes in `selection`.
 - [Publish verification results](./verification-results.mdx): how a result is stored and read, and
   how to send a `pact_verifier_cli` or JUnit report from your own CI.

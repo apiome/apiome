@@ -117,6 +117,11 @@ describe('PactDetailClient', () => {
     expect(
       within(screen.getByTestId('ppd-verification')).getAllByTestId('ppd-verdict')[0],
     ).toHaveTextContent('Verified');
+    // PFX-5.5: the provider's Verification page, narrowed to this consumer.
+    expect(screen.getByTestId('ppd-verification-link')).toHaveAttribute(
+      'href',
+      '/ade/dashboard/pacts/pacticipants/ledger-api/verification?consumer=billing-service',
+    );
 
     expect(await screen.findByTestId('ppd-diff-summary')).toHaveTextContent(
       '1 added, 1 changed, 1 removed, 2 unchanged',

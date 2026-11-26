@@ -137,7 +137,7 @@ _INSERT = """
     INSERT INTO apiome.verification_result (
         tenant_id, consumer_id, provider_id, pact_version_id, provider_version_id, number,
         success, provider_branch, test_results, verified_by_implementation,
-        kind, provider_contract_id, comparison, created_by, actor_label
+        kind, provider_contract_id, comparison, created_by, actor_label, trigger
     )
     VALUES (
         %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid,
@@ -147,7 +147,9 @@ _INSERT = """
          JOIN apiome.pacticipant_branch b ON b.id = bv.branch_id AND b.pacticipant_id = bv.pacticipant_id
          WHERE bv.version_id = %s::uuid AND bv.pacticipant_id = %s::uuid
          ORDER BY bv.created_at DESC, b.name LIMIT 1),
-        %s, %s, %s, %s::uuid, %s, %s::uuid, %s
+        %s, %s, %s, %s::uuid, %s, %s::uuid, %s,
+        -- PFX-5.5 (#6949): how the result came to be.
+        'bidirectional'
     )
     ON CONFLICT (pact_version_id, provider_version_id) WHERE kind = 'bidirectional' DO NOTHING
     RETURNING number

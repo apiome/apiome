@@ -40,6 +40,7 @@ import { PacticipantPactsTable } from '../pactDetail/PactPanels';
 import { fetchPacticipantPacts } from '../pactDetail/pactDetailApi';
 import type { PacticipantPacts } from '@lib/pact-detail';
 import { networkRoute } from '@lib/pact-network';
+import { verificationRoute } from '@lib/pact-verification';
 
 /** Where the breadcrumb's first step goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -334,11 +335,22 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
                         {pacts.data.pacts.length}
                         {pacts.data.truncated ? '+' : ''}
                       </span>
-                      {pacts.data.pacts.length > 0 ? (
-                        <Link className="ppx__link ppx__panel-link" href={networkRoute(slug)} data-testid="ppx-network-link">
-                          Network diagram
-                        </Link>
-                      ) : null}
+                      <span className="ppx__actions ppx__panel-link">
+                        {pacts.data.pacts.length > 0 ? (
+                          <Link className="ppx__link" href={networkRoute(slug)} data-testid="ppx-network-link">
+                            Network diagram
+                          </Link>
+                        ) : null}
+                        {pacts.data.pacts.some((pact) => pact.provider.slug === slug) ? (
+                          <Link
+                            className="ppx__link"
+                            href={verificationRoute(slug)}
+                            data-testid="ppx-verification-link"
+                          >
+                            Verification
+                          </Link>
+                        ) : null}
+                      </span>
                     </>
                   ) : null
                 }

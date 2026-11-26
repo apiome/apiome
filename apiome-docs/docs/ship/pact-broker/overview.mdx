@@ -11,12 +11,14 @@ it unchanged: give them your workspace's **broker base URL**
 Consumers publish their pacts, providers verify them and report back, deploy jobs record what runs
 where, and `can-i-deploy` stops a release that would break something.
 
-All of it is served through the API and the Pact tools. There are seven screens so far.
+All of it is served through the API and the Pact tools. There are eight screens so far.
 [**Pacticipants**](./pacticipants.mdx), under **Contracts** in the rail, lists every application in
 your pacts and opens each one's versions, branches, tags, environments and pacts.
 [**Pact detail**](./pact-detail.mdx) shows one pact's interactions, its verification status and what
 changed since the previous pact. The [**Network**](./network.mdx) diagram draws the pacticipants
-connected to one through pacts, with each integration's verdict. The [**Matrix**](./matrix.mdx)
+connected to one through pacts, with each integration's verdict. A provider's
+[**Verification**](./verification-console.mdx) page lists its results with their logs, re-runs a pact
+and verifies the stale ones. The [**Matrix**](./matrix.mdx)
 shows which consumer versions were verified against which provider versions, and
 [**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console) checks one version before a
 deployment, each with its verdict explained. **Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
@@ -58,6 +60,7 @@ run.
 | Tell a provider's verifier which pacts to check | [Choose pacts to verify with selectors](./selectors.mdx) |
 | Verify a new expectation without breaking the provider's build | [Pending and work-in-progress pacts](./pending-and-wip.mdx) |
 | Report whether a provider version honours each pact | [Publish verification results](./verification-results.mdx) |
+| Read a result's expected and actual values, re-run a pact, verify stale pacts | [Verification results and re-runs](./verification-console.mdx) |
 | Turn a pact into replayable cases with a fixed digest | [Compile a pact into a contract suite](./verification.mdx) |
 | Verify a provider without a Pact library, from Apiome | [Verify a provider from Apiome](./hosted-verification.mdx) |
 | Tell Apiome how to set up the provider states pacts name | [Provider states](./provider-states.mdx) |

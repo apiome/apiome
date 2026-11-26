@@ -10,7 +10,9 @@ provider version honour this pact? Apiome keeps every result, and [can-i-deploy]
 answers from them. The Pact verifiers publish to Apiome unchanged.
 
 A successful result takes the pact out of the pending state for that provider branch (see
-[Pending and work-in-progress pacts](./pending-and-wip.mdx)). There is no screen for results yet.
+[Pending and work-in-progress pacts](./pending-and-wip.mdx)). To read the results in the app, with
+each mismatch's expected and actual values, open the provider's
+[Verification page](./verification-console.mdx).
 
 ## Before you start
 
@@ -60,6 +62,11 @@ Apiome registers the provider version if it does not have it yet.
 | `verifiedBy` | The verifier and the library around it (`Pact-Rust` 1.2.0 in pact-js 13). |
 | `providerVersionBranch` | Shown in the answer: the branch the provider version was recorded on last — the one the verifier recorded just before publishing. |
 | `kind` | Shown in the answer: `native` for a result a verifier published, `bidirectional` for one Apiome wrote by comparing the pact with a [provider contract](./bi-directional.mdx#read-the-comparison). A verifier cannot set it. |
+
+Apiome also records how each result came to be: `published` for a result a verifier posted, `hosted`,
+`manual` (a re-run) or `stale-recheck` for one its [hosted verifier](./hosted-verification.mdx) ran, with
+the run's duration and evidence run, and `bidirectional` for a comparison. The Pact Broker answer does
+not change; the [Verification page](./verification-console.mdx) and its REST endpoints show them.
 
 - **A result never changes.** Publishing again adds a new result; it does not replace one.
 - **Bi-directional results are numbered with yours.** When the provider also publishes a
@@ -197,5 +204,6 @@ its pact with `pb:pact-version`.
 
 - [Choose pacts to verify with selectors](./selectors.mdx) — what the verifier fetches first.
 - [Contract webhooks](./webhooks.mdx) — tell CI when a result is published.
+- [Verification results and re-runs](./verification-console.mdx) — read the results in the app.
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, branches and tags.
 - [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

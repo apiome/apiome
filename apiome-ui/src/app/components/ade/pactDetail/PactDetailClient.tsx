@@ -48,6 +48,7 @@ import {
   type PactHistory,
   type PreviousPactResponse,
 } from '@lib/pact-detail';
+import { verificationRoute } from '@lib/pact-verification';
 import { CliSnippet } from '../pactPacticipants/PacticipantPanels';
 import { describeFailure } from '../pactPacticipants/describeFailure';
 import {
@@ -299,7 +300,16 @@ export default function PactDetailClient({
                 id="ppd-verification"
                 title="Verification status"
                 aside={
-                  entry ? <VerdictBadge latest={latestVerification(entry.verifications)} /> : null
+                  <>
+                    {entry ? <VerdictBadge latest={latestVerification(entry.verifications)} /> : null}
+                    <Link
+                      className="ppx__link ppx__panel-link"
+                      href={verificationRoute(provider, consumer)}
+                      data-testid="ppd-verification-link"
+                    >
+                      Results and logs
+                    </Link>
+                  </>
                 }
               >
                 {history.error ? (

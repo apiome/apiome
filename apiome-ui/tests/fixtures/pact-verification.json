@@ -1,0 +1,425 @@
+{
+  "status": {
+    "provider": "ledger-api",
+    "provider_name": "Ledger API",
+    "counts": {
+      "pacts": 3,
+      "verified": 1,
+      "failing": 1,
+      "stale": 1,
+      "interactions": 7,
+      "passing_interactions": 6,
+      "last_verified_at": "2026-11-25T14:32:10+00:00"
+    },
+    "pacts": [
+      {
+        "consumer": "billing-service",
+        "consumer_name": "Billing Service",
+        "consumer_version": "2.4.0",
+        "pact_version_sha": "3fa1c2d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f93",
+        "published_at": "2026-11-24T16:00:00+00:00",
+        "stale": false,
+        "latest_result": {
+          "id": "6f0c6f0e-2b1a-4c3d-9e8f-7a6b5c4d3e2f",
+          "number": 3,
+          "consumer": "billing-service",
+          "consumer_name": "Billing Service",
+          "consumer_version": "2.4.0",
+          "pact_version_sha": "3fa1c2d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f93",
+          "provider_version": "4f1e2d0",
+          "provider_branch": "main",
+          "success": false,
+          "kind": "native",
+          "pending": false,
+          "wip": false,
+          "build_url": "https://ci.example.com/ledger-api/builds/412",
+          "verified_by": "apiome-pact-verifier 1",
+          "trigger": "manual",
+          "duration_ms": 1840,
+          "evidence_run_id": "0b6f3c1e-8a2d-4e5f-9a1b-2c3d4e5f6a7b",
+          "created_at": "2026-11-25T14:32:10+00:00",
+          "counts": {
+            "total": 3,
+            "passed": 2,
+            "failed": 1
+          }
+        }
+      },
+      {
+        "consumer": "orders-ui",
+        "consumer_name": "Orders UI",
+        "consumer_version": "1.9.2",
+        "pact_version_sha": "9b8a7c6d5e4f30211203f4e5d6c7b8a99a8b7c6d5e4f30211203f4e5d6c7b8a9",
+        "published_at": "2026-11-24T12:00:00+00:00",
+        "stale": false,
+        "latest_result": {
+          "id": "1d2e3f40-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
+          "number": 2,
+          "consumer": "orders-ui",
+          "consumer_name": "Orders UI",
+          "consumer_version": "1.9.2",
+          "pact_version_sha": "9b8a7c6d5e4f30211203f4e5d6c7b8a99a8b7c6d5e4f30211203f4e5d6c7b8a9",
+          "provider_version": "4f1e2d0",
+          "provider_branch": "main",
+          "success": true,
+          "kind": "native",
+          "pending": false,
+          "wip": false,
+          "build_url": "https://ci.example.com/ledger-api/builds/412",
+          "verified_by": "Pact-Rust 1.2.0",
+          "trigger": "published",
+          "duration_ms": null,
+          "evidence_run_id": null,
+          "created_at": "2026-11-25T09:05:44+00:00",
+          "counts": {
+            "total": 4,
+            "passed": 4,
+            "failed": 0
+          }
+        }
+      },
+      {
+        "consumer": "reporting-job",
+        "consumer_name": "Reporting Job",
+        "consumer_version": "0.8.1",
+        "pact_version_sha": "5c4d3e2f1a0b99887766554433221100ffeeddccbbaa99887766554433221100",
+        "published_at": "2026-11-25T11:20:00+00:00",
+        "stale": true,
+        "latest_result": null
+      }
+    ],
+    "truncated": false
+  },
+  "history": {
+    "provider": "ledger-api",
+    "provider_name": "Ledger API",
+    "consumer": null,
+    "results": [
+      {
+        "id": "6f0c6f0e-2b1a-4c3d-9e8f-7a6b5c4d3e2f",
+        "number": 3,
+        "consumer": "billing-service",
+        "consumer_name": "Billing Service",
+        "consumer_version": "2.4.0",
+        "pact_version_sha": "3fa1c2d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f93",
+        "provider_version": "4f1e2d0",
+        "provider_branch": "main",
+        "success": false,
+        "kind": "native",
+        "pending": false,
+        "wip": false,
+        "build_url": "https://ci.example.com/ledger-api/builds/412",
+        "verified_by": "apiome-pact-verifier 1",
+        "trigger": "manual",
+        "duration_ms": 1840,
+        "evidence_run_id": "0b6f3c1e-8a2d-4e5f-9a1b-2c3d4e5f6a7b",
+        "created_at": "2026-11-25T14:32:10+00:00",
+        "counts": {
+          "total": 3,
+          "passed": 2,
+          "failed": 1
+        }
+      },
+      {
+        "id": "1d2e3f40-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
+        "number": 2,
+        "consumer": "orders-ui",
+        "consumer_name": "Orders UI",
+        "consumer_version": "1.9.2",
+        "pact_version_sha": "9b8a7c6d5e4f30211203f4e5d6c7b8a99a8b7c6d5e4f30211203f4e5d6c7b8a9",
+        "provider_version": "4f1e2d0",
+        "provider_branch": "main",
+        "success": true,
+        "kind": "native",
+        "pending": false,
+        "wip": false,
+        "build_url": "https://ci.example.com/ledger-api/builds/412",
+        "verified_by": "Pact-Rust 1.2.0",
+        "trigger": "published",
+        "duration_ms": null,
+        "evidence_run_id": null,
+        "created_at": "2026-11-25T09:05:44+00:00",
+        "counts": {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      },
+      {
+        "id": "aa11bb22-cc33-4d44-8e55-ff6677889900",
+        "number": 2,
+        "consumer": "billing-service",
+        "consumer_name": "Billing Service",
+        "consumer_version": "2.4.0",
+        "pact_version_sha": "3fa1c2d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f93",
+        "provider_version": "3e9d8c1",
+        "provider_branch": "main",
+        "success": true,
+        "kind": "native",
+        "pending": false,
+        "wip": false,
+        "build_url": "https://ci.example.com/ledger-api/builds/412",
+        "verified_by": "apiome-pact-verifier 1",
+        "trigger": "hosted",
+        "duration_ms": 2210,
+        "evidence_run_id": "77aa88bb-99cc-4dd0-8ee1-ff2233445566",
+        "created_at": "2026-11-24T18:11:02+00:00",
+        "counts": {
+          "total": 3,
+          "passed": 3,
+          "failed": 0
+        }
+      },
+      {
+        "id": "bb22cc33-dd44-4e55-8f66-778899aabbcc",
+        "number": 1,
+        "consumer": "orders-ui",
+        "consumer_name": "Orders UI",
+        "consumer_version": "1.9.0",
+        "pact_version_sha": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "provider_version": "3e9d8c1",
+        "provider_branch": null,
+        "success": true,
+        "kind": "native",
+        "pending": false,
+        "wip": false,
+        "build_url": null,
+        "verified_by": "Pact-Rust 1.2.0",
+        "trigger": null,
+        "duration_ms": null,
+        "evidence_run_id": null,
+        "created_at": "2026-11-20T08:00:00+00:00",
+        "counts": {
+          "total": 4,
+          "passed": 4,
+          "failed": 0
+        }
+      }
+    ],
+    "next_cursor": "118"
+  },
+  "detail": {
+    "result": {
+      "id": "6f0c6f0e-2b1a-4c3d-9e8f-7a6b5c4d3e2f",
+      "number": 3,
+      "consumer": "billing-service",
+      "consumer_name": "Billing Service",
+      "consumer_version": "2.4.0",
+      "pact_version_sha": "3fa1c2d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f93",
+      "provider_version": "4f1e2d0",
+      "provider_branch": "main",
+      "success": false,
+      "kind": "native",
+      "pending": false,
+      "wip": false,
+      "build_url": "https://ci.example.com/ledger-api/builds/412",
+      "verified_by": "apiome-pact-verifier 1",
+      "trigger": "manual",
+      "duration_ms": 1840,
+      "evidence_run_id": "0b6f3c1e-8a2d-4e5f-9a1b-2c3d4e5f6a7b",
+      "created_at": "2026-11-25T14:32:10+00:00",
+      "counts": {
+        "total": 3,
+        "passed": 2,
+        "failed": 1
+      }
+    },
+    "provider": "ledger-api",
+    "provider_name": "Ledger API",
+    "test_results": [
+      {
+        "interactionDescription": "a request for invoice 1042",
+        "success": true,
+        "outcome": "passed",
+        "interactionProviderState": "an invoice 1042 exists",
+        "providerStatesSetUp": true
+      },
+      {
+        "interactionDescription": "a request for the yearly summary",
+        "success": false,
+        "outcome": "failed",
+        "code": "pact-body-mismatch",
+        "mismatches": [
+          {
+            "attribute": "body",
+            "identifier": "/year",
+            "description": "expected a number but was a string",
+            "rule": "type",
+            "expected": 2026,
+            "actual": "2026"
+          },
+          {
+            "attribute": "body",
+            "identifier": "/entries/0/balance",
+            "description": "expected 1999 but was 1.5",
+            "rule": "equality",
+            "expected": 1999,
+            "actual": 1.5
+          }
+        ]
+      },
+      {
+        "interactionDescription": "a request to create an invoice",
+        "success": true,
+        "outcome": "passed"
+      }
+    ],
+    "comparison": null,
+    "evidence_status": "attached",
+    "evidence": {
+      "id": "0b6f3c1e-8a2d-4e5f-9a1b-2c3d4e5f6a7b",
+      "tenant_id": "t",
+      "target_slug": "ledger-staging",
+      "target_base_url": "https://ledger.staging.example.com",
+      "runner_name": "apiome-pact-verifier",
+      "runner_version": "1",
+      "started_at": "2026-11-25T14:32:08+00:00",
+      "finished_at": "2026-11-25T14:32:10+00:00",
+      "duration_ms": 1840,
+      "outcome": "failed",
+      "counts": {
+        "total": 3,
+        "passed": 2,
+        "failed": 1,
+        "errored": 0,
+        "skipped": 0
+      },
+      "operations": [
+        {
+          "sequence": 1,
+          "operation_key": "GET /invoices/1042",
+          "http_method": "GET",
+          "http_path": "/invoices/1042",
+          "outcome": "passed",
+          "expected_status": "200",
+          "actual_status": 200,
+          "duration_ms": 412,
+          "attempts": 1,
+          "assertions": [
+            {
+              "kind": "status",
+              "outcome": "passed",
+              "subject": "status",
+              "expected": "200",
+              "actual": "200"
+            }
+          ]
+        },
+        {
+          "sequence": 2,
+          "operation_key": "GET /summary",
+          "http_method": "GET",
+          "http_path": "/summary",
+          "outcome": "failed",
+          "failure_code": "pact-body-mismatch",
+          "failure_message": "2 body values did not match",
+          "expected_status": "200",
+          "actual_status": 200,
+          "duration_ms": 688,
+          "attempts": 1,
+          "assertions": [
+            {
+              "kind": "status",
+              "outcome": "passed",
+              "subject": "status",
+              "expected": "200",
+              "actual": "200"
+            },
+            {
+              "kind": "body",
+              "outcome": "failed",
+              "subject": "/year",
+              "expected": "2026",
+              "actual": "\"2026\"",
+              "code": "type",
+              "message": "expected a number but was a string"
+            },
+            {
+              "kind": "body",
+              "outcome": "failed",
+              "subject": "/entries/0/balance",
+              "expected": "1999",
+              "actual": "1.5",
+              "code": "equality",
+              "message": "expected 1999 but was 1.5"
+            }
+          ]
+        },
+        {
+          "sequence": 3,
+          "operation_key": "POST /invoices",
+          "http_method": "POST",
+          "http_path": "/invoices",
+          "outcome": "passed",
+          "expected_status": "201",
+          "actual_status": 201,
+          "duration_ms": 540,
+          "attempts": 2,
+          "assertions": [
+            {
+              "kind": "status",
+              "outcome": "passed",
+              "subject": "status",
+              "expected": "201",
+              "actual": "201"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "run": {
+    "provider": "ledger-api",
+    "provider_version": "4f1e2d0",
+    "provider_branch": "main",
+    "target": {
+      "target_id": "22222222-2222-4222-8222-222222222222",
+      "slug": "ledger-staging",
+      "environment": "staging",
+      "base_url": "https://ledger.staging.example.com",
+      "protocol": "http",
+      "allow_mutating_methods": false
+    },
+    "success": true,
+    "outcome": "passed",
+    "pacts": [
+      {
+        "consumer": "reporting-job",
+        "consumer_name": "Reporting Job",
+        "consumer_version": "0.8.1",
+        "pact_version_sha": "5c4d3e2f1a0b99887766554433221100ffeeddccbbaa99887766554433221100",
+        "outcome": "passed",
+        "pending": false,
+        "published": true,
+        "not_published_reason": null,
+        "result": {
+          "number": 1,
+          "success": true,
+          "url": "https://api.example.com/x",
+          "triggered_webhooks": 0
+        }
+      }
+    ],
+    "trigger": "stale-recheck",
+    "skipped": []
+  },
+  "targets": {
+    "targets": [
+      {
+        "slug": "ledger-staging",
+        "name": "Ledger staging",
+        "environment": "staging",
+        "protocol": "http",
+        "enabled": true
+      },
+      {
+        "slug": "ledger-old",
+        "name": "Ledger old",
+        "environment": "dev",
+        "protocol": "http",
+        "enabled": false
+      }
+    ],
+    "count": 2
+  }
+}

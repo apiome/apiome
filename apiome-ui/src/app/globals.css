@@ -45764,3 +45764,161 @@ tr[data-selected="true"] > td:first-child {
   display: block;
   margin-block-start: var(--space-1);
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Verification results and operations — PFX-5.5 (#6949): the KPI strip, the interactions with
+ * expected vs actual, the raw log and the run form.
+ * --------------------------------------------------------------------------------------------- */
+
+.pvx-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.pvx-kpi {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pvx-kpi dt {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pvx-kpi dd {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pvx-kpi--failing dd {
+  color: var(--danger-fg);
+}
+
+.pvx-kpi--stale dd {
+  color: var(--warn-fg);
+}
+
+.pvx-kpi--verified dd {
+  color: var(--ok-fg);
+}
+
+.pvx-filter {
+  margin: 0;
+}
+
+.pvx-interactions {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pvx-interaction {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pvx-interaction__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.pvx-interaction__summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pvx-interaction__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pvx-interaction__body {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.pvx-mismatch {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--border);
+}
+
+.pvx-mismatch__where {
+  margin: 0;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.pvx-diff {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-2);
+}
+
+.pvx-diff__side {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.pvx-diff__side pre {
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pvx-diff__side--expected pre {
+  background: var(--ok-soft);
+}
+
+.pvx-diff__side--actual pre {
+  background: var(--danger-soft);
+}
+
+.pvx-log {
+  max-block-size: 28rem;
+  overflow: auto;
+}
+
+.pvx-log:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pvx-run-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pvx-run-outcome {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+}

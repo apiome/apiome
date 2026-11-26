@@ -22,7 +22,7 @@ pass one bound to a rolled-back transaction.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import psycopg2
 from psycopg2.extras import Json
@@ -43,6 +43,7 @@ from .revision_deprecation import is_uuid_string
 from .verification_result import (
     CODE_REPORT_NOT_FOUND,
     CODE_VERIFICATION_NOT_FOUND,
+    TRIGGER_PUBLISHED,
     VerificationRequest,
     VerificationResultRecord,
     verification_result_from_row,
@@ -51,8 +52,11 @@ from .verification_result import (
 __all__ = [
     "get_bidirectional_result",
     "get_latest_verification_result",
+    "get_provider_result",
     "get_verification_result",
+    "latest_results_by_pact",
     "list_bidirectional_results",
+    "list_provider_results",
     "publish_verification_result",
     "record_broker_version",
 ]
@@ -63,7 +67,8 @@ _RESULT_SELECT = """
            r.verified_by_implementation, r.verified_by_version, r.verified_by_client_implementation,
            r.verified_by_client_version, r.verified_by_client_test_framework, r.pact_pending, r.wip,
            r.provider_verification_report_id::text AS provider_verification_report_id, r.created_at,
-           r.kind, r.comparison,
+           r.kind, r.comparison, r.trigger, r.duration_ms, r.evidence_run_id::text AS evidence_run_id, r.seq,
+           r.consumer_id::text AS consumer_id,
            c.slug AS consumer_slug, c.name AS consumer_name, pr.slug AS provider_slug, pr.name AS provider_name,
            pvn.number AS provider_version, pv.sha,
            (SELECT v.number FROM apiome.pact_publication p
@@ -119,6 +124,9 @@ def publish_verification_result(
     actor: ConsumerActor,
     pact_pending: Optional[bool] = None,
     wip: bool = False,
+    trigger: Optional[str] = TRIGGER_PUBLISHED,
+    duration_ms: Optional[int] = None,
+    evidence_run_id: Optional[str] = None,
 ) -> VerificationResultRecord:
     """Store one verification of a pact version by a provider version.
 
@@ -132,6 +140,10 @@ def publish_verification_result(
         actor: Who is publishing.
         pact_pending: Whether the for-verification link said the pact was pending (its metadata).
         wip: Whether the link said it was a work-in-progress pact.
+        trigger: How the result came to be (:data:`app.verification_result.TRIGGERS`):
+            ``published`` for a Pact verifier's post, the hosted verifier's own trigger otherwise.
+        duration_ms: How long the run took, when Apiome ran it.
+        evidence_run_id: The evidence run holding the run's assertions, when Apiome ran it.
 
     Returns:
         The stored result.
@@ -185,10 +197,12 @@ def publish_verification_result(
                 success, build_url, provider_branch, test_results,
                 verified_by_implementation, verified_by_version, verified_by_client_implementation,
                 verified_by_client_version, verified_by_client_test_framework,
-                pact_pending, wip, provider_verification_report_id, created_by, actor_label
+                pact_pending, wip, provider_verification_report_id, created_by, actor_label,
+                trigger, duration_ms, evidence_run_id
             )
             VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s::uuid, %s)
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s::uuid, %s,
+                    %s, %s, %s::uuid)
             RETURNING id::text AS id
             """,
             (
@@ -212,6 +226,9 @@ def publish_verification_result(
                 request.report_id,
                 _user_id(actor),
                 actor.label,
+                trigger,
+                max(0, int(duration_ms)) if duration_ms is not None else None,
+                evidence_run_id if evidence_run_id and is_uuid_string(str(evidence_run_id)) else None,
             ),
         )
         return cursor.fetchone()["id"]
@@ -339,8 +356,7 @@ def list_bidirectional_results(db: Any, tenant_id: str, limit: int = 50) -> List
     """
     bounded = max(1, min(int(limit), MAX_BIDIRECTIONAL_LIST))
     rows = db.execute_query(
-        _RESULT_SELECT
-        + " WHERE r.tenant_id = %s::uuid AND r.kind = 'bidirectional' ORDER BY r.seq DESC LIMIT %s",
+        _RESULT_SELECT + " WHERE r.tenant_id = %s::uuid AND r.kind = 'bidirectional' ORDER BY r.seq DESC LIMIT %s",
         (tenant_id, bounded),
     )
     return [verification_result_from_row(dict(row)) for row in rows or []]
@@ -378,6 +394,126 @@ def get_bidirectional_result(db: Any, tenant_id: str, result_id: str) -> Verific
             "so it has no comparison fidelity report",
         )
     return record
+
+
+#: The most results one page of a provider's history returns.
+MAX_HISTORY_PAGE = 50
+
+
+def list_provider_results(
+    db: Any,
+    tenant_id: str,
+    provider: PacticipantRecord,
+    *,
+    consumer: Optional[PacticipantRecord] = None,
+    before_seq: Optional[int] = None,
+    limit: int = MAX_HISTORY_PAGE,
+) -> Tuple[List[VerificationResultRecord], Optional[int]]:
+    """One page of a provider's verification results, newest first (PFX-5.5, #6949).
+
+    Read through ``idx_verification_result_provider_history`` (apiome-db V444), or
+    ``idx_verification_result_pair`` when the consumer is given. Native and bi-directional results
+    are both listed: they share one numbering and both decide can-i-deploy.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant; nothing of another tenant is read.
+        provider: The provider (already resolved in the tenant).
+        consumer: Only this consumer's results, when given.
+        before_seq: The cursor: only results recorded before this one.
+        limit: Page size, clamped to 1 … :data:`MAX_HISTORY_PAGE`.
+
+    Returns:
+        ``(results, next_cursor)``; ``next_cursor`` is ``None`` on the last page.
+    """
+    bounded = max(1, min(int(limit), MAX_HISTORY_PAGE))
+    where = " WHERE r.tenant_id = %s::uuid AND r.provider_id = %s::uuid"
+    params: List[Any] = [tenant_id, provider.id]
+    if consumer is not None:
+        where += " AND r.consumer_id = %s::uuid"
+        params.append(consumer.id)
+    if before_seq is not None:
+        where += " AND r.seq < %s"
+        params.append(int(before_seq))
+    params.append(bounded + 1)
+    rows = db.execute_query(_RESULT_SELECT + where + " ORDER BY r.seq DESC LIMIT %s", tuple(params)) or []
+    records = [verification_result_from_row(dict(row)) for row in rows[:bounded]]
+    more = len(rows) > bounded and records and records[-1].seq is not None
+    return records, (records[-1].seq if more else None)
+
+
+def get_provider_result(
+    db: Any, tenant_id: str, provider: PacticipantRecord, result_id: str
+) -> VerificationResultRecord:
+    """Read one verification result of a provider by its id (PFX-5.5, #6949).
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider: The provider (already resolved in the tenant).
+        result_id: The result's id (a UUID).
+
+    Returns:
+        The result.
+
+    Raises:
+        PactPublicationError: ``pact-verification-not-found`` for a malformed id, or an id that is
+            not one of this provider's results in this workspace (never saying which).
+    """
+    missing = f"provider '{provider.slug}' has no verification result '{result_id}'"
+    if not is_uuid_string(str(result_id)):
+        raise PactPublicationError(CODE_VERIFICATION_NOT_FOUND, missing)
+    return _read_result(
+        db,
+        " WHERE r.id = %s::uuid AND r.tenant_id = %s::uuid AND r.provider_id = %s::uuid",
+        (result_id, tenant_id, provider.id),
+        missing=missing,
+    )
+
+
+def latest_results_by_pact(
+    db: Any, tenant_id: str, provider: PacticipantRecord, pacts: Sequence[Tuple[str, str]]
+) -> Dict[Tuple[str, str], VerificationResultRecord]:
+    """The newest result of each of a provider's pact versions (PFX-5.5, #6949).
+
+    A pact version with no result (or only results of deleted provider versions) is absent from
+    the answer: that is what makes it *stale*.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider: The provider (already resolved in the tenant).
+        pacts: ``(consumer_id, sha)`` pairs.
+
+    Returns:
+        ``{(consumer_id, sha): result}`` for every pact version that has a result.
+    """
+    if not pacts:
+        return {}
+    keys = sorted({f"{consumer_id}:{_normalise_sha(sha)}" for consumer_id, sha in pacts})
+    rows = (
+        db.execute_query(
+            _RESULT_SELECT
+            + """
+        WHERE r.id IN (
+            SELECT DISTINCT ON (r2.pact_version_id) r2.id
+            FROM apiome.verification_result r2
+            JOIN apiome.pact_version pv2 ON pv2.id = r2.pact_version_id
+            JOIN apiome.pacticipant_version v2 ON v2.id = r2.provider_version_id AND v2.deleted_at IS NULL
+            WHERE r2.tenant_id = %s::uuid AND r2.provider_id = %s::uuid
+              AND (pv2.consumer_id::text || ':' || pv2.sha) = ANY(%s)
+            ORDER BY r2.pact_version_id, r2.seq DESC
+        )
+        """,
+            (tenant_id, provider.id, keys),
+        )
+        or []
+    )
+    found: Dict[Tuple[str, str], VerificationResultRecord] = {}
+    for row in rows:
+        record = verification_result_from_row(dict(row))
+        found[(str(row["consumer_id"]), record.sha)] = record
+    return found
 
 
 def record_broker_version(
