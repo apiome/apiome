@@ -1,0 +1,142 @@
+name: Apiome Pact
+description: >
+  Publish pacts, gate a pull request or a deploy on can-i-deploy with one sticky
+  PR comment, and record a deployment on merge — the apiome pact commands, with
+  pact-broker's flags and exit codes, against your Apiome workspace's Pact Broker.
+author: Apiome
+
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  command:
+    description: What to run — publish, can-i-deploy or record-deployment.
+    required: true
+  broker-base-url:
+    description: >
+      Your workspace's broker base URL, such as
+      https://api.apiome.dev/v1/tenants/acme/pact-broker. Empty reads PACT_BROKER_BASE_URL.
+    required: false
+    default: ""
+  broker-token:
+    description: >
+      An Apiome API key with the Pact scopes the command needs. Prefer a repository secret.
+      Empty reads PACT_BROKER_TOKEN.
+    required: false
+    default: ""
+  pacts:
+    description: publish — pact files or directories of pact files, one per line.
+    required: false
+    default: pacts
+  pacticipant:
+    description: can-i-deploy / record-deployment — the application being deployed.
+    required: false
+    default: ""
+  version:
+    description: >
+      The application version. Empty uses the pull request's head commit, or the commit
+      the workflow runs on.
+    required: false
+    default: ""
+  branch:
+    description: >
+      publish — the branch the version came from. Empty uses the pull request's head
+      branch, or the branch the workflow runs on.
+    required: false
+    default: ""
+  tags:
+    description: publish — tags for the consumer version, one per line.
+    required: false
+    default: ""
+  environment:
+    description: can-i-deploy / record-deployment — the environment's name, such as production.
+    required: false
+    default: ""
+  application-instance:
+    description: record-deployment — the instance deployed to (a region, a customer). Optional.
+    required: false
+    default: ""
+  retry-while-unknown:
+    description: can-i-deploy — retry this many times while a verification result is missing.
+    required: false
+    default: "0"
+  retry-interval:
+    description: can-i-deploy — seconds between retries.
+    required: false
+    default: "10"
+  dry-run:
+    description: can-i-deploy — when true, report the verdict but never fail the step.
+    required: false
+    default: "false"
+  comment:
+    description: >
+      When true (default), publish and can-i-deploy upsert one sticky comment on the pull
+      request with their result. Outside a pull request nothing is posted.
+    required: false
+    default: "true"
+  comment-id:
+    description: >
+      Tells sticky comments apart when one pull request runs the same command more than once
+      (a monorepo with several consumers). Empty uses the command, pacticipant and environment.
+    required: false
+    default: ""
+  github-token:
+    description: Token used to create or update the sticky PR comment.
+    required: false
+    default: ${{ github.token }}
+  install:
+    description: >
+      When true (default), install the Apiome CLI unless an apiome command is already on PATH.
+      Set false when an earlier step installs it.
+    required: false
+    default: "true"
+  cli-version:
+    description: Git tag, branch or commit of the CLI to install. Pin a tag in real pipelines.
+    required: false
+    default: main
+
+outputs:
+  exit-code:
+    description: Exit code of the apiome pact command (0 = it worked / deployable, 1 = anything else).
+    value: ${{ steps.pact.outputs.exit-code }}
+  report-path:
+    description: Path to the command's markdown output inside the workspace.
+    value: ${{ steps.pact.outputs.report-path }}
+  deployable:
+    description: can-i-deploy — true or false (empty for the other commands, or when it could not run).
+    value: ${{ steps.pact.outputs.deployable }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install the Apiome CLI
+      if: inputs.install == 'true'
+      shell: bash
+      run: bash "${GITHUB_ACTION_PATH}/install_cli.sh"
+      env:
+        APIOME_VERSION: ${{ inputs.cli-version }}
+
+    - name: apiome pact ${{ inputs.command }}
+      id: pact
+      shell: bash
+      run: bash "${GITHUB_ACTION_PATH}/entrypoint.sh"
+      env:
+        INPUT_COMMAND: ${{ inputs.command }}
+        INPUT_BROKER_BASE_URL: ${{ inputs.broker-base-url }}
+        INPUT_BROKER_TOKEN: ${{ inputs.broker-token }}
+        INPUT_PACTS: ${{ inputs.pacts }}
+        INPUT_PACTICIPANT: ${{ inputs.pacticipant }}
+        INPUT_VERSION: ${{ inputs.version || github.event.pull_request.head.sha || github.sha }}
+        INPUT_BRANCH: ${{ inputs.branch || github.head_ref || github.ref_name }}
+        INPUT_TAGS: ${{ inputs.tags }}
+        INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        INPUT_APPLICATION_INSTANCE: ${{ inputs.application-instance }}
+        INPUT_RETRY_WHILE_UNKNOWN: ${{ inputs.retry-while-unknown }}
+        INPUT_RETRY_INTERVAL: ${{ inputs.retry-interval }}
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        INPUT_COMMENT: ${{ inputs.comment }}
+        INPUT_COMMENT_ID: ${{ inputs.comment-id }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

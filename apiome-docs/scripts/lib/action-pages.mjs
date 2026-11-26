@@ -1,7 +1,7 @@
 /**
  * The CI action pages — DOCS-1.11 (#5628).
  *
- * `diff-action/README.md` and `mock-action/README.md` stay where GitHub expects an action's
+ * `diff-action/README.md`, `mock-action/README.md` and `pact-action/README.md` (PFX-4.3) stay where GitHub expects an action's
  * README; the docs site shows the same text under Reference → CI. This module turns a README
  * into its page: front matter added, the `# Title` line moved into it, and every relative link
  * rewritten — to the docs page when it points into `apiome-docs/docs/` or at a file the site
@@ -40,6 +40,13 @@ export const ACTION_PAGES = Object.freeze([
     title: 'mock-action (GitHub Action)',
     description: 'Inputs, outputs and behaviour of the apiome/mock-action portable mock runtime.',
     position: 4,
+  },
+  {
+    readme: 'pact-action/README.md',
+    page: 'pact-action.md',
+    title: 'pact-action (GitHub Action)',
+    description: 'Inputs, outputs and behaviour of the apiome/pact-action publish, can-i-deploy and record-deployment steps.',
+    position: 5,
   },
 ]);
 

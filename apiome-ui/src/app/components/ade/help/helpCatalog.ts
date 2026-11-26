@@ -1330,7 +1330,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'A consumer, provider and deploy pipeline built from the apiome pact commands.',
     page: 'apiome-docs/docs/ship/pact-broker/ci-pact.mdx',
     section: 'reference',
-    keywords: ['pipeline', 'github actions', 'gitlab', 'jenkins', 'deploy gate', 'can-i-deploy', 'record-deployment', 'webhook'],
+    keywords: ['pipeline', 'github actions', 'gitlab', 'bitbucket', 'jenkins', 'deploy gate', 'can-i-deploy', 'record-deployment', 'webhook', 'pact-action', 'sticky comment'],
   },
   {
     id: 'message-pacts',

@@ -22,6 +22,8 @@ describe('rewriteLink', () => {
   });
   it('points a file the site carries at its page', () => {
     assert.equal(rewriteLink('recipes/.gitlab-ci.yml', 'diff-action/README.md'), 'ci-gitlab-bitbucket.md');
+    assert.equal(rewriteLink('recipes/.gitlab-ci.yml', 'pact-action/README.md'), '../../ship/pact-broker/ci-pact.mdx');
+    assert.equal(rewriteLink('action.yml', 'pact-action/README.md'), 'pact-action.md');
     assert.equal(rewriteLink('../apiome-cli/README.md', 'diff-action/README.md'), '../cli/index.mdx');
     assert.equal(rewriteLink('../apiome-cli/README.md#classified-diff-ci-gate', 'diff-action/README.md'), '../cli/diff.md');
   });

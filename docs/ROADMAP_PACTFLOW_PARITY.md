@@ -44,7 +44,7 @@ roadmaps listed in §3.
 | Scheduled verification + drift alerts | `verification_schedule*` (V253) | CTG-4.4 #4501 | PFX-6.2 · [#6954](https://github.com/apiome/apiome/issues/6954) |
 | Deploy-gate status API (`/gate`, V254) | `deploy_gate*.py` | CTG-4.5 #4502 | New signal: can-i-deploy (PFX-7.2) |
 | Push webhooks, signing, dead-letter | `publish_webhooks.md` | CTG-3.3 | PFX-1.9 · [#6922](https://github.com/apiome/apiome/issues/6922) |
-| `apiome diff`, diff-action, mock-action | `apiome-cli`, `diff-action/` | CTG-2.x | PFX-4.3 · [#6940](https://github.com/apiome/apiome/issues/6940) |
+| `apiome diff`, diff-action, mock-action | `apiome-cli`, `diff-action/` | CTG-2.x | ✅ PFX-4.3 · [#6940](https://github.com/apiome/apiome/issues/6940) — `pact-action/` |
 | GraphQL / gRPC adapters in the suite | `contract_suite_graphql.py`, XPC | XPC-1.2, 3.2 | PFX-3.7 · [#6937](https://github.com/apiome/apiome/issues/6937) |
 
 Gaps this roadmap closes: there is **no broker** (no pacticipants, pact versions, branches/tags, environments,
@@ -289,7 +289,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-4.3 | CI actions and recipes | `pact-action`, GitLab/Bitbucket recipes, pacts-in-PR comment | `automation`,`pact`,`mvp` | Y | Y | M | new action dir |
 | PFX-4.4 · [#6941](https://github.com/apiome/apiome/issues/6941) | Commit statuses and PR checks | Verification status back to GitHub/GitLab | `automation`,`integrations`,`pact` | Y | N | M | apiome-rest |
 | PFX-4.5 · [#6942](https://github.com/apiome/apiome/issues/6942) | MCP tools for pacts | List pacts, matrix, can-i-deploy, record-deployment | `mcp`,`pact` | Y | N | M | apiome-mcp |
 | PFX-4.6 · [#6943](https://github.com/apiome/apiome/issues/6943) | Jenkins and Azure Pipelines recipes | Reference pipelines | `automation`,`pact` | Y | N | S | docs |
@@ -299,7 +298,7 @@ flowchart LR
 
 **✅ PFX-4.2 · #6939 Broker-compatible auth and API-key scopes — Complete** — every route under `/pact-broker` and `/pact-verifier` takes the workspace API key as a bearer token, `X-API-Key` or the **password of basic auth** (username ignored); basic auth without a password, a bare header and other schemes are refused `401` with where the key goes. V442 adds `pact:read` (every GET of both mounts, `for-verification`, the provider-state check, pacticipant reads), `pact:publish` (publish pacts / provider contracts, tag / branch a version, record deployments and releases) and `pact:verify` (verification results, external reports, hosted verify, provider states, tag / branch the provider version) to the CTG-2.3 allowlist; deletes, webhooks, environments and cleanup stay full-access; the `pacts` RBAC check still applies. API keys gets **Pact: read-only**, **Pact: consumer + deploy** and **Pact: CI verifier** presets; `apiome pact` reads `PACT_BROKER_PASSWORD` as the key. OpenAPI 1.678.0. **Docs:** `ship/pact-broker/cli.mdx` (key-scope table + security note), `ci-pact.mdx`, `publish-pacts.mdx`, `workspace/api-keys.mdx`; screenshot `api-keys-pact-scope`; release-notes post.
 
-**PFX-4.3** — composite action(s) in `pact-action/` mirroring `diff-action/` (publish pacts, can-i-deploy gate with sticky PR comment, record-deployment on merge), GitLab and Bitbucket recipes executed in a smoke matrix. *Deps:* 4.1. **Docs:** `…/ci-pact.mdx` embeds recipes verbatim.
+**✅ PFX-4.3 · #6940 CI actions and recipes — Complete** — `pact-action/` is a composite GitHub Action (installs the CLI unless `apiome` is on PATH, then runs `entrypoint.sh`) with `command: publish | can-i-deploy | record-deployment`: publish takes the pacts (one per line), the PR head commit / branch and the run URL; can-i-deploy takes pacticipant + environment, retries and `dry-run`, and sets `deployable`; both upsert one sticky PR comment (diff-action's `sticky_comment.sh`, marker `apiome-pact-action:<command>[:<pacticipant>@<environment>|:<comment-id>]`) and write the job summary; a failed comment is a warning, never a result change. record-deployment is refused on `pull_request` / `pull_request_target`. The broker key goes in the environment, never argv. Every bad input (unknown command, missing URL / token / pacticipant / environment, non-http URL, bad booleans or retry numbers, empty or missing pact paths) is refused with the reason, exit 1. GitLab (`recipes/.gitlab-ci.yml`) and Bitbucket (`recipes/bitbucket-pipelines.yml`) recipes run each job against a stub CLI in the `pact-action` workflow matrix, which also checks `ci-pact.mdx` embeds them byte for byte. No REST or CLI change. **Docs:** `ship/pact-broker/ci-pact.mdx` (GitHub Action section + embedded recipes), `ship/pact-broker/cli.mdx`, new generated `reference/ci/pact-action.md` from the README; release-notes post, What's new line.
 
 **PFX-4.4** — post verification status per provider/consumer pair as a GitHub commit status / check and GitLab status via the integrations installed in the tenant. *Deps:* 1.4, integrations auth.
 

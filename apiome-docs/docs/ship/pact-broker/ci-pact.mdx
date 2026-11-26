@@ -7,8 +7,11 @@ tags: [contracts, pact, ci, cli]
 
 This page puts the [`apiome pact` commands](./cli.mdx) together into the three jobs of a Pact
 pipeline: the **consumer** publishes its pacts, the **provider** is verified against them, and the
-**deploy** job asks `can-i-deploy` and records what it deployed. The examples are GitHub Actions;
-every step is one shell command, so the same lines work in GitLab CI, Jenkins or any other runner.
+**deploy** job asks `can-i-deploy` and records what it deployed. On GitHub, the
+[`apiome/pact-action`](#use-the-github-action) runs the steps for you and keeps the `can-i-deploy`
+answer in one pull-request comment; for GitLab CI and Bitbucket Pipelines there are
+[ready-made pipelines](#gitlab-ci-and-bitbucket-pipelines). Every step is also one shell command, so
+the same lines work in Jenkins or any other runner.
 
 ## Before you start
 
@@ -41,6 +44,57 @@ Each job installs the CLI with the installer:
 ```bash
 curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user
 ```
+
+## Use the GitHub Action
+
+`apiome/pact-action` installs the CLI and runs one of `publish`, `can-i-deploy` or
+`record-deployment` per step. On a pull request, `publish` and `can-i-deploy` keep **one comment**
+on the pull request up to date with their result, and every run writes the result to the job
+summary:
+
+```yaml
+# .github/workflows/pact.yml
+name: pact
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  pact:
+    runs-on: ubuntu-latest
+    env:
+      PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+      PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm run test:pact
+      - uses: apiome/apiome/pact-action@main
+        with:
+          command: publish
+      - uses: apiome/apiome/pact-action@main
+        with:
+          command: can-i-deploy
+          pacticipant: Billing Service
+          environment: production
+          retry-while-unknown: "12"
+      - if: github.event_name == 'push'
+        run: ./deploy.sh production
+      - if: github.event_name == 'push'
+        uses: apiome/apiome/pact-action@main
+        with:
+          command: record-deployment
+          pacticipant: Billing Service
+          environment: production
+```
+
+The version is the pull request's head commit (or the pushed commit), and the branch is the pull
+request's branch. `record-deployment` refuses to run in a pull-request run, because recording it
+would tell `can-i-deploy` that an unmerged commit is live. Every input, output and refusal is on
+[pact-action](../../reference/ci/pact-action.md). The sections below are the same pipeline as plain
+commands.
 
 ## 1. The consumer publishes its pacts
 
@@ -117,6 +171,152 @@ To start a GitHub Actions workflow directly, create the webhook with a GitHub ta
 deployment afterwards is what lets the next `can-i-deploy` of its consumers and providers check
 against it.
 
+## GitLab CI and Bitbucket Pipelines
+
+The two pipelines below run the same three steps in the image that carries the Apiome CLI. Merge
+requests and pull requests publish the pacts and ask `can-i-deploy`; the main branch also records
+the deployment. Add `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` as masked (GitLab) or secured
+(Bitbucket) variables, change `PACTICIPANT` and `DEPLOY_ENVIRONMENT` to yours, and put your deploy
+command before `record-deployment`. `can-i-deploy` keeps its answer as the `can-i-deploy.md`
+artifact. Both pipelines are run against a stub CLI on every change, so they stay correct.
+
+### GitLab CI
+
+{/* recipe:pact-gitlab */}
+```yaml
+# Apiome Pact pipeline for GitLab CI (PFX-4.3 / #6940).
+#
+# Copy the jobs into your .gitlab-ci.yml. Merge requests publish the pacts and ask can-i-deploy;
+# the default branch does the same, deploys, then records the deployment.
+#
+# Required CI/CD variables (Settings -> CI/CD -> Variables, "Masked" + "Protected"):
+#   PACT_BROKER_BASE_URL  https://api.apiome.dev/v1/tenants/<workspace>/pact-broker
+#   PACT_BROKER_TOKEN     Apiome API key with the "Pact: consumer + deploy" preset
+#
+# Every apiome pact command exits 0 when it worked and 1 otherwise, so each job fails on its own.
+
+stages:
+  - test
+  - pact
+  - deploy
+
+variables:
+  PACTICIPANT: Billing Service
+  PACT_DIR: pacts
+  DEPLOY_ENVIRONMENT: production
+  APIOME_LOAD_DOTENV: "0"
+
+.apiome-pact:
+  image:
+    # The image carries the Apiome CLI. Pin a version tag or digest - `latest` drifts.
+    name: ghcr.io/apiome/diff-action:latest
+    # The image entrypoint is the GitHub Action wrapper; GitLab needs a shell.
+    entrypoint: [""]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+pact-publish:
+  extends: .apiome-pact
+  stage: pact
+  script:
+    - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a masked CI/CD variable" >&2; exit 1; }'
+    - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a masked CI/CD variable" >&2; exit 1; }'
+    - 'apiome pact publish "$PACT_DIR" --consumer-app-version "$CI_COMMIT_SHA" --branch "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_BRANCH}" --build-url "$CI_JOB_URL"'
+
+pact-can-i-deploy:
+  extends: .apiome-pact
+  stage: pact
+  needs: [pact-publish]
+  script:
+    - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a masked CI/CD variable" >&2; exit 1; }'
+    - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a masked CI/CD variable" >&2; exit 1; }'
+    - 'apiome pact can-i-deploy --pacticipant "$PACTICIPANT" --version "$CI_COMMIT_SHA" --to-environment "$DEPLOY_ENVIRONMENT" --retry-while-unknown 12 --retry-interval 10 --output markdown > can-i-deploy.md || gate=$?'
+    - 'cat can-i-deploy.md'
+    - 'exit ${gate:-0}'
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - can-i-deploy.md
+
+pact-record-deployment:
+  extends: .apiome-pact
+  stage: deploy
+  needs: [pact-can-i-deploy]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a masked CI/CD variable" >&2; exit 1; }'
+    - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a masked CI/CD variable" >&2; exit 1; }'
+    - 'echo "deploy $CI_COMMIT_SHA to $DEPLOY_ENVIRONMENT here, or run this job after your deploy job"'
+    - 'apiome pact record-deployment --pacticipant "$PACTICIPANT" --version "$CI_COMMIT_SHA" --environment "$DEPLOY_ENVIRONMENT"'
+```
+
+### Bitbucket Pipelines
+
+{/* recipe:pact-bitbucket */}
+```yaml
+# Apiome Pact pipeline for Bitbucket Pipelines (PFX-4.3 / #6940).
+#
+# Copy the steps into your bitbucket-pipelines.yml. Pull requests publish the pacts and ask
+# can-i-deploy; main does the same, deploys, then records the deployment.
+#
+# Required repository variables (Repository settings -> Repository variables, check "Secured"):
+#   PACT_BROKER_BASE_URL  https://api.apiome.dev/v1/tenants/<workspace>/pact-broker
+#   PACT_BROKER_TOKEN     Apiome API key with the "Pact: consumer + deploy" preset
+#
+# Every apiome pact command exits 0 when it worked and 1 otherwise, so each step fails on its own.
+
+# The image carries the Apiome CLI. Pin a version tag or digest - `latest` drifts.
+image: ghcr.io/apiome/diff-action:latest
+
+definitions:
+  steps:
+    - step: &pact-publish
+        name: Publish pacts
+        script:
+          - 'export PACT_DIR="${PACT_DIR:-pacts}"'
+          - 'export APIOME_LOAD_DOTENV=0'
+          - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'apiome pact publish "$PACT_DIR" --consumer-app-version "$BITBUCKET_COMMIT" --branch "$BITBUCKET_BRANCH" --build-url "$BITBUCKET_GIT_HTTP_ORIGIN/pipelines/results/$BITBUCKET_BUILD_NUMBER"'
+    - step: &pact-can-i-deploy
+        name: Pact can-i-deploy
+        script:
+          - 'export PACTICIPANT="${PACTICIPANT:-Billing Service}"'
+          - 'export DEPLOY_ENVIRONMENT="${DEPLOY_ENVIRONMENT:-production}"'
+          - 'export APIOME_LOAD_DOTENV=0'
+          - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'apiome pact can-i-deploy --pacticipant "$PACTICIPANT" --version "$BITBUCKET_COMMIT" --to-environment "$DEPLOY_ENVIRONMENT" --retry-while-unknown 12 --retry-interval 10 --output markdown > can-i-deploy.md || gate=$?'
+          - 'cat can-i-deploy.md'
+          - 'exit ${gate:-0}'
+        artifacts:
+          - can-i-deploy.md
+    - step: &pact-record-deployment
+        name: Record deployment
+        script:
+          - 'export PACTICIPANT="${PACTICIPANT:-Billing Service}"'
+          - 'export DEPLOY_ENVIRONMENT="${DEPLOY_ENVIRONMENT:-production}"'
+          - 'export APIOME_LOAD_DOTENV=0'
+          - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'echo "deploy $BITBUCKET_COMMIT to $DEPLOY_ENVIRONMENT here, or add this step after your deploy step"'
+          - 'apiome pact record-deployment --pacticipant "$PACTICIPANT" --version "$BITBUCKET_COMMIT" --environment "$DEPLOY_ENVIRONMENT"'
+
+pipelines:
+  pull-requests:
+    '**':
+      - step: *pact-publish
+      - step: *pact-can-i-deploy
+  branches:
+    main:
+      - step: *pact-publish
+      - step: *pact-can-i-deploy
+      - step: *pact-record-deployment
+```
+
 ## What fails a job
 
 Every `apiome pact` command exits `0` when it worked and `1` otherwise, as `pact-broker` does:
@@ -136,6 +336,7 @@ exits `0`.
 ## Related
 
 - [The apiome pact commands](./cli.mdx)
+- [pact-action (GitHub Action)](../../reference/ci/pact-action.md) — every input and output
 - [Can I deploy?](./can-i-deploy.mdx)
 - [Environments and deployments](./environments.mdx)
 - [CI contract gate on GitLab and Bitbucket](../../reference/ci/ci-gitlab-bitbucket.md) — the
