@@ -1,0 +1,22 @@
+---
+slug: pact-import-publish
+title: "Publish pacts from the import dialog"
+description: "Import a Pact file and publish it to the Pact Broker in one step."
+authors: [apiome]
+---
+
+The **Import Pact file** dialog on a project's **Consumers** screen can now publish to the Pact
+Broker as well as the registry. See
+[Publish from the Import dialog](/ship/pact-broker/publish-pacts#publish-from-the-import-dialog).
+
+{/* truncate */}
+
+- **Also publish to the Pact Broker.** Tick it, name the **Provider** and the **Consumer version**
+  (and, if you like, a **Branch**, **Tags** and **Build URL**), then **Import**. The provider can
+  verify the pact and can-i-deploy sees it.
+- **Both results shown.** The dialog reports the revision stored and the broker's notices. A
+  refused publish is reported beside the stored revision, not instead of it.
+
+Publishing needs **Pacts** → **Create**. Unticked, the dialog works as before.
+
+*Last updated: November 27, 2026*

@@ -14,10 +14,16 @@ import {
   DialogTitle,
 } from '@/app/components/ui/Dialog';
 import { Input } from '@/app/components/ui/Input';
+import { Checkbox } from '@/app/components/ui/Checkbox';
 import { Label } from '@/app/components/ui/Label';
 import { Spinner } from '@/app/components/ui/Spinner';
 import { Textarea } from '@/app/components/ui/Textarea';
 
+import {
+  pactConsumerName,
+  validatePublishDraft,
+  type PublishDraft,
+} from '@lib/pact-publish';
 import { groupUnresolved, type UnresolvedInteraction } from './consumersModel';
 
 /**
@@ -50,6 +56,11 @@ export interface PactImportOutcome {
   revision: number;
   /** Everything that could not be placed. */
   unresolved: UnresolvedInteraction[];
+  /**
+   * What publishing to the Pact Broker did (PFX-5.8): its notices, or the reason it failed. Absent
+   * when the broker was not asked. A failed publish never undoes the registry import.
+   */
+  broker?: { notices: string[] } | { error: string };
 }
 
 /** Props for {@link PactImportDialog}. */
@@ -62,19 +73,27 @@ export interface PactImportDialogProps {
   consumerName?: string | null;
   /** The consumer's handle, when importing for an existing one. */
   consumerSlug?: string | null;
+  /** The provider the broker section starts with (this project's handle). */
+  defaultProvider?: string | null;
   /**
    * Import the document.
    *
    * @param pact The Pact document as text.
    * @param consumerSlug The handle to file it under, or an empty string to use the document's
    *   own consumer name.
+   * @param publish When set, also publish the pact to the Pact Broker with these details.
+   * @param consumerName The consumer the pact is for (resolved by the dialog), for the broker.
    * @returns The outcome, or an error message.
    */
   onImport: (
     pact: string,
     consumerSlug: string,
+    publish?: { consumerName: string; draft: PublishDraft },
   ) => Promise<{ outcome: PactImportOutcome } | { error: string }>;
 }
+
+/** The broker section before anything is typed. */
+const EMPTY_DRAFT: PublishDraft = { providerName: '', version: '', branch: '', tags: '', buildUrl: '' };
 
 /**
  * The Pact import dialog.
@@ -87,12 +106,15 @@ export default function PactImportDialog({
   onOpenChange,
   consumerName,
   consumerSlug,
+  defaultProvider,
   onImport,
 }: PactImportDialogProps) {
   const [pact, setPact] = React.useState('');
   const [slug, setSlug] = React.useState('');
   const [error, setError] = React.useState('');
   const [busy, setBusy] = React.useState(false);
+  const [publish, setPublish] = React.useState(false);
+  const [draft, setDraft] = React.useState<PublishDraft>(EMPTY_DRAFT);
   const [outcome, setOutcome] = React.useState<PactImportOutcome | null>(null);
   const fileInput = React.useRef<HTMLInputElement>(null);
 
@@ -103,7 +125,9 @@ export default function PactImportDialog({
     setError('');
     setBusy(false);
     setOutcome(null);
-  }, [open, consumerSlug]);
+    setPublish(false);
+    setDraft({ ...EMPTY_DRAFT, providerName: defaultProvider ?? '' });
+  }, [open, consumerSlug, defaultProvider]);
 
   const readFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -116,10 +140,23 @@ export default function PactImportDialog({
 
   const handleImport = async () => {
     if (!pact.trim() || busy) return;
+    // The consumer the broker files the pact under: the dialog's, else the handle, else the document's.
+    const brokerConsumer = consumerName || slug.trim() || consumerSlug || pactConsumerName(pact);
+    if (publish) {
+      const problem = validatePublishDraft(draft, brokerConsumer);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+    }
     setBusy(true);
     setError('');
     setOutcome(null);
-    const result = await onImport(pact, slug.trim());
+    const result = await onImport(
+      pact,
+      slug.trim(),
+      publish ? { consumerName: brokerConsumer, draft } : undefined,
+    );
     setBusy(false);
     if ('error' in result) {
       setError(result.error);
@@ -196,6 +233,79 @@ export default function PactImportDialog({
             </p>
           </div>
 
+          <div className="cns-form__field cns-publish">
+            <div className="cns-form__row">
+              <Checkbox
+                id="pact-publish"
+                checked={publish}
+                onCheckedChange={(value) => setPublish(value === true)}
+              />
+              <Label htmlFor="pact-publish">Also publish to the Pact Broker</Label>
+            </div>
+            <p className="cns-form__hint">
+              Files the pact under a consumer version so the provider can verify it and can-i-deploy
+              can see it. Without this the pact is stored as a consumer contract only.
+            </p>
+            {publish && (
+              <div className="cns-publish__fields" data-testid="pact-publish-fields">
+                <div className="cns-form__field">
+                  <Label htmlFor="pact-publish-provider">Provider</Label>
+                  <Input
+                    id="pact-publish-provider"
+                    className="mono"
+                    value={draft.providerName}
+                    maxLength={255}
+                    placeholder="orders-api"
+                    onChange={(event) => setDraft({ ...draft, providerName: event.target.value })}
+                  />
+                </div>
+                <div className="cns-form__field">
+                  <Label htmlFor="pact-publish-version">Consumer version</Label>
+                  <Input
+                    id="pact-publish-version"
+                    className="mono"
+                    value={draft.version}
+                    maxLength={255}
+                    placeholder="9f3c2a1"
+                    onChange={(event) => setDraft({ ...draft, version: event.target.value })}
+                  />
+                </div>
+                <div className="cns-form__field">
+                  <Label htmlFor="pact-publish-branch">Branch (optional)</Label>
+                  <Input
+                    id="pact-publish-branch"
+                    className="mono"
+                    value={draft.branch}
+                    maxLength={255}
+                    placeholder="main"
+                    onChange={(event) => setDraft({ ...draft, branch: event.target.value })}
+                  />
+                </div>
+                <div className="cns-form__field">
+                  <Label htmlFor="pact-publish-tags">Tags (optional)</Label>
+                  <Input
+                    id="pact-publish-tags"
+                    className="mono"
+                    value={draft.tags}
+                    placeholder="prod, release-2"
+                    onChange={(event) => setDraft({ ...draft, tags: event.target.value })}
+                  />
+                </div>
+                <div className="cns-form__field">
+                  <Label htmlFor="pact-publish-build">Build URL (optional)</Label>
+                  <Input
+                    id="pact-publish-build"
+                    className="mono"
+                    value={draft.buildUrl}
+                    maxLength={2048}
+                    placeholder="https://ci.example.com/builds/42"
+                    onChange={(event) => setDraft({ ...draft, buildUrl: event.target.value })}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           {error && <Alert variant="danger">{error}</Alert>}
 
           {outcome && (
@@ -207,6 +317,30 @@ export default function PactImportDialog({
                   ? `, ${outcome.unresolved.length} interactions unresolved.`
                   : '.'}
               </Alert>
+
+              {outcome.broker && (
+                <div data-testid="pact-publish-outcome">
+                  {'error' in outcome.broker ? (
+                    <Alert variant="danger">
+                      Stored in the registry, but not published to the Pact Broker:{' '}
+                      {outcome.broker.error}
+                    </Alert>
+                  ) : (
+                    <Alert variant="ok">
+                      Published to the Pact Broker.
+                      {outcome.broker.notices.length > 0 && (
+                        <ul className="cns-outcome__list">
+                          {outcome.broker.notices.map((line, index) => (
+                            <li className="cns-outcome__item" key={index}>
+                              {line}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </Alert>
+                  )}
+                </div>
+              )}
 
               {groups.map((group) => (
                 <section className="cns-outcome__group" key={group.reason}>
