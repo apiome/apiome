@@ -7,6 +7,7 @@ import * as React from 'react';
 import { Database, FileJson, Plus } from 'lucide-react';
 import { toast } from '../../../../../components/ui/toast';
 
+import type { PublishDraft } from '@lib/pact-publish';
 import { Button } from '@/app/components/ui/Button';
 import {
   DataTableFilterChip,
@@ -59,6 +60,7 @@ import {
   fetchConsumers,
   fetchRuntime,
   importPact,
+  publishToBroker,
   retireConsumer,
   updateConsumer,
 } from './api';
@@ -94,6 +96,9 @@ import {
 const HOME_ROUTE = '/ade/dashboard';
 
 /** Which overlay, if any, is open over the page. */
+/** A UUID, which is a project id rather than a handle worth offering as a provider name. */
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 type ConsumerOverlay = 'none' | 'register' | 'edit' | 'declare' | 'import' | 'surface' | 'bindings' | 'usage';
 
 /** The caller's effective permissions, as `/api/access/permissions/me` reports them. */
@@ -290,9 +295,15 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
     }
   };
 
-  const runImport = async (pact: string, consumerSlug: string) => {
+  const runImport = async (
+    pact: string,
+    consumerSlug: string,
+    publish?: { consumerName: string; draft: PublishDraft },
+  ) => {
     try {
       const result = await importPact(projectRef, pact, consumerSlug);
+      // The registry import is done; a broker failure is reported beside it, never instead of it.
+      const broker = publish ? await publishToBroker(pact, publish.consumerName, publish.draft) : undefined;
       await load();
       return {
         outcome: {
@@ -300,6 +311,7 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
           fieldCount: result.contract.field_count,
           revision: result.contract.revision,
           unresolved: result.unresolved ?? [],
+          ...(broker ? { broker } : {}),
         },
       };
     } catch (error) {
@@ -501,6 +513,7 @@ export default function ConsumersClient({ projectRef }: ConsumersClientProps) {
         onOpenChange={(next) => !next && setOverlay('none')}
         consumerName={active?.consumer.name ?? null}
         consumerSlug={active?.consumer.slug ?? null}
+        defaultProvider={UUID_PATTERN.test(projectRef) ? null : projectRef}
         onImport={runImport}
       />
 

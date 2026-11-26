@@ -8,6 +8,7 @@
  */
 
 import { withTeamParam } from '@lib/owners';
+import { buildPublishRequest, readPublishNotices, type PublishDraft } from '@lib/pact-publish';
 import type {
   AvailableSurface,
   BindingDraft,
@@ -193,6 +194,39 @@ export function importPact(
       body: JSON.stringify({ pact, ...(consumerSlug ? { consumer_slug: consumerSlug } : {}) }),
     },
   );
+}
+
+/**
+ * Publish a pact to the Pact Broker (PFX-5.8, #6952) through `/api/pact/publish`.
+ *
+ * Never throws: the dialog shows the answer beside the registry import's, so a refusal (a changed
+ * pact for a version that already has one is a 409) comes back as `{ error }`.
+ *
+ * @param pact The Pact document as text.
+ * @param consumerName The consumer publishing.
+ * @param draft The broker section of the dialog.
+ * @returns The notices REST printed, or the reason it was refused.
+ */
+export async function publishToBroker(
+  pact: string,
+  consumerName: string,
+  draft: PublishDraft,
+): Promise<{ notices: string[] } | { error: string }> {
+  try {
+    const response = await fetch('/api/pact/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildPublishRequest(pact, consumerName, draft)),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      const message = (data as { error?: unknown } | null)?.error;
+      return { error: typeof message === 'string' && message ? message : `The Pact Broker refused it (${response.status}).` };
+    }
+    return { notices: readPublishNotices(data) };
+  } catch {
+    return { error: 'The Pact Broker could not be reached. Try again shortly.' };
+  }
 }
 
 /**
