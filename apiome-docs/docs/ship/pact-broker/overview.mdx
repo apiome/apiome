@@ -21,7 +21,8 @@ connected to one through pacts, with each integration's verdict. A provider's
 and verifies the stale ones. The [**Matrix**](./matrix.mdx)
 shows which consumer versions were verified against which provider versions, and
 [**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console) checks one version before a
-deployment, each with its verdict explained. **Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
+deployment, each with its verdict explained. [**Webhooks**](./webhooks-console.mdx) lists the
+workspace's contract webhooks and every delivery, tests them and redelivers one. **Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
 each bi-directional comparison. **Provider states** shows a provider's registered states and
 [checks its pacts against them](./provider-states.mdx#see-provider-states-in-the-app) before a
 run.
@@ -71,6 +72,7 @@ run.
 | See how a pact is compared with a provider's OpenAPI document | [Comparison rules](./comparison-rules.mdx) |
 | Check message pacts against a provider's AsyncAPI document | [Message pacts](./message-pacts.mdx) |
 | Start CI when a pact needs verifying or a verification finishes | [Contract webhooks](./webhooks.mdx) |
+| Create, test and manage webhooks in the app; read and redeliver deliveries | [Webhooks and delivery log](./webhooks-console.mdx) |
 | See each pact's verdict on the GitHub or GitLab commit and pull request | [Commit statuses](./commit-statuses.mdx) |
 | Show in a README whether a public project's pacts are verified | [Pact badges](./badges.mdx) |
 | Group applications, undo a delete, clean up old versions | [Labels, deletes and retention](./retention.mdx) |

@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 83 operations."
+description: "REST endpoints tagged pact-broker: 87 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.682.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.683.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 83 operations
+Tag: `pact-broker` · 87 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2726,6 +2726,109 @@ Operation id: `delete_state_route_v1_tenants__tenant_slug__pact_verifier_provide
 | --- | --- | --- |
 | 204 | Successful response for delete a provider state. | — |
 | 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-webhook-deliveries` {#read-deliveries-v1-tenants-tenant-slug-pact-webhook-deliveries-get}
+
+**List webhook deliveries**
+
+The firings of the workspace's contract webhooks, newest first: each with its status (`success`, `failure` — dead-lettered after every attempt, `retrying`, `not_run`), attempts, the event, the pact that caused it and how it was triggered (`resource_creation` or `user` for a redelivery). `webhook` narrows to one webhook, `status` to one status. Pass `nextCursor` back as `cursor` for the next page. Requires `pacts:view`.
+
+Operation id: `read_deliveries_v1_tenants__tenant_slug__pact_webhook_deliveries_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `webhook` | query | string or null | no | Only this webhook's deliveries (its `uuid`). |
+| `status` | query | enum `"success"`, `"failure"`, `"retrying"`, `"not_run"` or null | no | Only deliveries with this status. |
+| `cursor` | query | string or null | no | The `nextCursor` of the previous page. |
+| `limit` | query | integer | no | The page size. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list webhook deliveries. | `application/json` object |
+| 400 | `pact-webhook-delivery-cursor-invalid` or `pact-webhook-invalid` (unknown status). | — |
+| 404 | `pact-webhook-not-found`: no such webhook in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-webhook-deliveries/latest` {#read-latest-deliveries-v1-tenants-tenant-slug-pact-webhook-deliveries-latest-get}
+
+**Latest delivery of each webhook**
+
+The newest firing of each of the workspace's contract webhooks, keyed by webhook `uuid`; a webhook that never fired is absent. Requires `pacts:view`.
+
+Operation id: `read_latest_deliveries_v1_tenants__tenant_slug__pact_webhook_deliveries_latest_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for latest delivery of each webhook. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-webhook-deliveries/{delivery_id}` {#read-delivery-v1-tenants-tenant-slug-pact-webhook-deliveries-delivery-id-get}
+
+**Read a webhook delivery**
+
+One firing and the log of each attempt (`attempt`, `success`, `status`, `logs`, `createdAt`), oldest first — what was sent and what came back, every secret removed. Requires `pacts:view`.
+
+Operation id: `read_delivery_v1_tenants__tenant_slug__pact_webhook_deliveries__delivery_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `delivery_id` | path | string | yes | Path parameter identifying the delivery id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a webhook delivery. | `application/json` object |
+| 404 | `pact-triggered-webhook-not-found`: no such delivery in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-webhook-deliveries/{delivery_id}/redeliver` {#post-redeliver-v1-tenants-tenant-slug-pact-webhook-deliveries-delivery-id-redeliver-post}
+
+**Redeliver a webhook delivery**
+
+Send a finished firing (`success` or `failure`) again: a new firing of the same webhook, with the same event and template parameters, queued now and retried as any other (`triggerType` `user`). The original and its log are kept. Answers `202` with the new delivery. Requires `pacts:edit`.
+
+Operation id: `post_redeliver_v1_tenants__tenant_slug__pact_webhook_deliveries__delivery_id__redeliver_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `delivery_id` | path | string | yes | Path parameter identifying the delivery id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 202 | Successful response for redeliver a webhook delivery. | `application/json` object |
+| 404 | `pact-triggered-webhook-not-found`: no such delivery in this workspace. | — |
+| 409 | `pact-webhook-delivery-in-progress`: the delivery is still queued or being retried; `pact-webhook-disabled`: its webhook is disabled. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}

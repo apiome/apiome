@@ -1,0 +1,29 @@
+---
+slug: pact-webhooks-console
+title: "Webhooks and delivery log"
+description: "Create, test and manage contract webhooks, read every delivery and redeliver one."
+authors: [apiome]
+---
+
+Contract webhooks now have pages of their own. On the **Pacticipants** page, click **Webhooks**. See
+[Webhooks and delivery log](/ship/pact-broker/webhooks-console).
+
+{/* truncate */}
+
+- **Every webhook at a glance.** What each is for, the events it fires on, where it sends (an HTTP
+  endpoint or a GitHub Actions workflow), whether it is enabled and signed, and its last delivery.
+- **Create and test.** **New webhook** writes one — events, the request or the GitHub repository,
+  headers, a body with `${pactbroker.…}` parameters, a signing secret — and **Test** sends it once
+  before you create it.
+- **Manage.** A webhook's page shows its request with secrets as `**********`, and **Test**,
+  **Edit**, **Disable** / **Enable** and **Delete**. Editing keeps a stored secret unless you replace
+  or remove it.
+- **Delivery log.** Every delivery, newest first — **Delivered**, **Failed**, **Retrying** or
+  **Queued** — for the workspace or one webhook, with the attempts made and what triggered it.
+- **Execution log and redelivery.** A delivery's page shows what each attempt sent and what came
+  back, with **Copy**. **Redeliver** sends a delivered or failed delivery again as a new delivery;
+  one still queued or retrying, or whose webhook is disabled, is refused with the reason.
+
+Reading needs **Pacts** → **View**; creating **Create**; editing, testing and redelivering **Edit**;
+deleting **Delete**. The delivery log and redelivery are also in the REST API under
+`/v1/tenants/{tenant}/pact-webhook-deliveries`.

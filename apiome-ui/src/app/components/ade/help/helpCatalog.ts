@@ -1413,6 +1413,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contracts', 'pact', 'rerun', 'stale', 'verify all stale', 'log', 'expected', 'actual', 'mismatch', 'history', 'trigger', 'hosted verifier', 'download'],
   },
   {
+    id: 'webhooks-console',
+    title: 'Webhooks and delivery log',
+    summary: 'Create, test, enable and delete contract webhooks, read each delivery and redeliver one.',
+    page: 'apiome-docs/docs/ship/pact-broker/webhooks-console.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'pact', 'execution', 'redeliver', 'retry', 'dead letter', 'test webhook', 'github actions', 'repository_dispatch', 'signing secret'],
+  },
+  {
     id: 'bi-directional',
     title: 'Publish a provider contract',
     summary: "Register a provider version's OpenAPI document for bi-directional contract testing.",

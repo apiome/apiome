@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.859.0] - 2026-11-26
+
+### Added
+- **Webhook delivery log and redelivery (PFX-5.6, #6950).** OpenAPI 1.683.0, apiome-db V445. Four
+  routes under `/v1/tenants/{tenant}/pact-webhook-deliveries` (`app.pact_webhook_delivery_routes`, tag
+  `pact-broker`, off the catalogued Pact Broker surface) for the console's **Webhooks** page:
+  - `GET …/pact-webhook-deliveries` — the firings of the workspace's contract webhooks, newest first,
+    with status (`success`, `failure`, `retrying`, `not_run`), attempts, event, pact and trigger;
+    `webhook` narrows to one webhook (a webhook of another workspace is a 404), `status` to one
+    status, `cursor` pages (`nextCursor`; a cursor it did not hand out is a 400
+    `pact-webhook-delivery-cursor-invalid`), `limit` ≤ 50. `pacts:view`.
+  - `GET …/pact-webhook-deliveries/latest` — the newest firing of each webhook. `pacts:view`.
+  - `GET …/pact-webhook-deliveries/{id}` — one firing and the log of each attempt, secrets removed.
+    `pacts:view`.
+  - `POST …/pact-webhook-deliveries/{id}/redeliver` — queue a finished firing again as a new firing
+    (`triggerType` `user`, same event and template parameters), retried as any other; the original
+    is kept. `202`. A firing still queued or retrying is a 409 `pact-webhook-delivery-in-progress`;
+    one whose webhook is disabled a 409 `pact-webhook-disabled`. `pacts:edit`.
+- apiome-db V445: `idx_pact_triggered_webhook_history (webhook_id, tenant_id, created_at DESC, id DESC)`
+  replaces `idx_pact_triggered_webhook_webhook`; `idx_pact_triggered_webhook_recent (tenant_id,
+  created_at DESC, id DESC)` serves the workspace's log.
+
 ## [1.858.0] - 2026-11-26
 
 ### Added

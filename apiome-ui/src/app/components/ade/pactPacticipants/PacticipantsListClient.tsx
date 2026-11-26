@@ -7,7 +7,7 @@
  * repository and when each was last changed. The **Label** filter narrows the list to the
  * pacticipants carrying one label; **Load more** reads the next page. Each name opens the
  * pacticipant's page (versions, branches, tags, environments). The header opens the **Matrix** and
- * **Can I deploy?** pages (PFX-5.4, #6948).
+ * **Can I deploy?** pages (PFX-5.4, #6948) and the **Webhooks** page (PFX-5.6, #6950).
  *
  * A workspace with no pacticipant shows the CLI command that registers them: publishing a pact
  * registers its consumer and its provider.
@@ -21,6 +21,7 @@ import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { PUBLISH_SNIPPET, type Pacticipant } from '@lib/pact-pacticipants';
 import { CAN_I_DEPLOY_ROUTE, MATRIX_ROUTE } from '@lib/pact-matrix';
+import { WEBHOOKS_ROUTE } from '@lib/pact-webhooks';
 import { CliSnippet, PacticipantsTable } from './PacticipantPanels';
 import { fetchLabels, fetchPacticipants } from './pacticipantsApi';
 import { describeFailure } from './describeFailure';
@@ -100,6 +101,9 @@ export default function PacticipantsListClient() {
             </Button>
             <Button variant="outline" asChild>
               <Link href={CAN_I_DEPLOY_ROUTE}>Can I deploy?</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href={WEBHOOKS_ROUTE}>Webhooks</Link>
             </Button>
             <Button variant="outline" onClick={() => void load(label)}>
               <RefreshCw aria-hidden />

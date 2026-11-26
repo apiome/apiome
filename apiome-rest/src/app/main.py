@@ -142,6 +142,7 @@ from .pact_broker_matrix_routes import router as pact_broker_matrix_router
 from .pact_broker_routes import router as pact_broker_router
 from .pact_broker_verification_routes import router as pact_broker_verification_router
 from .pact_comparison_routes import router as pact_comparison_router
+from .pact_webhook_delivery_routes import router as pact_webhook_delivery_router
 from .pact_postman_routes import router as pact_postman_router
 from .pact_suite_routes import router as pact_suite_router
 from .pact_verification_ops_routes import router as pact_verification_ops_router
@@ -583,6 +584,7 @@ app.include_router(pact_broker_compat_router)
 app.include_router(pact_broker_router)
 app.include_router(pact_broker_verification_router)
 app.include_router(pact_comparison_router)  # PFX-2.5 (#6929): comparison fidelity reports
+app.include_router(pact_webhook_delivery_router)  # PFX-5.6 (#6950): webhook delivery log, redeliver
 app.include_router(pact_postman_router)  # PFX-4.7 (#6944): Postman collection export of a pact
 app.include_router(pact_suite_router)  # PFX-3.1 (#6931): pact version → contract suite
 app.include_router(pact_verifier_router)  # PFX-3.2 (#6932): hosted provider verifier

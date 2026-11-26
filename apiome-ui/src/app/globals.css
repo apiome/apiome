@@ -45922,3 +45922,85 @@ tr[data-selected="true"] > td:first-child {
   gap: var(--space-2);
   margin-block-start: var(--space-3);
 }
+
+/* ===========================================================================
+ * Contracts — Webhooks and execution log (PFX-5.6, #6950). Built on the
+ * Pacticipants (.ppx) and Matrix (.pmx) classes; these add the editor's layout
+ * and the log blocks.
+ * ======================================================================== */
+
+.pwx-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pwx-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+.pwx-form__row--url {
+  grid-template-columns: minmax(6rem, 8rem) minmax(0, 1fr);
+}
+
+.pwx-events {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  align-items: start;
+}
+
+.pwx-events legend {
+  float: none;
+  grid-column: 1 / -1;
+  margin-block-end: var(--space-1);
+}
+
+.pwx-textarea {
+  block-size: auto;
+  min-block-size: 4.5rem;
+  padding-block: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  resize: vertical;
+}
+
+.pwx-secret-note {
+  font-size: var(--fs-xs);
+}
+
+.pwx-text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-fg);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.pwx-text-button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pwx-pre {
+  max-block-size: 24rem;
+  margin: 0;
+  overflow: auto;
+}
+
+.pwx-pre:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pwx-test-outcome {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+}
+
+.pwx-test-outcome p {
+  margin: 0;
+}
