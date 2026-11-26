@@ -1,0 +1,31 @@
+---
+slug: pact-verification-console
+title: "Verification results and re-runs"
+description: "Read each verification result, re-run a pact, and verify stale pacts in the app."
+authors: [apiome]
+---
+
+A provider's verification results now have a page of their own. On a pacticipant's page, in the
+**Pacts** section, click **Verification**. See
+[Verification results and re-runs](/ship/pact-broker/verification-console).
+
+{/* truncate */}
+
+- **Where the provider stands.** A strip counts the pacts, verified, failing and stale, the share of
+  interactions passing and when the provider last verified. Each consumer's newest pact is listed
+  with its newest result; a pact version with no result is marked **Stale — not verified**.
+- **Re-run.** Replay one pact against a verification target with the hosted verifier, as the build of
+  its newest result or another one, and publish a new result. A pair already being verified is
+  refused, so two runs never overlap.
+- **Verify all stale.** Verify every stale pact in one run, as the build you name. Every pact it does
+  not run is listed with the reason.
+- **History.** Every result, newest first, with its trigger (**Pact verifier**, **Hosted verifier**,
+  **Re-run**, **Stale re-check**, **Bi-directional**), duration, build link and interaction counts,
+  narrowed to one consumer when you choose.
+- **One result.** Each failed interaction is open, with every mismatch's **Expected** and **Actual**
+  values side by side; the requests a hosted run sent; and the raw log with **Copy** and
+  **Download**.
+
+Reading needs **Pacts** → **View**. Running needs **Pacts** → **Create** and **Verification
+evidence** → **Create**. The same operations are in the REST API under
+`/v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}`.

@@ -43,6 +43,12 @@ __all__ = [
     "CODE_VERIFICATION_INVALID",
     "CODE_VERIFICATION_NOT_FOUND",
     "MAX_TEST_RESULTS",
+    "TRIGGERS",
+    "TRIGGER_BIDIRECTIONAL",
+    "TRIGGER_HOSTED",
+    "TRIGGER_MANUAL",
+    "TRIGGER_PUBLISHED",
+    "TRIGGER_STALE_RECHECK",
     "VerificationRequest",
     "VerificationResultRecord",
     "parse_verification_request",
@@ -58,6 +64,19 @@ CODE_REPORT_NOT_FOUND = "pact-verification-report-not-found"
 
 #: The most per-interaction entries one result may carry.
 MAX_TEST_RESULTS = 10_000
+
+#: How a result came to be (apiome-db V444, PFX-5.5 #6949): a Pact verifier published it.
+TRIGGER_PUBLISHED = "published"
+#: The hosted verifier (PFX-3.2) ran it from a ``…/verify`` request.
+TRIGGER_HOSTED = "hosted"
+#: Someone re-ran one pact from the Verification console.
+TRIGGER_MANUAL = "manual"
+#: **Verify all stale** re-checked it.
+TRIGGER_STALE_RECHECK = "stale-recheck"
+#: Apiome compared the pact with the provider's contract (PFX-2.3).
+TRIGGER_BIDIRECTIONAL = "bidirectional"
+#: Every trigger, in the order the database's CHECK lists them. Results recorded before V444 have none.
+TRIGGERS = (TRIGGER_PUBLISHED, TRIGGER_HOSTED, TRIGGER_MANUAL, TRIGGER_STALE_RECHECK, TRIGGER_BIDIRECTIONAL)
 
 #: The longest a ``verifiedBy`` value may be (the column width).
 _LABEL_MAX = 255
@@ -216,6 +235,11 @@ class VerificationResultRecord(BaseModel):
         kind: ``native`` (a Pact verifier published it) or ``bidirectional`` (Apiome compared the
             pact with the provider version's contract, PFX-2.3).
         comparison: For ``bidirectional``, the comparison payload; ``None`` otherwise.
+        trigger: How it came to be (one of :data:`TRIGGERS`); ``None`` for a result recorded
+            before apiome-db V444.
+        duration_ms: How long the run took, when Apiome ran it.
+        evidence_run_id: The ECA-1.3 evidence run holding the run's assertions, when Apiome ran it.
+        seq: Its place in the order of recording (the history's cursor).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -240,6 +264,10 @@ class VerificationResultRecord(BaseModel):
     created_at: Optional[str] = None
     kind: str = "native"
     comparison: Optional[Dict[str, Any]] = None
+    trigger: Optional[str] = None
+    duration_ms: Optional[int] = None
+    evidence_run_id: Optional[str] = None
+    seq: Optional[int] = None
 
 
 def _iso(value: Any) -> Optional[str]:
@@ -292,4 +320,8 @@ def verification_result_from_row(row: Mapping[str, Any]) -> VerificationResultRe
         created_at=_iso(row.get("created_at")),
         kind=str(row.get("kind") or "native"),
         comparison=_json_object(row.get("comparison")),
+        trigger=row.get("trigger"),
+        duration_ms=int(row["duration_ms"]) if row.get("duration_ms") is not None else None,
+        evidence_run_id=str(row["evidence_run_id"]) if row.get("evidence_run_id") else None,
+        seq=int(row["seq"]) if row.get("seq") is not None else None,
     )

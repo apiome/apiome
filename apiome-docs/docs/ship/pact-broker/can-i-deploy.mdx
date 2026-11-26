@@ -13,7 +13,8 @@ already runs there?* Apiome answers it from three things you already record: the
 provider contract — and [what is deployed where](./environments.mdx). The `pact-broker can-i-deploy` command asks Apiome
 unchanged.
 
-There is no screen for the matrix yet. Use the CLI or the API.
+Ask it from your deploy job, from the [**Can I deploy?** page](#check-in-the-console) in the app, or
+from the API. To look at many versions at once, use the [**Matrix**](./matrix.mdx) page.
 
 ## Before you start
 
@@ -26,6 +27,41 @@ There is no screen for the matrix yet. Use the CLI or the API.
   (`https://api.apiome.dev/v1/tenants/<workspace>/pact-broker`) and `PACT_BROKER_TOKEN` to an API
   key. Any role can ask: the key needs **Pacts** → **View**. Create one on
   [API keys](../../workspace/api-keys.mdx).
+
+## Check in the console
+
+The **Can I deploy?** page asks the same question from the app and explains the answer.
+
+1. In the rail, under **Ship**, click **Contracts**.
+2. On the **Pacticipants** page, click **Can I deploy?**.
+3. In **Pacticipant**, type or choose the application being deployed.
+4. In **Version**, type or choose its version. Once the pacticipant is known, the list suggests its
+   latest versions.
+5. Under **Deploy to**, choose **Environment** and pick it from the list, or choose **Tag** and type
+   the tag.
+6. Optional: to leave an application out of the answer, type it in **Ignore a pacticipant** and
+   click **Ignore**. Click its name again to stop ignoring it. You can ignore up to 10.
+7. Click **Check**.
+
+If a field is missing, the page says which and does not ask. The address of the page carries the
+question (`?pacticipant=…&version=…&toEnvironment=…`), so you can share a check; opening a whole
+question asks it straight away.
+
+<Screenshot id="pact-can-i-deploy" alt="The Can I deploy? page asking whether Billing Service 2.0.0 can be deployed to production, ignoring Mobile App: the verdict reads Not known yet with a blocking notice about Audit Log, a retry hint and Check again, above the rows the verdict was reached from."/>
+
+The answer has three parts:
+
+- **Verdict** — **Yes — deployable**, **No — not deployable** or **Not known yet**, the Pact
+  Broker's sentence, and the counts. Each notice is listed under **Blocking**, **Warnings** or
+  **Passing**, with what to do about it. When the answer is not known yet, the page says when to ask
+  again, as REST's `Retry-After` does, and **Check again** asks. See [Wait for a result](#wait-for-a-result).
+- **Rows the verdict was reached from** — every row, with its result and reason. Ignored rows are
+  marked **Ignored**. **Open pact** opens the pact. The columns are the ones on the
+  [Matrix](./matrix.mdx#the-rows-table) page.
+- **Ask from a pipeline** — the `apiome pact can-i-deploy` command that asks the same question. It
+  exits `0` when the answer is yes and `1` otherwise.
+
+Before your first check, the page shows that command with example values.
 
 ## Gate a deployment
 

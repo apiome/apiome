@@ -1,0 +1,95 @@
+---
+title: Integration network
+description: See which applications depend on each other, and each integration's verdict.
+sidebar_position: 1.7
+tags: [contracts, pact, ui]
+---
+
+The **Network** page draws one pacticipant's network: every pacticipant connected to it through
+pacts, near or far, and the newest pact of each integration with how its latest verification went.
+Use it to see what an application depends on, what depends on it, and where a broken pact sits.
+For the terms, see [Pacticipants and versions](./concepts.mdx).
+
+The page only reads. It answers what the Pact Broker's network diagram answers.
+
+## Before you start
+
+- You hold **Pacts** → **View**. Without it, the page shows **Permission denied**.
+- The pacticipant is in at least one pact. A consumer [publishes its pacts](./publish-pacts.mdx).
+
+## Open the network
+
+1. In the rail, under **Ship**, click **Contracts**.
+2. On the **Pacticipants** page, click a pacticipant.
+3. In the **Pacts** section, click **Network diagram**.
+
+The page is at `/ade/dashboard/pacts/pacticipants/<handle>/network`.
+
+<Screenshot id="pact-network" alt="The Billing Service network: Mobile App and Web App consume Billing Service, which consumes Ledger API and Notification Service; Ledger API and Reporting consume Audit Log. Each arrow is marked by its verdict, above a table of the six integrations."/>
+
+## Read the diagram
+
+Each box is a pacticipant. Each arrow is an integration. It points from the consumer to its provider.
+Consumers sit on the left and their providers to the right, so a chain of dependencies reads left to
+right. The pacticipant you opened is highlighted.
+
+Each arrow is coloured and marked by the verdict of the integration's newest pact:
+
+| Mark | Verdict | What it means |
+| --- | --- | --- |
+| ✓ | **Verified** | The newest result passed. |
+| ✕ | **Failed** | The newest result failed. |
+| ! | **Failed (pending)** | The newest result failed, but the pact was pending, so the provider's build did not fail. See [Pending and work-in-progress pacts](./pending-and-wip.mdx). |
+| ? | **Not verified yet** | No provider has verified the pact. The arrow is dashed. |
+
+The key above the diagram counts the integrations with each verdict.
+
+- **Click an arrow** to open that integration's newest pact. See [Pact detail](./pact-detail.mdx).
+- **Click a pacticipant** to open its own network.
+
+You can also move through the diagram with **Tab**: each pacticipant and each arrow can take focus,
+and its name says what it is. When two pacticipants consume each other, or a chain loops back, the
+arrow that closes the loop is drawn as an arc under the boxes.
+
+## The integrations table
+
+Under the diagram, **Integrations** lists every integration in the network. Each row shows:
+
+| Column | What it shows |
+| --- | --- |
+| **Pact** | The consumer and the provider. Click it to open the newest pact. |
+| **Latest consumer version** | The consumer version that published the newest pact. A commit SHA is shortened to 12 characters. |
+| **Published** | When that pact was published, in UTC. |
+| **Verification** | The verdict of its newest result. |
+
+The table is the full list. If a column of the diagram has more than 12 pacticipants, the diagram
+draws the first 12, says how many more there are, and leaves their arrows out. The table still lists
+those integrations.
+
+## Large networks and reads that fail
+
+The page reads the network outward from the pacticipant you opened, nearest pacticipants first. It
+reads the pacts of at most 25 pacticipants. When the network is larger, the pacticipants it did not read are still drawn, with a
+dashed outline, and a notice above the diagram names them. Their own integrations further out are
+not shown. Open one of them to see its network.
+
+If one pacticipant's pacts cannot be read, the notice names it and gives the reason. It is drawn with
+a dashed outline, and the rest of the network still shows. If the pacticipant you opened cannot be
+read, the page shows the reason and **Try again**.
+
+If no pact names the pacticipant yet, the page shows the `apiome pact publish` command.
+
+## Who can do what
+
+| Action | Permission |
+| --- | --- |
+| Open a pacticipant's network | **Pacts** → **View** |
+
+Every read is scoped to your current workspace.
+
+## Related
+
+- [Pacticipants](./pacticipants.mdx)
+- [Pact detail](./pact-detail.mdx)
+- [Check before you deploy](./can-i-deploy.mdx)
+- [Pacticipants and versions](./concepts.mdx)

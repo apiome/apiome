@@ -1,0 +1,358 @@
+{
+  "topology": {
+    "environments": [
+      {
+        "uuid": "a1b2c3d4-0001-4000-8000-000000000001",
+        "name": "production",
+        "displayName": "Production",
+        "production": true,
+        "contractRequired": true,
+        "deployed": [
+          {
+            "pacticipant": {
+              "name": "Billing Service",
+              "slug": "billing-service"
+            },
+            "version": "2.3.1",
+            "applicationInstance": null,
+            "deployedAt": "2026-11-24T09:30:00+00:00"
+          },
+          {
+            "pacticipant": {
+              "name": "Ledger API",
+              "slug": "ledger-api"
+            },
+            "version": "3f2a9c1b7e6d4a5b8c9d0e1f2a3b4c5d6e7f8a9b",
+            "applicationInstance": null,
+            "deployedAt": "2026-11-22T17:00:00+00:00"
+          },
+          {
+            "pacticipant": {
+              "name": "Reporting Job",
+              "slug": "reporting-job"
+            },
+            "version": "1.4.2",
+            "applicationInstance": "eu-west",
+            "deployedAt": "2026-11-20T06:00:00+00:00"
+          },
+          {
+            "pacticipant": {
+              "name": "Reporting Job",
+              "slug": "reporting-job"
+            },
+            "version": "1.4.2",
+            "applicationInstance": "us-east",
+            "deployedAt": "2026-11-20T06:10:00+00:00"
+          }
+        ],
+        "released": [
+          {
+            "pacticipant": {
+              "name": "Mobile App",
+              "slug": "mobile-app"
+            },
+            "version": "5.2.0",
+            "releasedAt": "2026-11-18T12:00:00+00:00"
+          }
+        ]
+      },
+      {
+        "uuid": "a1b2c3d4-0002-4000-8000-000000000002",
+        "name": "staging",
+        "displayName": "Staging",
+        "production": false,
+        "contractRequired": false,
+        "deployed": [
+          {
+            "pacticipant": {
+              "name": "Billing Service",
+              "slug": "billing-service"
+            },
+            "version": "2.4.0",
+            "applicationInstance": null,
+            "deployedAt": "2026-11-25T08:10:00+00:00"
+          },
+          {
+            "pacticipant": {
+              "name": "Ledger API",
+              "slug": "ledger-api"
+            },
+            "version": "9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b",
+            "applicationInstance": null,
+            "deployedAt": "2026-11-25T07:45:00+00:00"
+          }
+        ],
+        "released": []
+      },
+      {
+        "uuid": "a1b2c3d4-0003-4000-8000-000000000003",
+        "name": "qa",
+        "displayName": "QA",
+        "production": false,
+        "contractRequired": false,
+        "deployed": [],
+        "released": []
+      }
+    ],
+    "truncated": false
+  },
+  "history": {
+    "environment": {
+      "uuid": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "production",
+      "displayName": "Production",
+      "production": true,
+      "contractRequired": true
+    },
+    "deployments": [
+      {
+        "uuid": "d0000000-0000-4000-8000-000000000005",
+        "pacticipant": {
+          "name": "Billing Service",
+          "slug": "billing-service"
+        },
+        "version": "2.3.1",
+        "applicationInstance": null,
+        "currentlyDeployed": true,
+        "deployedAt": "2026-11-24T09:30:00+00:00",
+        "undeployedAt": null,
+        "recordedBy": "ci@example.com"
+      },
+      {
+        "uuid": "d0000000-0000-4000-8000-000000000004",
+        "pacticipant": {
+          "name": "Ledger API",
+          "slug": "ledger-api"
+        },
+        "version": "3f2a9c1b7e6d4a5b8c9d0e1f2a3b4c5d6e7f8a9b",
+        "applicationInstance": null,
+        "currentlyDeployed": true,
+        "deployedAt": "2026-11-22T17:05:00+00:00",
+        "undeployedAt": null,
+        "recordedBy": "ci@example.com"
+      },
+      {
+        "uuid": "d0000000-0000-4000-8000-000000000003",
+        "pacticipant": {
+          "name": "Reporting Job",
+          "slug": "reporting-job"
+        },
+        "version": "1.4.2",
+        "applicationInstance": "us-east",
+        "currentlyDeployed": true,
+        "deployedAt": "2026-11-20T06:10:00+00:00",
+        "undeployedAt": null,
+        "recordedBy": "deploy-bot"
+      },
+      {
+        "uuid": "d0000000-0000-4000-8000-000000000002",
+        "pacticipant": {
+          "name": "Billing Service",
+          "slug": "billing-service"
+        },
+        "version": "2.2.0",
+        "applicationInstance": null,
+        "currentlyDeployed": false,
+        "deployedAt": "2026-11-15T10:00:00+00:00",
+        "undeployedAt": "2026-11-24T09:30:00+00:00",
+        "recordedBy": "ci@example.com"
+      }
+    ],
+    "nextCursor": "17"
+  },
+  "simulation": {
+    "environment": {
+      "uuid": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "production",
+      "displayName": "Production",
+      "production": true,
+      "contractRequired": true
+    },
+    "pacticipant": {
+      "name": "Ledger API",
+      "slug": "ledger-api"
+    },
+    "version": "9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b",
+    "applicationInstance": null,
+    "replaces": "3f2a9c1b7e6d4a5b8c9d0e1f2a3b4c5d6e7f8a9b",
+    "alreadyDeployed": false,
+    "evaluatedAt": "2026-11-25T12:00:00+00:00",
+    "verdict": {
+      "deployable": true,
+      "reason": "All required verification results are published and successful",
+      "reasons": [
+        {
+          "type": "success",
+          "code": "verified",
+          "text": "All required verification results are published and successful"
+        }
+      ],
+      "counts": {
+        "success": 2,
+        "failed": 0,
+        "unknown": 0
+      }
+    },
+    "impacts": [
+      {
+        "pacticipant": {
+          "name": "Billing Service",
+          "slug": "billing-service"
+        },
+        "version": "2.4.0",
+        "placement": "pending",
+        "environments": [
+          "staging"
+        ],
+        "roles": [
+          "consumer"
+        ],
+        "before": {
+          "deployable": false,
+          "reason": "The verification for the pact between the version 2.4.0 of Billing Service and a version of Ledger API currently in production (3f2a9c1b7e6d) failed",
+          "reasons": [
+            {
+              "type": "error",
+              "code": "verification-failed",
+              "text": "The verification for the pact between the version 2.4.0 of Billing Service and a version of Ledger API currently in production (3f2a9c1b7e6d) failed"
+            }
+          ],
+          "counts": {
+            "success": 1,
+            "failed": 1,
+            "unknown": 0
+          }
+        },
+        "after": {
+          "deployable": true,
+          "reason": "All required verification results are published and successful",
+          "reasons": [
+            {
+              "type": "success",
+              "code": "verified",
+              "text": "All required verification results are published and successful"
+            }
+          ],
+          "counts": {
+            "success": 1,
+            "failed": 0,
+            "unknown": 0
+          }
+        },
+        "effect": "clears"
+      },
+      {
+        "pacticipant": {
+          "name": "Mobile App",
+          "slug": "mobile-app"
+        },
+        "version": "5.3.0",
+        "placement": "pending",
+        "environments": [
+          "staging"
+        ],
+        "roles": [
+          "consumer"
+        ],
+        "before": {
+          "deployable": null,
+          "reason": "There is no verified pact between the version 5.3.0 of Mobile App and a version of Ledger API currently in production (3f2a9c1b7e6d)",
+          "reasons": [
+            {
+              "type": "error",
+              "code": "no-verification-result",
+              "text": "There is no verified pact between the version 5.3.0 of Mobile App and a version of Ledger API currently in production (3f2a9c1b7e6d)"
+            }
+          ],
+          "counts": {
+            "success": 0,
+            "failed": 0,
+            "unknown": 1
+          }
+        },
+        "after": {
+          "deployable": null,
+          "reason": "There is no verified pact between the version 5.3.0 of Mobile App and a version of Ledger API currently in production (3f2a9c1b7e6d)",
+          "reasons": [
+            {
+              "type": "error",
+              "code": "no-verification-result",
+              "text": "There is no verified pact between the version 5.3.0 of Mobile App and a version of Ledger API currently in production (3f2a9c1b7e6d)"
+            }
+          ],
+          "counts": {
+            "success": 1,
+            "failed": 0,
+            "unknown": 1
+          }
+        },
+        "effect": "unchanged"
+      },
+      {
+        "pacticipant": {
+          "name": "Billing Service",
+          "slug": "billing-service"
+        },
+        "version": "2.3.1",
+        "placement": "running",
+        "environments": [],
+        "roles": [
+          "consumer"
+        ],
+        "before": {
+          "deployable": true,
+          "reason": "All required verification results are published and successful",
+          "reasons": [
+            {
+              "type": "success",
+              "code": "verified",
+              "text": "All required verification results are published and successful"
+            }
+          ],
+          "counts": {
+            "success": 2,
+            "failed": 0,
+            "unknown": 0
+          }
+        },
+        "after": {
+          "deployable": true,
+          "reason": "All required verification results are published and successful",
+          "reasons": [
+            {
+              "type": "success",
+              "code": "verified",
+              "text": "All required verification results are published and successful"
+            }
+          ],
+          "counts": {
+            "success": 2,
+            "failed": 0,
+            "unknown": 0
+          }
+        },
+        "effect": "unchanged"
+      }
+    ],
+    "notChecked": [],
+    "summary": {
+      "clears": 1,
+      "unchanged": 2
+    }
+  },
+  "notChecked": [
+    {
+      "pacticipant": {
+        "name": "Reporting Job",
+        "slug": "reporting-job"
+      },
+      "version": "1.0.0",
+      "placement": "pending",
+      "environments": [
+        "qa"
+      ],
+      "code": "pact-simulation-over-limit",
+      "reason": "Only 20 counterpart versions are checked per simulation."
+    }
+  ]
+}

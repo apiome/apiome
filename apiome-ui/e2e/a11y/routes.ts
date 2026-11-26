@@ -263,6 +263,73 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-provider-states.html'] },
   },
   {
+    // PFX-5.1 (#6945): the Pacticipants list and one pacticipant's page (versions, branches, tags,
+    // environments), dumped by `tests/pact-pacticipants-ui.test.tsx`.
+    id: 'pact-pacticipants',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-pacticipants.html', 'pact-pacticipant-detail.html'],
+    },
+  },
+  {
+    // PFX-5.2 (#6946): one integration's pact — interactions, verification status, changes since
+    // the previous pact, history — dumped by `tests/pact-detail-ui.test.tsx`.
+    id: 'pact-detail',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-detail.html'] },
+  },
+  {
+    // PFX-5.3 (#6947): a pacticipant's integration network — the diagram with each integration's
+    // verdict and the integrations table — dumped by `tests/pact-network-ui.test.tsx`.
+    id: 'pact-network',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-network.html'] },
+  },
+  {
+    // PFX-5.4 (#6948): the matrix — query builder, verdict explained, grid and rows — and the
+    // can-i-deploy console, dumped by `tests/pact-matrix-ui.test.tsx`.
+    id: 'pact-matrix',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-matrix.html', 'pact-can-i-deploy.html'] },
+  },
+  {
+    // PFX-5.5 (#6949): a provider's Verification page (KPI strip, pacts with Re-run, history) and
+    // one result (expected vs actual, requests, raw log), dumped by `tests/pact-verification-ui.test.tsx`.
+    id: 'pact-verification',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-verification.html', 'pact-verification-result.html'],
+    },
+  },
+  {
+    // PFX-5.6 (#6950): the Webhooks page (webhooks with their newest delivery, recent deliveries),
+    // one webhook (overview, request, delivery log) and one delivery (each attempt's log), dumped
+    // by `tests/pact-webhooks-ui.test.tsx`.
+    id: 'pact-webhooks',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-webhooks.html', 'pact-webhook-detail.html', 'pact-webhook-delivery.html'],
+    },
+  },
+  {
+    // PFX-5.7 (#6951): the Environments dashboard (pacticipants × environments), one environment
+    // (overview, deployed now, released, deployment history) and the deploy simulator (verdict,
+    // what else changes, CLI), dumped by `tests/pact-environments-ui.test.tsx`.
+    id: 'pact-environments',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-environments.html', 'pact-environment-detail.html', 'pact-deploy-simulator.html'],
+    },
+  },
+  {
     // X3 (#6224): the released export surfaces of E1. The Source and Target steps (the target grid),
     // the several-targets Verify and the bulk dialog after a run are gated with the whole
     // `hive-export-studio` directory under the parity entry `export-studio`; this entry adds the

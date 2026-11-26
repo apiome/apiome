@@ -6,6 +6,95 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.860.0] - 2026-11-26
+
+### Added
+- **Environments, deployment history and the deploy simulator (PFX-5.7, #6951).** OpenAPI 1.684.0,
+  apiome-db V446. Three read routes under `/v1/tenants/{tenant}/pact-environments`
+  (`app.pact_deployment_routes`, tag `pact-broker`, off the catalogued Pact Broker surface) for the
+  console's **Environments** pages; `{environment}` is the environment's name. All need `pacts:view`.
+  - `GET …/pact-environments` — every environment with each version currently deployed to it
+    (pacticipant, version, application instance, `deployedAt`) and each release it currently
+    supports (`releasedAt`); `truncated` when either list passes 2000 entries.
+  - `GET …/pact-environments/{environment}/deployments` — every deployment recorded to the
+    environment, current or replaced, newest first, with `currentlyDeployed`, `deployedAt`,
+    `undeployedAt` and `recordedBy`; `pacticipant` narrows (an unknown one is a 404
+    `pacticipant-not-found`), `cursor` pages (`nextCursor`; one it did not hand out is a 400
+    `pact-deployment-cursor-invalid`), `limit` ≤ 50.
+  - `GET …/pact-environments/{environment}/simulate?pacticipant=&version=[&applicationInstance=]` —
+    what deploying that version would do, recording nothing: the candidate's can-i-deploy
+    `verdict`, the version it `replaces` in that instance (`alreadyDeployed` when it is the same),
+    and `impacts` — for each version of a pacticipant it has a pact with that is **running** in the
+    environment or **pending** (deployed or released elsewhere, not here), the verdict `before` and
+    `after` and the `effect` (`breaks`, `fixes`, `clears`, `blocks`, `changes`, `unchanged`), plus a
+    `summary` of the effects. At most 20 versions are checked; the rest are in `notChecked` with the
+    reason (`pact-simulation-over-limit`). Both verdicts come from the one verdict function
+    `can-i-deploy` uses (`query_matrix` gains an `environment_override` for the what-if). An
+    unknown environment, pacticipant or version is a 404; a malformed `applicationInstance` a 400
+    `pact-simulation-invalid`.
+- apiome-db V446: `idx_deployed_version_environment_history (environment_id, tenant_id, seq DESC)`
+  replaces `idx_deployed_version_environment`.
+
+## [1.859.0] - 2026-11-26
+
+### Added
+- **Webhook delivery log and redelivery (PFX-5.6, #6950).** OpenAPI 1.683.0, apiome-db V445. Four
+  routes under `/v1/tenants/{tenant}/pact-webhook-deliveries` (`app.pact_webhook_delivery_routes`, tag
+  `pact-broker`, off the catalogued Pact Broker surface) for the console's **Webhooks** page:
+  - `GET …/pact-webhook-deliveries` — the firings of the workspace's contract webhooks, newest first,
+    with status (`success`, `failure`, `retrying`, `not_run`), attempts, event, pact and trigger;
+    `webhook` narrows to one webhook (a webhook of another workspace is a 404), `status` to one
+    status, `cursor` pages (`nextCursor`; a cursor it did not hand out is a 400
+    `pact-webhook-delivery-cursor-invalid`), `limit` ≤ 50. `pacts:view`.
+  - `GET …/pact-webhook-deliveries/latest` — the newest firing of each webhook. `pacts:view`.
+  - `GET …/pact-webhook-deliveries/{id}` — one firing and the log of each attempt, secrets removed.
+    `pacts:view`.
+  - `POST …/pact-webhook-deliveries/{id}/redeliver` — queue a finished firing again as a new firing
+    (`triggerType` `user`, same event and template parameters), retried as any other; the original
+    is kept. `202`. A firing still queued or retrying is a 409 `pact-webhook-delivery-in-progress`;
+    one whose webhook is disabled a 409 `pact-webhook-disabled`. `pacts:edit`.
+- apiome-db V445: `idx_pact_triggered_webhook_history (webhook_id, tenant_id, created_at DESC, id DESC)`
+  replaces `idx_pact_triggered_webhook_webhook`; `idx_pact_triggered_webhook_recent (tenant_id,
+  created_at DESC, id DESC)` serves the workspace's log.
+
+## [1.858.0] - 2026-11-26
+
+### Added
+- **Verification results and operations (PFX-5.5, #6949).** OpenAPI 1.682.0, apiome-db V444. Five
+  routes under `/v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}` (`app.pact_verification_ops_routes`,
+  tag `pact-broker`, off the catalogued Pact Broker surface) for the console's **Verification** page:
+  - `GET …/verification-status` — each consumer's newest pact, the newest result of its pact version,
+    and `stale` (the pact version has no result); `counts` for the KPI strip; at most 500 consumers
+    (`truncated`). `pacts:view`.
+  - `GET …/results` — every result of the provider, newest first, with provider version and branch,
+    build URL, verifier, `trigger`, `duration_ms`, `evidence_run_id` and interaction counts;
+    `consumer` narrows, `cursor` pages (`next_cursor`; a cursor it did not hand out is a 400
+    `pact-history-cursor-invalid`), `limit` 1–50. `pacts:view`.
+  - `GET …/results/{result_id}` — one result with its stored `test_results` (mismatches with
+    `expected` / `actual`), a bi-directional `comparison`, and its evidence run (ECA-1.3) when the
+    caller also holds `verification_evidence:view`; `evidence_status` is `attached`, `not-recorded`,
+    `not-found` (pruned) or `forbidden`. `pacts:view`.
+  - `POST …/consumer/{consumer}/pact-version/{sha}/reverify` — run one pact version again on a
+    verification target with the hosted verifier; without `provider_version` it verifies as the
+    provider version and branch of the pact version's newest result (none: 422
+    `pact-verify-provider-version-required`). `trigger: manual`.
+  - `POST …/verify-stale` — verify every stale pact as `provider_version` (required);
+    `trigger: stale-recheck`. At most 25 per run: the rest, and pairs already running, are listed in
+    `skipped` (`pact-verify-over-limit`, `pact-verify-in-progress`) with a reason.
+  - Both runs need `pacts:create` and `verification_evidence:create` (API-key scope `pact:verify`) and
+    hold a per-pair session advisory lock: a re-run of a pair whose console run is still running is a
+    409 `pact-verify-in-progress`.
+- `verification_result` gains `trigger` (`published`, `hosted`, `manual`, `stale-recheck`,
+  `bidirectional`; null before V444), `duration_ms` and `evidence_run_id`, and the index
+  `idx_verification_result_provider_history`. Pact verifiers' results record `published`, the hosted
+  verifier's `hosted` with the run's duration and evidence run, bi-directional comparisons
+  `bidirectional`. The Pact Broker result document is unchanged.
+
+### Changed
+- `app.pact_verifier_service`: the target, credentials and provider-state handler of a run are
+  resolved by `open_verification_session` (`VerificationSession`), shared by the hosted verifier and
+  the console runs. No change to `…/verify`.
+
 ## [1.857.0] - 2026-11-26
 
 ### Added

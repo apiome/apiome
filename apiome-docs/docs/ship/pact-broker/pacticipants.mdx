@@ -1,0 +1,123 @@
+---
+title: Pacticipants
+description: Browse the applications in your pacts, with their versions and environments.
+sidebar_position: 1.5
+tags: [contracts, pact, ui]
+---
+
+A **pacticipant** is an application that takes part in a pact, as a consumer, a provider or both.
+The **Pacticipants** page lists every pacticipant in your workspace. Open one to see its versions,
+branches, tags, labels, and what each environment runs. For the terms, see
+[Pacticipants and versions](./concepts.mdx).
+
+The pages only read. To register, change or delete a pacticipant, use the
+[Pacticipants API](../../reference/rest/pacticipants.md), the [`apiome pact` commands](./cli.mdx)
+or your Pact tooling.
+
+## Before you start
+
+- You hold **Pacts** → **View**. Without it, the page shows **Permission denied**.
+- Pacticipants appear once a consumer [publishes a pact](./publish-pacts.mdx). Publishing registers
+  both the consumer and the provider.
+
+## Open the Pacticipants page
+
+1. In the rail, under **Ship**, click **Contracts**.
+2. The **Pacticipants** page opens. It lists the pacticipants by handle.
+
+Each row shows:
+
+| Column | What it shows |
+| --- | --- |
+| **Pacticipant** | The display name, which links to the pacticipant's page, and the handle under it. |
+| **Main branch** | The branch a query reads when it names none. |
+| **Labels** | The pacticipant's [labels](./retention.mdx#label-pacticipants). |
+| **Repository** | The repository URL. An `http` or `https` URL opens in a new tab. |
+| **Updated** | When the pacticipant last changed, in UTC. |
+
+<Screenshot id="pact-pacticipants" alt="The Pacticipants page: Billing Service, Ledger API and Mobile App, each with its handle, main branch, labels, repository and last update, under a Label filter."/>
+
+The header also opens the [**Matrix**](./matrix.mdx),
+[**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console),
+[**Webhooks**](./webhooks-console.mdx) and [**Environments**](./environments-dashboard.mdx) pages.
+
+To see only some pacticipants, choose a label from the **Label** list. Choose **All labels** to see
+every pacticipant again. The list shows 50 pacticipants at a time. Click **Load more** to see the
+next 50.
+
+If the workspace has no pacticipant yet, the page shows the command that publishes your first pacts:
+
+```bash
+apiome pact publish ./pacts \
+  --consumer-app-version "$GIT_COMMIT" \
+  --branch "$GIT_BRANCH"
+```
+
+## Open a pacticipant
+
+Click a pacticipant's name. Its page has five sections:
+
+- **Overview** shows the handle, the main branch, the repository, the labels, what the pacticipant is
+  **Bound to** (a project, a consumer, or nothing), and when it was registered.
+- **Branches** lists each branch with its **Head version**, the latest version recorded on it. The
+  main branch is marked **Main**.
+- **Environments** lists every environment of the workspace. For each one, it shows the versions of
+  this pacticipant that are **Deployed now**, with their application instance, and the releases that
+  are **Released and supported**. A production environment is marked **Production**. Click an
+  environment to open [its page](./environments-dashboard.mdx#read-an-environment).
+- **Pacts** lists every pact this pacticipant is in, as the consumer or the provider. Each row shows
+  the consumer and provider, this pacticipant's **Role**, the **Latest consumer version** that
+  published the pact, when it was published, and how its latest verification went. Click a pact to
+  open it. See [Pact detail](./pact-detail.mdx). Click **Network diagram** to see every pacticipant
+  connected to this one, with each integration's verdict. See [Integration network](./network.mdx).
+  When this pacticipant is the provider of a pact, click **Verification** to see its verification
+  results, re-run a pact and verify the stale ones. See
+  [Verification results and re-runs](./verification-console.mdx).
+- **Versions** lists the recorded versions, latest first, with their branches, tags, when they were
+  recorded and by whom, and a link to the build.
+
+<Screenshot id="pact-pacticipant-detail" alt="The Billing Service page: Overview facts, two branches with main marked Main, Production and Staging with the versions deployed and released there, and three pacts with their roles and verdicts."/>
+
+A commit SHA is shortened to its first 12 characters. Hover over it to see the full version number.
+
+### Narrow the versions
+
+1. Click a branch name, in **Branches** or in the **Versions** table, to list only the versions
+   recorded on that branch. The first row is the branch's head.
+2. Click a tag in the **Versions** table to list only the versions with that tag. The first row is
+   the latest version with the tag.
+3. Click **Clear** to list every version again.
+
+You can narrow by a branch and a tag at the same time. The count next to **Versions** says what the
+list shows, for example `2 versions on branch main, tagged prod`. The list shows 50 versions at a
+time. Click **Load more** to see the next 50.
+
+### When a section cannot be read
+
+Each section loads on its own. If one cannot be read, it shows the reason and **Try again**, and the
+other sections still show. If an environment's lists cannot be read, its row says
+**Could not be read** with the reason, and the other environments still show.
+
+If the workspace has no environment yet, **Environments** shows the commands that create one and
+record a deployment. See [Environments and deployments](./environments.mdx). If no pact names the
+pacticipant yet, **Pacts** shows the `apiome pact publish` command.
+
+## Who can do what
+
+| Action | Permission |
+| --- | --- |
+| Open the Pacticipants page and a pacticipant's page | **Pacts** → **View** |
+
+Every read is scoped to your current workspace.
+
+## Related
+
+- [Pacticipants and versions](./concepts.mdx)
+- [Pact detail](./pact-detail.mdx)
+- [Integration network](./network.mdx)
+- [Verification results and re-runs](./verification-console.mdx)
+- [Matrix](./matrix.mdx)
+- [Environments and deployments](./environments.mdx)
+- [Environments and the deploy simulator](./environments-dashboard.mdx)
+- [Labels, deletes and retention](./retention.mdx)
+- [Pacticipants API](../../reference/rest/pacticipants.md)

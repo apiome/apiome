@@ -36240,6 +36240,18 @@ tr:focus-within .pub-url__glyph {
   color: var(--fg-muted);
 }
 
+.cns-publish__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.cns-publish .cns-form__row {
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
 .cns-outcome__list,
 .cns-drawer__list {
   display: flex;
@@ -44929,4 +44941,1078 @@ tr[data-selected="true"] > td:first-child {
   margin: 0;
   color: var(--fg);
   overflow-wrap: anywhere;
+}
+
+/* ===========================================================================
+   Pacticipants — PFX-5.1 (#6945). `.ppx-*` is the Pacticipants list and one
+   pacticipant's page: the label filter, the tables (pacticipants, branches,
+   environments, versions), the facts and the CLI snippet of an empty state.
+   Branch and tag chips are buttons that narrow the versions. Tokens only.
+   =========================================================================== */
+.ppx {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ppx__toolbar,
+.ppx__filters,
+.ppx__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.ppx__field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.ppx__field-label {
+  color: var(--fg-muted);
+}
+
+.ppx__select {
+  min-inline-size: 12rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.ppx__select:focus-visible,
+.ppx__chip-button:focus-visible,
+.ppx__link:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.ppx__panel {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.ppx__panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ppx__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.ppx__statement {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.ppx__meta,
+.ppx__muted {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.ppx__mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.ppx__error {
+  margin: 0;
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+}
+
+.ppx__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.ppx__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.ppx__table th,
+.ppx__table td {
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+  text-align: start;
+  vertical-align: top;
+}
+
+.ppx__table thead th {
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.ppx__table tbody th {
+  font-weight: 400;
+}
+
+.ppx__table tbody tr:last-child th,
+.ppx__table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+.ppx__table tbody tr:hover {
+  background: var(--bg-subtle);
+}
+
+.ppx__name-cell {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ppx__name {
+  font-weight: 600;
+}
+
+.ppx__link {
+  border-radius: var(--r-sm);
+  color: var(--accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.ppx__when {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ppx__chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.ppx__chip-button {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.ppx__chip-button:hover {
+  border-color: var(--border-strong);
+}
+
+.ppx__inline-badge {
+  margin-inline-start: var(--space-2);
+}
+
+.ppx__filter {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+}
+
+.ppx__plain-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppx__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.ppx__fact {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+}
+
+.ppx__fact dt {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.ppx__fact dd {
+  margin: 0;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.ppx__snippet {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-align: start;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ppx__empty-note {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ppx__more {
+  display: flex;
+  justify-content: center;
+}
+
+/* ===========================================================================
+   A pact — PFX-5.2 (#6946). `.ppd-*` is one integration's pact page (it
+   reuses the `.ppx-*` panels, tables and facts): the interaction disclosures
+   with their states, request and response; the code blocks; the changes
+   since the previous pact; the open row of the history. Tokens only.
+   =========================================================================== */
+.ppd__interactions {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppd__interaction {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.ppd__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+
+.ppd__summary:hover {
+  background: var(--bg-subtle);
+}
+
+.ppd__summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.ppd__summary-main {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.ppd__detail {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+.ppd__parts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-3);
+}
+
+.ppd__part {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.ppd__part-title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ppd__code {
+  margin: 0;
+  max-block-size: 20rem;
+  overflow: auto;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ppd__state {
+  font-size: var(--fs-sm);
+}
+
+.ppd__state-name {
+  font-style: italic;
+}
+
+.ppd__diff {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppd__diff-item {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+.ppd__diff-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ppd__changes {
+  padding-inline-start: var(--space-3);
+}
+
+.ppd__change {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+}
+
+.ppd__change-path {
+  color: var(--fg-muted);
+}
+
+.ppd__change-added,
+.ppd__change-removed {
+  padding: 0 var(--space-1);
+  border-radius: var(--r-xs);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.ppd__change-added {
+  background: var(--ok-soft);
+}
+
+.ppd__change-removed {
+  background: var(--danger-soft);
+}
+
+.ppd__row--open {
+  background: var(--accent-soft);
+}
+
+/* ===========================================================================
+   Pact integration network — PFX-5.3 (#6947). The diagram of a pacticipant's
+   network (`NetworkGraphSvg`), its verdict key and its notices. `.pnx-*`.
+   Edges take the semantic `-fg` tones (calibrated for ≥3:1 on the surface);
+   the verdict is also a mark on each edge, and an unverified edge is dashed.
+   =========================================================================== */
+
+.ppx__panel-link {
+  margin-inline-start: auto;
+  font-size: var(--fs-sm);
+}
+
+.pnx-plot {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pnx-svg {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 40rem;
+  block-size: auto;
+}
+
+.pnx-edge {
+  --pnx-tone: var(--fg-muted);
+}
+
+.pnx-edge[data-verdict='verified'],
+.pnx-arrow[data-verdict='verified'],
+.pnx-legend__item[data-verdict='verified'] {
+  --pnx-tone: var(--ok-fg);
+}
+
+.pnx-edge[data-verdict='failed'],
+.pnx-arrow[data-verdict='failed'],
+.pnx-legend__item[data-verdict='failed'] {
+  --pnx-tone: var(--danger-fg);
+}
+
+.pnx-edge[data-verdict='failed-pending'],
+.pnx-arrow[data-verdict='failed-pending'],
+.pnx-legend__item[data-verdict='failed-pending'] {
+  --pnx-tone: var(--warn-fg);
+}
+
+.pnx-edge[data-verdict='unverified'],
+.pnx-arrow[data-verdict='unverified'],
+.pnx-legend__item[data-verdict='unverified'] {
+  --pnx-tone: var(--fg-muted);
+}
+
+.pnx-arrow {
+  fill: var(--pnx-tone);
+}
+
+.pnx-edge__link {
+  cursor: pointer;
+  outline: none;
+}
+
+.pnx-edge__hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+}
+
+.pnx-edge__line {
+  fill: none;
+  stroke: var(--pnx-tone);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.pnx-edge[data-verdict='unverified'] .pnx-edge__line {
+  stroke-dasharray: 6 4;
+}
+
+.pnx-edge__mark {
+  fill: var(--bg-surface);
+  stroke: var(--pnx-tone);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.pnx-edge__glyph {
+  fill: var(--pnx-tone);
+  font-weight: 700;
+}
+
+.pnx-edge__link:hover .pnx-edge__line,
+.pnx-edge__link:focus-visible .pnx-edge__line {
+  stroke-width: 3.5;
+}
+
+.pnx-edge__link:focus-visible .pnx-edge__mark {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.pnx-node__link {
+  cursor: pointer;
+  outline: none;
+}
+
+.pnx-node__box {
+  fill: var(--bg-subtle);
+  stroke: var(--fg-muted);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.pnx-node[data-centre] .pnx-node__box {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.pnx-node[data-gap='failed'] .pnx-node__box,
+.pnx-node[data-gap='not-read'] .pnx-node__box {
+  stroke-dasharray: 4 3;
+}
+
+.pnx-node__link:hover .pnx-node__box,
+.pnx-node__link:focus-visible .pnx-node__box {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.pnx-node__caption {
+  fill: var(--fg);
+  font-weight: 600;
+}
+
+.pnx-more {
+  fill: var(--fg-muted);
+}
+
+.pnx-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.pnx-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pnx-legend__swatch {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border: 1.5px solid var(--pnx-tone);
+  border-radius: var(--r-full);
+  color: var(--pnx-tone);
+  font-weight: 700;
+  font-size: var(--fs-xs);
+}
+
+.pnx-notices {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  padding-inline-start: var(--space-6);
+  border: 1px solid var(--warn);
+  border-radius: var(--r-md);
+  background: var(--warn-soft);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+/* ===========================================================================
+   Matrix and can-i-deploy — PFX-5.4 (#6948). `.pmx-*` is the Matrix and Can
+   I deploy pages (they reuse the `.ppx-*` panels, tables and snippets): the
+   query builder's selector fieldsets and inputs, the verdict panel with its
+   notice groups, the grid's verdict cells and their key. Tokens only.
+   =========================================================================== */
+.pmx-selector {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+}
+
+.pmx-selector__legend {
+  padding: 0 var(--space-1);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.pmx-selector__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2) var(--space-3);
+}
+
+.pmx-field {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+}
+
+.pmx-input {
+  min-inline-size: 12rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pmx-input:focus-visible,
+.pmx-cell:focus-visible,
+.pmx-check input:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pmx-select--narrow {
+  min-inline-size: 7rem;
+}
+
+.pmx-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pmx-radios {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pmx-radios legend {
+  float: inline-start;
+  margin-inline-end: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.pmx-ignored {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pmx-chip-icon {
+  display: inline;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.pmx-verdict {
+  border-inline-start-width: 4px;
+}
+
+.pmx-verdict[data-tone='ok'] {
+  border-inline-start-color: var(--ok-fg);
+}
+
+.pmx-verdict[data-tone='danger'] {
+  border-inline-start-color: var(--danger-fg);
+}
+
+.pmx-verdict[data-tone='warn'] {
+  border-inline-start-color: var(--warn-fg);
+}
+
+.pmx-verdict__headline {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+}
+
+.pmx-verdict[data-tone='ok'] .pmx-verdict__headline {
+  color: var(--ok-fg);
+}
+
+.pmx-verdict[data-tone='danger'] .pmx-verdict__headline {
+  color: var(--danger-fg);
+}
+
+.pmx-verdict[data-tone='warn'] .pmx-verdict__headline {
+  color: var(--warn-fg);
+}
+
+.pmx-notices {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pmx-notices__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pmx-notice {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pmx-notice__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pmx-notice__hint {
+  padding-inline-start: var(--space-4);
+}
+
+.pmx-grid-wrap {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pmx-grid th,
+.pmx-grid td {
+  white-space: nowrap;
+}
+
+.pmx-grid__cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.pmx-cell {
+  --pmx-tone: var(--fg-muted);
+  --pmx-soft: var(--bg-subtle);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--pmx-tone);
+  border-radius: var(--r-sm);
+  background: var(--pmx-soft);
+  color: var(--pmx-tone);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.pmx-cell[data-tone='ok'] {
+  --pmx-tone: var(--ok-fg);
+  --pmx-soft: var(--ok-soft);
+}
+
+.pmx-cell[data-tone='danger'] {
+  --pmx-tone: var(--danger-fg);
+  --pmx-soft: var(--danger-soft);
+}
+
+.pmx-cell[data-tone='warn'] {
+  --pmx-tone: var(--warn-fg);
+  --pmx-soft: var(--warn-soft);
+}
+
+.pmx-cell[data-ignored] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.pmx-cell--empty {
+  border-color: transparent;
+  background: transparent;
+}
+
+.pmx-cell--key {
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
+  font-size: var(--fs-xs);
+}
+
+.pmx-cell__count {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.pmx-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  list-style: none;
+}
+
+.pmx-key__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pmx-row-reason {
+  display: block;
+  margin-block-start: var(--space-1);
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * Verification results and operations — PFX-5.5 (#6949): the KPI strip, the interactions with
+ * expected vs actual, the raw log and the run form.
+ * --------------------------------------------------------------------------------------------- */
+
+.pvx-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.pvx-kpi {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pvx-kpi dt {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pvx-kpi dd {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pvx-kpi--failing dd {
+  color: var(--danger-fg);
+}
+
+.pvx-kpi--stale dd {
+  color: var(--warn-fg);
+}
+
+.pvx-kpi--verified dd {
+  color: var(--ok-fg);
+}
+
+.pvx-filter {
+  margin: 0;
+}
+
+.pvx-interactions {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pvx-interaction {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pvx-interaction__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.pvx-interaction__summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pvx-interaction__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pvx-interaction__body {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.pvx-mismatch {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--border);
+}
+
+.pvx-mismatch__where {
+  margin: 0;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.pvx-diff {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-2);
+}
+
+.pvx-diff__side {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.pvx-diff__side pre {
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pvx-diff__side--expected pre {
+  background: var(--ok-soft);
+}
+
+.pvx-diff__side--actual pre {
+  background: var(--danger-soft);
+}
+
+.pvx-log {
+  max-block-size: 28rem;
+  overflow: auto;
+}
+
+.pvx-log:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pvx-run-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pvx-run-outcome {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+}
+
+/* ===========================================================================
+ * Contracts — Webhooks and execution log (PFX-5.6, #6950). Built on the
+ * Pacticipants (.ppx) and Matrix (.pmx) classes; these add the editor's layout
+ * and the log blocks.
+ * ======================================================================== */
+
+.pwx-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pwx-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+.pwx-form__row--url {
+  grid-template-columns: minmax(6rem, 8rem) minmax(0, 1fr);
+}
+
+.pwx-events {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  align-items: start;
+}
+
+.pwx-events legend {
+  float: none;
+  grid-column: 1 / -1;
+  margin-block-end: var(--space-1);
+}
+
+.pwx-textarea {
+  block-size: auto;
+  min-block-size: 4.5rem;
+  padding-block: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  resize: vertical;
+}
+
+.pwx-secret-note {
+  font-size: var(--fs-xs);
+}
+
+.pwx-text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-fg);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.pwx-text-button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pwx-pre {
+  max-block-size: 24rem;
+  margin: 0;
+  overflow: auto;
+}
+
+.pwx-pre:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pwx-test-outcome {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+}
+
+.pwx-test-outcome p {
+  margin: 0;
 }

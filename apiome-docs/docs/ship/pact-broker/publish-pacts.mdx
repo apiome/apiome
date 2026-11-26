@@ -99,6 +99,27 @@ specification version it declares. Key order does not matter; the order of inter
 The `metadata` block is **not** part of it. Pact libraries write their own name and version there,
 so upgrading the library does not turn an unchanged pact into a new one.
 
+## Publish from the Import dialog
+
+You can also publish a pact you already have without a CI job. On a project's **Consumers** screen,
+**click “Import Pact file”**, choose or paste the pact, and **tick “Also publish to the Pact
+Broker”**. Fill in:
+
+| Field | What to enter |
+| --- | --- |
+| **Provider** | The provider the pact is with. It starts as the project's handle. |
+| **Consumer version** | The consumer's application version, such as a commit SHA. Required. |
+| **Branch**, **Tags**, **Build URL** | Optional. Separate tags with commas or spaces. The build URL is an `http` or `https` address. |
+
+The consumer is the one you opened the dialog from, the **Consumer handle** you typed, or the name
+the pact document declares.
+
+**Click “Import”.** Apiome stores the pact as a consumer contract first, then publishes it. The
+dialog stays open and shows both results: the revision stored, and the broker's notices. If the
+broker refuses the pact — for instance, a different pact for a consumer version that already has
+one — the dialog says so beside the stored revision; the import is not undone. Publishing needs
+**Pacts** → **Create**. Leave the box unticked to import to the registry only.
+
 ## Publish one pact with curl
 
 To publish a single document without the CLI, `PUT` it:

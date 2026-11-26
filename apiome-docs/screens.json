@@ -2864,6 +2864,162 @@
         "apiome-ui/src/app/components/ade/pactProviderStates/ProviderStatesClient.tsx",
         "apiome-ui/lib/pact-provider-states.ts"
       ]
+    },
+    {
+      "id": "pact-pacticipants",
+      "route": "/ade/dashboard/pacts/pacticipants",
+      "waitFor": "[data-testid=\"ppx-pacticipants-table\"]",
+      "data": "fixture:hive-a11y/pact-pacticipants.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantsListClient.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantPanels.tsx",
+        "apiome-ui/lib/pact-pacticipants.ts"
+      ]
+    },
+    {
+      "id": "pact-pacticipant-detail",
+      "route": "/ade/dashboard/pacts/pacticipants/billing-service",
+      "waitFor": "[data-testid=\"ppx-versions-table\"]",
+      "data": "fixture:hive-a11y/pact-pacticipant-detail.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantPanels.tsx",
+        "apiome-ui/src/app/components/ade/pactDetail/PactPanels.tsx",
+        "apiome-ui/lib/pact-pacticipants.ts"
+      ]
+    },
+    {
+      "id": "pact-detail",
+      "route": "/ade/dashboard/pacts/pacticipants/billing-service/pacts/ledger-api",
+      "waitFor": "[data-testid=\"ppd-interaction-list\"]",
+      "data": "fixture:hive-a11y/pact-detail.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactDetail/PactDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactDetail/PactPanels.tsx",
+        "apiome-ui/lib/pact-detail.ts"
+      ]
+    },
+    {
+      "id": "pact-verification",
+      "route": "/ade/dashboard/pacts/pacticipants/ledger-api/verification",
+      "waitFor": "[data-testid=\"pvx-history-table\"]",
+      "data": "fixture:hive-a11y/pact-verification.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactVerification/PactVerificationClient.tsx",
+        "apiome-ui/src/app/components/ade/pactVerification/VerificationPanels.tsx",
+        "apiome-ui/lib/pact-verification.ts"
+      ]
+    },
+    {
+      "id": "pact-verification-result",
+      "route": "/ade/dashboard/pacts/pacticipants/ledger-api/verification/results/6f0c6f0e-2b1a-4c3d-9e8f-7a6b5c4d3e2f",
+      "waitFor": "[data-testid=\"pvx-log\"]",
+      "data": "fixture:hive-a11y/pact-verification-result.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactVerification/VerificationResultClient.tsx",
+        "apiome-ui/src/app/components/ade/pactVerification/VerificationPanels.tsx",
+        "apiome-ui/lib/pact-verification.ts"
+      ]
+    },
+    {
+      "id": "pact-webhooks",
+      "route": "/ade/dashboard/pacts/webhooks",
+      "waitFor": "[data-testid=\"pwx-deliveries-table\"]",
+      "data": "fixture:hive-a11y/pact-webhooks.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhooksClient.tsx",
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhookPanels.tsx",
+        "apiome-ui/lib/pact-webhooks.ts"
+      ]
+    },
+    {
+      "id": "pact-webhook-detail",
+      "route": "/ade/dashboard/pacts/webhooks/8f7f2a0e-3c1d-4f6b-9a55-1d2f4c6b7a90",
+      "waitFor": "[data-testid=\"pwx-deliveries-table\"]",
+      "data": "fixture:hive-a11y/pact-webhook-detail.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhookDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhookPanels.tsx",
+        "apiome-ui/lib/pact-webhooks.ts"
+      ]
+    },
+    {
+      "id": "pact-webhook-delivery",
+      "route": "/ade/dashboard/pacts/webhooks/deliveries/5a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "waitFor": "[data-testid=\"pwx-attempts\"]",
+      "data": "fixture:hive-a11y/pact-webhook-delivery.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactWebhooks/DeliveryDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhookPanels.tsx",
+        "apiome-ui/lib/pact-webhooks.ts"
+      ]
+    },
+    {
+      "id": "pact-environments",
+      "route": "/ade/dashboard/pacts/environments",
+      "waitFor": "[data-testid=\"penv-grid\"]",
+      "data": "fixture:hive-a11y/pact-environments.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentPanels.tsx",
+        "apiome-ui/lib/pact-environments.ts"
+      ]
+    },
+    {
+      "id": "pact-environment-detail",
+      "route": "/ade/dashboard/pacts/environments/production",
+      "waitFor": "[data-testid=\"penv-history-table\"]",
+      "data": "fixture:hive-a11y/pact-environment-detail.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentPanels.tsx",
+        "apiome-ui/lib/pact-environments.ts"
+      ]
+    },
+    {
+      "id": "pact-deploy-simulator",
+      "route": "/ade/dashboard/pacts/environments/production/simulate",
+      "waitFor": "[data-testid=\"psim-impacts-table\"]",
+      "data": "fixture:hive-a11y/pact-deploy-simulator.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/DeploySimulatorClient.tsx",
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentPanels.tsx",
+        "apiome-ui/lib/pact-environments.ts"
+      ]
+    },
+    {
+      "id": "pact-network",
+      "route": "/ade/dashboard/pacts/pacticipants/billing-service/network",
+      "waitFor": "[data-testid=\"pact-network-plot\"]",
+      "data": "fixture:hive-a11y/pact-network.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactNetwork/PactNetworkClient.tsx",
+        "apiome-ui/src/app/components/ade/pactNetwork/NetworkGraphSvg.tsx",
+        "apiome-ui/src/app/components/ade/pactNetwork/networkLayoutModel.ts",
+        "apiome-ui/lib/pact-network.ts"
+      ]
+    },
+    {
+      "id": "pact-matrix",
+      "route": "/ade/dashboard/pacts/matrix",
+      "waitFor": "[data-testid=\"pmx-grid\"]",
+      "data": "fixture:hive-a11y/pact-matrix.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactMatrix/MatrixClient.tsx",
+        "apiome-ui/src/app/components/ade/pactMatrix/MatrixPanels.tsx",
+        "apiome-ui/lib/pact-matrix.ts"
+      ]
+    },
+    {
+      "id": "pact-can-i-deploy",
+      "route": "/ade/dashboard/pacts/can-i-deploy",
+      "waitFor": "[data-testid=\"pmx-verdict-panel\"]",
+      "data": "fixture:hive-a11y/pact-can-i-deploy.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactMatrix/CanIDeployClient.tsx",
+        "apiome-ui/src/app/components/ade/pactMatrix/MatrixPanels.tsx",
+        "apiome-ui/lib/pact-matrix.ts"
+      ]
     }
   ]
 }

@@ -237,6 +237,13 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
     ("PUT", re.compile(_PACT_VERSION_TAG_PATH), API_KEY_SCOPE_PACT_VERIFY),
     ("PUT", re.compile(_PACT_VERSION_BRANCH_PATH), API_KEY_SCOPE_PACT_VERIFY),
     ("POST", re.compile(_PACT_VERIFIER_PATH + r"/pacts/provider/[^/]+/verify/?$"), API_KEY_SCOPE_PACT_VERIFY),
+    # PFX-5.5 (#6949): the console's re-run and verify-all-stale are hosted verifier runs too.
+    (
+        "POST",
+        re.compile(_PACT_VERIFIER_PATH + r"/pacts/provider/[^/]+/consumer/[^/]+/pact-version/[^/]+/reverify/?$"),
+        API_KEY_SCOPE_PACT_VERIFY,
+    ),
+    ("POST", re.compile(_PACT_VERIFIER_PATH + r"/pacts/provider/[^/]+/verify-stale/?$"), API_KEY_SCOPE_PACT_VERIFY),
     ("POST", re.compile(_PACT_VERIFIER_PATH + r"/providers/[^/]+/provider-states/?$"), API_KEY_SCOPE_PACT_VERIFY),
     (
         "PUT",

@@ -11,8 +11,10 @@ webhook** is how Apiome tells them: an HTTP request it sends when something happ
 
 Webhooks have the Pact Broker's shape, so `pact-broker create-webhook`,
 `create-or-update-webhook` and `test-webhook` work unchanged, and a webhook body written for a
-Pact Broker works here. There is no screen for webhooks yet: use the Pact CLI or the
-[Pact Broker API](../../reference/rest/pact-broker.md).
+Pact Broker works here. Use the Pact CLI, the
+[Pact Broker API](../../reference/rest/pact-broker.md), or the **Webhooks** page in the app — see
+[Webhooks and delivery log](./webhooks-console.mdx), which also lists every delivery and redelivers
+one.
 
 ## Before you start
 
@@ -242,6 +244,11 @@ every attempt sent and received, with secrets replaced by `**********`:
 
 Send `Accept: application/hal+json` to get one entry per attempt instead of text.
 
+To read the deliveries of one webhook or of the whole workspace, and to send a finished delivery
+again, use the **Webhooks** page or `GET …/v1/tenants/<tenant>/pact-webhook-deliveries` and
+`POST …/pact-webhook-deliveries/<id>/redeliver` — see
+[Webhooks and delivery log](./webhooks-console.mdx#from-ci-or-a-script).
+
 ## Test a webhook
 
 ```bash
@@ -318,6 +325,7 @@ To try a webhook before you save it, post its body to `POST …/webhooks/execute
 
 ## Related
 
+- [Webhooks and delivery log](./webhooks-console.mdx) — the webhooks and their deliveries in the app.
 - [Publish pacts](./publish-pacts.mdx) — what fires the contract events.
 - [Publish verification results](./verification-results.mdx) — what fires the verification events.
 - [Environments and deployments](./environments.mdx) — which provider versions have to verify.

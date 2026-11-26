@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 78 operations."
+description: "REST endpoints tagged pact-broker: 90 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.681.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.684.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 78 operations
+Tag: `pact-broker` · 90 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2271,6 +2271,87 @@ Operation id: `read_fidelity_v1_tenants__tenant_slug__pact_comparisons__result_i
 | 404 | `pact-verification-not-found`: no bi-directional result with that id in this workspace, or the result was published by a Pact verifier and has no comparison. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-environments` {#read-environment-topology-v1-tenants-tenant-slug-pact-environments-get}
+
+**Environments and what is deployed to them**
+
+Every Pact environment of the workspace (by name) with each pacticipant version currently deployed to it (`deployed`: pacticipant, version, application instance, when) and each release it currently supports (`released`). `truncated` is true when either list stopped at 2000 entries. Requires `pacts:view`.
+
+Operation id: `read_environment_topology_v1_tenants__tenant_slug__pact_environments_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for environments and what is deployed to them. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-environments/{environment}/deployments` {#read-deployment-history-v1-tenants-tenant-slug-pact-environments-environment-deployments-get}
+
+**Deployment history of an environment**
+
+Every deployment recorded to the environment, current or replaced, newest first: pacticipant, version, application instance, `currentlyDeployed`, `deployedAt`, `undeployedAt` and who recorded it. `pacticipant` narrows to one pacticipant (handle or name). Pass `nextCursor` back as `cursor` for the next page. Requires `pacts:view`.
+
+Operation id: `read_deployment_history_v1_tenants__tenant_slug__pact_environments__environment__deployments_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `environment` | path | string | yes | Path parameter identifying the environment segment. |
+| `pacticipant` | query | string or null | no | Only this pacticipant's deployments (handle or name). |
+| `cursor` | query | string or null | no | The `nextCursor` of the previous page. |
+| `limit` | query | integer | no | The page size. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for deployment history of an environment. | `application/json` object |
+| 400 | `pact-deployment-cursor-invalid`. | — |
+| 404 | `pact-environment-not-found` or `pacticipant-not-found`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-environments/{environment}/simulate` {#read-deployment-simulation-v1-tenants-tenant-slug-pact-environments-environment-simulate-get}
+
+**Simulate a deployment**
+
+What would happen if `pacticipant` `version` were deployed to the environment (to `applicationInstance`, or the unnamed instance) — without recording anything. Answers the candidate's own can-i-deploy `verdict`, the version it would `replace`, and `impacts`: for each version of a pacticipant it has a pact with that is **running** in the environment or **pending** (deployed or released elsewhere, not here), its verdict `before` and `after` and the `effect` (`breaks`, `fixes`, `clears`, `blocks`, `changes`, `unchanged`). At most 20 versions are checked; the rest are in `notChecked` with the reason. Requires `pacts:view`.
+
+Operation id: `read_deployment_simulation_v1_tenants__tenant_slug__pact_environments__environment__simulate_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `environment` | path | string | yes | Path parameter identifying the environment segment. |
+| `pacticipant` | query | string | yes | The pacticipant to deploy (handle or name). |
+| `version` | query | string | yes | The version to deploy. |
+| `applicationInstance` | query | string or null | no | The instance to deploy to; the unnamed one when omitted. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for simulate a deployment. | `application/json` object |
+| 400 | `pact-simulation-invalid`: a malformed `applicationInstance`. | — |
+| 404 | `pact-environment-not-found`, `pacticipant-not-found` or `pacticipant-version-not-found`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-postman-collections` {#export-pact-postman-collection-v1-tenants-tenant-slug-pact-postman-collections-post}
 
 **Export a pact as a Postman collection**
@@ -2345,6 +2426,123 @@ Request body for compile a pact version into a contract suite.
 | 404 | `pacticipant-not-found` or `pact-not-found`: no such provider, consumer or pact version in this workspace. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/reverify` {#reverify-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-consumer-consumer-pact-version-sha-reverify-post}
+
+**Re-run the verification of one pact**
+
+Verify one pact version again on a registered verification target (PFX-5.5), with the hosted verifier (PFX-3.2): the same replay, matching, evidence and publishing. Without `provider_version` the run verifies as the provider version and branch of the pact version's newest result. The published result records `trigger: manual`.
+
+A console run of the same consumer ↔ provider pair that is still running makes this a `409` (`pact-verify-in-progress`). Like the hosted verifier, a run that happened is `200` whatever it found: read `success` and `outcome`. Requires `pacts:create` and `verification_evidence:create`.
+
+Operation id: `reverify_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__consumer__consumer__pact_version__sha__reverify_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `sha` | path | string | yes | Path parameter identifying the sha segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for re-run the verification of one pact.
+
+- `application/json` — [`ConsoleRunRequest`](#schema-consolerunrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for re-run the verification of one pact. | `application/json` [`ConsoleRunResponse`](#schema-consolerunresponse) |
+| 400 | A malformed provider version, branch or build URL. | — |
+| 404 | `pacticipant-not-found`, `pact-not-found` or `target-not-found` in this workspace. | — |
+| 409 | `pact-verify-in-progress`: a console run of this pair is already running. | — |
+| 422 | `pact-verify-provider-version-required`, `pact-verify-target-auth-unavailable`, or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`, a URL refusal). | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/results` {#read-results-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-results-get}
+
+**List a provider's verification results**
+
+Every verification result of the provider, newest first (PFX-5.5): native results a Pact verifier published, the hosted verifier's, console re-runs and bi-directional comparisons. Each has its provider version and branch, build URL, verifier, trigger (`published`, `hosted`, `manual`, `stale-recheck`, `bidirectional`, or null before triggers were recorded), run duration and interaction counts. `consumer` narrows to one consumer; pass `next_cursor` as `cursor` for the next page. Requires `pacts:view`.
+
+Operation id: `read_results_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__results_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | query | string or null | no | Only this consumer's results. |
+| `cursor` | query | string or null | no | The `next_cursor` of the previous page. |
+| `limit` | query | integer | no | Page size. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list a provider's verification results. | `application/json` [`ResultHistoryPage`](#schema-resulthistorypage) |
+| 400 | `pact-history-cursor-invalid`. | — |
+| 404 | `pacticipant-not-found` or `pact-verification-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/results/{result_id}` {#read-one-result-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-results-result-id-get}
+
+**Read one verification result with its log**
+
+One verification result of the provider (PFX-5.5): its summary, its `test_results` as stored (each failed interaction's mismatches with `expected` and `actual` where the verifier sent them), a bi-directional result's `comparison`, and — when Apiome ran it — its evidence run, every request with its assertions. `evidence_status` says why the run is absent: `not-recorded` (a Pact verifier published the result), `not-found` (pruned) or `forbidden` (the caller lacks `verification_evidence:view`). Requires `pacts:view`.
+
+Operation id: `read_one_result_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__results__result_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `result_id` | path | string | yes | Path parameter identifying the result id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read one verification result with its log. | `application/json` [`ResultDetail`](#schema-resultdetail) |
+| 404 | `pacticipant-not-found` or `pact-verification-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verification-status` {#read-verification-status-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-verification-status-get}
+
+**Where a provider's verification stands**
+
+Each consumer's newest pact for the provider (PFX-5.5), with the newest verification result of that pact version and whether it is **stale**: a pact version with no result at all — it changed since the provider last verified, or was never verified. `counts` is the KPI strip (pacts, verified, failing, stale, interactions, passing interactions, last verified). At most 500 consumers (`truncated`). Requires `pacts:view`.
+
+Operation id: `read_verification_status_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verification_status_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for where a provider's verification stands. | `application/json` [`VerificationStatus`](#schema-verificationstatus) |
+| 404 | `pacticipant-not-found` or `pact-verification-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify` {#verify-provider-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-verify-post}
 
 **Verify a provider against its pacts (hosted verifier)**
@@ -2390,6 +2588,39 @@ Request body for verify a provider against its pacts (hosted verifier).
 | 400 | `pact-selector-invalid`, or a malformed provider version, branch or build URL. | — |
 | 404 | `pacticipant-not-found` or `target-not-found` in this workspace. | — |
 | 422 | `pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`, or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`, a URL refusal). | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify-stale` {#verify-stale-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-verify-stale-post}
+
+**Verify every stale pact of a provider**
+
+Verify each consumer's newest pact that has no verification result yet (PFX-5.5) in one run of the hosted verifier, as `provider_version` (required) on a registered verification target. The published results record `trigger: stale-recheck`. At most 25 pacts are verified; the rest are listed in `skipped` with `pact-verify-over-limit`, and a pair whose console run is still running with `pact-verify-in-progress` — none is dropped. No stale pact is `outcome: no-pacts`. Requires `pacts:create` and `verification_evidence:create`.
+
+Operation id: `verify_stale_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verify_stale_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for verify every stale pact of a provider.
+
+- `application/json` — [`ConsoleRunRequest`](#schema-consolerunrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for verify every stale pact of a provider. | `application/json` [`ConsoleRunResponse`](#schema-consolerunresponse) |
+| 400 | A malformed provider version, branch or build URL. | — |
+| 404 | `pacticipant-not-found`, `pact-not-found` or `target-not-found` in this workspace. | — |
+| 409 | `pact-verify-in-progress`: a console run of this pair is already running. | — |
+| 422 | `pact-verify-provider-version-required`, `pact-verify-target-auth-unavailable`, or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`, a URL refusal). | — |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states` {#list-states-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-get}
 
@@ -2578,7 +2809,139 @@ Operation id: `delete_state_route_v1_tenants__tenant_slug__pact_verifier_provide
 | 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-webhook-deliveries` {#read-deliveries-v1-tenants-tenant-slug-pact-webhook-deliveries-get}
+
+**List webhook deliveries**
+
+The firings of the workspace's contract webhooks, newest first: each with its status (`success`, `failure` — dead-lettered after every attempt, `retrying`, `not_run`), attempts, the event, the pact that caused it and how it was triggered (`resource_creation` or `user` for a redelivery). `webhook` narrows to one webhook, `status` to one status. Pass `nextCursor` back as `cursor` for the next page. Requires `pacts:view`.
+
+Operation id: `read_deliveries_v1_tenants__tenant_slug__pact_webhook_deliveries_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `webhook` | query | string or null | no | Only this webhook's deliveries (its `uuid`). |
+| `status` | query | enum `"success"`, `"failure"`, `"retrying"`, `"not_run"` or null | no | Only deliveries with this status. |
+| `cursor` | query | string or null | no | The `nextCursor` of the previous page. |
+| `limit` | query | integer | no | The page size. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list webhook deliveries. | `application/json` object |
+| 400 | `pact-webhook-delivery-cursor-invalid` or `pact-webhook-invalid` (unknown status). | — |
+| 404 | `pact-webhook-not-found`: no such webhook in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-webhook-deliveries/latest` {#read-latest-deliveries-v1-tenants-tenant-slug-pact-webhook-deliveries-latest-get}
+
+**Latest delivery of each webhook**
+
+The newest firing of each of the workspace's contract webhooks, keyed by webhook `uuid`; a webhook that never fired is absent. Requires `pacts:view`.
+
+Operation id: `read_latest_deliveries_v1_tenants__tenant_slug__pact_webhook_deliveries_latest_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for latest delivery of each webhook. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-webhook-deliveries/{delivery_id}` {#read-delivery-v1-tenants-tenant-slug-pact-webhook-deliveries-delivery-id-get}
+
+**Read a webhook delivery**
+
+One firing and the log of each attempt (`attempt`, `success`, `status`, `logs`, `createdAt`), oldest first — what was sent and what came back, every secret removed. Requires `pacts:view`.
+
+Operation id: `read_delivery_v1_tenants__tenant_slug__pact_webhook_deliveries__delivery_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `delivery_id` | path | string | yes | Path parameter identifying the delivery id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a webhook delivery. | `application/json` object |
+| 404 | `pact-triggered-webhook-not-found`: no such delivery in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-webhook-deliveries/{delivery_id}/redeliver` {#post-redeliver-v1-tenants-tenant-slug-pact-webhook-deliveries-delivery-id-redeliver-post}
+
+**Redeliver a webhook delivery**
+
+Send a finished firing (`success` or `failure`) again: a new firing of the same webhook, with the same event and template parameters, queued now and retried as any other (`triggerType` `user`). The original and its log are kept. Answers `202` with the new delivery. Requires `pacts:edit`.
+
+Operation id: `post_redeliver_v1_tenants__tenant_slug__pact_webhook_deliveries__delivery_id__redeliver_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `delivery_id` | path | string | yes | Path parameter identifying the delivery id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 202 | Successful response for redeliver a webhook delivery. | `application/json` object |
+| 404 | `pact-triggered-webhook-not-found`: no such delivery in this workspace. | — |
+| 409 | `pact-webhook-delivery-in-progress`: the delivery is still queued or being retried; `pact-webhook-disabled`: its webhook is disabled. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
+
+### `ConsoleRunRequest` {#schema-consolerunrequest}
+
+A re-run or verify-all-stale from the Verification console.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `target_ref` | string | yes | Slug or id of the registered verification target to replay against. |
+| `provider_version` | string or null | no | The provider version being verified. A re-run defaults to the provider version of the pact's newest result; verify-all-stale requires it. |
+| `provider_branch` | string or null | no | Its branch. A re-run that takes the provider version from a result takes its branch too. |
+| `build_url` | string or null | no | http(s) URL of the CI build. |
+| `verification` | `PactVerificationOptions` | no | What the run may send: the mutating-method opt-in, fixtures and the provider-state choice. |
+| `context` | object | no | Non-secret context stored with the evidence. Never credentials. |
+
+### `ConsoleRunResponse` {#schema-consolerunresponse}
+
+A console run: the hosted verifier's answer, its trigger, and what it did not run.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `provider` | string | yes | The provider's handle. |
+| `provider_version` | string | yes | The provider version verified. |
+| `provider_branch` | string or null | no | Its branch, when stated. |
+| `target` | `VerifiedTarget` | yes | The verification target replayed against. |
+| `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed`. |
+| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed) or `no-pacts` (the selectors chose nothing). |
+| `pacts` | array of `PactVerification` | no | One entry per pact verified. |
+| `trigger` | string | yes | `manual` (re-run) or `stale-recheck` (verify all stale). |
+| `skipped` | array of `SkippedPact` | no | Chosen but not verified, each with why. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 
@@ -2680,6 +3043,32 @@ A registered provider state, as stored.
 | `created_at` | string (date-time) | yes | When it was registered. |
 | `updated_at` | string (date-time) | yes | When it last changed. |
 
+### `ResultDetail` {#schema-resultdetail}
+
+One verification result in full.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `result` | `ResultSummary` | yes | The result. |
+| `provider` | string | yes | The provider's handle. |
+| `provider_name` | string | yes | The provider's display name. |
+| `test_results` | array of any | no | The per-interaction results as stored: `interactionDescription`, `success`, and for a failure `mismatches` (`attribute`, `identifier`, `description`, and — from the hosted verifier and most Pact verifiers — `expected` and `actual`) or `exceptions`. |
+| `comparison` | object or null | no | A bi-directional result's comparison. |
+| `evidence_status` | string | yes | `attached`, `not-recorded`, `not-found` (pruned) or `forbidden` (no `verification_evidence:view`). |
+| `evidence` | `VerificationRunRecord` or null | no | The evidence run: every request with its assertions, when `attached`. |
+
+### `ResultHistoryPage` {#schema-resulthistorypage}
+
+One page of a provider's verification history.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `provider` | string | yes | The provider's handle. |
+| `provider_name` | string | yes | The provider's display name. |
+| `consumer` | string or null | no | The consumer the page is narrowed to. |
+| `results` | array of `ResultSummary` | no | Newest first. |
+| `next_cursor` | string or null | no | Pass as `cursor` for the next page; null at the end. |
+
 ### `StateCheckRequest` {#schema-statecheckrequest}
 
 Which pacts to check, and on which target.
@@ -2703,3 +3092,15 @@ Whether a provider can set up every state its pacts name.
 | `warnings` | integer | yes | How many warnings were found. |
 | `states` | array of `StateCheckEntry` | no | Every state the selected interactions name; unregistered ones first. |
 | `unused` | array of string | no | Registered states no selected interaction names. |
+
+### `VerificationStatus` {#schema-verificationstatus}
+
+Where a provider's verification stands.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `provider` | string | yes | The provider's handle. |
+| `provider_name` | string | yes | The provider's display name. |
+| `counts` | `StatusCounts` | yes | The KPI strip. |
+| `pacts` | array of `VerificationStatusEntry` | no | One per consumer, by handle. |
+| `truncated` | boolean | no | True when the provider has more than 500 consumers (the rest are left out). |

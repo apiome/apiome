@@ -11,11 +11,8 @@ it unchanged: give them your workspace's **broker base URL**
 Consumers publish their pacts, providers verify them and report back, deploy jobs record what runs
 where, and `can-i-deploy` stops a release that would break something.
 
-All of it is served through the API and the Pact tools. There are two screens so far.
-**Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
-each bi-directional comparison. **Provider states** shows a provider's registered states and
-[checks its pacts against them](./provider-states.mdx#see-provider-states-in-the-app) before a
-run.
+All of it is served through the API and the Pact tools, and you can read and act on it in the
+[**Contracts** workspace](#the-contracts-workspace) of the app.
 
 ## When to use it
 
@@ -33,6 +30,7 @@ run.
 
 | Where | Best for | Details |
 | --- | --- | --- |
+| The **Contracts** workspace in the app | Reading pacts, verdicts and deployments; re-running verifications; managing webhooks | [The Contracts workspace](#the-contracts-workspace) |
 | The **Pact CLI** (`pact-broker`, `pact broker`) | Publishing, recording deployments and can-i-deploy from CI | [Publish and fetch pacts](./publish-pacts.mdx) |
 | The **Apiome CLI** (`apiome pact …`) | The same commands with the same flags and exit codes, plus provider contracts and hosted verification | [The apiome pact commands](./cli.mdx), [Run Pact in CI](./ci-pact.mdx) |
 | A **CI pipeline** (GitHub Actions, GitLab CI, Bitbucket, Jenkins, Azure Pipelines) | Publish, can-i-deploy and record-deployment as ready-made steps, with the verdict on the pull request | [Run Pact in CI](./ci-pact.mdx), [Commit statuses](./commit-statuses.mdx) |
@@ -41,25 +39,55 @@ run.
 | The **Pact Broker API** (`…/pact-broker/…`) | Anything a Pact tool does, from a script | [Pact Broker API](../../reference/rest/pact-broker.md) |
 | The **Pacticipants API** (`…/pacticipants/…`) | Registering applications, labels, deletes and retention | [Pacticipants API](../../reference/rest/pacticipants.md) |
 
+## The Contracts workspace
+
+**Click Contracts** in the rail (under **Ship**). It opens on **Pacticipants**, whose header links
+to **Matrix**, **Can I deploy?**, **Webhooks** and **Environments**. Every screen is open to
+anyone who can view pacts, and each empty screen shows the CLI command that fills it.
+
+| Screen | How you get there | What it shows |
+| --- | --- | --- |
+| [**Pacticipants**](./pacticipants.mdx) | **Contracts** in the rail | Every application in your pacts; each one's versions, branches, tags, environments and pacts |
+| [**Pact detail**](./pact-detail.mdx) | A pact on a pacticipant's **Pacts** section | One pact's interactions, its verification status and what changed since the previous pact |
+| [**Network**](./network.mdx) | **Network diagram** on a pacticipant's **Pacts** section | The pacticipants connected through pacts, each integration coloured by its verdict |
+| [**Verification**](./verification-console.mdx) | **Verification** on a provider's **Pacts** section | A provider's results with their logs and mismatches; re-run one pact or verify the stale ones |
+| [**Matrix**](./matrix.mdx) | **Matrix** on the **Pacticipants** header | Which consumer versions were verified against which provider versions, with the verdict explained |
+| [**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console) | **Can I deploy?** on the **Pacticipants** header | Whether one version is safe to deploy to an environment, and the CLI command that asks the same |
+| [**Webhooks**](./webhooks-console.mdx) | **Webhooks** on the **Pacticipants** header | Contract webhooks and every delivery; create, test and redeliver |
+| [**Environments**](./environments-dashboard.mdx) | **Environments** on the **Pacticipants** header | Which version runs where, each environment's deployment history, and the deploy simulator |
+| [**Pact comparisons**](./bi-directional.mdx#in-the-app) | `/ade/dashboard/pacts/comparisons` | The fidelity report of each bi-directional comparison |
+| [**Provider states**](./provider-states.mdx#see-provider-states-in-the-app) | `/ade/dashboard/pacts/provider-states` | A provider's registered states, and a check of its pacts against them before a run |
+
+A project's **Consumers** screen can also
+[publish a pact to the broker](./publish-pacts.mdx#publish-from-the-import-dialog) while you import
+it: **click “Import Pact file”** and **tick “Also publish to the Pact Broker”**.
+
 ## At a glance
 
 | To | Read |
 | --- | --- |
 | Learn the words: pacticipant, version, branch, tag, pact version | [Pact Broker concepts](./concepts.mdx) |
+| Browse your pacticipants, their versions and what runs where | [Pacticipants](./pacticipants.mdx) |
+| Read a pact's interactions, verification status and changes since the previous one | [Pact detail](./pact-detail.mdx) |
+| See which applications depend on each other, and where a pact fails | [Integration network](./network.mdx) |
 | Publish a consumer's pacts and fetch them back | [Publish and fetch pacts](./publish-pacts.mdx) |
 | Tell a provider's verifier which pacts to check | [Choose pacts to verify with selectors](./selectors.mdx) |
 | Verify a new expectation without breaking the provider's build | [Pending and work-in-progress pacts](./pending-and-wip.mdx) |
 | Report whether a provider version honours each pact | [Publish verification results](./verification-results.mdx) |
+| Read a result's expected and actual values, re-run a pact, verify stale pacts | [Verification results and re-runs](./verification-console.mdx) |
 | Turn a pact into replayable cases with a fixed digest | [Compile a pact into a contract suite](./verification.mdx) |
 | Verify a provider without a Pact library, from Apiome | [Verify a provider from Apiome](./hosted-verification.mdx) |
 | Tell Apiome how to set up the provider states pacts name | [Provider states](./provider-states.mdx) |
 | Record which version runs in each environment | [Environments and deployments](./environments.mdx) |
+| See which version runs where; simulate a deployment before you make it | [Environments and the deploy simulator](./environments-dashboard.mdx) |
 | Ask whether a version is safe to deploy | [Can I deploy?](./can-i-deploy.mdx) |
+| Query which consumer versions were verified against which provider versions | [Matrix](./matrix.mdx) |
 | Register a provider's OpenAPI document for bi-directional contract testing | [Publish a provider contract](./bi-directional.mdx) |
 | See how a pact is compared with a provider's OpenAPI document | [Comparison rules](./comparison-rules.mdx) |
 | Check message pacts against a provider's AsyncAPI document | [Message pacts](./message-pacts.mdx) |
 | Start CI when a pact needs verifying or a verification finishes | [Contract webhooks](./webhooks.mdx) |
 | Run the consumer, provider and deploy steps in your CI | [Run Pact in CI](./ci-pact.mdx) |
+| Create, test and manage webhooks in the app; read and redeliver deliveries | [Webhooks and delivery log](./webhooks-console.mdx) |
 | See each pact's verdict on the GitHub or GitLab commit and pull request | [Commit statuses](./commit-statuses.mdx) |
 | Run a consumer's pact against a provider build in Postman or Newman | [Export a pact as a Postman collection](./cli.mdx#export-a-pact-as-a-postman-collection) |
 | Show in a README whether a public project's pacts are verified | [Pact badges](./badges.mdx) |
