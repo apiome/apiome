@@ -1,0 +1,29 @@
+---
+slug: pact-pacticipants
+title: "Pacticipants list and detail"
+description: "Browse every application in your pacts, with its versions, branches, tags and environments."
+authors: [apiome]
+---
+
+The Pact Broker has its first screens for the registry. Under **Ship**, the rail's new
+**Contracts** entry opens **Pacticipants**: every application in your workspace's pacts. Open one to
+see its versions, branches, tags, labels and what each environment runs. See
+[Pacticipants](/ship/pact-broker/pacticipants).
+
+{/* truncate */}
+
+- **Every pacticipant on one page.** Each row shows the handle, the main branch, the labels, the
+  repository and the last update. Narrow the list by **Label**; **Load more** reads the next 50.
+- **A page per pacticipant.** **Overview** has its handle, main branch, repository, labels and what
+  it is bound to. **Branches** lists each branch with its head version and marks the main branch.
+- **What runs where.** **Environments** shows, for every environment, the versions of the
+  pacticipant deployed there now (with the application instance) and the releases still supported.
+- **Versions, branches and tags together.** **Versions** lists the recorded versions, latest first,
+  with their branches, tags and builds. Click a branch or a tag to list only its versions.
+- **Nothing hidden.** Each section loads on its own. One that cannot be read says why and offers
+  **Try again**, and an environment whose lists cannot be read says so on its row.
+- **A start in an empty workspace.** With no pacticipant yet, the page shows the
+  `apiome pact publish` command that registers the first ones.
+
+The pages read only and need **Pacts** → **View**. Registering, changing and deleting pacticipants
+stays with the REST API, the `apiome pact` commands and your Pact tooling.

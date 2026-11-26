@@ -345,6 +345,16 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
         match: 'subtree',
       },
       {
+        // PFX-EPIC-5: the Contracts area — the Pact Broker's pacticipants (PFX-5.1) and, below
+        // `/pacts`, its other screens. `/ade/dashboard/pacts` opens on the Pacticipants list.
+        id: 'contracts',
+        label: 'Contracts',
+        href: `${DASHBOARD_HREF}/pacts`,
+        icon: 'handshake',
+        requiresTenant: true,
+        match: 'subtree',
+      },
+      {
         id: 'sunset-timeline',
         label: 'Sunset timeline',
         href: PLATFORM_NAV_SUNSET_TIMELINE_HREF,
