@@ -943,4 +943,23 @@ describe('the docs fixtures', () => {
     expect(within(dialog).getByTestId('api-key-scope-registry_read')).toHaveTextContent('registry:read');
     writeA11yFixture('api-keys-registry-scope', bodyMarkup());
   });
+
+  it('renders the create dialog with the Pact CI verifier preset (PFX-4.2)', async () => {
+    const user = userEvent.setup();
+    render(<ApiKeysClient />);
+    await screen.findByText('CI contract gate');
+
+    const dialog = await openCreateDialog(user, 'Ledger API verifier');
+    await user.type(within(dialog).getByLabelText('Description'), 'Verifies Ledger API against its consumers in CI.');
+    await user.click(within(dialog).getByTestId('api-key-scope-pact_verify'));
+    await user.type(within(dialog).getByLabelText('Expires in (days)'), '365');
+    const card = within(dialog).getByTestId('api-key-scope-pact_verify');
+    expect(card).toHaveAttribute('data-checked');
+    expect(card).toHaveTextContent('pact:read');
+    expect(card).toHaveTextContent('pact:verify');
+    expect(card).not.toHaveTextContent('pact:publish');
+    expect(within(dialog).getByTestId('api-key-scope-pact_read')).toHaveTextContent('pact:read');
+    expect(within(dialog).getByTestId('api-key-scope-pact_publish')).toHaveTextContent('pact:publish');
+    writeA11yFixture('api-keys-pact-scope', bodyMarkup());
+  });
 });

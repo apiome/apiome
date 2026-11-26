@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.854.0] - 2026-11-25
+
+### Added
+- **Broker-compatible auth and Pact API key scopes (PFX-4.2, #6939).** OpenAPI 1.678.0 (the Pact
+  Broker index description). Migration V442 widens `api_keys_scopes_vocab_ck` by `pact:read`,
+  `pact:publish` and `pact:verify` (agent keys stay pinned to `agent:invoke`). Every route under
+  `/v1/tenants/{tenant}/pact-broker` and `/pact-verifier` (`app.pact_broker_auth`) now also takes the
+  workspace API key as the **password of HTTP basic auth** (username ignored), as the `pact-broker`
+  CLI's `--broker-username` / `--broker-password` and the Pact libraries send it; basic auth with no
+  password, a bare `Authorization` value and any other scheme are refused `401` with where the key
+  goes (never echoing the value), with `WWW-Authenticate: Bearer, Basic realm="apiome-pact-broker"`.
+  The `app.auth` allowlist admits: `pact:read` — every GET of both mounts, the read-only POSTs
+  (`…/for-verification`, `…/provider-states/check`) and GETs of `/pacticipants` and
+  `/pacticipant-labels`; `pact:publish` — `POST …/contracts/publish`, `PUT` a pact or a provider
+  contract, `PUT` a version's tag or branch, recording a deployment / release (`POST …/deployed-versions`
+  / `…/released-versions`, `PATCH` either); `pact:verify` — `POST` verification results (with or
+  without metadata) and external verification results, `PUT` a tag or branch, hosted `…/verify`,
+  `POST` / `PUT` provider states. Deletes, webhooks, environments, labels and cleanup stay
+  full-access only. The route's `pacts` RBAC check still applies to the key's user. A test guard
+  fails when a new broker / verifier route is not classified. `api_key_from_basic` moved from
+  `app.schema_registry_confluent_routes` to `app.auth` (shared, re-imported there).
+
 ## [1.853.0] - 2026-11-25
 
 ### Added

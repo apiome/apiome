@@ -8,7 +8,8 @@ import { confirmDestructive, isUuid } from "../util.js";
 
 /**
  * Allowed workspace API key scopes (CTG-2.3 / #4473; `usage:ingest` RDG-1.2 / #5760;
- * `registry:read` / `registry:write` CDG-4.3 / #5975).
+ * `registry:read` / `registry:write` CDG-4.3 / #5975; `pact:read` / `pact:publish` / `pact:verify`
+ * PFX-4.2 / #6939).
  */
 export const API_KEY_SCOPE_VOCAB = new Set([
   "*",
@@ -17,6 +18,9 @@ export const API_KEY_SCOPE_VOCAB = new Set([
   "usage:ingest",
   "registry:read",
   "registry:write",
+  "pact:read",
+  "pact:publish",
+  "pact:verify",
 ]);
 
 /**
@@ -40,7 +44,7 @@ export function normalizeApiKeyScopes(raw?: string | string[] | null): string[] 
   for (const s of parts) {
     if (!API_KEY_SCOPE_VOCAB.has(s)) {
       throw new CliError(
-        `Invalid API key scope "${s}". Allowed: *, diff:read, lint:read, usage:ingest, registry:read, registry:write.`,
+        `Invalid API key scope "${s}". Allowed: ${[...API_KEY_SCOPE_VOCAB].join(", ")}.`,
       );
     }
   }

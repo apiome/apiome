@@ -3,8 +3,9 @@ Authentication module for JWT and API Key validation.
 
 Supports both JWT tokens (from NextAuth) and API keys for authentication.
 API keys may carry machine scopes (CTG-2.3 / #4473): ``*`` (full access),
-``diff:read``, ``lint:read`` and ``usage:ingest`` (RDG-1.2 / #5760). Restricted keys are
-allowlisted by method+path.
+``diff:read``, ``lint:read``, ``usage:ingest`` (RDG-1.2 / #5760), ``registry:read`` /
+``registry:write`` (CDG-4.3 / #5975) and ``pact:read`` / ``pact:publish`` / ``pact:verify``
+(PFX-4.2 / #6939). Restricted keys are allowlisted by method+path.
 
 A route may appear in the allowlist more than once, each entry naming a different acceptable
 scope: the deploy gate (CTG-4.5 / #4502) is a read over lint grades *and* breaking classification,
@@ -12,6 +13,8 @@ so a CI key holding either read scope may call it rather than needing a third sc
 carried through the key-management surfaces of three packages.
 """
 
+import base64
+import binascii
 import logging
 import re
 import uuid
@@ -54,8 +57,35 @@ API_KEY_SCOPE_USAGE_INGEST = "usage:ingest"
 API_KEY_SCOPE_REGISTRY_READ = "registry:read"
 API_KEY_SCOPE_REGISTRY_WRITE = "registry:write"
 
+#: PFX-4.2 (#6939, V442): the Pact Broker at ``/v1/tenants/{tenant}/pact-broker`` and Apiome's
+#: hosted verifier at ``/v1/tenants/{tenant}/pact-verifier``.
+#:
+#: * ``pact:read`` admits every GET of both mounts and their read-only POSTs (``for-verification``,
+#:   the provider-state check) — what ``can-i-deploy`` and a verifier fetching its pacts need — and
+#:   the reads of the pacticipant registry at ``/v1/tenants/{tenant}/pacticipants``.
+#: * ``pact:publish`` admits the consumer and deploy pipeline's writes: publishing pacts and provider
+#:   contracts, tagging a version or recording it on a branch, recording a deployment or release.
+#: * ``pact:verify`` admits the provider pipeline's writes: verification results, the hosted verifier
+#:   run, registering provider states, and tagging / branching the provider version it verified.
+#:
+#: Deletes, webhooks, environments and cleanup are left to full-access keys. No pact scope admits
+#: any other route; the route's RBAC check (``pacts:view`` / ``pacts:create``) still
+#: applies to the key's user on top of the scope.
+API_KEY_SCOPE_PACT_READ = "pact:read"
+API_KEY_SCOPE_PACT_PUBLISH = "pact:publish"
+API_KEY_SCOPE_PACT_VERIFY = "pact:verify"
+
 #: Every route of the Confluent-compatible registry mount (CDG-4.3).
 _REGISTRY_SCHEMA_PATH = r"^/registry/schema/[^/]+"
+#: The Pact Broker mount and the hosted verifier mount (PFX-4.2).
+_PACT_BROKER_PATH = r"^/v1/tenants/[^/]+/pact-broker"
+_PACT_VERIFIER_PATH = r"^/v1/tenants/[^/]+/pact-verifier"
+#: ``…/pacts/provider/{p}/consumer/{c}/pact-version/{sha}`` — one pact content version.
+_PACT_VERSION_PATH = _PACT_BROKER_PATH + r"/pacts/provider/[^/]+/consumer/[^/]+/pact-version/[^/]+"
+#: Tagging a version and recording it on a branch: a consumer does it when it publishes, a provider
+#: verifier when it publishes results (``providerVersionTags`` / ``providerVersionBranch``).
+_PACT_VERSION_TAG_PATH = _PACT_BROKER_PATH + r"/pacticipants/[^/]+/versions/[^/]+/tags/[^/]+/?$"
+_PACT_VERSION_BRANCH_PATH = _PACT_BROKER_PATH + r"/pacticipants/[^/]+/branches/.+/versions/[^/]+/?$"
 
 #: (HTTP method, path regex) → an acceptable scope for restricted machine keys. A route may have
 #: several entries; holding **any** of the matched scopes admits the call.
@@ -162,6 +192,57 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
     ("POST", re.compile(_REGISTRY_SCHEMA_PATH + r"/subjects/[^/]+/versions/?$"), API_KEY_SCOPE_REGISTRY_WRITE),
     ("PUT", re.compile(_REGISTRY_SCHEMA_PATH + r"/(config|mode)(/[^/]+)?/?$"), API_KEY_SCOPE_REGISTRY_WRITE),
     ("DELETE", re.compile(_REGISTRY_SCHEMA_PATH + r"/subjects/[^/]+/?$"), API_KEY_SCOPE_REGISTRY_WRITE),
+    # PFX-4.2 (#6939): the Pact Broker and the hosted verifier. Reads take ``pact:read``.
+    ("GET", re.compile(_PACT_BROKER_PATH + r"(/.*)?$"), API_KEY_SCOPE_PACT_READ),
+    ("POST", re.compile(_PACT_BROKER_PATH + r"/pacts/provider/[^/]+/for-verification/?$"), API_KEY_SCOPE_PACT_READ),
+    ("GET", re.compile(_PACT_VERIFIER_PATH + r"(/.*)?$"), API_KEY_SCOPE_PACT_READ),
+    # The pacticipant registry's reads (PFX-1.1), which `apiome pact list-pacticipants` and
+    # `describe-version --latest` call. Its writes stay full-access.
+    ("GET", re.compile(r"^/v1/tenants/[^/]+/(pacticipants|pacticipant-labels)(/.*)?$"), API_KEY_SCOPE_PACT_READ),
+    (
+        "POST",
+        re.compile(_PACT_VERIFIER_PATH + r"/providers/[^/]+/provider-states/check/?$"),
+        API_KEY_SCOPE_PACT_READ,
+    ),
+    # The consumer / deploy pipeline's writes take ``pact:publish``.
+    ("POST", re.compile(_PACT_BROKER_PATH + r"/contracts/publish/?$"), API_KEY_SCOPE_PACT_PUBLISH),
+    (
+        "PUT",
+        re.compile(_PACT_BROKER_PATH + r"/pacts/provider/[^/]+/consumer/[^/]+/version/[^/]+/?$"),
+        API_KEY_SCOPE_PACT_PUBLISH,
+    ),
+    (
+        "PUT",
+        re.compile(_PACT_BROKER_PATH + r"/contracts/provider/[^/]+/version/[^/]+/?$"),
+        API_KEY_SCOPE_PACT_PUBLISH,
+    ),
+    ("PUT", re.compile(_PACT_VERSION_TAG_PATH), API_KEY_SCOPE_PACT_PUBLISH),
+    ("PUT", re.compile(_PACT_VERSION_BRANCH_PATH), API_KEY_SCOPE_PACT_PUBLISH),
+    (
+        "POST",
+        re.compile(
+            _PACT_BROKER_PATH
+            + r"/pacticipants/[^/]+/versions/[^/]+/(deployed|released)-versions/environment/[^/]+/?$"
+        ),
+        API_KEY_SCOPE_PACT_PUBLISH,
+    ),
+    ("PATCH", re.compile(_PACT_BROKER_PATH + r"/(deployed|released)-versions/[^/]+/?$"), API_KEY_SCOPE_PACT_PUBLISH),
+    # The provider pipeline's writes take ``pact:verify``.
+    (
+        "POST",
+        re.compile(_PACT_VERSION_PATH + r"(/metadata/[^/]+)?/verification-results/?$"),
+        API_KEY_SCOPE_PACT_VERIFY,
+    ),
+    ("POST", re.compile(_PACT_VERSION_PATH + r"/external-verification-results/?$"), API_KEY_SCOPE_PACT_VERIFY),
+    ("PUT", re.compile(_PACT_VERSION_TAG_PATH), API_KEY_SCOPE_PACT_VERIFY),
+    ("PUT", re.compile(_PACT_VERSION_BRANCH_PATH), API_KEY_SCOPE_PACT_VERIFY),
+    ("POST", re.compile(_PACT_VERIFIER_PATH + r"/pacts/provider/[^/]+/verify/?$"), API_KEY_SCOPE_PACT_VERIFY),
+    ("POST", re.compile(_PACT_VERIFIER_PATH + r"/providers/[^/]+/provider-states/?$"), API_KEY_SCOPE_PACT_VERIFY),
+    (
+        "PUT",
+        re.compile(_PACT_VERIFIER_PATH + r"/providers/[^/]+/provider-states/[^/]+/?$"),
+        API_KEY_SCOPE_PACT_VERIFY,
+    ),
 )
 
 
@@ -241,6 +322,30 @@ def enforce_api_key_scopes(auth_data: Dict[str, Any], request: Request) -> None:
             f"required={' or '.join(acceptable) if acceptable else 'full access (*)'}"
         ),
     )
+
+
+def api_key_from_basic(authorization: str) -> Optional[str]:
+    """Return the password of an HTTP basic ``Authorization`` value — the API key — or ``None``.
+
+    Clients that only speak basic auth (Confluent serializers, CDG-4.3; the ``pact-broker`` CLI's
+    ``--broker-username`` / ``--broker-password``, PFX-4.2) send ``<name>:<secret>``; the name is
+    ignored and the secret is the workspace API key.
+
+    Args:
+        authorization: The full header value (``Basic <base64>``).
+
+    Returns:
+        The API key, or ``None`` when the value is not well-formed basic auth or has no password.
+    """
+    scheme, _, encoded = authorization.strip().partition(" ")
+    if scheme.lower() != "basic" or not encoded.strip():
+        return None
+    try:
+        decoded = base64.b64decode(encoded.strip(), validate=True).decode("utf-8")
+    except (binascii.Error, UnicodeDecodeError, ValueError):
+        return None
+    _, sep, password = decoded.partition(":")
+    return password if sep and password else None
 
 
 def decode_jwt(token: str) -> Optional[Dict[str, Any]]:

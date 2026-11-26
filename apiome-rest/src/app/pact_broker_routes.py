@@ -885,8 +885,10 @@ def _read(
         "`pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` answer whether a version "
         "can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`. `pb:webhooks` and "
         "`pb:webhook` are what `pact-broker create-webhook` and `create-or-update-webhook` use.\n\n"
-        "A workspace API key may be sent as `Authorization: Bearer <key>` on every route under "
-        "`/pact-broker`. Requires `pacts:view`."
+        "A workspace API key may be sent as `Authorization: Bearer <key>`, or as the password of "
+        "basic auth (any username), on every route under `/pact-broker`. A restricted key needs a "
+        "Pact scope: `pact:read` for reads, `pact:publish` to publish pacts and record "
+        "deployments, `pact:verify` to publish verification results. Requires `pacts:view`."
     ),
 )
 def pact_broker_index(

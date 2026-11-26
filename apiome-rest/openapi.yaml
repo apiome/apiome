@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.677.0
+  version: 1.678.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -30038,7 +30038,7 @@ paths:
         `pb:publish-contracts` is what `pact-broker publish` and the Pact libraries post to; `pb:provider-pacts-for-verification` is what a Pact verifier posts its consumer-version selectors to. `pb:publish-pact`, `pb:latest-pact-version`, `pb:pact-version`, `pb:latest-provider-pacts` and the others are URI templates. `pb:environments` lists the environments `pact-broker record-deployment` looks an environment up in. `pb:can-i-deploy-pacticipant-version-to-environment` and `…-to-tag` answer whether a version can be deployed; `pact-broker can-i-deploy` asks `…/pact-broker/matrix`. `pb:webhooks` and `pb:webhook` are what `pact-broker create-webhook` and `create-or-update-webhook` use.
       
       
-        A workspace API key may be sent as `Authorization: Bearer <key>` on every route under `/pact-broker`. Requires `pacts:view`.'
+        A workspace API key may be sent as `Authorization: Bearer <key>`, or as the password of basic auth (any username), on every route under `/pact-broker`. A restricted key needs a Pact scope: `pact:read` for reads, `pact:publish` to publish pacts and record deployments, `pact:verify` to publish verification results. Requires `pacts:view`.'
       operationId: pact_broker_index_v1_tenants__tenant_slug__pact_broker_get
       parameters:
       - name: tenant_slug

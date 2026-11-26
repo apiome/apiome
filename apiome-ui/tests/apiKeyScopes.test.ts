@@ -37,6 +37,17 @@ describe('apiKeyScopes', () => {
     expect(API_KEY_SCOPE_PRESETS.usage).toEqual(['usage:ingest']);
     expect(API_KEY_SCOPE_PRESETS.registry_read).toEqual(['registry:read']);
     expect(API_KEY_SCOPE_PRESETS.registry_client).toEqual(['registry:read', 'registry:write']);
+    expect(API_KEY_SCOPE_PRESETS.pact_read).toEqual(['pact:read']);
+    expect(API_KEY_SCOPE_PRESETS.pact_publish).toEqual(['pact:read', 'pact:publish']);
+    expect(API_KEY_SCOPE_PRESETS.pact_verify).toEqual(['pact:read', 'pact:verify']);
+  });
+
+  test('the Pact Broker scopes stand on their own (PFX-4.2)', () => {
+    expect(normalizeApiKeyScopes('pact:read,pact:verify')).toEqual(['pact:read', 'pact:verify']);
+    expect(normalizeApiKeyScopes('pact:publish')).toEqual(['pact:publish']);
+    expect(() => normalizeApiKeyScopes('*,pact:read')).toThrow(/must stand alone/);
+    expect(() => normalizeApiKeyScopes('pact:write')).toThrow(/Invalid API key scope "pact:write"/);
+    expect(() => normalizeApiKeyScopes('pact:write')).toThrow(/pact:verify/);
   });
 
   test('the schema registry scopes stand on their own (CDG-4.3)', () => {
@@ -69,5 +80,8 @@ describe('apiKeyScopes', () => {
     expect(presetFromScopes(['usage:ingest'])).toBe('usage');
     expect(presetFromScopes(['registry:read'])).toBe('registry_read');
     expect(presetFromScopes(['registry:write', 'registry:read'])).toBe('registry_client');
+    expect(presetFromScopes(['pact:read'])).toBe('pact_read');
+    expect(presetFromScopes(['pact:publish', 'pact:read'])).toBe('pact_publish');
+    expect(presetFromScopes(['pact:verify', 'pact:read'])).toBe('pact_verify');
   });
 });

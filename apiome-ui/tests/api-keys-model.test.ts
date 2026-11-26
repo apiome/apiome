@@ -219,10 +219,13 @@ describe('scopes', () => {
       'usage:ingest': 0,
       'registry:read': 0,
       'registry:write': 0,
+      'pact:read': 0,
+      'pact:publish': 0,
+      'pact:verify': 0,
     });
   });
 
-  it('describes the six scopes the reference card lists', () => {
+  it('describes the nine scopes the reference card lists', () => {
     expect(API_KEY_SCOPE_REFERENCE.map((entry) => entry.scope)).toEqual([
       '*',
       'diff:read',
@@ -230,12 +233,15 @@ describe('scopes', () => {
       'usage:ingest',
       'registry:read',
       'registry:write',
+      'pact:read',
+      'pact:publish',
+      'pact:verify',
     ]);
     expect(API_KEY_SCOPE_REFERENCE.filter((entry) => entry.full)).toHaveLength(1);
   });
 });
 
-describe('the seven presets', () => {
+describe('the ten presets', () => {
   it('produce exactly the scope strings the server already stores', () => {
     // The acceptance criterion, as a property: every option reads its scopes from the shared
     // table rather than restating them.
@@ -247,7 +253,7 @@ describe('the seven presets', () => {
     }
   });
 
-  it('cover every preset the shared table defines, in the mockup order, then usage and registry', () => {
+  it('cover every preset the shared table defines, in the mockup order, then usage, registry and pact', () => {
     expect(API_KEY_SCOPE_PRESET_OPTIONS.map((option) => option.value)).toEqual([
       'full',
       'diff',
@@ -256,6 +262,9 @@ describe('the seven presets', () => {
       'usage',
       'registry_read',
       'registry_client',
+      'pact_read',
+      'pact_publish',
+      'pact_verify',
     ]);
     expect(API_KEY_SCOPE_PRESET_OPTIONS).toHaveLength(
       Object.keys(API_KEY_SCOPE_PRESETS).length
@@ -268,6 +277,9 @@ describe('the seven presets', () => {
     expect(describeApiKeyScopePreset('usage')).toBe('usage:ingest');
     expect(describeApiKeyScopePreset('registry_read')).toBe('registry:read');
     expect(describeApiKeyScopePreset('registry_client')).toBe('registry:read + registry:write');
+    expect(describeApiKeyScopePreset('pact_read')).toBe('pact:read');
+    expect(describeApiKeyScopePreset('pact_publish')).toBe('pact:read + pact:publish');
+    expect(describeApiKeyScopePreset('pact_verify')).toBe('pact:read + pact:verify');
   });
 });
 

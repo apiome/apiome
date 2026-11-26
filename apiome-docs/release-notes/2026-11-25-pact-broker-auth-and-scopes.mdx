@@ -1,0 +1,26 @@
+---
+slug: pact-broker-auth-and-scopes
+title: "Pact Broker basic auth and Pact key scopes"
+description: "Pact tooling signs in with basic auth too, and keys get three Pact scopes."
+authors: [apiome]
+---
+
+Apiome's Pact Broker now accepts the credentials Pact tooling sends either way: a workspace API key
+as a bearer token, or as the **password** of basic auth. And three new key scopes —
+`pact:read`, `pact:publish` and `pact:verify` — let each pipeline job hold only what it needs. See
+[Pact keys and scopes](/ship/pact-broker/cli#pact-keys-and-scopes).
+
+{/* truncate */}
+
+- **Basic auth.** `pact-broker --broker-username … --broker-password <api-key>`,
+  `PACT_BROKER_USERNAME` / `PACT_BROKER_PASSWORD` and pact-js `pactBrokerUsername` /
+  `pactBrokerPassword` work unchanged; the username is ignored. Basic auth without a password, or
+  an unknown scheme, is refused with a message that says where the key goes.
+- **Three presets on API keys.** **Pact: read-only** (`pact:read`) for `can-i-deploy`,
+  **Pact: consumer + deploy** (`pact:read` `pact:publish`) to publish pacts and record deployments,
+  and **Pact: CI verifier** (`pact:read` `pact:verify`) to publish verification results — it cannot
+  publish a pact. See [API keys](/workspace/api-keys#a-key-for-pact-tooling).
+- **Nothing else.** A Pact key reaches the broker, the hosted verifier and the pacticipant list
+  only. Deletes, webhooks and environments still need a full-access key, and the member who created
+  the key still needs the **Pacts** permission.
+- **`apiome pact`** reads `PACT_BROKER_PASSWORD` as the key when no token is set.

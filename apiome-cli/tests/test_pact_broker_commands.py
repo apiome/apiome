@@ -178,14 +178,38 @@ def test_a_malformed_broker_url_is_refused(monkeypatch: pytest.MonkeyPatch) -> N
     assert "not a Pact Broker base URL" in result.output
 
 
-def test_basic_auth_alone_is_reported_not_ignored(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_basic_auth_password_is_the_api_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, httpx_mock: Any
+) -> None:
+    """PFX-4.2: a pipeline configured for basic auth works; the password is the key."""
     monkeypatch.setenv("PACT_BROKER_BASE_URL", _BROKER)
     monkeypatch.setenv("PACT_BROKER_USERNAME", "ci")
-    monkeypatch.setenv("PACT_BROKER_PASSWORD", "secret")
+    monkeypatch.setenv("PACT_BROKER_PASSWORD", "basic-key")
+    _pact(tmp_path / "p.json")
+    httpx_mock.add_response(method="POST", url=f"{_BROKER}/contracts/publish", json={})
+    result = _invoke("publish", str(tmp_path / "p.json"), "-a", "1")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert httpx_mock.get_requests()[0].headers["X-API-Key"] == "basic-key"
+
+
+def test_a_token_wins_over_the_basic_auth_password(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, httpx_mock: Any
+) -> None:
+    monkeypatch.setenv("PACT_BROKER_BASE_URL", _BROKER)
+    monkeypatch.setenv("PACT_BROKER_TOKEN", "broker-token")
+    monkeypatch.setenv("PACT_BROKER_PASSWORD", "basic-key")
+    _pact(tmp_path / "p.json")
+    httpx_mock.add_response(method="POST", url=f"{_BROKER}/contracts/publish", json={})
+    assert _invoke("publish", str(tmp_path / "p.json"), "-a", "1").exit_code == EXIT_SUCCESS
+    assert httpx_mock.get_requests()[0].headers["X-API-Key"] == "broker-token"
+
+
+def test_a_username_without_a_password_is_reported_not_ignored(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PACT_BROKER_BASE_URL", _BROKER)
+    monkeypatch.setenv("PACT_BROKER_USERNAME", "ci")
     result = _invoke("list-pacticipants")
     assert result.exit_code == EXIT_ERROR
-    assert "PACT_BROKER_USERNAME" in result.output and "API key" in result.output
-    assert "secret" not in result.output
+    assert "PACT_BROKER_PASSWORD" in result.output and "API key" in result.output
 
 
 def test_no_credential_exits_1(monkeypatch: pytest.MonkeyPatch) -> None:
