@@ -11,12 +11,15 @@ it unchanged: give them your workspace's **broker base URL**
 Consumers publish their pacts, providers verify them and report back, deploy jobs record what runs
 where, and `can-i-deploy` stops a release that would break something.
 
-All of it is served through the API and the Pact tools. There are five screens so far.
+All of it is served through the API and the Pact tools. There are seven screens so far.
 [**Pacticipants**](./pacticipants.mdx), under **Contracts** in the rail, lists every application in
 your pacts and opens each one's versions, branches, tags, environments and pacts.
 [**Pact detail**](./pact-detail.mdx) shows one pact's interactions, its verification status and what
 changed since the previous pact. The [**Network**](./network.mdx) diagram draws the pacticipants
-connected to one through pacts, with each integration's verdict. **Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
+connected to one through pacts, with each integration's verdict. The [**Matrix**](./matrix.mdx)
+shows which consumer versions were verified against which provider versions, and
+[**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console) checks one version before a
+deployment, each with its verdict explained. **Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
 each bi-directional comparison. **Provider states** shows a provider's registered states and
 [checks its pacts against them](./provider-states.mdx#see-provider-states-in-the-app) before a
 run.
@@ -60,6 +63,7 @@ run.
 | Tell Apiome how to set up the provider states pacts name | [Provider states](./provider-states.mdx) |
 | Record which version runs in each environment | [Environments and deployments](./environments.mdx) |
 | Ask whether a version is safe to deploy | [Can I deploy?](./can-i-deploy.mdx) |
+| Query which consumer versions were verified against which provider versions | [Matrix](./matrix.mdx) |
 | Register a provider's OpenAPI document for bi-directional contract testing | [Publish a provider contract](./bi-directional.mdx) |
 | See how a pact is compared with a provider's OpenAPI document | [Comparison rules](./comparison-rules.mdx) |
 | Check message pacts against a provider's AsyncAPI document | [Message pacts](./message-pacts.mdx) |

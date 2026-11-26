@@ -55,7 +55,7 @@ function linkName(body: unknown, rel: string): string | null {
 }
 
 /** The last path segment of a link (a pacticipant's handle in a broker URL), or `null`. */
-function lastSegment(href: string | null): string | null {
+export function lastSegment(href: string | null): string | null {
   if (!href) return null;
   const segment = href.replace(/\/+$/, '').split('/').pop();
   if (!segment) return null;

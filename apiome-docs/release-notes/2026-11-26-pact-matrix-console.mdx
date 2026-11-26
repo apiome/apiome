@@ -1,0 +1,31 @@
+---
+slug: pact-matrix-console
+title: "Matrix and can-i-deploy console"
+description: "Query the matrix and check a deployment in the app, with the verdict explained."
+authors: [apiome]
+---
+
+You can now read the Pact Broker's matrix and ask can-i-deploy in the app. On the **Pacticipants**
+page, click **Matrix** or **Can I deploy?**. See [Matrix](/ship/pact-broker/matrix) and
+[Can I deploy?](/ship/pact-broker/can-i-deploy#check-in-the-console).
+
+{/* truncate */}
+
+- **A query builder for the matrix.** Choose one or more pacticipants and which of their versions —
+  the latest, one version, a branch, the main branch, a tag, an environment or all — how results
+  collapse, and how many rows to read. Two or more selectors ask whether those versions work
+  together.
+- **The grid.** Consumer versions down, provider versions across. Each cell is the newest result of
+  the pair, marked **Verified** ✓, **Failed** ✕, **Pending** ! or **No result** ?, and opens the pact.
+  Ignored rows are dashed. Every row is also in the table below.
+- **Can I deploy?** Name a version and an environment (or a tag), leave applications out with
+  **Ignore**, and click **Check**. The page shows the rows the answer came from and the matching
+  `apiome pact can-i-deploy` command for your pipeline.
+- **The verdict, explained.** **Yes — deployable**, **No — not deployable** or **Not known yet**,
+  with the Pact Broker's sentence, the counts, and each notice under **Blocking**, **Warnings** or
+  **Passing** with what to do about it. While a result is missing, the page says when to ask again
+  and **Check again** asks.
+- **Shareable.** The address carries the query. An address the page cannot read, or a query that is
+  not finished, says why instead of asking.
+
+Both pages only read and need **Pacts** → **View**.

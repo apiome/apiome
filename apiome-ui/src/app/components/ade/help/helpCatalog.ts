@@ -1394,7 +1394,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Ask whether a version is safe to deploy, from recorded pacts, results and deployments.',
     page: 'apiome-docs/docs/ship/pact-broker/can-i-deploy.mdx',
     section: 'reference',
-    keywords: ['matrix', 'retry-while-unknown', 'to-environment', 'ignore', 'verdict', 'contract required', 'pending pact', 'exit code'],
+    keywords: ['matrix', 'retry-while-unknown', 'to-environment', 'ignore', 'verdict', 'contract required', 'pending pact', 'exit code', 'console', 'check again', 'deploy gate', 'blocking'],
+  },
+  {
+    id: 'matrix',
+    title: 'Matrix',
+    summary: 'Query which consumer versions were verified against which provider versions, with the verdict explained.',
+    page: 'apiome-docs/docs/ship/pact-broker/matrix.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'pact', 'grid', 'selectors', 'latestby', 'query builder', 'compatibility', 'verdict', 'verified', 'failed', 'deployable'],
   },
   {
     id: 'bi-directional',
