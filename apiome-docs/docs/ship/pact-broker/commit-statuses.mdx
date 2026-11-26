@@ -1,0 +1,133 @@
+---
+title: Commit statuses
+description: See each pact's verification verdict on GitHub and GitLab commits and pull requests.
+sidebar_position: 6.6
+tags: [contracts, pact, ci, github, gitlab, rest]
+---
+
+Apiome puts the verdict of each consumer ↔ provider pair on the commit it is about. The pull
+request then shows it next to its other checks, and a branch protection rule can require it:
+
+- **When a consumer publishes a pact**, its commit gets **pending** — *Pact awaiting verification by
+  Ledger API*. If the provider's main branch has already verified this exact pact, the commit gets
+  that verdict at once.
+- **When a verification result arrives**, from your own verifier or from
+  [hosted verification](./hosted-verification.mdx), both commits get **success** or **failure**:
+  the provider's commit (the version that verified) and the consumer's commit (the version that
+  published the pact).
+
+Each status is named `apiome-pact/<consumer>/<provider>`, such as
+`apiome-pact/billing-service/ledger-api`, on both repositories. A newer verdict for the same pair
+replaces the status on that commit instead of adding another one. The status links to the pact
+or to the verification result.
+
+## Before you start
+
+1. **Register each repository** under [Repositories](../../bring-in/repositories.mdx) with a
+   linked GitHub or GitLab account. Apiome writes the status with that account's token, so the
+   account needs permission to write commit statuses (GitHub: the `repo` scope or **Commit
+   statuses: write**; GitLab: the **Developer** role). Apiome never asks for a token for this.
+2. **Set each pacticipant's repository URL** to the same repository, either when you
+   [register the pacticipant](./concepts.mdx#register-a-pacticipant) or later with `PATCH`:
+
+   ```bash
+   curl -X PATCH https://api.apiome.dev/v1/tenants/acme/pacticipants/billing-service \
+     -H "X-API-Key: sk_live_…" \
+     -H "Content-Type: application/json" \
+     -d '{"repository_url": "https://github.com/acme/billing-service"}'
+   ```
+
+   Case, a trailing `/` and a `.git` suffix don't matter.
+3. **Use the commit SHA as the version number** when you publish and verify. This is the usual Pact
+   convention, such as `--consumer-app-version "$GITHUB_SHA"` and
+   `--provider-app-version "$GITHUB_SHA"` (see [Run Pact in CI](./ci-pact.mdx)).
+
+Statuses go to repositories on `github.com` and `gitlab.com`.
+
+## What the commit shows
+
+| Event | Commit | State (GitHub · GitLab) | Description |
+| --- | --- | --- | --- |
+| A pact is published | consumer | `pending` · `pending` | Pact awaiting verification by *provider* |
+| A pact the provider's main branch already verified is published | consumer | that verdict | Pact verified by *provider* *version* |
+| A verification passes | provider and consumer | `success` · `success` | Pact verified by *provider* *version* / Pact with *consumer* *version* verified |
+| A verification fails | provider and consumer | `failure` · `failed` | Pact failed verification by *provider* *version* / Pact with *consumer* *version* failed verification |
+
+A failed verification of a [pending pact](./pending-and-wip.mdx) is still reported as a failure on
+the commit. The pending rule only decides whether the verifier's own exit code fails the build.
+
+[Bi-directional](./bi-directional.mdx) verdicts don't post a commit status yet. They are in the
+matrix and in `can-i-deploy` as usual.
+
+## When a status isn't sent
+
+Nothing is dropped silently. Every verdict is recorded, and one that could not be sent is recorded
+with the reason:
+
+| `reason_code` | What it means | What to do |
+| --- | --- | --- |
+| `pact-status-no-repository` | The pacticipant has no repository URL | Set `repository_url` |
+| `pact-status-version-not-a-commit` | The version number, such as `1.4.0`, is not a commit SHA | Publish with the commit as the version |
+| `pact-status-repository-not-registered` | No registered repository matches the URL | Register it under **Repositories** |
+| `pact-status-provider-unsupported` | The repository is on Bitbucket or a self-hosted host | — |
+| `check-provider-forbidden` | No stored credential, or the provider refused the account | Re-link the account, or give it write access |
+| `check-provider-unavailable` | The provider could not be reached, or rate-limited the request | Retry |
+| `check-publishing-disabled` | Status publishing is off for this deployment (`APIOME_PROVIDER_CHECKS_ENABLED=false`) | Ask your administrator |
+
+A status that was never attempted has the outcome `suppressed`. One that the provider refused or
+could not take has the outcome `failed`. A problem with a status never fails the publish or the
+verification that caused it.
+
+## List and retry statuses
+
+List what was posted, newest first. Filter by `pacticipant`, `version` or `outcome`. You need
+**Pacts** → **View**:
+
+```bash
+curl "https://api.apiome.dev/v1/tenants/acme/pact-commit-statuses?outcome=suppressed" \
+  -H "X-API-Key: sk_live_…"
+```
+
+```json
+{
+  "items": [
+    {
+      "id": "6f1c…",
+      "pacticipant": "billing-service",
+      "version": "4f2a9c1e0b7d3a6f5c8e9d0b1a2c3d4e5f6a7b8c",
+      "consumer": "billing-service",
+      "provider": "ledger-api",
+      "side": "consumer",
+      "context": "apiome-pact/billing-service/ledger-api",
+      "state": "pending",
+      "description": "Pact awaiting verification by Ledger API",
+      "outcome": "suppressed",
+      "reason_code": "pact-status-repository-not-registered",
+      "message": "No repository registered in this workspace matches https://github.com/acme/billing-service; …",
+      "attempts": 0
+    }
+  ],
+  "next_cursor": null
+}
+```
+
+After you fix the cause, send a `suppressed` or `failed` status again. You need **Pacts** →
+**Edit**:
+
+```bash
+curl -X POST https://api.apiome.dev/v1/tenants/acme/pact-commit-statuses/6f1c…/retry \
+  -H "X-API-Key: sk_live_…"
+```
+
+A retry checks again where the status can go, so it is sent once the repository is registered or
+the account is linked. A status that was already accepted returns `409 pact-status-not-retryable`.
+Both endpoints read only your workspace's statuses. These endpoints take a **Full access** key; the
+Pact key presets cover the broker routes only. Every field is in the
+[REST reference](../../reference/rest/pacticipants.md).
+
+## Related
+
+- [Run Pact in CI](./ci-pact.mdx)
+- [Verification results](./verification-results.mdx)
+- [Contract webhooks](./webhooks.mdx) — to start the provider's build when a pact needs verifying
+- [Repositories](../../bring-in/repositories.mdx)

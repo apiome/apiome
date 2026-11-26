@@ -1397,6 +1397,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['create-webhook', 'repository_dispatch', 'GitHub Actions', 'pactbroker.pactUrl', 'signing secret', 'HMAC', 'dead-letter', 'retry', 'triggered'],
   },
   {
+    id: 'commit-statuses',
+    title: 'Commit statuses',
+    summary: "See each pact's verification verdict on GitHub and GitLab commits and pull requests.",
+    page: 'apiome-docs/docs/ship/pact-broker/commit-statuses.mdx',
+    section: 'reference',
+    keywords: ['github', 'gitlab', 'pull request', 'branch protection', 'pending', 'retry', 'repository URL', 'apiome-pact'],
+  },
+  {
     id: 'badges',
     title: 'Pact badges',
     summary: 'Show in a README whether the pacts of a public project are verified.',

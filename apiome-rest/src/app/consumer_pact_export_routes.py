@@ -57,6 +57,7 @@ from .consumer_pact_export_store import CODE_PROVIDER_AMBIGUOUS, PactNames, reso
 from .database import db
 from .pact_broker_routes import _base_url, _enforce_publish_budget, _publish_result
 from .pact_broker_routes import _http_error as _broker_error
+from .pact_commit_status_store import post_publish_statuses
 from .pact_publication import PactPublicationError, prepare_pact
 from .pact_publication_store import publish_pacts
 from .pact_webhook_events import fire_publish_events
@@ -407,6 +408,7 @@ def publish_consumer_pact(
         raise _broker_error(exc) from exc
     base = _base_url(request, tenant_slug)
     fire_publish_events(db, tenant_id, base, outcome)
+    post_publish_statuses(db, tenant_id, base, outcome)
     comparisons = compare_published_pacts(db, tenant_id, outcome, actor=actor)
     return PactExportPublishResponse(
         **_response_fields(contract, names, export, version_row),

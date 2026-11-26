@@ -1,6 +1,6 @@
 ---
 title: "Pacticipants"
-description: "REST endpoints tagged pacticipants: 19 operations."
+description: "REST endpoints tagged pacticipants: 21 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,69 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.678.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.679.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pacticipants` · 19 operations
+Tag: `pacticipants` · 21 operations
+
+## `GET /v1/tenants/{tenant_slug}/pact-commit-statuses` {#get-pact-commit-statuses-v1-tenants-tenant-slug-pact-commit-statuses-get}
+
+**List pact commit statuses**
+
+The pact verdicts Apiome posted (or could not post) to GitHub and GitLab commits, most recently updated first. One status per pacticipant version and context (`apiome-pact/<consumer>/<provider>`): `pending` while a published pact awaits the provider's verification, then `pass` or `fail` on both the consumer's and the provider's commit.
+
+`outcome` says what happened to the send: `dispatched` (the provider accepted it), `suppressed` (not attempted — `reason_code` says why: no repository URL, version not a commit SHA, repository not registered, unsupported provider, no stored credential, publishing switched off), `failed` (the provider refused or could not be reached) or `queued`.
+
+Requires `pacts:view`.
+
+Operation id: `get_pact_commit_statuses_v1_tenants__tenant_slug__pact_commit_statuses_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant` | query | string or null | no | Only this pacticipant's commits (handle). |
+| `version` | query | string or null | no | Only this version number. |
+| `outcome` | query | string or null | no | Only this outcome: queued, dispatched, suppressed, failed. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list pact commit statuses. | `application/json` [`CommitStatusList`](#schema-commitstatuslist) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-commit-statuses/{status_id}/retry` {#retry-pact-commit-status-v1-tenants-tenant-slug-pact-commit-statuses-status-id-retry-post}
+
+**Send a pact commit status again**
+
+Send a `suppressed` or `failed` commit status again. Where it can go is decided afresh, so a retry after registering the repository, linking the account or fixing the pacticipant's repository URL sends it; one whose cause remains comes back with the same `reason_code`.
+
+Requires `pacts:edit`.
+
+Operation id: `retry_pact_commit_status_v1_tenants__tenant_slug__pact_commit_statuses__status_id__retry_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `status_id` | path | string | yes | Path parameter identifying the status id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for send a pact commit status again. | `application/json` [`CommitStatusRecord`](#schema-commitstatusrecord) |
+| 404 | `pact-status-not-found`: no such status in this workspace. | — |
+| 409 | `pact-status-not-retryable`: the status was accepted or is being sent. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-retention` {#run-pact-retention-v1-tenants-tenant-slug-pact-retention-post}
 
@@ -593,6 +653,47 @@ Operation id: `put_pacticipant_version_tag_v1_tenants__tenant_slug__pacticipants
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
+
+### `CommitStatusList` {#schema-commitstatuslist}
+
+A page of commit statuses, newest first.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `items` | array of [`CommitStatusRecord`](#schema-commitstatusrecord) | yes | Items. |
+| `next_cursor` | string or null | no | Pass as `cursor` for the next page. |
+
+### `CommitStatusRecord` {#schema-commitstatusrecord}
+
+A recorded commit status, as the API returns it.
+
+Never carries a token: the credential is resolved at send time and stored nowhere.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Status id. |
+| `pacticipant` | string | yes | Handle of the pacticipant whose commit the status is on. |
+| `version` | string | yes | The pacticipant version (commit) the status is about. |
+| `consumer` | string | yes | Handle of the pair's consumer. |
+| `provider` | string | yes | Handle of the pair's provider. |
+| `side` | enum `"consumer"`, `"provider"` | yes | Which pacticipant of the pair the status is for. |
+| `context` | string | yes | Status context, `apiome-pact/<consumer>/<provider>`. |
+| `state` | enum `"pending"`, `"pass"`, `"fail"` | yes | The verdict. |
+| `description` | string | no | The one-line description shown on the commit. |
+| `target_url` | string or null | no | Where the status links. |
+| `pact_version_sha` | string or null | no | The pact content the verdict is about. |
+| `verification_number` | integer or null | no | The verification result, for a verdict. |
+| `commit_sha` | string or null | no | The commit the status was written to. |
+| `git_provider` | string or null | no | `github` or `gitlab`, once a repository matched. |
+| `repository` | string or null | no | Full name of the repository written to. |
+| `repository_id` | string or null | no | The registered repository used. |
+| `outcome` | enum `"queued"`, `"dispatched"`, `"suppressed"`, `"failed"` | yes | `dispatched` (accepted), `suppressed` (not attempted — see `reason_code`), `failed` or `queued`. |
+| `reason_code` | string or null | no | Stable reason for a suppressed or failed status. |
+| `message` | string | no | What happened, in words. |
+| `http_status` | integer or null | no | The provider's HTTP status, when a request went out. |
+| `attempts` | integer | no | How many times the status was sent. |
+| `created_at` | string or null | no | Creation timestamp (ISO 8601). |
+| `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

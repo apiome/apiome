@@ -171,6 +171,19 @@ To start a GitHub Actions workflow directly, create the webhook with a GitHub ta
 deployment afterwards is what lets the next `can-i-deploy` of its consumers and providers check
 against it.
 
+## See the verdict on the pull request
+
+Because every job above uses the commit SHA as the version, Apiome can post each pact's verdict
+back to the commit as a GitHub or GitLab **commit status** named
+`apiome-pact/<consumer>/<provider>`. The consumer's pull request shows **pending** until the
+provider verifies the pact, then **success** or **failure**. The provider's pull request shows
+the result of its own verification. To require it before merging, add the status to the branch
+protection rule.
+
+To turn this on, register both repositories under [Repositories](../../bring-in/repositories.mdx)
+and set each pacticipant's repository URL. No CI step is needed. See
+[Commit statuses](./commit-statuses.mdx).
+
 ## GitLab CI and Bitbucket Pipelines
 
 The two pipelines below run the same three steps in the image that carries the Apiome CLI. Merge
@@ -336,6 +349,7 @@ exits `0`.
 ## Related
 
 - [The apiome pact commands](./cli.mdx)
+- [Commit statuses](./commit-statuses.mdx) — the verdict on each commit and pull request
 - [pact-action (GitHub Action)](../../reference/ci/pact-action.md) — every input and output
 - [Can I deploy?](./can-i-deploy.mdx)
 - [Environments and deployments](./environments.mdx)

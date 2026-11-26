@@ -66,6 +66,8 @@ __all__ = [
     "GITHUB_API_URL",
     "GITLAB_API_URL",
     "GitHubCheckRunAdapter",
+    "GitHubCommitStatusAdapter",
+    "GitLabCommitStatusAdapter",
     "GitLabStatusAdapter",
     "PublishRequest",
     "PublishedStatus",
@@ -74,6 +76,8 @@ __all__ = [
     "StatusAdapter",
     "StatusPublishError",
     "adapter_for",
+    "commit_status_adapter_for",
+    "commit_status_providers",
     "supported_providers",
 ]
 
@@ -696,6 +700,130 @@ class BitbucketStatusAdapter(StatusAdapter):
         """
         value = payload.get("url")
         return str(value) if value else None
+
+
+class GitHubCommitStatusAdapter(GitHubCheckRunAdapter):
+    """GitHub commit statuses — PFX-4.4 (#6941).
+
+    ``POST /repos/{owner}/{repo}/statuses/{sha}`` is an upsert keyed on ``context``, like GitLab's.
+    Pact verdicts use it rather than check runs because a commit status can be written with the
+    OAuth token of the linked account a repository was registered with, while a check run needs a
+    GitHub App installation token. GitHub keeps 140 characters of a description.
+    """
+
+    #: GitHub's limit on a commit-status description.
+    _DESCRIPTION_MAX_CHARS = 140
+
+    #: Normalized state → GitHub commit-status ``state``.
+    _STATES = {"pending": "pending", "pass": "success", "fail": "failure", "skipped": "success"}
+
+    def build_call(self, request: PublishRequest) -> Tuple[str, str, Dict[str, Any]]:
+        """Build the commit-status call.
+
+        Args:
+            request: The verdict.
+
+        Returns:
+            ``(method, url, body)``.
+
+        Raises:
+            StatusPublishError: ``check-provider-refused`` for a state with no commit-status
+                spelling or a repository name that is not ``owner/name``.
+        """
+        owner, repo = _split_full_name(request.repo_full_name)
+        state = self._STATES.get(request.state)
+        if state is None:
+            raise StatusPublishError(CODE_PROVIDER_REFUSED, f"{request.state!r} is not a commit-status state.")
+        owner_q, repo_q = quote(owner, safe=""), quote(repo, safe="")
+        sha = quote(request.commit_sha, safe="")
+        description = request.title or request.name
+        if len(description) > self._DESCRIPTION_MAX_CHARS:
+            description = description[: self._DESCRIPTION_MAX_CHARS - 1] + "…"
+        body: Dict[str, Any] = {"state": state, "context": request.name, "description": description}
+        if request.details_url:
+            body["target_url"] = request.details_url
+        return "POST", f"{self.api_url}/repos/{owner_q}/{repo_q}/statuses/{sha}", body
+
+    def read_url(self, payload: Mapping[str, Any]) -> Optional[str]:
+        """Read the status's target URL back from a success body.
+
+        Args:
+            payload: The decoded response.
+
+        Returns:
+            The URL, or ``None``.
+        """
+        value = payload.get("target_url")
+        return str(value) if value else None
+
+
+class GitLabCommitStatusAdapter(GitLabStatusAdapter):
+    """GitLab commit statuses for a verdict that is *waiting*, not running — PFX-4.4 (#6941).
+
+    The GNC-2.2 check adapter sends ``running`` for ``pending`` because its check is in progress. A
+    pact awaiting verification is not running anywhere yet, so this one sends GitLab's own
+    ``pending``; every other state is spelled as :class:`GitLabStatusAdapter` spells it.
+    """
+
+    def build_call(self, request: PublishRequest) -> Tuple[str, str, Dict[str, Any]]:
+        """Build the commit-status call, with ``pending`` kept as ``pending``.
+
+        Args:
+            request: The verdict.
+
+        Returns:
+            ``(method, url, body)``.
+        """
+        method, url, body = super().build_call(request)
+        if request.state == "pending":
+            body["state"] = "pending"
+        return method, url, body
+
+
+#: The adapter that writes a plain commit status, by provider (PFX-4.4).
+_COMMIT_STATUS_ADAPTERS: Dict[str, type] = {
+    GitHubCommitStatusAdapter.provider: GitHubCommitStatusAdapter,
+    GitLabCommitStatusAdapter.provider: GitLabCommitStatusAdapter,
+}
+
+
+def commit_status_providers() -> Tuple[str, ...]:
+    """Return the providers a commit status can be written to.
+
+    Returns:
+        The provider ids, sorted.
+    """
+    return tuple(sorted(_COMMIT_STATUS_ADAPTERS))
+
+
+def commit_status_adapter_for(
+    provider: str,
+    token: Optional[str],
+    *,
+    client_factory: Optional[ClientFactory] = None,
+) -> StatusAdapter:
+    """Build the commit-status adapter for a provider (GitHub commit statuses, GitLab statuses).
+
+    Args:
+        provider: ``github`` or ``gitlab``.
+        token: The repository token, resolved server-side.
+        client_factory: How to obtain an HTTP client; injected in tests.
+
+    Returns:
+        The adapter.
+
+    Raises:
+        StatusPublishError: ``check-provider-unsupported`` for any other provider.
+    """
+    key = str(provider or "").strip().lower()
+    adapter = _COMMIT_STATUS_ADAPTERS.get(key)
+    if adapter is None:
+        raise StatusPublishError(
+            CODE_PROVIDER_UNSUPPORTED,
+            f"Commit statuses cannot be written to provider {provider!r}; "
+            f"they can be written to {', '.join(commit_status_providers())}.",
+        )
+    return adapter(token, client_factory=client_factory)
 
 
 #: Every provider that has a status adapter, keyed by the provider id V265 stores.

@@ -140,6 +140,10 @@ Name pact files or folders; a folder publishes every `*.json` file in it. Every 
 before anything is sent, and a file that is not a pact stops the run with its name and the reason.
 Pacts of several consumers are sent as one request per consumer.
 
+Give the commit SHA as `--consumer-app-version`, as above. Apiome can then post each pact's verdict
+to that commit as a GitHub or GitLab status: **pending** until the provider verifies it. See
+[Commit statuses](./commit-statuses.mdx).
+
 - `--auto-detect-version-properties` (`-r`) reads the branch and build URL from GitHub Actions,
   GitLab, Jenkins, Buildkite, CircleCI, Travis, Bitbucket, AppVeyor, CodeShip or Azure DevOps, and
   falls back to `git`.
@@ -206,7 +210,9 @@ apiome pact verify \
 Apiome replays each selected pact against the registered verification target `ledger-staging`
 and publishes a result per pact. It prints one row per pact and every interaction it could not
 replay, with the reason. `--no-publish-verification-results` is a dry run. See
-[Verify a provider from Apiome](./hosted-verification.mdx).
+[Verify a provider from Apiome](./hosted-verification.mdx). Each published result is also posted as
+a [commit status](./commit-statuses.mdx) to the provider's commit and to the consumer's commit,
+when their version numbers are commit SHAs.
 
 ## Choose the output
 
@@ -248,5 +254,6 @@ writes nothing.
   `apiome/pact-action` GitHub Action and GitLab CI and Bitbucket Pipelines recipes.
 - [pact-action (GitHub Action)](../../reference/ci/pact-action.md) — `publish`, `can-i-deploy` with
   a pull-request comment, and `record-deployment` as workflow steps.
+- [Commit statuses](./commit-statuses.mdx) — each pact's verdict on its GitHub or GitLab commit.
 - [Pact Broker overview](./overview.mdx)
 - [Pact Broker compatibility](./compatibility.mdx)

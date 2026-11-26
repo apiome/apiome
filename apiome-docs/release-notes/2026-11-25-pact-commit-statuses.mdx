@@ -1,0 +1,29 @@
+---
+slug: pact-commit-statuses
+title: "Pact verdicts on GitHub and GitLab commits"
+description: "Each pact's verification verdict now appears on its commit and pull request."
+authors: [apiome]
+---
+
+Pull requests now show each pact's verdict next to their other checks. When a consumer publishes a
+pact, Apiome marks the consumer's commit **pending** until the provider verifies it. When the
+verification result arrives, Apiome marks both commits **success** or **failure**. The status is
+named `apiome-pact/<consumer>/<provider>`, so a branch protection rule can require it. See
+[Commit statuses](/ship/pact-broker/commit-statuses).
+
+{/* truncate */}
+
+- **No CI step needed.** Register the repositories under **Repositories** with a linked GitHub or
+  GitLab account, and set each pacticipant's repository URL. Statuses are written with that
+  account's stored credential. Apiome never asks for a token for this.
+- **Commits, by SHA.** Publish and verify with the commit SHA as the version, such as
+  `--consumer-app-version "$GITHUB_SHA"`. A pact the provider's main branch has already verified
+  gets that verdict straight away.
+- **Nothing dropped silently.** A status that cannot be sent is recorded with the reason, such as
+  no repository URL, a version that is not a commit, a repository that isn't registered, an
+  unsupported host or a missing credential. List them with
+  `GET …/pact-commit-statuses`, fix the cause and send them again with `POST …/retry`.
+- **Never in the way.** A provider that refuses or is down never fails the publish or the
+  verification. The status is recorded as `failed` and can be retried.
+
+*Last updated: November 25, 2026*
