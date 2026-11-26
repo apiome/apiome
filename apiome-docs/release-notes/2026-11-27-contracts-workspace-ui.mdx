@@ -1,0 +1,42 @@
+---
+slug: contracts-workspace-ui
+title: "The Contracts workspace"
+description: "Every Pact Broker screen in one place: pacts, verdicts, verification, webhooks, deployments."
+authors: [apiome]
+---
+
+The Contracts workspace is complete. Everything the Pact Broker knows about your workspace —
+pacticipants, pacts, verification results, the matrix, webhooks and deployments — can now be read
+and acted on in the app, with no feature flag. **Click Contracts** in the rail (under **Ship**) to
+start; the [Pact Broker overview](/ship/pact-broker/overview#the-contracts-workspace) maps every
+screen.
+
+{/* truncate */}
+
+**What the epic covers:**
+
+- **Pacticipants.** Every application in your pacts, with its versions, branches, tags, the
+  environments it runs in and its pacts — [Pacticipants](/ship/pact-broker/pacticipants).
+- **Pact detail.** One pact's interactions (HTTP, message and synchronous message), its
+  verification status, its history and what changed since the previous distinct pact —
+  [Pact detail](/ship/pact-broker/pact-detail).
+- **Network diagram.** The pacticipants connected to one through pacts, each integration coloured
+  by its verdict, with nothing left out silently — [Integration network](/ship/pact-broker/network).
+- **Matrix and Can I deploy?** Build a matrix query from selectors, read the verdict with every
+  notice explained, and check one version against an environment with the matching
+  `apiome pact can-i-deploy` command — [Matrix](/ship/pact-broker/matrix),
+  [Can I deploy?](/ship/pact-broker/can-i-deploy#check-in-the-console).
+- **Verification.** A provider's results with their logs and each mismatch's expected and actual
+  values; re-run one pact or verify every stale one —
+  [Verification results and re-runs](/ship/pact-broker/verification-console).
+- **Webhooks.** Create, test, enable and delete contract webhooks, read each delivery's execution
+  log and redeliver it — [Webhooks and delivery log](/ship/pact-broker/webhooks-console).
+- **Environments.** Which version runs where, each environment's deployment history, and a deploy
+  simulator that shows what a deployment would break before you make it —
+  [Environments and the deploy simulator](/ship/pact-broker/environments-dashboard).
+- **Publish while you import.** The **Import a Pact file** dialog on a project's **Consumers**
+  screen can publish the pact to the broker in the same step —
+  [Publish from the Import dialog](/ship/pact-broker/publish-pacts#publish-from-the-import-dialog).
+
+Every screen reads with the same **Pacts** permission as the Pact tools, and writes — re-runs,
+webhook changes, redeliveries, publishing — need the same role a CI key needs.

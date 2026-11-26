@@ -134,7 +134,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 | ✅ PFX-EPIC-2 | Bi-directional contract testing | 2.1–2.4 | 6 |
 | ✅ PFX-EPIC-3 | Provider verification engine | 3.1–3.3 | 7 |
 | PFX-EPIC-4 | CLI, CI and client compatibility | 4.1–4.3 | 7 |
-| PFX-EPIC-5 | Contracts workspace UI | 5.1–5.4, 5.6 | 8 |
+| ✅ PFX-EPIC-5 | Contracts workspace UI | 5.1–5.4, 5.6 | 8 |
 | PFX-EPIC-6 | Operations, governance and migration | 6.1, 6.7 | 8 |
 | PFX-EPIC-7 | Integration with specs, gates and registry | 7.1–7.3 | 5 |
 
@@ -304,7 +304,11 @@ flowchart LR
 
 **✅ PFX-4.7 · #6944 Postman collection export — Complete** — `POST /v1/tenants/{t}/pact-postman-collections` (`pacts:view`, stateless, beside the broker surface) writes a Postman Collection v2.1 from a stored pact (`provider` + `consumer`, at most one of `consumerVersion` / `tag` / `branch` / `pactVersionSha`; none = latest; caller's tenant) or an inline `pact` (`pact_max_bytes`, `validate_pact_document`): one request per HTTP interaction against `{{baseUrl}}` (`baseUrl` option), provider states in the description, a saved example response, and (`tests`, default on) a test script checking status, expected headers (`Content-Type` by media type) and the body by Pact's default rules (`app.pact_postman`). `notices` (code, outcome `left-out` / `not-asserted` / `not-applied` / `info`, pointer, reason): message and plugin gRPC interactions, method-less interactions and non-text request bodies left out; response values under matching rules and non-text response bodies not asserted; request generators not applied; provider states listed once. Nothing exportable is `422 pact-postman-no-http-interactions` with the notices. CLI `apiome pact export-postman` (`--provider/--consumer` + selection, or `--pact-file`; `--provider-base-url`, `--no-tests`, `-o`, `--fail-on-left-out`). The schema side is the existing `postman` export target (`apiome export postman`). OpenAPI 1.681.0. **Docs:** `ship/pact-broker/cli.mdx` (Export a pact as a Postman collection), `ci-pact.mdx` (Newman smoke test), `ship/export-to-an-api-client.md`; CLI + REST reference regen; release-notes post, What's new line.
 
-### PFX-EPIC-5 · [#6911](https://github.com/apiome/apiome/issues/6911) — Contracts workspace UI
+### ✅ PFX-EPIC-5 · [#6911](https://github.com/apiome/apiome/issues/6911) — Contracts workspace UI
+
+✅ **Done** (2026-11-25).
+
+**Status.** All eight issues of this epic are complete (PFX-5.8 #6952 was the last). #6911 replaced the screen paragraph of `apiome-docs/docs/ship/pact-broker/overview.mdx` with a **The Contracts workspace** section (how to reach each of the ten screens and what it shows, plus publishing from the **Import a Pact file** dialog) and an app row in **Where you work from**, added the release-notes post `2026-11-27-contracts-workspace-ui.mdx` and a What's new line. The per-screen pages were reviewed and are already complete from #6945–#6952. No screenshot changes.
 
 Design references: `mockups/pact/*` and `mockups/contracts/{matrix,verification,can-i-deploy}.html` (moved with this plan). Placement: a **Contracts** area under the project/ tenant navigation, with the existing Consumers page as a tab. Follow the facelift data-fx conventions and the DOC-contract (screenshots in light/dark).
 
