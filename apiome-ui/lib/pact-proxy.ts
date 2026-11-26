@@ -1,6 +1,6 @@
 /**
  * Shared forwarding for the `/api/pact/*` proxies (PFX-5.1, #6945; PFX-5.2, #6946; PFX-5.3, #6947;
- * PFX-5.4, #6948; PFX-5.5, #6949).
+ * PFX-5.4, #6948; PFX-5.5, #6949; PFX-5.6, #6950).
  *
  * Each proxy resolves the signed-in user's workspace, forwards one read to apiome-rest as that
  * user, and passes REST's answer through (a 403 stays a 403). Tenant scoping and the `pacts`
@@ -22,6 +22,7 @@ import {
 import { findPreviousDistinct } from '@lib/pact-detail';
 import { collectPactNetwork } from '@lib/pact-network';
 import { retryAfterSeconds } from '@lib/pact-matrix';
+import { collectWebhooks } from '@lib/pact-webhooks';
 
 /** What the browser is told when apiome-rest cannot be reached. */
 export const PACT_UNAVAILABLE = 'The Pact Broker is unavailable (apiome-rest not reachable). Try again shortly.';
@@ -166,6 +167,41 @@ export async function forwardPactRun(path: string, body: unknown): Promise<NextR
     body,
     unavailable: PACT_UNAVAILABLE,
   });
+}
+
+/**
+ * Forward one webhook write (PFX-5.6, #6950) as the signed-in user: create, replace, delete, test
+ * or redeliver, with an already checked body. REST's refusal keeps its status and message (a 422
+ * names the field, a 409 says why a delivery cannot be sent again, a 429 asks to wait).
+ *
+ * @param path - The REST path below `/v1/tenants/{slug}`.
+ * @param method - `POST`, `PUT` or `DELETE`.
+ * @param body - The checked body, or `undefined` for none.
+ * @returns REST's answer, or its refusal as `{ success: false, error }`.
+ */
+export async function forwardPactWrite(
+  path: string,
+  method: 'POST' | 'PUT' | 'DELETE',
+  body?: unknown,
+): Promise<NextResponse> {
+  const resolved = await resolveConnectorTenant();
+  if ('error' in resolved) return resolved.error;
+  return forwardConnectorRequest(tenantUrl(resolved.slug, path), {
+    method,
+    user: resolved.user,
+    body,
+    unavailable: PACT_UNAVAILABLE,
+  });
+}
+
+/**
+ * The Webhooks page's read (PFX-5.6, #6950): every webhook and the newest firing of each, read as
+ * the signed-in user.
+ *
+ * @returns `{ webhooks, latest }`, or REST's refusal of either read.
+ */
+export async function forwardWebhooksOverview(): Promise<NextResponse> {
+  return answerWithReader((read) => collectWebhooks(read));
 }
 
 /** REST's message from a refusal (`detail` string or `detail.message`), or the fallback. */

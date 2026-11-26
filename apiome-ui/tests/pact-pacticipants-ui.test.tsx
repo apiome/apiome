@@ -105,6 +105,8 @@ describe('PacticipantsListClient', () => {
       'href',
       '/ade/dashboard/pacts/can-i-deploy',
     );
+    // PFX-5.6 (#6950): and the Webhooks page.
+    expect(screen.getByRole('link', { name: 'Webhooks' })).toHaveAttribute('href', '/ade/dashboard/pacts/webhooks');
     await screen.findByRole('option', { name: 'tier-1' });
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipants', container.innerHTML);

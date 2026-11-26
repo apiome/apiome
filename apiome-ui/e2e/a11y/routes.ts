@@ -306,6 +306,18 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
+    // PFX-5.6 (#6950): the Webhooks page (webhooks with their newest delivery, recent deliveries),
+    // one webhook (overview, request, delivery log) and one delivery (each attempt's log), dumped
+    // by `tests/pact-webhooks-ui.test.tsx`.
+    id: 'pact-webhooks',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-webhooks.html', 'pact-webhook-detail.html', 'pact-webhook-delivery.html'],
+    },
+  },
+  {
     // X3 (#6224): the released export surfaces of E1. The Source and Target steps (the target grid),
     // the several-targets Verify and the bulk dialog after a run are gated with the whole
     // `hive-export-studio` directory under the parity entry `export-studio`; this entry adds the

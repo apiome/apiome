@@ -1,0 +1,165 @@
+---
+title: Webhooks and delivery log
+description: Create, test and manage contract webhooks, read every delivery, redeliver one.
+sidebar_position: 6.55
+tags: [contracts, pact, webhooks, ci, ui, rest]
+---
+
+The **Webhooks** page lists the workspace's [contract webhooks](./webhooks.mdx) and every delivery
+they made. From there you can create a webhook and **Test** it before saving, turn one off and on,
+change or delete it, read exactly what each delivery sent and got back, and **Redeliver** one.
+
+## Before you start
+
+- You hold **Pacts** → **View** to read the pages. Without it, the page shows **Permission denied**.
+- To create a webhook you hold **Pacts** → **Create**; to change, test or redeliver one,
+  **Pacts** → **Edit**; to delete one, **Pacts** → **Delete**. See [Who can do what](#who-can-do-what).
+- The endpoint the webhook calls is reachable from the internet over `http` or `https`. Apiome
+  refuses private, loopback and link-local addresses.
+- To store a secret (a token, a password or a signing secret), the server needs a vault key. On
+  Apiome Cloud it is set; see [Contract webhooks → For operators](./webhooks.mdx#for-operators).
+
+## Open the Webhooks page
+
+1. In the rail, under **Ship**, click **Contracts**.
+2. On the **Pacticipants** page, click **Webhooks**.
+
+The page is at `/ade/dashboard/pacts/webhooks`.
+
+<Screenshot id="pact-webhooks" alt="The Webhooks page: three webhooks with what each is for, its events, where it sends (POST ci.example.com, GitHub Actions · acme/billing-service), Enabled or Disabled, Signed, and its last delivery (Failed, Delivered, Never fired); below, the recent deliveries with status, event, pact, webhook, attempts and trigger."/>
+
+The webhooks table shows, for each webhook:
+
+| Column | What it shows |
+| --- | --- |
+| **Webhook** | Its description, or its request (`POST host`) when it has none. Click it to open it. |
+| **For** | **All pacts**, one consumer, one provider, or one pact (`Consumer → Provider`). |
+| **Events** | The events it fires on. |
+| **Sends to** | The method and host, or **GitHub Actions** and the repository. |
+| **State** | **Enabled** or **Disabled**, and **Signed** when deliveries carry `X-Apiome-Signature`. |
+| **Last delivery** | The status and time of its newest delivery, or **Never fired**. |
+
+**Recent deliveries** lists every delivery of the workspace, newest first. Choose a **Status** to
+narrow it, and click **Load more** for older ones.
+
+| Status | What it means |
+| --- | --- |
+| **Delivered** | The endpoint answered `2xx`. |
+| **Failed** | Every attempt failed (4 in all); the delivery is on the dead-letter list. |
+| **Retrying** | At least one attempt failed; Apiome tries again after 10 s, 60 s and 5 min. |
+| **Queued** | Not sent yet. |
+
+The **Trigger** column says **Event** for a delivery an event caused and **Redelivery** for one
+somebody sent again.
+
+## Create a webhook
+
+1. Click **New webhook**.
+2. Optionally give it a **Description**, a **Consumer** and a **Provider**. Leave both empty for
+   every pact of the workspace. A name must be a pacticipant that exists.
+3. Tick the **Events** it fires on (see [Events](./webhooks.mdx#events)).
+   **Contract requiring verification published** is ticked for you.
+4. Under **Sends to**, choose **An HTTP endpoint** or **A GitHub Actions workflow (repository_dispatch)**.
+   - For an HTTP endpoint, choose the **Method** (`POST`, `PUT` or `PATCH`) and give the **URL**,
+     the **Headers** (one `Name: value` per line) and the **Body**. A body that is JSON is sent as
+     JSON; anything else is sent as text. Add a **Basic auth username** and **Password** if the
+     endpoint needs them.
+   - For GitHub Actions, give the **Repository** (`owner/name`), a **GitHub token** that may
+     dispatch events to it, and optionally the **Event type** and a **GitHub Enterprise API URL**.
+5. Optionally give a **Signing secret** of 16 characters or more. Each delivery then carries
+   `X-Apiome-Signature: sha256=<hex>`; see [Secrets and signing](./webhooks.mdx#secrets-and-signing).
+6. Click **Test** to send the webhook once, now, without saving it. The dialog shows **Test succeeded**
+   or **Test failed**, the URL it was sent to, the response and the log.
+7. Click **Create webhook**. The webhook's page opens.
+
+`${pactbroker.…}` parameters in the URL's path and query, the headers and the body are filled in
+when the webhook fires. A test fills them from the latest pact of the consumer and provider, or with
+placeholders. See [Template parameters](./webhooks.mdx#template-parameters).
+
+Until the form is complete, the dialog says what is missing — for example *Enter the http(s) URL to
+send to.* When Apiome refuses the webhook, the dialog shows why and names the field, for example
+`/request/url: …` for a private address.
+
+## Manage one webhook
+
+Click a webhook to open its page.
+
+<Screenshot id="pact-webhook-detail" alt="The page of the webhook Verify Ledger API when a pact changes: Test, Edit, Disable and Delete buttons; the overview (for provider Ledger API, the event, the POST URL, signed with X-Apiome-Signature); the request headers with Authorization shown as stars and the JSON body; and the webhook's delivery log."/>
+
+- **Overview** shows what it is for, its events, where it sends, whether it is signed, and when it
+  was created and last changed.
+- **Request** shows the headers and the body. Secret headers (`Authorization`, anything naming a
+  token, secret, API key or cookie) and the password read `**********`.
+- **Delivery log** lists the webhook's deliveries, newest first, with the same **Status** filter.
+
+The buttons:
+
+| Button | What it does |
+| --- | --- |
+| **Test** | Sends the saved webhook once, now. The **Test run** panel shows the outcome. A test is not queued, retried or added to the delivery log. A workspace may run 30 tests per rate-limit window. |
+| **Edit** | Opens the editor with the webhook's values. A stored secret reads **Stored — type to replace**: leave it to keep it, type a new value to replace it, or click **Remove it**. |
+| **Disable** / **Enable** | Turns the webhook off or on. A disabled webhook fires nothing; its stored secrets are kept. |
+| **Delete** | Asks first. The webhook stops firing at once, and its queued deliveries, delivery log and execution logs are deleted with it. |
+
+To test changes before saving them, save them, then click **Test**.
+
+## Read a delivery and redeliver it
+
+Click the time of a delivery in a delivery log, or the **Last delivery** of a webhook.
+
+<Screenshot id="pact-webhook-delivery" alt="A failed delivery of Contract requiring verification published for Billing Service → Ledger API 2.4.0: the overview (webhook, event, pact, attempts 4, trigger Event) and the execution log of attempts 1 to 4, each open with the request sent and the 503 or 500 answer, ending with moved to the dead-letter list."/>
+
+- **Overview** names the webhook, the event, the pact that caused it (click it to open the pact),
+  the consumer version, the verification result (for a verification event), the attempts made and
+  left, the trigger and when it fired.
+- **Execution log** shows every attempt: the request line, the headers and body sent, and the
+  status, headers and body that came back. A failed attempt is open. Secret values are removed
+  everywhere, the endpoint's answer included. Click **Copy** to copy the whole log.
+
+To send a delivery again, click **Redeliver**. Apiome queues a new delivery of the same webhook
+with the same event and parameters, and retries it like any other. The original delivery and its log
+stay as they were. The page links **Open the new delivery**.
+
+**Redeliver** is only offered for a **Delivered** or **Failed** delivery. Apiome refuses, and says
+why, when:
+
+- the delivery is still **Queued** or **Retrying** — sending it again would deliver it twice; or
+- its webhook is disabled — enable it first.
+
+## From CI or a script
+
+The pages use the [Pact Broker's webhook routes](./webhooks.mdx#see-what-a-webhook-did) and these Apiome
+routes, under `/v1/tenants/<tenant>`:
+
+| Endpoint | What it does |
+| --- | --- |
+| `GET pact-webhook-deliveries?webhook=&status=&cursor=` | The delivery log, newest first; `webhook` narrows to one webhook, `status` to `success`, `failure`, `retrying` or `not_run`. Up to 50 a page (`limit`). |
+| `GET pact-webhook-deliveries/latest` | The newest delivery of each webhook. |
+| `GET pact-webhook-deliveries/<id>` | One delivery and the log of each attempt. |
+| `POST pact-webhook-deliveries/<id>/redeliver` | Queue a finished delivery again. `202` with the new delivery; `409` while it is queued or retrying, or when its webhook is disabled. |
+
+```bash
+curl -X POST \
+  "$APIOME/v1/tenants/acme/pact-webhook-deliveries/5a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d/redeliver" \
+  -H "Authorization: Bearer $APIOME_API_KEY"
+```
+
+See the [Pact broker REST reference](../../reference/rest/pact-broker.md).
+
+## Who can do what
+
+| Action | Permission |
+| --- | --- |
+| Open the Webhooks page, a webhook and a delivery | **Pacts** → **View** |
+| **New webhook**, and **Test** in its dialog | **Pacts** → **Create** |
+| **Edit**, **Disable** / **Enable**, **Test** a saved webhook, **Redeliver** | **Pacts** → **Edit** |
+| **Delete** | **Pacts** → **Delete** |
+
+Every read and change is scoped to your current workspace.
+
+## Related
+
+- [Contract webhooks](./webhooks.mdx)
+- [Commit statuses](./commit-statuses.mdx)
+- [Pacticipants](./pacticipants.mdx)
+- [Publish verification results](./verification-results.mdx)

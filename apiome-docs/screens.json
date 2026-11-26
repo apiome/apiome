@@ -2922,6 +2922,39 @@
       ]
     },
     {
+      "id": "pact-webhooks",
+      "route": "/ade/dashboard/pacts/webhooks",
+      "waitFor": "[data-testid=\"pwx-deliveries-table\"]",
+      "data": "fixture:hive-a11y/pact-webhooks.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhooksClient.tsx",
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhookPanels.tsx",
+        "apiome-ui/lib/pact-webhooks.ts"
+      ]
+    },
+    {
+      "id": "pact-webhook-detail",
+      "route": "/ade/dashboard/pacts/webhooks/8f7f2a0e-3c1d-4f6b-9a55-1d2f4c6b7a90",
+      "waitFor": "[data-testid=\"pwx-deliveries-table\"]",
+      "data": "fixture:hive-a11y/pact-webhook-detail.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhookDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhookPanels.tsx",
+        "apiome-ui/lib/pact-webhooks.ts"
+      ]
+    },
+    {
+      "id": "pact-webhook-delivery",
+      "route": "/ade/dashboard/pacts/webhooks/deliveries/5a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+      "waitFor": "[data-testid=\"pwx-attempts\"]",
+      "data": "fixture:hive-a11y/pact-webhook-delivery.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactWebhooks/DeliveryDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactWebhooks/WebhookPanels.tsx",
+        "apiome-ui/lib/pact-webhooks.ts"
+      ]
+    },
+    {
       "id": "pact-network",
       "route": "/ade/dashboard/pacts/pacticipants/billing-service/network",
       "waitFor": "[data-testid=\"pact-network-plot\"]",
