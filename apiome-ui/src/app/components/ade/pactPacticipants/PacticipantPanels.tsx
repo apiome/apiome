@@ -20,6 +20,7 @@ import {
   type PacticipantEnvironment,
   type PacticipantVersion,
 } from '@lib/pact-pacticipants';
+import { environmentRoute } from '@lib/pact-environments';
 
 /**
  * A CLI command, as an empty state shows it.
@@ -268,7 +269,9 @@ export function EnvironmentsTable({
           {environments.map((environment) => (
             <tr key={environment.uuid} data-testid={`ppx-env-${environment.name}`}>
               <th scope="row">
-                <span className="ppx__name">{environment.displayName}</span>
+                <Link className="ppx__link ppx__name" href={environmentRoute(environment.name)}>
+                  {environment.displayName}
+                </Link>
                 {environment.production ? (
                   <Badge variant="warn" className="ppx__inline-badge">
                     Production

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.683.0
+  version: 1.684.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -39359,6 +39359,293 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for redeliverawebhookdeliveryresponse422.
+  /v1/tenants/{tenant_slug}/pact-environments:
+    get:
+      tags:
+      - pact-broker
+      summary: Environments and what is deployed to them
+      description: 'Every Pact environment of the workspace (by name) with each pacticipant
+        version currently deployed to it (`deployed`: pacticipant, version, application
+        instance, when) and each release it currently supports (`released`). `truncated`
+        is true when either list stopped at 2000 entries. Requires `pacts:view`.'
+      operationId: read_environment_topology_v1_tenants__tenant_slug__pact_environments_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Environmentsandwhatisdeployedtothemauthorization schema.
+          - type: 'null'
+            description: Environmentsandwhatisdeployedtothemauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Environmentsandwhatisdeployedtothem Xapikey schema.
+          - type: 'null'
+            description: Environmentsandwhatisdeployedtothem Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for environments and what is deployed to
+            them.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Read Environment Topology V1 Tenants  Tenant Slug  Pact
+                  Environments Get
+                description: Response Read Environment Topology V1 Tenants  Tenant
+                  Slug  Pact Environments Get schema.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for environmentsandwhatisdeployedtothemresponse422.
+  /v1/tenants/{tenant_slug}/pact-environments/{environment}/deployments:
+    get:
+      tags:
+      - pact-broker
+      summary: Deployment history of an environment
+      description: 'Every deployment recorded to the environment, current or replaced,
+        newest first: pacticipant, version, application instance, `currentlyDeployed`,
+        `deployedAt`, `undeployedAt` and who recorded it. `pacticipant` narrows to
+        one pacticipant (handle or name). Pass `nextCursor` back as `cursor` for the
+        next page. Requires `pacts:view`.'
+      operationId: read_deployment_history_v1_tenants__tenant_slug__pact_environments__environment__deployments_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: environment
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Environment
+          description: Environment schema.
+        description: Path parameter identifying the environment segment.
+      - name: pacticipant
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deploymenthistoryofanenvironmentpacticipant schema.
+          - type: 'null'
+            description: Deploymenthistoryofanenvironmentpacticipant schema.
+          description: Only this pacticipant's deployments (handle or name).
+          title: Pacticipant
+        description: Only this pacticipant's deployments (handle or name).
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deploymenthistoryofanenvironmentcursor schema.
+          - type: 'null'
+            description: Deploymenthistoryofanenvironmentcursor schema.
+          description: The `nextCursor` of the previous page.
+          title: Cursor
+        description: The `nextCursor` of the previous page.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          description: The page size.
+          default: 25
+          title: Limit
+        description: The page size.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deploymenthistoryofanenvironmentauthorization schema.
+          - type: 'null'
+            description: Deploymenthistoryofanenvironmentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deploymenthistoryofanenvironment Xapikey schema.
+          - type: 'null'
+            description: Deploymenthistoryofanenvironment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for deployment history of an environment.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Read Deployment History V1 Tenants  Tenant Slug  Pact
+                  Environments  Environment  Deployments Get
+                description: Response Read Deployment History V1 Tenants  Tenant Slug  Pact
+                  Environments  Environment  Deployments Get schema.
+        '400':
+          description: '`pact-deployment-cursor-invalid`.'
+        '404':
+          description: '`pact-environment-not-found` or `pacticipant-not-found`.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deploymenthistoryofanenvironmentresponse422.
+  /v1/tenants/{tenant_slug}/pact-environments/{environment}/simulate:
+    get:
+      tags:
+      - pact-broker
+      summary: Simulate a deployment
+      description: 'What would happen if `pacticipant` `version` were deployed to
+        the environment (to `applicationInstance`, or the unnamed instance) — without
+        recording anything. Answers the candidate''s own can-i-deploy `verdict`, the
+        version it would `replace`, and `impacts`: for each version of a pacticipant
+        it has a pact with that is **running** in the environment or **pending** (deployed
+        or released elsewhere, not here), its verdict `before` and `after` and the
+        `effect` (`breaks`, `fixes`, `clears`, `blocks`, `changes`, `unchanged`).
+        At most 20 versions are checked; the rest are in `notChecked` with the reason.
+        Requires `pacts:view`.'
+      operationId: read_deployment_simulation_v1_tenants__tenant_slug__pact_environments__environment__simulate_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: environment
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Environment
+          description: Environment schema.
+        description: Path parameter identifying the environment segment.
+      - name: pacticipant
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The pacticipant to deploy (handle or name).
+          title: Pacticipant
+        description: The pacticipant to deploy (handle or name).
+      - name: version
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The version to deploy.
+          title: Version
+        description: The version to deploy.
+      - name: applicationInstance
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Simulateadeploymentapplication Instance schema.
+          - type: 'null'
+            description: Simulateadeploymentapplication Instance schema.
+          description: The instance to deploy to; the unnamed one when omitted.
+          title: Applicationinstance
+        description: The instance to deploy to; the unnamed one when omitted.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Simulateadeploymentauthorization schema.
+          - type: 'null'
+            description: Simulateadeploymentauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Simulateadeployment Xapikey schema.
+          - type: 'null'
+            description: Simulateadeployment Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for simulate a deployment.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Read Deployment Simulation V1 Tenants  Tenant Slug  Pact
+                  Environments  Environment  Simulate Get
+                description: Response Read Deployment Simulation V1 Tenants  Tenant
+                  Slug  Pact Environments  Environment  Simulate Get schema.
+        '400':
+          description: '`pact-simulation-invalid`: a malformed `applicationInstance`.'
+        '404':
+          description: '`pact-environment-not-found`, `pacticipant-not-found` or `pacticipant-version-not-found`.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for simulateadeploymentresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers/{consumer_ref}/bindings:
     get:
       tags:

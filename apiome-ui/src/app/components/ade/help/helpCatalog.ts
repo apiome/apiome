@@ -1421,6 +1421,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contracts', 'pact', 'execution', 'redeliver', 'retry', 'dead letter', 'test webhook', 'github actions', 'repository_dispatch', 'signing secret'],
   },
   {
+    id: 'environments-dashboard',
+    title: 'Environments and the deploy simulator',
+    summary: 'See which version runs where, read each deployment, and simulate one before you make it.',
+    page: 'apiome-docs/docs/ship/pact-broker/environments-dashboard.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'pact', 'deployed versions', 'deployment history', 'what if', 'promote', 'staging', 'production', 'unblock', 'can-i-deploy', 'record-deployment'],
+  },
+  {
     id: 'bi-directional',
     title: 'Publish a provider contract',
     summary: "Register a provider version's OpenAPI document for bi-directional contract testing.",

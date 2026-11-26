@@ -2955,6 +2955,39 @@
       ]
     },
     {
+      "id": "pact-environments",
+      "route": "/ade/dashboard/pacts/environments",
+      "waitFor": "[data-testid=\"penv-grid\"]",
+      "data": "fixture:hive-a11y/pact-environments.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentPanels.tsx",
+        "apiome-ui/lib/pact-environments.ts"
+      ]
+    },
+    {
+      "id": "pact-environment-detail",
+      "route": "/ade/dashboard/pacts/environments/production",
+      "waitFor": "[data-testid=\"penv-history-table\"]",
+      "data": "fixture:hive-a11y/pact-environment-detail.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentPanels.tsx",
+        "apiome-ui/lib/pact-environments.ts"
+      ]
+    },
+    {
+      "id": "pact-deploy-simulator",
+      "route": "/ade/dashboard/pacts/environments/production/simulate",
+      "waitFor": "[data-testid=\"psim-impacts-table\"]",
+      "data": "fixture:hive-a11y/pact-deploy-simulator.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/DeploySimulatorClient.tsx",
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentPanels.tsx",
+        "apiome-ui/lib/pact-environments.ts"
+      ]
+    },
+    {
       "id": "pact-network",
       "route": "/ade/dashboard/pacts/pacticipants/billing-service/network",
       "waitFor": "[data-testid=\"pact-network-plot\"]",

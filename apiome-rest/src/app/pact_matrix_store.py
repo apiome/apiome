@@ -38,7 +38,7 @@ from __future__ import annotations
 import re
 import threading
 import weakref
-from typing import Any, Dict, List, MutableMapping, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Sequence, Set, Tuple
 
 import psycopg2
 import psycopg2.errors
@@ -514,6 +514,7 @@ def _infer(
     specified: Sequence[ResolvedSelector],
     options: MatrixOptions,
     ignore_selectors: Sequence[ResolvedSelector],
+    environment_override: Optional[Mapping[str, Sequence[Dict[str, Any]]]] = None,
 ) -> List[ResolvedSelector]:
     """Resolve a selector for every pacticipant of the integrations that the caller did not name.
 
@@ -524,6 +525,9 @@ def _infer(
         specified: The selectors the caller wrote, resolved.
         options: The query's options; the destination says which versions.
         ignore_selectors: The resolved ``ignore`` selectors.
+        environment_override: PFX-5.7 (the deploy simulator): for a destination environment, the
+            versions (``id``, ``number``) to treat as being there for these pacticipants (by id),
+            instead of the ones recorded. Every other pacticipant reads what is recorded.
 
     Returns:
         The inferred selectors: the versions of each other pacticipant at the destination, or one
@@ -535,7 +539,10 @@ def _infer(
         if pacticipant_id in named:
             continue
         selector = _inferred_selector(pacticipant["name"], options)
-        versions = _find_versions(db, tenant_id, pacticipant, selector)
+        if environment_override is not None and options.environment_name and pacticipant_id in environment_override:
+            versions: Optional[List[Dict[str, Any]]] = [dict(v) for v in environment_override[pacticipant_id]]
+        else:
+            versions = _find_versions(db, tenant_id, pacticipant, selector)
         inferred += resolve_selector(selector, INFERRED, pacticipant, versions, ignore_selectors)
     return inferred
 
@@ -674,7 +681,12 @@ def _uncontracted(db: Any, tenant_id: str, specified: Sequence[ResolvedSelector]
 
 
 def query_matrix(
-    db: Any, tenant_id: str, selectors: Sequence[UnresolvedSelector], options: MatrixOptions
+    db: Any,
+    tenant_id: str,
+    selectors: Sequence[UnresolvedSelector],
+    options: MatrixOptions,
+    *,
+    environment_override: Optional[Mapping[str, Sequence[Dict[str, Any]]]] = None,
 ) -> MatrixResult:
     """Answer one matrix query for the caller's tenant.
 
@@ -683,6 +695,9 @@ def query_matrix(
         tenant_id: The caller's tenant.
         selectors: The selectors the caller wrote (already validated by :mod:`app.pact_matrix`).
         options: The query's options.
+        environment_override: The deploy simulator's what-if (PFX-5.7): the versions to treat as
+            being in the destination environment for some pacticipants, by pacticipant id. Only an
+            inferred (destination) selector reads it; ``None`` (every route) reads what is recorded.
 
     Returns:
         The rows (considered and ignored), every resolved selector, the integrations, and — when
@@ -707,7 +722,7 @@ def query_matrix(
     specified = _resolve(db, tenant_id, selectors, SPECIFIED, known, ignore)
     infer = options.infers_selectors
     integrations, pacticipants = _find_integrations(db, tenant_id, specified, infer or len(specified) == 1)
-    inferred = _infer(db, tenant_id, pacticipants, specified, options, ignore) if infer else []
+    inferred = _infer(db, tenant_id, pacticipants, specified, options, ignore, environment_override) if infer else []
     resolved = specified + inferred
 
     rows = apply_latestby(_read_rows(db, tenant_id, resolved, options), options.latestby)
