@@ -9,7 +9,9 @@
  * * **Pacts** — each consumer's newest pact with its newest result; a pact version with no result
  *   is *stale*. Each row has **Re-run**, and the section has **Verify all stale**: both open the
  *   run dialog (a verification target, the provider version and branch) and run the hosted
- *   verifier, then show what it found — including every pact it did not run, with why.
+ *   verifier, then show what it found — including every pact it did not run, with why. PFX-6.2
+ *   (#6954) adds the cadence line, an *Overdue* badge for a pact past its stale threshold, the link
+ *   to its open re-publish request, and why a scheduled run of it did not happen.
  * * **History** — every result of the provider, newest first, with its trigger, duration, build
  *   and interaction counts; **Consumer** narrows it (kept in the address as `?consumer=`); **Load
  *   more** pages. Each result opens its own page (expected vs actual, the log).
@@ -36,7 +38,7 @@ import {
 import { CliSnippet } from '../pactPacticipants/PacticipantPanels';
 import { describeFailure } from '../pactPacticipants/describeFailure';
 import { verifySnippet } from '../pactDetail/PactDetailClient';
-import { HistoryTable, KpiStrip, RunDialog, StatusTable, type RunRequest } from './VerificationPanels';
+import { CadenceLine, HistoryTable, KpiStrip, RunDialog, StatusTable, type RunRequest } from './VerificationPanels';
 import {
   fetchTargetOptions,
   fetchVerificationHistory,
@@ -69,7 +71,7 @@ type OpenRun = RunRequest & { entry?: VerificationStatusEntry };
  * @param props - The id stem, title, an optional trailing node and the body.
  * @returns The section.
  */
-function Panel({
+export function Panel({
   id,
   title,
   aside,
@@ -99,7 +101,7 @@ function Panel({
  * @param props - What failed, why, and how to retry.
  * @returns The notice.
  */
-function SectionError({ title, error, onRetry }: { title: string; error: string; onRetry: () => void }) {
+export function SectionError({ title, error, onRetry }: { title: string; error: string; onRetry: () => void }) {
   return (
     <EmptyState
       variant="compact"
@@ -287,6 +289,7 @@ export default function PactVerificationClient({ slug, consumer }: { slug: strin
             ) : (
               <>
                 <KpiStrip counts={data.counts} />
+                <CadenceLine settings={data.settings} />
                 {data.truncated ? (
                   <p className="ppx__muted">Only the first 500 consumers are listed.</p>
                 ) : null}

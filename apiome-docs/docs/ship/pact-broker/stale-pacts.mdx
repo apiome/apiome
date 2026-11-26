@@ -1,0 +1,193 @@
+---
+title: Stale pacts and verification scheduling
+description: Verify pacts on a cadence and ask consumers to re-publish stale ones.
+sidebar_position: 4.15
+tags: [contracts, pact, verification, ui, rest]
+---
+
+import Screenshot from '@site/src/components/Screenshot';
+
+A pact is **stale** when its provider has not verified it for longer than the **stale threshold**.
+The time counts from the pact's newest verification result, or from when it was published if it was
+never verified. Apiome does three things about stale pacts:
+
+- It can **verify pacts on a cadence** with the [hosted verifier](./hosted-verification.mdx), so
+  pacts keep getting verified between provider builds.
+- It **asks the consumer to re-publish** a stale pact. The re-publish request is tracked until the
+  consumer answers it or it expires, and an expired request is escalated.
+- It **fires contract webhooks** when a pact goes stale or fresh again, and when a request opens or
+  expires.
+
+:::note Two kinds of "stale"
+The [Verification page](./verification-console.mdx) has always marked a pact version with no result
+at all as **Stale — not verified**, and **Verify all stale** still verifies exactly those. A pact past
+its stale threshold is marked **Overdue** instead.
+:::
+
+## Verification settings
+
+On **Pacticipants**, click **Verification settings**.
+
+<Screenshot id="pact-verification-settings" alt="The Verification settings page: the workspace defaults form with cadence, stale threshold, request window and concurrent runs, and the overrides table" />
+
+**Workspace defaults** apply to every consumer ↔ provider pair:
+
+| Setting | What it does | Default |
+| --- | --- | --- |
+| **Verification cadence** | When Apiome verifies a pair on its own (see below). | **Manual only** |
+| **Stale threshold (hours)** | A pact not verified for longer than this is stale. 1 to 2160 (90 days). | 72 |
+| **Request window (hours)** | How long a re-publish request stays open before it expires and is escalated. 1 to 720. | 72 |
+| **Concurrent scheduled runs** | How many scheduled verifications may run at once in the workspace. 1 to 10. | 2 |
+| **Ask the consumer to re-publish a pact when it goes stale** | Turn re-publish requests on or off. | On |
+
+Change any value and click **Save**. Until you save, the page says the workspace uses the defaults.
+
+### Cadences
+
+| Cadence | When the hosted verifier runs a pair |
+| --- | --- |
+| **On publish** | A newly published pact version, on the next sweep (within about five minutes). |
+| **Hourly** | Every hour, and a newly published pact version on the next sweep. |
+| **Nightly** | Every 24 hours, and a newly published pact version on the next sweep. |
+| **Manual only** | Never. Only your CI, **Re-run** and **Verify all stale** verify. |
+
+A scheduled run needs a **verification target**, which only an override can set. A pair with a
+cadence but no target is not verified; its row on the Verification page says why.
+
+### Overrides
+
+An override gives one provider, or one consumer of it, its own cadence, stale threshold or
+verification target. A pair's override wins over its provider's, which wins over the workspace
+defaults. Each value is chosen separately, so a provider override can set the target while a pair
+override sets a shorter threshold.
+
+1. Under **Overrides**, click **Add override**.
+2. Enter the **Provider**, for example `ledger-api`. Leave **Consumer** empty for every consumer of
+   the provider, or enter one, for example `billing-service`.
+3. Set any of **Cadence**, **Stale threshold (hours)** and **Verification target for scheduled
+   runs**. Leave a field empty, or on **Inherit**, to keep the inherited value.
+4. Click **Save override**.
+
+**Edit** changes an override's values (not its provider or consumer); **Remove** deletes it. An
+override whose target was deleted shows **Deleted** next to the target, and its pairs are not
+verified on a schedule until you pick another target.
+
+### How a scheduled run verifies
+
+- It replays the pair's newest pact against the target and publishes the result, like **Re-run**.
+  The result's trigger is **Scheduled**.
+- It verifies as the provider version of the pact's newest result, or else of the provider's newest
+  result. With no result to take a version from, the run is skipped and the row says so: publish a
+  result from CI, or **Re-run** the pact with a provider version.
+- It sends no mutating request (`POST`, `PUT`, `PATCH`, `DELETE`). Those interactions are held back
+  and reported in the result.
+- A pair that is already being verified is left for the next sweep. A run that the target refuses is
+  recorded with the target's reason.
+
+## Re-publish requests
+
+When a pact goes stale, Apiome opens a re-publish request to its consumer:
+
+| State | Meaning |
+| --- | --- |
+| **Requested** | Waiting for the consumer to re-publish the pact. |
+| **Acknowledged** | The consumer acknowledged it, with an optional note. |
+| **Re-published** | The consumer published the pact again (any newer publication closes it at once). |
+| **Cleared** | The provider verified the pact before the consumer re-published it. |
+| **Expired** | The window passed with no re-publish or verification. The request was escalated. |
+
+A pair has at most one open request. An expired request is not opened again for the same pact
+version until the provider verifies it.
+
+To see every request, click **Re-publish requests** on **Verification settings**. **State** narrows
+the list; it starts on **Open**.
+
+<Screenshot id="pact-republish-requests" alt="The Re-publish requests page listing three requests with their pair, pact, state, requested and expiry times" />
+
+Click a request to open it. The **Overview** shows the stale pact, the threshold it crossed, when it
+was last verified or published, and when the request expires. **Who was told** says what notifying
+the consumer did.
+
+<Screenshot id="pact-republish-request" alt="One re-publish request: overview with its state and timeline, who was told, and the Acknowledge form with a note" />
+
+To answer a request as the consumer:
+
+1. Open the request.
+2. Under **Acknowledge**, optionally write a **Note**, for example
+   `Re-publishing from the main branch build on Friday.`
+3. Click **Acknowledge**. Click **Update note** to change the note later.
+
+Acknowledging does not stop the clock: the request still expires at the end of its window unless the
+pact is re-published or verified first.
+
+### Who is told
+
+A pacticipant has no owners of its own yet. The request goes to the owner team of what the consumer
+pacticipant is linked to: its consumer-registry entry, or else its project (see
+[Teams → Ownership](/workspace/teams#ownership)). Team members get an inbox notification, and the team's chat channel gets a
+message.
+
+- With no confirmed owner, the request is recorded in the **Unowned findings** report, or sent to the
+  workspace's catch-all team.
+- A pacticipant linked to neither a consumer nor a project reaches nobody, and the request says so.
+  The request and its webhooks still stand.
+- When a request expires, the consumer's owners and the provider's owners are both notified.
+
+### Webhooks
+
+[Contract webhooks](./webhooks.mdx) can listen for four Apiome events. Each carries the pair's
+`${pactbroker.*}` parameters: consumer and provider names, the consumer version, its branch and tags,
+and the pact URL.
+
+| Event | Fires when |
+| --- | --- |
+| `contract_became_stale` | A pair's newest pact goes past its stale threshold. |
+| `contract_no_longer_stale` | A stale pact is verified, or a newer one replaces it. |
+| `contract_republish_requested` | A re-publish request opens. |
+| `contract_republish_request_expired` | A re-publish request expires and is escalated. |
+
+## On the Verification page
+
+The [Verification page](./verification-console.mdx) shows the cadence and stale threshold that apply
+to the provider, with a link to **Verification settings**. Each pact past its threshold is marked
+**Overdue** and linked to its open request (**Re-publish requested**). A pact whose scheduled run was
+skipped says why. The KPI strip counts **Overdue** pacts.
+
+## Permissions
+
+| To | You need |
+| --- | --- |
+| Read the settings, overrides and requests | **Pacts** → **View** |
+| Save the settings or an override, remove an override, acknowledge a request | **Pacts** → **Edit** |
+
+Every change is recorded in [Access audit](/govern/access-audit) as
+`pacts.verification_settings.update`, `pacts.verification_override.save`,
+`pacts.verification_override.delete` or `pacts.republish_request.acknowledge`.
+
+## REST API
+
+| Method and path | What it does |
+| --- | --- |
+| `GET`, `PUT /v1/tenants/{tenant}/pact-verification-settings` | Read or replace the workspace defaults. |
+| `GET`, `PUT …/pact-verification-settings/overrides` | List the overrides, or save one (`provider`, optional `consumer`, `cadence`, `stale_threshold_hours`, `target_ref`). |
+| `DELETE …/pact-verification-settings/overrides/{id}` | Remove an override. |
+| `GET /v1/tenants/{tenant}/pact-republish-requests` | List requests (`provider`, `consumer`, `state` or `open`, `cursor`, `limit` up to 50). |
+| `GET …/pact-republish-requests/{id}` | Read one request. |
+| `POST …/pact-republish-requests/{id}/acknowledge` | Acknowledge with an optional `note`. A closed request answers `409`. |
+
+See the [REST reference](/reference/rest/pact-broker).
+
+## For operators
+
+The sweep that records stale state, moves requests on and runs scheduled verifications runs in
+apiome-rest:
+
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `APIOME_PACT_REMEDIATION_ENABLED` | `true` | Set to `false` to stop the sweep, for example during an incident. |
+| `APIOME_PACT_REMEDIATION_INTERVAL` | `300` | Seconds between sweeps. |
+| `APIOME_PACT_REMEDIATION_MAX_PROVIDERS` | `2000` | The most providers one sweep looks at. |
+| `APIOME_PACT_SCHEDULE_BATCH_SIZE` | `5` | The most scheduled verifications one sweep runs. The rest wait for the next sweep. |
+
+Links in webhooks fired by the sweep start with `APIOME_API_PUBLIC_URL`. Set it, or the links are
+relative paths.

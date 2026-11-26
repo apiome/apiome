@@ -1,0 +1,150 @@
+{
+  "settings": {
+    "cadence": "nightly",
+    "stale_threshold_hours": 72,
+    "max_concurrent_runs": 2,
+    "request_window_hours": 72,
+    "republish_requests_enabled": true,
+    "customised": true,
+    "updated_at": "2026-11-25T16:20:00+00:00"
+  },
+  "defaults": {
+    "cadence": "manual-only",
+    "stale_threshold_hours": 72,
+    "max_concurrent_runs": 2,
+    "request_window_hours": 72,
+    "republish_requests_enabled": true,
+    "customised": false,
+    "updated_at": null
+  },
+  "overrides": {
+    "overrides": [
+      {
+        "id": "7a1f0c52-3d4e-4b6a-9f10-2c8e5d7b1a01",
+        "provider": "ledger-api",
+        "provider_name": "Ledger API",
+        "consumer": null,
+        "consumer_name": null,
+        "cadence": null,
+        "stale_threshold_hours": null,
+        "target": "ledger-staging",
+        "target_name": "Ledger staging",
+        "target_deleted": false,
+        "updated_at": "2026-11-25T16:22:00+00:00"
+      },
+      {
+        "id": "7a1f0c52-3d4e-4b6a-9f10-2c8e5d7b1a02",
+        "provider": "ledger-api",
+        "provider_name": "Ledger API",
+        "consumer": "billing-service",
+        "consumer_name": "Billing Service",
+        "cadence": "hourly",
+        "stale_threshold_hours": 24,
+        "target": null,
+        "target_name": null,
+        "target_deleted": false,
+        "updated_at": "2026-11-25T16:25:00+00:00"
+      },
+      {
+        "id": "7a1f0c52-3d4e-4b6a-9f10-2c8e5d7b1a03",
+        "provider": "orders-api",
+        "provider_name": "Orders API",
+        "consumer": null,
+        "consumer_name": null,
+        "cadence": "on-publish",
+        "stale_threshold_hours": null,
+        "target": "orders-qa",
+        "target_name": "Orders QA",
+        "target_deleted": true,
+        "updated_at": "2026-11-24T09:00:00+00:00"
+      }
+    ]
+  },
+  "requests": {
+    "requests": [
+      {
+        "id": "5c2b8e14-6f0a-4d3b-8a7e-1f9c4b2d6e01",
+        "provider": "ledger-api",
+        "provider_name": "Ledger API",
+        "consumer": "orders-ui",
+        "consumer_name": "Orders UI",
+        "pact_version_sha": "eeee5f7a1c2b3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccd",
+        "consumer_version": "1.9.2",
+        "state": "requested",
+        "threshold_hours": 72,
+        "reference_at": "2026-11-21T08:00:00+00:00",
+        "requested_at": "2026-11-24T08:05:00+00:00",
+        "expires_at": "2026-11-27T08:05:00+00:00",
+        "acknowledged_at": null,
+        "acknowledged_by": null,
+        "note": null,
+        "resolved_at": null,
+        "resolved_consumer_version": null,
+        "notification_status": "routed",
+        "escalation_status": null,
+        "webhook_deliveries": 1
+      },
+      {
+        "id": "5c2b8e14-6f0a-4d3b-8a7e-1f9c4b2d6e02",
+        "provider": "ledger-api",
+        "provider_name": "Ledger API",
+        "consumer": "billing-service",
+        "consumer_name": "Billing Service",
+        "pact_version_sha": "a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff00",
+        "consumer_version": "2.4.0",
+        "state": "acknowledged",
+        "threshold_hours": 24,
+        "reference_at": "2026-11-23T10:00:00+00:00",
+        "requested_at": "2026-11-24T10:05:00+00:00",
+        "expires_at": "2026-11-27T10:05:00+00:00",
+        "acknowledged_at": "2026-11-24T13:40:00+00:00",
+        "acknowledged_by": "dana@example.com",
+        "note": "Re-publishing from the main branch build on Friday.",
+        "resolved_at": null,
+        "resolved_consumer_version": null,
+        "notification_status": "routed",
+        "escalation_status": null,
+        "webhook_deliveries": 1
+      },
+      {
+        "id": "5c2b8e14-6f0a-4d3b-8a7e-1f9c4b2d6e03",
+        "provider": "orders-api",
+        "provider_name": "Orders API",
+        "consumer": "mobile-app",
+        "consumer_name": "Mobile App",
+        "pact_version_sha": "0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff1",
+        "consumer_version": "5.0.1",
+        "state": "expired",
+        "threshold_hours": 72,
+        "reference_at": "2026-11-15T09:00:00+00:00",
+        "requested_at": "2026-11-18T09:05:00+00:00",
+        "expires_at": "2026-11-21T09:05:00+00:00",
+        "acknowledged_at": null,
+        "acknowledged_by": null,
+        "note": null,
+        "resolved_at": "2026-11-21T09:10:00+00:00",
+        "resolved_consumer_version": null,
+        "notification_status": "unlinked",
+        "escalation_status": "unowned",
+        "webhook_deliveries": 2
+      }
+    ],
+    "next_cursor": null
+  },
+  "targets": {
+    "targets": [
+      { "slug": "ledger-staging", "name": "Ledger staging", "environment": "staging", "protocol": "http", "enabled": true },
+      { "slug": "orders-qa", "name": "Orders QA", "environment": "test", "protocol": "http", "enabled": true }
+    ]
+  },
+  "pacticipants": {
+    "pacticipants": [
+      { "id": "p-1", "slug": "ledger-api", "name": "Ledger API", "labels": [] },
+      { "id": "p-2", "slug": "billing-service", "name": "Billing Service", "labels": [] },
+      { "id": "p-3", "slug": "orders-ui", "name": "Orders UI", "labels": [] }
+    ],
+    "count": 3,
+    "has_more": false,
+    "next_cursor": null
+  }
+}

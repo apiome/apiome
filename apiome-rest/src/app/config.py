@@ -2548,6 +2548,36 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Stale-pact remediation and Pact verification scheduling (PFX-6.2, #6954). A background async
+    # loop (app.pact_remediation_sweep) walks every provider with a pact: records each pair's stale
+    # state (firing contract_became_stale / contract_no_longer_stale), opens, closes and escalates
+    # re-publish requests, and runs the scheduled hosted verifications that are due on each pair's
+    # cadence. Cadence, stale threshold and concurrency are per-workspace settings
+    # (/v1/tenants/{t}/pact-verification-settings); these settings govern the loop.
+    #
+    # pact_remediation_enabled           Global kill switch; False halts the whole tick.
+    # pact_remediation_interval_seconds  How often the loop wakes.
+    # pact_remediation_max_providers     The most providers one tick walks (the rest wait a tick).
+    # pact_schedule_batch_size           The most scheduled verifications one tick runs; they send
+    #                                    real requests to verification targets, so the batch is
+    #                                    bounded and the rest stay due.
+    pact_remediation_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("APIOME_PACT_REMEDIATION_ENABLED", "pact_remediation_enabled"),
+    )
+    pact_remediation_interval_seconds: int = Field(
+        default=300,
+        validation_alias=AliasChoices("APIOME_PACT_REMEDIATION_INTERVAL", "pact_remediation_interval_seconds"),
+    )
+    pact_remediation_max_providers: int = Field(
+        default=2000,
+        validation_alias=AliasChoices("APIOME_PACT_REMEDIATION_MAX_PROVIDERS", "pact_remediation_max_providers"),
+    )
+    pact_schedule_batch_size: int = Field(
+        default=5,
+        validation_alias=AliasChoices("APIOME_PACT_SCHEDULE_BATCH_SIZE", "pact_schedule_batch_size"),
+    )
+
     # Auto-regen on publish (SDK-4.3, #4497). A background async loop (app.sdk_regen_worker) runs the
     # jobs a publish queues for each active SDK regen subscription: an SDK-4.1 registry publish
     # and/or an SDK-4.2 pull request per job, with transient failures retried and permanent ones

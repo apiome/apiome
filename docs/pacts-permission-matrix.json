@@ -524,6 +524,54 @@
       "path": "/v1/internal/mcp/pacts/record-deployment",
       "audit": "pacts.deployment.record",
       "auditedBy": "explicit"
+    },
+    {
+      "id": "verification-settings.update",
+      "label": "Save the verification settings",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-verification-settings",
+      "audit": "pacts.verification_settings.update",
+      "auditedBy": "route",
+      "body": {
+        "cadence": "nightly",
+        "stale_threshold_hours": 72,
+        "max_concurrent_runs": 2,
+        "request_window_hours": 72,
+        "republish_requests_enabled": true
+      }
+    },
+    {
+      "id": "verification-override.save",
+      "label": "Save a verification override",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-verification-settings/overrides",
+      "audit": "pacts.verification_override.save",
+      "auditedBy": "route",
+      "body": {
+        "provider": "accounts",
+        "cadence": "hourly"
+      }
+    },
+    {
+      "id": "verification-override.delete",
+      "label": "Remove a verification override",
+      "permission": "pacts:edit",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-verification-settings/overrides/{uuid}",
+      "audit": "pacts.verification_override.delete",
+      "auditedBy": "route"
+    },
+    {
+      "id": "republish-request.acknowledge",
+      "label": "Acknowledge a re-publish request",
+      "permission": "pacts:edit",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-republish-requests/{uuid}/acknowledge",
+      "audit": "pacts.republish_request.acknowledge",
+      "auditedBy": "route",
+      "body": {}
     }
   ],
   "reads": [

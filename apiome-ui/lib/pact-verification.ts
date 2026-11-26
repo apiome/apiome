@@ -10,6 +10,7 @@
  * Everything here is pure, so the proxies, the pages and the tests share it.
  */
 
+import type { EffectiveSettings, RepublishRequest, ScheduledAttempt } from '@lib/pact-remediation';
 import { formatValue, shortSha } from '@lib/pact-detail';
 import { MAX_FILTER_LENGTH, isPacticipantHandle, pacticipantRoute, safeHttpUrl } from '@lib/pact-pacticipants';
 
@@ -23,7 +24,7 @@ export interface ResultCounts {
 }
 
 /** How a result came to be. `null` for a result recorded before triggers were recorded. */
-export type VerificationTrigger = 'published' | 'hosted' | 'manual' | 'stale-recheck' | 'bidirectional';
+export type VerificationTrigger = 'published' | 'hosted' | 'manual' | 'stale-recheck' | 'bidirectional' | 'scheduled';
 
 /** One verification result, as the history and the status list carry it. */
 export interface ResultSummary {
@@ -123,6 +124,16 @@ export interface VerificationStatusEntry {
   published_at: string | null;
   stale: boolean;
   latest_result: ResultSummary | null;
+  /** PFX-6.2: not verified for longer than its stale threshold. */
+  overdue?: boolean;
+  /** When it crossed the threshold, when overdue. */
+  stale_since?: string | null;
+  /** The cadence, threshold and target that apply to this pair. */
+  settings?: EffectiveSettings | null;
+  /** Its open re-publish request. */
+  republish_request?: RepublishRequest | null;
+  /** Its last scheduled verification attempt. */
+  scheduled?: ScheduledAttempt | null;
 }
 
 /** The KPI strip. */
@@ -131,6 +142,10 @@ export interface StatusCounts {
   verified: number;
   failing: number;
   stale: number;
+  /** PFX-6.2: pacts not verified within their stale threshold. */
+  overdue?: number;
+  /** PFX-6.2: open re-publish requests. */
+  republish_requests?: number;
   interactions: number;
   passing_interactions: number;
   last_verified_at: string | null;
@@ -143,6 +158,8 @@ export interface VerificationStatus {
   counts: StatusCounts;
   pacts: VerificationStatusEntry[];
   truncated: boolean;
+  /** PFX-6.2: the cadence, threshold and target that apply to the provider. */
+  settings?: EffectiveSettings | null;
 }
 
 /** One pact a console run verified. */
@@ -373,6 +390,7 @@ export const TRIGGER_LABELS: Record<VerificationTrigger, string> = {
   manual: 'Re-run',
   'stale-recheck': 'Stale re-check',
   bidirectional: 'Bi-directional',
+  scheduled: 'Scheduled',
 };
 
 /**

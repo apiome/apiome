@@ -1,0 +1,29 @@
+---
+slug: pact-stale-remediation
+title: "Stale pacts and verification scheduling"
+description: "Verify pacts on a cadence, and ask consumers to re-publish stale pacts."
+authors: [apiome]
+---
+
+Apiome now notices when a pact goes unverified for too long, and does something about it. On
+**Pacticipants**, click **Verification settings**. See
+[Stale pacts and verification scheduling](/ship/pact-broker/stale-pacts).
+
+{/* truncate */}
+
+- **Stale threshold.** A pact not verified for longer than the threshold (72 hours by default) is
+  stale. The Verification page marks it **Overdue** and counts it in the KPI strip.
+- **Verification cadence.** Choose **On publish**, **Hourly**, **Nightly** or **Manual only** (the
+  default) for the workspace, and override it, the threshold or the verification target for one
+  provider or one consumer ↔ provider pair. Scheduled runs use the hosted verifier, publish their
+  results as **Scheduled**, and run at most a set number at a time. A pair that cannot run says why.
+- **Re-publish requests.** A stale pact opens a request to its consumer: **Requested**,
+  **Acknowledged** (with a note), then **Re-published**, **Cleared** (verified meanwhile) or
+  **Expired**. The consumer's owner team is notified, and an expired request is escalated to the
+  consumer's and provider's owners. **Re-publish requests** lists them all.
+- **Webhooks.** Contract webhooks can listen for `contract_became_stale`, `contract_no_longer_stale`,
+  `contract_republish_requested` and `contract_republish_request_expired`.
+
+Reading needs **Pacts** → **View**; changing the settings and acknowledging a request need **Pacts**
+→ **Edit**. The REST API has them under `/v1/tenants/{tenant}/pact-verification-settings` and
+`/v1/tenants/{tenant}/pact-republish-requests` (REST API 1.686.0).

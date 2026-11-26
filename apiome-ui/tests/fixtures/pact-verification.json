@@ -9,7 +9,9 @@
       "stale": 1,
       "interactions": 7,
       "passing_interactions": 6,
-      "last_verified_at": "2026-11-25T14:32:10+00:00"
+      "last_verified_at": "2026-11-25T14:32:10+00:00",
+      "overdue": 1,
+      "republish_requests": 1
     },
     "pacts": [
       {
@@ -43,7 +45,19 @@
             "passed": 2,
             "failed": 1
           }
-        }
+        },
+        "overdue": false,
+        "stale_since": null,
+        "settings": {
+          "cadence": "hourly",
+          "cadence_source": "pair",
+          "stale_threshold_hours": 24,
+          "stale_threshold_source": "pair",
+          "target": "ledger-staging",
+          "target_source": "provider"
+        },
+        "republish_request": null,
+        "scheduled": null
       },
       {
         "consumer": "orders-ui",
@@ -76,7 +90,40 @@
             "passed": 4,
             "failed": 0
           }
-        }
+        },
+        "overdue": true,
+        "stale_since": "2026-11-24T08:00:00+00:00",
+        "settings": {
+          "cadence": "nightly",
+          "cadence_source": "workspace",
+          "stale_threshold_hours": 72,
+          "stale_threshold_source": "workspace",
+          "target": "ledger-staging",
+          "target_source": "provider"
+        },
+        "republish_request": {
+          "id": "5c2b8e14-6f0a-4d3b-8a7e-1f9c4b2d6e01",
+          "provider": "ledger-api",
+          "provider_name": "Ledger API",
+          "consumer": "orders-ui",
+          "consumer_name": "Orders UI",
+          "pact_version_sha": "eeee5f7a1c2b3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccd",
+          "consumer_version": "1.9.2",
+          "state": "requested",
+          "threshold_hours": 72,
+          "reference_at": "2026-11-21T08:00:00+00:00",
+          "requested_at": "2026-11-24T08:05:00+00:00",
+          "expires_at": "2026-11-27T08:05:00+00:00",
+          "acknowledged_at": null,
+          "acknowledged_by": null,
+          "note": null,
+          "resolved_at": null,
+          "resolved_consumer_version": null,
+          "notification_status": "routed",
+          "escalation_status": null,
+          "webhook_deliveries": 1
+        },
+        "scheduled": null
       },
       {
         "consumer": "reporting-job",
@@ -85,10 +132,36 @@
         "pact_version_sha": "5c4d3e2f1a0b99887766554433221100ffeeddccbbaa99887766554433221100",
         "published_at": "2026-11-25T11:20:00+00:00",
         "stale": true,
-        "latest_result": null
+        "latest_result": null,
+        "overdue": false,
+        "stale_since": null,
+        "settings": {
+          "cadence": "nightly",
+          "cadence_source": "workspace",
+          "stale_threshold_hours": 72,
+          "stale_threshold_source": "workspace",
+          "target": "ledger-staging",
+          "target_source": "provider"
+        },
+        "republish_request": null,
+        "scheduled": {
+          "pact_version_sha": "5c4d3e2f1a0b99887766554433221100ffeeddccbbaa99887766554433221100",
+          "attempted_at": "2026-11-26T02:00:00+00:00",
+          "status": "skipped",
+          "code": "pact-schedule-no-provider-version",
+          "reason": "no provider version is known to verify as: publish a verification result from CI, or Re-run this pact with a provider version"
+        }
       }
     ],
-    "truncated": false
+    "truncated": false,
+    "settings": {
+      "cadence": "nightly",
+      "cadence_source": "workspace",
+      "stale_threshold_hours": 72,
+      "stale_threshold_source": "workspace",
+      "target": "ledger-staging",
+      "target_source": "provider"
+    }
   },
   "history": {
     "provider": "ledger-api",

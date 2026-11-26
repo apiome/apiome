@@ -1413,6 +1413,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contracts', 'pact', 'rerun', 'stale', 'verify all stale', 'log', 'expected', 'actual', 'mismatch', 'history', 'trigger', 'hosted verifier', 'download'],
   },
   {
+    id: 'stale-pacts',
+    title: 'Stale pacts and verification scheduling',
+    summary: 'Set the verification cadence and stale threshold, and follow re-publish requests to consumers.',
+    page: 'apiome-docs/docs/ship/pact-broker/stale-pacts.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'overdue', 'threshold', 'cadence', 'nightly', 'hourly', 'on publish', 'schedule', 're-publish', 'republish', 'acknowledge', 'escalation', 'verification settings'],
+  },
+  {
     id: 'webhooks-console',
     title: 'Webhooks and delivery log',
     summary: 'Create, test, enable and delete contract webhooks, read each delivery and redeliver one.',

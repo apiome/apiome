@@ -131,6 +131,9 @@ from the Pact CLI, a Pact library, the console or an MCP tool. Source `api_key` 
 | `pacts.webhook.execute`, `pacts.webhook.redeliver` | A webhook is tested, or a delivery is sent again. |
 | `pacts.provider_state.create`, `.update`, `.delete` | A provider state is created, changed or deleted. |
 | `pacts.commit_status.retry` | A commit status is sent again. |
+| `pacts.verification_settings.update` | The workspace's [verification settings](../ship/pact-broker/stale-pacts.mdx) are saved. |
+| `pacts.verification_override.save`, `.delete` | A verification override is saved or removed. |
+| `pacts.republish_request.acknowledge` | A consumer acknowledges a re-publish request. |
 | `pacts.pacticipant.delete`, `.restore`, `pacts.version.delete`, `.restore` | A pacticipant or version is deleted or restored; the detail holds the `reason`. |
 | `pacts.label.add`, `pacts.label.remove` | A label is added or removed. |
 | `pacts.retention.apply`, `pacts.purge` | A retention run is applied, or deleted rows are purged after 30 days; the detail holds the counts. |

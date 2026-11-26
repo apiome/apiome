@@ -146,6 +146,7 @@ from .pact_webhook_delivery_routes import router as pact_webhook_delivery_router
 from .pact_deployment_routes import router as pact_deployment_router
 from .pact_postman_routes import router as pact_postman_router
 from .pact_suite_routes import router as pact_suite_router
+from .pact_remediation_routes import router as pact_remediation_router
 from .pact_verification_ops_routes import router as pact_verification_ops_router
 from .pact_verifier_routes import router as pact_verifier_router
 from .pact_provider_state_routes import router as pact_provider_state_router
@@ -591,6 +592,7 @@ app.include_router(pact_postman_router)  # PFX-4.7 (#6944): Postman collection e
 app.include_router(pact_suite_router)  # PFX-3.1 (#6931): pact version → contract suite
 app.include_router(pact_verifier_router)  # PFX-3.2 (#6932): hosted provider verifier
 app.include_router(pact_verification_ops_router)  # PFX-5.5 (#6949): verification results and operations
+app.include_router(pact_remediation_router)  # PFX-6.2 (#6954): verification settings, re-publish requests
 app.include_router(pact_provider_state_router)  # PFX-3.3 (#6933): provider-state registry
 app.include_router(pact_broker_environment_router)
 app.include_router(pact_broker_matrix_router)
@@ -835,6 +837,7 @@ _catalog_graph_task: asyncio.Task | None = None
 _usage_sweep_task: asyncio.Task | None = None
 _lint_waiver_expiry_task: asyncio.Task | None = None
 _verification_schedule_task: asyncio.Task | None = None
+_pact_remediation_task: asyncio.Task | None = None
 _async_job_retention_task: asyncio.Task | None = None
 _mock_activity_flush_task: asyncio.Task | None = None
 _document_lifecycle_task: asyncio.Task | None = None
@@ -1287,6 +1290,35 @@ async def startup_event():
             except Exception:
                 log.exception("verification schedule sweep")
 
+    async def _pact_remediation_sweep() -> None:
+        """Remediate stale pacts and run scheduled Pact verifications (PFX-6.2, #6954).
+
+        Ticks on ``APIOME_PACT_REMEDIATION_INTERVAL`` (default 300s): records each pair's stale
+        state, opens / closes / escalates re-publish requests, and runs at most
+        ``APIOME_PACT_SCHEDULE_BATCH_SIZE`` due scheduled verifications. A dedicated DB connection,
+        because the concurrency-slot and per-pair advisory locks are session-scoped.
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        tick_seconds = max(30, int(settings.pact_remediation_interval_seconds))
+        sweep_db = sweep_database()
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+
+                def _run_remediation() -> Any:
+                    with sweep_tick(sweep_db) as thread_db:
+                        from .pact_remediation_sweep import process_pact_remediation_sweep
+
+                        return process_pact_remediation_sweep(thread_db)
+
+                await asyncio.to_thread(_run_remediation)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("pact remediation sweep")
+
     async def _async_job_retention_sweep() -> None:
         """Periodically reap expired async jobs and export artifacts (IXH-6.3, #5122).
 
@@ -1540,6 +1572,8 @@ async def startup_event():
     _lint_waiver_expiry_task = asyncio.create_task(_lint_waiver_expiry_sweep())
     global _verification_schedule_task
     _verification_schedule_task = asyncio.create_task(_verification_schedule_sweep())
+    global _pact_remediation_task
+    _pact_remediation_task = asyncio.create_task(_pact_remediation_sweep())
     global _async_job_retention_task
     _async_job_retention_task = asyncio.create_task(_async_job_retention_sweep())
 
@@ -1672,6 +1706,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _verification_schedule_task = None
+    global _pact_remediation_task
+    if _pact_remediation_task is not None:
+        _pact_remediation_task.cancel()
+        try:
+            await _pact_remediation_task
+        except asyncio.CancelledError:
+            pass
+        _pact_remediation_task = None
     global _mock_activity_flush_task
     if _mock_activity_flush_task is not None:
         _mock_activity_flush_task.cancel()

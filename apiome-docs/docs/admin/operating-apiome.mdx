@@ -1070,6 +1070,15 @@ foreign-key violation, the row it names points across workspaces — send it to 
 deleting it. Build its three `CREATE INDEX IF NOT EXISTS` indexes concurrently as above to shorten
 the upgrade; the two unique keys are built by the migration.
 
+`V448` (PFX-6.2) adds five empty tables for [stale-pact remediation and verification
+scheduling](../ship/pact-broker/stale-pacts.mdx) and widens two `CHECK` constraints: the
+verification-result `trigger` gains `scheduled`, and contract webhooks may name four new events.
+Re-adding each constraint checks every existing row of `verification_result` and `pact_webhook`
+once while holding a lock on the table; nothing is rewritten. After the upgrade, the remediation
+sweep runs every `APIOME_PACT_REMEDIATION_INTERVAL` seconds (default 300); set
+`APIOME_PACT_REMEDIATION_ENABLED=false` to hold it. Workspaces start on **Manual only**, so no
+scheduled verification runs until someone chooses a cadence and a verification target.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's
