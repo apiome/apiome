@@ -10,8 +10,9 @@ pipeline: the **consumer** publishes its pacts, the **provider** is verified aga
 **deploy** job asks `can-i-deploy` and records what it deployed. On GitHub, the
 [`apiome/pact-action`](#use-the-github-action) runs the steps for you and keeps the `can-i-deploy`
 answer in one pull-request comment; for GitLab CI and Bitbucket Pipelines there are
-[ready-made pipelines](#gitlab-ci-and-bitbucket-pipelines). Every step is also one shell command, so
-the same lines work in Jenkins or any other runner.
+[ready-made pipelines](#gitlab-ci-and-bitbucket-pipelines), and Jenkins and Azure Pipelines have
+[theirs](#jenkins-and-azure-pipelines). Every step is also one shell command, so the same lines
+work in any other runner.
 
 ## Before you start
 
@@ -333,6 +334,220 @@ pipelines:
       - step: *pact-publish
       - step: *pact-can-i-deploy
       - step: *pact-record-deployment
+```
+
+## Jenkins and Azure Pipelines
+
+These two pipelines run the same three steps, one stage or job each. Pull requests publish the
+pacts and ask `can-i-deploy`; the main branch also records the deployment, and never from a pull
+request. Neither runs in an image: each installs the CLI with the installer unless `apiome` is
+already on the agent. `can-i-deploy` keeps its answer as the `can-i-deploy.md` build artifact (a
+build-summary section on Azure). Both pipelines are run against a stub CLI on every change, so
+they stay correct.
+
+### Jenkins
+
+Copy the stages into the `Jenkinsfile` of a **Multibranch Pipeline** job, which supplies the
+branch and the pull-request variables the stages read.
+
+1. **Add a credential.** In **Manage Jenkins** → **Credentials**, add a **Secret text** credential
+   with the id `apiome-pact-broker-token` holding the API key (the **Pact: consumer + deploy**
+   preset).
+2. **Set your values.** Change `PACT_BROKER_BASE_URL`, `PACTICIPANT` and `DEPLOY_ENVIRONMENT` to
+   yours, and put your deploy stage before **Record deployment**.
+
+The key stays in the credential binding, and the commands are single-quoted so the shell, not
+Groovy, reads it. The version is `GIT_COMMIT`; a multibranch job for a pull request builds the
+pull request's head commit unless the branch source is set to build the merge with the target.
+Keep it on the head commit so the version is one that was published.
+
+{/* recipe:pact-jenkins */}
+```groovy
+// Apiome Pact pipeline for Jenkins (PFX-4.6 / #6943).
+//
+// Copy the stages into your Jenkinsfile (a Multibranch Pipeline job). Pull requests publish the
+// pacts and ask can-i-deploy; the main branch does the same, deploys, then records the deployment.
+//
+// Set up once:
+//   * a "Secret text" credential with id apiome-pact-broker-token holding an Apiome API key with
+//     the "Pact: consumer + deploy" preset;
+//   * PACT_BROKER_BASE_URL below, changed to your workspace's broker base URL.
+//
+// The agent needs curl and sh. Every apiome pact command exits 0 when it worked and 1 otherwise,
+// so each stage fails on its own. Commands sit in single-quoted strings, so the shell, not
+// Groovy, reads the variables and the key never lands in the Groovy log.
+
+pipeline {
+  agent any
+  options {
+    timestamps()
+    disableConcurrentBuilds(abortPrevious: true)
+  }
+  environment {
+    PACT_BROKER_BASE_URL = 'https://api.apiome.dev/v1/tenants/<workspace>/pact-broker'
+    PACT_BROKER_TOKEN = credentials('apiome-pact-broker-token')
+    PACTICIPANT = 'Billing Service'
+    PACT_DIR = 'pacts'
+    DEPLOY_ENVIRONMENT = 'production'
+    APIOME_LOAD_DOTENV = '0'
+    PATH = "${env.HOME}/.local/bin:${env.PATH}"
+  }
+  stages {
+    stage('Install Apiome CLI') {
+      steps {
+        sh 'command -v apiome >/dev/null 2>&1 || { curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user --no-modify-path; }'
+      }
+    }
+    stage('Publish pacts') {
+      steps {
+        sh 'for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do test -n "$(printenv "$v")" || { echo "$v is not set - see the setup notes at the top of this file" >&2; exit 1; }; done'
+        sh 'apiome pact publish "$PACT_DIR" --consumer-app-version "$GIT_COMMIT" --branch "${CHANGE_BRANCH:-$BRANCH_NAME}" --build-url "$BUILD_URL"'
+      }
+    }
+    stage('Can I deploy?') {
+      steps {
+        sh 'for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do test -n "$(printenv "$v")" || { echo "$v is not set - see the setup notes at the top of this file" >&2; exit 1; }; done'
+        sh 'apiome pact can-i-deploy --pacticipant "$PACTICIPANT" --version "$GIT_COMMIT" --to-environment "$DEPLOY_ENVIRONMENT" --retry-while-unknown 12 --retry-interval 10 --output markdown > can-i-deploy.md || gate=$?; cat can-i-deploy.md; exit ${gate:-0}'
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'can-i-deploy.md', allowEmptyArchive: true
+        }
+      }
+    }
+    stage('Record deployment') {
+      // Never in a pull request: recording it would tell can-i-deploy an unmerged commit is live.
+      when {
+        allOf {
+          branch 'main'
+          not { changeRequest() }
+        }
+      }
+      steps {
+        sh 'for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do test -n "$(printenv "$v")" || { echo "$v is not set - see the setup notes at the top of this file" >&2; exit 1; }; done'
+        sh 'echo "deploy $GIT_COMMIT to $DEPLOY_ENVIRONMENT here, or add your deploy stage before this one"'
+        sh 'apiome pact record-deployment --pacticipant "$PACTICIPANT" --version "$GIT_COMMIT" --environment "$DEPLOY_ENVIRONMENT"'
+      }
+    }
+  }
+}
+```
+
+### Azure Pipelines
+
+Copy the jobs into `azure-pipelines.yml`.
+
+1. **Add two variables.** In **Pipelines** → **Edit** → **Variables**, add `PACT_BROKER_BASE_URL`
+   and `PACT_BROKER_TOKEN`, and tick **Keep this value secret** for the token.
+2. **Set your values.** Change `PACTICIPANT` and `DEPLOY_ENVIRONMENT` to yours, and put your deploy
+   job before **Record deployment**.
+3. **Start pull-request runs.** The `pr:` trigger does this for GitHub and Bitbucket repositories.
+   For Azure Repos, add the pipeline as **Build validation** on the branch policy.
+
+Azure does not pass secret variables to scripts on its own, so each step maps the broker values
+into its `env`. A variable that is not defined reaches the script as its own `$(NAME)` text; the
+step treats that as missing and stops with the reason. On a pull request the version is the pull
+request's head commit, not the merge commit Azure checks out.
+
+{/* recipe:pact-azure */}
+```yaml
+# Apiome Pact pipeline for Azure Pipelines (PFX-4.6 / #6943).
+#
+# Copy the jobs into your azure-pipelines.yml. Pull requests publish the pacts and ask
+# can-i-deploy; main does the same, deploys, then records the deployment. For a GitHub or
+# Bitbucket repository the `pr:` trigger below starts the pull-request run; for Azure Repos add
+# this pipeline as a build validation on the branch policy.
+#
+# Required pipeline variables (Pipelines -> Edit -> Variables):
+#   PACT_BROKER_BASE_URL  https://api.apiome.dev/v1/tenants/<workspace>/pact-broker
+#   PACT_BROKER_TOKEN     Apiome API key with the "Pact: consumer + deploy" preset - keep it secret
+#
+# Secret variables are not environment variables until a step maps them, so each step does.
+# Every apiome pact command exits 0 when it worked and 1 otherwise, so each job fails on its own.
+
+trigger:
+  branches:
+    include: [main]
+
+pr:
+  branches:
+    include: ['*']
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  PACTICIPANT: Billing Service
+  PACT_DIR: pacts
+  DEPLOY_ENVIRONMENT: production
+  APIOME_LOAD_DOTENV: "0"
+
+jobs:
+  - job: Publish
+    displayName: Publish pacts
+    steps:
+      - script: |
+          set -e
+          command -v apiome >/dev/null 2>&1 || { curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user --no-modify-path; }
+          echo "##vso[task.prependpath]$HOME/.local/bin"
+        displayName: Install Apiome CLI
+      - script: |
+          set -euo pipefail
+          for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do
+            case "$(printenv "$v")" in ''|'$('*) echo "$v is not set - add it as a pipeline variable" >&2; exit 1 ;; esac
+          done
+          branch="${SYSTEM_PULLREQUEST_SOURCEBRANCH:-$BUILD_SOURCEBRANCH}"
+          apiome pact publish "$PACT_DIR" --consumer-app-version "${SYSTEM_PULLREQUEST_SOURCECOMMITID:-$BUILD_SOURCEVERSION}" --branch "${branch#refs/heads/}" --build-url "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_build/results?buildId=${BUILD_BUILDID}"
+        displayName: Publish pacts
+        env:
+          PACT_BROKER_BASE_URL: $(PACT_BROKER_BASE_URL)
+          PACT_BROKER_TOKEN: $(PACT_BROKER_TOKEN)
+
+  - job: CanIDeploy
+    displayName: Pact can-i-deploy
+    dependsOn: Publish
+    steps:
+      - script: |
+          set -e
+          command -v apiome >/dev/null 2>&1 || { curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user --no-modify-path; }
+          echo "##vso[task.prependpath]$HOME/.local/bin"
+        displayName: Install Apiome CLI
+      - script: |
+          set -euo pipefail
+          for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do
+            case "$(printenv "$v")" in ''|'$('*) echo "$v is not set - add it as a pipeline variable" >&2; exit 1 ;; esac
+          done
+          apiome pact can-i-deploy --pacticipant "$PACTICIPANT" --version "${SYSTEM_PULLREQUEST_SOURCECOMMITID:-$BUILD_SOURCEVERSION}" --to-environment "$DEPLOY_ENVIRONMENT" --retry-while-unknown 12 --retry-interval 10 --output markdown > can-i-deploy.md || gate=$?
+          cat can-i-deploy.md
+          echo "##vso[task.uploadsummary]$PWD/can-i-deploy.md"
+          exit ${gate:-0}
+        displayName: Ask can-i-deploy
+        env:
+          PACT_BROKER_BASE_URL: $(PACT_BROKER_BASE_URL)
+          PACT_BROKER_TOKEN: $(PACT_BROKER_TOKEN)
+
+  - job: RecordDeployment
+    displayName: Record deployment
+    dependsOn: CanIDeploy
+    # Never in a pull request: recording it would tell can-i-deploy an unmerged commit is live.
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+    steps:
+      - script: |
+          set -e
+          command -v apiome >/dev/null 2>&1 || { curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user --no-modify-path; }
+          echo "##vso[task.prependpath]$HOME/.local/bin"
+        displayName: Install Apiome CLI
+      - script: |
+          set -euo pipefail
+          for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do
+            case "$(printenv "$v")" in ''|'$('*) echo "$v is not set - add it as a pipeline variable" >&2; exit 1 ;; esac
+          done
+          echo "deploy $BUILD_SOURCEVERSION to $DEPLOY_ENVIRONMENT here, or add your deploy job before this one"
+          apiome pact record-deployment --pacticipant "$PACTICIPANT" --version "$BUILD_SOURCEVERSION" --environment "$DEPLOY_ENVIRONMENT"
+        displayName: Record deployment
+        env:
+          PACT_BROKER_BASE_URL: $(PACT_BROKER_BASE_URL)
+          PACT_BROKER_TOKEN: $(PACT_BROKER_TOKEN)
 ```
 
 ## What fails a job

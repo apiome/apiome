@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Smoke tests for the GitLab CI / Bitbucket Pipelines Pact recipes (PFX-4.3 / #6940).
+# Smoke tests for the GitLab CI / Bitbucket Pipelines / Jenkins / Azure Pipelines Pact recipes
+# (PFX-4.3 / #6940, PFX-4.6 / #6943).
 #
 # Each job of a recipe is executed the way the runner executes it: its `script:` lines (and
 # GitLab's `variables:` block) are pulled out of the YAML and run under `set -e` in a throw-away
@@ -7,7 +8,7 @@
 # renamed variable, a wrong flag or a lost exit code fails here without a GitLab or Bitbucket
 # runner. The guide must embed each recipe byte for byte.
 #
-# Usage: test_ci_recipes.sh [--recipe gitlab|bitbucket|all]
+# Usage: test_ci_recipes.sh [--recipe gitlab|bitbucket|jenkins|azure|all]
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -76,6 +77,47 @@ job_to_shell() {
   chmod +x "$3"
   [[ "$(recipe_script_lines "${section}" | wc -l)" -ge 3 ]] ||
     fail "the job matching [$2] in $1 did not parse into script lines"
+}
+
+# Materialise one Jenkins stage as a runnable script: the single-quoted `environment { }` values
+# (the broker URL and token come from the test, so PACT_BROKER_* are skipped) followed by the
+# stage's `sh '...'` lines, under `set -e` as Jenkins runs `sh` with `-e`.
+#
+# Args: $1 — Jenkinsfile, $2 — section header regex, $3 — destination script.
+jenkins_stage_to_shell() {
+  local section="${TMP}/section.groovy"
+  recipe_section "$1" "$2" >"${section}"
+  {
+    echo "#!/usr/bin/env bash"
+    echo "set -e"
+    sed -nE "s/^[[:space:]]+([A-Z_]+) = '([^']*)'\$/\1 \2/p" "$1" | while read -r key value; do
+      [[ "${key}" == PACT_BROKER_* ]] || printf 'export %s=%q\n' "${key}" "${value}"
+    done
+    sed -nE "s/^[[:space:]]*sh '(.*)'\$/\1/p" "${section}"
+  } >"$3"
+  chmod +x "$3"
+  [[ "$(sed -nE "s/^[[:space:]]*sh '(.*)'\$/\1/p" "${section}" | wc -l)" -ge 1 ]] ||
+    fail "the stage matching [$2] in $1 did not parse into sh lines"
+}
+
+# Materialise one Azure Pipelines job as a runnable script: the top-level `variables:` followed
+# by the body of every `- script: |` block of the job.
+#
+# Args: $1 — azure-pipelines.yml, $2 — section header regex, $3 — destination script.
+azure_job_to_shell() {
+  local section="${TMP}/section.yml"
+  recipe_section "$1" "$2" >"${section}"
+  {
+    echo "#!/usr/bin/env bash"
+    recipe_variable_exports "$1"
+    awk '
+      inblk && (/^[[:space:]]*$/ || match($0, /[^ ]/) > ind + 2) { print substr($0, ind + 4); next }
+      { inblk = 0 }
+      /^[[:space:]]*- script: \|[[:space:]]*$/ { inblk = 1; ind = match($0, /[^ ]/) }
+    ' "${section}"
+  } >"$3"
+  chmod +x "$3"
+  [[ "$(wc -l <"$3")" -ge 5 ]] || fail "the job matching [$2] in $1 did not parse into script lines"
 }
 
 # Install a stub `apiome`: logs its arguments (one per line) and the broker env, prints a
@@ -232,15 +274,132 @@ run_bitbucket() {
   echo "OK  recipe: bitbucket"
 }
 
+JENKINS_ENV_BASE=(GIT_COMMIT="${SHA}" BUILD_URL=https://jenkins.example.com/job/web/7/)
+
+jenkins_publish_args() {
+  printf '%s\n' pact publish pacts --consumer-app-version "${SHA}" --branch feature/x --build-url https://jenkins.example.com/job/web/7/
+}
+jenkins_publish_args_main() {
+  printf '%s\n' pact publish pacts --consumer-app-version "${SHA}" --branch main --build-url https://jenkins.example.com/job/web/7/
+}
+
+run_jenkins() {
+  local recipe="${ROOT}/recipes/Jenkinsfile"
+  echo "==> recipe: jenkins"
+  [[ -f "${recipe}" ]] || fail "recipe not found: ${recipe}"
+  grep -q "credentials('apiome-pact-broker-token')" "${recipe}" ||
+    fail "jenkins: the broker key must come from a Jenkins credential"
+  if grep -qE '^[[:space:]]*sh +"' "${recipe}"; then
+    fail "jenkins: commands must be single-quoted so Groovy never interpolates the key"
+  fi
+  recipe_section "${recipe}" "stage[(]'Record deployment'[)]" | grep -q "not { changeRequest() }" ||
+    fail "jenkins: record-deployment must never run for a change request"
+  recipe_section "${recipe}" "stage[(]'Record deployment'[)]" | grep -q "branch 'main'" ||
+    fail "jenkins: record-deployment must run on the main branch"
+
+  local pr=("${JENKINS_ENV_BASE[@]}" CHANGE_BRANCH=feature/x BRANCH_NAME=PR-12)
+  local main=("${JENKINS_ENV_BASE[@]}" BRANCH_NAME=main)
+
+  jenkins_stage_to_shell "${recipe}" "stage[(]'Publish pacts'[)]" "${TMP}/jk-publish.sh"
+  check_job "jenkins Publish pacts (pull request)" "${TMP}/jk-publish.sh" jenkins_publish_args "" "${pr[@]}"
+  check_job "jenkins Publish pacts (main)" "${TMP}/jk-publish.sh" jenkins_publish_args_main "" "${main[@]}"
+  jenkins_stage_to_shell "${recipe}" "stage[(]'Can I deploy[?]'[)]" "${TMP}/jk-cid.sh"
+  check_job "jenkins Can I deploy?" "${TMP}/jk-cid.sh" cid_args can-i-deploy.md "${pr[@]}"
+  jenkins_stage_to_shell "${recipe}" "stage[(]'Record deployment'[)]" "${TMP}/jk-record.sh"
+  check_job "jenkins Record deployment" "${TMP}/jk-record.sh" record_args "" "${main[@]}"
+
+  # The install stage is a no-op when apiome is already on PATH, and fails when the download fails.
+  install_stub 0
+  jenkins_stage_to_shell "${recipe}" "stage[(]'Install Apiome CLI'[)]" "${TMP}/jk-install.sh"
+  (cd "${TMP}" && bash "${TMP}/jk-install.sh") || fail "jenkins: install must pass when apiome is on PATH"
+  assert_install_downloads "${TMP}/jk-install.sh" jenkins
+
+  assert_doc_matches_recipe "${recipe}" "{/* recipe:pact-jenkins */}"
+  echo "OK  recipe: jenkins"
+}
+
+# Assert an install script downloads the installer and fails with it when apiome is missing.
+#
+# Args: $1 — install script, $2 — label.
+assert_install_downloads() {
+  local bin2="${TMP}/bin-no-apiome" log="${TMP}/curl.log"
+  mkdir -p "${bin2}"
+  printf '#!/bin/sh\necho "$@" >"%s"\nexit 22\n' "${log}" >"${bin2}/curl"
+  chmod +x "${bin2}/curl"
+  ln -sf "$(command -v bash)" "${bin2}/bash"
+  ln -sf "$(command -v sh)" "${bin2}/sh"
+  ln -sf "$(command -v dirname)" "${bin2}/dirname"
+  set +e
+  (cd "${TMP}" && PATH="${bin2}" bash "$1" >/dev/null 2>&1)
+  local code=$?
+  set -e
+  [[ "${code}" -ne 0 ]] || fail "$2: a failed installer download must fail the job"
+  grep -q "https://get.apiome.dev" "${log}" || fail "$2: the install must download from get.apiome.dev"
+}
+
+AZURE_PR_ENV=(SYSTEM_PULLREQUEST_SOURCECOMMITID="${SHA}" SYSTEM_PULLREQUEST_SOURCEBRANCH=refs/heads/feature/x
+  BUILD_SOURCEVERSION=fedcba9876543210 BUILD_SOURCEBRANCH=refs/pull/12/merge)
+AZURE_MAIN_ENV=(BUILD_SOURCEVERSION="${SHA}" BUILD_SOURCEBRANCH=refs/heads/main)
+AZURE_COMMON=(SYSTEM_COLLECTIONURI=https://dev.azure.com/acme/ SYSTEM_TEAMPROJECT=web BUILD_BUILDID=7)
+
+azure_publish_args() {
+  printf '%s\n' pact publish pacts --consumer-app-version "${SHA}" --branch feature/x \
+    --build-url "https://dev.azure.com/acme/web/_build/results?buildId=7"
+}
+azure_publish_args_main() {
+  printf '%s\n' pact publish pacts --consumer-app-version "${SHA}" --branch main \
+    --build-url "https://dev.azure.com/acme/web/_build/results?buildId=7"
+}
+
+run_azure() {
+  local recipe="${ROOT}/recipes/azure-pipelines.yml"
+  echo "==> recipe: azure"
+  [[ -f "${recipe}" ]] || fail "recipe not found: ${recipe}"
+  grep -q "^pr:" "${recipe}" || fail "azure: the pipeline must be wired to pull requests"
+  [[ "$(grep -c 'PACT_BROKER_TOKEN: \$(PACT_BROKER_TOKEN)' "${recipe}")" -eq 3 ]] ||
+    fail "azure: every pact step must map the secret broker token into its environment"
+  local record
+  record="$(recipe_section "${recipe}" '^  - job: RecordDeployment')"
+  grep -q "ne(variables\['Build.Reason'\], 'PullRequest')" <<<"${record}" ||
+    fail "azure: record-deployment must never run in a pull-request run"
+  grep -q "refs/heads/main" <<<"${record}" || fail "azure: record-deployment must run on main"
+
+  azure_job_to_shell "${recipe}" '^  - job: Publish$' "${TMP}/az-publish.sh"
+  check_job "azure Publish pacts (pull request)" "${TMP}/az-publish.sh" azure_publish_args "" "${AZURE_COMMON[@]}" "${AZURE_PR_ENV[@]}"
+  check_job "azure Publish pacts (main)" "${TMP}/az-publish.sh" azure_publish_args_main "" "${AZURE_COMMON[@]}" "${AZURE_MAIN_ENV[@]}"
+  azure_job_to_shell "${recipe}" '^  - job: CanIDeploy$' "${TMP}/az-cid.sh"
+  check_job "azure Pact can-i-deploy" "${TMP}/az-cid.sh" cid_args can-i-deploy.md "${AZURE_COMMON[@]}" "${AZURE_PR_ENV[@]}"
+  azure_job_to_shell "${recipe}" '^  - job: RecordDeployment$' "${TMP}/az-record.sh"
+  check_job "azure Record deployment" "${TMP}/az-record.sh" record_args "" "${AZURE_COMMON[@]}" "${AZURE_MAIN_ENV[@]}"
+
+  # Azure leaves an unset secret as the literal macro text; the job must treat that as missing.
+  install_stub 0
+  run_job "${TMP}/az-publish.sh" "https://api.example.com/v1/tenants/acme/pact-broker" '$(PACT_BROKER_TOKEN)' \
+    "${AZURE_COMMON[@]}" "${AZURE_MAIN_ENV[@]}"
+  [[ "${CODE}" -eq 1 ]] || fail "azure: an unexpanded secret macro must exit 1, got ${CODE}"
+  grep -q "PACT_BROKER_TOKEN is not set" <<<"${OUT}" || fail "azure: unexpanded macro reason: ${OUT}"
+
+  install_stub 0
+  azure_job_to_shell "${recipe}" '^  - job: Publish$' "${TMP}/az-all.sh"
+  assert_install_downloads "${TMP}/az-all.sh" azure
+
+  assert_doc_matches_recipe "${recipe}" "{/* recipe:pact-azure */}"
+  echo "OK  recipe: azure"
+}
+
 case "${SELECTED}" in
   gitlab) run_gitlab ;;
   bitbucket) run_bitbucket ;;
+  jenkins) run_jenkins ;;
+  azure) run_azure ;;
   all)
     run_gitlab
     run_bitbucket
+    run_jenkins
+    run_azure
     ;;
   *)
-    echo "unknown recipe: ${SELECTED} (expected gitlab, bitbucket, or all)" >&2
+    echo "unknown recipe: ${SELECTED} (expected gitlab, bitbucket, jenkins, azure, or all)" >&2
     exit 2
     ;;
 esac

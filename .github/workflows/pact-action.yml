@@ -1,8 +1,8 @@
 name: pact-action
 
 # Shell tests for the pact-action Action (PFX-4.3, #6940) plus the CI-recipe smoke matrix for the
-# GitLab / Bitbucket Pact pipelines. The recipe jobs run each published pipeline job against a stub
-# CLI and check the Run Pact in CI guide embeds the recipes byte for byte, so the documented
+# GitLab / Bitbucket / Jenkins / Azure Pipelines Pact pipelines. The recipe jobs run each published
+# pipeline job against a stub CLI and check the Run Pact in CI guide embeds the recipes byte for byte, so the documented
 # pipelines cannot rot as the CLI evolves.
 
 on:
@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        recipe: [gitlab, bitbucket]
+        recipe: [gitlab, bitbucket, jenkins, azure]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
