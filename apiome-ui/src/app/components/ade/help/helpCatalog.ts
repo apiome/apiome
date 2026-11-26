@@ -1349,6 +1349,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contracts', 'versions', 'branches', 'tags', 'environments', 'labels', 'main branch', 'deployed'],
   },
   {
+    id: 'pact-detail',
+    title: 'Pact detail',
+    summary: 'Read a pact: its interactions, provider states, verification status and changes since the previous one.',
+    page: 'apiome-docs/docs/ship/pact-broker/pact-detail.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'interactions', 'provider states', 'diff', 'previous', 'verification', 'verified', 'history', 'messages'],
+  },
+  {
     id: 'provider-states',
     title: 'Provider states',
     summary: "Register the states a provider's pacts name, and how Apiome sets them up.",

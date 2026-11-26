@@ -29,6 +29,7 @@ jest.mock('next/link', () => ({
 }));
 
 import fixture from './fixtures/pact-pacticipants.json';
+import pactFixture from './fixtures/pact-detail.json';
 import PacticipantsListClient from '../src/app/components/ade/pactPacticipants/PacticipantsListClient';
 import PacticipantDetailClient from '../src/app/components/ade/pactPacticipants/PacticipantDetailClient';
 import { EnvironmentsTable, VersionsTable } from '../src/app/components/ade/pactPacticipants/PacticipantPanels';
@@ -157,6 +158,7 @@ describe('PacticipantDetailClient', () => {
       [`${base}/branches`]: ok({ branches: BRANCHES, count: 2, has_more: false }),
       [`${base}/environments`]: ok({ environments: ENVIRONMENTS }),
       [`${base}/versions`]: ok({ versions: VERSIONS, count: 3, has_more: false }),
+      [`${base}/pacts`]: ok(pactFixture.pacticipantPacts),
       [`${base}/versions?branch=main`]: ok({ versions: VERSIONS.slice(1), count: 2, has_more: false }),
       [`${base}/versions?tag=prod`]: ok({ versions: VERSIONS.slice(1, 2), count: 1, has_more: false }),
     };
@@ -180,6 +182,13 @@ describe('PacticipantDetailClient', () => {
     const versions = await screen.findByTestId('ppx-versions-table');
     expect(within(versions).getAllByRole('row')).toHaveLength(4);
     expect(screen.getByTestId('ppx-versions-summary')).toHaveTextContent('3 versions');
+    const pacts = await screen.findByTestId('ppx-pacts-table');
+    expect(within(pacts).getByRole('link', { name: 'Billing Service → Ledger API' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/pacts/pacticipants/billing-service/pacts/ledger-api',
+    );
+    expect(screen.getByTestId('ppx-pacts-count')).toHaveTextContent('3');
+    expect(within(pacts).getAllByText('Provider')).toHaveLength(1);
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipant-detail', container.innerHTML);
   });
@@ -207,6 +216,15 @@ describe('PacticipantDetailClient', () => {
     routes[`${base}/environments`] = ok({ environments: [] });
     fireEvent.click(within(screen.getByTestId('ppx-environments')).getByRole('button', { name: /try again/i }));
     expect(await screen.findByTestId('ppx-environments-empty')).toHaveTextContent('apiome pact record-deployment');
+  });
+
+  it('shows the publish command when no pact names the pacticipant, and retries a failed read', async () => {
+    routes[`${base}/pacts`] = () => ({ status: 400, body: { success: false, error: 'Pacticipant x not found' } });
+    render(<PacticipantDetailClient slug="billing-service" />);
+    expect(await screen.findByText('The pacts could not be read')).toBeInTheDocument();
+    routes[`${base}/pacts`] = ok({ matrix: [] });
+    fireEvent.click(within(screen.getByTestId('ppx-pacts')).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('ppx-pacts-empty')).toHaveTextContent('apiome pact publish');
   });
 
   it('says when the pacticipant does not exist, with the way back', async () => {

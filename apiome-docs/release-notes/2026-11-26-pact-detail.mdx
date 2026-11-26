@@ -1,0 +1,29 @@
+---
+slug: pact-detail
+title: "Pact detail and interaction viewer"
+description: "Read a pact's interactions, verification status and changes since the previous pact."
+authors: [apiome]
+---
+
+You can now read a pact in the app. A pacticipant's page lists every pact it is in, and each pact
+opens on its own page: its interactions, how providers verified it, and what changed since the
+previous pact. See [Pact detail](/ship/pact-broker/pact-detail).
+
+{/* truncate */}
+
+- **Every pact of a pacticipant.** The new **Pacts** section on a pacticipant's page lists the pacts
+  it is in, as the consumer or the provider, with the latest consumer version and how its last
+  verification went.
+- **Interactions, as written.** Each interaction opens to show its provider states with their
+  parameters, and its request and response, or its message. HTTP, message and synchronous message
+  interactions are drawn in any Pact specification; any other type is shown as its JSON, never left
+  out.
+- **Verification status.** The page says whether the pact is **Verified**, **Failed**, **Failed
+  (pending)** or **Not verified yet**, and lists every provider version that verified it, with how.
+- **Diff vs previous.** The page compares the pact with the previous *different* pact and lists the
+  interactions added, changed and removed. Each changed value shows its path and its old and new
+  values.
+- **History.** Every consumer version that published a pact for the provider, newest first, with
+  its verdict. Click one to open its pact; the address keeps the version so you can share it.
+
+The page reads only and needs **Pacts** → **View**.

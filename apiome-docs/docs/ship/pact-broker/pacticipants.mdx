@@ -51,7 +51,7 @@ apiome pact publish ./pacts \
 
 ## Open a pacticipant
 
-Click a pacticipant's name. Its page has four sections:
+Click a pacticipant's name. Its page has five sections:
 
 - **Overview** shows the handle, the main branch, the repository, the labels, what the pacticipant is
   **Bound to** (a project, a consumer, or nothing), and when it was registered.
@@ -60,10 +60,14 @@ Click a pacticipant's name. Its page has four sections:
 - **Environments** lists every environment of the workspace. For each one, it shows the versions of
   this pacticipant that are **Deployed now**, with their application instance, and the releases that
   are **Released and supported**. A production environment is marked **Production**.
+- **Pacts** lists every pact this pacticipant is in, as the consumer or the provider. Each row shows
+  the consumer and provider, this pacticipant's **Role**, the **Latest consumer version** that
+  published the pact, when it was published, and how its latest verification went. Click a pact to
+  open it. See [Pact detail](./pact-detail.mdx).
 - **Versions** lists the recorded versions, latest first, with their branches, tags, when they were
   recorded and by whom, and a link to the build.
 
-<Screenshot id="pact-pacticipant-detail" alt="The Billing Service page: Overview facts, two branches with main marked Main, Production and Staging with the versions deployed and released there, and three versions with their branches, tags and builds."/>
+<Screenshot id="pact-pacticipant-detail" alt="The Billing Service page: Overview facts, two branches with main marked Main, Production and Staging with the versions deployed and released there, and three pacts with their roles and verdicts."/>
 
 A commit SHA is shortened to its first 12 characters. Hover over it to see the full version number.
 
@@ -86,7 +90,8 @@ other sections still show. If an environment's lists cannot be read, its row say
 **Could not be read** with the reason, and the other environments still show.
 
 If the workspace has no environment yet, **Environments** shows the commands that create one and
-record a deployment. See [Environments and deployments](./environments.mdx).
+record a deployment. See [Environments and deployments](./environments.mdx). If no pact names the
+pacticipant yet, **Pacts** shows the `apiome pact publish` command.
 
 ## Who can do what
 
@@ -99,6 +104,7 @@ Every read is scoped to your current workspace.
 ## Related
 
 - [Pacticipants and versions](./concepts.mdx)
+- [Pact detail](./pact-detail.mdx)
 - [Environments and deployments](./environments.mdx)
 - [Labels, deletes and retention](./retention.mdx)
 - [Pacticipants API](../../reference/rest/pacticipants.md)

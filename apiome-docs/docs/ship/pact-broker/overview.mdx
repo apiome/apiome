@@ -11,9 +11,11 @@ it unchanged: give them your workspace's **broker base URL**
 Consumers publish their pacts, providers verify them and report back, deploy jobs record what runs
 where, and `can-i-deploy` stops a release that would break something.
 
-All of it is served through the API and the Pact tools. There are three screens so far.
+All of it is served through the API and the Pact tools. There are four screens so far.
 [**Pacticipants**](./pacticipants.mdx), under **Contracts** in the rail, lists every application in
-your pacts and opens each one's versions, branches, tags and environments. **Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
+your pacts and opens each one's versions, branches, tags, environments and pacts.
+[**Pact detail**](./pact-detail.mdx) shows one pact's interactions, its verification status and what
+changed since the previous pact. **Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
 each bi-directional comparison. **Provider states** shows a provider's registered states and
 [checks its pacts against them](./provider-states.mdx#see-provider-states-in-the-app) before a
 run.
@@ -46,6 +48,7 @@ run.
 | --- | --- |
 | Learn the words: pacticipant, version, branch, tag, pact version | [Pact Broker concepts](./concepts.mdx) |
 | Browse your pacticipants, their versions and what runs where | [Pacticipants](./pacticipants.mdx) |
+| Read a pact's interactions, verification status and changes since the previous one | [Pact detail](./pact-detail.mdx) |
 | Publish a consumer's pacts and fetch them back | [Publish and fetch pacts](./publish-pacts.mdx) |
 | Tell a provider's verifier which pacts to check | [Choose pacts to verify with selectors](./selectors.mdx) |
 | Verify a new expectation without breaking the provider's build | [Pending and work-in-progress pacts](./pending-and-wip.mdx) |

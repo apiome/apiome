@@ -45181,3 +45181,158 @@ tr[data-selected="true"] > td:first-child {
   display: flex;
   justify-content: center;
 }
+
+/* ===========================================================================
+   A pact — PFX-5.2 (#6946). `.ppd-*` is one integration's pact page (it
+   reuses the `.ppx-*` panels, tables and facts): the interaction disclosures
+   with their states, request and response; the code blocks; the changes
+   since the previous pact; the open row of the history. Tokens only.
+   =========================================================================== */
+.ppd__interactions {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppd__interaction {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.ppd__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+
+.ppd__summary:hover {
+  background: var(--bg-subtle);
+}
+
+.ppd__summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.ppd__summary-main {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.ppd__detail {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+.ppd__parts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-3);
+}
+
+.ppd__part {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.ppd__part-title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ppd__code {
+  margin: 0;
+  max-block-size: 20rem;
+  overflow: auto;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ppd__state {
+  font-size: var(--fs-sm);
+}
+
+.ppd__state-name {
+  font-style: italic;
+}
+
+.ppd__diff {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppd__diff-item {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+
+.ppd__diff-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ppd__changes {
+  padding-inline-start: var(--space-3);
+}
+
+.ppd__change {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+}
+
+.ppd__change-path {
+  color: var(--fg-muted);
+}
+
+.ppd__change-added,
+.ppd__change-removed {
+  padding: 0 var(--space-1);
+  border-radius: var(--r-xs);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.ppd__change-added {
+  background: var(--ok-soft);
+}
+
+.ppd__change-removed {
+  background: var(--danger-soft);
+}
+
+.ppd__row--open {
+  background: var(--accent-soft);
+}

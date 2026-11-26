@@ -24,7 +24,7 @@ const BASE = '/api/pact';
  * @param fallback - What to say when the failure carried no message.
  * @returns The parsed body.
  */
-async function readJson<T>(response: Response, fallback: string): Promise<T> {
+export async function readJson<T>(response: Response, fallback: string): Promise<T> {
   const body = (await response.json().catch(() => ({}))) as unknown;
   if (!response.ok) {
     const error = body && typeof body === 'object' ? (body as Record<string, unknown>).error : undefined;

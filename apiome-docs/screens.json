@@ -2884,7 +2884,19 @@
       "sources": [
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantDetailClient.tsx",
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantPanels.tsx",
+        "apiome-ui/src/app/components/ade/pactDetail/PactPanels.tsx",
         "apiome-ui/lib/pact-pacticipants.ts"
+      ]
+    },
+    {
+      "id": "pact-detail",
+      "route": "/ade/dashboard/pacts/pacticipants/billing-service/pacts/ledger-api",
+      "waitFor": "[data-testid=\"ppd-interaction-list\"]",
+      "data": "fixture:hive-a11y/pact-detail.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactDetail/PactDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactDetail/PactPanels.tsx",
+        "apiome-ui/lib/pact-detail.ts"
       ]
     }
   ]
