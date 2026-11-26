@@ -38,6 +38,7 @@ jest.mock('next/link', () => ({
 }));
 
 import fixture from './fixtures/pact-verification.json';
+import healthFixture from './fixtures/pact-health.json';
 import PactVerificationClient from '../src/app/components/ade/pactVerification/PactVerificationClient';
 import VerificationResultClient from '../src/app/components/ade/pactVerification/VerificationResultClient';
 import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
@@ -45,6 +46,16 @@ import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } };
 const BASE = '/api/pact/pacticipants/ledger-api/verification';
 const RESULT_ID = fixture.detail.result.id;
+/** Ledger API's consumers' contract health (PFX-6.3): failing, and degraded (overdue; never verified). */
+const [FAILING, DEGRADED] = healthFixture.overview.pairs;
+const HEALTH = {
+  ...healthFixture.overview,
+  pairs: [
+    { ...FAILING, consumer: 'billing-service', consumer_name: 'Billing Service' },
+    { ...DEGRADED, consumer: 'reporting-job', consumer_name: 'Reporting Job' },
+    { ...DEGRADED, consumer: 'orders-ui', consumer_name: 'Orders UI' },
+  ],
+};
 
 type Answer = { status: number; body: unknown };
 let answers: Record<string, () => Answer>;
@@ -68,6 +79,7 @@ beforeEach(() => {
   calls = [];
   answers = {
     [`${BASE}/status`]: () => ({ status: 200, body: fixture.status }),
+    '/api/pact/health': () => ({ status: 200, body: HEALTH }),
     [`${BASE}/results?cursor=`]: () => ({
       status: 200,
       body: { ...fixture.history, results: [{ ...fixture.history.results[3], id: 'older-1', number: 9 }], next_cursor: null },
@@ -133,7 +145,9 @@ describe('PactVerificationClient', () => {
       'https://ci.example.com/ledger-api/builds/412',
     );
     expect(screen.getByTestId('pvx-history-bb22cc33-dd44-4e55-8f66-778899aabbcc')).toHaveTextContent('Not recorded');
-    expect(gets()).toEqual([`${BASE}/status`, `${BASE}/results`]);
+    expect(await screen.findByTestId('pvx-health-billing-service')).toHaveTextContent('Failing');
+    expect(screen.getByTestId('pvx-health-orders-ui')).toHaveTextContent('Degraded');
+    expect(gets()).toEqual([`${BASE}/status`, `${BASE}/results`, '/api/pact/health?provider=ledger-api']);
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-verification', liveMarkup(container.firstElementChild!));
   });
@@ -184,7 +198,9 @@ describe('PactVerificationClient', () => {
     expect(within(dialog).getByTestId('pvx-run-close')).toHaveTextContent('Done');
     fireEvent.click(within(dialog).getByTestId('pvx-run-close'));
     await waitFor(() => expect(screen.queryByTestId('pvx-run-dialog')).not.toBeInTheDocument());
-    await waitFor(() => expect(gets().slice(before)).toEqual([`${BASE}/status`, `${BASE}/results`]));
+    await waitFor(() =>
+      expect(gets().slice(before)).toEqual([`${BASE}/status`, `${BASE}/results`, '/api/pact/health?provider=ledger-api']),
+    );
   });
 
   it('shows REST’s refusal of a run and keeps the dialog open', async () => {

@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.863.0] - 2026-11-26
+
+### Added
+- **Contract health rollup and verification analytics (PFX-6.3, #6955).** OpenAPI 1.687.0,
+  apiome-db V449.
+  - **Health.** `GET /v1/tenants/{t}/pact-health` (`window` = `7d` / `30d` (default) / `90d`,
+    `provider`, `consumer`, `state`): every consumer ↔ provider pair with a pact, rolled up into one
+    state (`healthy`, `degraded`, `failing`, `unknown`) fused from six signals, each `ok` / `warn` /
+    `fail` / `unknown` with a `pact-health-…` reason code: the newest pact's latest verdict (never
+    verified is a warning), the window's pass rate (≥ 95 % ok, ≥ 80 % warn), flakiness (verdict flips
+    between consecutive results; ≤ 10 % ok, ≤ 30 % warn; judged from three results), overdue (the
+    PFX-6.2 sweep's record for the newest pact), an open re-publish request, and the newest firing of
+    each contract webhook for the pair (dead-lettered = warn). The worst signal wins; `unknown`
+    signals never make a pair worse. Worst first, at most 500 pairs (`truncated`, `omitted_pairs`);
+    `counts` cover every pair the provider/consumer filter matches; `totals` the listed pairs'
+    analytics.
+  - **One pair.** `GET …/pact-health/providers/{provider}/consumers/{consumer}` (`window`): the pair's
+    health and its **trend** — one bucket per day (per week for `90d`), oldest first, empty ones
+    included — with runs, pass rate, flips, flakiness and mean duration (`timed_runs`: results from
+    verifiers outside Apiome carry no duration).
+  - Both need `pacts:view`; an unknown `window` or `state` is `400 pact-health-window-invalid` /
+    `pact-health-state-invalid`; a pair with no pact is `404 pact-health-pair-not-found`. Computed on
+    every read; nothing stored. SLA, consent and dispute signals are CAG-10.4 (#7025).
+  - apiome-db V449 adds `idx_verification_result_tenant_window (tenant_id, created_at)`.
+
 ## [1.862.0] - 2026-11-26
 
 ### Added

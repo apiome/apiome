@@ -46023,6 +46023,206 @@ tr[data-selected="true"] > td:first-child {
   white-space: pre-wrap;
 }
 
+/* ---------------------------------------------------------------------------------------------
+ * Contract health rollup and analytics — PFX-6.3 (#6955). Built on the Pacticipants (.ppx),
+ * Matrix (.pmx) and Verification (.pvx) classes; these add the filters, a pair's signals and the
+ * trend charts (SVG drawn with these classes only).
+ * --------------------------------------------------------------------------------------------- */
+
+.phx-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.phx-kpi--healthy dd {
+  color: var(--ok-fg);
+}
+
+.phx-kpi--degraded dd {
+  color: var(--warn-fg);
+}
+
+.phx-kpi--failing dd,
+.phx-kpi--failed dd {
+  color: var(--danger-fg);
+}
+
+.phx-generated {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-xs);
+}
+
+.phx-concerns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phx-concern {
+  padding: 0 var(--space-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+}
+
+.phx-concern--fail {
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+
+.phx-concern--warn {
+  background: var(--warn-soft);
+  color: var(--warn-fg);
+}
+
+.phx-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+}
+
+.phx-signals {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phx-signal {
+  display: grid;
+  grid-template-columns: minmax(9rem, 12rem) 6.5rem 1fr;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) 0;
+  border-block-end: 1px solid var(--border);
+}
+
+.phx-signal:last-child {
+  border-block-end: 0;
+}
+
+.phx-signal__name {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.phx-signal > :nth-child(2) {
+  justify-self: start;
+}
+
+.phx-signal__why {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.phx-signal__code {
+  grid-column: 3;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 640px) {
+  .phx-signal {
+    grid-template-columns: 1fr auto;
+  }
+
+  .phx-signal__why,
+  .phx-signal__code {
+    grid-column: 1 / -1;
+  }
+}
+
+.phx-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+}
+
+.phx-chart {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.phx-chart__title {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.phx-chart__latest {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.phx-chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.phx-chart__axis {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+
+.phx-chart__grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.phx-chart__line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.phx-chart__dot {
+  fill: var(--accent);
+}
+
+.phx-chart--flakiness .phx-chart__line {
+  stroke: var(--warn);
+}
+
+.phx-chart--flakiness .phx-chart__dot {
+  fill: var(--warn);
+}
+
+.phx-chart__days {
+  display: flex;
+  justify-content: space-between;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.phx-row--empty {
+  color: var(--fg-muted);
+}
+
+.pvx-health {
+  display: inline-flex;
+  margin-inline-start: var(--space-2);
+}
+
 /* ===========================================================================
  * Contracts — Webhooks and execution log (PFX-5.6, #6950). Built on the
  * Pacticipants (.ppx) and Matrix (.pmx) classes; these add the editor's layout

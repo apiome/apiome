@@ -1,0 +1,145 @@
+---
+title: Contract health and verification analytics
+description: Roll each pact pair into one health state, with pass-rate and flakiness trends.
+sidebar_position: 4.17
+tags: [contracts, pact, verification, ui, rest]
+---
+
+import Screenshot from '@site/src/components/Screenshot';
+
+**Contract health** rolls every consumer ↔ provider pair with a pact into one state, built from what
+the Pact Broker already records about it: verification results, staleness, re-publish requests and
+webhook deliveries. It also shows how each pair's verification has trended: its **pass rate**, its
+**flakiness** (how often the verdict flips) and its **mean duration**, per day or per week.
+
+Health is worked out each time you open the page. Nothing is stored, and nothing needs turning on.
+
+## Before you start
+
+- You hold **Pacts** → **View**. Without it, the page shows **Permission denied**.
+- A pair appears once its consumer [publishes a pact](./publish-pacts.mdx). Its trends fill in as
+  [verification results](./verification-results.mdx) are published.
+
+## Open Contract health
+
+1. In the rail, under **Ship**, click **Contracts**.
+2. On **Pacticipants**, click **Contract health**.
+
+<Screenshot id="pact-health" alt="The Contract health page: a strip of counts (3 pairs, 1 healthy, 1 degraded, 1 failing, 87% pass rate, 17% flakiness), then the pairs worst first: Orders UI → Ledger API failing on its latest verdict, pass rate and flakiness, Billing Service → Ledger API degraded because it is overdue with an open re-publish request, and Orders UI → Inventory API healthy."/>
+
+The strip at the top counts the pairs in each state, and gives the pass rate, flakiness and mean
+duration of every listed pair together.
+
+The **Pairs** table lists the pairs worst first: **Failing**, then **Degraded**, **Unknown** and
+**Healthy**, then by provider and consumer.
+
+| Column | What it shows |
+| --- | --- |
+| **Pair** | The consumer and provider. Click it to open the pair's page. |
+| **Health** | The pair's state (see below). |
+| **Concerns** | Each signal that fails or warns, failing first. Hover one to read why. |
+| **Runs** | Verification results published in the window. |
+| **Pass rate** | The share of those results that passed. |
+| **Flakiness** | How often the verdict changed from one result to the next. |
+| **Mean duration** | The mean run time of the results that carry one. |
+| **Last verified** | When the newest pact's newest result was published. |
+
+Use the two lists above the table to narrow it:
+
+- **Window**: **Last 7 days**, **Last 30 days** (the default) or **Last 90 days**.
+- **State**: one state, or **Every state**.
+
+Both are kept in the page address, so you can share the view. The counts still cover every pair. The
+page lists at most 500 pairs; if more match, it says how many are left out, so narrow it by state.
+
+## How a pair's health is worked out
+
+Each pair has six **signals**. Each one is **OK**, **Warning**, **Failing** or **No evidence**:
+
+| Signal | OK | Warning | Failing | No evidence |
+| --- | --- | --- | --- | --- |
+| **Latest verdict** | The newest pact's newest result passed. | The newest pact has no result yet. | The newest pact's newest result failed. | — |
+| **Pass rate** | 95% or more of the window's results passed. | 80% to 95%. | Under 80%. | No result in the window. |
+| **Flakiness** | The verdict changed between 10% or fewer of consecutive results. | Over 10%, up to 30%. | Over 30%. | Fewer than three results in the window. |
+| **Overdue** | The newest pact was verified within its [stale threshold](./stale-pacts.mdx). | It was not. | — | The stale-pact sweep has not checked the newest pact yet. |
+| **Re-publish request** | No request is open. | A [re-publish request](./stale-pacts.mdx#re-publish-requests) to the consumer is open. | — | — |
+| **Webhooks** | The newest delivery of each [contract webhook](./webhooks-console.mdx) that fired for the pair did not fail. | At least one newest delivery failed for good. | — | No webhook fired for the pair in the window. |
+
+The pair's state is the worst of its signals:
+
+| State | When |
+| --- | --- |
+| **Failing** | At least one signal is failing. |
+| **Degraded** | At least one signal warns, and none fails. |
+| **Healthy** | Every signal with evidence is OK. |
+| **Unknown** | No signal has evidence yet. |
+
+A signal with **No evidence** never makes a pair worse. It is still listed on the pair's page, so you
+can see what was not checked.
+
+:::note Flakiness counts flips, not failures
+Results *passed, failed, passed, failed* have a pass rate of 50% and a flakiness of 100%: the verdict
+changed every time. Results *passed, passed, failed, failed* have the same pass rate but a flakiness
+of 33%: one change in three. A pair that fails steadily is failing; a pair that flips is flaky, which
+usually means a test that depends on timing, data or order.
+:::
+
+## Open a pair
+
+Click a pair. Its page shows:
+
+<Screenshot id="pact-pair-health" alt="The health of Orders UI → Ledger API over the last 7 days: Failing; the newest pact 4.2.0; 14 runs, 5 failed, 64% pass rate, 6 verdict flips, 46% flakiness, 2.1 s mean duration; and the six signals with their reasons: latest verdict, pass rate and flakiness failing, webhooks warning."/>
+
+- **Health**: the pair's state, its newest pact, when that was published and last verified, and the
+  window's runs, failures, pass rate, verdict flips, flakiness and mean duration. If a re-publish
+  request is open, **Open re-publish request** opens it.
+- **Signals**: each of the six signals with its status, why, and its reason code (for example
+  `pact-health-pass-rate-low`).
+- **Trends**: a chart each for **Pass rate**, **Flakiness** and **Mean duration**, one point per day
+  (per week for **Last 90 days**). A day with no result has no point, so the line breaks there
+  rather than dropping to zero. Hover a point to read its day and value.
+- **Trend**: the same numbers as a table, newest first, with days that had no result included.
+
+<Screenshot id="pact-pair-health-trends" alt="The Trends of Orders UI → Ledger API over the last 7 days: pass-rate, flakiness and mean-duration charts with a gap on 2026-11-23, when nothing was verified, and the Trend table with one row per day from 2026-11-26 back to 2026-11-20."/>
+
+Results published by a verifier outside Apiome often carry no duration. They count towards the pass
+rate and flakiness, but not the mean duration, and the page says how many were left out.
+
+Change the **Window** list to see another window. **Pact** opens the pact, and **Verification** opens
+the provider's [Verification page](./verification-console.mdx) narrowed to this consumer.
+
+## On the Verification page
+
+The provider's [Verification page](./verification-console.mdx) shows each consumer's health state
+next to its name. Click it to open the pair's health.
+
+## Who can do what
+
+| To | You need |
+| --- | --- |
+| Open Contract health and a pair's health | **Pacts** → **View** |
+
+Every read is scoped to your current workspace: another workspace's pairs never appear, and naming
+another workspace's pacticipant answers *not found*.
+
+## REST API
+
+| Method and path | What it does |
+| --- | --- |
+| `GET /v1/tenants/{tenant}/pact-health` | Every pair's health over a `window` (`7d`, `30d` or `90d`), worst first. Narrow by `provider`, `consumer` and `state`. |
+| `GET …/pact-health/providers/{provider}/consumers/{consumer}` | One pair's health and its trend, one bucket per day (per week for `90d`). |
+
+Each signal carries a `status`, a reason `code` and a `summary`. An unknown `window` or `state`
+answers `400` (`pact-health-window-invalid`, `pact-health-state-invalid`); a consumer with no pact
+for the provider answers `404` (`pact-health-pair-not-found`). See the
+[REST reference](/reference/rest/pact-broker).
+
+Health covers Pact signals only. SLA breaches, consent and disputes on an agreement are added by the
+contract agreements work, which builds on this rollup.
+
+## Related
+
+- [Verification results and re-runs](./verification-console.mdx)
+- [Stale pacts and verification scheduling](./stale-pacts.mdx)
+- [Webhooks and delivery log](./webhooks-console.mdx)
+- [Publish verification results](./verification-results.mdx)

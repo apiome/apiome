@@ -1,0 +1,25 @@
+---
+slug: pact-contract-health
+title: "Contract health and verification analytics"
+description: "See each pact pair's health in one state, with pass-rate and flakiness trends."
+authors: [apiome]
+---
+
+Every consumer ↔ provider pair now has one health state, and its verification has a history you can
+read. On **Pacticipants**, click **Contract health**. See
+[Contract health and verification analytics](/ship/pact-broker/contract-health).
+
+{/* truncate */}
+
+- **One state per pair.** **Healthy**, **Degraded**, **Failing** or **Unknown**, fused from six
+  signals: the newest pact's latest verdict, the window's pass rate and flakiness, whether the pact
+  is overdue, an open re-publish request, and failed contract-webhook deliveries. Each signal says
+  **OK**, **Warning**, **Failing** or **No evidence**, and why. Pairs are listed worst first.
+- **Trends.** A pair's page charts its **pass rate**, **flakiness** (how often the verdict flips
+  between one result and the next) and **mean duration** per day, or per week over 90 days, with the
+  same numbers in a table. Choose **Last 7 days**, **Last 30 days** or **Last 90 days**.
+- **On the Verification page.** Each consumer's health state sits next to its name and opens the
+  pair's health.
+
+Health is worked out on every read, so there is nothing to turn on. It needs **Pacts** → **View**.
+The REST API has it under `/v1/tenants/{tenant}/pact-health` (REST API 1.687.0).

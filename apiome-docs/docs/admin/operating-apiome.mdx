@@ -1079,6 +1079,13 @@ sweep runs every `APIOME_PACT_REMEDIATION_INTERVAL` seconds (default 300); set
 `APIOME_PACT_REMEDIATION_ENABLED=false` to hold it. Workspaces start on **Manual only**, so no
 scheduled verification runs until someone chooses a cadence and a verification target.
 
+`V449` (PFX-6.3) adds one index, `idx_verification_result_tenant_window (tenant_id, created_at)`,
+so [Contract health](../ship/pact-broker/contract-health.mdx) reads a workspace's verification
+results inside its window without scanning every workspace's. It changes no table. On a large
+`verification_result`, build it concurrently first as above
+(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_verification_result_tenant_window ON
+apiome.verification_result (tenant_id, created_at)`); the migration then skips it.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's

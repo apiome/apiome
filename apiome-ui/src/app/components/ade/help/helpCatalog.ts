@@ -1421,6 +1421,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contracts', 'overdue', 'threshold', 'cadence', 'nightly', 'hourly', 'on publish', 'schedule', 're-publish', 'republish', 'acknowledge', 'escalation', 'verification settings'],
   },
   {
+    id: 'contract-health',
+    title: 'Contract health and verification analytics',
+    summary: 'See each pact pair rolled up into one health state, with pass-rate, flakiness and duration trends.',
+    page: 'apiome-docs/docs/ship/pact-broker/contract-health.mdx',
+    section: 'reference',
+    keywords: ['pact', 'rollup', 'pass rate', 'flaky', 'flakiness', 'duration', 'trend', 'degraded', 'failing', 'signals'],
+  },
+  {
     id: 'webhooks-console',
     title: 'Webhooks and delivery log',
     summary: 'Create, test, enable and delete contract webhooks, read each delivery and redeliver one.',

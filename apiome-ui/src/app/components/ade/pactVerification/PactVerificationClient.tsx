@@ -39,6 +39,8 @@ import { CliSnippet } from '../pactPacticipants/PacticipantPanels';
 import { describeFailure } from '../pactPacticipants/describeFailure';
 import { verifySnippet } from '../pactDetail/PactDetailClient';
 import { CadenceLine, HistoryTable, KpiStrip, RunDialog, StatusTable, type RunRequest } from './VerificationPanels';
+import { healthByConsumer, type PairHealth } from '@lib/pact-health';
+import { fetchHealth } from '../pactHealth/healthApi';
 import {
   fetchTargetOptions,
   fetchVerificationHistory,
@@ -128,6 +130,8 @@ export function SectionError({ title, error, onRetry }: { title: string; error: 
 export default function PactVerificationClient({ slug, consumer }: { slug: string; consumer: string | null }) {
   const router = useRouter();
   const [status, setStatus] = React.useState<StatusRead>({ data: null, error: null });
+  /** Each consumer's contract health (PFX-6.3); empty when it could not be read. */
+  const [health, setHealth] = React.useState<Record<string, PairHealth>>({});
   const [history, setHistory] = React.useState<HistoryRead>({
     results: [],
     next: null,
@@ -148,6 +152,10 @@ export default function PactVerificationClient({ slug, consumer }: { slug: strin
     } catch (caught) {
       setStatus({ data: null, error: describeFailure(caught, 'Could not load the verification status') });
     }
+    // The health badges are a convenience: the page stands without them.
+    fetchHealth({ provider: slug })
+      .then((overview) => setHealth(healthByConsumer(overview)))
+      .catch(() => setHealth({}));
   }, [slug]);
 
   const loadHistory = React.useCallback(
@@ -296,6 +304,7 @@ export default function PactVerificationClient({ slug, consumer }: { slug: strin
                 <StatusTable
                   entries={data.pacts}
                   provider={slug}
+                  health={health}
                   onRerun={(entry) => {
                     ranRef.current = false;
                     openRun({

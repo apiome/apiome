@@ -51,6 +51,8 @@ import {
   type TargetOption,
   type VerificationStatusEntry,
 } from '@lib/pact-verification';
+import { healthStateText, pairHealthRoute, type PairHealth } from '@lib/pact-health';
+import { HealthStateBadge } from '../pactHealth/HealthPanels';
 
 /**
  * A result's verdict as a badge.
@@ -162,10 +164,13 @@ export function StatusTable({
   entries,
   provider,
   onRerun,
+  health = {},
 }: {
   entries: VerificationStatusEntry[];
   provider: string;
   onRerun: (entry: VerificationStatusEntry) => void;
+  /** Each consumer's contract health (PFX-6.3), by consumer handle; a missing one shows no badge. */
+  health?: Record<string, PairHealth>;
 }) {
   return (
     <div className="ppx__table-wrap">
@@ -192,6 +197,16 @@ export function StatusTable({
                   <Link className="ppx__link ppx__name" href={pactRoute(entry.consumer, provider)}>
                     {entry.consumer_name}
                   </Link>
+                  {health[entry.consumer] ? (
+                    <Link
+                      className="pvx-health"
+                      href={pairHealthRoute(provider, entry.consumer)}
+                      aria-label={`${entry.consumer_name}'s contract health: ${healthStateText(health[entry.consumer].state).label}`}
+                      data-testid={`pvx-health-${entry.consumer}`}
+                    >
+                      <HealthStateBadge state={health[entry.consumer].state} />
+                    </Link>
+                  ) : null}
                 </th>
                 <td>
                   <span className="ppx__mono" title={entry.consumer_version}>

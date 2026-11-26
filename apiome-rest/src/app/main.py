@@ -147,6 +147,7 @@ from .pact_deployment_routes import router as pact_deployment_router
 from .pact_postman_routes import router as pact_postman_router
 from .pact_suite_routes import router as pact_suite_router
 from .pact_remediation_routes import router as pact_remediation_router
+from .pact_health_routes import router as pact_health_router
 from .pact_verification_ops_routes import router as pact_verification_ops_router
 from .pact_verifier_routes import router as pact_verifier_router
 from .pact_provider_state_routes import router as pact_provider_state_router
@@ -593,6 +594,7 @@ app.include_router(pact_suite_router)  # PFX-3.1 (#6931): pact version → contr
 app.include_router(pact_verifier_router)  # PFX-3.2 (#6932): hosted provider verifier
 app.include_router(pact_verification_ops_router)  # PFX-5.5 (#6949): verification results and operations
 app.include_router(pact_remediation_router)  # PFX-6.2 (#6954): verification settings, re-publish requests
+app.include_router(pact_health_router)  # PFX-6.3 (#6955): contract health rollup and verification analytics
 app.include_router(pact_provider_state_router)  # PFX-3.3 (#6933): provider-state registry
 app.include_router(pact_broker_environment_router)
 app.include_router(pact_broker_matrix_router)
