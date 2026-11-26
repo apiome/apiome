@@ -30,7 +30,7 @@ That opens the provider's page with the history narrowed to that consumer.
 
 The page is at `/ade/dashboard/pacts/pacticipants/<provider>/verification`.
 
-<Screenshot id="pact-verification" alt="The Ledger API verification page: a strip of counts (3 pacts, 1 verified, 1 failing, 1 stale, 86% of interactions passing), the newest pact of Billing Service, Orders UI and Reporting Job with their results and Re-run buttons, and the history of results with trigger, duration and build."/>
+<Screenshot id="pact-verification" alt="The Ledger API verification page: a strip of counts (3 pacts, 1 verified, 1 failing, 1 stale, 86% of interactions passing), the newest pact of Billing Service (Failing), Orders UI and Reporting Job (both Degraded) with their health, results and Re-run buttons, and the history of results with trigger, duration and build."/>
 
 ## Read where the provider stands
 
@@ -48,7 +48,8 @@ The strip at the top counts the newest pact of each consumer:
 
 The **Pacts** table lists each consumer's newest pact: the consumer version and pact version, the
 newest result with its verdict, and the provider version that published it. Click **Result N** to
-open that result.
+open that result. Next to each consumer's name, its [contract health](./contract-health.mdx) state
+(**Healthy**, **Degraded**, **Failing** or **Unknown**) opens the pair's health and trends.
 
 **A stale pact** has no verification result. Its consumer changed the pact since the provider last
 verified it, or the provider never verified it. It is marked **Stale — not verified**. A stale pact
@@ -177,6 +178,7 @@ Every read and run is scoped to your current workspace.
 ## Related
 
 - [Stale pacts and verification scheduling](./stale-pacts.mdx)
+- [Contract health and verification analytics](./contract-health.mdx)
 - [Publish verification results](./verification-results.mdx)
 - [Verify a provider from Apiome](./hosted-verification.mdx)
 - [Pact detail](./pact-detail.mdx)

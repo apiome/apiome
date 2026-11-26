@@ -1,0 +1,381 @@
+{
+  "overview": {
+    "window": "30d",
+    "since": "2026-10-28T00:00:00+00:00",
+    "until": "2026-11-27T00:00:00+00:00",
+    "bucket_days": 1,
+    "generated_at": "2026-11-26T12:00:00+00:00",
+    "counts": {
+      "pairs": 3,
+      "healthy": 1,
+      "degraded": 1,
+      "failing": 1,
+      "unknown": 0
+    },
+    "totals": {
+      "runs": 39,
+      "passed": 34,
+      "failed": 5,
+      "pass_rate": 0.8717948717948718,
+      "flips": 6,
+      "flakiness": 0.16666666666666666,
+      "timed_runs": 37,
+      "mean_duration_ms": 1243.7837837837837
+    },
+    "pairs": [
+      {
+        "provider": "ledger-api",
+        "provider_name": "Ledger API",
+        "consumer": "orders-ui",
+        "consumer_name": "Orders UI",
+        "pact_version_sha": "3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c",
+        "consumer_version": "4.2.0",
+        "published_at": "2026-11-20T08:00:00+00:00",
+        "state": "failing",
+        "components": [
+          {
+            "key": "latest-verdict",
+            "status": "fail",
+            "code": "pact-health-latest-failed",
+            "summary": "The newest pact failed verification."
+          },
+          {
+            "key": "pass-rate",
+            "status": "fail",
+            "code": "pact-health-pass-rate-low",
+            "summary": "64% of 14 results passed, below the 95% a healthy pair keeps."
+          },
+          {
+            "key": "flakiness",
+            "status": "fail",
+            "code": "pact-health-flaky",
+            "summary": "The verdict changed 6 of 13 times from one result to the next (46%): the verification is flaky."
+          },
+          {
+            "key": "overdue",
+            "status": "ok",
+            "code": "pact-health-up-to-date",
+            "summary": "The newest pact was verified within its stale threshold."
+          },
+          {
+            "key": "republish-request",
+            "status": "ok",
+            "code": "pact-health-no-republish-request",
+            "summary": "No re-publish request is open."
+          },
+          {
+            "key": "webhooks",
+            "status": "warn",
+            "code": "pact-health-webhooks-failing",
+            "summary": "The newest delivery of 1 of 2 webhooks failed."
+          }
+        ],
+        "metrics": {
+          "runs": 14,
+          "passed": 9,
+          "failed": 5,
+          "pass_rate": 0.6428571428571429,
+          "flips": 6,
+          "flakiness": 0.46153846153846156,
+          "timed_runs": 14,
+          "mean_duration_ms": 2150.0
+        },
+        "latest_success": false,
+        "latest_verified_at": "2026-11-26T09:12:00+00:00",
+        "republish_request_id": null
+      },
+      {
+        "provider": "ledger-api",
+        "provider_name": "Ledger API",
+        "consumer": "billing-service",
+        "consumer_name": "Billing Service",
+        "pact_version_sha": "9ab09ab09ab09ab09ab09ab09ab09ab09ab09ab09ab09ab09ab09ab09ab09ab0",
+        "consumer_version": "1.4.0",
+        "published_at": "2026-11-18T10:30:00+00:00",
+        "state": "degraded",
+        "components": [
+          {
+            "key": "latest-verdict",
+            "status": "ok",
+            "code": "pact-health-latest-passed",
+            "summary": "The newest pact passed verification."
+          },
+          {
+            "key": "pass-rate",
+            "status": "ok",
+            "code": "pact-health-pass-rate-ok",
+            "summary": "100% of 3 results passed."
+          },
+          {
+            "key": "flakiness",
+            "status": "ok",
+            "code": "pact-health-not-flaky",
+            "summary": "The verdict changed 0 of 2 times from one result to the next (0%)."
+          },
+          {
+            "key": "overdue",
+            "status": "warn",
+            "code": "pact-health-overdue",
+            "summary": "The newest pact has not been verified within its stale threshold since 2026-11-24T16:40:00+00:00."
+          },
+          {
+            "key": "republish-request",
+            "status": "warn",
+            "code": "pact-health-republish-request-open",
+            "summary": "A re-publish request to the consumer is open."
+          },
+          {
+            "key": "webhooks",
+            "status": "ok",
+            "code": "pact-health-webhooks-delivered",
+            "summary": "The newest delivery of each of 1 webhooks did not fail."
+          }
+        ],
+        "metrics": {
+          "runs": 3,
+          "passed": 3,
+          "failed": 0,
+          "pass_rate": 1.0,
+          "flips": 0,
+          "flakiness": 0.0,
+          "timed_runs": 1,
+          "mean_duration_ms": 1840.0
+        },
+        "latest_success": true,
+        "latest_verified_at": "2026-11-21T16:40:00+00:00",
+        "republish_request_id": "6b1f2a9e-0c3d-4e5f-8a7b-1c2d3e4f5a6b"
+      },
+      {
+        "provider": "inventory-api",
+        "provider_name": "Inventory API",
+        "consumer": "orders-ui",
+        "consumer_name": "Orders UI",
+        "pact_version_sha": "5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e5d2e",
+        "consumer_version": "4.2.0",
+        "published_at": "2026-11-19T07:00:00+00:00",
+        "state": "healthy",
+        "components": [
+          {
+            "key": "latest-verdict",
+            "status": "ok",
+            "code": "pact-health-latest-passed",
+            "summary": "The newest pact passed verification."
+          },
+          {
+            "key": "pass-rate",
+            "status": "ok",
+            "code": "pact-health-pass-rate-ok",
+            "summary": "100% of 22 results passed."
+          },
+          {
+            "key": "flakiness",
+            "status": "ok",
+            "code": "pact-health-not-flaky",
+            "summary": "The verdict changed 0 of 21 times from one result to the next (0%)."
+          },
+          {
+            "key": "overdue",
+            "status": "ok",
+            "code": "pact-health-up-to-date",
+            "summary": "The newest pact was verified within its stale threshold."
+          },
+          {
+            "key": "republish-request",
+            "status": "ok",
+            "code": "pact-health-no-republish-request",
+            "summary": "No re-publish request is open."
+          },
+          {
+            "key": "webhooks",
+            "status": "ok",
+            "code": "pact-health-webhooks-delivered",
+            "summary": "The newest delivery of each of 1 webhooks did not fail."
+          }
+        ],
+        "metrics": {
+          "runs": 22,
+          "passed": 22,
+          "failed": 0,
+          "pass_rate": 1.0,
+          "flips": 0,
+          "flakiness": 0.0,
+          "timed_runs": 22,
+          "mean_duration_ms": 640.0
+        },
+        "latest_success": true,
+        "latest_verified_at": "2026-11-26T08:05:00+00:00",
+        "republish_request_id": null
+      }
+    ],
+    "truncated": false,
+    "omitted_pairs": 0
+  },
+  "detail": {
+    "window": "7d",
+    "since": "2026-11-20T00:00:00+00:00",
+    "until": "2026-11-27T00:00:00+00:00",
+    "bucket_days": 1,
+    "generated_at": "2026-11-26T12:00:00+00:00",
+    "pair": {
+      "provider": "ledger-api",
+      "provider_name": "Ledger API",
+      "consumer": "orders-ui",
+      "consumer_name": "Orders UI",
+      "pact_version_sha": "3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c3f1c",
+      "consumer_version": "4.2.0",
+      "published_at": "2026-11-20T08:00:00+00:00",
+      "state": "failing",
+      "components": [
+        {
+          "key": "latest-verdict",
+          "status": "fail",
+          "code": "pact-health-latest-failed",
+          "summary": "The newest pact failed verification."
+        },
+        {
+          "key": "pass-rate",
+          "status": "fail",
+          "code": "pact-health-pass-rate-low",
+          "summary": "64% of 14 results passed, below the 95% a healthy pair keeps."
+        },
+        {
+          "key": "flakiness",
+          "status": "fail",
+          "code": "pact-health-flaky",
+          "summary": "The verdict changed 6 of 13 times from one result to the next (46%): the verification is flaky."
+        },
+        {
+          "key": "overdue",
+          "status": "ok",
+          "code": "pact-health-up-to-date",
+          "summary": "The newest pact was verified within its stale threshold."
+        },
+        {
+          "key": "republish-request",
+          "status": "ok",
+          "code": "pact-health-no-republish-request",
+          "summary": "No re-publish request is open."
+        },
+        {
+          "key": "webhooks",
+          "status": "warn",
+          "code": "pact-health-webhooks-failing",
+          "summary": "The newest delivery of 1 of 2 webhooks failed."
+        }
+      ],
+      "metrics": {
+        "runs": 14,
+        "passed": 9,
+        "failed": 5,
+        "pass_rate": 0.6428571428571429,
+        "flips": 6,
+        "flakiness": 0.46153846153846156,
+        "timed_runs": 14,
+        "mean_duration_ms": 2150.0
+      },
+      "latest_success": false,
+      "latest_verified_at": "2026-11-26T09:12:00+00:00",
+      "republish_request_id": null
+    },
+    "trend": [
+      {
+        "start": "2026-11-20T00:00:00+00:00",
+        "end": "2026-11-21T00:00:00+00:00",
+        "metrics": {
+          "runs": 2,
+          "passed": 2,
+          "failed": 0,
+          "pass_rate": 1.0,
+          "flips": 0,
+          "flakiness": 0.0,
+          "timed_runs": 2,
+          "mean_duration_ms": 2050.0
+        }
+      },
+      {
+        "start": "2026-11-21T00:00:00+00:00",
+        "end": "2026-11-22T00:00:00+00:00",
+        "metrics": {
+          "runs": 2,
+          "passed": 1,
+          "failed": 1,
+          "pass_rate": 0.5,
+          "flips": 1,
+          "flakiness": 0.5,
+          "timed_runs": 2,
+          "mean_duration_ms": 2200.0
+        }
+      },
+      {
+        "start": "2026-11-22T00:00:00+00:00",
+        "end": "2026-11-23T00:00:00+00:00",
+        "metrics": {
+          "runs": 3,
+          "passed": 2,
+          "failed": 1,
+          "pass_rate": 0.6666666666666666,
+          "flips": 2,
+          "flakiness": 0.6666666666666666,
+          "timed_runs": 3,
+          "mean_duration_ms": 2100.0
+        }
+      },
+      {
+        "start": "2026-11-23T00:00:00+00:00",
+        "end": "2026-11-24T00:00:00+00:00",
+        "metrics": {
+          "runs": 0,
+          "passed": 0,
+          "failed": 0,
+          "pass_rate": null,
+          "flips": 0,
+          "flakiness": null,
+          "timed_runs": 0,
+          "mean_duration_ms": null
+        }
+      },
+      {
+        "start": "2026-11-24T00:00:00+00:00",
+        "end": "2026-11-25T00:00:00+00:00",
+        "metrics": {
+          "runs": 2,
+          "passed": 1,
+          "failed": 1,
+          "pass_rate": 0.5,
+          "flips": 1,
+          "flakiness": 0.5,
+          "timed_runs": 2,
+          "mean_duration_ms": 2100.0
+        }
+      },
+      {
+        "start": "2026-11-25T00:00:00+00:00",
+        "end": "2026-11-26T00:00:00+00:00",
+        "metrics": {
+          "runs": 3,
+          "passed": 1,
+          "failed": 2,
+          "pass_rate": 0.3333333333333333,
+          "flips": 2,
+          "flakiness": 0.6666666666666666,
+          "timed_runs": 3,
+          "mean_duration_ms": 2300.0
+        }
+      },
+      {
+        "start": "2026-11-26T00:00:00+00:00",
+        "end": "2026-11-27T00:00:00+00:00",
+        "metrics": {
+          "runs": 2,
+          "passed": 2,
+          "failed": 0,
+          "pass_rate": 1.0,
+          "flips": 0,
+          "flakiness": 0.0,
+          "timed_runs": 2,
+          "mean_duration_ms": 2100.0
+        }
+      }
+    ]
+  }
+}

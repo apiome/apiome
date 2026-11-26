@@ -8,7 +8,8 @@
  * pacticipants carrying one label; **Load more** reads the next page. Each name opens the
  * pacticipant's page (versions, branches, tags, environments). The header opens the **Matrix** and
  * **Can I deploy?** pages (PFX-5.4, #6948), the **Webhooks** page (PFX-5.6, #6950) and the
- * **Environments** dashboard (PFX-5.7, #6951), and **Verification settings** (PFX-6.2, #6954).
+ * **Environments** dashboard (PFX-5.7, #6951), **Contract health** (PFX-6.3, #6955), and **Verification
+ * settings** (PFX-6.2, #6954).
  *
  * A workspace with no pacticipant shows the CLI command that registers them: publishing a pact
  * registers its consumer and its provider.
@@ -25,6 +26,7 @@ import { CAN_I_DEPLOY_ROUTE, MATRIX_ROUTE } from '@lib/pact-matrix';
 import { WEBHOOKS_ROUTE } from '@lib/pact-webhooks';
 import { ENVIRONMENTS_ROUTE } from '@lib/pact-environments';
 import { SETTINGS_ROUTE } from '@lib/pact-remediation';
+import { HEALTH_ROUTE } from '@lib/pact-health';
 import { CliSnippet, PacticipantsTable } from './PacticipantPanels';
 import { fetchLabels, fetchPacticipants } from './pacticipantsApi';
 import { describeFailure } from './describeFailure';
@@ -110,6 +112,9 @@ export default function PacticipantsListClient() {
             </Button>
             <Button variant="outline" asChild>
               <Link href={ENVIRONMENTS_ROUTE}>Environments</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href={HEALTH_ROUTE}>Contract health</Link>
             </Button>
             <Button variant="outline" asChild>
               <Link href={SETTINGS_ROUTE}>Verification settings</Link>

@@ -183,7 +183,7 @@ provider states — is guarded by the **Pacts** resource (`pacts`):
 
 | Action | Needs | Viewer | Editor | Admin | Owner |
 | --- | --- | --- | --- | --- | --- |
-| Read pacticipants, versions, pacts, results, the matrix and can-i-deploy | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Read pacticipants, versions, pacts, results, the matrix, can-i-deploy and [contract health](./contract-health.mdx) | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | Register a pacticipant, record a version, add a tag, publish pacts and verification results | `pacts:create` | — | ✓ | ✓ | ✓ |
 | Create an environment or a webhook, record a deployment or a release, create a provider state | `pacts:create` | — | ✓ | ✓ | ✓ |
 | Change a pacticipant, environment, webhook or provider state; add or remove a label | `pacts:edit` | — | ✓ | ✓ | ✓ |

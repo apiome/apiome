@@ -317,6 +317,17 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
+    // PFX-6.3 (#6955): Contract health (every pair worst first) and one pair's health with its
+    // signals and trends, dumped by `tests/pact-health-ui.test.tsx`.
+    id: 'pact-health',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-health.html', 'pact-pair-health.html'],
+    },
+  },
+  {
     // PFX-5.6 (#6950): the Webhooks page (webhooks with their newest delivery, recent deliveries),
     // one webhook (overview, request, delivery log) and one delivery (each attempt's log), dumped
     // by `tests/pact-webhooks-ui.test.tsx`.

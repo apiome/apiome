@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.686.0",
+    "version": "1.687.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -46456,6 +46456,321 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Request body for acknowledgearepublishrequestresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-health": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Read the workspace's contract health",
+        "description": "Every consumer \u2194 provider pair with a pact (PFX-6.3), rolled up into one state \u2014 `healthy`, `degraded`, `failing` or `unknown` \u2014 fused from its signals: the newest pact's latest verdict, the window's pass rate and flakiness (how often the verdict flips between consecutive results), whether the stale-pact sweep found it overdue, an open re-publish request, and failed contract-webhook deliveries. Each signal says `ok`, `warn`, `fail` or `unknown` with a reason code. Pairs are listed worst first, at most 500 (`truncated`, `omitted_pairs`). Narrow by `provider`, `consumer` and `state`; the `counts` cover every pair the provider/consumer filter matches. Computed on every read. Requires `pacts:view`.",
+        "operationId": "read_health_v1_tenants__tenant_slug__pact_health_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 8,
+                  "description": "Readtheworkspacescontracthealthwindow schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacescontracthealthwindow schema."
+                }
+              ],
+              "description": "`7d`, `30d` or `90d` (default `30d`).",
+              "title": "Window"
+            },
+            "description": "`7d`, `30d` or `90d` (default `30d`)."
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255,
+                  "description": "Readtheworkspacescontracthealthprovider schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacescontracthealthprovider schema."
+                }
+              ],
+              "description": "Only this provider's pairs.",
+              "title": "Provider"
+            },
+            "description": "Only this provider's pairs."
+          },
+          {
+            "name": "consumer",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255,
+                  "description": "Readtheworkspacescontracthealthconsumer schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacescontracthealthconsumer schema."
+                }
+              ],
+              "description": "Only this consumer's pairs.",
+              "title": "Consumer"
+            },
+            "description": "Only this consumer's pairs."
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 16,
+                  "description": "Readtheworkspacescontracthealthstate schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacescontracthealthstate schema."
+                }
+              ],
+              "description": "Only pairs in this state: `healthy`, `degraded`, `failing` or `unknown`.",
+              "title": "State"
+            },
+            "description": "Only pairs in this state: `healthy`, `degraded`, `failing` or `unknown`."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readtheworkspacescontracthealthauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacescontracthealthauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readtheworkspacescontracthealth Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacescontracthealth Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read the workspace's contract health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactHealthOverview",
+                  "description": "Response payload for readtheworkspacescontracthealthresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-health-window-invalid` or `pact-health-state-invalid`."
+          },
+          "404": {
+            "description": "`pacticipant-not-found` for the `provider` or `consumer` filter."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readtheworkspacescontracthealthresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-health/providers/{provider}/consumers/{consumer}": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Read one pair's contract health and trends",
+        "description": "One consumer \u2194 provider pair's health (PFX-6.3) \u2014 its state, every fused signal and the window's analytics \u2014 and its **trend**: one bucket per day for `7d` and `30d`, per week for `90d`, oldest first and empty ones included, each with runs, pass rate, verdict flips, flakiness and mean duration. `{provider}` and `{consumer}` are handles, ids or names. Requires `pacts:view`.",
+        "operationId": "read_pair_health_v1_tenants__tenant_slug__pact_health_providers__provider__consumers__consumer__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "consumer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Consumer",
+              "description": "Consumer schema."
+            },
+            "description": "Path parameter identifying the consumer segment."
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 8,
+                  "description": "Readonepairscontracthealthandtrendswindow schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonepairscontracthealthandtrendswindow schema."
+                }
+              ],
+              "description": "`7d`, `30d` or `90d` (default `30d`).",
+              "title": "Window"
+            },
+            "description": "`7d`, `30d` or `90d` (default `30d`)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonepairscontracthealthandtrendsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonepairscontracthealthandtrendsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readonepairscontracthealthandtrends Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readonepairscontracthealthandtrends Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read one pair's contract health and trends.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactPairHealthDetail",
+                  "description": "Response payload for readonepairscontracthealthandtrendsresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-health-window-invalid`."
+          },
+          "404": {
+            "description": "`pacticipant-not-found`, or `pact-health-pair-not-found` when the consumer has published no pact for the provider."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readonepairscontracthealthandtrendsresponse422."
                 }
               }
             }
@@ -229939,6 +230254,167 @@
         "title": "PactGeneratorEntry",
         "description": "One generator: a value the verifier substitutes for the example."
       },
+      "PactHealthComponent": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "`latest-verdict`, `pass-rate`, `flakiness`, `overdue`, `republish-request` or `webhooks`.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`ok`, `warn`, `fail` or `unknown` (no evidence either way).",
+            "example": "active"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "A stable reason code (`pact-health-\u2026`).",
+            "example": "example"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "One sentence saying why.",
+            "example": "List pets"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "status",
+          "code",
+          "summary"
+        ],
+        "title": "PactHealthComponent",
+        "description": "One signal fused into a pair's health."
+      },
+      "PactHealthCounts": {
+        "properties": {
+          "pairs": {
+            "type": "integer",
+            "title": "Pairs",
+            "description": "Pairs with a pact (before the `state` filter).",
+            "example": 1
+          },
+          "healthy": {
+            "type": "integer",
+            "title": "Healthy",
+            "description": "Pairs whose signals are all ok (or unknown).",
+            "example": 1
+          },
+          "degraded": {
+            "type": "integer",
+            "title": "Degraded",
+            "description": "Pairs with a warning and no failure.",
+            "example": 1
+          },
+          "failing": {
+            "type": "integer",
+            "title": "Failing",
+            "description": "Pairs with a failing signal.",
+            "example": 1
+          },
+          "unknown": {
+            "type": "integer",
+            "title": "Unknown",
+            "description": "Pairs with no evidence either way.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pairs",
+          "healthy",
+          "degraded",
+          "failing",
+          "unknown"
+        ],
+        "title": "PactHealthCounts",
+        "description": "How many pairs are in each state."
+      },
+      "PactHealthOverview": {
+        "properties": {
+          "window": {
+            "type": "string",
+            "title": "Window",
+            "description": "`7d`, `30d` or `90d`.",
+            "example": "example"
+          },
+          "since": {
+            "type": "string",
+            "title": "Since",
+            "description": "The window's first instant (inclusive).",
+            "example": "example"
+          },
+          "until": {
+            "type": "string",
+            "title": "Until",
+            "description": "The window's end (exclusive): the end of today, UTC.",
+            "example": "example"
+          },
+          "bucket_days": {
+            "type": "integer",
+            "title": "Bucket Days",
+            "description": "The length of one trend bucket, in days.",
+            "example": 1
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At",
+            "description": "When this rollup was computed (it is computed on every read).",
+            "example": "2026-11-26T21:36:00Z"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/PactHealthCounts",
+            "description": "Pairs per state."
+          },
+          "totals": {
+            "$ref": "#/components/schemas/PactPairMetrics",
+            "description": "The analytics of every listed pair together."
+          },
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/PactPairHealth"
+            },
+            "type": "array",
+            "title": "Pairs",
+            "description": "Worst first, then by provider and consumer handle.",
+            "maxItems": 1000
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "True when more than 500 pairs match (the rest are left out and counted).",
+            "default": false,
+            "example": false
+          },
+          "omitted_pairs": {
+            "type": "integer",
+            "title": "Omitted Pairs",
+            "description": "How many matching pairs were left out by the cap.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "window",
+          "since",
+          "until",
+          "bucket_days",
+          "generated_at",
+          "counts",
+          "totals"
+        ],
+        "title": "PactHealthOverview",
+        "description": "The workspace's contract health over a window."
+      },
       "PactImportRequest": {
         "properties": {
           "pact": {
@@ -230067,6 +230543,283 @@
         ],
         "title": "PactMatchingRuleEntry",
         "description": "One matching rule, in one shape whichever specification version filed it."
+      },
+      "PactPairHealth": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "The provider's handle.",
+            "example": "example"
+          },
+          "provider_name": {
+            "type": "string",
+            "title": "Provider Name",
+            "description": "The provider's display name.",
+            "example": "Example"
+          },
+          "consumer": {
+            "type": "string",
+            "title": "Consumer",
+            "description": "The consumer's handle.",
+            "example": "example"
+          },
+          "consumer_name": {
+            "type": "string",
+            "title": "Consumer Name",
+            "description": "The consumer's display name.",
+            "example": "Example"
+          },
+          "pact_version_sha": {
+            "type": "string",
+            "title": "Pact Version Sha",
+            "description": "The pair's newest pact version.",
+            "example": "1.0.0"
+          },
+          "consumer_version": {
+            "type": "string",
+            "title": "Consumer Version",
+            "description": "The consumer version that published it last.",
+            "example": "1.0.0"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Pair Health schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Pair Health schema."
+              }
+            ],
+            "title": "Published At",
+            "description": "When that version published it."
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "`healthy`, `degraded`, `failing` or `unknown`.",
+            "example": "example"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/PactHealthComponent"
+            },
+            "type": "array",
+            "title": "Components",
+            "description": "Every fused signal, in a fixed order.",
+            "maxItems": 1000
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/PactPairMetrics",
+            "description": "The window's analytics."
+          },
+          "latest_success": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Pact Pair Health schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Pair Health schema."
+              }
+            ],
+            "title": "Latest Success",
+            "description": "The newest pact's newest verdict, if any."
+          },
+          "latest_verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Pair Health schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Pair Health schema."
+              }
+            ],
+            "title": "Latest Verified At",
+            "description": "When that result was published."
+          },
+          "republish_request_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Pair Health schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Pair Health schema."
+              }
+            ],
+            "title": "Republish Request Id",
+            "description": "The open re-publish request, if any."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "provider",
+          "provider_name",
+          "consumer",
+          "consumer_name",
+          "pact_version_sha",
+          "consumer_version",
+          "state",
+          "components",
+          "metrics"
+        ],
+        "title": "PactPairHealth",
+        "description": "One consumer \u2194 provider pair's health."
+      },
+      "PactPairHealthDetail": {
+        "properties": {
+          "window": {
+            "type": "string",
+            "title": "Window",
+            "description": "`7d`, `30d` or `90d`.",
+            "example": "example"
+          },
+          "since": {
+            "type": "string",
+            "title": "Since",
+            "description": "The window's first instant (inclusive).",
+            "example": "example"
+          },
+          "until": {
+            "type": "string",
+            "title": "Until",
+            "description": "The window's end (exclusive).",
+            "example": "example"
+          },
+          "bucket_days": {
+            "type": "integer",
+            "title": "Bucket Days",
+            "description": "The length of one trend bucket, in days.",
+            "example": 1
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At",
+            "description": "When this was computed.",
+            "example": "2026-11-26T21:36:00Z"
+          },
+          "pair": {
+            "$ref": "#/components/schemas/PactPairHealth",
+            "description": "The pair's health over the whole window."
+          },
+          "trend": {
+            "items": {
+              "$ref": "#/components/schemas/PactTrendBucket"
+            },
+            "type": "array",
+            "title": "Trend",
+            "description": "Every bucket of the window, oldest first (empty ones included).",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "window",
+          "since",
+          "until",
+          "bucket_days",
+          "generated_at",
+          "pair",
+          "trend"
+        ],
+        "title": "PactPairHealthDetail",
+        "description": "One pair's health with its trend."
+      },
+      "PactPairMetrics": {
+        "properties": {
+          "runs": {
+            "type": "integer",
+            "title": "Runs",
+            "description": "Verification results.",
+            "example": 1
+          },
+          "passed": {
+            "type": "integer",
+            "title": "Passed",
+            "description": "Of those, the ones that passed.",
+            "example": 1
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "description": "Of those, the ones that failed.",
+            "example": 1
+          },
+          "pass_rate": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Pact Pair Metrics schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Pair Metrics schema."
+              }
+            ],
+            "title": "Pass Rate",
+            "description": "`passed / runs` (0 \u2026 1), or null with no runs."
+          },
+          "flips": {
+            "type": "integer",
+            "title": "Flips",
+            "description": "Results whose verdict differs from the result before them.",
+            "example": 1
+          },
+          "flakiness": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Pact Pair Metrics schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Pair Metrics schema."
+              }
+            ],
+            "title": "Flakiness",
+            "description": "`flips` as a share of consecutive result pairs (0 \u2026 1), or null with fewer than two results."
+          },
+          "timed_runs": {
+            "type": "integer",
+            "title": "Timed Runs",
+            "description": "Results that carry a duration (verifiers outside Apiome may send none).",
+            "example": 1
+          },
+          "mean_duration_ms": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Pact Pair Metrics schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Pair Metrics schema."
+              }
+            ],
+            "title": "Mean Duration Ms",
+            "description": "The mean duration of the timed results, or null when none is timed."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "runs",
+          "passed",
+          "failed",
+          "flips",
+          "timed_runs"
+        ],
+        "title": "PactPairMetrics",
+        "description": "A pair's (or the workspace's, or one bucket's) verification analytics."
       },
       "PactPostmanRequest": {
         "properties": {
@@ -230396,6 +231149,35 @@
         ],
         "title": "PactSuiteResponse",
         "description": "The suite compiled from one pact version."
+      },
+      "PactTrendBucket": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "title": "Start",
+            "description": "The bucket's first instant (inclusive).",
+            "example": "example"
+          },
+          "end": {
+            "type": "string",
+            "title": "End",
+            "description": "The bucket's end (exclusive).",
+            "example": "example"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/PactPairMetrics",
+            "description": "What the bucket recorded."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "metrics"
+        ],
+        "title": "PactTrendBucket",
+        "description": "One bucket of a pair's trend."
       },
       "PacticipantBranchListResponse": {
         "properties": {

@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 98 operations."
+description: "REST endpoints tagged pact-broker: 100 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.686.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.687.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 98 operations
+Tag: `pact-broker` · 100 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2352,6 +2352,63 @@ Operation id: `read_deployment_simulation_v1_tenants__tenant_slug__pact_environm
 | 404 | `pact-environment-not-found`, `pacticipant-not-found` or `pacticipant-version-not-found`. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-health` {#read-health-v1-tenants-tenant-slug-pact-health-get}
+
+**Read the workspace's contract health**
+
+Every consumer ↔ provider pair with a pact (PFX-6.3), rolled up into one state — `healthy`, `degraded`, `failing` or `unknown` — fused from its signals: the newest pact's latest verdict, the window's pass rate and flakiness (how often the verdict flips between consecutive results), whether the stale-pact sweep found it overdue, an open re-publish request, and failed contract-webhook deliveries. Each signal says `ok`, `warn`, `fail` or `unknown` with a reason code. Pairs are listed worst first, at most 500 (`truncated`, `omitted_pairs`). Narrow by `provider`, `consumer` and `state`; the `counts` cover every pair the provider/consumer filter matches. Computed on every read. Requires `pacts:view`.
+
+Operation id: `read_health_v1_tenants__tenant_slug__pact_health_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `window` | query | string or null | no | `7d`, `30d` or `90d` (default `30d`). |
+| `provider` | query | string or null | no | Only this provider's pairs. |
+| `consumer` | query | string or null | no | Only this consumer's pairs. |
+| `state` | query | string or null | no | Only pairs in this state: `healthy`, `degraded`, `failing` or `unknown`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the workspace's contract health. | `application/json` [`PactHealthOverview`](#schema-pacthealthoverview) |
+| 400 | `pact-health-window-invalid` or `pact-health-state-invalid`. | — |
+| 404 | `pacticipant-not-found` for the `provider` or `consumer` filter. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-health/providers/{provider}/consumers/{consumer}` {#read-pair-health-v1-tenants-tenant-slug-pact-health-providers-provider-consumers-consumer-get}
+
+**Read one pair's contract health and trends**
+
+One consumer ↔ provider pair's health (PFX-6.3) — its state, every fused signal and the window's analytics — and its **trend**: one bucket per day for `7d` and `30d`, per week for `90d`, oldest first and empty ones included, each with runs, pass rate, verdict flips, flakiness and mean duration. `{provider}` and `{consumer}` are handles, ids or names. Requires `pacts:view`.
+
+Operation id: `read_pair_health_v1_tenants__tenant_slug__pact_health_providers__provider__consumers__consumer__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `consumer` | path | string | yes | Path parameter identifying the consumer segment. |
+| `window` | query | string or null | no | `7d`, `30d` or `90d` (default `30d`). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read one pair's contract health and trends. | `application/json` [`PactPairHealthDetail`](#schema-pactpairhealthdetail) |
+| 400 | `pact-health-window-invalid`. | — |
+| 404 | `pacticipant-not-found`, or `pact-health-pair-not-found` when the consumer has published no pact for the provider. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-postman-collections` {#export-pact-postman-collection-v1-tenants-tenant-slug-pact-postman-collections-post}
 
 **Export a pact as a Postman collection**
@@ -3213,6 +3270,37 @@ A stored override.
 | `target_name` | string or null | no | Its display name. |
 | `target_deleted` | boolean | no | True when the target was deleted: scheduled runs of this override cannot run. |
 | `updated_at` | string or null | no | When it was last saved. |
+
+### `PactHealthOverview` {#schema-pacthealthoverview}
+
+The workspace's contract health over a window.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `window` | string | yes | `7d`, `30d` or `90d`. |
+| `since` | string | yes | The window's first instant (inclusive). |
+| `until` | string | yes | The window's end (exclusive): the end of today, UTC. |
+| `bucket_days` | integer | yes | The length of one trend bucket, in days. |
+| `generated_at` | string | yes | When this rollup was computed (it is computed on every read). |
+| `counts` | `PactHealthCounts` | yes | Pairs per state. |
+| `totals` | `PactPairMetrics` | yes | The analytics of every listed pair together. |
+| `pairs` | array of `PactPairHealth` | no | Worst first, then by provider and consumer handle. |
+| `truncated` | boolean | no | True when more than 500 pairs match (the rest are left out and counted). |
+| `omitted_pairs` | integer | no | How many matching pairs were left out by the cap. |
+
+### `PactPairHealthDetail` {#schema-pactpairhealthdetail}
+
+One pair's health with its trend.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `window` | string | yes | `7d`, `30d` or `90d`. |
+| `since` | string | yes | The window's first instant (inclusive). |
+| `until` | string | yes | The window's end (exclusive). |
+| `bucket_days` | integer | yes | The length of one trend bucket, in days. |
+| `generated_at` | string | yes | When this was computed. |
+| `pair` | `PactPairHealth` | yes | The pair's health over the whole window. |
+| `trend` | array of `PactTrendBucket` | yes | Every bucket of the window, oldest first (empty ones included). |
 
 ### `PactPostmanRequest` {#schema-pactpostmanrequest}
 
