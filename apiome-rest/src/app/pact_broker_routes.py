@@ -56,6 +56,7 @@ from .consumer_contract_store import actor_from_auth
 from .database import db
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_host import alias_base_url
+from .pact_commit_status_store import post_publish_statuses
 from .pact_environment import (
     CODE_DEPLOYED_VERSION_NOT_FOUND,
     CODE_DEPLOYMENT_INVALID,
@@ -1117,6 +1118,7 @@ def publish_contracts(
         raise _http_error(exc) from exc
     base = _base_url(request, tenant_slug)
     fire_publish_events(db, tenant_id, base, outcome)
+    post_publish_statuses(db, tenant_id, base, outcome)
     comparisons = compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id))
     return HalJSONResponse(_publish_result(base, outcome, comparisons))
 
@@ -1193,6 +1195,7 @@ def publish_pact(
     published: PublishedPact = outcome.pacts[0]
     base = _base_url(request, tenant_slug)
     fire_publish_events(db, tenant_id, base, outcome)
+    post_publish_statuses(db, tenant_id, base, outcome)
     # The comparisons are read in the matrix; this response stays the pact, as on a Pact Broker.
     compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id))
     return HalJSONResponse(

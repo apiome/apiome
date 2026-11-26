@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.855.0] - 2026-11-25
+
+### Added
+- **Pact commit statuses and PR checks (PFX-4.4, #6941).** OpenAPI 1.679.0. Migration V443 adds
+  `pact_commit_status`: one row per pacticipant version and context (`apiome-pact/<consumer>/<provider>`)
+  with the verdict (`pending` / `pass` / `fail`), where it was sent and the outcome (`queued`,
+  `dispatched`, `suppressed`, `failed`) with a stable `reason_code`. After a pact publish commits
+  (`POST …/contracts/publish`, `PUT` a pact, the consumer-contract export publish) the consumer's
+  commit gets `pending`, or the provider main branch's verdict for that exact content; after a
+  verification result commits (broker `POST …/verification-results`, hosted `…/verify`) the
+  provider's and the consumer's commits get `pass` / `fail` (`app.pact_commit_status_store`). The
+  target is the live `tenant_repositories` row whose `clone_url_normalized` matches the pacticipant's
+  `repository_url`, on `github.com` or `gitlab.com`; the version number must be a 7–64 hex commit SHA.
+  Sent through `app.provider_status_adapter` with the registration's stored linked-account token
+  (`provider_check_store._repository_token`, never stored or returned): new `GitHubCommitStatusAdapter`
+  (`POST /repos/{o}/{r}/statuses/{sha}`, works with OAuth tokens, 140-char description) and
+  `GitLabCommitStatusAdapter` (GitLab statuses, `pending` kept as `pending`). Every verdict that cannot
+  go is recorded `suppressed` (`pact-status-no-repository`, `pact-status-version-not-a-commit`,
+  `pact-status-repository-not-registered`, `pact-status-provider-unsupported`,
+  `check-provider-forbidden`, `check-publishing-disabled` under `APIOME_PROVIDER_CHECKS_ENABLED=false`);
+  a provider refusal is `failed` with its code and redacted message. A status problem never fails the
+  publish or the verification. New endpoints (tag `pacticipants`, tenant from the credential):
+  `GET /v1/tenants/{tenant_slug}/pact-commit-statuses` (`pacts:view`; `pacticipant`, `version`,
+  `outcome` filters; keyset `limit` ≤ 200 / `cursor`, `X-Next-Cursor`) and
+  `POST …/pact-commit-statuses/{status_id}/retry` (`pacts:edit`; re-resolves the target; `404
+  pact-status-not-found`, `409 pact-status-not-retryable` for a dispatched or queued status).
+  Bi-directional verdicts (PFX-2.3) do not post statuses yet.
+
 ## [1.854.0] - 2026-11-25
 
 ### Added

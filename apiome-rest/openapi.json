@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.678.0",
+    "version": "1.679.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -999,6 +999,294 @@
           },
           "422": {
             "description": "No keep selector, no `plan_digest` when applying, or a run too large."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-commit-statuses": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "List pact commit statuses",
+        "description": "The pact verdicts Apiome posted (or could not post) to GitHub and GitLab commits, most recently updated first. One status per pacticipant version and context (`apiome-pact/<consumer>/<provider>`): `pending` while a published pact awaits the provider's verification, then `pass` or `fail` on both the consumer's and the provider's commit.\n\n`outcome` says what happened to the send: `dispatched` (the provider accepted it), `suppressed` (not attempted \u2014 `reason_code` says why: no repository URL, version not a commit SHA, repository not registered, unsupported provider, no stored credential, publishing switched off), `failed` (the provider refused or could not be reached) or `queued`.\n\nRequires `pacts:view`.",
+        "operationId": "get_pact_commit_statuses_v1_tenants__tenant_slug__pact_commit_statuses_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255,
+                  "description": "Listpactcommitstatusespacticipant schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpactcommitstatusespacticipant schema."
+                }
+              ],
+              "description": "Only this pacticipant's commits (handle).",
+              "title": "Pacticipant"
+            },
+            "description": "Only this pacticipant's commits (handle)."
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255,
+                  "description": "Listpactcommitstatusesversion schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpactcommitstatusesversion schema."
+                }
+              ],
+              "description": "Only this version number.",
+              "title": "Version"
+            },
+            "description": "Only this version number."
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listpactcommitstatusesoutcome schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpactcommitstatusesoutcome schema."
+                }
+              ],
+              "description": "Only this outcome: queued, dispatched, suppressed, failed.",
+              "title": "Outcome"
+            },
+            "description": "Only this outcome: queued, dispatched, suppressed, failed."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size. At most 200.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size. At most 200."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "description": "Listpactcommitstatusescursor schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpactcommitstatusescursor schema."
+                }
+              ],
+              "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listpactcommitstatusesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpactcommitstatusesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listpactcommitstatuses Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listpactcommitstatuses Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list pact commit statuses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitStatusList",
+                  "description": "Response payload for listpactcommitstatusesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listpactcommitstatusesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-commit-statuses/{status_id}/retry": {
+      "post": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Send a pact commit status again",
+        "description": "Send a `suppressed` or `failed` commit status again. Where it can go is decided afresh, so a retry after registering the repository, linking the account or fixing the pacticipant's repository URL sends it; one whose cause remains comes back with the same `reason_code`.\n\nRequires `pacts:edit`.",
+        "operationId": "retry_pact_commit_status_v1_tenants__tenant_slug__pact_commit_statuses__status_id__retry_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "status_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Status Id",
+              "description": "Status Id schema."
+            },
+            "description": "Path parameter identifying the status id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Sendapactcommitstatusagainauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Sendapactcommitstatusagainauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Sendapactcommitstatusagain Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Sendapactcommitstatusagain Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for send a pact commit status again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitStatusRecord",
+                  "description": "Response payload for sendapactcommitstatusagainresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`pact-status-not-found`: no such status in this workspace."
+          },
+          "409": {
+            "description": "`pact-status-not-retryable`: the status was accepted or is being sent."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for sendapactcommitstatusagainresponse422."
+                }
+              }
+            }
           }
         }
       }
@@ -287869,6 +288157,303 @@
         ],
         "title": "StateUse",
         "description": "One interaction that names a state."
+      },
+      "CommitStatusList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CommitStatusRecord"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Items.",
+            "maxItems": 100
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status List schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status List schema."
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Pass as `cursor` for the next page."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "CommitStatusList",
+        "description": "A page of commit statuses, newest first."
+      },
+      "CommitStatusRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Status id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "pacticipant": {
+            "type": "string",
+            "title": "Pacticipant",
+            "description": "Handle of the pacticipant whose commit the status is on.",
+            "example": "example"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "The pacticipant version (commit) the status is about.",
+            "example": "1.0.0"
+          },
+          "consumer": {
+            "type": "string",
+            "title": "Consumer",
+            "description": "Handle of the pair's consumer.",
+            "example": "example"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "Handle of the pair's provider.",
+            "example": "example"
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "consumer",
+              "provider"
+            ],
+            "title": "Side",
+            "description": "Which pacticipant of the pair the status is for.",
+            "example": "consumer"
+          },
+          "context": {
+            "type": "string",
+            "title": "Context",
+            "description": "Status context, `apiome-pact/<consumer>/<provider>`.",
+            "example": "example"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "pass",
+              "fail"
+            ],
+            "title": "State",
+            "description": "The verdict.",
+            "example": "pending"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "The one-line description shown on the commit.",
+            "default": "",
+            "example": "A pet available for adoption in the store."
+          },
+          "target_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Target Url",
+            "description": "Where the status links."
+          },
+          "pact_version_sha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Pact Version Sha",
+            "description": "The pact content the verdict is about."
+          },
+          "verification_number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Verification Number",
+            "description": "The verification result, for a verdict."
+          },
+          "commit_sha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Commit Sha",
+            "description": "The commit the status was written to."
+          },
+          "git_provider": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Git Provider",
+            "description": "`github` or `gitlab`, once a repository matched."
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Repository",
+            "description": "Full name of the repository written to."
+          },
+          "repository_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Repository Id",
+            "description": "The registered repository used."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "dispatched",
+              "suppressed",
+              "failed"
+            ],
+            "title": "Outcome",
+            "description": "`dispatched` (accepted), `suppressed` (not attempted \u2014 see `reason_code`), `failed` or `queued`.",
+            "example": "queued"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Reason Code",
+            "description": "Stable reason for a suppressed or failed status."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "What happened, in words.",
+            "default": "",
+            "example": "Example validation message."
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Http Status",
+            "description": "The provider's HTTP status, when a request went out."
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts",
+            "description": "How many times the status was sent.",
+            "default": 0,
+            "example": 1
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601)."
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Commit Status schema."
+              },
+              {
+                "type": "null",
+                "description": "Commit Status schema."
+              }
+            ],
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pacticipant",
+          "version",
+          "consumer",
+          "provider",
+          "side",
+          "context",
+          "state",
+          "outcome"
+        ],
+        "title": "CommitStatusRecord",
+        "description": "A recorded commit status, as the API returns it.\n\nNever carries a token: the credential is resolved at send time and stored nowhere."
       }
     },
     "securitySchemes": {

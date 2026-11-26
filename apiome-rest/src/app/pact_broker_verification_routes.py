@@ -44,6 +44,7 @@ from .pact_broker_routes import (
     _tenant_id,
     _version_document,
 )
+from .pact_commit_status_store import post_verification_statuses
 from .pact_comparison_routes import comparison_fidelity_path
 from .pact_external_verification import (
     FORMAT_AUTO,
@@ -495,6 +496,7 @@ def _store_result(
         raise _http_error(exc) from exc
     base = _base_url(request, tenant_slug)
     fire_verification_events(db, _tenant_id(auth_data), base, result)
+    post_verification_statuses(db, _tenant_id(auth_data), base, result)
     document = _result_document(request, tenant_slug, base, result)
     if extra:
         document.update(extra)

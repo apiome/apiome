@@ -43,6 +43,7 @@ from .contract_suite import ContractSuiteManifest, PactSuiteOptions, SuiteSource
 from .contract_suite_pact import compile_pact_suite
 from .mcp_credentials import load_endpoint_auth_headers
 from .pact_broker_verification_routes import _result_url
+from .pact_commit_status_store import post_verification_statuses
 from .pact_pending_store import load_pending_evidence
 from .pact_provider_state import registry_of
 from .pact_provider_state_handler import RegistryStateHandler
@@ -568,6 +569,7 @@ def _verify_one(
 def _published(db: Any, tenant_id: str, broker_base: str, stored: VerificationResultRecord) -> PublishedResult:
     """Queue a stored result's webhooks and describe it for the response."""
     fired = fire_verification_events(db, tenant_id, broker_base, stored)
+    post_verification_statuses(db, tenant_id, broker_base, stored)
     return PublishedResult(
         number=stored.number,
         success=stored.success,

@@ -149,6 +149,7 @@ from .pact_broker_webhook_routes import router as pact_broker_webhook_router
 from .pact_badge_routes import router as pact_badge_router
 from .pact_broker_cleanup_routes import router as pact_broker_cleanup_router
 from .pact_retention_routes import router as pact_retention_router
+from .pact_commit_status_routes import router as pact_commit_status_router
 from .pacticipant_routes import router as pacticipant_router
 from .provider_contract_routes import router as provider_contract_router
 from .paths_routes import router as paths_router
@@ -568,6 +569,8 @@ app.include_router(consumer_pact_export_router)
 app.include_router(pacticipant_router)
 # PFX-1.11 (#6924): selector-based cleanup of pacticipant versions (dry run first).
 app.include_router(pact_retention_router)
+# PFX-4.4 (#6941): pact verdicts posted to GitHub / GitLab commits — list and retry.
+app.include_router(pact_commit_status_router)
 # Pact Broker-compatible publication and retrieval (PFX-1.2, #6915).
 # PFX-1.8 (#6921): the catalogued unsupported endpoints first (so ``…/latest/badge`` is not read as
 # the tag ``badge``), the real Pact Broker routes, then a catch-all — every request under
