@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.676.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.677.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 77 operations
 
@@ -2578,7 +2578,7 @@ Which pacts to verify, against which target, as which provider build.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `target_ref` | string | yes | Slug or id of the registered verification target (ECA-1.2) to replay against. |
+| `target_ref` | string | yes | Slug or id of the registered verification target (ECA-1.2) to replay against: an `http` target for HTTP interactions, a `grpc` or `connect` target for gRPC calls recorded by the Pact protobuf plugin. |
 | `provider_version` | string | yes | The provider application version being verified (a commit SHA). Results are recorded against it. |
 | `provider_branch` | string or null | no | The branch of that provider version. Recorded on the version before a result is published, and used as `providerVersionBranch` for pending pacts and `matchingBranch` selectors when `selection` does not state one. |
 | `build_url` | string or null | no | http(s) URL of the CI build, stored on each result. |

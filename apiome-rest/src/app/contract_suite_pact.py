@@ -23,6 +23,22 @@ One HTTP interaction becomes one case with ``source: pact_interaction`` and ``sy
 
 Cases are grouped by operation (``METHOD path``, sorted) and then follow the pact's own order.
 
+Plugin and GraphQL interactions (PFX-3.7)
+-----------------------------------------
+* A **gRPC call recorded by the protobuf plugin** (Pact 4 ``Synchronous/Messages``,
+  ``transport: grpc``) becomes a ``grpc``-protocol case — the XPC-3.2 RPC case model
+  (:mod:`app.contract_suite_rpc`), keyed ``package.Service.Method`` — read through the
+  descriptors the pact files in its metadata (:mod:`app.pact_plugin_grpc`). Its request and
+  expected reply are protobuf-JSON; its expected status is ``ok`` or the recorded
+  ``grpc-status``; its response matching rules are renamed to protobuf-JSON field names. It runs
+  on a ``grpc`` or ``connect`` verification target. A suite whose every case is gRPC is stamped
+  ``protocol: grpc``; otherwise it stays ``http``.
+* A **GraphQL-over-HTTP interaction** stays an HTTP case but carries the operation
+  (``case.graphql``, the XPC-1.2 model, :mod:`app.pact_graphql`) so the mutating-method gate
+  reads its operation type and the runner checks the GraphQL ``errors`` envelope. Mapping its
+  selections onto the consumer-contract model awaits XPC-1.6 (#5733) and is reported.
+* Any other plugin interaction (CSV, Avro, a protobuf body over HTTP …) is listed unsupported.
+
 Deterministic per pact version
 ------------------------------
 The manifest is built only from what the pact version's content address covers (the interactions,
@@ -34,8 +50,9 @@ with the same ``sha256:`` digest.
 Nothing skipped silently
 ------------------------
 What cannot be replayed is listed under ``unsupported`` **and** reported as a finding: a message
-interaction (PFX-3.6), a plugin interaction (PFX-3.7), an interaction with no method or path, a
-request body that cannot be decoded. What is compiled more weakly than the pact says is a
+interaction (PFX-3.6), a plugin interaction other than a protobuf-plugin gRPC call (PFX-3.7), a
+streaming gRPC method, an interaction with no method or path, a request body that cannot be
+decoded. What is compiled more weakly than the pact says is a
 ``degraded`` finding: an embedded Pact 1 matcher, a matching rule the suite cannot name, a request
 generator, an unreadable response body or provider state. What a runner must supply — the provider
 states — is an ``info`` finding.
@@ -50,7 +67,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 from .change_taxonomy_enum import json_pointer_escape
-from .contract_protocols import PROTOCOL_HTTP
+from .contract_protocols import PROTOCOL_GRPC, PROTOCOL_HTTP
 from .contract_suite import (
     CASE_SOURCE_PACT_INTERACTION,
     CODE_NO_CASES_COMPILED,
@@ -58,9 +75,12 @@ from .contract_suite import (
     CODE_OPERATION_NOT_SELECTED,
     CODE_PACT_BODY_UNREADABLE,
     CODE_PACT_EMBEDDED_MATCHER,
+    CODE_PACT_GRAPHQL_SELECTIONS_NOT_MAPPED,
+    CODE_PACT_GRAPHQL_UNREADABLE,
     CODE_PACT_INTERACTION_MALFORMED,
     CODE_PACT_MATCHING_RULE_UNSUPPORTED,
     CODE_PACT_PLUGIN_INTERACTION,
+    CODE_PACT_PLUGIN_PARTIAL,
     CODE_PACT_PROVIDER_STATE,
     CODE_PACT_PROVIDER_STATE_UNREADABLE,
     CODE_PACT_REQUEST_GENERATOR,
@@ -68,6 +88,7 @@ from .contract_suite import (
     CODE_PACT_SPECIFICATION_ASSUMED,
     CODE_STATUS_UNDECLARED,
     CODE_UNSUPPORTED_OPERATION_KIND,
+    CODE_UNSUPPORTED_STREAMING,
     FINDING_DEGRADED,
     FINDING_INFO,
     FINDING_UNSUPPORTED,
@@ -76,8 +97,10 @@ from .contract_suite import (
     ContractCase,
     ContractCaseExpectation,
     ContractCaseRequest,
+    ContractGraphqlRequest,
     ContractPactInteraction,
     ContractRequestParameter,
+    ContractRpcRequest,
     ContractSuiteManifest,
     PactGeneratorEntry,
     PactMatchingRuleEntry,
@@ -96,8 +119,19 @@ from .contract_suite import (
     manifest_digest,
 )
 from .pact_contract_import import interaction_is_http, pact_specification_version
+from .pact_graphql import read_graphql_request
 from .pact_interaction_reader import as_dict, media_type_of, read_body, read_headers, read_query
 from .pact_matching_rules import MatchingRule, parse_matching_rules, parse_path
+from .pact_plugin_grpc import (
+    CODE_GRPC_STREAMING,
+    DescriptorCatalog,
+    GrpcPluginCall,
+    int64_matcher,
+    is_grpc_plugin_interaction,
+    plugin_names,
+    read_grpc_interaction,
+    rename_rule_path,
+)
 from .pact_publication import pact_content_sha
 
 __all__ = [
@@ -176,6 +210,8 @@ class _PactCompilation:
         unsupported: Interactions no case covers.
         dropped: Interactions left out by ``max_interactions``.
         states: Each provider state named, with the pointer of its first use.
+        catalog: The protobuf descriptors the pact files (read only for plugin interactions).
+        graphql_pointers: Pointers of the interactions compiled as GraphQL operations.
     """
 
     consumer: str
@@ -186,6 +222,8 @@ class _PactCompilation:
     unsupported: List[SuiteUnsupportedOperation] = field(default_factory=list)
     dropped: int = 0
     states: Dict[str, str] = field(default_factory=dict)
+    catalog: Optional[DescriptorCatalog] = None
+    graphql_pointers: List[str] = field(default_factory=list)
 
     def report(
         self,
@@ -256,39 +294,49 @@ def compile_pact_suite(
     resolved = (options or PactSuiteOptions()).normalized()
     specification = pact_specification_version(document)
     compilation = _PactCompilation(
-        consumer=consumer, provider=provider, v4=(specification or "").startswith("4")
+        consumer=consumer,
+        provider=provider,
+        v4=(specification or "").startswith("4"),
+        catalog=DescriptorCatalog(document),
     )
     _report_specification(compilation, specification)
 
     entries = _entries(document)
     selected = _select(compilation, entries, resolved)
     for index, pointer, kind, interaction in selected:
+        if kind == "interactions" and isinstance(interaction, dict) and is_grpc_plugin_interaction(interaction):
+            _compile_grpc_interaction(compilation, index, pointer, interaction)
+            continue
         if kind == "messages" or (isinstance(interaction, dict) and not interaction_is_http(interaction)):
             _leave_out_message(compilation, pointer, interaction)
             continue
         _compile_interaction(compilation, index, pointer, interaction)
 
     _report_states(compilation)
+    _report_graphql(compilation)
     if not compilation.cases:
         compilation.report(
             CODE_NO_CASES_COMPILED,
             FINDING_DEGRADED,
-            "the pact yields no HTTP interaction this suite can replay",
+            "the pact yields no HTTP or gRPC interaction this suite can replay",
         )
 
     cases = sorted(compilation.cases, key=lambda case: (case.operation_key, _case_index(case)))
     findings = _sorted_findings(compilation.findings)
     operations = _operations(cases)
+    # A suite of gRPC calls only is a gRPC suite (it runs on a grpc or connect target); anything
+    # with an HTTP case stays http, and the verifier holds back what the target cannot speak.
+    protocol = PROTOCOL_GRPC if cases and all(case.protocol == PROTOCOL_GRPC for case in cases) else PROTOCOL_HTTP
     manifest = ContractSuiteManifest(
         options=None,
-        protocol=PROTOCOL_HTTP,
+        protocol=protocol,
         api=SuiteApiInfo(
             name=provider,
             title=f"Pact: {consumer} → {provider}",
             version=None,
             format=f"pact-{specification}" if specification else "pact",
-            paradigm="rest",
-            protocol=PROTOCOL_HTTP,
+            paradigm="rpc" if protocol == PROTOCOL_GRPC else "rest",
+            protocol=protocol,
             servers=[],
         ),
         source=source,
@@ -467,11 +515,13 @@ def _compile_interaction(
     path = path.strip()
     key = f"{method} {path}"
     if _is_plugin(interaction):
+        names = ", ".join(plugin_names(interaction)) or "an unnamed plugin"
         compilation.leave_out(
             key,
             CODE_PACT_PLUGIN_INTERACTION,
-            f"'{description}' is a plugin interaction; its exchange is defined by the plugin, "
-            "not by the HTTP request it records (PFX-3.7)",
+            f"'{description}' is a plugin interaction ({names}); its exchange is defined by the "
+            "plugin, not by the HTTP request it records — only gRPC calls recorded by the "
+            "protobuf plugin are replayed",
             pointer,
         )
         return
@@ -491,6 +541,11 @@ def _compile_interaction(
     headers = read_headers(request)
     parameters = _parameters(request, headers)
     request_media = body.media_type or media_type_of(headers.get("content-type", ("", ""))[1])
+    graphql = _graphql(
+        compilation, key, method, path, body.value if body.present else None, request_media, request, pointer
+    )
+    if graphql is _LEFT_OUT:
+        return
     expected = _response(compilation, key, response, response_pointer)
     request_rules = _rules(compilation, key, request, request_pointer)
     states = _provider_states(compilation, key, interaction, pointer)
@@ -541,6 +596,7 @@ def _compile_interaction(
                 body=body.value if body.present else None,
                 media_type=request_media if body.present else None,
             ),
+            graphql=graphql if isinstance(graphql, ContractGraphqlRequest) else None,
             pact=pact,
             expect=ContractCaseExpectation(
                 outcome=outcome,
@@ -552,9 +608,308 @@ def _compile_interaction(
                     "are compared under the pact's matching rules (`pact.response`)."
                 ),
             ),
-            tags=["pact", "pending"] if pending else ["pact"],
+            tags=_tags(pending, "graphql" if isinstance(graphql, ContractGraphqlRequest) else None),
         )
     )
+
+
+def _tags(pending: bool, kind: Optional[str]) -> List[str]:
+    """The tags of a pact case: ``pact``, then its kind (``graphql``, ``grpc``), then ``pending``."""
+    return ["pact", *([kind] if kind else []), *(["pending"] if pending else [])]
+
+
+#: Returned by :func:`_graphql` when the interaction was listed unsupported (a subscription).
+_LEFT_OUT = object()
+
+
+def _graphql(
+    compilation: _PactCompilation,
+    key: str,
+    method: str,
+    path: str,
+    body: Any,
+    media_type: Optional[str],
+    request: Mapping[str, Any],
+    pointer: str,
+) -> Any:
+    """Read the GraphQL operation an HTTP interaction carries, if it carries one (PFX-3.7).
+
+    Args:
+        compilation: The run state; an unreadable operation is reported, a subscription left out.
+        key: The case's operation key.
+        method: The upper-cased HTTP method.
+        path: The recorded path.
+        body: The decoded request body, or ``None``.
+        media_type: The body's media type.
+        request: The pact ``request`` object.
+        pointer: The interaction's JSON Pointer.
+
+    Returns:
+        The :class:`ContractGraphqlRequest` to attach; ``None`` for a request that is not GraphQL
+        (or is, unreadably — then reported and replayed as plain HTTP); :data:`_LEFT_OUT` when the
+        interaction was listed unsupported.
+    """
+    operation, problem = read_graphql_request(method, path, body, media_type, read_query(request))
+    if problem:
+        compilation.report(
+            CODE_PACT_GRAPHQL_UNREADABLE,
+            FINDING_DEGRADED,
+            f"the request carries a GraphQL operation that cannot be read: {problem}; it is "
+            f"replayed as plain HTTP, and {method} decides whether it is mutating",
+            operation_key=key,
+            pointer=f"{pointer}/request",
+        )
+        return None
+    if operation is None:
+        return None
+    if operation.operation_type == "subscription":
+        compilation.leave_out(
+            key,
+            CODE_UNSUPPORTED_STREAMING,
+            f"the GraphQL operation '{operation.operation_name or operation.field}' is a subscription; "
+            "a request/response replay cannot express a stream",
+            pointer,
+        )
+        return _LEFT_OUT
+    compilation.graphql_pointers.append(pointer)
+    return ContractGraphqlRequest(
+        query=operation.query,
+        variables=operation.variables,
+        operationName=operation.operation_name,
+        operation_type=operation.operation_type,
+        field=operation.field,
+    )
+
+
+def _report_graphql(compilation: _PactCompilation) -> None:
+    """Report, once, that GraphQL selections are not mapped onto consumer contracts yet.
+
+    Args:
+        compilation: The run state.
+    """
+    if not compilation.graphql_pointers:
+        return
+    count = len(compilation.graphql_pointers)
+    compilation.report(
+        CODE_PACT_GRAPHQL_SELECTIONS_NOT_MAPPED,
+        FINDING_INFO,
+        f"{count} interaction{'s' if count != 1 else ''} carry a GraphQL operation, verified as "
+        "GraphQL-over-HTTP; the fields they select are not mapped onto the consumer-contract "
+        "model, which awaits GraphQL consumer contracts (XPC-1.6, #5733)",
+        pointer=compilation.graphql_pointers[0],
+    )
+
+
+# =============================================================================================
+# A gRPC call recorded by the protobuf plugin (PFX-3.7)
+# =============================================================================================
+
+
+def _compile_grpc_interaction(
+    compilation: _PactCompilation, index: int, pointer: str, interaction: Mapping[str, Any]
+) -> None:
+    """Compile one protobuf-plugin gRPC interaction into a ``grpc`` case, or report why not.
+
+    Args:
+        compilation: The run state, filled in place.
+        index: Position of the interaction in ``interactions``.
+        pointer: Its JSON Pointer.
+        interaction: The interaction.
+    """
+    description = _description(interaction, pointer)
+    assert compilation.catalog is not None
+    call, problem = read_grpc_interaction(interaction, pointer, compilation.catalog)
+    if call is None:
+        assert problem is not None
+        compilation.leave_out(
+            pointer,
+            CODE_UNSUPPORTED_STREAMING if problem.code == CODE_GRPC_STREAMING else CODE_PACT_PLUGIN_INTERACTION,
+            f"the gRPC interaction '{description}' cannot be replayed ({problem.code}): {problem.reason}",
+            pointer,
+        )
+        return
+    key = f"{call.service}.{call.method}"
+    for where, note in call.notes:
+        compilation.report(CODE_PACT_PLUGIN_PARTIAL, FINDING_DEGRADED, note, operation_key=key, pointer=where)
+    if call.expect_message:
+        compilation.report(
+            CODE_PACT_PLUGIN_PARTIAL,
+            FINDING_DEGRADED,
+            f"the recorded grpc-message {call.expect_message!r} is not compared; only the status is",
+            operation_key=key,
+            pointer=f"{call.response_pointer}/metadata",
+        )
+
+    request = as_dict(interaction.get("request"))
+    responses = interaction.get("response")
+    response = as_dict(responses[0]) if isinstance(responses, list) and responses else as_dict(responses)
+    request_pointer = f"{pointer}/request"
+    states = _provider_states(compilation, key, interaction, pointer)
+    pending = interaction.get("pending") is True
+    interaction_key = interaction.get("key") if isinstance(interaction.get("key"), str) else None
+    expected = PactResponseExpectation(
+        status=None,
+        headers={},
+        has_body=call.has_body,
+        body=call.body if call.has_body else None,
+        media_type="application/json" if call.has_body else None,
+        body_pointer=f"{call.response_pointer}/contents/content" if call.has_body else None,
+        matching_rules=_grpc_rules(compilation, key, response, call.response_pointer, call),
+        generators=_generators(compilation, key, response, call.response_pointer, side="response"),
+    )
+    pact = ContractPactInteraction(
+        index=index,
+        key=interaction_key,
+        description=description,
+        pointer=pointer,
+        interaction_type="Synchronous/Messages",
+        pending=pending,
+        provider_states=states,
+        request_matching_rules=_grpc_rules(compilation, key, request, request_pointer, None),
+        request_generators=_generators(compilation, key, request, request_pointer, side="request"),
+        response=expected,
+    )
+    given = f" given {', '.join(repr(state.name) for state in states)}" if states else ""
+    success = call.expect_code == "ok"
+    compilation.cases.append(
+        ContractCase(
+            case_id=_case_id(key, CASE_SOURCE_PACT_INTERACTION, interaction_key or description, pointer, description),
+            operation_key=key,
+            operation_name=call.method,
+            source=CASE_SOURCE_PACT_INTERACTION,
+            source_detail=interaction_key or description,
+            source_pointer=pointer,
+            title=description,
+            description=(
+                f"Replay '{description}'{given} as {compilation.consumer} recorded it: "
+                f"{call.procedure} → {call.expect_code}."
+            ),
+            synthetic=False,
+            protocol=PROTOCOL_GRPC,
+            request=ContractCaseRequest(
+                method="POST",
+                path_template=call.procedure,
+                path=call.procedure,
+                parameters=[],
+                has_body=True,
+                body=call.message,
+                media_type="application/json",
+            ),
+            rpc=ContractRpcRequest(
+                service=call.service,
+                method=call.method,
+                procedure=call.procedure,
+                input_type=call.input_type,
+                output_type=call.output_type,
+                message=call.message,
+                idempotency_level=call.idempotency_level,
+                expect_code=call.expect_code,
+            ),
+            pact=pact,
+            expect=ContractCaseExpectation(
+                outcome=OUTCOME_SUCCESS if success else OUTCOME_CLIENT_ERROR,
+                status_codes=["200"] if success else ["4XX", "5XX"],
+                status_declared=False,
+                response_schema_id=None,
+                reason=(
+                    f"{compilation.consumer} expects status `{call.expect_code}`"
+                    + (
+                        " and a reply matching the recorded message under the pact's matching rules "
+                        "(`pact.response`)."
+                        if call.has_body
+                        else "."
+                    )
+                ),
+            ),
+            tags=_tags(pending, "grpc"),
+        )
+    )
+
+
+def _grpc_rules(
+    compilation: _PactCompilation,
+    key: str,
+    section: Mapping[str, Any],
+    pointer: str,
+    call: Optional[GrpcPluginCall],
+) -> List[PactMatchingRuleEntry]:
+    """Read a plugin request's or response's matching rules.
+
+    Body rules are filed under ``body`` or (Pact 4 messages) ``content``. On the response they are
+    renamed from ``.proto`` field names to protobuf-JSON names, so they select fields of the reply
+    the runner decodes; metadata rules are carried but reported, since metadata is not compared.
+
+    Args:
+        compilation: The run state.
+        key: The case's operation key.
+        section: The plugin ``request`` or ``response`` object.
+        pointer: Its JSON Pointer.
+        call: The read call, for the response side (its output descriptor); ``None`` for the
+            request side, whose rules only describe what the consumer may vary.
+
+    Returns:
+        Every rule, the unsupported ones included.
+    """
+    entries: List[PactMatchingRuleEntry] = []
+    for rule in parse_matching_rules(section.get("matchingRules"), f"{pointer}/matchingRules", message=True):
+        path, match, matcher = rule.path, rule.kind, dict(rule.matcher)
+        if rule.category == "metadata":
+            if call is not None:
+                compilation.report(
+                    CODE_PACT_PLUGIN_PARTIAL,
+                    FINDING_DEGRADED,
+                    f"the metadata matching rule on '{rule.path}' is carried but not applied: gRPC "
+                    "response metadata is not compared",
+                    operation_key=key,
+                    pointer=rule.pointer,
+                )
+        elif call is not None and rule.category == "body":
+            steps = parse_path(rule.path)
+            renamed, int64 = rename_rule_path(steps, call.output_descriptor) if steps is not None else (None, False)
+            replacement = int64_matcher(rule.kind, rule.matcher) if int64 else None
+            if replacement is not None:
+                compilation.report(
+                    CODE_PACT_PLUGIN_PARTIAL,
+                    FINDING_INFO,
+                    f"the {rule.kind} rule at '{rule.path}' names a 64-bit integer field, which "
+                    "protobuf-JSON prints as a decimal string; it is applied as a digits-only regex",
+                    operation_key=key,
+                    pointer=rule.pointer,
+                )
+                match, matcher = "regex", replacement
+            if renamed is None:
+                compilation.report(
+                    CODE_PACT_MATCHING_RULE_UNSUPPORTED,
+                    FINDING_DEGRADED,
+                    f"the body matching rule at '{rule.path}' names no field of "
+                    f"'{call.output_type}'; it is carried but selects nothing",
+                    operation_key=key,
+                    pointer=rule.pointer,
+                )
+            else:
+                path = renamed
+        if call is not None and rule.category != "metadata":
+            problem = _rule_problem(MatchingRule(rule.category, path, match, matcher, rule.pointer))
+            if problem:
+                compilation.report(
+                    CODE_PACT_MATCHING_RULE_UNSUPPORTED,
+                    FINDING_DEGRADED,
+                    f"the {rule.category} matching rule at '{rule.path or rule.category}' {problem}; "
+                    "it is carried but cannot be applied",
+                    operation_key=key,
+                    pointer=rule.pointer,
+                )
+        entries.append(
+            PactMatchingRuleEntry(
+                category=rule.category,
+                path=path,
+                match=match,
+                matcher=matcher,
+                combine=rule.combine,
+                pointer=rule.pointer,
+            )
+        )
+    return entries
 
 
 def _case_index(case: ContractCase) -> int:
@@ -975,7 +1330,7 @@ def _report_specification(compilation: _PactCompilation, specification: Optional
 
 
 def _operations(cases: Sequence[ContractCase]) -> List[SuiteOperation]:
-    """One operation summary per distinct ``METHOD path``, sorted by key.
+    """One operation summary per distinct ``METHOD path`` (or gRPC ``package.Service.Method``), sorted.
 
     Args:
         cases: The compiled cases, sorted by operation key.
@@ -994,11 +1349,11 @@ def _operations(cases: Sequence[ContractCase]) -> List[SuiteOperation]:
             SuiteOperation(
                 key=key,
                 name=key,
-                service_key=None,
+                service_key=first.rpc.service if first.rpc is not None else None,
                 http_method=first.request.method,
                 http_path=first.request.path_template,
                 deprecated=False,
-                tags=["pact"],
+                tags=["pact", "grpc"] if first.rpc is not None else ["pact"],
                 case_count=len(grouped[key]),
                 request_media_type=media[0] if media else None,
             )

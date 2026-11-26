@@ -132,7 +132,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 | --- | --- | --- | --- |
 | ✅ PFX-EPIC-1 | Pact Broker core: model, API, can-i-deploy | 1.1–1.9 | 11 |
 | ✅ PFX-EPIC-2 | Bi-directional contract testing | 2.1–2.4 | 6 |
-| PFX-EPIC-3 | Provider verification engine | 3.1–3.3 | 7 |
+| ✅ PFX-EPIC-3 | Provider verification engine | 3.1–3.3 | 7 |
 | PFX-EPIC-4 | CLI, CI and client compatibility | 4.1–4.3 | 7 |
 | PFX-EPIC-5 | Contracts workspace UI | 5.1–5.4, 5.6 | 8 |
 | PFX-EPIC-6 | Operations, governance and migration | 6.1, 6.7 | 8 |
@@ -262,11 +262,10 @@ flowchart LR
 
 **✅ PFX-2.6 · #6930 Pact export from a declared consumer surface — Complete** — consumers registered through the UI picker (not a pact file) can export a Pact v4 file (and publish it to the broker) generated from the operations/fields they declared, using OAS examples as the sample values. *Deps:* CTG-4.1, 1.2. **Docs:** how-to page.
 
-### PFX-EPIC-3 · [#6909](https://github.com/apiome/apiome/issues/6909) — Provider verification engine
+### ✅ PFX-EPIC-3 · [#6909](https://github.com/apiome/apiome/issues/6909) — Provider verification engine
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-3.7 | Plugin pacts: gRPC and GraphQL | Plugin-framework interactions on the XPC adapters | `contracts`,`pact`,`rest` | Y | N | L | apiome-rest |
 
 **✅ PFX-3.1 · #6931 Pact → contract-suite compiler — Complete** — the ECA-1.1 compiler's case model gains a `pact` source: request, expected response, provider state, matching rules; manifest stays byte-identical per (pact version, options) with a `sha256:` digest. Unsupported semantics reported, never skipped. *Deps:* 1.2, ECA-1.1. **Docs:** reference regen; `…/pact-broker/verification.mdx`.
 
@@ -280,7 +279,7 @@ flowchart LR
 
 **✅ PFX-3.6 · #6936 Message pacts — Complete** — Pact v3 `messages` and v4 `Asynchronous/Messages` compared with an **AsyncAPI 2.x / 3.x provider contract** (`contractType: asyncapi`, read from the document when omitted, inline only; structural check, no migration) by `pact_asyncapi_compare` like 2.2: resolved onto a channel/message (`pact_asyncapi_index`: metadata destination, address templates, message name, only messages the provider sends, first payload match), then content type, metadata against `headers`, contents against a JSON Schema `payload` (reuses the AsyncAPI payload helpers) and matching rules. New message codes on the comparison-rules page; HTTP interactions and Pact 4 `Synchronous/Messages` are reported as not compared (synchronous handlers deferred). The fidelity report lists the message checks. Golden corpus of 28 cases. *Deps:* 2.2. **Docs:** `…/pact-broker/message-pacts.mdx`, comparison-rules section.
 
-**PFX-3.7 · #6937 Plugin pacts: gRPC and GraphQL** — Pact plugin-framework interactions mapped onto XPC-1.2/3.2 adapters and the XPC-1.6 GraphQL consumer-contract model. *Deps:* 3.2, XPC-1.6 #5733.
+**✅ PFX-3.7 · #6937 Plugin pacts: gRPC and GraphQL — Complete** — a gRPC call recorded by the Pact protobuf plugin (Pact 4 `Synchronous/Messages`, `transport: grpc`) compiles, through the descriptors the pact files under `metadata.plugins`, into a `grpc` case on the XPC-3.2 RPC model (`pact_plugin_grpc`: procedure, protobuf-JSON request and reply, `grpc-status`, idempotency from the method options, rule paths renamed to JSON names, numeric rules on int64 fields applied as a digits regex) and is judged by the verifier's matching engine on a `grpc` / `connect` target. A GraphQL-over-HTTP interaction carries the XPC-1.2 operation (`pact_graphql`): its operation type gates mutation, and unrecorded `errors` fail. Hosted verification takes `http`, `grpc` or `connect` targets and holds back what the target cannot speak (`pact-interaction-protocol-mismatch`). Other plugins, streaming methods and subscriptions are reported unsupported. Mapping GraphQL selections onto the consumer-contract model is reported as deferred (`PACT_GRAPHQL_SELECTIONS_NOT_MAPPED`) until XPC-1.6 #5733 ships. *Deps:* 3.2, XPC-1.6 #5733. **Docs:** `…/pact-broker/verification.mdx`, `…/pact-broker/hosted-verification.mdx`.
 
 ### PFX-EPIC-4 · [#6910](https://github.com/apiome/apiome/issues/6910) — CLI, CI and client compatibility
 

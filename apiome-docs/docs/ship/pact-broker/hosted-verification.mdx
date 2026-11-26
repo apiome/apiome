@@ -19,8 +19,10 @@ report](./verification-results.mdx#send-a-report-from-your-own-ci) instead.
 
 - A consumer has [published a pact](./publish-pacts.mdx) with the provider.
 - The provider runs somewhere Apiome can reach, and that deployment is registered as a
-  **verification target**. The target holds the base URL, the credentials and the policy:
-  timeouts, retries, and whether mutating methods are allowed. See
+  **verification target**. The target holds the base URL, the protocol, the credentials and the
+  policy: timeouts, retries, and whether mutating methods are allowed. Use an `http` target for
+  HTTP interactions, and a `grpc` or `connect` target for gRPC calls (see
+  [gRPC and GraphQL pacts](#grpc-and-graphql-pacts)). See
   [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) and the
   [Contract assurance REST reference](../../reference/rest/contract-assurance.md).
 - Your API key belongs to a member who holds **Pacts** → **Create** and
@@ -49,7 +51,7 @@ curl -X POST \
 
 | Field | Required | What it does |
 | --- | --- | --- |
-| `target_ref` | Yes | The slug or id of the verification target to replay against. |
+| `target_ref` | Yes | The slug or id of the verification target to replay against: `http`, `grpc` or `connect`. The response echoes its `protocol` under `target`. |
 | `provider_version` | Yes | The provider version being verified, usually the commit SHA. Results are recorded against it. |
 | `provider_branch` | No | The branch of that version. It is recorded on the version before a result is published, and used for `matchingBranch` selectors and pending pacts. |
 | `build_url` | No | The CI build, stored on each result. |
@@ -217,6 +219,56 @@ This covers:
 - a `contentType` rule that names no type, or another rule on a binary body that is not text;
 - a matcher no Pact specification defines.
 
+## gRPC and GraphQL pacts
+
+A pact can hold gRPC calls recorded by the
+[Pact protobuf plugin](https://github.com/pactflow/pact-protobuf-plugin), and GraphQL operations
+recorded as HTTP interactions. Both are replayed. See
+[gRPC and GraphQL interactions](./verification.mdx#grpc-and-graphql-interactions) for how each is
+compiled.
+
+### gRPC calls
+
+A gRPC call is sent only to a `grpc` or `connect` verification target:
+
+- **`connect`** — Apiome posts the request as protobuf JSON to `/{package.Service}/{Method}` over
+  HTTP, with the Connect protocol.
+- **`grpc`** — Apiome opens a native gRPC channel. The server must have **server reflection**
+  turned on, so Apiome can encode the request and decode the reply.
+
+Apiome then compares the reply with what the consumer recorded:
+
+1. **Status.** The recorded `grpc-status`, or `ok` when none is recorded.
+2. **Message.** For an `ok` reply, the message is compared with the recorded one under the pact's
+   matching rules, exactly as a JSON body is. A mismatch names the field as a JSON Pointer into
+   the message, such as `/totalCents`, and the rule.
+
+Request metadata is not sent, and response metadata and `grpc-message` are not compared. The
+compiled suite reports each one as a `PACT_PLUGIN_PARTIAL` finding. A streaming method cannot be
+replayed and is listed under `unsupported`.
+
+A gRPC call is mutating unless its method declares `idempotency_level = NO_SIDE_EFFECTS`. Any
+other call needs the [mutating opt-in](#mutating-interactions).
+
+### GraphQL operations
+
+A GraphQL operation is replayed on the recorded path, such as `/graphql`, on an `http` target.
+Two things differ from a plain HTTP interaction:
+
+- **Mutating.** A `query` is not mutating, although it is sent as a `POST`. A `mutation` is, and
+  needs the [mutating opt-in](#mutating-interactions).
+- **Errors.** A reply that carries an `errors` array the consumer did not record fails with
+  `graphql-errors-present`, even when `data` matches. When the consumer recorded `errors`, the
+  matching rules judge them.
+
+### One target per protocol
+
+A target speaks one protocol, so a pact that mixes HTTP interactions and gRPC calls is replayed in
+part on each target. What the target cannot speak is skipped with
+`pact-interaction-protocol-mismatch`, and the pact is `incomplete` on that run, so nothing is
+published. Verify such a pact on an `http` target and a `grpc` target in two runs, or ask the
+consumer to split it.
+
 ## Mutating interactions
 
 By default a run sends only `GET`, `HEAD` and `OPTIONS`. An interaction with `POST`, `PUT`,
@@ -270,7 +322,8 @@ An interaction that is not replayed has `outcome` `skipped` or `errored`, a `cod
 
 | Code | Meaning | What to do |
 | --- | --- | --- |
-| `mutating-method-blocked` | The method is mutating, and the target's policy or the run does not allow it. | See [Mutating interactions](#mutating-interactions). |
+| `mutating-method-blocked` | The method is mutating, and the target's policy or the run does not allow it. A GraphQL `mutation` and a gRPC call without `NO_SIDE_EFFECTS` count as mutating. | See [Mutating interactions](#mutating-interactions). |
+| `pact-interaction-protocol-mismatch` | A gRPC call on an `http` target, or an HTTP interaction on a `grpc` or `connect` target. | Run again against a target of the other protocol. See [One target per protocol](#one-target-per-protocol). |
 | `provider-state-not-set-up` | The interaction assumes a provider state, and the provider has registered none. | [Register its states](./provider-states.mdx#register-a-state). |
 | `provider-state-not-registered` | The interaction names a state the provider has not registered. | Register the state, or ask the consumer to use a registered name. |
 | `provider-state-param-missing` | The interaction leaves out a parameter the state requires. | Give the parameter a `default`, or ask the consumer to add it. |
@@ -279,10 +332,12 @@ An interaction that is not replayed has `outcome` `skipped` or `errored`, a `cod
 | `pact-request-path-not-on-target` | The recorded path names a scheme or a host, or does not start with `/`. It is never sent, because it would leave the target. | Fix the path in the consumer's test. |
 | `transport-error`, `timeout` | The target could not be reached or did not answer in time. | Check the target, then run again. |
 
-Interactions Apiome cannot replay at all, such as message and plugin interactions, are listed
-under the pact's `unsupported` with a reason. Asynchronous messages are verified without running
-the provider, against its AsyncAPI document: see [Message pacts](./message-pacts.mdx). Replaying
-synchronous messages (a request and its reply) against a message handler is not available yet.
+Interactions Apiome cannot replay at all are listed under the pact's `unsupported` with a reason:
+message interactions, plugins other than protobuf (such as CSV), streaming gRPC methods, gRPC calls
+whose `.proto` definitions are missing from the pact, and GraphQL subscriptions. Asynchronous
+messages are verified without running the provider, against its AsyncAPI document: see
+[Message pacts](./message-pacts.mdx). Replaying synchronous messages that are not gRPC calls
+against a message handler is not available yet.
 
 ## What can stop a run
 
@@ -292,7 +347,7 @@ synchronous messages (a request and its reply) against a message handler is not 
 | `400` | `pacticipant-invalid-version`, `pacticipant-invalid-branch`, `pacticipant-invalid-url` | The provider version, branch or build URL is malformed. |
 | `404` | `pacticipant-not-found` | No such provider in this workspace. |
 | `404` | `target-not-found` | No such verification target in this workspace. |
-| `422` | `target-disabled`, `target-protocol-mismatch` | The target is disabled, or it is not an HTTP target. |
+| `422` | `target-disabled`, `target-protocol-mismatch` | The target is disabled, or it is not an `http`, `grpc` or `connect` target (a `graphql` target, for example). |
 | `422` | `pact-verify-target-auth-unavailable` | The target's credential could not be read. |
 | `422` | `pact-verify-too-many-pacts` | The selectors chose more than 25 pacts. |
 

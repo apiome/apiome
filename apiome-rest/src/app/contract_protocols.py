@@ -24,6 +24,7 @@ from typing import Dict, Tuple
 
 __all__ = [
     "CONTRACT_PROTOCOLS",
+    "PACT_VERIFICATION",
     "PROTOCOL_CONNECT",
     "PROTOCOL_GRAPHQL",
     "PROTOCOL_GRPC",
@@ -56,10 +57,17 @@ CONTRACT_PROTOCOLS: Tuple[str, ...] = (
     PROTOCOL_CONNECT,
 )
 
+#: Not a wire protocol: what a hosted pact verification asks a target for (PFX-3.7). A pact may
+#: carry HTTP interactions and gRPC calls the protobuf plugin recorded, so its run accepts an
+#: ``http``, ``grpc`` or ``connect`` target and holds back, per interaction, what that target
+#: cannot speak (:func:`app.pact_verifier.plan_pact_run`).
+PACT_VERIFICATION = "pact"
+
 #: Which target protocols can execute a suite of each protocol. A protocol not listed pairs only
 #: with itself.
 _TARGET_PROTOCOLS: Dict[str, Tuple[str, ...]] = {
     PROTOCOL_GRPC: (PROTOCOL_GRPC, PROTOCOL_CONNECT),
+    PACT_VERIFICATION: (PROTOCOL_HTTP, PROTOCOL_GRPC, PROTOCOL_CONNECT),
 }
 
 

@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.853.0] - 2026-11-25
+
+### Added
+- **Plugin pacts: gRPC and GraphQL (PFX-3.7, #6937).** OpenAPI 1.677.0 (`VerifiedTarget.protocol`,
+  the `PactVerifyRequest.target_ref` description, and the `ContractCase` / `ContractPactInteraction`
+  descriptions). No migration. The pact compiler (`app.contract_suite_pact`) now compiles a gRPC
+  call recorded by the Pact protobuf plugin (Pact 4 `Synchronous/Messages`, `transport: grpc`) into
+  a `grpc`-protocol case on the XPC-3.2 RPC model, read through the `FileDescriptorSet` the pact
+  files under `metadata.plugins[protobuf].configuration[descriptorKey]` (new pure module
+  `app.pact_plugin_grpc`): procedure `/{package.Service}/{Method}`, protobuf-JSON request and
+  expected reply, `expect_code` from the recorded `grpc-status`, `idempotency_level` from the
+  method options, response rule paths renamed to protobuf-JSON names, and `integer` / `number`
+  rules on 64-bit integer fields applied as a digits regex. A suite of gRPC calls only is stamped
+  `protocol: grpc`. A GraphQL-over-HTTP interaction (JSON `POST`, `GET`, `application/graphql`)
+  keeps its HTTP request and carries the XPC-1.2 `graphql` block (new pure module
+  `app.pact_graphql`), so `is_mutating_case` reads its operation type and the runner fails a reply
+  with unrecorded `errors` (`graphql-errors-present`). The RPC runner judges a pact case against
+  the recorded status and message with the verifier's matching engine
+  (`contract_runner.pact_mismatch_assertions`, shared with HTTP). Hosted verification
+  (`POST …/pact-verifier/pacts/provider/{p}/verify`) resolves `http`, `grpc` or `connect` targets
+  (`contract_protocols.PACT_VERIFICATION`); `plan_pact_run(target_protocol=…)` holds back what the
+  target cannot speak with `pact-interaction-protocol-mismatch`, so a mixed pact is `incomplete`
+  on one target. New suite codes `PACT_PLUGIN_PARTIAL`, `PACT_GRAPHQL_UNREADABLE` and
+  `PACT_GRAPHQL_SELECTIONS_NOT_MAPPED` (mapping GraphQL selections onto consumer contracts awaits
+  XPC-1.6, #5733); other plugins, streaming methods (`UNSUPPORTED_STREAMING`), unreadable
+  descriptors / methods / content and GraphQL subscriptions are listed under `unsupported`.
+
 ## [1.852.0] - 2026-11-25
 
 ### Added

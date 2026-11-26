@@ -69,8 +69,9 @@ from .contract_suite import (
     OUTCOME_SUCCESS,
     ContractCase,
     ContractSuiteManifest,
+    PactResponseExpectation,
 )
-from .pact_value_match import PART_HEADER, match_response
+from .pact_value_match import PART_HEADER, Mismatch, match_response
 from .schema_instance_validation import validate_json_instance
 from .ssrf_guard import build_guarded_client
 from .verification_evidence import (
@@ -112,6 +113,8 @@ __all__ = [
     "FAILURE_MUTATING_METHOD_BLOCKED",
     "FAILURE_PACT_BODY_MISMATCH",
     "FAILURE_PACT_HEADER_MISMATCH",
+    "pact_graphql_envelope",
+    "pact_mismatch_assertions",
     "FAILURE_RESPONSE_SCHEMA_MISMATCH",
     "FAILURE_STATUS_MISMATCH",
     "FAILURE_TIMEOUT",
@@ -409,7 +412,8 @@ def is_mutating_case(case: ContractCase) -> bool:
     the verb says nothing; its operation type does — a ``mutation`` is mutating, a ``query`` is
     not. A gRPC-family case is mutating unless its method declares ``idempotency_level =
     NO_SIDE_EFFECTS``: protobuf's default (``IDEMPOTENCY_UNKNOWN``) promises nothing, and an
-    ``IDEMPOTENT`` method may still write.
+    ``IDEMPOTENT`` method may still write. A pact case replaying a GraphQL-over-HTTP interaction
+    (PFX-3.7) carries its operation too and is gated by it the same way.
 
     Args:
         case: The compiled case.
@@ -417,7 +421,7 @@ def is_mutating_case(case: ContractCase) -> bool:
     Returns:
         ``True`` when the mutating-method gate applies to the case.
     """
-    if case.protocol == PROTOCOL_GRAPHQL and case.graphql is not None:
+    if case.graphql is not None:
         return case.graphql.operation_type == "mutation"
     if case.protocol == PROTOCOL_GRPC and case.rpc is not None:
         return case.rpc.idempotency_level != "no_side_effects"
@@ -740,7 +744,64 @@ def _pact_assertions(case: ContractCase, response: httpx.Response) -> List[Asser
     """
     assert case.pact is not None
     expectation = case.pact.response
+    if case.graphql is not None:
+        envelope = pact_graphql_envelope(case, _parse_json_body(response))
+        if envelope is not None:
+            return [envelope]
     mismatches = match_response(expectation, headers=dict(response.headers), content=response.content)
+    return pact_mismatch_assertions(expectation, mismatches)
+
+
+def pact_graphql_envelope(case: ContractCase, body: Any) -> Optional[AssertionInput]:
+    """Check the GraphQL envelope of a pact case replaying a GraphQL operation (PFX-3.7).
+
+    A GraphQL server answers a failed operation with ``200`` and an ``errors`` array, and a pact
+    body match lets members the consumer did not record through — so a reply carrying ``errors``
+    the consumer never expected is failed here, before the body is compared.
+
+    Args:
+        case: A pact case with ``case.graphql`` set.
+        body: The parsed response body.
+
+    Returns:
+        A failed ``graphql-errors-present`` assertion, or ``None`` when the consumer recorded
+        ``errors`` itself (the matching rules then judge them) or the reply carries none.
+    """
+    assert case.pact is not None
+    recorded = case.pact.response.body
+    if isinstance(recorded, dict) and "errors" in recorded:
+        return None
+    errors = body.get("errors") if isinstance(body, dict) else None
+    if not isinstance(errors, list) or not errors:
+        return None
+    first = errors[0]
+    detail = first.get("message") if isinstance(first, dict) else _render(first)
+    return AssertionInput(
+        kind=ASSERTION_KIND_CUSTOM,
+        outcome=ASSERTION_OUTCOME_FAILED,
+        subject="/errors",
+        expected="errors absent",
+        actual=_bounded(_render(detail), _FIELD_LIMIT),
+        code=FAILURE_GRAPHQL_ERRORS_PRESENT,
+        message=_bounded(
+            f"the server answered the GraphQL operation with errors the pact does not record: {detail}",
+            _MESSAGE_LIMIT,
+        ),
+    )
+
+
+def pact_mismatch_assertions(
+    expectation: PactResponseExpectation, mismatches: Sequence[Mismatch]
+) -> List[AssertionInput]:
+    """Record a pact comparison as assertions — shared by the HTTP and the RPC runner.
+
+    Args:
+        expectation: The response the pact expects.
+        mismatches: What :mod:`app.pact_value_match` found.
+
+    Returns:
+        One failed assertion per mismatch, or the passed headers / body assertions.
+    """
     if mismatches:
         return [
             AssertionInput(
@@ -813,7 +874,7 @@ def _execute_case(
     t0 = time.perf_counter()
 
     if is_mutating_case(case) and not target.policy.allow_mutating_methods:
-        if case.protocol == PROTOCOL_GRAPHQL:
+        if case.graphql is not None:
             what = "this case is a GraphQL mutation"
         elif case.protocol == PROTOCOL_GRPC:
             what = "this method does not declare idempotency_level = NO_SIDE_EFFECTS"
@@ -1025,7 +1086,8 @@ def run_suite(
         # What a hook sets up for one case must not be seen by another.
         concurrency = 1
     rpc_transport: Optional[Any] = None
-    if manifest.protocol == PROTOCOL_GRPC:
+    # A pact suite may mix HTTP and gRPC cases (PFX-3.7), so the cases decide, not the stamp.
+    if manifest.protocol == PROTOCOL_GRPC or any(case.protocol == PROTOCOL_GRPC for case in cases):
         from .contract_runner_rpc import build_rpc_transport
 
         rpc_transport = build_rpc_transport(target, client=client, auth_headers=headers)

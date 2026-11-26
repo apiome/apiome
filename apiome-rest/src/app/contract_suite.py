@@ -292,8 +292,19 @@ CODE_SELECTION_DEPTH_LIMITED = "SELECTION_DEPTH_LIMITED"
 CODE_FIELD_ARGUMENTS_REQUIRED = "FIELD_ARGUMENTS_REQUIRED"
 #: Pact (PFX-3.1): an interaction with no readable request method and path, so nothing to send.
 CODE_PACT_INTERACTION_MALFORMED = "PACT_INTERACTION_MALFORMED"
-#: Pact: a Pact 4 plugin interaction (gRPC, protobuf, CSV …) — PFX-3.7, not a plain HTTP replay.
+#: Pact: a Pact 4 plugin interaction that cannot be replayed — a plugin other than protobuf, a
+#: protobuf body on HTTP, or a gRPC call whose descriptors, method or content do not resolve
+#: (PFX-3.7). A gRPC call the protobuf plugin recorded is compiled into an RPC case instead.
 CODE_PACT_PLUGIN_INTERACTION = "PACT_PLUGIN_INTERACTION"
+#: Pact: part of a protobuf-plugin gRPC interaction is carried more weakly than the pact says —
+#: request metadata not sent, response metadata or ``grpc-message`` not compared (PFX-3.7).
+CODE_PACT_PLUGIN_PARTIAL = "PACT_PLUGIN_PARTIAL"
+#: Pact: an HTTP interaction carries a GraphQL request that cannot be read (PFX-3.7); it is
+#: replayed as plain HTTP, gated by its method.
+CODE_PACT_GRAPHQL_UNREADABLE = "PACT_GRAPHQL_UNREADABLE"
+#: Pact: the pact's GraphQL operations are verified, but their selections are not mapped onto
+#: the consumer-contract model, which awaits XPC-1.6 (#5733).
+CODE_PACT_GRAPHQL_SELECTIONS_NOT_MAPPED = "PACT_GRAPHQL_SELECTIONS_NOT_MAPPED"
 #: Pact: a request or response body whose content cannot be decoded (bad base64, invalid JSON).
 CODE_PACT_BODY_UNREADABLE = "PACT_BODY_UNREADABLE"
 #: Pact: a Pact 1 matcher embedded in a body (``json_class``), removed; its rule is not carried.
@@ -346,6 +357,9 @@ SUITE_FINDING_CODES: Tuple[str, ...] = tuple(
             CODE_FIELD_ARGUMENTS_REQUIRED,
             CODE_PACT_INTERACTION_MALFORMED,
             CODE_PACT_PLUGIN_INTERACTION,
+            CODE_PACT_PLUGIN_PARTIAL,
+            CODE_PACT_GRAPHQL_UNREADABLE,
+            CODE_PACT_GRAPHQL_SELECTIONS_NOT_MAPPED,
             CODE_PACT_BODY_UNREADABLE,
             CODE_PACT_EMBEDDED_MATCHER,
             CODE_PACT_MATCHING_RULE_UNSUPPORTED,
@@ -799,15 +813,17 @@ class ContractCase(BaseModel):
     graphql: Optional[ContractGraphqlRequest] = Field(
         default=None,
         description=(
-            "The GraphQL document, variables and operation name. Present exactly when "
-            "`protocol` is `graphql`; `request.body` carries the same document as sent."
+            "The GraphQL document, variables and operation name. Present when `protocol` is "
+            "`graphql` (`request.body` carries the same document as sent), and on a pact case "
+            "replaying a GraphQL-over-HTTP interaction (PFX-3.7), whose `protocol` stays `http`."
         ),
     )
     rpc: Optional[ContractRpcRequest] = Field(
         default=None,
         description=(
             "The unary call: procedure, request message and expected status code. Present "
-            "exactly when `protocol` is `grpc`; `request.body` carries the same message."
+            "exactly when `protocol` is `grpc` — compiled from a protobuf version, or from a "
+            "pact's protobuf-plugin interaction (PFX-3.7); `request.body` carries the same message."
         ),
     )
     pact: Optional["ContractPactInteraction"] = Field(
@@ -985,7 +1001,10 @@ class ContractPactInteraction(BaseModel):
     description: str = Field(description="The interaction's description.")
     pointer: str = Field(description="JSON Pointer of the interaction in the pact document.")
     interaction_type: str = Field(
-        description="`Synchronous/HTTP` for a Pact 4 interaction that says so, `http` for Pact 1–3."
+        description=(
+            "`Synchronous/HTTP` for a Pact 4 interaction that says so, `http` for Pact 1–3, "
+            "`Synchronous/Messages` for a gRPC call the protobuf plugin recorded (PFX-3.7)."
+        )
     )
     pending: bool = Field(
         default=False, description="Whether the Pact 4 interaction is marked `pending` by the consumer."
