@@ -294,6 +294,26 @@ export const EVENT_OPTIONS: readonly EventOption[] = [
     label: 'Consumer version branch created',
     description: 'A publication on a branch the consumer did not have before.',
   },
+  {
+    name: 'contract_became_stale',
+    label: 'Contract became stale',
+    description: 'A pact went unverified for longer than its stale threshold.',
+  },
+  {
+    name: 'contract_no_longer_stale',
+    label: 'Contract no longer stale',
+    description: 'A stale pact was verified, or a newer one replaced it.',
+  },
+  {
+    name: 'contract_republish_requested',
+    label: 'Re-publish requested',
+    description: 'The consumer of a stale pact was asked to re-publish it.',
+  },
+  {
+    name: 'contract_republish_request_expired',
+    label: 'Re-publish request expired',
+    description: 'A re-publish request went unanswered for its window and was escalated.',
+  },
 ];
 
 /**

@@ -26,6 +26,15 @@ import {
 import { formatWhen, safeHttpUrl, shortVersion } from '@lib/pact-pacticipants';
 import { pactRoute, shortSha } from '@lib/pact-detail';
 import {
+  SETTINGS_ROUTE,
+  SOURCE_TEXT,
+  cadenceLabel,
+  formatHours,
+  requestRoute,
+  stateText,
+  type EffectiveSettings,
+} from '@lib/pact-remediation';
+import {
   OUTCOME_LABELS,
   formatDuration,
   passRate,
@@ -70,6 +79,7 @@ export function KpiStrip({ counts }: { counts: StatusCounts }) {
     ['verified', 'Verified', String(counts.verified)],
     ['failing', 'Failing', String(counts.failing)],
     ['stale', 'Stale', String(counts.stale)],
+    ...(counts.overdue === undefined ? [] : [['overdue', 'Overdue', String(counts.overdue)] as [string, string, string]]),
     ['pass-rate', 'Interactions passing', passRate(counts)],
     ['last', 'Last verified', counts.last_verified_at ? formatWhen(counts.last_verified_at) : 'Never'],
   ];
@@ -82,6 +92,63 @@ export function KpiStrip({ counts }: { counts: StatusCounts }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+/**
+ * What PFX-6.2 adds to a pact's row: overdue past its stale threshold, its open re-publish request,
+ * and why a scheduled verification did not run.
+ *
+ * @param props - The row.
+ * @returns The notes, or nothing.
+ */
+export function RemediationNotes({ entry }: { entry: VerificationStatusEntry }) {
+  const request = entry.republish_request;
+  const attempt = entry.scheduled;
+  const blocked = attempt && (attempt.status === 'skipped' || attempt.status === 'errored') ? attempt : null;
+  if (!entry.overdue && !request && !blocked) return null;
+  return (
+    <span className="pvx-remediation" data-testid={`pvx-remediation-${entry.consumer}`}>
+      {entry.overdue ? (
+        <Badge
+          variant="danger"
+          data-testid="pvx-overdue"
+          title={entry.stale_since ? `Past its stale threshold since ${formatWhen(entry.stale_since)}` : undefined}
+        >
+          Overdue
+        </Badge>
+      ) : null}
+      {request ? (
+        <Link className="ppx__link" href={requestRoute(request.id)} data-testid="pvx-republish-link">
+          Re-publish {stateText(request.state).label.toLowerCase()}
+        </Link>
+      ) : null}
+      {blocked ? (
+        <span className="ppx__muted" data-testid="pvx-schedule-note">
+          Scheduled run {blocked.status}: {blocked.reason ?? blocked.code}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/**
+ * The cadence and stale threshold that apply to the provider, with where to change them.
+ *
+ * @param props - The provider's effective settings, when known.
+ * @returns The line, or nothing.
+ */
+export function CadenceLine({ settings }: { settings: EffectiveSettings | null | undefined }) {
+  if (!settings) return null;
+  return (
+    <p className="ppx__muted pvx-cadence" data-testid="pvx-cadence">
+      Verification cadence: {cadenceLabel(settings.cadence)} ({SOURCE_TEXT[settings.cadence_source]}) · stale after{' '}
+      {formatHours(settings.stale_threshold_hours)}
+      {settings.target ? ` · scheduled runs replay against ${settings.target}` : ''} ·{' '}
+      <Link className="ppx__link" href={SETTINGS_ROUTE}>
+        Verification settings
+      </Link>
+    </p>
   );
 }
 
@@ -147,6 +214,7 @@ export function StatusTable({
                       Stale — not verified
                     </Badge>
                   )}
+                  <RemediationNotes entry={entry} />
                 </td>
                 <td className="ppx__mono" title={result?.provider_version}>
                   {result ? shortVersion(result.provider_version) : <span className="ppx__muted">—</span>}

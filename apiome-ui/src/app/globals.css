@@ -45935,6 +45935,94 @@ tr[data-selected="true"] > td:first-child {
   margin-block-start: var(--space-3);
 }
 
+.pvx-kpi--overdue dd {
+  color: var(--danger-fg);
+}
+
+/* PFX-6.2 (#6954): a pact's remediation notes and the provider's cadence line. */
+.pvx-remediation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin-block-start: var(--space-1);
+  font-size: var(--fs-xs);
+}
+
+.pvx-cadence {
+  margin: 0 0 var(--space-3);
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * Verification settings and re-publish requests — PFX-6.2 (#6954). Built on the Pacticipants
+ * (.ppx) and Matrix (.pmx) classes; these add the forms' layout and the request facts.
+ * --------------------------------------------------------------------------------------------- */
+
+.prx-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.prx-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  align-items: start;
+  gap: var(--space-3);
+}
+
+.prx-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.prx-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.prx-saved {
+  color: var(--ok-fg);
+  font-size: var(--fs-sm);
+}
+
+.prx-note {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.prx-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: 0 0 var(--space-3);
+}
+
+.prx-facts dt {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.prx-facts dd {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.prx-quote {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 3px solid var(--border-strong);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  white-space: pre-wrap;
+}
+
 /* ===========================================================================
  * Contracts — Webhooks and execution log (PFX-5.6, #6950). Built on the
  * Pacticipants (.ppx) and Matrix (.pmx) classes; these add the editor's layout

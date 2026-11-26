@@ -188,6 +188,7 @@ provider states — is guarded by the **Pacts** resource (`pacts`):
 | Create an environment or a webhook, record a deployment or a release, create a provider state | `pacts:create` | — | ✓ | ✓ | ✓ |
 | Change a pacticipant, environment, webhook or provider state; add or remove a label | `pacts:edit` | — | ✓ | ✓ | ✓ |
 | Mark a deployment undeployed, test a saved webhook, redeliver a webhook, retry a commit status | `pacts:edit` | — | ✓ | ✓ | ✓ |
+| Save the [verification settings](./stale-pacts.mdx) or an override, remove an override, acknowledge a re-publish request | `pacts:edit` | — | ✓ | ✓ | ✓ |
 | Delete or restore a pacticipant or a version, delete an environment, webhook or provider state, apply a retention run | `pacts:delete` | — | — | ✓ | ✓ |
 
 Running a verification from Apiome (**Verify**, **Re-verify**, **Verify stale pacts**) also needs

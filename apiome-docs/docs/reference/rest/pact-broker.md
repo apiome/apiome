@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 90 operations."
+description: "REST endpoints tagged pact-broker: 98 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.685.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.686.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 90 operations
+Tag: `pact-broker` · 98 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -1796,7 +1796,7 @@ Operation id: `read_webhooks_v1_tenants__tenant_slug__pact_broker_webhooks_get`
 
 Create a webhook — what `pact-broker create-webhook` posts. The body is the Pact Broker's: `events` (default `contract_content_changed`), an optional `consumer` and `provider` (omit both for every pact of the workspace) and the `request` to send.
 
-- **Events:** `contract_published`, `contract_content_changed`, `contract_requiring_verification_published` (once per provider version that has not verified the pact: the head of the provider's main branch and what is deployed or released), `provider_verification_published`, `provider_verification_succeeded`, `provider_verification_failed`, and Apiome's `consumer_version_branch_created`.
+- **Events:** `contract_published`, `contract_content_changed`, `contract_requiring_verification_published` (once per provider version that has not verified the pact: the head of the provider's main branch and what is deployed or released), `provider_verification_published`, `provider_verification_succeeded`, `provider_verification_failed`, and Apiome's `consumer_version_branch_created` and stale-pact remediation events (`contract_became_stale`, `contract_no_longer_stale`, `contract_republish_requested`, `contract_republish_request_expired`).
 - **Templates:** `${pactbroker.*}` parameters are substituted in the URL's path and query, the headers, the credentials and the body when the webhook fires. Template parameters: `${pactbroker.consumerName}`, `${pactbroker.providerName}`, `${pactbroker.consumerVersionNumber}`, `${pactbroker.providerVersionNumber}`, `${pactbroker.providerVersionTags}`, `${pactbroker.providerVersionDescriptions}`, `${pactbroker.providerVersionBranch}`, `${pactbroker.consumerVersionTags}`, `${pactbroker.consumerVersionBranch}`, `${pactbroker.pactUrl}`, `${pactbroker.verificationResultUrl}`, `${pactbroker.githubVerificationStatus}`, `${pactbroker.bitbucketVerificationStatus}`, `${pactbroker.azureDevOpsVerificationStatus}`, `${pactbroker.gitlabVerificationStatus}`, `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}`, `${pactbroker.eventName}`, `${pactbroker.buildUrl}`, `${pactbroker.currentlyDeployedProviderVersionNumber}`.
 - **Target:** send `request` for any HTTP endpoint (POST, PUT or PATCH), or Apiome's `target` of type `github_repository_dispatch` to start a GitHub Actions workflow.
 - **Where it may go:** http or https, to a public address. Loopback, private and link-local addresses are refused when the webhook is saved and again on every send; redirects are not followed.
@@ -2387,6 +2387,93 @@ Request body for export a pact as a postman collection.
 | 413 | `pact-too-large`: the inline pact is over the workspace's pact size limit. | — |
 | 422 | `pact-postman-export-invalid` (no pact named, two selections, an inline pact with a selection, a bad `baseUrl`), `pact-invalid` (the inline document is not a pact) or `pact-postman-no-http-interactions` (with `notices`). | — |
 
+## `GET /v1/tenants/{tenant_slug}/pact-republish-requests` {#read-requests-v1-tenants-tenant-slug-pact-republish-requests-get}
+
+**List re-publish requests**
+
+The workspace's re-publish requests (PFX-6.2), newest first: each stale pact the sweep asked its consumer to re-publish, its state (`requested`, `acknowledged`, `republished`, `cleared` — verified meanwhile — or `expired`, escalated), its window, and what notifying the consumer's owners did. Narrow by `provider`, `consumer` and `state` (`open` for requested and acknowledged); pass `next_cursor` as `cursor` for the next page. Requires `pacts:view`.
+
+Operation id: `read_requests_v1_tenants__tenant_slug__pact_republish_requests_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | query | string or null | no | Only this provider's. |
+| `consumer` | query | string or null | no | Only this consumer's. |
+| `state` | query | string or null | no | A state, or `open`. |
+| `cursor` | query | string or null | no | The `next_cursor` of the previous page. |
+| `limit` | query | integer | no | Page size. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list re-publish requests. | `application/json` [`RepublishRequestPage`](#schema-republishrequestpage) |
+| 400 | `pact-republish-request-cursor-invalid`. | — |
+| 404 | `pacticipant-not-found` for the `provider` or `consumer` filter. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-republish-requests/{request_id}` {#read-request-v1-tenants-tenant-slug-pact-republish-requests-request-id-get}
+
+**Read one re-publish request**
+
+One re-publish request of the workspace (PFX-6.2). Requires `pacts:view`.
+
+Operation id: `read_request_v1_tenants__tenant_slug__pact_republish_requests__request_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `request_id` | path | string | yes | Path parameter identifying the request id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read one re-publish request. | `application/json` [`RepublishRequestRecord`](#schema-republishrequestrecord) |
+| 404 | `pact-republish-request-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-republish-requests/{request_id}/acknowledge` {#acknowledge-v1-tenants-tenant-slug-pact-republish-requests-request-id-acknowledge-post}
+
+**Acknowledge a re-publish request**
+
+The consumer acknowledges an open re-publish request (PFX-6.2), optionally with a `note` (what it will do, and when; at most 1000 characters). Acknowledging again updates the note. The request still expires at the end of its window unless the consumer re-publishes the pact or the provider verifies it. A request that is no longer open is a `409` (`pact-republish-request-closed`). Requires `pacts:edit`.
+
+Operation id: `acknowledge_v1_tenants__tenant_slug__pact_republish_requests__request_id__acknowledge_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `request_id` | path | string | yes | Path parameter identifying the request id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for acknowledge a re-publish request.
+
+- `application/json` — [`AcknowledgeRequest`](#schema-acknowledgerequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for acknowledge a re-publish request. | `application/json` [`RepublishRequestRecord`](#schema-republishrequestrecord) |
+| 404 | `pact-republish-request-not-found` in this workspace. | — |
+| 409 | `pact-republish-request-closed`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-suites/provider/{provider}/consumer/{consumer}/pact-version/{sha}` {#compile-pact-version-suite-v1-tenants-tenant-slug-pact-suites-provider-provider-consumer-consumer-pact-version-sha-post}
 
 **Compile a pact version into a contract suite**
@@ -2424,6 +2511,136 @@ Request body for compile a pact version into a contract suite.
 | --- | --- | --- |
 | 200 | Successful response for compile a pact version into a contract suite. | `application/json` [`PactSuiteResponse`](#schema-pactsuiteresponse) |
 | 404 | `pacticipant-not-found` or `pact-not-found`: no such provider, consumer or pact version in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-verification-settings` {#read-settings-v1-tenants-tenant-slug-pact-verification-settings-get}
+
+**Read the workspace's Pact verification settings**
+
+The workspace's verification settings (PFX-6.2): the **cadence** on which Apiome's hosted verifier runs each pair (`on-publish`, `hourly`, `nightly` or `manual-only`), the **stale threshold** in hours (a pact not verified for longer is stale and opens a re-publish request), how many scheduled verifications may run at once, how long a re-publish request stays open, and whether stale pacts open requests. A workspace that never saved any reads the defaults (`customised: false`: manual-only, 72 h, 2, 72 h, on). Requires `pacts:view`.
+
+Operation id: `read_settings_v1_tenants__tenant_slug__pact_verification_settings_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the workspace's pact verification settings. | `application/json` [`VerificationSettings`](#schema-verificationsettings) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-verification-settings` {#update-settings-v1-tenants-tenant-slug-pact-verification-settings-put}
+
+**Save the workspace's Pact verification settings**
+
+Replace the workspace's verification settings (PFX-6.2); every field is required. A cadence other than `manual-only` runs a pair only where an override names a verification target. Out-of-range values are a `422` naming the field. Requires `pacts:edit`.
+
+Operation id: `update_settings_v1_tenants__tenant_slug__pact_verification_settings_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for save the workspace's pact verification settings.
+
+- `application/json` — [`VerificationSettingsInput`](#schema-verificationsettingsinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for save the workspace's pact verification settings. | `application/json` [`VerificationSettings`](#schema-verificationsettings) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-verification-settings/overrides` {#read-overrides-v1-tenants-tenant-slug-pact-verification-settings-overrides-get}
+
+**List the Pact verification overrides**
+
+Every provider-wide and per-pair override of the workspace (PFX-6.2), by provider then consumer: its cadence, stale threshold and verification target (null inherits). `target_deleted` flags an override whose target was deleted. Requires `pacts:view`.
+
+Operation id: `read_overrides_v1_tenants__tenant_slug__pact_verification_settings_overrides_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the pact verification overrides. | `application/json` [`OverrideList`](#schema-overridelist) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-verification-settings/overrides` {#save-override-v1-tenants-tenant-slug-pact-verification-settings-overrides-put}
+
+**Save a Pact verification override**
+
+Create or replace the override of a provider (omit `consumer`) or of one consumer ↔ provider pair (PFX-6.2). Set at least one of `cadence`, `stale_threshold_hours` and `target_ref` (the verification target scheduled runs replay against); a null field inherits — the pair's override wins over the provider's, which wins over the workspace's. A workspace has at most 500 overrides. Requires `pacts:edit`.
+
+Operation id: `save_override_v1_tenants__tenant_slug__pact_verification_settings_overrides_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for save a pact verification override.
+
+- `application/json` — [`OverrideInput`](#schema-overrideinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for save a pact verification override. | `application/json` [`OverrideRecord`](#schema-overriderecord) |
+| 404 | `pacticipant-not-found` or `target-not-found` in this workspace. | — |
+| 422 | `pact-verification-override-invalid`, or a value out of range. | — |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-verification-settings/overrides/{override_id}` {#remove-override-v1-tenants-tenant-slug-pact-verification-settings-overrides-override-id-delete}
+
+**Remove a Pact verification override**
+
+Remove one override (PFX-6.2); the provider or pair inherits again. Requires `pacts:edit`.
+
+Operation id: `remove_override_v1_tenants__tenant_slug__pact_verification_settings_overrides__override_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `override_id` | path | string | yes | Path parameter identifying the override id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for remove a pact verification override. | — |
+| 404 | `pact-verification-override-not-found` in this workspace. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/reverify` {#reverify-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-consumer-consumer-pact-version-sha-reverify-post}
@@ -2914,6 +3131,14 @@ Operation id: `post_redeliver_v1_tenants__tenant_slug__pact_webhook_deliveries__
 
 ## Schemas used {#schemas-used}
 
+### `AcknowledgeRequest` {#schema-acknowledgerequest}
+
+The consumer acknowledges a re-publish request.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `note` | string or null | no | What the consumer will do, and when. |
+
 ### `ConsoleRunRequest` {#schema-consolerunrequest}
 
 A re-run or verify-all-stale from the Verification console.
@@ -2940,7 +3165,7 @@ A console run: the hosted verifier's answer, its trigger, and what it did not ru
 | `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed`. |
 | `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed) or `no-pacts` (the selectors chose nothing). |
 | `pacts` | array of `PactVerification` | no | One entry per pact verified. |
-| `trigger` | string | yes | `manual` (re-run) or `stale-recheck` (verify all stale). |
+| `trigger` | string | yes | `manual` (re-run), `stale-recheck` (verify all stale) or `scheduled`. |
 | `skipped` | array of `SkippedPact` | no | Chosen but not verified, each with why. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -2950,6 +3175,44 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `OverrideInput` {#schema-overrideinput}
+
+A provider-wide or per-pair override, as ``PUT …/overrides`` creates or replaces it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `provider` | string | yes | The provider's handle, id or name. |
+| `consumer` | string or null | no | The consumer's handle, id or name; omit for every consumer of the provider. |
+| `cadence` | string or null | no | The cadence; null inherits. |
+| `stale_threshold_hours` | integer or null | no | The stale threshold (1 … 2160); null inherits. |
+| `target_ref` | string or null | no | Slug or id of the verification target scheduled runs replay against; null inherits. |
+
+### `OverrideList` {#schema-overridelist}
+
+Every override of the workspace, by provider then consumer.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `overrides` | array of [`OverrideRecord`](#schema-overriderecord) | no | Overrides. |
+
+### `OverrideRecord` {#schema-overriderecord}
+
+A stored override.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | The override's id (what `DELETE …/overrides/{id}` removes). |
+| `provider` | string | yes | The provider's handle. |
+| `provider_name` | string | yes | The provider's display name. |
+| `consumer` | string or null | no | The consumer's handle; null for every consumer. |
+| `consumer_name` | string or null | no | The consumer's display name. |
+| `cadence` | string or null | no | The cadence; null inherits. |
+| `stale_threshold_hours` | integer or null | no | The threshold; null inherits. |
+| `target` | string or null | no | The verification target's handle; null inherits. |
+| `target_name` | string or null | no | Its display name. |
+| `target_deleted` | boolean | no | True when the target was deleted: scheduled runs of this override cannot run. |
+| `updated_at` | string or null | no | When it was last saved. |
 
 ### `PactPostmanRequest` {#schema-pactpostmanrequest}
 
@@ -3043,6 +3306,42 @@ A registered provider state, as stored.
 | `created_at` | string (date-time) | yes | When it was registered. |
 | `updated_at` | string (date-time) | yes | When it last changed. |
 
+### `RepublishRequestPage` {#schema-republishrequestpage}
+
+One page of re-publish requests, newest first.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `requests` | array of [`RepublishRequestRecord`](#schema-republishrequestrecord) | no | Requests. |
+| `next_cursor` | string or null | no | Pass as `cursor` for the next page. |
+
+### `RepublishRequestRecord` {#schema-republishrequestrecord}
+
+A request to a consumer to re-publish a stale pact.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | The request's id. |
+| `provider` | string | yes | The provider's handle. |
+| `provider_name` | string | yes | The provider's display name. |
+| `consumer` | string | yes | The consumer's handle. |
+| `consumer_name` | string | yes | The consumer's display name. |
+| `pact_version_sha` | string | yes | The stale pact version. |
+| `consumer_version` | string | yes | The consumer version that published it last. |
+| `state` | string | yes | `requested`, `acknowledged`, `republished`, `cleared` or `expired`. |
+| `threshold_hours` | integer | yes | The stale threshold it crossed. |
+| `reference_at` | string or null | no | When the pact was last verified (or published, when never verified). |
+| `requested_at` | string or null | no | When the request was opened. |
+| `expires_at` | string or null | no | When it expires and escalates, unless answered. |
+| `acknowledged_at` | string or null | no | When the consumer acknowledged it. |
+| `acknowledged_by` | string or null | no | Who acknowledged it. |
+| `note` | string or null | no | The acknowledgement's note. |
+| `resolved_at` | string or null | no | When it was republished, cleared or expired. |
+| `resolved_consumer_version` | string or null | no | The consumer version that re-published, for `republished`. |
+| `notification_status` | string or null | no | What notifying the consumer's owners did: `routed`, `throttled`, `unowned`, `catch_all`, `unlinked` (the consumer is linked to no consumer or project with owners) or `failed`. |
+| `escalation_status` | string or null | no | The same, for the escalation on expiry. |
+| `webhook_deliveries` | integer | no | Contract webhook deliveries queued for it. |
+
 ### `ResultDetail` {#schema-resultdetail}
 
 One verification result in full.
@@ -3093,6 +3392,32 @@ Whether a provider can set up every state its pacts name.
 | `states` | array of `StateCheckEntry` | no | Every state the selected interactions name; unregistered ones first. |
 | `unused` | array of string | no | Registered states no selected interaction names. |
 
+### `VerificationSettings` {#schema-verificationsettings}
+
+The workspace's verification settings, as read.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `cadence` | string | yes | `on-publish`, `hourly`, `nightly` or `manual-only`: when the hosted verifier runs a pair. |
+| `stale_threshold_hours` | integer | yes | A pact not verified for longer than this is stale (1 … 2160). |
+| `max_concurrent_runs` | integer | yes | How many scheduled verifications may run at once in the workspace (1 … 10). |
+| `request_window_hours` | integer | yes | How long a re-publish request stays open before it expires and escalates (1 … 720). |
+| `republish_requests_enabled` | boolean | yes | Whether a stale pact opens a re-publish request. |
+| `customised` | boolean | yes | False while the workspace uses the defaults (never saved). |
+| `updated_at` | string or null | no | When they were last saved. |
+
+### `VerificationSettingsInput` {#schema-verificationsettingsinput}
+
+The workspace's verification settings, as ``PUT`` replaces them.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `cadence` | string | yes | `on-publish`, `hourly`, `nightly` or `manual-only`: when the hosted verifier runs a pair. |
+| `stale_threshold_hours` | integer | yes | A pact not verified for longer than this is stale (1 … 2160). |
+| `max_concurrent_runs` | integer | yes | How many scheduled verifications may run at once in the workspace (1 … 10). |
+| `request_window_hours` | integer | yes | How long a re-publish request stays open before it expires and escalates (1 … 720). |
+| `republish_requests_enabled` | boolean | yes | Whether a stale pact opens a re-publish request. |
+
 ### `VerificationStatus` {#schema-verificationstatus}
 
 Where a provider's verification stands.
@@ -3104,3 +3429,4 @@ Where a provider's verification stands.
 | `counts` | `StatusCounts` | yes | The KPI strip. |
 | `pacts` | array of `VerificationStatusEntry` | no | One per consumer, by handle. |
 | `truncated` | boolean | no | True when the provider has more than 500 consumers (the rest are left out). |
+| `settings` | `EffectiveSettings` or null | no | The cadence, stale threshold and target that apply to the provider (PFX-6.2). |

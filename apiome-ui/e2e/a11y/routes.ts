@@ -306,6 +306,17 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
+    // PFX-6.2 (#6954): Verification settings (defaults and overrides), the Re-publish requests list
+    // and one request, dumped by `tests/pact-remediation-ui.test.tsx`.
+    id: 'pact-remediation',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-verification-settings.html', 'pact-republish-requests.html', 'pact-republish-request.html'],
+    },
+  },
+  {
     // PFX-5.6 (#6950): the Webhooks page (webhooks with their newest delivery, recent deliveries),
     // one webhook (overview, request, delivery log) and one delivery (each attempt's log), dumped
     // by `tests/pact-webhooks-ui.test.tsx`.

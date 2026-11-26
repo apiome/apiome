@@ -5,7 +5,9 @@ needs verifying by a provider version, or a verification finished. This module i
 no database, no network:
 
 * the **events** a webhook can fire on (:data:`EVENT_NAMES`) — the Pact Broker's six, plus
-  Apiome's ``consumer_version_branch_created``;
+  Apiome's ``consumer_version_branch_created`` and the four stale-pact remediation events
+  (PFX-6.2: ``contract_became_stale``, ``contract_no_longer_stale``,
+  ``contract_republish_requested``, ``contract_republish_request_expired``);
 * **reading a webhook body** in the Pact Broker's shape (:func:`parse_webhook_request`): the
   ``request`` to send, or Apiome's ``target`` for a GitHub Actions ``repository_dispatch``;
 * the **template parameters** (:func:`template_parameters`) — every ``${pactbroker.*}`` name a
@@ -50,10 +52,14 @@ __all__ = [
     "CODE_WEBHOOK_TEST_RATE_LIMITED",
     "CODE_TRIGGERED_WEBHOOK_NOT_FOUND",
     "DEFAULT_EVENT",
+    "EVENT_BECAME_STALE",
     "EVENT_BRANCH_CREATED",
     "EVENT_CONTENT_CHANGED",
     "EVENT_NAMES",
+    "EVENT_NO_LONGER_STALE",
     "EVENT_PUBLISHED",
+    "EVENT_REPUBLISH_REQUESTED",
+    "EVENT_REPUBLISH_REQUEST_EXPIRED",
     "EVENT_REQUIRING_VERIFICATION",
     "EVENT_VERIFICATION_FAILED",
     "EVENT_VERIFICATION_PUBLISHED",
@@ -104,8 +110,16 @@ EVENT_VERIFICATION_SUCCEEDED = "provider_verification_succeeded"
 EVENT_VERIFICATION_FAILED = "provider_verification_failed"
 #: Apiome only: a pact publication recorded the consumer version on a branch that is new.
 EVENT_BRANCH_CREATED = "consumer_version_branch_created"
+#: Apiome only (PFX-6.2): a pair's newest pact went unverified for longer than its stale threshold.
+EVENT_BECAME_STALE = "contract_became_stale"
+#: Apiome only (PFX-6.2): a stale pact was verified, or a newer one replaced it.
+EVENT_NO_LONGER_STALE = "contract_no_longer_stale"
+#: Apiome only (PFX-6.2): the consumer of a stale pact was asked to re-publish it.
+EVENT_REPUBLISH_REQUESTED = "contract_republish_requested"
+#: Apiome only (PFX-6.2): a re-publish request went unanswered for its window and was escalated.
+EVENT_REPUBLISH_REQUEST_EXPIRED = "contract_republish_request_expired"
 
-#: Every event a webhook may name (mirrors the V436 CHECK).
+#: Every event a webhook may name (mirrors the V448 CHECK, which widened V436's).
 EVENT_NAMES: Tuple[str, ...] = (
     EVENT_PUBLISHED,
     EVENT_CONTENT_CHANGED,
@@ -114,6 +128,10 @@ EVENT_NAMES: Tuple[str, ...] = (
     EVENT_VERIFICATION_SUCCEEDED,
     EVENT_VERIFICATION_FAILED,
     EVENT_BRANCH_CREATED,
+    EVENT_BECAME_STALE,
+    EVENT_NO_LONGER_STALE,
+    EVENT_REPUBLISH_REQUESTED,
+    EVENT_REPUBLISH_REQUEST_EXPIRED,
 )
 #: The event of a webhook that names none, as in the Pact Broker.
 DEFAULT_EVENT = EVENT_CONTENT_CHANGED

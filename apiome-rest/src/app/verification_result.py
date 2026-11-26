@@ -48,6 +48,7 @@ __all__ = [
     "TRIGGER_HOSTED",
     "TRIGGER_MANUAL",
     "TRIGGER_PUBLISHED",
+    "TRIGGER_SCHEDULED",
     "TRIGGER_STALE_RECHECK",
     "VerificationRequest",
     "VerificationResultRecord",
@@ -75,8 +76,17 @@ TRIGGER_MANUAL = "manual"
 TRIGGER_STALE_RECHECK = "stale-recheck"
 #: Apiome compared the pact with the provider's contract (PFX-2.3).
 TRIGGER_BIDIRECTIONAL = "bidirectional"
+#: The verification scheduler ran it on the pair's cadence (apiome-db V448, PFX-6.2 #6954).
+TRIGGER_SCHEDULED = "scheduled"
 #: Every trigger, in the order the database's CHECK lists them. Results recorded before V444 have none.
-TRIGGERS = (TRIGGER_PUBLISHED, TRIGGER_HOSTED, TRIGGER_MANUAL, TRIGGER_STALE_RECHECK, TRIGGER_BIDIRECTIONAL)
+TRIGGERS = (
+    TRIGGER_PUBLISHED,
+    TRIGGER_HOSTED,
+    TRIGGER_MANUAL,
+    TRIGGER_STALE_RECHECK,
+    TRIGGER_BIDIRECTIONAL,
+    TRIGGER_SCHEDULED,
+)
 
 #: The longest a ``verifiedBy`` value may be (the column width).
 _LABEL_MAX = 255

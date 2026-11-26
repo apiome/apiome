@@ -73,6 +73,10 @@ AUDIT_ACTIONS = (
     "pacts.provider_state.update",
     "pacts.provider_state.delete",
     "pacts.commit_status.retry",
+    "pacts.verification_settings.update",
+    "pacts.verification_override.save",
+    "pacts.verification_override.delete",
+    "pacts.republish_request.acknowledge",
 )
 
 #: Every endpoint :func:`audited_write` wraps, by qualified name, with the action it writes. The

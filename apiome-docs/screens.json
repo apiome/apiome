@@ -2911,6 +2911,36 @@
       ]
     },
     {
+      "id": "pact-verification-settings",
+      "route": "/ade/dashboard/pacts/settings",
+      "waitFor": "[data-testid=\"prx-overrides-table\"]",
+      "data": "fixture:hive-a11y/pact-verification-settings.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactRemediation/VerificationSettingsClient.tsx",
+        "apiome-ui/lib/pact-remediation.ts"
+      ]
+    },
+    {
+      "id": "pact-republish-requests",
+      "route": "/ade/dashboard/pacts/republish-requests",
+      "waitFor": "[data-testid=\"prx-requests-table\"]",
+      "data": "fixture:hive-a11y/pact-republish-requests.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactRemediation/RepublishRequestsClient.tsx",
+        "apiome-ui/lib/pact-remediation.ts"
+      ]
+    },
+    {
+      "id": "pact-republish-request",
+      "route": "/ade/dashboard/pacts/republish-requests/5c2b8e14-6f0a-4d3b-8a7e-1f9c4b2d6e02",
+      "waitFor": "[data-testid=\"prx-facts\"]",
+      "data": "fixture:hive-a11y/pact-republish-request.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactRemediation/RepublishRequestClient.tsx",
+        "apiome-ui/lib/pact-remediation.ts"
+      ]
+    },
+    {
       "id": "pact-verification-result",
       "route": "/ade/dashboard/pacts/pacticipants/ledger-api/verification/results/6f0c6f0e-2b1a-4c3d-9e8f-7a6b5c4d3e2f",
       "waitFor": "[data-testid=\"pvx-log\"]",

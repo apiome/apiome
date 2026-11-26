@@ -26,7 +26,13 @@ For each event the enabled webhooks that list it and are for this consumer and p
 get one queued delivery each (:func:`app.pact_webhook_store.enqueue_triggered_webhook`), with the
 template parameters of that firing.
 
-**Neither function raises.** A webhook problem must never turn a completed publish into a failed
+**Stale-pact remediation** (PFX-6.2): a publish closes the pair's open re-publish request as
+``republished`` (:func:`fire_publish_events`), and (:func:`fire_remediation_event`) the sweep fires
+``contract_became_stale`` / ``contract_no_longer_stale`` when a pair's stale state changes, and
+``contract_republish_requested`` / ``contract_republish_request_expired`` as a re-publish request
+opens and expires, each with the pair's pact parameters.
+
+**No function here raises.** A webhook problem must never turn a completed publish into a failed
 one: any error is logged and the function returns what it managed to queue.
 """
 
@@ -58,6 +64,7 @@ __all__ = [
     "RequiredVerification",
     "content_changed",
     "fire_publish_events",
+    "fire_remediation_event",
     "fire_verification_events",
     "pact_url",
     "required_verifications",
@@ -426,6 +433,26 @@ def _publish_events_for_pact(
     return queued
 
 
+def _resolve_republish_requests(db: Any, tenant_id: str, outcome: PublishOutcome) -> None:
+    """Close each published pair's open re-publish request as ``republished`` (PFX-6.2); never raises."""
+    from .pact_remediation_store import resolve_republished_on_publish
+
+    for published in outcome.pacts:
+        try:
+            rows = db.execute_query(
+                "SELECT id::text AS id FROM apiome.pacticipant WHERE tenant_id = %s::uuid AND slug = %s"
+                " AND deleted_at IS NULL",
+                (tenant_id, published.pact.provider_slug),
+            )
+        except Exception:  # noqa: BLE001 - remediation bookkeeping never fails a publish
+            logger.exception("re-publish requests: provider lookup failed for tenant %s", tenant_id)
+            return
+        if rows:
+            resolve_republished_on_publish(
+                db, tenant_id, outcome.consumer.id, rows[0]["id"], published.pact.consumer_version
+            )
+
+
 def fire_publish_events(db: Any, tenant_id: str, base: str, outcome: PublishOutcome) -> List[str]:
     """Queue the webhooks of a publish request that has committed.
 
@@ -439,6 +466,7 @@ def fire_publish_events(db: Any, tenant_id: str, base: str, outcome: PublishOutc
         The ids of the queued firings. Empty when nothing changed, no webhook listens, or queueing
         failed (which is logged, never raised).
     """
+    _resolve_republish_requests(db, tenant_id, outcome)
     changed = [published for published in outcome.pacts if published.created or published.replaced]
     if not changed:
         return []
@@ -518,4 +546,74 @@ def fire_verification_events(db: Any, tenant_id: str, base: str, result: Verific
         return list(db._guarded_tx(work) or [])
     except Exception:  # noqa: BLE001 - a webhook problem never fails the verification
         logger.exception("contract webhooks: failed to queue verification events for tenant %s", tenant_id)
+        return []
+
+
+def fire_remediation_event(
+    db: Any,
+    tenant_id: str,
+    base: str,
+    event_name: str,
+    *,
+    consumer_id: str,
+    provider_id: str,
+    consumer_slug: str,
+    consumer_name: str,
+    provider_slug: str,
+    provider_name: str,
+    consumer_version: str,
+    sha: str,
+) -> List[str]:
+    """Queue the webhooks of a stale-pact remediation event (PFX-6.2).
+
+    The parameters are the pair's: consumer and provider names and labels, the consumer version
+    that published the pact last with its tags and branch, and the pact's URL.
+
+    Args:
+        db: The database.
+        tenant_id: The pair's tenant.
+        base: The broker base URL the links start with.
+        event_name: One of the four remediation events of :mod:`app.pact_webhook`.
+        consumer_id: The consumer pacticipant.
+        provider_id: The provider pacticipant.
+        consumer_slug: The consumer's handle.
+        consumer_name: Its display name.
+        provider_slug: The provider's handle.
+        provider_name: Its display name.
+        consumer_version: The consumer version that published the pact last.
+        sha: The pact version.
+
+    Returns:
+        The ids of the queued firings; empty when no webhook listens or queueing failed (logged).
+    """
+
+    def work(cursor: Any) -> List[str]:
+        labels = _version_labels(cursor, consumer_id, consumer_version)
+        parameters = template_parameters(
+            event_name=event_name,
+            consumer_name=consumer_name,
+            provider_name=provider_name,
+            consumer_labels=_pacticipant_labels(cursor, consumer_id),
+            provider_labels=_pacticipant_labels(cursor, provider_id),
+            consumer_version_number=consumer_version,
+            consumer_version_tags=labels["tags"],
+            consumer_version_branch=(labels["branches"] or [None])[-1],
+            pact_url=pact_url(base, provider_slug, consumer_slug, sha, consumer_version),
+            build_url=labels.get("build_url"),
+        )
+        return _fire(
+            cursor,
+            tenant_id,
+            event_name,
+            consumer_id,
+            provider_id,
+            parameters,
+            consumer_version_number=consumer_version or None,
+            sha=sha,
+        )
+
+    try:
+        return list(db._guarded_tx(work) or [])
+    except Exception:  # noqa: BLE001 - remediation keeps going when a webhook cannot be queued
+        logger.exception("contract webhooks: failed to queue %s for tenant %s", event_name, tenant_id)
         return []

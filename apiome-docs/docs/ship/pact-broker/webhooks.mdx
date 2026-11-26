@@ -144,6 +144,10 @@ jobs:
 | `provider_verification_succeeded` | A verification result that passed is published. |
 | `provider_verification_failed` | A verification result that failed is published. |
 | `consumer_version_branch_created` | A pact publication records the consumer version on a branch the consumer did not have before. Apiome only. |
+| `contract_became_stale` | A pair's newest pact goes past its [stale threshold](./stale-pacts.mdx). Apiome only. |
+| `contract_no_longer_stale` | A stale pact is verified, or a newer one replaces it. Apiome only. |
+| `contract_republish_requested` | The consumer of a stale pact is asked to [re-publish it](./stale-pacts.mdx#re-publish-requests). Apiome only. |
+| `contract_republish_request_expired` | A re-publish request expires unanswered and is escalated. Apiome only. |
 
 Publishing the same pact for the same consumer version again fires nothing.
 

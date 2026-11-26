@@ -63,9 +63,18 @@ def test_migration_declares_the_webhook_rules(migration: str) -> None:
     assert not missing, f"Migration missing expected fragments: {missing}"
 
 
-def test_the_event_list_matches_the_code(migration: str) -> None:
-    block = migration.split("CONSTRAINT pact_webhook_events_check")[1].split("]::text[]")[0]
-    assert sorted(part.strip(" '\n") for part in block.split("ARRAY[")[1].split(",")) == sorted(EVENT_NAMES)
+def _event_list(sql: str) -> list:
+    """The event names of the last ``pact_webhook_events_check`` a migration declares."""
+    block = sql.split("pact_webhook_events_check")[-1].split("]::text[]")[0]
+    return sorted(part.strip(" '\n") for part in block.split("ARRAY[")[1].split(","))
+
+
+def test_the_event_list_was_the_broker_seven_and_v448_matches_the_code(migration: str, repo_root: Path) -> None:
+    """V436 declared the Pact Broker's six plus the branch event; V448 (PFX-6.2) widened it to the code's."""
+    original = _event_list(migration)
+    assert len(original) == 7 and set(original) <= set(EVENT_NAMES)
+    widened = (repo_root / "apiome-db/scripts/V448__pact_stale_remediation_6954.sql").read_text()
+    assert _event_list(widened) == sorted(EVENT_NAMES)
 
 
 def test_the_methods_and_target_kinds_match_the_code(migration: str) -> None:

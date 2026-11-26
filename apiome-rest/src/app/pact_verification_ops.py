@@ -15,6 +15,12 @@ publish (PFX-1.4) and the hosted verifier (PFX-3.2):
 * **Re-run** (:func:`reverify_pact`): verify one pact version again on a verification target, as
   the provider version of the result being re-run unless another is given.
 * **Verify all stale** (:func:`verify_stale_pacts`): verify every stale pact in one run.
+* **Scheduled runs** (:func:`run_scheduled_verification`, PFX-6.2): the verification scheduler
+  (:mod:`app.pact_remediation_sweep`) verifies one pair on its cadence through the same path.
+
+The status also carries PFX-6.2's remediation view of each pact: whether it is *overdue* (not
+verified for longer than its stale threshold), its open re-publish request, its last scheduled
+verification attempt, and the cadence and threshold that apply to it.
 
 **Overlapping runs are refused per pair.** A console run of a consumer ↔ provider pair holds a
 session advisory lock (:class:`app.db_advisory_lock.SessionAdvisoryLock`) on that pair while it
@@ -30,6 +36,7 @@ Every read starts from the provider of the caller's tenant
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -39,6 +46,14 @@ from .db_advisory_lock import SessionAdvisoryLock
 from .pact_pending_store import load_pending_evidence
 from .pact_publication import CODE_PACT_NOT_FOUND, PactPublicationError
 from .pact_publication_store import list_pact_candidates
+from .pact_remediation import (
+    EffectiveSettings,
+    RepublishRequestRecord,
+    ScheduledAttempt,
+    is_stale,
+    reference_time,
+    resolve_settings,
+)
 from .pact_selectors import (
     PactCandidate,
     VerifiablePact,
@@ -58,7 +73,12 @@ from .pacticipant import PacticipantRecord, validate_branch, validate_url, valid
 from .pacticipant_store import get_pacticipant
 from .verification_evidence import EvidenceValidationError, VerificationRunRecord
 from .verification_evidence_store import get_run
-from .verification_result import TRIGGER_MANUAL, TRIGGER_STALE_RECHECK, VerificationResultRecord
+from .verification_result import (
+    TRIGGER_MANUAL,
+    TRIGGER_SCHEDULED,
+    TRIGGER_STALE_RECHECK,
+    VerificationResultRecord,
+)
 from .verification_result_store import (
     MAX_HISTORY_PAGE,
     get_provider_result,
@@ -89,9 +109,11 @@ __all__ = [
     "VerificationStatus",
     "VerificationStatusEntry",
     "decode_cursor",
+    "latest_pacts",
     "list_results",
     "read_result",
     "reverify_pact",
+    "run_scheduled_verification",
     "summarise",
     "verification_status",
     "verify_stale_pacts",
@@ -164,8 +186,8 @@ class ResultSummary(BaseModel):
     trigger: Optional[str] = Field(
         default=None,
         description=(
-            "How it came to be: `published`, `hosted`, `manual`, `stale-recheck` or `bidirectional`; "
-            "null for a result recorded before triggers were recorded."
+            "How it came to be: `published`, `hosted`, `manual`, `stale-recheck`, `bidirectional` or "
+            "`scheduled`; null for a result recorded before triggers were recorded."
         ),
     )
     duration_ms: Optional[int] = Field(default=None, description="How long the run took, when Apiome ran it.")
@@ -223,6 +245,25 @@ class VerificationStatusEntry(BaseModel):
     published_at: Optional[str] = Field(default=None, description="When that version published it.")
     stale: bool = Field(description="True when the pact version has no verification result.")
     latest_result: Optional[ResultSummary] = Field(default=None, description="Its newest result.")
+    overdue: bool = Field(
+        default=False,
+        description=(
+            "True when the pact has not been verified for longer than its stale threshold (counted from "
+            "its newest result, or its publication when never verified) — what opens a re-publish request."
+        ),
+    )
+    stale_since: Optional[str] = Field(
+        default=None, description="When it crossed the stale threshold, when `overdue`."
+    )
+    settings: Optional[EffectiveSettings] = Field(
+        default=None, description="The cadence, stale threshold and target that apply to this pair."
+    )
+    republish_request: Optional[RepublishRequestRecord] = Field(
+        default=None, description="Its open re-publish request, when there is one."
+    )
+    scheduled: Optional[ScheduledAttempt] = Field(
+        default=None, description="Its last scheduled verification attempt, when the scheduler tried it."
+    )
 
 
 class StatusCounts(BaseModel):
@@ -234,6 +275,8 @@ class StatusCounts(BaseModel):
     verified: int = Field(description="Newest pacts whose newest result passed.")
     failing: int = Field(description="Newest pacts whose newest result failed.")
     stale: int = Field(description="Newest pacts with no result.")
+    overdue: int = Field(default=0, description="Newest pacts not verified within their stale threshold.")
+    republish_requests: int = Field(default=0, description="Open re-publish requests.")
     interactions: int = Field(description="Interactions in the newest results.")
     passing_interactions: int = Field(description="Of those, the ones that passed.")
     last_verified_at: Optional[str] = Field(default=None, description="When the newest of the results was published.")
@@ -251,6 +294,9 @@ class VerificationStatus(BaseModel):
     truncated: bool = Field(
         default=False,
         description=f"True when the provider has more than {MAX_STATUS_PACTS} consumers (the rest are left out).",
+    )
+    settings: Optional[EffectiveSettings] = Field(
+        default=None, description="The cadence, stale threshold and target that apply to the provider (PFX-6.2)."
     )
 
 
@@ -303,7 +349,7 @@ class SkippedPact(BaseModel):
 class ConsoleRunResponse(PactVerifyResponse):
     """A console run: the hosted verifier's answer, its trigger, and what it did not run."""
 
-    trigger: str = Field(description="`manual` (re-run) or `stale-recheck` (verify all stale).")
+    trigger: str = Field(description="`manual` (re-run), `stale-recheck` (verify all stale) or `scheduled`.")
     skipped: List[SkippedPact] = Field(default_factory=list, description="Chosen but not verified, each with why.")
 
 
@@ -364,11 +410,82 @@ def _iso(value: Any) -> Optional[str]:
     return value.isoformat() if hasattr(value, "isoformat") else str(value)
 
 
+def _parse(value: Any) -> Optional[datetime]:
+    """A timestamp (``datetime`` or ISO text) as an aware ``datetime``; ``None`` when unreadable."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
 def _latest_pacts(db: Any, tenant_id: str, provider_ref: str) -> Tuple[PacticipantRecord, List[PactCandidate]]:
     """The provider and each consumer's newest publication, by consumer handle."""
     provider, candidates = list_pact_candidates(db, tenant_id, provider_ref)
     latest = latest_per_consumer(candidates, lambda _candidate: True)
     return provider, sorted(latest, key=lambda candidate: candidate.consumer_slug)
+
+
+def latest_pacts(db: Any, tenant_id: str, provider_ref: str) -> Tuple[PacticipantRecord, List[PactCandidate]]:
+    """The provider and each consumer's newest publication, by consumer handle.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider_ref: The provider's handle, id or name.
+
+    Returns:
+        The provider and one candidate per consumer.
+
+    Raises:
+        PacticipantValidationError: ``pacticipant-not-found``.
+    """
+    return _latest_pacts(db, tenant_id, provider_ref)
+
+
+class _RemediationView:
+    """What PFX-6.2 adds to the status of one provider: settings, open requests, attempts."""
+
+    def __init__(self, db: Any, tenant_id: str, provider: PacticipantRecord) -> None:
+        """Read the provider's remediation state.
+
+        A failure is logged and leaves the view empty: the status read never fails because of it.
+
+        Args:
+            db: The database.
+            tenant_id: The caller's tenant.
+            provider: The provider.
+        """
+        from .pact_remediation_store import (
+            attempts_for_provider,
+            get_settings,
+            open_requests_for_provider,
+            override_values_for_provider,
+        )
+
+        self.available = False
+        self.requests: Dict[str, RepublishRequestRecord] = {}
+        self.attempts: Dict[str, ScheduledAttempt] = {}
+        self.provider_settings: Optional[EffectiveSettings] = None
+        try:
+            self.workspace = get_settings(db, tenant_id)
+            self.provider_override, self.pair_overrides = override_values_for_provider(db, tenant_id, provider.id)
+            self.requests = open_requests_for_provider(db, tenant_id, provider.id)
+            self.attempts = attempts_for_provider(db, tenant_id, provider.id)
+            self.provider_settings = resolve_settings(self.workspace, self.provider_override)
+            self.available = True
+        except Exception:  # noqa: BLE001 - the status read stands without the remediation view
+            logger.exception("verification status: remediation state unavailable for tenant %s", tenant_id)
+
+    def settings_for(self, consumer_id: str) -> Optional[EffectiveSettings]:
+        """The effective settings of one pair, or ``None`` when the view is unavailable."""
+        if not self.available:
+            return None
+        return resolve_settings(self.workspace, self.provider_override, self.pair_overrides.get(str(consumer_id)))
 
 
 def verification_status(db: Any, tenant_id: str, provider_ref: str) -> VerificationStatus:
@@ -389,9 +506,18 @@ def verification_status(db: Any, tenant_id: str, provider_ref: str) -> Verificat
     truncated = len(latest) > MAX_STATUS_PACTS
     latest = latest[:MAX_STATUS_PACTS]
     results = latest_results_by_pact(db, tenant_id, provider, [(c.consumer_id, c.sha) for c in latest])
+    view = _RemediationView(db, tenant_id, provider)
+    now = datetime.now(timezone.utc)
     entries: List[VerificationStatusEntry] = []
     for candidate in latest:
         record = results.get((str(candidate.consumer_id), candidate.sha))
+        settings = view.settings_for(candidate.consumer_id)
+        overdue, stale_since = False, None
+        if settings is not None:
+            reference = reference_time(_parse(record.created_at) if record else None, _parse(candidate.published_at))
+            overdue = is_stale(reference, settings.stale_threshold_hours, now)
+            if overdue and reference is not None:
+                stale_since = (reference + timedelta(hours=settings.stale_threshold_hours)).isoformat()
         entries.append(
             VerificationStatusEntry(
                 consumer=candidate.consumer_slug,
@@ -401,6 +527,11 @@ def verification_status(db: Any, tenant_id: str, provider_ref: str) -> Verificat
                 published_at=_iso(candidate.published_at),
                 stale=record is None,
                 latest_result=summarise(record) if record is not None else None,
+                overdue=overdue,
+                stale_since=stale_since,
+                settings=settings,
+                republish_request=view.requests.get(str(candidate.consumer_id)),
+                scheduled=view.attempts.get(str(candidate.consumer_id)),
             )
         )
     summaries = [entry.latest_result for entry in entries if entry.latest_result is not None]
@@ -410,12 +541,19 @@ def verification_status(db: Any, tenant_id: str, provider_ref: str) -> Verificat
         verified=sum(1 for summary in summaries if summary.success),
         failing=sum(1 for summary in summaries if not summary.success),
         stale=sum(1 for entry in entries if entry.stale),
+        overdue=sum(1 for entry in entries if entry.overdue),
+        republish_requests=sum(1 for entry in entries if entry.republish_request is not None),
         interactions=sum(summary.counts.total for summary in summaries),
         passing_interactions=sum(summary.counts.passed for summary in summaries),
         last_verified_at=dates[-1] if dates else None,
     )
     return VerificationStatus(
-        provider=provider.slug, provider_name=provider.name, counts=counts, pacts=entries, truncated=truncated
+        provider=provider.slug,
+        provider_name=provider.name,
+        counts=counts,
+        pacts=entries,
+        truncated=truncated,
+        settings=view.provider_settings,
     )
 
 
@@ -813,6 +951,71 @@ def verify_stale_pacts(
         broker_base=broker_base,
         refuse_busy=False,
         skipped=skipped,
+        state_handler=state_handler,
+        lock_factory=lock_factory,
+    )
+
+
+#: Who a scheduled run is recorded as.
+SCHEDULER_ACTOR = ConsumerActor(user_id=None, label="pact-verification-scheduler", kind="system")
+
+
+def run_scheduled_verification(
+    db: Any,
+    tenant_id: str,
+    provider: PacticipantRecord,
+    candidate: PactCandidate,
+    *,
+    target_ref: str,
+    provider_version: str,
+    provider_branch: Optional[str],
+    broker_base: str,
+    state_handler: Optional[ProviderStateHandler] = None,
+    lock_factory: LockFactory = SessionAdvisoryLock,
+) -> ConsoleRunResponse:
+    """Verify one pair's newest pact on its cadence (``trigger: scheduled``, PFX-6.2).
+
+    The same path as **Re-run**: the hosted verifier, under the pair's lock, publishing the result.
+    It sends no mutating request unless the target's default options allow it (they do not): those
+    interactions are held back and reported in the result. A pair already being verified is
+    returned in ``skipped`` with ``pact-verify-in-progress``, not waited for.
+
+    Args:
+        db: The database.
+        tenant_id: The provider's tenant.
+        provider: The provider.
+        candidate: The pair's newest publication.
+        target_ref: The verification target from the pair's settings.
+        provider_version: The provider version to verify as.
+        provider_branch: Its branch, when known.
+        broker_base: The Pact Broker base URL for result links and webhooks.
+        state_handler: A provider-state handler to use instead of the registered one (tests).
+        lock_factory: Builds the pair's lock (tests).
+
+    Returns:
+        The run.
+
+    Raises:
+        PacticipantValidationError: A malformed provider version or branch.
+        PactVerifierError: The hosted verifier's refusals.
+        TargetValidationError: The target could not be resolved.
+    """
+    version = validate_version_number(provider_version)
+    branch = validate_branch(provider_branch) if provider_branch else None
+    body = ConsoleRunRequest(target_ref=target_ref, provider_version=version, provider_branch=branch)
+    pacts = _verifiable(db, tenant_id, provider, [candidate], branch)
+    return _run(
+        db,
+        tenant_id,
+        provider,
+        pacts,
+        _hosted_request(body, version, branch),
+        trigger=TRIGGER_SCHEDULED,
+        description=lambda c: f"scheduled: {c.consumer_name} version {c.version_number}",
+        actor=SCHEDULER_ACTOR,
+        broker_base=broker_base,
+        refuse_busy=False,
+        skipped=[],
         state_handler=state_handler,
         lock_factory=lock_factory,
     )

@@ -42,6 +42,7 @@ The strip at the top counts the newest pact of each consumer:
 | **Verified** | Newest pacts whose newest result passed. |
 | **Failing** | Newest pacts whose newest result failed. |
 | **Stale** | Newest pacts with no result yet. |
+| **Overdue** | Newest pacts not verified for longer than their [stale threshold](./stale-pacts.mdx). |
 | **Interactions passing** | Of the interactions in those newest results, the share that passed. |
 | **Last verified** | When the newest of those results was published. |
 
@@ -53,6 +54,12 @@ open that result.
 verified it, or the provider never verified it. It is marked **Stale — not verified**. A stale pact
 reads as *not known yet* in [can-i-deploy](./can-i-deploy.mdx), so a deployment that depends on it
 waits.
+
+Below the strip, a line names the **verification cadence** and **stale threshold** that apply to the
+provider, with a link to **Verification settings**. A pact not verified for longer than its threshold
+is marked **Overdue**, and links to its open re-publish request (**Re-publish requested**). A pact
+whose scheduled verification was skipped says why. See
+[Stale pacts and verification scheduling](./stale-pacts.mdx).
 
 ## Re-run one pact
 
@@ -169,6 +176,7 @@ Every read and run is scoped to your current workspace.
 
 ## Related
 
+- [Stale pacts and verification scheduling](./stale-pacts.mdx)
 - [Publish verification results](./verification-results.mdx)
 - [Verify a provider from Apiome](./hosted-verification.mdx)
 - [Pact detail](./pact-detail.mdx)

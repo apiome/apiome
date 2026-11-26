@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.862.0] - 2026-11-26
+
+### Added
+- **Stale-pact remediation and Pact verification scheduling (PFX-6.2, #6954).** OpenAPI 1.686.0,
+  apiome-db V448.
+  - **Stale threshold.** A pair's newest pact is *overdue* when it has not been verified for longer
+    than its stale threshold (counted from its newest result, or its publication when never
+    verified). The Verification console's `stale` (no result at all, PFX-5.5) is unchanged.
+  - **Verification settings.** `GET` / `PUT /v1/tenants/{t}/pact-verification-settings`: cadence
+    (`on-publish`, `hourly`, `nightly`, `manual-only` — the default), stale threshold (1–2160 h,
+    default 72), concurrent scheduled runs (1–10, default 2), re-publish request window (1–720 h,
+    default 72) and whether stale pacts open requests. `GET` / `PUT …/overrides` and
+    `DELETE …/overrides/{id}`: a cadence, threshold or verification target for one provider or one
+    consumer ↔ provider pair (pair over provider over workspace; at most 500 per workspace).
+  - **Re-publish requests.** `GET /v1/tenants/{t}/pact-republish-requests` (`provider`, `consumer`,
+    `state` incl. `open`, `cursor`, `limit` ≤ 50), `GET …/{id}`, `POST …/{id}/acknowledge` (`note`;
+    a closed request is `409 pact-republish-request-closed`). States: `requested` → `acknowledged`
+    → `republished` (the consumer published again; also closed at once by the publish), `cleared`
+    (verified meanwhile) or `expired` (escalated). One open request per pair; not reopened for the
+    same pact version until it is verified again.
+  - **Sweep** (`app.pact_remediation_sweep`, every `APIOME_PACT_REMEDIATION_INTERVAL` s, default
+    300; kill switch `APIOME_PACT_REMEDIATION_ENABLED`; `APIOME_PACT_REMEDIATION_MAX_PROVIDERS`):
+    records each pair's stale state, opens / closes / escalates requests, notifies the owners of
+    what the consumer pacticipant is linked to (consumer-registry entry, else project) through owner
+    routing as `owner_verification_drift` (`unlinked` when neither), and runs due scheduled
+    verifications with the hosted verifier (`trigger: scheduled`; at most
+    `APIOME_PACT_SCHEDULE_BATCH_SIZE` per tick, default 5; each in one of the workspace's concurrency
+    slots and under the pair's lock). A due pair with no target or no known provider version is
+    recorded with the reason.
+  - **Webhook events.** `contract_became_stale`, `contract_no_longer_stale`,
+    `contract_republish_requested`, `contract_republish_request_expired`, with the pair's
+    `${pactbroker.*}` parameters.
+  - **Verification status.** `GET …/pact-verifier/pacts/provider/{p}/verification-status` entries gain
+    `overdue`, `stale_since`, `settings`, `republish_request` and `scheduled`; `counts` gains
+    `overdue` and `republish_requests`; the status gains `settings`.
+  - **Audit and RBAC.** Reads need `pacts:view`; writes `pacts:edit` and write
+    `pacts.verification_settings.update`, `pacts.verification_override.save|delete` and
+    `pacts.republish_request.acknowledge` (`docs/pacts-permission-matrix.json`).
+
+
 ## [1.861.0] - 2026-11-26
 
 ### Added

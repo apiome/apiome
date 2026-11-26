@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.685.0
+  version: 1.686.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -33874,6 +33874,597 @@ paths:
           description: '`pact-verify-provider-version-required`, `pact-verify-target-auth-unavailable`,
             or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`,
             a URL refusal).'
+  /v1/tenants/{tenant_slug}/pact-verification-settings:
+    get:
+      tags:
+      - pact-broker
+      summary: Read the workspace's Pact verification settings
+      description: 'The workspace''s verification settings (PFX-6.2): the **cadence**
+        on which Apiome''s hosted verifier runs each pair (`on-publish`, `hourly`, `nightly`
+        or `manual-only`), the **stale threshold** in hours (a pact not verified for
+        longer is stale and opens a re-publish request), how many scheduled verifications
+        may run at once, how long a re-publish request stays open, and whether stale
+        pacts open requests. A workspace that never saved any reads the defaults (`customised:
+        false`: manual-only, 72 h, 2, 72 h, on). Requires `pacts:view`.'
+      operationId: read_settings_v1_tenants__tenant_slug__pact_verification_settings_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readtheworkspaces Pactverificationsettingauthorization schema.
+          - type: 'null'
+            description: Readtheworkspaces Pactverificationsettingauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readtheworkspaces Pactverificationsetting Xapikey schema.
+          - type: 'null'
+            description: Readtheworkspaces Pactverificationsetting Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the workspace's pact verification
+            settings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationSettings'
+                description: Response payload for readtheworkspaces pactverificationsettingresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readtheworkspaces pactverificationsettingresponse422.
+    put:
+      tags:
+      - pact-broker
+      summary: Save the workspace's Pact verification settings
+      description: Replace the workspace's verification settings (PFX-6.2); every field
+        is required. A cadence other than `manual-only` runs a pair only where an override
+        names a verification target. Out-of-range values are a `422` naming the field.
+        Requires `pacts:edit`.
+      operationId: update_settings_v1_tenants__tenant_slug__pact_verification_settings_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savetheworkspaces Pactverificationsettingauthorization schema.
+          - type: 'null'
+            description: Savetheworkspaces Pactverificationsettingauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savetheworkspaces Pactverificationsetting Xapikey schema.
+          - type: 'null'
+            description: Savetheworkspaces Pactverificationsetting Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationSettingsInput'
+              description: Request body for savetheworkspaces pactverificationsettingrequest.
+        description: Request body for save the workspace's pact verification settings.
+      responses:
+        '200':
+          description: Successful response for save the workspace's pact verification
+            settings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationSettings'
+                description: Response payload for savetheworkspaces pactverificationsettingresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for savetheworkspaces pactverificationsettingresponse422.
+  /v1/tenants/{tenant_slug}/pact-verification-settings/overrides:
+    get:
+      tags:
+      - pact-broker
+      summary: List the Pact verification overrides
+      description: 'Every provider-wide and per-pair override of the workspace (PFX-6.2),
+        by provider then consumer: its cadence, stale threshold and verification target
+        (null inherits). `target_deleted` flags an override whose target was deleted.
+        Requires `pacts:view`.'
+      operationId: read_overrides_v1_tenants__tenant_slug__pact_verification_settings_overrides_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthe Pactverificationoverridesauthorization schema.
+          - type: 'null'
+            description: Listthe Pactverificationoverridesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthe Pactverificationoverrides Xapikey schema.
+          - type: 'null'
+            description: Listthe Pactverificationoverrides Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the pact verification overrides.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverrideList'
+                description: Response payload for listthe pactverificationoverridesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthe pactverificationoverridesresponse422.
+    put:
+      tags:
+      - pact-broker
+      summary: Save a Pact verification override
+      description: Create or replace the override of a provider (omit `consumer`) or
+        of one consumer ↔ provider pair (PFX-6.2). Set at least one of `cadence`, `stale_threshold_hours`
+        and `target_ref` (the verification target scheduled runs replay against); a
+        null field inherits — the pair's override wins over the provider's, which wins
+        over the workspace's. A workspace has at most 500 overrides. Requires `pacts:edit`.
+      operationId: save_override_v1_tenants__tenant_slug__pact_verification_settings_overrides_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savea Pactverificationoverrideauthorization schema.
+          - type: 'null'
+            description: Savea Pactverificationoverrideauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savea Pactverificationoverride Xapikey schema.
+          - type: 'null'
+            description: Savea Pactverificationoverride Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OverrideInput'
+              description: Request body for savea pactverificationoverriderequest.
+        description: Request body for save a pact verification override.
+      responses:
+        '200':
+          description: Successful response for save a pact verification override.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverrideRecord'
+                description: Response payload for savea pactverificationoverrideresponse200.
+        '404':
+          description: '`pacticipant-not-found` or `target-not-found` in this workspace.'
+        '422':
+          description: '`pact-verification-override-invalid`, or a value out of range.'
+  /v1/tenants/{tenant_slug}/pact-verification-settings/overrides/{override_id}:
+    delete:
+      tags:
+      - pact-broker
+      summary: Remove a Pact verification override
+      description: Remove one override (PFX-6.2); the provider or pair inherits again.
+        Requires `pacts:edit`.
+      operationId: remove_override_v1_tenants__tenant_slug__pact_verification_settings_overrides__override_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: override_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Override Id
+          description: Override Id schema.
+        description: Path parameter identifying the override id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removea Pactverificationoverrideauthorization schema.
+          - type: 'null'
+            description: Removea Pactverificationoverrideauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Removea Pactverificationoverride Xapikey schema.
+          - type: 'null'
+            description: Removea Pactverificationoverride Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for remove a pact verification override.
+        '404':
+          description: '`pact-verification-override-not-found` in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for removea pactverificationoverrideresponse422.
+  /v1/tenants/{tenant_slug}/pact-republish-requests:
+    get:
+      tags:
+      - pact-broker
+      summary: List re-publish requests
+      description: 'The workspace''s re-publish requests (PFX-6.2), newest first: each
+        stale pact the sweep asked its consumer to re-publish, its state (`requested`,
+        `acknowledged`, `republished`, `cleared` — verified meanwhile — or `expired`,
+        escalated), its window, and what notifying the consumer''s owners did. Narrow
+        by `provider`, `consumer` and `state` (`open` for requested and acknowledged);
+        pass `next_cursor` as `cursor` for the next page. Requires `pacts:view`.'
+      operationId: read_requests_v1_tenants__tenant_slug__pact_republish_requests_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+            description: Request body for listrepublishrequestsprovider.
+          - type: 'null'
+            description: Request body for listrepublishrequestsprovider.
+          description: Only this provider's.
+          title: Provider
+        description: Only this provider's.
+      - name: consumer
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+            description: Request body for listrepublishrequestsconsumer.
+          - type: 'null'
+            description: Request body for listrepublishrequestsconsumer.
+          description: Only this consumer's.
+          title: Consumer
+        description: Only this consumer's.
+      - name: state
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^(open|requested|acknowledged|republished|cleared|expired)$
+            description: Request body for listrepublishrequestsstate.
+          - type: 'null'
+            description: Request body for listrepublishrequestsstate.
+          description: A state, or `open`.
+          title: State
+        description: A state, or `open`.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 32
+            description: Request body for listrepublishrequestscursor.
+          - type: 'null'
+            description: Request body for listrepublishrequestscursor.
+          description: The `next_cursor` of the previous page.
+          title: Cursor
+        description: The `next_cursor` of the previous page.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          description: Page size.
+          default: 25
+          title: Limit
+        description: Page size.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Request body for listrepublishrequestsauthorization.
+          - type: 'null'
+            description: Request body for listrepublishrequestsauthorization.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Request body for listrepublishrequests xapikey.
+          - type: 'null'
+            description: Request body for listrepublishrequests xapikey.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list re-publish requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepublishRequestPage'
+                description: Request body for listrepublishrequestsresponse200.
+        '400':
+          description: '`pact-republish-request-cursor-invalid`.'
+        '404':
+          description: '`pacticipant-not-found` for the `provider` or `consumer` filter.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Request body for listrepublishrequestsresponse422.
+  /v1/tenants/{tenant_slug}/pact-republish-requests/{request_id}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read one re-publish request
+      description: One re-publish request of the workspace (PFX-6.2). Requires `pacts:view`.
+      operationId: read_request_v1_tenants__tenant_slug__pact_republish_requests__request_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: request_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Request Id
+          description: Request Id schema.
+        description: Path parameter identifying the request id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Request body for readonerepublishrequestauthorization.
+          - type: 'null'
+            description: Request body for readonerepublishrequestauthorization.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Request body for readonerepublishrequest xapikey.
+          - type: 'null'
+            description: Request body for readonerepublishrequest xapikey.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read one re-publish request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepublishRequestRecord'
+                description: Request body for readonerepublishrequestresponse200.
+        '404':
+          description: '`pact-republish-request-not-found` in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Request body for readonerepublishrequestresponse422.
+  /v1/tenants/{tenant_slug}/pact-republish-requests/{request_id}/acknowledge:
+    post:
+      tags:
+      - pact-broker
+      summary: Acknowledge a re-publish request
+      description: The consumer acknowledges an open re-publish request (PFX-6.2), optionally
+        with a `note` (what it will do, and when; at most 1000 characters). Acknowledging
+        again updates the note. The request still expires at the end of its window unless
+        the consumer re-publishes the pact or the provider verifies it. A request that
+        is no longer open is a `409` (`pact-republish-request-closed`). Requires `pacts:edit`.
+      operationId: acknowledge_v1_tenants__tenant_slug__pact_republish_requests__request_id__acknowledge_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: request_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Request Id
+          description: Request Id schema.
+        description: Path parameter identifying the request id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Request body for acknowledgearepublishrequestauthorization.
+          - type: 'null'
+            description: Request body for acknowledgearepublishrequestauthorization.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Request body for acknowledgearepublishrequest xapikey.
+          - type: 'null'
+            description: Request body for acknowledgearepublishrequest xapikey.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgeRequest'
+              description: Request body for acknowledgearepublishrequestrequest.
+        description: Request body for acknowledge a re-publish request.
+      responses:
+        '200':
+          description: Successful response for acknowledge a re-publish request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepublishRequestRecord'
+                description: Request body for acknowledgearepublishrequestresponse200.
+        '404':
+          description: '`pact-republish-request-not-found` in this workspace.'
+        '409':
+          description: '`pact-republish-request-closed`.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Request body for acknowledgearepublishrequestresponse422.
   /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states:
     get:
       tags:
@@ -36165,7 +36756,7 @@ paths:
       description: 'Create a webhook — what `pact-broker create-webhook` posts. The body is the Pact Broker''s: `events` (default `contract_content_changed`), an optional `consumer` and `provider` (omit both for every pact of the workspace) and the `request` to send.
 
 
-        - **Events:** `contract_published`, `contract_content_changed`, `contract_requiring_verification_published` (once per provider version that has not verified the pact: the head of the provider''s main branch and what is deployed or released), `provider_verification_published`, `provider_verification_succeeded`, `provider_verification_failed`, and Apiome''s `consumer_version_branch_created`.
+        - **Events:** `contract_published`, `contract_content_changed`, `contract_requiring_verification_published` (once per provider version that has not verified the pact: the head of the provider''s main branch and what is deployed or released), `provider_verification_published`, `provider_verification_succeeded`, `provider_verification_failed`, and Apiome''s `consumer_version_branch_created` and stale-pact remediation events (`contract_became_stale`, `contract_no_longer_stale`, `contract_republish_requested`, `contract_republish_request_expired`).
 
         - **Templates:** `${pactbroker.*}` parameters are substituted in the URL''s path and query, the headers, the credentials and the body when the webhook fires. Template parameters: `${pactbroker.consumerName}`, `${pactbroker.providerName}`, `${pactbroker.consumerVersionNumber}`, `${pactbroker.providerVersionNumber}`, `${pactbroker.providerVersionTags}`, `${pactbroker.providerVersionDescriptions}`, `${pactbroker.providerVersionBranch}`, `${pactbroker.consumerVersionTags}`, `${pactbroker.consumerVersionBranch}`, `${pactbroker.pactUrl}`, `${pactbroker.verificationResultUrl}`, `${pactbroker.githubVerificationStatus}`, `${pactbroker.bitbucketVerificationStatus}`, `${pactbroker.azureDevOpsVerificationStatus}`, `${pactbroker.gitlabVerificationStatus}`, `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}`, `${pactbroker.eventName}`, `${pactbroker.buildUrl}`, `${pactbroker.currentlyDeployedProviderVersionNumber}`.
 
@@ -36286,6 +36877,10 @@ paths:
                         - provider_verification_succeeded
                         - provider_verification_failed
                         - consumer_version_branch_created
+                        - contract_became_stale
+                        - contract_no_longer_stale
+                        - contract_republish_requested
+                        - contract_republish_request_expired
                         description: Human-readable name.
                         example: contract_published
                   maxItems: 1000
@@ -36509,6 +37104,10 @@ paths:
                         - provider_verification_succeeded
                         - provider_verification_failed
                         - consumer_version_branch_created
+                        - contract_became_stale
+                        - contract_no_longer_stale
+                        - contract_republish_requested
+                        - contract_republish_request_expired
                         description: Human-readable name.
                         example: contract_published
                   maxItems: 1000
@@ -36809,6 +37408,10 @@ paths:
                         - provider_verification_succeeded
                         - provider_verification_failed
                         - consumer_version_branch_created
+                        - contract_became_stale
+                        - contract_no_longer_stale
+                        - contract_republish_requested
+                        - contract_republish_request_expired
                         description: Human-readable name.
                         example: contract_published
                   maxItems: 1000
@@ -37241,6 +37844,10 @@ paths:
                         - provider_verification_succeeded
                         - provider_verification_failed
                         - consumer_version_branch_created
+                        - contract_became_stale
+                        - contract_no_longer_stale
+                        - contract_republish_requested
+                        - contract_republish_request_expired
                         description: Human-readable name.
                         example: contract_published
                   maxItems: 1000
@@ -37531,6 +38138,10 @@ paths:
                         - provider_verification_succeeded
                         - provider_verification_failed
                         - consumer_version_branch_created
+                        - contract_became_stale
+                        - contract_no_longer_stale
+                        - contract_republish_requested
+                        - contract_republish_request_expired
                         description: Human-readable name.
                         example: contract_published
                   maxItems: 1000
@@ -37821,6 +38432,10 @@ paths:
                         - provider_verification_succeeded
                         - provider_verification_failed
                         - consumer_version_branch_created
+                        - contract_became_stale
+                        - contract_no_longer_stale
+                        - contract_republish_requested
+                        - contract_republish_request_expired
                         description: Human-readable name.
                         example: contract_published
                   maxItems: 1000
@@ -38123,6 +38738,10 @@ paths:
                         - provider_verification_succeeded
                         - provider_verification_failed
                         - consumer_version_branch_created
+                        - contract_became_stale
+                        - contract_no_longer_stale
+                        - contract_republish_requested
+                        - contract_republish_request_expired
                         description: Human-readable name.
                         example: contract_published
                   maxItems: 1000
@@ -219577,7 +220196,7 @@ components:
         trigger:
           type: string
           title: Trigger
-          description: '`manual` (re-run) or `stale-recheck` (verify all stale).'
+          description: '`manual` (re-run), `stale-recheck` (verify all stale) or `scheduled`.'
           example: example
         skipped:
           items:
@@ -219814,8 +220433,9 @@ components:
           - type: 'null'
             description: Result schema.
           title: Trigger
-          description: 'How it came to be: `published`, `hosted`, `manual`, `stale-recheck`
-            or `bidirectional`; null for a result recorded before triggers were recorded.'
+          description: 'How it came to be: `published`, `hosted`, `manual`, `stale-recheck`,
+            `bidirectional` or `scheduled`; null for a result recorded before triggers
+            were recorded.'
         duration_ms:
           anyOf:
           - type: integer
@@ -219922,6 +220542,18 @@ components:
           title: Stale
           description: Newest pacts with no result.
           example: 1
+        overdue:
+          type: integer
+          title: Overdue
+          description: Newest pacts not verified within their stale threshold.
+          default: 0
+          example: 1
+        republish_requests:
+          type: integer
+          title: Republish Requests
+          description: Open re-publish requests.
+          default: 0
+          example: 1
         interactions:
           type: integer
           title: Interactions
@@ -219980,6 +220612,13 @@ components:
             left out).
           default: false
           example: false
+        settings:
+          anyOf:
+          - $ref: '#/components/schemas/EffectiveSettings'
+          - type: 'null'
+            description: Verification schema.
+          description: The cadence, stale threshold and target that apply to the provider
+            (PFX-6.2).
       additionalProperties: false
       type: object
       required:
@@ -220029,6 +220668,41 @@ components:
           - type: 'null'
             description: Verification Status Entry schema.
           description: Its newest result.
+        overdue:
+          type: boolean
+          title: Overdue
+          description: True when the pact has not been verified for longer than its stale
+            threshold (counted from its newest result, or its publication when never verified)
+            — what opens a re-publish request.
+          default: false
+          example: false
+        stale_since:
+          anyOf:
+          - type: string
+            description: Verification Status Entry schema.
+          - type: 'null'
+            description: Verification Status Entry schema.
+          title: Stale Since
+          description: When it crossed the stale threshold, when `overdue`.
+        settings:
+          anyOf:
+          - $ref: '#/components/schemas/EffectiveSettings'
+          - type: 'null'
+            description: Verification Status Entry schema.
+          description: The cadence, stale threshold and target that apply to this pair.
+        republish_request:
+          anyOf:
+          - $ref: '#/components/schemas/RepublishRequestRecord'
+          - type: 'null'
+            description: Verification Status Entry schema.
+          description: Its open re-publish request, when there is one.
+        scheduled:
+          anyOf:
+          - $ref: '#/components/schemas/ScheduledAttempt'
+          - type: 'null'
+            description: Verification Status Entry schema.
+          description: Its last scheduled verification attempt, when the scheduler tried
+            it.
       additionalProperties: false
       type: object
       required:
@@ -220039,6 +220713,547 @@ components:
       - stale
       title: VerificationStatusEntry
       description: One consumer's newest pact for the provider, and how it stands.
+    AcknowledgeRequest:
+      properties:
+        note:
+          anyOf:
+          - type: string
+            maxLength: 1000
+            description: Request body for acknowledge.
+          - type: 'null'
+            description: Request body for acknowledge.
+          title: Note
+          description: What the consumer will do, and when.
+      additionalProperties: false
+      type: object
+      title: AcknowledgeRequest
+      description: The consumer acknowledges a re-publish request.
+    EffectiveSettings:
+      properties:
+        cadence:
+          type: string
+          title: Cadence
+          description: The cadence that applies.
+          example: example
+        cadence_source:
+          type: string
+          title: Cadence Source
+          description: '`workspace`, `provider` or `pair`.'
+          example: example
+        stale_threshold_hours:
+          type: integer
+          title: Stale Threshold Hours
+          description: The stale threshold that applies.
+          example: 1
+        stale_threshold_source:
+          type: string
+          title: Stale Threshold Source
+          description: '`workspace`, `provider` or `pair`.'
+          example: example
+        target:
+          anyOf:
+          - type: string
+            description: Effective Settings schema.
+          - type: 'null'
+            description: Effective Settings schema.
+          title: Target
+          description: The verification target scheduled runs use, if any.
+        target_source:
+          anyOf:
+          - type: string
+            description: Effective Settings schema.
+          - type: 'null'
+            description: Effective Settings schema.
+          title: Target Source
+          description: '`provider` or `pair` when a target is set.'
+      additionalProperties: false
+      type: object
+      required:
+      - cadence
+      - cadence_source
+      - stale_threshold_hours
+      - stale_threshold_source
+      title: EffectiveSettings
+      description: What applies to one pair (or provider), and where each value came from.
+    OverrideInput:
+      properties:
+        provider:
+          type: string
+          maxLength: 255
+          minLength: 1
+          title: Provider
+          description: The provider's handle, id or name.
+          example: example
+        consumer:
+          anyOf:
+          - type: string
+            maxLength: 255
+            minLength: 1
+            description: Override Input schema.
+          - type: 'null'
+            description: Override Input schema.
+          title: Consumer
+          description: The consumer's handle, id or name; omit for every consumer of the
+            provider.
+        cadence:
+          anyOf:
+          - type: string
+            pattern: ^(on-publish|hourly|nightly|manual-only)$
+            description: Override Input schema.
+          - type: 'null'
+            description: Override Input schema.
+          title: Cadence
+          description: The cadence; null inherits.
+        stale_threshold_hours:
+          anyOf:
+          - type: integer
+            maximum: 2160.0
+            minimum: 1.0
+            description: Override Input schema.
+          - type: 'null'
+            description: Override Input schema.
+          title: Stale Threshold Hours
+          description: The stale threshold (1 … 2160); null inherits.
+        target_ref:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+            description: Override Input schema.
+          - type: 'null'
+            description: Override Input schema.
+          title: Target Ref
+          description: Slug or id of the verification target scheduled runs replay against;
+            null inherits.
+      additionalProperties: false
+      type: object
+      required:
+      - provider
+      title: OverrideInput
+      description: A provider-wide or per-pair override, as ``PUT …/overrides`` creates
+        or replaces it.
+    OverrideList:
+      properties:
+        overrides:
+          items:
+            $ref: '#/components/schemas/OverrideRecord'
+          type: array
+          title: Overrides
+          description: Overrides.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      title: OverrideList
+      description: Every override of the workspace, by provider then consumer.
+    OverrideRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: The override's id (what `DELETE …/overrides/{id}` removes).
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: The provider's display name.
+          example: Example
+        consumer:
+          anyOf:
+          - type: string
+            description: Override schema.
+          - type: 'null'
+            description: Override schema.
+          title: Consumer
+          description: The consumer's handle; null for every consumer.
+        consumer_name:
+          anyOf:
+          - type: string
+            description: Override schema.
+          - type: 'null'
+            description: Override schema.
+          title: Consumer Name
+          description: The consumer's display name.
+        cadence:
+          anyOf:
+          - type: string
+            description: Override schema.
+          - type: 'null'
+            description: Override schema.
+          title: Cadence
+          description: The cadence; null inherits.
+        stale_threshold_hours:
+          anyOf:
+          - type: integer
+            description: Override schema.
+          - type: 'null'
+            description: Override schema.
+          title: Stale Threshold Hours
+          description: The threshold; null inherits.
+        target:
+          anyOf:
+          - type: string
+            description: Override schema.
+          - type: 'null'
+            description: Override schema.
+          title: Target
+          description: The verification target's handle; null inherits.
+        target_name:
+          anyOf:
+          - type: string
+            description: Override schema.
+          - type: 'null'
+            description: Override schema.
+          title: Target Name
+          description: Its display name.
+        target_deleted:
+          type: boolean
+          title: Target Deleted
+          description: 'True when the target was deleted: scheduled runs of this override
+            cannot run.'
+          default: false
+          example: false
+        updated_at:
+          anyOf:
+          - type: string
+            description: Override schema.
+          - type: 'null'
+            description: Override schema.
+          title: Updated At
+          description: When it was last saved.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - provider
+      - provider_name
+      title: OverrideRecord
+      description: A stored override.
+    RepublishRequestPage:
+      properties:
+        requests:
+          items:
+            $ref: '#/components/schemas/RepublishRequestRecord'
+          type: array
+          title: Requests
+          description: Requests.
+          maxItems: 1000
+        next_cursor:
+          anyOf:
+          - type: string
+            description: Request body for republish request page.
+          - type: 'null'
+            description: Request body for republish request page.
+          title: Next Cursor
+          description: Pass as `cursor` for the next page.
+      additionalProperties: false
+      type: object
+      title: RepublishRequestPage
+      description: One page of re-publish requests, newest first.
+    RepublishRequestRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: The request's id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: The provider's display name.
+          example: Example
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer's handle.
+          example: example
+        consumer_name:
+          type: string
+          title: Consumer Name
+          description: The consumer's display name.
+          example: Example
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The stale pact version.
+          example: 1.0.0
+        consumer_version:
+          type: string
+          title: Consumer Version
+          description: The consumer version that published it last.
+          example: 1.0.0
+        state:
+          type: string
+          title: State
+          description: '`requested`, `acknowledged`, `republished`, `cleared` or `expired`.'
+          example: example
+        threshold_hours:
+          type: integer
+          title: Threshold Hours
+          description: The stale threshold it crossed.
+          example: 1
+        reference_at:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Reference At
+          description: When the pact was last verified (or published, when never verified).
+        requested_at:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Requested At
+          description: When the request was opened.
+        expires_at:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Expires At
+          description: When it expires and escalates, unless answered.
+        acknowledged_at:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Acknowledged At
+          description: When the consumer acknowledged it.
+        acknowledged_by:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Acknowledged By
+          description: Who acknowledged it.
+        note:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Note
+          description: The acknowledgement's note.
+        resolved_at:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Resolved At
+          description: When it was republished, cleared or expired.
+        resolved_consumer_version:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Resolved Consumer Version
+          description: The consumer version that re-published, for `republished`.
+        notification_status:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Notification Status
+          description: 'What notifying the consumer''s owners did: `routed`, `throttled`,
+            `unowned`, `catch_all`, `unlinked` (the consumer is linked to no consumer
+            or project with owners) or `failed`.'
+        escalation_status:
+          anyOf:
+          - type: string
+            description: Request body for republish request.
+          - type: 'null'
+            description: Request body for republish request.
+          title: Escalation Status
+          description: The same, for the escalation on expiry.
+        webhook_deliveries:
+          type: integer
+          title: Webhook Deliveries
+          description: Contract webhook deliveries queued for it.
+          default: 0
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - provider
+      - provider_name
+      - consumer
+      - consumer_name
+      - pact_version_sha
+      - consumer_version
+      - state
+      - threshold_hours
+      title: RepublishRequestRecord
+      description: A request to a consumer to re-publish a stale pact.
+    ScheduledAttempt:
+      properties:
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version it was for.
+          example: 1.0.0
+        attempted_at:
+          anyOf:
+          - type: string
+            description: Scheduled Attempt schema.
+          - type: 'null'
+            description: Scheduled Attempt schema.
+          title: Attempted At
+          description: When.
+        status:
+          type: string
+          title: Status
+          description: '`verified`, `failed`, `skipped` or `errored`.'
+          example: active
+        code:
+          anyOf:
+          - type: string
+            description: Scheduled Attempt schema.
+          - type: 'null'
+            description: Scheduled Attempt schema.
+          title: Code
+          description: Why it did not verify, as a stable code.
+        reason:
+          anyOf:
+          - type: string
+            description: Scheduled Attempt schema.
+          - type: 'null'
+            description: Scheduled Attempt schema.
+          title: Reason
+          description: Why it did not verify, and what to do.
+      additionalProperties: false
+      type: object
+      required:
+      - pact_version_sha
+      - status
+      title: ScheduledAttempt
+      description: A pair's last scheduled verification attempt.
+    VerificationSettings:
+      properties:
+        cadence:
+          type: string
+          pattern: ^(on-publish|hourly|nightly|manual-only)$
+          title: Cadence
+          description: '`on-publish`, `hourly`, `nightly` or `manual-only`: when the hosted
+            verifier runs a pair.'
+          example: example
+        stale_threshold_hours:
+          type: integer
+          maximum: 2160.0
+          minimum: 1.0
+          title: Stale Threshold Hours
+          description: A pact not verified for longer than this is stale (1 … 2160).
+          example: 1
+        max_concurrent_runs:
+          type: integer
+          maximum: 10.0
+          minimum: 1.0
+          title: Max Concurrent Runs
+          description: How many scheduled verifications may run at once in the workspace
+            (1 … 10).
+          example: 1
+        request_window_hours:
+          type: integer
+          maximum: 720.0
+          minimum: 1.0
+          title: Request Window Hours
+          description: How long a re-publish request stays open before it expires and
+            escalates (1 … 720).
+          example: 1
+        republish_requests_enabled:
+          type: boolean
+          title: Republish Requests Enabled
+          description: Whether a stale pact opens a re-publish request.
+          example: false
+        customised:
+          type: boolean
+          title: Customised
+          description: False while the workspace uses the defaults (never saved).
+          example: false
+        updated_at:
+          anyOf:
+          - type: string
+            description: Verification Settings schema.
+          - type: 'null'
+            description: Verification Settings schema.
+          title: Updated At
+          description: When they were last saved.
+      additionalProperties: false
+      type: object
+      required:
+      - cadence
+      - stale_threshold_hours
+      - max_concurrent_runs
+      - request_window_hours
+      - republish_requests_enabled
+      - customised
+      title: VerificationSettings
+      description: The workspace's verification settings, as read.
+    VerificationSettingsInput:
+      properties:
+        cadence:
+          type: string
+          pattern: ^(on-publish|hourly|nightly|manual-only)$
+          title: Cadence
+          description: '`on-publish`, `hourly`, `nightly` or `manual-only`: when the hosted
+            verifier runs a pair.'
+          example: example
+        stale_threshold_hours:
+          type: integer
+          maximum: 2160.0
+          minimum: 1.0
+          title: Stale Threshold Hours
+          description: A pact not verified for longer than this is stale (1 … 2160).
+          example: 1
+        max_concurrent_runs:
+          type: integer
+          maximum: 10.0
+          minimum: 1.0
+          title: Max Concurrent Runs
+          description: How many scheduled verifications may run at once in the workspace
+            (1 … 10).
+          example: 1
+        request_window_hours:
+          type: integer
+          maximum: 720.0
+          minimum: 1.0
+          title: Request Window Hours
+          description: How long a re-publish request stays open before it expires and
+            escalates (1 … 720).
+          example: 1
+        republish_requests_enabled:
+          type: boolean
+          title: Republish Requests Enabled
+          description: Whether a stale pact opens a re-publish request.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - cadence
+      - stale_threshold_hours
+      - max_concurrent_runs
+      - request_window_hours
+      - republish_requests_enabled
+      title: VerificationSettingsInput
+      description: The workspace's verification settings, as ``PUT`` replaces them.
   securitySchemes:
     Bearer:
       type: http
