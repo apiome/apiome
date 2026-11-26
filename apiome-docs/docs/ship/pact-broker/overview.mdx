@@ -11,9 +11,11 @@ it unchanged: give them your workspace's **broker base URL**
 Consumers publish their pacts, providers verify them and report back, deploy jobs record what runs
 where, and `can-i-deploy` stops a release that would break something.
 
-All of it is served through the API and the Pact tools. The one screen so far is **Pact
-comparisons**, which shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
-each bi-directional comparison.
+All of it is served through the API and the Pact tools. There are two screens so far.
+**Pact comparisons** shows the [fidelity report](./bi-directional.mdx#read-the-fidelity-report) of
+each bi-directional comparison. **Provider states** shows a provider's registered states and
+[checks its pacts against them](./provider-states.mdx#see-provider-states-in-the-app) before a
+run.
 
 ## When to use it
 
@@ -81,6 +83,13 @@ each bi-directional comparison.
    [`pact-broker can-i-deploy`](./can-i-deploy.mdx) reads the matrix against what runs in the
    target environment and answers **yes**, **no** or **unknown**, with a reason for each
    integration. The job stops when the answer is not yes.
+
+**Apiome as the verifier.** A provider without a Pact library in its language can leave steps 3
+and 4 to Apiome. One request [verifies it from Apiome](./hosted-verification.mdx): the same
+selectors pick the pacts, each pact is [compiled into a contract suite](./verification.mdx), the
+[provider states](./provider-states.mdx) are set up, and every interaction is replayed against a
+registered verification target. Apiome then publishes a result for each pact. This covers HTTP
+interactions, gRPC calls recorded by the Pact protobuf plugin, and GraphQL operations.
 
 **Bi-directional instead of a verifier.** A provider that does not run Pact verification publishes
 its OpenAPI document as a [provider contract](./bi-directional.mdx) instead, with

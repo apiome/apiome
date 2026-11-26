@@ -264,6 +264,10 @@ flowchart LR
 
 ### ✅ PFX-EPIC-3 · [#6909](https://github.com/apiome/apiome/issues/6909) — Provider verification engine
 
+✅ **Done** (2026-11-25).
+
+**Status.** All seven issues of this epic are complete (PFX-3.7 #6937 was the last). #6909 brought `apiome-docs/docs/ship/pact-broker/overview.mdx` up to date (the **Provider states** screen, where hosted verification fits next to a Pact verifier and bi-directional testing), added the release-notes post `2026-11-25-provider-verification-engine.mdx` and a What's new line. `verification.mdx` and `hosted-verification.mdx` were reviewed and are already complete from #6931–#6937.
+
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 
