@@ -133,7 +133,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 | ✅ PFX-EPIC-1 | Pact Broker core: model, API, can-i-deploy | 1.1–1.9 | 11 |
 | ✅ PFX-EPIC-2 | Bi-directional contract testing | 2.1–2.4 | 6 |
 | ✅ PFX-EPIC-3 | Provider verification engine | 3.1–3.3 | 7 |
-| PFX-EPIC-4 | CLI, CI and client compatibility | 4.1–4.3 | 7 |
+| ✅ PFX-EPIC-4 | CLI, CI and client compatibility | 4.1–4.3 | 7 |
 | PFX-EPIC-5 | Contracts workspace UI | 5.1–5.4, 5.6 | 8 |
 | PFX-EPIC-6 | Operations, governance and migration | 6.1, 6.7 | 8 |
 | PFX-EPIC-7 | Integration with specs, gates and registry | 7.1–7.3 | 5 |
@@ -285,7 +285,11 @@ flowchart LR
 
 **✅ PFX-3.7 · #6937 Plugin pacts: gRPC and GraphQL — Complete** — a gRPC call recorded by the Pact protobuf plugin (Pact 4 `Synchronous/Messages`, `transport: grpc`) compiles, through the descriptors the pact files under `metadata.plugins`, into a `grpc` case on the XPC-3.2 RPC model (`pact_plugin_grpc`: procedure, protobuf-JSON request and reply, `grpc-status`, idempotency from the method options, rule paths renamed to JSON names, numeric rules on int64 fields applied as a digits regex) and is judged by the verifier's matching engine on a `grpc` / `connect` target. A GraphQL-over-HTTP interaction carries the XPC-1.2 operation (`pact_graphql`): its operation type gates mutation, and unrecorded `errors` fail. Hosted verification takes `http`, `grpc` or `connect` targets and holds back what the target cannot speak (`pact-interaction-protocol-mismatch`). Other plugins, streaming methods and subscriptions are reported unsupported. Mapping GraphQL selections onto the consumer-contract model is reported as deferred (`PACT_GRAPHQL_SELECTIONS_NOT_MAPPED`) until XPC-1.6 #5733 ships. *Deps:* 3.2, XPC-1.6 #5733. **Docs:** `…/pact-broker/verification.mdx`, `…/pact-broker/hosted-verification.mdx`.
 
-### PFX-EPIC-4 · [#6910](https://github.com/apiome/apiome/issues/6910) — CLI, CI and client compatibility
+### ✅ PFX-EPIC-4 · [#6910](https://github.com/apiome/apiome/issues/6910) — CLI, CI and client compatibility
+
+✅ **Done** (2026-11-25).
+
+**Status.** All seven issues of this epic are complete (PFX-4.7 #6944 was the last). #6910 brought `apiome-docs/docs/ship/pact-broker/overview.mdx` up to date (CI pipelines and AI agents as places to work from; Run Pact in CI and the Postman export in *At a glance*), tidied the intro of `cli.mdx`, and added the release-notes post `2026-11-26-pact-cli-ci-and-client-compatibility.mdx` and a What's new line. `cli.mdx` and `ci-pact.mdx` were reviewed and are already complete from #6938–#6944.
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |

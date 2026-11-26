@@ -35,6 +35,8 @@ run.
 | --- | --- | --- |
 | The **Pact CLI** (`pact-broker`, `pact broker`) | Publishing, recording deployments and can-i-deploy from CI | [Publish and fetch pacts](./publish-pacts.mdx) |
 | The **Apiome CLI** (`apiome pact …`) | The same commands with the same flags and exit codes, plus provider contracts and hosted verification | [The apiome pact commands](./cli.mdx), [Run Pact in CI](./ci-pact.mdx) |
+| A **CI pipeline** (GitHub Actions, GitLab CI, Bitbucket, Jenkins, Azure Pipelines) | Publish, can-i-deploy and record-deployment as ready-made steps, with the verdict on the pull request | [Run Pact in CI](./ci-pact.mdx), [Commit statuses](./commit-statuses.mdx) |
+| An **AI agent** (the `pact` MCP tools) | Listing pacts, reading the matrix, asking can-i-deploy and recording deployments from a chat | [Ask from an AI agent](./cli.mdx#ask-from-an-ai-agent-mcp) |
 | A **Pact library** (pact-js, pact-jvm, …) | Publishing from the consumer's tests and verifying in the provider's | [Choose pacts to verify with selectors](./selectors.mdx) |
 | The **Pact Broker API** (`…/pact-broker/…`) | Anything a Pact tool does, from a script | [Pact Broker API](../../reference/rest/pact-broker.md) |
 | The **Pacticipants API** (`…/pacticipants/…`) | Registering applications, labels, deletes and retention | [Pacticipants API](../../reference/rest/pacticipants.md) |
@@ -57,7 +59,9 @@ run.
 | See how a pact is compared with a provider's OpenAPI document | [Comparison rules](./comparison-rules.mdx) |
 | Check message pacts against a provider's AsyncAPI document | [Message pacts](./message-pacts.mdx) |
 | Start CI when a pact needs verifying or a verification finishes | [Contract webhooks](./webhooks.mdx) |
+| Run the consumer, provider and deploy steps in your CI | [Run Pact in CI](./ci-pact.mdx) |
 | See each pact's verdict on the GitHub or GitLab commit and pull request | [Commit statuses](./commit-statuses.mdx) |
+| Run a consumer's pact against a provider build in Postman or Newman | [Export a pact as a Postman collection](./cli.mdx#export-a-pact-as-a-postman-collection) |
 | Show in a README whether a public project's pacts are verified | [Pact badges](./badges.mdx) |
 | Group applications, undo a delete, clean up old versions | [Labels, deletes and retention](./retention.mdx) |
 | Check which Pact Broker endpoints Apiome serves | [Pact Broker compatibility](./compatibility.mdx) |
