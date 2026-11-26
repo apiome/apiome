@@ -1405,6 +1405,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contracts', 'pact', 'grid', 'selectors', 'latestby', 'query builder', 'compatibility', 'verdict', 'verified', 'failed', 'deployable'],
   },
   {
+    id: 'verification-console',
+    title: 'Verification results and re-runs',
+    summary: 'Read each verification result with expected and actual values, re-run one, and verify stale pacts.',
+    page: 'apiome-docs/docs/ship/pact-broker/verification-console.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'pact', 'rerun', 'stale', 'verify all stale', 'log', 'expected', 'actual', 'mismatch', 'history', 'trigger', 'hosted verifier', 'download'],
+  },
+  {
     id: 'bi-directional',
     title: 'Publish a provider contract',
     summary: "Register a provider version's OpenAPI document for bi-directional contract testing.",

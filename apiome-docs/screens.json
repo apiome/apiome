@@ -2900,6 +2900,28 @@
       ]
     },
     {
+      "id": "pact-verification",
+      "route": "/ade/dashboard/pacts/pacticipants/ledger-api/verification",
+      "waitFor": "[data-testid=\"pvx-history-table\"]",
+      "data": "fixture:hive-a11y/pact-verification.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactVerification/PactVerificationClient.tsx",
+        "apiome-ui/src/app/components/ade/pactVerification/VerificationPanels.tsx",
+        "apiome-ui/lib/pact-verification.ts"
+      ]
+    },
+    {
+      "id": "pact-verification-result",
+      "route": "/ade/dashboard/pacts/pacticipants/ledger-api/verification/results/6f0c6f0e-2b1a-4c3d-9e8f-7a6b5c4d3e2f",
+      "waitFor": "[data-testid=\"pvx-log\"]",
+      "data": "fixture:hive-a11y/pact-verification-result.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactVerification/VerificationResultClient.tsx",
+        "apiome-ui/src/app/components/ade/pactVerification/VerificationPanels.tsx",
+        "apiome-ui/lib/pact-verification.ts"
+      ]
+    },
+    {
       "id": "pact-network",
       "route": "/ade/dashboard/pacts/pacticipants/billing-service/network",
       "waitFor": "[data-testid=\"pact-network-plot\"]",

@@ -295,6 +295,17 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-matrix.html', 'pact-can-i-deploy.html'] },
   },
   {
+    // PFX-5.5 (#6949): a provider's Verification page (KPI strip, pacts with Re-run, history) and
+    // one result (expected vs actual, requests, raw log), dumped by `tests/pact-verification-ui.test.tsx`.
+    id: 'pact-verification',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-verification.html', 'pact-verification-result.html'],
+    },
+  },
+  {
     // X3 (#6224): the released export surfaces of E1. The Source and Target steps (the target grid),
     // the several-targets Verify and the bulk dialog after a run are gated with the whole
     // `hive-export-studio` directory under the parity entry `export-studio`; this entry adds the

@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.858.0] - 2026-11-26
+
+### Added
+- **Verification results and operations (PFX-5.5, #6949).** OpenAPI 1.682.0, apiome-db V444. Five
+  routes under `/v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}` (`app.pact_verification_ops_routes`,
+  tag `pact-broker`, off the catalogued Pact Broker surface) for the console's **Verification** page:
+  - `GET …/verification-status` — each consumer's newest pact, the newest result of its pact version,
+    and `stale` (the pact version has no result); `counts` for the KPI strip; at most 500 consumers
+    (`truncated`). `pacts:view`.
+  - `GET …/results` — every result of the provider, newest first, with provider version and branch,
+    build URL, verifier, `trigger`, `duration_ms`, `evidence_run_id` and interaction counts;
+    `consumer` narrows, `cursor` pages (`next_cursor`; a cursor it did not hand out is a 400
+    `pact-history-cursor-invalid`), `limit` 1–50. `pacts:view`.
+  - `GET …/results/{result_id}` — one result with its stored `test_results` (mismatches with
+    `expected` / `actual`), a bi-directional `comparison`, and its evidence run (ECA-1.3) when the
+    caller also holds `verification_evidence:view`; `evidence_status` is `attached`, `not-recorded`,
+    `not-found` (pruned) or `forbidden`. `pacts:view`.
+  - `POST …/consumer/{consumer}/pact-version/{sha}/reverify` — run one pact version again on a
+    verification target with the hosted verifier; without `provider_version` it verifies as the
+    provider version and branch of the pact version's newest result (none: 422
+    `pact-verify-provider-version-required`). `trigger: manual`.
+  - `POST …/verify-stale` — verify every stale pact as `provider_version` (required);
+    `trigger: stale-recheck`. At most 25 per run: the rest, and pairs already running, are listed in
+    `skipped` (`pact-verify-over-limit`, `pact-verify-in-progress`) with a reason.
+  - Both runs need `pacts:create` and `verification_evidence:create` (API-key scope `pact:verify`) and
+    hold a per-pair session advisory lock: a re-run of a pair whose console run is still running is a
+    409 `pact-verify-in-progress`.
+- `verification_result` gains `trigger` (`published`, `hosted`, `manual`, `stale-recheck`,
+  `bidirectional`; null before V444), `duration_ms` and `evidence_run_id`, and the index
+  `idx_verification_result_provider_history`. Pact verifiers' results record `published`, the hosted
+  verifier's `hosted` with the run's duration and evidence run, bi-directional comparisons
+  `bidirectional`. The Pact Broker result document is unchanged.
+
+### Changed
+- `app.pact_verifier_service`: the target, credentials and provider-state handler of a run are
+  resolved by `open_verification_session` (`VerificationSession`), shared by the hosted verifier and
+  the console runs. No change to `…/verify`.
+
 ## [1.857.0] - 2026-11-26
 
 ### Added

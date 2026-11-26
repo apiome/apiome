@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.681.0
+  version: 1.682.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -33419,6 +33419,459 @@ paths:
           description: '`pacticipant-not-found` or `target-not-found` in this workspace.'
         '422':
           description: '`pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`,
+            or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`,
+            a URL refusal).'
+  /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verification-status:
+    get:
+      tags:
+      - pact-broker
+      summary: Where a provider's verification stands
+      description: 'Each consumer''s newest pact for the provider (PFX-5.5), with the
+        newest verification result of that pact version and whether it is **stale**:
+        a pact version with no result at all — it changed since the provider last verified,
+        or was never verified. `counts` is the KPI strip (pacts, verified, failing,
+        stale, interactions, passing interactions, last verified). At most 500 consumers
+        (`truncated`). Requires `pacts:view`.'
+      operationId: read_verification_status_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verification_status_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Whereaprovidersverificationstandsauthorization schema.
+          - type: 'null'
+            description: Whereaprovidersverificationstandsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Whereaprovidersverificationstands Xapikey schema.
+          - type: 'null'
+            description: Whereaprovidersverificationstands Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for where a provider's verification stands.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatus'
+                description: Response payload for whereaprovidersverificationstandsresponse200.
+        '404':
+          description: '`pacticipant-not-found` or `pact-verification-not-found` in
+            this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for whereaprovidersverificationstandsresponse422.
+  /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/results:
+    get:
+      tags:
+      - pact-broker
+      summary: List a provider's verification results
+      description: 'Every verification result of the provider, newest first (PFX-5.5):
+        native results a Pact verifier published, the hosted verifier''s, console re-runs
+        and bi-directional comparisons. Each has its provider version and branch, build
+        URL, verifier, trigger (`published`, `hosted`, `manual`, `stale-recheck`, `bidirectional`,
+        or null before triggers were recorded), run duration and interaction counts.
+        `consumer` narrows to one consumer; pass `next_cursor` as `cursor` for the next
+        page. Requires `pacts:view`.'
+      operationId: read_results_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__results_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            minLength: 1
+            maxLength: 255
+            description: Listaprovidersverificationresultsconsumer schema.
+          - type: 'null'
+            description: Listaprovidersverificationresultsconsumer schema.
+          description: Only this consumer's results.
+          title: Consumer
+        description: Only this consumer's results.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 32
+            description: Listaprovidersverificationresultscursor schema.
+          - type: 'null'
+            description: Listaprovidersverificationresultscursor schema.
+          description: The `next_cursor` of the previous page.
+          title: Cursor
+        description: The `next_cursor` of the previous page.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          description: Page size.
+          default: 50
+          title: Limit
+        description: Page size.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprovidersverificationresultsauthorization schema.
+          - type: 'null'
+            description: Listaprovidersverificationresultsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listaprovidersverificationresults Xapikey schema.
+          - type: 'null'
+            description: Listaprovidersverificationresults Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list a provider's verification results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultHistoryPage'
+                description: Response payload for listaprovidersverificationresultsresponse200.
+        '404':
+          description: '`pacticipant-not-found` or `pact-verification-not-found` in
+            this workspace.'
+        '400':
+          description: '`pact-history-cursor-invalid`.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listaprovidersverificationresultsresponse422.
+  /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/results/{result_id}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read one verification result with its log
+      description: 'One verification result of the provider (PFX-5.5): its summary,
+        its `test_results` as stored (each failed interaction''s mismatches with `expected`
+        and `actual` where the verifier sent them), a bi-directional result''s `comparison`,
+        and — when Apiome ran it — its evidence run, every request with its assertions.
+        `evidence_status` says why the run is absent: `not-recorded` (a Pact verifier
+        published the result), `not-found` (pruned) or `forbidden` (the caller lacks
+        `verification_evidence:view`). Requires `pacts:view`.'
+      operationId: read_one_result_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__results__result_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: result_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Result Id
+          description: Result Id schema.
+        description: Path parameter identifying the result id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readoneverificationresultwithitslogauthorization schema.
+          - type: 'null'
+            description: Readoneverificationresultwithitslogauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readoneverificationresultwithitslog Xapikey schema.
+          - type: 'null'
+            description: Readoneverificationresultwithitslog Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read one verification result with its
+            log.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultDetail'
+                description: Response payload for readoneverificationresultwithitslogresponse200.
+        '404':
+          description: '`pacticipant-not-found` or `pact-verification-not-found` in
+            this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readoneverificationresultwithitslogresponse422.
+  /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/reverify:
+    post:
+      tags:
+      - pact-broker
+      summary: Re-run the verification of one pact
+      description: 'Verify one pact version again on a registered verification target
+        (PFX-5.5), with the hosted verifier (PFX-3.2): the same replay, matching, evidence
+        and publishing. Without `provider_version` the run verifies as the provider
+        version and branch of the pact version''s newest result. The published result
+        records `trigger: manual`.
+
+
+        A console run of the same consumer ↔ provider pair that is still running makes
+        this a `409` (`pact-verify-in-progress`). Like the hosted verifier, a run that
+        happened is `200` whatever it found: read `success` and `outcome`. Requires
+        `pacts:create` and `verification_evidence:create`.'
+      operationId: reverify_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__consumer__consumer__pact_version__sha__reverify_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: consumer
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Consumer
+          description: Consumer schema.
+        description: Path parameter identifying the consumer segment.
+      - name: sha
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Sha
+          description: Sha schema.
+        description: Path parameter identifying the sha segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Reruntheverificationofonepactauthorization schema.
+          - type: 'null'
+            description: Reruntheverificationofonepactauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Reruntheverificationofonepact Xapikey schema.
+          - type: 'null'
+            description: Reruntheverificationofonepact Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsoleRunRequest'
+              description: Request body for reruntheverificationofonepactrequest.
+        description: Request body for re-run the verification of one pact.
+      responses:
+        '200':
+          description: Successful response for re-run the verification of one pact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsoleRunResponse'
+                description: Response payload for reruntheverificationofonepactresponse200.
+        '400':
+          description: A malformed provider version, branch or build URL.
+        '404':
+          description: '`pacticipant-not-found`, `pact-not-found` or `target-not-found`
+            in this workspace.'
+        '409':
+          description: '`pact-verify-in-progress`: a console run of this pair is already
+            running.'
+        '422':
+          description: '`pact-verify-provider-version-required`, `pact-verify-target-auth-unavailable`,
+            or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`,
+            a URL refusal).'
+  /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify-stale:
+    post:
+      tags:
+      - pact-broker
+      summary: Verify every stale pact of a provider
+      description: 'Verify each consumer''s newest pact that has no verification result
+        yet (PFX-5.5) in one run of the hosted verifier, as `provider_version` (required)
+        on a registered verification target. The published results record `trigger:
+        stale-recheck`. At most 25 pacts are verified; the rest are listed in `skipped`
+        with `pact-verify-over-limit`, and a pair whose console run is still running
+        with `pact-verify-in-progress` — none is dropped. No stale pact is `outcome:
+        no-pacts`. Requires `pacts:create` and `verification_evidence:create`.'
+      operationId: verify_stale_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verify_stale_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Verifyeverystalepactofaproviderauthorization schema.
+          - type: 'null'
+            description: Verifyeverystalepactofaproviderauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Verifyeverystalepactofaprovider Xapikey schema.
+          - type: 'null'
+            description: Verifyeverystalepactofaprovider Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsoleRunRequest'
+              description: Request body for verifyeverystalepactofaproviderrequest.
+        description: Request body for verify every stale pact of a provider.
+      responses:
+        '200':
+          description: Successful response for verify every stale pact of a provider.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsoleRunResponse'
+                description: Response payload for verifyeverystalepactofaproviderresponse200.
+        '400':
+          description: A malformed provider version, branch or build URL.
+        '404':
+          description: '`pacticipant-not-found`, `pact-not-found` or `target-not-found`
+            in this workspace.'
+        '409':
+          description: '`pact-verify-in-progress`: a console run of this pair is already
+            running.'
+        '422':
+          description: '`pact-verify-provider-version-required`, `pact-verify-target-auth-unavailable`,
             or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`,
             a URL refusal).'
   /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states:
@@ -218432,6 +218885,567 @@ components:
 
 
         Never carries a token: the credential is resolved at send time and stored nowhere.'
+    ConsoleRunRequest:
+      properties:
+        target_ref:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Target Ref
+          description: Slug or id of the registered verification target to replay against.
+          example: example
+        provider_version:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Request body for console run.
+          - type: 'null'
+            description: Request body for console run.
+          title: Provider Version
+          description: The provider version being verified. A re-run defaults to the provider
+            version of the pact's newest result; verify-all-stale requires it.
+        provider_branch:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Request body for console run.
+          - type: 'null'
+            description: Request body for console run.
+          title: Provider Branch
+          description: Its branch. A re-run that takes the provider version from a result
+            takes its branch too.
+        build_url:
+          anyOf:
+          - type: string
+            maxLength: 2000
+            description: Request body for console run.
+          - type: 'null'
+            description: Request body for console run.
+          title: Build Url
+          description: http(s) URL of the CI build.
+        verification:
+          $ref: '#/components/schemas/PactVerificationOptions'
+          description: 'What the run may send: the mutating-method opt-in, fixtures and
+            the provider-state choice.'
+        context:
+          additionalProperties: true
+          type: object
+          title: Context
+          description: Non-secret context stored with the evidence. Never credentials.
+      additionalProperties: false
+      type: object
+      required:
+      - target_ref
+      title: ConsoleRunRequest
+      description: A re-run or verify-all-stale from the Verification console.
+    ConsoleRunResponse:
+      properties:
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        provider_version:
+          type: string
+          title: Provider Version
+          description: The provider version verified.
+          example: 1.0.0
+        provider_branch:
+          anyOf:
+          - type: string
+            description: Response payload for console run.
+          - type: 'null'
+            description: Response payload for console run.
+          title: Provider Branch
+          description: Its branch, when stated.
+        target:
+          $ref: '#/components/schemas/VerifiedTarget'
+          description: The verification target replayed against.
+        success:
+          type: boolean
+          title: Success
+          description: 'What a CI job should exit on: true when at least one pact was
+            verified and every pact that is not pending `passed`.'
+          example: false
+        outcome:
+          type: string
+          title: Outcome
+          description: '`passed`, `failed` (a non-pending pact failed), `incomplete` (none
+            failed, but one could not be fully replayed) or `no-pacts` (the selectors
+            chose nothing).'
+          example: example
+        pacts:
+          items:
+            $ref: '#/components/schemas/PactVerification'
+          type: array
+          title: Pacts
+          description: One entry per pact verified.
+          maxItems: 1000
+        trigger:
+          type: string
+          title: Trigger
+          description: '`manual` (re-run) or `stale-recheck` (verify all stale).'
+          example: example
+        skipped:
+          items:
+            $ref: '#/components/schemas/SkippedPact'
+          type: array
+          title: Skipped
+          description: Chosen but not verified, each with why.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - provider
+      - provider_version
+      - target
+      - success
+      - outcome
+      - trigger
+      title: ConsoleRunResponse
+      description: 'A console run: the hosted verifier''s answer, its trigger, and what
+        it did not run.'
+    ResultCounts:
+      properties:
+        total:
+          type: integer
+          title: Total
+          description: Entries in `testResults`.
+          example: 1
+        passed:
+          type: integer
+          title: Passed
+          description: 'Entries with `success: true`.'
+          example: 1
+        failed:
+          type: integer
+          title: Failed
+          description: Every other entry (failed, skipped, unsupported).
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - total
+      - passed
+      - failed
+      title: ResultCounts
+      description: How a result's interactions went, from its ``testResults``.
+    ResultDetail:
+      properties:
+        result:
+          $ref: '#/components/schemas/ResultSummary'
+          description: The result.
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: The provider's display name.
+          example: Example
+        test_results:
+          items: {}
+          type: array
+          title: Test Results
+          description: 'The per-interaction results as stored: `interactionDescription`,
+            `success`, and for a failure `mismatches` (`attribute`, `identifier`, `description`,
+            and — from the hosted verifier and most Pact verifiers — `expected` and `actual`)
+            or `exceptions`.'
+          maxItems: 100
+        comparison:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Comparison
+          description: A bi-directional result's comparison.
+        evidence_status:
+          type: string
+          title: Evidence Status
+          description: '`attached`, `not-recorded`, `not-found` (pruned) or `forbidden`
+            (no `verification_evidence:view`).'
+          example: active
+        evidence:
+          anyOf:
+          - $ref: '#/components/schemas/VerificationRunRecord'
+          - type: 'null'
+            description: Result schema.
+          description: 'The evidence run: every request with its assertions, when `attached`.'
+      additionalProperties: false
+      type: object
+      required:
+      - result
+      - provider
+      - provider_name
+      - evidence_status
+      title: ResultDetail
+      description: One verification result in full.
+    ResultHistoryPage:
+      properties:
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: The provider's display name.
+          example: Example
+        consumer:
+          anyOf:
+          - type: string
+            description: Result History Page schema.
+          - type: 'null'
+            description: Result History Page schema.
+          title: Consumer
+          description: The consumer the page is narrowed to.
+        results:
+          items:
+            $ref: '#/components/schemas/ResultSummary'
+          type: array
+          title: Results
+          description: Newest first.
+          maxItems: 100
+        next_cursor:
+          anyOf:
+          - type: string
+            description: Result History Page schema.
+          - type: 'null'
+            description: Result History Page schema.
+          title: Next Cursor
+          description: Pass as `cursor` for the next page; null at the end.
+      additionalProperties: false
+      type: object
+      required:
+      - provider
+      - provider_name
+      title: ResultHistoryPage
+      description: One page of a provider's verification history.
+    ResultSummary:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: The result's id (what `…/results/{result_id}` reads).
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        number:
+          type: integer
+          title: Number
+          description: Its number among the results of its pact version.
+          example: 1
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer's handle.
+          example: example
+        consumer_name:
+          type: string
+          title: Consumer Name
+          description: The consumer's display name.
+          example: Example
+        consumer_version:
+          anyOf:
+          - type: string
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Consumer Version
+          description: The latest consumer version of the pact.
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version verified.
+          example: 1.0.0
+        provider_version:
+          type: string
+          title: Provider Version
+          description: The provider version (build) that verified.
+          example: 1.0.0
+        provider_branch:
+          anyOf:
+          - type: string
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Provider Branch
+          description: Its branch, when known.
+        success:
+          type: boolean
+          title: Success
+          description: Whether every interaction passed.
+          example: false
+        kind:
+          type: string
+          title: Kind
+          description: '`native` or `bidirectional`.'
+          example: example
+        pending:
+          anyOf:
+          - type: boolean
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Pending
+          description: Whether the pact was pending when verified.
+        wip:
+          type: boolean
+          title: Wip
+          description: Whether it was verified as a work-in-progress pact.
+          default: false
+          example: false
+        build_url:
+          anyOf:
+          - type: string
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Build Url
+          description: The CI build that ran it.
+        verified_by:
+          anyOf:
+          - type: string
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Verified By
+          description: The verifier and its version (`Pact-Rust 1.2.0`).
+        trigger:
+          anyOf:
+          - type: string
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Trigger
+          description: 'How it came to be: `published`, `hosted`, `manual`, `stale-recheck`
+            or `bidirectional`; null for a result recorded before triggers were recorded.'
+        duration_ms:
+          anyOf:
+          - type: integer
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Duration Ms
+          description: How long the run took, when Apiome ran it.
+        evidence_run_id:
+          anyOf:
+          - type: string
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Evidence Run Id
+          description: The evidence run holding its log.
+        created_at:
+          anyOf:
+          - type: string
+            description: Result schema.
+          - type: 'null'
+            description: Result schema.
+          title: Created At
+          description: When it was published.
+        counts:
+          $ref: '#/components/schemas/ResultCounts'
+          description: How its interactions went.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - number
+      - consumer
+      - consumer_name
+      - pact_version_sha
+      - provider_version
+      - success
+      - kind
+      - counts
+      title: ResultSummary
+      description: One verification result, as the history and the status list show it.
+    SkippedPact:
+      properties:
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer's handle.
+          example: example
+        consumer_name:
+          type: string
+          title: Consumer Name
+          description: The consumer's display name.
+          example: Example
+        consumer_version:
+          type: string
+          title: Consumer Version
+          description: The consumer version of the pact.
+          example: 1.0.0
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version.
+          example: 1.0.0
+        code:
+          type: string
+          title: Code
+          description: '`pact-verify-in-progress` or `pact-verify-over-limit`.'
+          example: example
+        reason:
+          type: string
+          title: Reason
+          description: Why it was not verified, and what to do.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      - consumer_name
+      - consumer_version
+      - pact_version_sha
+      - code
+      - reason
+      title: SkippedPact
+      description: A pact the run chose but did not verify, with the reason.
+    StatusCounts:
+      properties:
+        pacts:
+          type: integer
+          title: Pacts
+          description: Consumers with a pact (one newest pact each).
+          example: 1
+        verified:
+          type: integer
+          title: Verified
+          description: Newest pacts whose newest result passed.
+          example: 1
+        failing:
+          type: integer
+          title: Failing
+          description: Newest pacts whose newest result failed.
+          example: 1
+        stale:
+          type: integer
+          title: Stale
+          description: Newest pacts with no result.
+          example: 1
+        interactions:
+          type: integer
+          title: Interactions
+          description: Interactions in the newest results.
+          example: 1
+        passing_interactions:
+          type: integer
+          title: Passing Interactions
+          description: Of those, the ones that passed.
+          example: 1
+        last_verified_at:
+          anyOf:
+          - type: string
+            description: Status Counts schema.
+          - type: 'null'
+            description: Status Counts schema.
+          title: Last Verified At
+          description: When the newest of the results was published.
+      additionalProperties: false
+      type: object
+      required:
+      - pacts
+      - verified
+      - failing
+      - stale
+      - interactions
+      - passing_interactions
+      title: StatusCounts
+      description: The KPI strip of the Verification page.
+    VerificationStatus:
+      properties:
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: The provider's display name.
+          example: Example
+        counts:
+          $ref: '#/components/schemas/StatusCounts'
+          description: The KPI strip.
+        pacts:
+          items:
+            $ref: '#/components/schemas/VerificationStatusEntry'
+          type: array
+          title: Pacts
+          description: One per consumer, by handle.
+          maxItems: 1000
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when the provider has more than 500 consumers (the rest are
+            left out).
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - provider
+      - provider_name
+      - counts
+      title: VerificationStatus
+      description: Where a provider's verification stands.
+    VerificationStatusEntry:
+      properties:
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer's handle.
+          example: example
+        consumer_name:
+          type: string
+          title: Consumer Name
+          description: The consumer's display name.
+          example: Example
+        consumer_version:
+          type: string
+          title: Consumer Version
+          description: The consumer version that published the pact last.
+          example: 1.0.0
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version.
+          example: 1.0.0
+        published_at:
+          anyOf:
+          - type: string
+            description: Verification Status Entry schema.
+          - type: 'null'
+            description: Verification Status Entry schema.
+          title: Published At
+          description: When that version published it.
+        stale:
+          type: boolean
+          title: Stale
+          description: True when the pact version has no verification result.
+          example: false
+        latest_result:
+          anyOf:
+          - $ref: '#/components/schemas/ResultSummary'
+          - type: 'null'
+            description: Verification Status Entry schema.
+          description: Its newest result.
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      - consumer_name
+      - consumer_version
+      - pact_version_sha
+      - stale
+      title: VerificationStatusEntry
+      description: One consumer's newest pact for the provider, and how it stands.
   securitySchemes:
     Bearer:
       type: http

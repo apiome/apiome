@@ -1,0 +1,175 @@
+---
+title: Verification results and re-runs
+description: Read each verification result, re-run a pact, and verify the stale ones.
+sidebar_position: 4.1
+tags: [contracts, pact, verification, ui, rest]
+---
+
+The **Verification** page of a provider shows how its pacts stand and every
+[verification result](./verification-results.mdx) it has. From there you can open one result to see
+exactly what failed, copy or download its log, **Re-run** a pact, or **Verify all stale** pacts at
+once. Re-runs use the [hosted verifier](./hosted-verification.mdx): Apiome replays the pact against
+a registered verification target and publishes a new result.
+
+## Before you start
+
+- You hold **Pacts** → **View** to read the page. Without it, the page shows **Permission denied**.
+- To re-run, you also hold **Pacts** → **Create** and **Verification evidence** → **Create**. The
+  built-in **Editor** role has both.
+- To re-run, the provider has a **verification target**: a running copy of it that Apiome can reach.
+  See [Verify a provider from Apiome](./hosted-verification.mdx#before-you-start).
+
+## Open the Verification page
+
+1. In the rail, under **Ship**, click **Contracts**.
+2. On the **Pacticipants** page, click the provider.
+3. In the **Pacts** section, click **Verification**.
+
+You can also start on a pact: in its **Verification status** section, click **Results and logs**.
+That opens the provider's page with the history narrowed to that consumer.
+
+The page is at `/ade/dashboard/pacts/pacticipants/<provider>/verification`.
+
+<Screenshot id="pact-verification" alt="The Ledger API verification page: a strip of counts (3 pacts, 1 verified, 1 failing, 1 stale, 86% of interactions passing), the newest pact of Billing Service, Orders UI and Reporting Job with their results and Re-run buttons, and the history of results with trigger, duration and build."/>
+
+## Read where the provider stands
+
+The strip at the top counts the newest pact of each consumer:
+
+| Count | What it counts |
+| --- | --- |
+| **Pacts** | Consumers with a pact for this provider. |
+| **Verified** | Newest pacts whose newest result passed. |
+| **Failing** | Newest pacts whose newest result failed. |
+| **Stale** | Newest pacts with no result yet. |
+| **Interactions passing** | Of the interactions in those newest results, the share that passed. |
+| **Last verified** | When the newest of those results was published. |
+
+The **Pacts** table lists each consumer's newest pact: the consumer version and pact version, the
+newest result with its verdict, and the provider version that published it. Click **Result N** to
+open that result.
+
+**A stale pact** has no verification result. Its consumer changed the pact since the provider last
+verified it, or the provider never verified it. It is marked **Stale — not verified**. A stale pact
+reads as *not known yet* in [can-i-deploy](./can-i-deploy.mdx), so a deployment that depends on it
+waits.
+
+## Re-run one pact
+
+1. In the **Pacts** table, click **Re-run** on the consumer's row.
+2. Choose the **Verification target**.
+3. Check the **Provider version**. It is filled in with the provider version of the pact's newest
+   result, so a re-run answers "does that build still honour this pact?". Change it to verify another
+   build. If the pact has no result yet, enter the version.
+4. Optionally change the **Provider branch**, and tick **Send mutating requests** if the pact's
+   `POST`, `PUT`, `PATCH` and `DELETE` interactions may be sent. The target's own policy must allow
+   them too.
+5. Click **Re-run verification**.
+
+The dialog then says how the run went: **Passed**, **Failed**, or **Incomplete — nothing published**
+when an interaction could not be replayed. Click **Done**. The page reads the results again, and
+the new result is first in the history, with the trigger **Re-run**.
+
+You can also re-run from a result's own page: click **Re-run verification** in its header.
+
+**One run per pact at a time.** While a re-run or a **Verify all stale** run of a consumer and
+provider is still going, another re-run of the same pair is refused with *a verification of … is
+already running*. Wait for it to finish and run again.
+
+## Verify all stale pacts
+
+1. Above the **Pacts** table, click **Verify all stale (N)**. The button is off when nothing is stale.
+2. Choose the **Verification target** and enter the **Provider version** the pacts are verified as,
+   usually the commit SHA of the build running on the target. Optionally give the branch.
+3. Click **Verify stale pacts**.
+
+One run verifies at most 25 pacts. The dialog lists every stale pact it did not run, with the reason:
+past the limit (run **Verify all stale** again for the rest), or already being verified.
+
+## The history
+
+**History** lists every verification result of the provider, newest first: results Pact verifiers
+published, hosted runs, re-runs and bi-directional comparisons. Each row shows:
+
+| Column | What it shows |
+| --- | --- |
+| **Result** | Its number for the pact version, and the pact version. Click it to open the result. |
+| **Consumer** | The consumer whose pact was verified. |
+| **Provider version** | The provider build, and its branch when known. |
+| **Verdict** | **Passed**, **Failed**, or **Failed (pending)** when the pact was pending. |
+| **Interactions** | How many of the result's interactions passed. |
+| **Trigger** | How the result came to be (see below). |
+| **Duration** | How long the run took, when Apiome ran it. |
+| **Build** | The CI build, when the verifier sent one. |
+| **Verified** | When the result was published, in UTC. |
+
+Choose a consumer in the list above the table to see only its results. The address keeps
+`?consumer=`, so you can share it. **Load more** reads the next 25.
+
+| Trigger | Meaning |
+| --- | --- |
+| **Pact verifier** | A Pact verifier in the provider's build published it. |
+| **Hosted verifier** | A [hosted verification](./hosted-verification.mdx) request ran it. |
+| **Re-run** | Someone clicked **Re-run**. |
+| **Stale re-check** | **Verify all stale** ran it. |
+| **Bi-directional** | Apiome compared the pact with the provider contract. See [Bi-directional contracts](./bi-directional.mdx). |
+| **Not recorded** | It was published before Apiome recorded triggers. |
+
+## Read one result
+
+Open a result from the **Pacts** table or the history.
+
+<Screenshot id="pact-verification-result" alt="Result 3 of Billing Service's pact with Ledger API: the overview with provider build 4f1e2d0 on main, trigger Re-run and duration 1.8 s; the failed summary interaction open with expected and actual values side by side; the requests the run sent; and the raw log with Copy and Download."/>
+
+- **Overview** shows the verdict, the pact, the provider build (version and branch), the CI build,
+  the verifier, the trigger, the duration and how many interactions passed.
+- **Interactions** lists each interaction. A failed one is open. Each mismatch names where it is
+  (for example `body /year`) and the matching rule, and shows the **Expected** and **Actual** values
+  side by side. An interaction that failed without a mismatch shows the verifier's message.
+- **Requests** lists the requests a hosted run sent, with the status returned and how many
+  assertions passed. A result a Pact verifier published has no requests here: its log is in the build
+  that ran it. The page also says when retention removed the log, or when your role cannot read
+  verification evidence.
+- **Raw log** is the whole result as text: every interaction, mismatch and request. Click **Copy**
+  to copy it, or **Download** to save it as a `.log` file.
+
+## From CI or a script
+
+The page uses these REST endpoints, which you can call with an API key. They live beside the hosted
+verifier, under `/v1/tenants/<tenant>/pact-verifier/pacts/provider/<provider>`:
+
+| Endpoint | What it does |
+| --- | --- |
+| `GET …/verification-status` | Each consumer's newest pact, its newest result, and whether it is stale. |
+| `GET …/results?consumer=&cursor=` | The history, newest first. |
+| `GET …/results/<id>` | One result with its test results and evidence run. |
+| `POST …/consumer/<consumer>/pact-version/<sha>/reverify` | Re-run one pact. |
+| `POST …/verify-stale` | Verify every stale pact (`provider_version` required). |
+
+```bash
+curl -X POST \
+  "$APIOME/v1/tenants/acme/pact-verifier/pacts/provider/ledger-api/verify-stale" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "target_ref": "ledger-staging", "provider_version": "4f1e2d0", "provider_branch": "main" }'
+```
+
+A key with the `pact:verify` scope may run them. See the
+[Pact broker REST reference](../../reference/rest/pact-broker.md).
+
+## Who can do what
+
+| Action | Permission |
+| --- | --- |
+| Open the Verification page and a result | **Pacts** → **View** |
+| See a result's requests | **Verification evidence** → **View** as well |
+| **Re-run** and **Verify all stale** | **Pacts** → **Create** and **Verification evidence** → **Create** |
+
+Every read and run is scoped to your current workspace.
+
+## Related
+
+- [Publish verification results](./verification-results.mdx)
+- [Verify a provider from Apiome](./hosted-verification.mdx)
+- [Pact detail](./pact-detail.mdx)
+- [Check before you deploy](./can-i-deploy.mdx)

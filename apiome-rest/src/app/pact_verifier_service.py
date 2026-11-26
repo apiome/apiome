@@ -80,9 +80,9 @@ from .pact_verifier import (
 from .pact_webhook_events import fire_verification_events
 from .pact_wip import select_wip_pacts
 from .pacticipant import PacticipantRecord, validate_branch, validate_url, validate_version_number
-from .verification_evidence import VerificationRunInput
+from .verification_evidence import VerificationRunInput, duration_ms_between
 from .verification_evidence_store import record_run
-from .verification_result import VerificationRequest, VerificationResultRecord
+from .verification_result import TRIGGER_HOSTED, VerificationRequest, VerificationResultRecord
 from .verification_result_store import publish_verification_result, record_broker_version
 from .verification_target import AUTH_KIND_STORED, ResolvedTarget
 from .verification_target_store import TargetActor, resolve_target
@@ -99,8 +99,10 @@ __all__ = [
     "PactVerifyRequest",
     "PactVerifyResponse",
     "PublishedResult",
+    "VerificationSession",
     "VerifiedTarget",
     "compile_stored_pact",
+    "open_verification_session",
     "provider_state_handler",
     "select_provider_pacts",
     "verify_provider_pacts",
@@ -474,6 +476,8 @@ def _verify_one(
     broker_base: str,
     build_url: Optional[str],
     pending: bool,
+    trigger: str = TRIGGER_HOSTED,
+    description: Optional[str] = None,
 ) -> PactVerification:
     """Verify one selected pact and, when the run is conclusive, publish its result.
 
@@ -491,6 +495,9 @@ def _verify_one(
         broker_base: The Pact Broker base URL the result's link starts with.
         build_url: The checked build URL.
         pending: Whether the pact's failure is excused for this run (see :func:`_excused`).
+        trigger: What started the run, stored on the published result (PFX-5.5): ``hosted`` for a
+            ``…/verify`` request, ``manual`` or ``stale-recheck`` from the Verification console.
+        description: Why the pact is verified, when no selector chose it (a console run).
 
     Returns:
         The pact's verification.
@@ -542,6 +549,9 @@ def _verify_one(
             actor=actor,
             pact_pending=selected.pending,
             wip=selected.wip,
+            trigger=trigger,
+            duration_ms=duration_ms_between(run.started_at, run.finished_at),
+            evidence_run_id=evidence_run_id,
         )
         published = _published(db, tenant_id, broker_base, stored)
 
@@ -550,7 +560,7 @@ def _verify_one(
         consumer_name=candidate.consumer_name,
         consumer_version=candidate.version_number,
         pact_version_sha=candidate.sha,
-        short_description=short_description(selected),
+        short_description=description if description is not None else short_description(selected),
         pending=pending,
         wip=selected.wip,
         suite_digest=manifest.digest,
@@ -654,6 +664,158 @@ def verify_provider_pacts(
             "Narrow the selection (a `consumer` on each selector, or fewer selectors) and run again.",
         )
 
+    session = open_verification_session(db, tenant_id, provider, request, actor=actor, state_handler=state_handler)
+    try:
+        if selected and request.publish and branch:
+            # A verifier records the provider version's branch before it publishes, so each result
+            # carries it; the version itself is recorded by the publication.
+            record_broker_version(db, tenant_id, provider.slug, version, actor=actor, branch=branch)
+        pacts = [
+            session.verify(pact, pending=_excused(pact, query), broker_base=broker_base, build_url=build_url)
+            for pact in selected
+        ]
+    finally:
+        session.close()
+    return session.response(version, branch, pacts)
+
+
+class VerificationSession:
+    """One resolved target, its credentials and its provider-state handler, for a run of pacts.
+
+    Built by :func:`open_verification_session`. The hosted verifier shares it with the
+    Verification console's re-run and verify-all-stale (PFX-5.5, #6949), so every path replays,
+    records and publishes the same way. :meth:`close` releases the provider-state handler.
+    """
+
+    def __init__(
+        self,
+        db: Any,
+        tenant_id: str,
+        provider: PacticipantRecord,
+        request: PactVerifyRequest,
+        *,
+        target: ResolvedTarget,
+        auth_headers: Dict[str, str],
+        handler: Optional[ProviderStateHandler],
+        actor: ConsumerActor,
+        target_actor: TargetActor,
+    ) -> None:
+        """Hold what every pact of the run shares (see :func:`open_verification_session`)."""
+        self.db = db
+        self.tenant_id = tenant_id
+        self.provider = provider
+        self.request = request
+        self.target = target
+        self.auth_headers = auth_headers
+        self.handler = handler
+        self.actor = actor
+        self.target_actor = target_actor
+
+    def verify(
+        self,
+        pact: VerifiablePact,
+        *,
+        pending: bool,
+        broker_base: str,
+        build_url: Optional[str],
+        trigger: str = TRIGGER_HOSTED,
+        description: Optional[str] = None,
+    ) -> PactVerification:
+        """Verify one pact on this session's target (see :func:`_verify_one`).
+
+        Args:
+            pact: The pact, with whether it is pending.
+            pending: Whether its failure is excused for this run.
+            broker_base: The Pact Broker base URL for result links and webhooks.
+            build_url: The checked build URL.
+            trigger: What started the run (stored on the published result).
+            description: Why the pact is verified, when no selector chose it.
+
+        Returns:
+            The pact's verification.
+        """
+        return _verify_one(
+            self.db,
+            self.tenant_id,
+            self.provider,
+            pact,
+            self.request,
+            target=self.target,
+            auth_headers=self.auth_headers,
+            handler=self.handler,
+            actor=self.actor,
+            target_actor=self.target_actor,
+            broker_base=broker_base,
+            build_url=build_url,
+            pending=pending,
+            trigger=trigger,
+            description=description,
+        )
+
+    def close(self) -> None:
+        """Release the provider-state handler, if it holds anything."""
+        close = getattr(self.handler, "close", None)
+        if callable(close):
+            close()
+
+    def response(self, version: str, branch: Optional[str], pacts: List[PactVerification]) -> PactVerifyResponse:
+        """The run's answer: the target as resolved, the verdict and every pact.
+
+        Args:
+            version: The checked provider version.
+            branch: The checked provider branch.
+            pacts: The pacts verified.
+
+        Returns:
+            The response.
+        """
+        outcome = _run_outcome(pacts)
+        return PactVerifyResponse(
+            provider=self.provider.slug,
+            provider_version=version,
+            provider_branch=branch,
+            target=VerifiedTarget(
+                target_id=self.target.target_id,
+                slug=self.target.slug,
+                environment=self.target.environment,
+                base_url=self.target.base_url,
+                protocol=self.target.protocol,
+                allow_mutating_methods=self.target.policy.allow_mutating_methods,
+            ),
+            success=outcome == OUTCOME_PASSED,
+            outcome=outcome,
+            pacts=pacts,
+        )
+
+
+def open_verification_session(
+    db: Any,
+    tenant_id: str,
+    provider: PacticipantRecord,
+    request: PactVerifyRequest,
+    *,
+    actor: ConsumerActor,
+    state_handler: Optional[ProviderStateHandler] = None,
+) -> VerificationSession:
+    """Resolve the request's target, its credentials and the provider-state handler.
+
+    Nothing is sent to the target here; a run that cannot start fails before any pact is replayed.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider: The provider being verified.
+        request: The verification request (its ``target_ref``).
+        actor: Who is verifying.
+        state_handler: A provider-state handler to use instead of the registered one (tests).
+
+    Returns:
+        The session; call :meth:`VerificationSession.close` when done.
+
+    Raises:
+        TargetValidationError: The target could not be resolved.
+        PactVerifierError: :data:`CODE_TARGET_AUTH_UNAVAILABLE`.
+    """
     target_actor = TargetActor(user_id=actor.user_id, label=actor.label, kind=actor.kind)
     # An http target replays HTTP interactions, a grpc / connect one the gRPC calls (PFX-3.7).
     target = resolve_target(tenant_id, request.target_ref, actor=target_actor, protocol=PACT_VERIFICATION)
@@ -664,50 +826,15 @@ def verify_provider_pacts(
         auth_headers = materialize_auth_headers(target.auth, stored_headers=stored_headers)
     except AuthResolutionError as exc:
         raise PactVerifierError(CODE_TARGET_AUTH_UNAVAILABLE, str(exc)) from exc
-
-    if selected and request.publish and branch:
-        # A verifier records the provider version's branch before it publishes, so each result
-        # carries it; the version itself is recorded by the publication.
-        record_broker_version(db, tenant_id, provider.slug, version, actor=actor, branch=branch)
-
     handler = state_handler or provider_state_handler(db, tenant_id, provider, target, auth_headers)
-    try:
-        pacts = [
-        _verify_one(
-            db,
-            tenant_id,
-            provider,
-            pact,
-            request,
-            target=target,
-            auth_headers=auth_headers,
-            handler=handler,
-            actor=actor,
-            target_actor=target_actor,
-            broker_base=broker_base,
-            build_url=build_url,
-                pending=_excused(pact, query),
-            )
-            for pact in selected
-        ]
-    finally:
-        close = getattr(handler, "close", None)
-        if callable(close):
-            close()
-    outcome = _run_outcome(pacts)
-    return PactVerifyResponse(
-        provider=provider.slug,
-        provider_version=version,
-        provider_branch=branch,
-        target=VerifiedTarget(
-            target_id=target.target_id,
-            slug=target.slug,
-            environment=target.environment,
-            base_url=target.base_url,
-            protocol=target.protocol,
-            allow_mutating_methods=target.policy.allow_mutating_methods,
-        ),
-        success=outcome == OUTCOME_PASSED,
-        outcome=outcome,
-        pacts=pacts,
+    return VerificationSession(
+        db,
+        tenant_id,
+        provider,
+        request,
+        target=target,
+        auth_headers=auth_headers,
+        handler=handler,
+        actor=actor,
+        target_actor=target_actor,
     )

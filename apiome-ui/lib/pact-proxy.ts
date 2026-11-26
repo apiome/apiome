@@ -1,6 +1,6 @@
 /**
  * Shared forwarding for the `/api/pact/*` proxies (PFX-5.1, #6945; PFX-5.2, #6946; PFX-5.3, #6947;
- * PFX-5.4, #6948).
+ * PFX-5.4, #6948; PFX-5.5, #6949).
  *
  * Each proxy resolves the signed-in user's workspace, forwards one read to apiome-rest as that
  * user, and passes REST's answer through (a 403 stays a 403). Tenant scoping and the `pacts`
@@ -146,6 +146,26 @@ export async function forwardPactVerdict(path: string): Promise<NextResponse> {
   } catch {
     return pactError(503, PACT_UNAVAILABLE);
   }
+}
+
+/**
+ * Forward one console run (a re-run or verify-all-stale, PFX-5.5 #6949) as the signed-in user:
+ * a `POST` of an already checked body. REST's refusal keeps its status and its message (a 409 for
+ * a pair already running, a 403 without `pacts:create`).
+ *
+ * @param path - The REST path below `/v1/tenants/{slug}`.
+ * @param body - The checked run body.
+ * @returns REST's answer, or its refusal as `{ success: false, error }`.
+ */
+export async function forwardPactRun(path: string, body: unknown): Promise<NextResponse> {
+  const resolved = await resolveConnectorTenant();
+  if ('error' in resolved) return resolved.error;
+  return forwardConnectorRequest(tenantUrl(resolved.slug, path), {
+    method: 'POST',
+    user: resolved.user,
+    body,
+    unavailable: PACT_UNAVAILABLE,
+  });
 }
 
 /** REST's message from a refusal (`detail` string or `detail.message`), or the fallback. */
