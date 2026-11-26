@@ -1,0 +1,30 @@
+---
+slug: pact-postman-collections
+title: "Export a pact as a Postman collection"
+description: "Run a consumer's pact as Postman requests with test scripts, in Postman or Newman."
+authors: [apiome]
+---
+
+A provider team can now run a consumer's pact as a Postman collection.
+`apiome pact export-postman --provider "Ledger API" --consumer "Billing Service"` writes the pact as
+a Postman Collection v2.1. Open it in Postman, or run it in CI with `newman run`. See
+[Export a pact as a Postman collection](/ship/pact-broker/cli#export-a-pact-as-a-postman-collection).
+
+{/* truncate */}
+
+- **Any pact.** Export the latest pact between two pacticipants, or pick one with
+  `--consumer-version`, `--tag`, `--branch` or `--pact-version`. `--pact-file` exports a local
+  Pact file before you publish it.
+- **One request per interaction.** Each request goes to a `{{baseUrl}}` variable
+  (`--provider-base-url` fills it in). Its description names the provider states to set up, and a
+  saved example shows the expected response.
+- **Test scripts.** Each request checks the status, the expected headers and the body by Pact's
+  default rules: extra object keys are fine, arrays must have the same length, and other values must
+  be equal. `--no-tests` leaves the scripts out.
+- **Nothing dropped silently.** Message and gRPC interactions are left out. Values under a matching
+  rule are not checked, and generators are not applied. The command lists each of these with the
+  reason. `--fail-on-left-out` fails the job when an interaction was left out.
+- **From a specification too.** A collection made from an API's OpenAPI document is still
+  `apiome export postman`. See [Export to an API client](/ship/export-to-an-api-client).
+
+*Last updated: November 26, 2026*

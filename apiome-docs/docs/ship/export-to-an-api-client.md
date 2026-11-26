@@ -24,6 +24,9 @@ exported to any of them.
   unchanged; an Insomnia or Bruno one re-imports to the same operations, parameters, folders and auth.
 - **Share it without secrets.** No credential value is ever written: auth and every secret-looking
   value become empty variables you fill in in the client.
+- **Replay a consumer's pact.** To turn a pact (what a consumer sends and expects) into a Postman
+  collection with test scripts, use `apiome pact export-postman` instead — see
+  [Export a pact as a Postman collection](./pact-broker/cli.mdx#export-a-pact-as-a-postman-collection).
 
 A collection saves calls, not a contract, so every client export is **lossy**: types become example
 bodies and responses become saved examples or are left out. The fidelity report lists each trade

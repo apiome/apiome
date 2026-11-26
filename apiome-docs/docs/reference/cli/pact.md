@@ -18,7 +18,7 @@ Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`create-environment`](#pact-create-environment), [`create-webhook`](#pact-create-webhook), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`verify`](#pact-verify).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`create-environment`](#pact-create-environment), [`create-webhook`](#pact-create-webhook), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`verify`](#pact-verify).
 
 ## apiome pact can-i-deploy {#pact-can-i-deploy}
 
@@ -154,6 +154,34 @@ apiome pact export-consumer-contract [OPTIONS]
 | `--provider` | text |  |  | The provider pacticipant name; defaults to the project's bound pacticipant. |
 | `--output`, `-o` | file |  |  | Write the Pact file here instead of stdout. |
 | `--fail-on-findings` | flag |  |  | Exit 1 when any value was invented or anything was left out. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact export-postman {#pact-export-postman}
+
+Export a pact as a Postman Collection v2.1 (POST …/pact-postman-collections).
+
+One request per HTTP interaction against {{baseUrl}}, a saved example of the expected response and a test script checking it (status, headers, body by Pact's default rules). Name a stored pact with --provider and --consumer (the latest pact, or one of --consumer-version, --tag, --branch, --pact-version), or send a local file with --pact-file. Prints every notice — what was left out, not asserted or not applied, with a reason, and the provider states to set up. Without --output the collection goes to stdout and the summary to stderr. Exits 1 when the server refuses (no such pact, no HTTP interaction to export), or with --fail-on-left-out when an interaction was left out. For a collection from a specification, use apiome export postman.
+
+```text
+apiome pact export-postman [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--provider` | text |  |  | The provider pacticipant (handle, id or name); required for a stored pact. |
+| `--consumer` | text |  |  | The consumer pacticipant (handle, id or name); required for a stored pact. |
+| `--consumer-version` | text |  |  | The pact this consumer version published. |
+| `--tag` | text |  |  | The latest pact of consumer versions with this tag. |
+| `--branch` | text |  |  | The latest pact of consumer versions on this branch. |
+| `--pact-version` | text |  |  | The pact with this content SHA (64 hex characters). |
+| `--pact-file` | file |  |  | Export a local Pact file instead of a stored pact (nothing is published). |
+| `--provider-base-url` | text |  |  | The value of the {{baseUrl}} collection variable (http or https URL). |
+| `--tests` / `--no-tests` | flag | `--tests` |  | Give each request a test script. |
+| `--output`, `-o` | file |  |  | Write the collection here instead of stdout. |
+| `--fail-on-left-out` | flag |  |  | Exit 1 when any interaction was left out of the collection. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 

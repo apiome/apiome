@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.680.0",
+    "version": "1.681.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -44628,6 +44628,105 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-postman-collections": {
+      "post": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Export a pact as a Postman collection",
+        "description": "Writes a **Postman Collection v2.1** from a pact: one request per HTTP interaction against a `{{baseUrl}}` variable, a saved example of the expected response, and (`tests`, default on) a test script that checks the status, the expected headers and the body by Pact's default rules (extra object keys allowed, arrays of the same length, other values equal). Provider states are named in each request's description.\n\nSend `provider` + `consumer` and at most one of `consumerVersion`, `tag`, `branch`, `pactVersionSha` for a stored pact (none: the latest), or `pact` for an inline document. Nothing is stored.\n\n`notices` lists what the collection does not carry, each with a code, outcome (`left-out`, `not-asserted`, `not-applied`, `info`), JSON Pointer and reason: message and gRPC interactions, non-text bodies, values governed by matching rules, generators, and the provider states to set up. A pact with no HTTP interaction to export is `422 pact-postman-no-http-interactions`. Requires `pacts:view`.",
+        "operationId": "export_pact_postman_collection_v1_tenants__tenant_slug__pact_postman_collections_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exportapactasa Postmancollectionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportapactasa Postmancollectionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Exportapactasa Postmancollection Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Exportapactasa Postmancollection Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PactPostmanRequest",
+                "description": "Request body for exportapactasa postmancollectionrequest."
+              }
+            }
+          },
+          "description": "Request body for export a pact as a postman collection."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for export a pact as a postman collection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Export Pact Postman Collection V1 Tenants  Tenant Slug  Pact Postman Collections Post",
+                  "description": "Response Export Pact Postman Collection V1 Tenants  Tenant Slug  Pact Postman Collections Post schema."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`pacticipant-not-found` or `pact-not-found`: no such stored pact in this workspace."
+          },
+          "413": {
+            "description": "`pact-too-large`: the inline pact is over the workspace's pact size limit."
+          },
+          "422": {
+            "description": "`pact-postman-export-invalid` (no pact named, two selections, an inline pact with a selection, a bad `baseUrl`), `pact-invalid` (the inline document is not a pact) or `pact-postman-no-http-interactions` (with `notices`)."
           }
         }
       }
@@ -227582,6 +227681,134 @@
         ],
         "title": "PactMatchingRuleEntry",
         "description": "One matching rule, in one shape whichever specification version filed it."
+      },
+      "PactPostmanRequest": {
+        "properties": {
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact postman."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact postman."
+              }
+            ],
+            "title": "Provider",
+            "description": "The provider pacticipant (handle, id or name). Required for a stored pact."
+          },
+          "consumer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact postman."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact postman."
+              }
+            ],
+            "title": "Consumer",
+            "description": "The consumer pacticipant (handle, id or name). Required for a stored pact."
+          },
+          "consumerVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact postman."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact postman."
+              }
+            ],
+            "title": "Consumerversion",
+            "description": "The pact this consumer version published."
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact postman."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact postman."
+              }
+            ],
+            "title": "Tag",
+            "description": "The latest pact of consumer versions with this tag."
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact postman."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact postman."
+              }
+            ],
+            "title": "Branch",
+            "description": "The latest pact of consumer versions on this branch."
+          },
+          "pactVersionSha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact postman."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact postman."
+              }
+            ],
+            "title": "Pactversionsha",
+            "description": "The pact with this content address (64 hex characters)."
+          },
+          "pact": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Request body for pact postman."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact postman."
+              }
+            ],
+            "title": "Pact",
+            "description": "An inline Pact document (specification 1\u20134) instead of a stored pact. `consumer` and `provider` then only name the collection, and default to the document's own."
+          },
+          "baseUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact postman."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact postman."
+              }
+            ],
+            "title": "Baseurl",
+            "description": "The value of the `{{baseUrl}}` collection variable (an http or https URL). Omitted: empty, to fill in (Newman: `--env-var baseUrl=\u2026`)."
+          },
+          "tests": {
+            "type": "boolean",
+            "title": "Tests",
+            "description": "Give each request a test script that checks the expected response.",
+            "default": true,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PactPostmanRequest",
+        "description": "What to export: a stored pact (by pair and selection) or an inline Pact document."
       },
       "PactProviderState": {
         "properties": {
