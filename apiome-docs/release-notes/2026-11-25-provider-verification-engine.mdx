@@ -1,0 +1,58 @@
+---
+slug: provider-verification-engine
+title: "Provider verification engine"
+description: "Apiome compiles, replays and judges a provider's pacts, then publishes the results."
+authors: [apiome]
+---
+
+The provider verification engine is complete. Apiome can now verify a provider against its
+consumers' pacts by itself: it compiles each pact into a contract suite, sets up the provider
+states the pact names, replays every interaction against a running copy of the provider, judges
+the responses by the pact's matching rules, and publishes a
+[verification result](/ship/pact-broker/verification-results) for each pact. The matrix and
+[can-i-deploy](/ship/pact-broker/can-i-deploy) read those results like ones a Pact verifier
+published. The provider needs no Pact library.
+
+{/* truncate */}
+
+**Verify from the provider's build.** Name a registered verification target and the provider
+version you are verifying:
+
+```bash
+curl -X POST \
+  "$APIOME/v1/tenants/acme/pact-verifier/pacts/provider/ledger-api/verify" \
+  -H "Authorization: Bearer $APIOME_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"target_ref": "ledger-staging", "provider_version": "'"$GIT_COMMIT"'", "provider_branch": "main"}'
+```
+
+**What the epic covers:**
+
+- **Pacts as contract suites.** Each interaction becomes a replayable case with its request,
+  expected response, provider states and matching rules. The same pact version always gives the
+  same suite and `sha256:` digest, and nothing is dropped without a reason —
+  [Compile a pact into a contract suite](/ship/pact-broker/verification).
+- **Hosted verification.** Pacts are picked by consumer-version selectors and replayed against a
+  verification target. The target's network guard and mutation policy apply, and a run can never
+  widen them. Every failure names the interaction, the field and the rule —
+  [Verify a provider from Apiome](/ship/pact-broker/hosted-verification).
+- **Provider states.** Register how each state is set up: a state-change call or a recorded
+  fixture, with parameters and per-target overrides. Check a provider's pacts against the registry
+  before a run, on the API or the **Provider states** page —
+  [Provider states](/ship/pact-broker/provider-states).
+- **Every Pact matcher.** Pact 2–4 matching rules, from `type` and `regex` to `arrayContains`,
+  `eachKey` and `contentType`, are applied as the reference verifiers apply them. They are tested
+  against the Pact specification test suite —
+  [Supported matching rules](/ship/pact-broker/hosted-verification#supported-matching-rules).
+- **Results from your own CI.** A `pact_verifier_cli` JSON report or a JUnit file from a run
+  elsewhere can be sent with `apiome pact` and becomes a verification result —
+  [Send a report from your own CI](/ship/pact-broker/verification-results#send-a-report-from-your-own-ci).
+- **Message pacts.** Asynchronous messages are checked against the provider's AsyncAPI 2.x or 3.x
+  document, without running the provider — [Message pacts](/ship/pact-broker/message-pacts).
+- **gRPC and GraphQL.** gRPC calls recorded by the Pact protobuf plugin are replayed against a
+  `grpc` or `connect` target. GraphQL operations are replayed as GraphQL, so only a `mutation`
+  counts as mutating —
+  [gRPC and GraphQL pacts](/ship/pact-broker/hosted-verification#grpc-and-graphql-pacts).
+
+The [Pact Broker overview](/ship/pact-broker/overview) now shows where hosted verification fits
+next to a Pact verifier in your own build and bi-directional testing.
