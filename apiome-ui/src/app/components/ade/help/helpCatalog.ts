@@ -1357,6 +1357,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contracts', 'interactions', 'provider states', 'diff', 'previous', 'verification', 'verified', 'history', 'messages'],
   },
   {
+    id: 'network',
+    title: 'Integration network',
+    summary: 'See which pacticipants depend on each other through pacts, and the verdict of each integration.',
+    page: 'apiome-docs/docs/ship/pact-broker/network.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'pact', 'diagram', 'graph', 'dependencies', 'groups', 'consumers', 'providers', 'verdict', 'verified', 'failed'],
+  },
+  {
     id: 'provider-states',
     title: 'Provider states',
     summary: "Register the states a provider's pacts name, and how Apiome sets them up.",

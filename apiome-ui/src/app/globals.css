@@ -45336,3 +45336,182 @@ tr[data-selected="true"] > td:first-child {
 .ppd__row--open {
   background: var(--accent-soft);
 }
+
+/* ===========================================================================
+   Pact integration network — PFX-5.3 (#6947). The diagram of a pacticipant's
+   network (`NetworkGraphSvg`), its verdict key and its notices. `.pnx-*`.
+   Edges take the semantic `-fg` tones (calibrated for ≥3:1 on the surface);
+   the verdict is also a mark on each edge, and an unverified edge is dashed.
+   =========================================================================== */
+
+.ppx__panel-link {
+  margin-inline-start: auto;
+  font-size: var(--fs-sm);
+}
+
+.pnx-plot {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pnx-svg {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 40rem;
+  block-size: auto;
+}
+
+.pnx-edge {
+  --pnx-tone: var(--fg-muted);
+}
+
+.pnx-edge[data-verdict='verified'],
+.pnx-arrow[data-verdict='verified'],
+.pnx-legend__item[data-verdict='verified'] {
+  --pnx-tone: var(--ok-fg);
+}
+
+.pnx-edge[data-verdict='failed'],
+.pnx-arrow[data-verdict='failed'],
+.pnx-legend__item[data-verdict='failed'] {
+  --pnx-tone: var(--danger-fg);
+}
+
+.pnx-edge[data-verdict='failed-pending'],
+.pnx-arrow[data-verdict='failed-pending'],
+.pnx-legend__item[data-verdict='failed-pending'] {
+  --pnx-tone: var(--warn-fg);
+}
+
+.pnx-edge[data-verdict='unverified'],
+.pnx-arrow[data-verdict='unverified'],
+.pnx-legend__item[data-verdict='unverified'] {
+  --pnx-tone: var(--fg-muted);
+}
+
+.pnx-arrow {
+  fill: var(--pnx-tone);
+}
+
+.pnx-edge__link {
+  cursor: pointer;
+  outline: none;
+}
+
+.pnx-edge__hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+}
+
+.pnx-edge__line {
+  fill: none;
+  stroke: var(--pnx-tone);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.pnx-edge[data-verdict='unverified'] .pnx-edge__line {
+  stroke-dasharray: 6 4;
+}
+
+.pnx-edge__mark {
+  fill: var(--bg-surface);
+  stroke: var(--pnx-tone);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.pnx-edge__glyph {
+  fill: var(--pnx-tone);
+  font-weight: 700;
+}
+
+.pnx-edge__link:hover .pnx-edge__line,
+.pnx-edge__link:focus-visible .pnx-edge__line {
+  stroke-width: 3.5;
+}
+
+.pnx-edge__link:focus-visible .pnx-edge__mark {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.pnx-node__link {
+  cursor: pointer;
+  outline: none;
+}
+
+.pnx-node__box {
+  fill: var(--bg-subtle);
+  stroke: var(--fg-muted);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.pnx-node[data-centre] .pnx-node__box {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.pnx-node[data-gap='failed'] .pnx-node__box,
+.pnx-node[data-gap='not-read'] .pnx-node__box {
+  stroke-dasharray: 4 3;
+}
+
+.pnx-node__link:hover .pnx-node__box,
+.pnx-node__link:focus-visible .pnx-node__box {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.pnx-node__caption {
+  fill: var(--fg);
+  font-weight: 600;
+}
+
+.pnx-more {
+  fill: var(--fg-muted);
+}
+
+.pnx-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.pnx-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pnx-legend__swatch {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border: 1.5px solid var(--pnx-tone);
+  border-radius: var(--r-full);
+  color: var(--pnx-tone);
+  font-weight: 700;
+  font-size: var(--fs-xs);
+}
+
+.pnx-notices {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  padding-inline-start: var(--space-6);
+  border: 1px solid var(--warn);
+  border-radius: var(--r-md);
+  background: var(--warn-soft);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}

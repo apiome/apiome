@@ -1,5 +1,5 @@
 /**
- * Shared forwarding for the `/api/pact/*` proxies (PFX-5.1, #6945; PFX-5.2, #6946).
+ * Shared forwarding for the `/api/pact/*` proxies (PFX-5.1, #6945; PFX-5.2, #6946; PFX-5.3, #6947).
  *
  * Each proxy resolves the signed-in user's workspace, forwards one read to apiome-rest as that
  * user, and passes REST's answer through (a 403 stays a 403). Tenant scoping and the `pacts`
@@ -19,6 +19,7 @@ import {
   type RestReader,
 } from '@lib/pact-pacticipants';
 import { findPreviousDistinct } from '@lib/pact-detail';
+import { collectPactNetwork } from '@lib/pact-network';
 
 /** What the browser is told when apiome-rest cannot be reached. */
 export const PACT_UNAVAILABLE = 'The Pact Broker is unavailable (apiome-rest not reachable). Try again shortly.';
@@ -104,6 +105,17 @@ export async function forwardPreviousPact(
   version: string | null,
 ): Promise<NextResponse> {
   return answerWithReader((read) => findPreviousDistinct(read, provider, consumer, version));
+}
+
+/**
+ * The network of pacticipants connected to one (PFX-5.3, #6947), collected by reading each one's
+ * matrix as the signed-in user.
+ *
+ * @param slug - The pacticipant's handle (already checked).
+ * @returns The network, or REST's refusal of the pacticipant's own matrix.
+ */
+export async function forwardPactNetwork(slug: string): Promise<NextResponse> {
+  return answerWithReader((read) => collectPactNetwork(read, slug));
 }
 
 /**

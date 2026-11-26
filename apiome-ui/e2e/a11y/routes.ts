@@ -281,6 +281,13 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-detail.html'] },
   },
   {
+    // PFX-5.3 (#6947): a pacticipant's integration network — the diagram with each integration's
+    // verdict and the integrations table — dumped by `tests/pact-network-ui.test.tsx`.
+    id: 'pact-network',
+    mockup: null,
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-network.html'] },
+  },
+  {
     // X3 (#6224): the released export surfaces of E1. The Source and Target steps (the target grid),
     // the several-targets Verify and the bulk dialog after a run are gated with the whole
     // `hive-export-studio` directory under the parity entry `export-studio`; this entry adds the

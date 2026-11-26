@@ -1,0 +1,166 @@
+{
+  "centre": "billing-service",
+  "pacticipants": [
+    {
+      "slug": "billing-service",
+      "name": "Billing Service",
+      "distance": 0
+    },
+    {
+      "slug": "ledger-api",
+      "name": "Ledger API",
+      "distance": 1
+    },
+    {
+      "slug": "mobile-app",
+      "name": "Mobile App",
+      "distance": 1
+    },
+    {
+      "slug": "notification-service",
+      "name": "Notification Service",
+      "distance": 1
+    },
+    {
+      "slug": "web-app",
+      "name": "Web App",
+      "distance": 1
+    },
+    {
+      "slug": "audit-log",
+      "name": "Audit Log",
+      "distance": 2
+    },
+    {
+      "slug": "reporting",
+      "name": "Reporting",
+      "distance": 3
+    }
+  ],
+  "integrations": [
+    {
+      "consumer": {
+        "name": "Billing Service",
+        "slug": "billing-service"
+      },
+      "provider": {
+        "name": "Ledger API",
+        "slug": "ledger-api"
+      },
+      "latestVersion": "1.4.0",
+      "publishedAt": "2026-11-24T16:40:00Z",
+      "latestVerification": {
+        "providerVersion": "2.8.0",
+        "providerBranch": "main",
+        "success": true,
+        "verifiedAt": "2026-11-24T16:40:30Z",
+        "kind": "native",
+        "pending": false,
+        "wip": false
+      },
+      "verdict": "verified"
+    },
+    {
+      "consumer": {
+        "name": "Billing Service",
+        "slug": "billing-service"
+      },
+      "provider": {
+        "name": "Notification Service",
+        "slug": "notification-service"
+      },
+      "latestVersion": "1.4.0",
+      "publishedAt": "2026-11-24T16:40:00Z",
+      "latestVerification": null,
+      "verdict": "unverified"
+    },
+    {
+      "consumer": {
+        "name": "Ledger API",
+        "slug": "ledger-api"
+      },
+      "provider": {
+        "name": "Audit Log",
+        "slug": "audit-log"
+      },
+      "latestVersion": "2.8.0",
+      "publishedAt": "2026-11-23T10:05:00Z",
+      "latestVerification": {
+        "providerVersion": "0.9.1",
+        "providerBranch": "main",
+        "success": false,
+        "verifiedAt": "2026-11-23T10:05:30Z",
+        "kind": "native",
+        "pending": true,
+        "wip": false
+      },
+      "verdict": "failed-pending"
+    },
+    {
+      "consumer": {
+        "name": "Mobile App",
+        "slug": "mobile-app"
+      },
+      "provider": {
+        "name": "Billing Service",
+        "slug": "billing-service"
+      },
+      "latestVersion": "3.2.0",
+      "publishedAt": "2026-11-22T08:30:00Z",
+      "latestVerification": {
+        "providerVersion": "1.4.0",
+        "providerBranch": "main",
+        "success": false,
+        "verifiedAt": "2026-11-22T08:30:30Z",
+        "kind": "native",
+        "pending": false,
+        "wip": false
+      },
+      "verdict": "failed"
+    },
+    {
+      "consumer": {
+        "name": "Reporting",
+        "slug": "reporting"
+      },
+      "provider": {
+        "name": "Audit Log",
+        "slug": "audit-log"
+      },
+      "latestVersion": "5.0.2",
+      "publishedAt": "2026-11-21T12:00:00Z",
+      "latestVerification": {
+        "providerVersion": "0.9.1",
+        "providerBranch": "main",
+        "success": true,
+        "verifiedAt": "2026-11-21T12:00:30Z",
+        "kind": "native",
+        "pending": false,
+        "wip": false
+      },
+      "verdict": "verified"
+    },
+    {
+      "consumer": {
+        "name": "Web App",
+        "slug": "web-app"
+      },
+      "provider": {
+        "name": "Billing Service",
+        "slug": "billing-service"
+      },
+      "latestVersion": "7.11.0",
+      "publishedAt": "2026-11-24T09:15:00Z",
+      "latestVerification": {
+        "providerVersion": "1.4.0",
+        "providerBranch": "main",
+        "success": true,
+        "verifiedAt": "2026-11-24T09:15:30Z",
+        "kind": "native",
+        "pending": false,
+        "wip": false
+      },
+      "verdict": "verified"
+    }
+  ]
+}
