@@ -21,6 +21,12 @@ def _context_obj(ctx: typer.Context) -> dict[str, object] | None:
     return None
 
 
+def root_flag_given(ctx: typer.Context, key: str) -> bool:
+    """Whether the root callback received ``key`` (``base_url``, ``api_key``, …) as a non-empty flag."""
+    obj = _context_obj(ctx)
+    return bool(obj is not None and isinstance(obj.get(key), str) and obj.get(key))
+
+
 def json_mode_from_context(ctx: typer.Context) -> bool:
     """Return True when a parent callback set ``json`` on the context object."""
     obj = _context_obj(ctx)

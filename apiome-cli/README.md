@@ -84,6 +84,8 @@ Settings resolve in this order (highest wins first):
 | `APIOME_TENANT_ID` | Tenant UUID (optional; some operations need tenant scope) |
 | `APIOME_API_KEY` | API key sent as `X-API-Key` (required for Tier 2 API-key-authenticated commands/routes, including list/import and `api-keys`) |
 | `APIOME_SESSION_TOKEN` | UI session bearer token from `POST /auth/login` (required for `auth`, `tokens`, and `integrations` commands) |
+| `PACT_BROKER_BASE_URL` | `apiome pact` only: the broker base URL `https://<api>/v1/tenants/<tenant>/pact-broker` (names the API and the workspace); wins over `APIOME_BASE_URL` / `APIOME_TENANT_ID`, loses to the root `--base-url` and the command's `--broker-base-url` |
+| `PACT_BROKER_TOKEN` | `apiome pact` only: the workspace API key; wins over `APIOME_API_KEY`, loses to `--api-key` and `--broker-token` |
 | `NO_COLOR` | Set to any non-empty value to disable colour ([no-color.org](https://no-color.org)) |
 | `APIOME_NO_COLOR` | Disable colour for this tool only |
 | `FORCE_COLOR` | Emit colour even when stdout is not a terminal (CI log viewers that render ANSI) |
@@ -653,6 +655,33 @@ For GitHub pull requests, prefer the copy-paste Action
 [`apiome/apiome/diff-action`](../diff-action/) — it runs this command, fails the check on
 exit `1`, surfaces exit `2` distinctly, and upserts one sticky PR comment with `--format md`.
 See [CI contract gate](../apiome-docs/docs/reference/ci/ci-diff-gate.md).
+
+### Pact Broker commands (`apiome pact`)
+
+`pact-broker`'s commands with the same flags, sentences and exit codes (`0` success, `1` any
+failure — inside `apiome pact` a bad flag or a refused request is `1`, not `2`). They read
+`PACT_BROKER_BASE_URL` / `PACT_BROKER_TOKEN` as well as `APIOME_*`; `--output table|json|markdown`
+(`-o`) picks the format. See `apiome-docs/docs/ship/pact-broker/cli.mdx`.
+
+```bash
+export PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker
+export PACT_BROKER_TOKEN=obj_your_key_here
+
+apiome pact publish ./pacts --consumer-app-version "$GIT_COMMIT" --auto-detect-version-properties
+apiome pact can-i-deploy -a "Billing Service" -e "$GIT_COMMIT" --to-environment production \
+  --retry-while-unknown 6 --retry-interval 10
+apiome pact record-deployment -a "Billing Service" -e "$GIT_COMMIT" --environment production
+apiome pact create-environment --name production --production
+apiome pact create-webhook https://ci.example.com/hook --provider "Ledger API" \
+  --contract-requiring-verification-published
+apiome pact verify --provider "Ledger API" -a "$GIT_COMMIT" --target ledger-staging \
+  --consumer-version-selector '{"mainBranch": true}'
+apiome pact list-pacticipants -o markdown
+apiome pact describe-version -a "Billing Service" --latest
+```
+
+`apiome pact migrate` is reserved for the Pact Broker / PactFlow import (PFX-6.7) and exits `1`
+until it ships.
 
 ### API change check suite (`checks`)
 

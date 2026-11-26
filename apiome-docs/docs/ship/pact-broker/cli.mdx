@@ -1,0 +1,201 @@
+---
+title: The apiome pact commands
+description: Publish, check and record pacts with apiome pact, using pact-broker's flags.
+sidebar_position: 0.7
+tags: [contracts, pact, ci, cli]
+---
+
+`apiome pact` is the Apiome CLI's Pact Broker command group. It has the commands of the
+`pact-broker` CLI you already run in CI — `publish`, `can-i-deploy`, `record-deployment` and the
+rest — with the same flags, the same sentences in the log and the same exit codes. A pipeline moves
+over by changing `pact-broker` to `apiome pact`.
+
+It also has the commands only Apiome has: publishing an OpenAPI
+[provider contract](./bi-directional.mdx), [hosted verification](./hosted-verification.mdx),
+[sending a verifier report](./verification-results.mdx#send-a-report-from-your-own-ci) and
+[exporting a consumer surface as a pact](./publish-pacts.mdx). There is no screen for these
+commands; they run in a terminal or a CI job.
+
+## Before you start
+
+You need:
+
+1. **The Apiome CLI.** See [Install the CLI](../../reference/install-the-cli.md).
+2. **The broker base URL** of your workspace — your API address followed by
+   `/v1/tenants/<workspace>/pact-broker`, for example
+   `https://api.apiome.dev/v1/tenants/acme/pact-broker`.
+3. **An API key** from a member whose role holds **Pacts** → **Create** (the built-in **Editor**
+   role does). Create one on [API keys](../../workspace/api-keys.mdx). Read-only commands such as
+   `can-i-deploy` need only **Pacts** → **View**.
+
+## Point the CLI at your workspace
+
+`apiome pact` reads the two variables Pact tooling already uses:
+
+```bash
+export PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker
+export PACT_BROKER_TOKEN=<your API key>
+```
+
+The broker base URL names both the API and the workspace, so nothing else is needed. If you
+already use the Apiome CLI, `APIOME_BASE_URL`, `APIOME_TENANT_ID` and `APIOME_API_KEY` work too.
+
+When several are set, the first one found wins:
+
+| Order | Where | Base URL | Credential |
+| --- | --- | --- | --- |
+| 1 | The command's flags | `--broker-base-url` (`-b`) | `--broker-token` (`-k`) |
+| 2 | The CLI's root flags | `apiome --base-url … --tenant …` | `apiome --api-key …` |
+| 3 | Pact's variables | `PACT_BROKER_BASE_URL` | `PACT_BROKER_TOKEN` |
+| 4 | Apiome's settings | `APIOME_BASE_URL` + `APIOME_TENANT_ID` | `APIOME_API_KEY` |
+
+Prefer the variables to `-k`: a secret on the command line is visible to other processes.
+
+If your operator set up a [broker host](./publish-pacts.mdx#the-broker-host-alias), the short form
+`https://acme.<broker host>` works for the commands that call Pact Broker routes. `list-pacticipants`,
+`describe-version --latest` and `verify` call Apiome's own API, which the short form does not
+serve; they stop and ask for the long form.
+
+`PACT_BROKER_USERNAME` and `PACT_BROKER_PASSWORD` are not used: Apiome's broker signs in with an
+API key. When only those two are set, the command stops and says so.
+
+## The commands
+
+| Command | Does | Replaces |
+| --- | --- | --- |
+| `publish` | Publish pact files for a consumer version | `pact-broker publish` |
+| `list-pacticipants` | List the workspace's pacticipants | `pact-broker list-pacticipants` |
+| `describe-version` | Show a version's branches, tags and build URL | `pact-broker describe-version` |
+| `can-i-deploy` | Ask whether a version can be deployed | `pact-broker can-i-deploy` |
+| `record-deployment` | Record a deployment to an environment | `pact-broker record-deployment` |
+| `record-release` | Record a release to an environment | `pact-broker record-release` |
+| `create-environment` | Create an environment | `pact-broker create-environment` |
+| `create-webhook` | Create a contract webhook | `pact-broker create-webhook` |
+| `verify` | Verify a provider with Apiome's hosted verifier | a Pact verifier in your build |
+| `publish-provider-contract` | Publish an OpenAPI provider contract with its evidence | `pactflow publish-provider-contract` |
+| `publish-verification-results` | Send a report from a verifier you ran | — |
+| `export-consumer-contract`, `publish-consumer-contract` | Turn a declared consumer surface into a pact | — |
+| `migrate` | Import a Pact Broker or PactFlow workspace | not available yet |
+
+Every option of every command is in the [CLI reference](../../reference/cli/pact.md).
+
+## Publish pacts
+
+```bash
+apiome pact publish ./pacts \
+  --consumer-app-version "$GIT_COMMIT" \
+  --branch "$GIT_BRANCH" \
+  --build-url "$CI_BUILD_URL"
+```
+
+Name pact files or folders; a folder publishes every `*.json` file in it. Every file is read
+before anything is sent, and a file that is not a pact stops the run with its name and the reason.
+Pacts of several consumers are sent as one request per consumer.
+
+- `--auto-detect-version-properties` (`-r`) reads the branch and build URL from GitHub Actions,
+  GitLab, Jenkins, Buildkite, CircleCI, Travis, Bitbucket, AppVeyor, CodeShip or Azure DevOps, and
+  falls back to `git`.
+- `--tag` (`-t`) tags the version; `--tag-with-git-branch` (`-g`) tags it with the detected branch.
+- `--merge` is refused: Apiome keeps the pact a version published, and refuses a different one for
+  the same version.
+
+## Ask can-i-deploy
+
+```bash
+apiome pact can-i-deploy \
+  --pacticipant "Billing Service" --version "$GIT_COMMIT" \
+  --to-environment production \
+  --retry-while-unknown 6 --retry-interval 10
+```
+
+It prints the matrix rows, then `Computer says yes \o/` or `Computer says no ¯\_(ツ)_/¯` with the
+reason — the lines `pact-broker` prints. Name the version one way: `--version`, `--latest`
+(with `--tag` for the latest tagged version), `--branch` or `--main-branch`. Use `--to` for a tag
+instead of an environment, and `--ignore` to leave an application out. `--dry-run` prints the
+verdict without stopping the job. One pacticipant is checked per run; check several by running the
+command once for each.
+
+See [Can I deploy?](./can-i-deploy.mdx) for how the verdict is reached.
+
+## Record deployments and releases
+
+```bash
+apiome pact create-environment --name production --display-name Production --production
+apiome pact record-deployment --pacticipant "Billing Service" --version "$GIT_COMMIT" --environment production
+apiome pact record-release --pacticipant "Mobile App" --version 4.2.0 --environment production
+```
+
+The environment is found by name. An unknown name stops with the `create-environment` command that
+creates it. Add `--application-instance` (`--target`) to `record-deployment` when the application
+runs several copies in one environment. See [Environments and deployments](./environments.mdx).
+
+## Create a webhook
+
+```bash
+apiome pact create-webhook https://ci.example.com/hooks/ledger \
+  --request POST \
+  --header "Content-Type: application/json" \
+  --data '{"pact": "${pactbroker.pactUrl}"}' \
+  --provider "Ledger API" \
+  --contract-requiring-verification-published
+```
+
+Choose at least one event flag. `--data @body.json` reads the body from a file. The password of
+`--user name:password` is stored sealed and never printed. See
+[Contract webhooks](./webhooks.mdx).
+
+## Verify a provider
+
+```bash
+apiome pact verify \
+  --provider "Ledger API" --provider-app-version "$GIT_COMMIT" --branch main \
+  --target ledger-staging \
+  --consumer-version-selector '{"mainBranch": true}' \
+  --consumer-version-selector '{"deployedOrReleased": true}' \
+  --enable-pending
+```
+
+Apiome replays each selected pact against the registered verification target `ledger-staging`
+and publishes a result per pact. It prints one row per pact and every interaction it could not
+replay, with the reason. `--no-publish-verification-results` is a dry run. See
+[Verify a provider from Apiome](./hosted-verification.mdx).
+
+## Choose the output
+
+`--output` (`-o`) picks the format of every command:
+
+| Value | Prints |
+| --- | --- |
+| `table` | Aligned columns and `pact-broker`'s sentences (the default) |
+| `json` | The server's answer, unchanged — the same as `apiome --json pact …` |
+| `markdown` | Tables and lists ready for a job summary or a pull-request comment |
+
+```bash
+apiome pact can-i-deploy -a "Billing Service" -e "$GIT_COMMIT" --to-environment production \
+  -o markdown >> "$GITHUB_STEP_SUMMARY"
+```
+
+## Exit codes
+
+`apiome pact` exits like `pact-broker`:
+
+| Code | Means |
+| --- | --- |
+| `0` | It worked; for `can-i-deploy`, the version can be deployed (or `--dry-run`); for `verify`, the run passed |
+| `1` | Anything else: the server refused (no permission, a key of another workspace, an unknown version, a conflict), a flag was wrong, `can-i-deploy` said no or could not decide, or `verify` failed |
+
+The rest of the Apiome CLI exits `2` for a bad flag or a refused request; inside `apiome pact` both
+are `1`, so a script written for `pact-broker` keeps working. The message on stderr says what went
+wrong.
+
+## Migrating from a Pact Broker
+
+`apiome pact migrate` is listed so that pipelines can find it, but the import of an existing Pact
+Broker or PactFlow workspace is not available yet. The command exits `1`, says so, and reads and
+writes nothing.
+
+## Related
+
+- [Run Pact in CI](./ci-pact.mdx) — a full pipeline built from these commands.
+- [Pact Broker overview](./overview.mdx)
+- [Pact Broker compatibility](./compatibility.mdx)

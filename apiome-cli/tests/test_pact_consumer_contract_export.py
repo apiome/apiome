@@ -20,7 +20,7 @@ from apiome_cli.client.pact_consumer_export import (
     has_findings,
     summary_lines,
 )
-from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
+from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
 from apiome_cli.main import app
 
 runner = CliRunner()
@@ -247,7 +247,7 @@ def test_a_server_refusal_exits_with_the_api_error(
     result = runner.invoke(
         app, ["pact", "export-consumer-contract", "-p", "pets", "-c", "web-app"]
     )
-    assert result.exit_code == EXIT_USAGE
+    assert result.exit_code == EXIT_ERROR
 
 
 # --- publish -----------------------------------------------------------------------------------

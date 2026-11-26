@@ -289,7 +289,6 @@ flowchart LR
 
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-4.1 · [#6938](https://github.com/apiome/apiome/issues/6938) | `apiome pact` command group | publish, list, describe, can-i-deploy, record-*, webhooks | `cli`,`pact`,`mvp` | Y | Y | L | apiome-cli |
 | PFX-4.2 · [#6939](https://github.com/apiome/apiome/issues/6939) | Broker-compatible auth and API-key scopes | Bearer/basic mapped to API keys; scopes `pact:read/publish/verify` | `contracts`,`pact`,`rest`,`mvp` | Y | Y | M | apiome-rest, apiome-ui |
 | PFX-4.3 | CI actions and recipes | `pact-action`, GitLab/Bitbucket recipes, pacts-in-PR comment | `automation`,`pact`,`mvp` | Y | Y | M | new action dir |
 | PFX-4.4 · [#6941](https://github.com/apiome/apiome/issues/6941) | Commit statuses and PR checks | Verification status back to GitHub/GitLab | `automation`,`integrations`,`pact` | Y | N | M | apiome-rest |
@@ -297,7 +296,7 @@ flowchart LR
 | PFX-4.6 · [#6943](https://github.com/apiome/apiome/issues/6943) | Jenkins and Azure Pipelines recipes | Reference pipelines | `automation`,`pact` | Y | N | S | docs |
 | PFX-4.7 · [#6944](https://github.com/apiome/apiome/issues/6944) | Postman collection export | Collection v2.1 from schemas and from a pact | `contracts`,`pact`,`cli` | Y | N | M | apiome-rest, apiome-cli |
 
-**PFX-4.1** — `apiome pact publish|publish-provider-contract|list-pacticipants|describe-version|can-i-deploy|record-deployment|record-release|create-environment|create-webhook|verify|migrate`, honours `PACT_BROKER_BASE_URL`/`PACT_BROKER_TOKEN` as well as `APIOME_*`; exit codes identical to `pact-broker`; JSON/markdown output. *Deps:* 1.2–1.6. **Docs:** CLI reference regen + page.
+**✅ PFX-4.1 · #6938 `apiome pact` command group — Complete** — `apiome pact publish|list-pacticipants|describe-version|can-i-deploy|record-deployment|record-release|create-environment|create-webhook|verify` take `pact-broker`'s flags and print its sentences; every `apiome pact` command (the PFX-2.4/2.6/3.5 ones too) reads `PACT_BROKER_BASE_URL` (path form names API + workspace; the tenant-host alias reaches broker routes only) / `PACT_BROKER_TOKEN` as well as `APIOME_*`, takes `-b`/`-k`, and the group exits like `pact-broker` (`0` success, `1` any failure, usage and 4xx included). `--output table|json|markdown`. Unsupported input (non-pact files, `--merge`, webhook methods outside POST/PUT/PATCH, basic-auth-only env) is refused with the reason before sending. `migrate` is registered but exits 1 until PFX-6.7 (#6959). No REST change. **Docs:** CLI reference regen; `ship/pact-broker/cli.mdx`, `ship/pact-broker/ci-pact.mdx`; release-notes post.
 
 **PFX-4.2** — Pact tooling sends a bearer token or basic auth: accept both against Apiome API keys; new scopes on `api_keys.scopes` with the CTG-2.3 allowlist pattern; read-only keys for CI verifiers. *Deps:* none. **Docs:** security note + key-scope table.
 

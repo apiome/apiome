@@ -34,6 +34,7 @@ run.
 | Where | Best for | Details |
 | --- | --- | --- |
 | The **Pact CLI** (`pact-broker`, `pact broker`) | Publishing, recording deployments and can-i-deploy from CI | [Publish and fetch pacts](./publish-pacts.mdx) |
+| The **Apiome CLI** (`apiome pact …`) | The same commands with the same flags and exit codes, plus provider contracts and hosted verification | [The apiome pact commands](./cli.mdx), [Run Pact in CI](./ci-pact.mdx) |
 | A **Pact library** (pact-js, pact-jvm, …) | Publishing from the consumer's tests and verifying in the provider's | [Choose pacts to verify with selectors](./selectors.mdx) |
 | The **Pact Broker API** (`…/pact-broker/…`) | Anything a Pact tool does, from a script | [Pact Broker API](../../reference/rest/pact-broker.md) |
 | The **Pacticipants API** (`…/pacticipants/…`) | Registering applications, labels, deletes and retention | [Pacticipants API](../../reference/rest/pacticipants.md) |
@@ -114,6 +115,8 @@ get **Pacts** on [Roles](../../workspace/roles.mdx).
 
 ## Related
 
+- [The apiome pact commands](./cli.mdx) and [Run Pact in CI](./ci-pact.mdx) — the CLI and a
+  pipeline built from it.
 - [Contract testing and CI gates](../contract-testing-and-ci-gates.mdx) — breaking-change gates
   and the consumer registry.
 - [API keys](../../workspace/api-keys.mdx) — the token your Pact tools send.
