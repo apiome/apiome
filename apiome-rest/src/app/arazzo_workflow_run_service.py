@@ -42,14 +42,14 @@ from .arazzo_workflow_run import (
     plan_mutating_steps,
     validate_inputs,
 )
-from .contract_runner import FAILURE_AUTH_UNAVAILABLE, AuthResolutionError, materialize_auth_headers
+from .contract_runner import FAILURE_AUTH_UNAVAILABLE, AuthResolutionError
 from .database import db
-from .mcp_credentials import load_endpoint_auth_headers
 from .provider_verification import FixtureFinding
 from .ssrf_guard import build_guarded_client
+from .target_credentials import target_auth_headers
 from .verification_evidence import VerificationRunInput, VerificationRunRecord
 from .verification_evidence_store import TargetActor, record_run
-from .verification_target import AUTH_KIND_STORED, NETWORK_CLASS_PRIVATE
+from .verification_target import NETWORK_CLASS_PRIVATE
 from .verification_target_store import resolve_target
 
 __all__ = [
@@ -230,11 +230,8 @@ def run_workflow_against_target(
             version_id, workflow_id, plan.refusals, digest=digest, findings=plan.fixture_findings
         )
 
-    stored_headers: Optional[Dict[str, str]] = None
-    if resolved.auth.kind == AUTH_KIND_STORED and resolved.auth.ref:
-        stored_headers = load_endpoint_auth_headers(resolved.auth.ref)
     try:
-        auth_headers = materialize_auth_headers(resolved.auth, stored_headers=stored_headers)
+        auth_headers = target_auth_headers(tenant_id, resolved.auth)
     except AuthResolutionError as exc:
         return _refused(
             version_id,

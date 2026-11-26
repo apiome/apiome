@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 100 operations."
+description: "REST endpoints tagged pact-broker: 105 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.687.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.688.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 100 operations
+Tag: `pact-broker` · 105 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -1501,7 +1501,7 @@ Request body for create a webhook for a pact.
 | `events` | array of object | no | Default: `contract_content_changed`. |
 | `request` | object | no | The HTTP request to send. Send this or `target`. |
 | `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
-| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. May be `${user.<name>}`, a workspace secret of 16 characters or more. |
 
 **Responses**
 
@@ -1801,6 +1801,7 @@ Create a webhook — what `pact-broker create-webhook` posts. The body is the Pa
 - **Target:** send `request` for any HTTP endpoint (POST, PUT or PATCH), or Apiome's `target` of type `github_repository_dispatch` to start a GitHub Actions workflow.
 - **Where it may go:** http or https, to a public address. Loopback, private and link-local addresses are refused when the webhook is saved and again on every send; redirects are not followed.
 - **Secrets:** `password`, the `target` token, secret headers (`Authorization`, anything naming a token, secret, API key or cookie) and `signingSecret` are sealed in the credential vault and never returned or logged.
+- **Workspace secrets:** `${user.<name>}` in the URL's path or query, a header, the body, the credentials, the `target` token or `signingSecret` refers to a secret kept under `/v1/tenants/{tenant}/pact-secrets`; it must exist when the webhook is saved (`422` `pact-webhook-invalid` naming the field otherwise), is resolved only when the webhook is sent, and is scrubbed from every log. The webhook lists the names as `secretReferences`.
 - **Signing:** with `signingSecret`, each delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body.
 - **Limit:** 200 webhooks per workspace.
 - **Delivery:** up to 4 attempts (after 10 s, 60 s and 5 min; `Retry-After` is honoured), then the firing is dead-lettered.
@@ -1832,7 +1833,7 @@ Request body for create a webhook.
 | `events` | array of object | no | Default: `contract_content_changed`. |
 | `request` | object | no | The HTTP request to send. Send this or `target`. |
 | `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
-| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. May be `${user.<name>}`, a workspace secret of 16 characters or more. |
 
 **Responses**
 
@@ -1900,7 +1901,7 @@ Request body for create a webhook for a consumer.
 | `events` | array of object | no | Default: `contract_content_changed`. |
 | `request` | object | no | The HTTP request to send. Send this or `target`. |
 | `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
-| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. May be `${user.<name>}`, a workspace secret of 16 characters or more. |
 
 **Responses**
 
@@ -1943,7 +1944,7 @@ Request body for run an unsaved webhook.
 | `events` | array of object | no | Default: `contract_content_changed`. |
 | `request` | object | no | The HTTP request to send. Send this or `target`. |
 | `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
-| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. May be `${user.<name>}`, a workspace secret of 16 characters or more. |
 
 **Responses**
 
@@ -2012,7 +2013,7 @@ Request body for create a webhook for a provider.
 | `events` | array of object | no | Default: `contract_content_changed`. |
 | `request` | object | no | The HTTP request to send. Send this or `target`. |
 | `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
-| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. May be `${user.<name>}`, a workspace secret of 16 characters or more. |
 
 **Responses**
 
@@ -2083,7 +2084,7 @@ Request body for create a webhook for an integration.
 | `events` | array of object | no | Default: `contract_content_changed`. |
 | `request` | object | no | The HTTP request to send. Send this or `target`. |
 | `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
-| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. May be `${user.<name>}`, a workspace secret of 16 characters or more. |
 
 **Responses**
 
@@ -2156,7 +2157,7 @@ Request body for create or replace a webhook.
 | `events` | array of object | no | Default: `contract_content_changed`. |
 | `request` | object | no | The HTTP request to send. Send this or `target`. |
 | `target` | object | no | Apiome: a GitHub Actions `repository_dispatch`, in place of `request`. |
-| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. |
+| `signingSecret` | string | no | Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. May be `${user.<name>}`, a workspace secret of 16 characters or more. |
 
 **Responses**
 
@@ -2529,6 +2530,155 @@ Request body for acknowledge a re-publish request.
 | 200 | Successful response for acknowledge a re-publish request. | `application/json` [`RepublishRequestRecord`](#schema-republishrequestrecord) |
 | 404 | `pact-republish-request-not-found` in this workspace. | — |
 | 409 | `pact-republish-request-closed`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-secrets` {#read-secrets-v1-tenants-tenant-slug-pact-secrets-get}
+
+**List the workspace's secrets**
+
+Every secret of the workspace by name (PFX-6.5): its description, the reference a webhook writes (`${user.<name>}`), when its value was last set, and the webhooks and verification targets that use it. **Values are never returned.** Requires `pacts:view`.
+
+Operation id: `read_secrets_v1_tenants__tenant_slug__pact_secrets_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the workspace's secrets. | `application/json` [`SecretList`](#schema-secretlist) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-secrets` {#post-secret-v1-tenants-tenant-slug-pact-secrets-post}
+
+**Create a workspace secret**
+
+Keep a secret once, sealed in the credential vault, for webhooks and verification targets to refer to (PFX-6.5). `name` is a letter, then up to 63 letters, digits and underscores, unique in the workspace and never changed; `value` is one line of up to 4,096 characters. A webhook refers to it as `${user.<name>}` in its URL path or query, headers, body, credentials, GitHub token or signing secret; a verification target with `auth.kind: secret` and `auth.ref: <name>`. A workspace keeps at most 200 secrets. The answer never contains the value. Requires `pacts:create`.
+
+Operation id: `post_secret_v1_tenants__tenant_slug__pact_secrets_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create a workspace secret.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | What references use: a letter, then up to 63 letters, digits and underscores. Never changes. |
+| `description` | string | no | Free-text description. |
+| `value` | string | yes | The secret, one line. Sealed; never returned. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create a workspace secret. | `application/json` [`SecretRecord`](#schema-secretrecord) |
+| 409 | `pact-secret-name-taken` or `pact-secret-limit-reached`. | — |
+| 422 | `pact-secret-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 503 | `pact-secret-vault-unavailable`: the server has no key to seal the value with (APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS). | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-secrets/{secret_id}` {#read-secret-v1-tenants-tenant-slug-pact-secrets-secret-id-get}
+
+**Read a workspace secret**
+
+One secret, without its value, and what refers to it (PFX-6.5). Requires `pacts:view`.
+
+Operation id: `read_secret_v1_tenants__tenant_slug__pact_secrets__secret_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `secret_id` | path | string | yes | Path parameter identifying the secret id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a workspace secret. | `application/json` [`SecretRecord`](#schema-secretrecord) |
+| 404 | `pact-secret-not-found`: no such secret in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-secrets/{secret_id}` {#put-secret-v1-tenants-tenant-slug-pact-secrets-secret-id-put}
+
+**Update or rotate a workspace secret**
+
+Replace the description and, when `value` is sent, rotate the value (PFX-6.5): every webhook and verification target that refers to the secret uses the new value from its next send or run. The name cannot change — references use it; `name` may be sent only as the stored one. Requires `pacts:edit`.
+
+Operation id: `put_secret_v1_tenants__tenant_slug__pact_secrets__secret_id__put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `secret_id` | path | string | yes | Path parameter identifying the secret id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for update or rotate a workspace secret.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | no | Ignored when it repeats the stored name. |
+| `description` | string | no | Omit or null to clear. |
+| `value` | string | no | A new value (rotation). Omit to keep the stored one. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for update or rotate a workspace secret. | `application/json` [`SecretRecord`](#schema-secretrecord) |
+| 404 | `pact-secret-not-found`: no such secret in this workspace. | — |
+| 422 | `pact-secret-invalid`: the body is malformed; `detail.pointer` names the field. | — |
+| 503 | `pact-secret-vault-unavailable`: the server has no key to seal the value with (APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS). | — |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-secrets/{secret_id}` {#remove-secret-v1-tenants-tenant-slug-pact-secrets-secret-id-delete}
+
+**Delete a workspace secret**
+
+Delete a secret (PFX-6.5). A secret a webhook or a verification target still refers to is not deleted: the answer is `409 pact-secret-in-use` naming them. Requires `pacts:delete`.
+
+Operation id: `remove_secret_v1_tenants__tenant_slug__pact_secrets__secret_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `secret_id` | path | string | yes | Path parameter identifying the secret id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a workspace secret. | — |
+| 404 | `pact-secret-not-found`: no such secret in this workspace. | — |
+| 409 | `pact-secret-in-use`: names what still refers to it. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-suites/provider/{provider}/consumer/{consumer}/pact-version/{sha}` {#compile-pact-version-suite-v1-tenants-tenant-slug-pact-suites-provider-provider-consumer-consumer-pact-version-sha-post}
@@ -3455,6 +3605,44 @@ One page of a provider's verification history.
 | `consumer` | string or null | no | The consumer the page is narrowed to. |
 | `results` | array of `ResultSummary` | no | Newest first. |
 | `next_cursor` | string or null | no | Pass as `cursor` for the next page; null at the end. |
+
+### `SecretList` {#schema-secretlist}
+
+The workspace's secrets, by name.
+
+Attributes:
+    secrets: Every secret.
+    limit: The most a workspace may keep.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `secrets` | array of [`SecretRecord`](#schema-secretrecord) | no | Secrets. |
+| `limit` | integer | no | Limit. |
+
+### `SecretRecord` {#schema-secretrecord}
+
+A stored secret as everyone reads it: never its value.
+
+Attributes:
+    id: The secret's id.
+    name: The name references use.
+    description: What it is for.
+    reference: How a webhook template writes it: ``${user.<name>}``.
+    used_by: The webhooks and targets that refer to it.
+    value_updated_at: When the value was last set (created or rotated).
+    created_at: When it was created.
+    updated_at: When it was last changed.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `name` | string | yes | Human-readable name. |
+| `description` | string or null | no | Free-text description. |
+| `reference` | string | yes | Reference. |
+| `used_by` | `SecretUsage` | no | Used By. |
+| `value_updated_at` | string or null | no | Value Updated At timestamp (ISO 8601). |
+| `created_at` | string or null | no | Creation timestamp (ISO 8601). |
+| `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
 
 ### `StateCheckRequest` {#schema-statecheckrequest}
 

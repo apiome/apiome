@@ -16,6 +16,10 @@ What is specific here:
   webhook did not name.
 * **It is signed** when the webhook has a signing secret: ``X-Apiome-Signature: sha256=<hex>`` is
   the HMAC-SHA256 of the body, as on push-webhook subscriptions.
+* **Workspace secrets are resolved at send time** (PFX-6.5): every ``${user.<name>}`` the webhook
+  refers to (``secret_refs``) is opened from the workspace's secrets just before the request is
+  rendered. A secret that was deleted or cannot be opened fails the attempt with the reason — the
+  request is never sent with a reference left in it.
 * **Every attempt leaves an execution log** — the request and the response as text — in
   ``push_webhook_delivery_attempts.execution_log``. Secret header values are replaced by
   ``**********`` and every secret value is scrubbed from the whole text, the response included, so
@@ -29,10 +33,12 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .pact_secret import PactSecretError
+from .pact_secret_store import resolve_secrets
 from .pact_webhook import (
     REDACTED,
     SIGNATURE_HEADER,
@@ -40,6 +46,7 @@ from .pact_webhook import (
     WebhookRecord,
     is_secret_header,
     render_request,
+    resolve_signing_secret,
     scrub,
 )
 from .pact_webhook_secrets import KEYS_SETTING
@@ -55,7 +62,14 @@ from .ssrf_guard import build_guarded_client
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["ExecutionResult", "deliver_pact_webhook_event", "execute_webhook", "send_request"]
+__all__ = [
+    "ExecutionResult",
+    "UnsendableWebhookError",
+    "deliver_pact_webhook_event",
+    "execute_webhook",
+    "prepare_request",
+    "send_request",
+]
 
 USER_AGENT = "Apiome-Webhooks/1.0"
 #: Seconds one request may take.
@@ -195,9 +209,42 @@ def send_request(
     return result
 
 
-def _render(record: WebhookRecord, secrets: Mapping[str, Any], parameters: Mapping[str, str]) -> RenderedRequest:
-    """Render a stored webhook's request with its opened secrets."""
-    return render_request(
+class UnsendableWebhookError(Exception):
+    """The request cannot be rendered: a workspace secret it refers to is missing or unopenable.
+
+    The message names the reference, never a value.
+    """
+
+
+def prepare_request(
+    database: Any,
+    tenant_id: str,
+    record: WebhookRecord,
+    secrets: Mapping[str, Any],
+    parameters: Mapping[str, str],
+) -> Tuple[RenderedRequest, Optional[str]]:
+    """Resolve the workspace secrets a webhook refers to and render its request.
+
+    Args:
+        database: The database the secrets are read from.
+        tenant_id: The webhook's tenant: references resolve only within it.
+        record: The webhook (its ``secret_refs`` name what to resolve).
+        secrets: Its own opened secrets (``{}`` when it has none).
+        parameters: The template parameters of this firing.
+
+    Returns:
+        The rendered request and the signing secret (``None`` when unsigned).
+
+    Raises:
+        UnsendableWebhookError: A referred secret no longer exists, cannot be opened, or (as the signing
+            secret) is too short.
+    """
+    try:
+        vault = resolve_secrets(database, tenant_id, record.secret_refs)
+        signing = resolve_signing_secret(secrets.get("signingSecret"), vault)
+    except (PactSecretError, ValueError) as exc:
+        raise UnsendableWebhookError(str(exc)) from exc
+    rendered = render_request(
         method=record.method,
         url=record.url,
         headers=record.headers,
@@ -206,7 +253,10 @@ def _render(record: WebhookRecord, secrets: Mapping[str, Any], parameters: Mappi
         username=record.username,
         password=secrets.get("password"),
         secret_headers=secrets.get("headers") or {},
+        secret_values=vault,
     )
+    # send_request adds the signing secret to what it scrubs.
+    return rendered, signing
 
 
 def execute_webhook(
@@ -215,6 +265,8 @@ def execute_webhook(
     parameters: Mapping[str, str],
     *,
     event_type: str = "pact.test",
+    database: Any = None,
+    tenant_id: str = "",
 ) -> ExecutionResult:
     """Send a webhook's request once, now, outside the queue (a test run).
 
@@ -223,16 +275,18 @@ def execute_webhook(
         secrets: Its opened secrets (``{}`` when it has none).
         parameters: The template parameters to render it with.
         event_type: Sent as ``X-Apiome-Event``.
+        database: Where the workspace secrets it refers to are read (needed when
+            ``record.secret_refs`` names any).
+        tenant_id: The workspace they belong to.
 
     Returns:
         The outcome.
+
+    Raises:
+        UnsendableWebhookError: A referred secret is missing, cannot be opened, or is too short to sign with.
     """
-    return send_request(
-        _render(record, secrets, parameters),
-        event_type=event_type,
-        signing_secret=secrets.get("signingSecret"),
-        completion=None,
-    )
+    rendered, signing = prepare_request(database, tenant_id, record, secrets, parameters)
+    return send_request(rendered, event_type=event_type, signing_secret=signing, completion=None)
 
 
 def _finalize(
@@ -315,13 +369,23 @@ def deliver_pact_webhook_event(database: Any, row: Mapping[str, Any]) -> None:
 
     payload = row.get("payload") or {}
     parameters = payload.get("parameters") if isinstance(payload, Mapping) else None
-    rendered = _render(hook.record, hook.secrets, parameters or {})
+    try:
+        rendered, signing = prepare_request(
+            database, str(row["tenant_id"]), hook.record, hook.secrets, parameters or {}
+        )
+    except UnsendableWebhookError as exc:
+        reason = f"not sent: {exc}"
+        _finalize(
+            database, row, attempt_number, delivered=False, error=reason,
+            execution_log=_log_lines([f"ERROR: {reason}"]),
+        )
+        return
     last = attempt_number >= MAX_DELIVERY_ATTEMPTS
     result = send_request(
         rendered,
         event_type=str(row.get("event_type") or ""),
         delivery_id=str(row["event_id"]),
-        signing_secret=hook.secrets.get("signingSecret"),
+        signing_secret=signing,
     )
     if result.success:
         closing = "Webhook delivered"

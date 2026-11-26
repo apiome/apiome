@@ -17,7 +17,9 @@ records) but every failure is logged, matching :mod:`app.registry_audit`.
 
 **Nothing here ever handles a secret.** The store moves a *reference*: an environment-variable
 name the runner reads itself, or a credential-vault id the runner service unseals at request time.
-There is no code path in this module that decrypts, fetches, or returns credential material.
+There is no code path in this module that decrypts, fetches, or returns credential material. A
+``secret`` reference (PFX-6.5) is checked to name a secret of the target's workspace when it is
+stored (:func:`_assert_secret_exists`), never opened.
 """
 
 from __future__ import annotations
@@ -27,8 +29,11 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional
 
 from .database import db
+from .pact_secret_store import missing_secret_names
 from .verification_target import (
     AUTH_KIND_NONE,
+    AUTH_KIND_SECRET,
+    CODE_AUTH_INVALID,
     CODE_DISABLED,
     CODE_NOT_FOUND,
     CODE_POLICY_TLS_REQUIRED,
@@ -183,6 +188,25 @@ def _assert_policy_coherent(network_class: str, definition: Any) -> None:
         raise TargetValidationError(CODE_POLICY_TLS_REQUIRED, "; ".join(violations))
 
 
+def _assert_secret_exists(tenant_id: str, auth: Any) -> None:
+    """Refuse a ``secret`` credential reference that names no secret of the target's workspace.
+
+    Args:
+        tenant_id: The target's tenant: a reference resolves only within it.
+        auth: The :class:`~app.verification_target.TargetAuthReference` being stored.
+
+    Raises:
+        TargetValidationError: ``target-auth-invalid`` naming the missing secret.
+    """
+    if auth is None or auth.kind != AUTH_KIND_SECRET:
+        return
+    if missing_secret_names(db, tenant_id, [auth.ref]):
+        raise TargetValidationError(
+            CODE_AUTH_INVALID,
+            f"auth.ref names no secret '{auth.ref}' in this workspace; create it under Pact secrets first",
+        )
+
+
 def _assert_private_approved(
     network_class: str, approval_reason: Optional[str], actor: TargetActor
 ) -> None:
@@ -283,6 +307,7 @@ def create_target(
     slug = validate_slug(definition.slug)
     _assert_private_approved(definition.network_class, definition.approval_reason, actor)
     _assert_policy_coherent(definition.network_class, definition)
+    _assert_secret_exists(tenant_id, definition.auth)
     base_url = validate_base_url(definition.base_url, definition.network_class)
 
     if db.get_verification_target_by_slug(tenant_id, slug) is not None:
@@ -374,6 +399,7 @@ def update_target(
     elif patch.network_class is not None:
         # The policy is unchanged but its meaning may have changed with the network class.
         _assert_policy_coherent(network_class, record)
+    _assert_secret_exists(tenant_id, patch.auth)
 
     fields: Dict[str, Any] = {}
     for column in ("name", "description", "environment", "protocol", "enabled"):

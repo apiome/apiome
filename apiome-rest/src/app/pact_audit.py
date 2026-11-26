@@ -77,6 +77,9 @@ AUDIT_ACTIONS = (
     "pacts.verification_override.save",
     "pacts.verification_override.delete",
     "pacts.republish_request.acknowledge",
+    "pacts.secret.create",
+    "pacts.secret.update",
+    "pacts.secret.delete",
 )
 
 #: Every endpoint :func:`audited_write` wraps, by qualified name, with the action it writes. The
