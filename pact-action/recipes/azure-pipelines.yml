@@ -1,0 +1,97 @@
+# Apiome Pact pipeline for Azure Pipelines (PFX-4.6 / #6943).
+#
+# Copy the jobs into your azure-pipelines.yml. Pull requests publish the pacts and ask
+# can-i-deploy; main does the same, deploys, then records the deployment. For a GitHub or
+# Bitbucket repository the `pr:` trigger below starts the pull-request run; for Azure Repos add
+# this pipeline as a build validation on the branch policy.
+#
+# Required pipeline variables (Pipelines -> Edit -> Variables):
+#   PACT_BROKER_BASE_URL  https://api.apiome.dev/v1/tenants/<workspace>/pact-broker
+#   PACT_BROKER_TOKEN     Apiome API key with the "Pact: consumer + deploy" preset - keep it secret
+#
+# Secret variables are not environment variables until a step maps them, so each step does.
+# Every apiome pact command exits 0 when it worked and 1 otherwise, so each job fails on its own.
+
+trigger:
+  branches:
+    include: [main]
+
+pr:
+  branches:
+    include: ['*']
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  PACTICIPANT: Billing Service
+  PACT_DIR: pacts
+  DEPLOY_ENVIRONMENT: production
+  APIOME_LOAD_DOTENV: "0"
+
+jobs:
+  - job: Publish
+    displayName: Publish pacts
+    steps:
+      - script: |
+          set -e
+          command -v apiome >/dev/null 2>&1 || { curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user --no-modify-path; }
+          echo "##vso[task.prependpath]$HOME/.local/bin"
+        displayName: Install Apiome CLI
+      - script: |
+          set -euo pipefail
+          for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do
+            case "$(printenv "$v")" in ''|'$('*) echo "$v is not set - add it as a pipeline variable" >&2; exit 1 ;; esac
+          done
+          branch="${SYSTEM_PULLREQUEST_SOURCEBRANCH:-$BUILD_SOURCEBRANCH}"
+          apiome pact publish "$PACT_DIR" --consumer-app-version "${SYSTEM_PULLREQUEST_SOURCECOMMITID:-$BUILD_SOURCEVERSION}" --branch "${branch#refs/heads/}" --build-url "${SYSTEM_COLLECTIONURI}${SYSTEM_TEAMPROJECT}/_build/results?buildId=${BUILD_BUILDID}"
+        displayName: Publish pacts
+        env:
+          PACT_BROKER_BASE_URL: $(PACT_BROKER_BASE_URL)
+          PACT_BROKER_TOKEN: $(PACT_BROKER_TOKEN)
+
+  - job: CanIDeploy
+    displayName: Pact can-i-deploy
+    dependsOn: Publish
+    steps:
+      - script: |
+          set -e
+          command -v apiome >/dev/null 2>&1 || { curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user --no-modify-path; }
+          echo "##vso[task.prependpath]$HOME/.local/bin"
+        displayName: Install Apiome CLI
+      - script: |
+          set -euo pipefail
+          for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do
+            case "$(printenv "$v")" in ''|'$('*) echo "$v is not set - add it as a pipeline variable" >&2; exit 1 ;; esac
+          done
+          apiome pact can-i-deploy --pacticipant "$PACTICIPANT" --version "${SYSTEM_PULLREQUEST_SOURCECOMMITID:-$BUILD_SOURCEVERSION}" --to-environment "$DEPLOY_ENVIRONMENT" --retry-while-unknown 12 --retry-interval 10 --output markdown > can-i-deploy.md || gate=$?
+          cat can-i-deploy.md
+          echo "##vso[task.uploadsummary]$PWD/can-i-deploy.md"
+          exit ${gate:-0}
+        displayName: Ask can-i-deploy
+        env:
+          PACT_BROKER_BASE_URL: $(PACT_BROKER_BASE_URL)
+          PACT_BROKER_TOKEN: $(PACT_BROKER_TOKEN)
+
+  - job: RecordDeployment
+    displayName: Record deployment
+    dependsOn: CanIDeploy
+    # Never in a pull request: recording it would tell can-i-deploy an unmerged commit is live.
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ne(variables['Build.Reason'], 'PullRequest'))
+    steps:
+      - script: |
+          set -e
+          command -v apiome >/dev/null 2>&1 || { curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user --no-modify-path; }
+          echo "##vso[task.prependpath]$HOME/.local/bin"
+        displayName: Install Apiome CLI
+      - script: |
+          set -euo pipefail
+          for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do
+            case "$(printenv "$v")" in ''|'$('*) echo "$v is not set - add it as a pipeline variable" >&2; exit 1 ;; esac
+          done
+          echo "deploy $BUILD_SOURCEVERSION to $DEPLOY_ENVIRONMENT here, or add your deploy job before this one"
+          apiome pact record-deployment --pacticipant "$PACTICIPANT" --version "$BUILD_SOURCEVERSION" --environment "$DEPLOY_ENVIRONMENT"
+        displayName: Record deployment
+        env:
+          PACT_BROKER_BASE_URL: $(PACT_BROKER_BASE_URL)
+          PACT_BROKER_TOKEN: $(PACT_BROKER_TOKEN)

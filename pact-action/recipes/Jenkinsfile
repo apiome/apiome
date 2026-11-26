@@ -1,0 +1,68 @@
+// Apiome Pact pipeline for Jenkins (PFX-4.6 / #6943).
+//
+// Copy the stages into your Jenkinsfile (a Multibranch Pipeline job). Pull requests publish the
+// pacts and ask can-i-deploy; the main branch does the same, deploys, then records the deployment.
+//
+// Set up once:
+//   * a "Secret text" credential with id apiome-pact-broker-token holding an Apiome API key with
+//     the "Pact: consumer + deploy" preset;
+//   * PACT_BROKER_BASE_URL below, changed to your workspace's broker base URL.
+//
+// The agent needs curl and sh. Every apiome pact command exits 0 when it worked and 1 otherwise,
+// so each stage fails on its own. Commands sit in single-quoted strings, so the shell, not
+// Groovy, reads the variables and the key never lands in the Groovy log.
+
+pipeline {
+  agent any
+  options {
+    timestamps()
+    disableConcurrentBuilds(abortPrevious: true)
+  }
+  environment {
+    PACT_BROKER_BASE_URL = 'https://api.apiome.dev/v1/tenants/<workspace>/pact-broker'
+    PACT_BROKER_TOKEN = credentials('apiome-pact-broker-token')
+    PACTICIPANT = 'Billing Service'
+    PACT_DIR = 'pacts'
+    DEPLOY_ENVIRONMENT = 'production'
+    APIOME_LOAD_DOTENV = '0'
+    PATH = "${env.HOME}/.local/bin:${env.PATH}"
+  }
+  stages {
+    stage('Install Apiome CLI') {
+      steps {
+        sh 'command -v apiome >/dev/null 2>&1 || { curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user --no-modify-path; }'
+      }
+    }
+    stage('Publish pacts') {
+      steps {
+        sh 'for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do test -n "$(printenv "$v")" || { echo "$v is not set - see the setup notes at the top of this file" >&2; exit 1; }; done'
+        sh 'apiome pact publish "$PACT_DIR" --consumer-app-version "$GIT_COMMIT" --branch "${CHANGE_BRANCH:-$BRANCH_NAME}" --build-url "$BUILD_URL"'
+      }
+    }
+    stage('Can I deploy?') {
+      steps {
+        sh 'for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do test -n "$(printenv "$v")" || { echo "$v is not set - see the setup notes at the top of this file" >&2; exit 1; }; done'
+        sh 'apiome pact can-i-deploy --pacticipant "$PACTICIPANT" --version "$GIT_COMMIT" --to-environment "$DEPLOY_ENVIRONMENT" --retry-while-unknown 12 --retry-interval 10 --output markdown > can-i-deploy.md || gate=$?; cat can-i-deploy.md; exit ${gate:-0}'
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'can-i-deploy.md', allowEmptyArchive: true
+        }
+      }
+    }
+    stage('Record deployment') {
+      // Never in a pull request: recording it would tell can-i-deploy an unmerged commit is live.
+      when {
+        allOf {
+          branch 'main'
+          not { changeRequest() }
+        }
+      }
+      steps {
+        sh 'for v in PACT_BROKER_BASE_URL PACT_BROKER_TOKEN; do test -n "$(printenv "$v")" || { echo "$v is not set - see the setup notes at the top of this file" >&2; exit 1; }; done'
+        sh 'echo "deploy $GIT_COMMIT to $DEPLOY_ENVIRONMENT here, or add your deploy stage before this one"'
+        sh 'apiome pact record-deployment --pacticipant "$PACTICIPANT" --version "$GIT_COMMIT" --environment "$DEPLOY_ENVIRONMENT"'
+      }
+    }
+  }
+}

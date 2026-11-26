@@ -65,7 +65,9 @@ When the job already sets `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` in `env
 inputs out.
 
 Full guide: [Run Pact in CI](../apiome-docs/docs/ship/pact-broker/ci-pact.mdx), which also has the
-GitLab CI and Bitbucket Pipelines [recipes](recipes/.gitlab-ci.yml).
+GitLab CI, Bitbucket Pipelines, Jenkins and Azure Pipelines
+[recipes](recipes/.gitlab-ci.yml) ([Jenkinsfile](recipes/Jenkinsfile),
+[azure-pipelines.yml](recipes/azure-pipelines.yml)).
 
 ## Inputs
 
@@ -129,8 +131,8 @@ Each refusal is an error annotation with the reason, exits `1`, and sends nothin
 
 ```bash
 bash pact-action/tests/run.sh                          # every test
-bash pact-action/tests/test_ci_recipes.sh --recipe gitlab
+bash pact-action/tests/test_ci_recipes.sh --recipe gitlab   # or bitbucket, jenkins, azure
 ```
 
-`test_ci_recipes.sh` runs each job of the GitLab and Bitbucket recipes against a stub CLI and checks
+`test_ci_recipes.sh` runs each job of the GitLab, Bitbucket, Jenkins and Azure recipes against a stub CLI and checks
 that the guide embeds each recipe byte for byte.

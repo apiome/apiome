@@ -1,0 +1,27 @@
+---
+slug: pact-jenkins-and-azure-pipelines
+title: "Pact in CI: Jenkins and Azure Pipelines recipes"
+description: "Copy-and-paste Jenkinsfile and azure-pipelines.yml for publish, can-i-deploy and record-deployment."
+authors: [apiome]
+---
+
+The Pact pipeline you can copy for GitLab CI and Bitbucket Pipelines now exists for Jenkins and
+Azure Pipelines too. Each runs the same three steps with the `apiome pact` commands. See
+[Run Pact in CI](/ship/pact-broker/ci-pact#jenkins-and-azure-pipelines).
+
+{/* truncate */}
+
+- **Jenkins.** A `Jenkinsfile` for a Multibranch Pipeline: publish and `can-i-deploy` on every
+  branch and pull request, record the deployment on `main`. The broker key is a Jenkins **Secret
+  text** credential and the commands are single-quoted, so the key never reaches the Groovy log.
+- **Azure Pipelines.** An `azure-pipelines.yml` with a job per step. Each step maps the secret
+  broker variables into its environment, and a variable that was never defined stops the step with
+  the reason instead of sending the text `$(PACT_BROKER_TOKEN)` as a key.
+- **Never from a pull request.** Both recipes record a deployment only on the main branch, never in a
+  pull-request run, so `can-i-deploy` never treats an unmerged commit as live.
+- **The answer is kept.** `can-i-deploy` writes `can-i-deploy.md` and keeps it as a build artifact
+  (a build-summary section on Azure).
+- **Tested.** Every job runs against a stub CLI on each change, and the guide shows the pipelines
+  exactly as tested.
+
+*Last updated: November 25, 2026*
