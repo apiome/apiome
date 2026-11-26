@@ -5,13 +5,14 @@
  *
  * One application of the workspace's Pact Broker: its handle, main branch, repository, labels and
  * bindings; its **Branches** with their head versions; what each **Environment** runs of it now
- * (deployed versions and supported releases); and its **Versions**, latest recorded first, with
- * their branches and tags. Choosing a branch or a tag anywhere on the page narrows the versions to
+ * (deployed versions and supported releases); its **Pacts** — every integration it is the consumer
+ * or provider of, each linking to its newest pact (PFX-5.2, #6946); and its **Versions**, latest
+ * recorded first, with their branches and tags. Choosing a branch or a tag anywhere on the page narrows the versions to
  * it; **Clear** widens them again.
  *
  * ### What this page owns
  *
- * The four reads and the version filter. Each section loads and fails on its own, with its own
+ * The five reads and the version filter. Each section loads and fails on its own, with its own
  * **Try again**, so a broker that cannot list environments still shows the versions. How each
  * section is drawn is `PacticipantPanels`; labels, paths and formatting are `@lib/pact-pacticipants`.
  */
@@ -24,15 +25,19 @@ import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import {
   PACTICIPANTS_ROUTE,
+  PUBLISH_SNIPPET,
   versionsSummary,
   type Pacticipant,
   type PacticipantBranch,
   type PacticipantEnvironment,
   type PacticipantVersion,
 } from '@lib/pact-pacticipants';
-import { BranchesTable, EnvironmentsTable, PacticipantFacts, VersionsTable } from './PacticipantPanels';
+import { BranchesTable, CliSnippet, EnvironmentsTable, PacticipantFacts, VersionsTable } from './PacticipantPanels';
 import { fetchBranches, fetchEnvironments, fetchPacticipant, fetchVersions } from './pacticipantsApi';
 import { describeFailure } from './describeFailure';
+import { PacticipantPactsTable } from '../pactDetail/PactPanels';
+import { fetchPacticipantPacts } from '../pactDetail/pactDetailApi';
+import type { PacticipantPacts } from '@lib/pact-detail';
 
 /** Where the breadcrumb's first step goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -119,6 +124,7 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
     data: null,
     error: null,
   });
+  const [pacts, setPacts] = React.useState<Section<PacticipantPacts>>({ data: null, error: null });
   const [filter, setFilter] = React.useState<VersionFilter>({ branch: null, tag: null });
   const [versions, setVersions] = React.useState<Section<VersionList>>({ data: null, error: null });
   const [loadingMore, setLoadingMore] = React.useState(false);
@@ -151,6 +157,15 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
       setEnvironments({ data: (await fetchEnvironments(slug)).environments, error: null });
     } catch (caught) {
       setEnvironments({ data: null, error: describeFailure(caught, 'Could not load the environments') });
+    }
+  }, [slug]);
+
+  const loadPacts = React.useCallback(async () => {
+    setPacts({ data: null, error: null });
+    try {
+      setPacts({ data: await fetchPacticipantPacts(slug), error: null });
+    } catch (caught) {
+      setPacts({ data: null, error: describeFailure(caught, 'Could not load the pacts') });
     }
   }, [slug]);
 
@@ -196,14 +211,16 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
     void loadPacticipant();
     void loadBranches();
     void loadEnvironments();
+    void loadPacts();
     void loadVersions(filter);
-  }, [filter, loadBranches, loadEnvironments, loadPacticipant, loadVersions]);
+  }, [filter, loadBranches, loadEnvironments, loadPacticipant, loadPacts, loadVersions]);
 
   React.useEffect(() => {
     void loadPacticipant();
     void loadBranches();
     void loadEnvironments();
-  }, [loadPacticipant, loadBranches, loadEnvironments]);
+    void loadPacts();
+  }, [loadPacticipant, loadBranches, loadEnvironments, loadPacts]);
 
   React.useEffect(() => {
     void loadVersions(filter);
@@ -302,6 +319,34 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
                   <LoadingState message="Reading the environments…" minHeightClassName="min-h-[4rem]" />
                 ) : (
                   <EnvironmentsTable environments={environments.data} pacticipantName={pacticipant.data.name} />
+                )}
+              </Panel>
+
+              <Panel
+                id="ppx-pacts"
+                title="Pacts"
+                aside={
+                  pacts.data ? (
+                    <span className="ppx__meta" data-testid="ppx-pacts-count">
+                      {pacts.data.pacts.length}
+                      {pacts.data.truncated ? '+' : ''}
+                    </span>
+                  ) : null
+                }
+              >
+                {pacts.error ? (
+                  <SectionError title="The pacts could not be read" error={pacts.error} onRetry={() => void loadPacts()} />
+                ) : pacts.data === null ? (
+                  <LoadingState message="Reading the pacts…" minHeightClassName="min-h-[4rem]" />
+                ) : pacts.data.pacts.length === 0 ? (
+                  <div className="ppx__empty-note" data-testid="ppx-pacts-empty">
+                    <p className="ppx__statement">
+                      No pact names this pacticipant yet. A consumer&apos;s build publishes its pacts:
+                    </p>
+                    <CliSnippet label="Publish a pact" command={PUBLISH_SNIPPET} />
+                  </div>
+                ) : (
+                  <PacticipantPactsTable pacts={pacts.data.pacts} slug={slug} />
                 )}
               </Panel>
 

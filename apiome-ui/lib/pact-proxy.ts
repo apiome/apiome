@@ -1,5 +1,5 @@
 /**
- * Shared forwarding for the `/api/pact/*` proxies (PFX-5.1, #6945).
+ * Shared forwarding for the `/api/pact/*` proxies (PFX-5.1, #6945; PFX-5.2, #6946).
  *
  * Each proxy resolves the signed-in user's workspace, forwards one read to apiome-rest as that
  * user, and passes REST's answer through (a 403 stays a 403). Tenant scoping and the `pacts`
@@ -16,7 +16,9 @@ import {
   pickListQuery,
   withQuery,
   type RestRead,
+  type RestReader,
 } from '@lib/pact-pacticipants';
+import { findPreviousDistinct } from '@lib/pact-detail';
 
 /** What the browser is told when apiome-rest cannot be reached. */
 export const PACT_UNAVAILABLE = 'The Pact Broker is unavailable (apiome-rest not reachable). Try again shortly.';
@@ -84,6 +86,33 @@ export function pacticipantPath(slug: string, suffix = ''): string | null {
  * @returns `{ environments }`, or REST's refusal of the environment list.
  */
 export async function forwardPacticipantEnvironments(slug: string): Promise<NextResponse> {
+  return answerWithReader((read) => collectPacticipantEnvironments(read, slug));
+}
+
+/**
+ * The previous different pact of a consumer version (PFX-5.2, #6946), found by walking back
+ * through the integration's versions as the signed-in user.
+ *
+ * @param provider - The provider's handle (already checked).
+ * @param consumer - The consumer's handle (already checked).
+ * @param version - The consumer version; the latest pact when `null`.
+ * @returns The outcome and the previous pact, or REST's refusal of a read it needed.
+ */
+export async function forwardPreviousPact(
+  provider: string,
+  consumer: string,
+  version: string | null,
+): Promise<NextResponse> {
+  return answerWithReader((read) => findPreviousDistinct(read, provider, consumer, version));
+}
+
+/**
+ * Run a roll-up of several REST reads as the signed-in user and answer with its result.
+ *
+ * @param run - The roll-up, given a reader of paths below `/v1/tenants/{slug}`.
+ * @returns The result as JSON; a {@link RollupError} keeps REST's status; an unreachable REST is a 503.
+ */
+async function answerWithReader<T>(run: (read: RestReader) => Promise<T>): Promise<NextResponse> {
   const resolved = await resolveConnectorTenant();
   if ('error' in resolved) return resolved.error;
   const headers = createRestAuthHeaders(resolved.user);
@@ -93,7 +122,7 @@ export async function forwardPacticipantEnvironments(slug: string): Promise<Next
     return { ok: rest.ok, status: rest.status, body };
   };
   try {
-    return NextResponse.json(await collectPacticipantEnvironments(read, slug));
+    return NextResponse.json(await run(read));
   } catch (caught) {
     if (caught instanceof RollupError) return pactError(caught.status >= 400 ? caught.status : 502, caught.message);
     return pactError(503, PACT_UNAVAILABLE);
