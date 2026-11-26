@@ -23,7 +23,7 @@ from apiome_cli.client.pact_provider_contract import (
     summary_lines,
 )
 from apiome_cli.commands.pact import provider_contract_path
-from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
+from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
 from apiome_cli.main import app
 
 runner = CliRunner()
@@ -255,7 +255,7 @@ def test_json_mode_prints_the_response(tmp_path: Path, httpx_mock: Any) -> None:
 
 
 @pytest.mark.usefixtures("api_key_env")
-def test_a_refused_report_exits_2_with_the_server_message(tmp_path: Path, httpx_mock: Any) -> None:
+def test_a_refused_report_exits_1_with_the_server_message(tmp_path: Path, httpx_mock: Any) -> None:
     contract, report = _files(tmp_path)
     detail = {
         "code": "provider-contract-evidence-invalid",
@@ -268,7 +268,7 @@ def test_a_refused_report_exits_2_with_the_server_message(tmp_path: Path, httpx_
         ["pact", "publish-provider-contract", str(contract), "--provider", "Ledger API", "-a", "abc123",
          "--evidence", str(report)],
     )
-    assert result.exit_code == EXIT_USAGE, result.output
+    assert result.exit_code == EXIT_ERROR, result.output
 
 
 @pytest.mark.usefixtures("api_key_env")
@@ -279,11 +279,11 @@ def test_both_evidence_options_are_a_usage_error(tmp_path: Path) -> None:
         ["pact", "publish-provider-contract", str(contract), "--provider", "Ledger API", "-a", "abc123",
          "--evidence", str(report), "--evidence-report", "6f1c2b3a-4d5e-4f60-8a7b-9c0d1e2f3a4b"],
     )
-    assert result.exit_code == EXIT_USAGE
+    assert result.exit_code == EXIT_ERROR
     assert "not both" in result.output
 
 
 @pytest.mark.usefixtures("api_key_env")
 def test_neither_a_file_nor_an_apiome_version_is_a_usage_error() -> None:
     result = runner.invoke(app, ["pact", "publish-provider-contract", "--provider", "Ledger API", "-a", "abc123"])
-    assert result.exit_code == EXIT_USAGE
+    assert result.exit_code == EXIT_ERROR

@@ -1,0 +1,131 @@
+---
+title: Run Pact in CI
+description: A consumer, provider and deploy pipeline built from the apiome pact commands.
+sidebar_position: 0.8
+tags: [contracts, pact, ci, cli]
+---
+
+This page puts the [`apiome pact` commands](./cli.mdx) together into the three jobs of a Pact
+pipeline: the **consumer** publishes its pacts, the **provider** is verified against them, and the
+**deploy** job asks `can-i-deploy` and records what it deployed. The examples are GitHub Actions;
+every step is one shell command, so the same lines work in GitLab CI, Jenkins or any other runner.
+
+## Before you start
+
+1. **Two CI secrets.** `PACT_BROKER_BASE_URL` — your workspace's broker base URL, such as
+   `https://api.apiome.dev/v1/tenants/acme/pact-broker` — and `PACT_BROKER_TOKEN`, an API key from a
+   member whose role holds **Pacts** → **Create**. Create the key on
+   [API keys](../../workspace/api-keys.mdx).
+2. **The environments you deploy to**, created once:
+
+   ```bash
+   apiome pact create-environment --name test
+   apiome pact create-environment --name production --production
+   ```
+
+3. **For hosted verification**, a [verification target](./hosted-verification.mdx) for the
+   provider, such as `ledger-staging`.
+
+Each job installs the CLI with the installer:
+
+```bash
+curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user
+```
+
+## 1. The consumer publishes its pacts
+
+After the consumer's Pact tests write their files to `./pacts`:
+
+```yaml
+# .github/workflows/consumer.yml
+name: consumer
+on: push
+jobs:
+  pact:
+    runs-on: ubuntu-latest
+    env:
+      PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+      PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm run test:pact
+      - run: curl -fsSL https://get.apiome.dev -o get-apiome.sh && sh ./get-apiome.sh --user
+      - run: apiome pact publish ./pacts --consumer-app-version "$GITHUB_SHA" --auto-detect-version-properties
+```
+
+`--auto-detect-version-properties` records the branch and the link to this run. The job fails if
+a file is not a pact, or if this commit already published a different pact.
+
+## 2. The provider is verified
+
+Either run your own Pact verifier and let it publish its results, or let Apiome replay the pacts
+for you:
+
+```yaml
+# .github/workflows/provider.yml (a step of the provider's build)
+      - run: |
+          apiome pact verify \
+            --provider "Ledger API" --provider-app-version "$GITHUB_SHA" --branch "$GITHUB_REF_NAME" \
+            --target ledger-staging \
+            --consumer-version-selector '{"mainBranch": true}' \
+            --consumer-version-selector '{"deployedOrReleased": true}' \
+            --enable-pending -o markdown >> "$GITHUB_STEP_SUMMARY"
+```
+
+The step fails when a pact that is not pending fails. If your verifier ran elsewhere, send its
+report instead with
+[`apiome pact publish-verification-results`](./verification-results.mdx#send-a-report-from-your-own-ci).
+
+To start this job whenever a consumer publishes a pact that needs verifying, create a
+[webhook](./webhooks.mdx) once:
+
+```bash
+apiome pact create-webhook https://ci.example.com/hooks/ledger-verify \
+  --header "Content-Type: application/json" \
+  --data '{"pactUrl": "${pactbroker.pactUrl}", "providerVersion": "${pactbroker.providerVersionNumber}"}' \
+  --provider "Ledger API" --contract-requiring-verification-published
+```
+
+To start a GitHub Actions workflow directly, create the webhook with a GitHub target as
+[Contract webhooks](./webhooks.mdx#start-a-github-actions-workflow) shows; `create-webhook` sends plain HTTP requests only.
+
+## 3. Deploy, gated on contracts
+
+```yaml
+# a step of each service's deploy job
+      - run: |
+          apiome pact can-i-deploy --pacticipant "Billing Service" --version "$GITHUB_SHA" \
+            --to-environment production --retry-while-unknown 12 --retry-interval 10
+      - run: ./deploy.sh production
+      - run: |
+          apiome pact record-deployment --pacticipant "Billing Service" --version "$GITHUB_SHA" \
+            --environment production
+```
+
+`can-i-deploy` exits `1` and the deploy stops when the version is not compatible with what runs in
+`production`, or when a verification result is still missing after the retries. Recording the
+deployment afterwards is what lets the next `can-i-deploy` of its consumers and providers check
+against it.
+
+## What fails a job
+
+Every `apiome pact` command exits `0` when it worked and `1` otherwise, as `pact-broker` does:
+
+| The job fails when | The message says |
+| --- | --- |
+| The key is missing, or belongs to another workspace | which setting to give, or the server's refusal |
+| The key's role lacks **Pacts** → **View** or **Create** | the missing permission |
+| A file is not a pact, or a flag is wrong | the file or flag and the reason |
+| `can-i-deploy` says no, or cannot decide in time | the reason for each integration |
+| `verify` fails or cannot replay everything | each failed pact and each interaction it could not replay |
+
+To try `can-i-deploy` without blocking deploys yet, add `--dry-run`: it prints the verdict and
+exits `0`.
+
+## Related
+
+- [The apiome pact commands](./cli.mdx)
+- [Can I deploy?](./can-i-deploy.mdx)
+- [Environments and deployments](./environments.mdx)
+- [CI contract gate on GitLab and Bitbucket](../../reference/ci/ci-gitlab-bitbucket.md) — the
+  OpenAPI diff gate, which runs next to these jobs

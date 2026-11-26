@@ -19,7 +19,7 @@ from apiome_cli.client.pact_external_verification import (
     report_content_type,
     summary_lines,
 )
-from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
+from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
 from apiome_cli.main import app
 
 runner = CliRunner()
@@ -222,7 +222,7 @@ def test_json_mode_prints_the_response(
     assert json.loads(result.output)["ingestion"]["format"] == "pact-verifier-json"
 
 
-def test_a_refused_report_exits_2_with_the_server_message(
+def test_a_refused_report_exits_1_with_the_server_message(
     tmp_path: Path, api_key_env: None, httpx_mock: Any
 ) -> None:
     report = tmp_path / "report.json"
@@ -239,7 +239,7 @@ def test_a_refused_report_exits_2_with_the_server_message(
         },
     )
     result = _invoke(report=report)
-    assert result.exit_code == EXIT_USAGE or result.exit_code == 2
+    assert result.exit_code == EXIT_ERROR
     assert "proves nothing" in result.output
 
 
@@ -249,5 +249,5 @@ def test_an_unknown_format_is_a_usage_error_before_any_request(
     report = tmp_path / "report.json"
     report.write_bytes(_REPORT)
     result = _invoke("--format", "tap", report=report)
-    assert result.exit_code == 2
+    assert result.exit_code == EXIT_ERROR  # pact-broker exits 1 for usage errors too
     assert httpx_mock.get_requests() == []

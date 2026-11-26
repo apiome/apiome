@@ -16,8 +16,15 @@ specification's examples) and write it, or publish it to the workspace's Pact Br
 (``pact_verifier_cli --json`` output or JUnit XML) as a verification result in the broker, so
 can-i-deploy sees it (PFX-3.5).
 
-Authentication is the usual ``APIOME_API_KEY`` / config path; the workspace is the configured
-tenant.
+PFX-4.1 (#6938) adds the ``pact-broker``-compatible commands (``publish``, ``list-pacticipants``,
+``describe-version``, ``can-i-deploy``, ``record-deployment``, ``record-release``,
+``create-environment``, ``create-webhook``, ``verify``, ``migrate``; see
+:mod:`apiome_cli.commands.pact_broker`) and gives the whole group ``pact-broker``'s exit codes:
+``0`` success, ``1`` any failure — a refusal by the server and a bad flag alike.
+
+Every command reads ``PACT_BROKER_BASE_URL`` / ``PACT_BROKER_TOKEN`` as well as ``APIOME_*``, and
+takes ``--broker-base-url`` / ``--broker-token`` (``-b`` / ``-k``); see
+:mod:`apiome_cli.client.pact_broker_connection` for the precedence.
 """
 
 from __future__ import annotations
@@ -28,10 +35,12 @@ from urllib.parse import quote
 
 import json
 
+import click
 import typer
+from typer.core import TyperGroup
 
-from apiome_cli.cli_context import insecure_from_context, settings_from_context
-from apiome_cli.client.http import RestClient
+from apiome_cli.client.errors import CliError
+from apiome_cli.client.pact_broker_connection import connect
 from apiome_cli.client.pact_consumer_export import (
     build_publish_body as build_consumer_publish_body,
 )
@@ -58,15 +67,51 @@ from apiome_cli.client.pact_provider_contract import (
     is_verified,
     summary_lines,
 )
-from apiome_cli.client.tenant_scope import require_tenant_slug
-from apiome_cli.config import require_api_key
-from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
+from apiome_cli.commands import pact_broker
+from apiome_cli.commands.pact_broker import BROKER_BASE_URL, BROKER_TOKEN
+from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import emit_json, json_mode_from_context
 
+class PactBrokerGroup(TyperGroup):
+    """The ``pact`` group, with ``pact-broker``'s exit codes: ``0`` success, ``1`` any failure.
+
+    ``pact-broker`` exits 1 for every failure — a refused request, a bad flag, an undeployable
+    version — and CI scripts test for exactly that. Elsewhere the Apiome CLI exits 2 for usage
+    errors and 4xx refusals; inside this group both become 1. A :class:`CliError` raised by a
+    command prints its message on stderr and exits with its code.
+    """
+
+    def invoke(self, ctx: click.Context) -> object:
+        """Run the subcommand, mapping usage errors and exit 2 to exit 1.
+
+        Args:
+            ctx: The group's context.
+
+        Returns:
+            Whatever the subcommand returns.
+
+        Raises:
+            click.exceptions.Exit: with ``pact-broker``'s exit code.
+        """
+        try:
+            return super().invoke(ctx)
+        except CliError as exc:
+            typer.echo(exc.message, err=True)
+            raise click.exceptions.Exit(EXIT_ERROR if exc.exit_code == EXIT_USAGE else exc.exit_code) from exc
+        except click.UsageError as exc:
+            exc.show()
+            raise click.exceptions.Exit(EXIT_ERROR) from exc
+        except click.exceptions.Exit as exc:
+            if exc.exit_code == EXIT_USAGE:
+                raise click.exceptions.Exit(EXIT_ERROR) from exc
+            raise
+
+
 app = typer.Typer(
     name="pact",
-    help="Pact Broker: publish provider contracts, and export consumer surfaces as Pact files.",
+    cls=PactBrokerGroup,
+    help="Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification, pact-broker compatible.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -149,13 +194,15 @@ def publish_provider_contract(
         "--fail-on-unverified",
         help="Exit 1 when the published contract has no passing self-verification evidence.",
     ),
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
 ) -> None:
     """Publish a provider contract with its self-verification evidence (PUT …/contracts/provider/…).
 
     Prints what was published, what the evidence proved (verified, failed, inconclusive or missing,
     with the report's kind, tool, digest and counts) and the bi-directional comparisons the publish
-    ran. Exits 2 when the server refuses the request (a bad document or report, with its location),
-    and 1 with --fail-on-unverified when the contract is unverified.
+    ran. Exits 1 when the server refuses the request (a bad document or report, with its location),
+    or with --fail-on-unverified when the contract is unverified.
     """
     try:
         results = build_verification_results(
@@ -181,11 +228,9 @@ def publish_provider_contract(
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="CONTRACT / --apiome-version") from exc
 
-    settings = settings_from_context(ctx)
-    require_api_key(settings)
-    client = RestClient(settings, verify=not insecure_from_context(ctx))
-    tenant_slug = require_tenant_slug(settings, client)
-    response = client.put(provider_contract_path(tenant_slug, provider, provider_app_version), json=body)
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    tenant_slug = conn.tenant(command="publish-provider-contract")
+    response = conn.client.put(provider_contract_path(tenant_slug, provider, provider_app_version), json=body)
     payload = response.json()
 
     if json_mode_from_context(ctx):
@@ -231,21 +276,21 @@ def export_consumer_contract(
     fail_on_findings: bool = typer.Option(
         False, "--fail-on-findings", help="Exit 1 when any value was invented or anything was left out."
     ),
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
 ) -> None:
     """Export a picker-declared consumer surface as a Pact v4 file (GET …/consumers/{c}/pact).
 
     The pact carries one interaction per declared operation and response status, only the declared
     fields, and the specification's examples as sample values. Prints the findings — every value
     that had to be invented (placeholder) and everything left out (omitted), with a reason. Without
-    --output the Pact JSON goes to stdout and the summary to stderr. Exits 2 when the server refuses
-    (a contract imported from a Pact file, or one that yields no interaction), and 1 with
+    --output the Pact JSON goes to stdout and the summary to stderr. Exits 1 when the server refuses
+    (a contract imported from a Pact file, or one that yields no interaction), or with
     --fail-on-findings when there are findings.
     """
-    settings = settings_from_context(ctx)
-    require_api_key(settings)
-    client = RestClient(settings, verify=not insecure_from_context(ctx))
-    tenant_slug = require_tenant_slug(settings, client)
-    payload = client.get(
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    tenant_slug = conn.tenant(command="export-consumer-contract")
+    payload = conn.client.get(
         consumer_pact_path(tenant_slug, project, consumer, revision=revision, provider=provider)
     ).json()
 
@@ -284,13 +329,15 @@ def publish_consumer_contract(
     fail_on_findings: bool = typer.Option(
         False, "--fail-on-findings", help="Exit 1 when any value was invented or anything was left out."
     ),
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
 ) -> None:
     """Publish a picker-declared consumer surface to the Pact Broker (POST …/consumers/{c}/pact/publish).
 
     Generates the same Pact v4 file as export-consumer-contract and publishes it for the consumer
     version, as `pact-broker publish` would: branch, tags and build URL are recorded and the
-    bi-directional comparisons run. Prints the findings and the broker's notices. Exits 2 when the
-    server refuses (409 when that version already published a different pact), and 1 with
+    bi-directional comparisons run. Prints the findings and the broker's notices. Exits 1 when the
+    server refuses (409 when that version already published a different pact), or with
     --fail-on-findings when there are findings.
     """
     body = build_consumer_publish_body(
@@ -301,11 +348,9 @@ def publish_consumer_contract(
         revision=revision,
         provider=provider,
     )
-    settings = settings_from_context(ctx)
-    require_api_key(settings)
-    client = RestClient(settings, verify=not insecure_from_context(ctx))
-    tenant_slug = require_tenant_slug(settings, client)
-    payload = client.post(consumer_pact_path(tenant_slug, project, consumer, publish=True), json=body).json()
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    tenant_slug = conn.tenant(command="publish-consumer-contract")
+    payload = conn.client.post(consumer_pact_path(tenant_slug, project, consumer, publish=True), json=body).json()
 
     if output is not None:
         _write_pact(payload, output)
@@ -368,22 +413,22 @@ def publish_verification_results(
         "--fail-on-failure",
         help="Exit 1 when the published result is a failure.",
     ),
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
 ) -> None:
     """Publish a verification report produced elsewhere (POST …/external-verification-results).
 
     Reads pact_verifier_cli --json output or JUnit XML on the server, stores it as a verification
     result of the pact version and prints the verdict and every note about what could not be used.
-    Exits 2 when the server refuses (a malformed or empty report, an unknown pact version), and 1
+    Exits 1 when the server refuses (a malformed or empty report, an unknown pact version), or
     with --fail-on-failure when the result is a failure.
     """
     if report_format not in REPORT_FORMATS:
         raise typer.BadParameter(
             f"must be one of {', '.join(REPORT_FORMATS)}", param_hint="--format"
         )
-    settings = settings_from_context(ctx)
-    require_api_key(settings)
-    client = RestClient(settings, verify=not insecure_from_context(ctx))
-    tenant_slug = require_tenant_slug(settings, client)
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    tenant_slug = conn.tenant(command="publish-verification-results")
     path = external_results_path(
         tenant_slug,
         provider,
@@ -397,7 +442,7 @@ def publish_verification_results(
         verifier=verifier,
         verifier_version=verifier_version,
     )
-    response = client.post(
+    response = conn.client.post(
         path,
         content=report.read_bytes(),
         headers={"Content-Type": report_content_type(report, content_type)},
@@ -412,3 +457,7 @@ def publish_verification_results(
     raise typer.Exit(
         EXIT_ERROR if fail_on_failure and not payload.get("success") else EXIT_SUCCESS
     )
+
+
+for _name, _command in pact_broker.COMMANDS:
+    app.command(_name)(_command)

@@ -1,6 +1,6 @@
 ---
 title: "apiome pact"
-description: "Pact Broker: publish provider contracts, and export consumer surfaces as Pact files."
+description: "Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification, pact-broker compatible."
 sidebar_position: 27
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,19 +12,133 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome pact {#pact}
 
-Pact Broker: publish provider contracts, and export consumer surfaces as Pact files.
+Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification, pact-broker compatible.
 
 ```text
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`export-consumer-contract`](#pact-export-consumer-contract), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`create-environment`](#pact-create-environment), [`create-webhook`](#pact-create-webhook), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`verify`](#pact-verify).
+
+## apiome pact can-i-deploy {#pact-can-i-deploy}
+
+Can this version be deployed? (GET …/matrix, as `pact-broker can-i-deploy` asks it.)
+
+Prints the matrix rows, pact-broker's "Computer says yes" or "Computer says no" verdict, the reason and the notices. Exits 0 when deployable, 1 when not or when a result is still missing after the retries; --dry-run always exits 0.
+
+```text
+apiome pact can-i-deploy [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text (repeatable) |  | yes | The pacticipant being deployed. |
+| `--version`, `-e` | text |  |  | Its version. |
+| `--latest`, `-l` | flag |  |  | Its latest version (with --tag: the latest tagged). |
+| `--tag` | text |  |  | With --latest: the tag of the version. |
+| `--branch` | text |  |  | The latest version from this branch. |
+| `--main-branch` | flag |  |  | The latest version from its main branch. |
+| `--to-environment` | text |  |  | The environment it is deployed to. |
+| `--to` | text |  |  | The tag it is deployed to (legacy; prefer environments). |
+| `--ignore` | text (repeatable) |  |  | Leave this pacticipant out of the verdict (repeatable). |
+| `--retry-while-unknown` | integer range | `0` |  | Retry this many times while a verification result is missing. |
+| `--retry-interval` | float range | `10` |  | Seconds between retries. |
+| `--dry-run` | flag |  |  | Print the verdict but always exit 0. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact create-environment {#pact-create-environment}
+
+Create an environment (POST …/environments) and print its UUID.
+
+Exits 1 when the name is taken (409) or the caller may not create environments (403).
+
+```text
+apiome pact create-environment [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  | yes | The name tooling uses: one word, no spaces. |
+| `--display-name` | text |  |  | The name people read. |
+| `--production` | flag |  |  | It is a production environment. |
+| `--contract-required` | flag |  |  | Apiome: can-i-deploy refuses a pacticipant that has no contract. |
+| `--contact-name` | text |  |  | A contact for the environment. |
+| `--contact-email-address` | text |  |  | That contact's email address. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact create-webhook {#pact-create-webhook}
+
+Create a webhook (POST …/webhooks), with `pact-broker create-webhook`'s options.
+
+Choose at least one event flag (--contract-content-changed, --contract-published, --contract-requiring-verification-published, --provider-verification-published, --provider-verification-succeeded, --provider-verification-failed, --consumer-version-branch-created). The password is stored sealed and never printed. Exits 1 when the broker refuses the webhook (a private host, an unknown pacticipant).
+
+```text
+apiome pact create-webhook [OPTIONS] URL
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `URL` | text | yes | The URL the webhook calls. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--request`, `-X` | text | `POST` |  | The method: POST, PUT or PATCH. |
+| `--header`, `-H` | text (repeatable) |  |  | 'Name: value' (repeatable). |
+| `--data`, `-d` | text |  |  | The body; @file reads it from a file. |
+| `--user`, `-u` | text |  |  | 'username:password' for basic auth (stored sealed). |
+| `--consumer` | text |  |  | Only pacts of this consumer. |
+| `--provider` | text |  |  | Only pacts of this provider. |
+| `--description` | text |  |  | What the webhook is for. |
+| `--contract-content-changed` | flag |  |  |  |
+| `--contract-published` | flag |  |  |  |
+| `--contract-requiring-verification-published` | flag |  |  |  |
+| `--provider-verification-published` | flag |  |  |  |
+| `--provider-verification-succeeded` | flag |  |  |  |
+| `--provider-verification-failed` | flag |  |  |  |
+| `--consumer-version-branch-created` | flag |  |  |  |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact describe-version {#pact-describe-version}
+
+Describe a pacticipant version: number, branches, tags, build URL, creation time.
+
+With --version it reads GET …/pact-broker/pacticipants/{p}/versions/{v}; otherwise the latest recorded version (with --tag, the latest carrying that tag). Exits 1 when there is none.
+
+```text
+apiome pact describe-version [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text |  | yes | The pacticipant's name or handle. |
+| `--version`, `-e` | text |  |  | The version number. |
+| `--latest`, `-l` | flag |  |  | The latest version (the default without -e). |
+| `--tag` | text |  |  | With --latest: the latest version with this tag. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 
 ## apiome pact export-consumer-contract {#pact-export-consumer-contract}
 
 Export a picker-declared consumer surface as a Pact v4 file (GET …/consumers/{c}/pact).
 
-The pact carries one interaction per declared operation and response status, only the declared fields, and the specification's examples as sample values. Prints the findings — every value that had to be invented (placeholder) and everything left out (omitted), with a reason. Without --output the Pact JSON goes to stdout and the summary to stderr. Exits 2 when the server refuses (a contract imported from a Pact file, or one that yields no interaction), and 1 with --fail-on-findings when there are findings.
+The pact carries one interaction per declared operation and response status, only the declared fields, and the specification's examples as sample values. Prints the findings — every value that had to be invented (placeholder) and everything left out (omitted), with a reason. Without --output the Pact JSON goes to stdout and the summary to stderr. Exits 1 when the server refuses (a contract imported from a Pact file, or one that yields no interaction), or with --fail-on-findings when there are findings.
 
 ```text
 apiome pact export-consumer-contract [OPTIONS]
@@ -40,12 +154,81 @@ apiome pact export-consumer-contract [OPTIONS]
 | `--provider` | text |  |  | The provider pacticipant name; defaults to the project's bound pacticipant. |
 | `--output`, `-o` | file |  |  | Write the Pact file here instead of stdout. |
 | `--fail-on-findings` | flag |  |  | Exit 1 when any value was invented or anything was left out. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact list-pacticipants {#pact-list-pacticipants}
+
+List the workspace's pacticipants (GET /v1/tenants/{t}/pacticipants, every page).
+
+Prints name, handle, main branch, repository and labels. JSON output is `{"pacticipants": [...], "count": N}` over all pages.
+
+```text
+apiome pact list-pacticipants [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--label` | text |  |  | Only pacticipants with this label. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact migrate {#pact-migrate}
+
+Migrate a Pact Broker or PactFlow workspace into Apiome — not available yet.
+
+The one-command import of pacticipants, versions, pacts, results, environments, deployments and webhooks arrives with PFX-6.7. Until then this command exits 1 and says so, so a pipeline never mistakes it for a migration that ran.
+
+```text
+apiome pact migrate [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--from` | text |  |  | The source Pact Broker or PactFlow base URL. |
+| `--token` | text |  |  | A read token for the source broker. |
+
+## apiome pact publish {#pact-publish}
+
+Publish pacts for a consumer version (POST …/contracts/publish), as `pact-broker publish`.
+
+Reads every pact first and refuses the run before anything is sent when a file is not a pact. Sends one request per consumer (at most 100 pacts each), records the branch, tags and build URL, and prints the broker's notices — including the bi-directional comparisons a publish runs. Exits 1 on any refusal (409 when that version already published a different pact).
+
+```text
+apiome pact publish [OPTIONS] PACTS...
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PACTS...` | path | yes | Pact files, or directories of *.json pact files. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--consumer-app-version`, `-a` | text |  |  | The consumer build's version (a commit SHA is best). |
+| `--branch` | text |  |  | The branch the build came from. |
+| `--auto-detect-version-properties`, `-r` | flag |  |  | Read the branch and build URL from the CI environment (GitHub, GitLab, Jenkins, …) or git. |
+| `--tag`, `-t` | text (repeatable) |  |  | Tag the consumer version (repeatable). |
+| `--tag-with-git-branch`, `-g` | flag |  |  | Also tag the version with the detected branch. |
+| `--build-url` | text |  |  | http(s) URL of the CI build. |
+| `--merge` | flag |  |  | Not supported: refused with the reason. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 
 ## apiome pact publish-consumer-contract {#pact-publish-consumer-contract}
 
 Publish a picker-declared consumer surface to the Pact Broker (POST …/consumers/{c}/pact/publish).
 
-Generates the same Pact v4 file as export-consumer-contract and publishes it for the consumer version, as `pact-broker publish` would: branch, tags and build URL are recorded and the bi-directional comparisons run. Prints the findings and the broker's notices. Exits 2 when the server refuses (409 when that version already published a different pact), and 1 with --fail-on-findings when there are findings.
+Generates the same Pact v4 file as export-consumer-contract and publishes it for the consumer version, as `pact-broker publish` would: branch, tags and build URL are recorded and the bi-directional comparisons run. Prints the findings and the broker's notices. Exits 1 when the server refuses (409 when that version already published a different pact), or with --fail-on-findings when there are findings.
 
 ```text
 apiome pact publish-consumer-contract [OPTIONS]
@@ -65,12 +248,14 @@ apiome pact publish-consumer-contract [OPTIONS]
 | `--provider` | text |  |  | The provider pacticipant name; defaults to the project's bound pacticipant. |
 | `--output`, `-o` | file |  |  | Also write the published Pact file here. |
 | `--fail-on-findings` | flag |  |  | Exit 1 when any value was invented or anything was left out. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 
 ## apiome pact publish-provider-contract {#pact-publish-provider-contract}
 
 Publish a provider contract with its self-verification evidence (PUT …/contracts/provider/…).
 
-Prints what was published, what the evidence proved (verified, failed, inconclusive or missing, with the report's kind, tool, digest and counts) and the bi-directional comparisons the publish ran. Exits 2 when the server refuses the request (a bad document or report, with its location), and 1 with --fail-on-unverified when the contract is unverified.
+Prints what was published, what the evidence proved (verified, failed, inconclusive or missing, with the report's kind, tool, digest and counts) and the bi-directional comparisons the publish ran. Exits 1 when the server refuses the request (a bad document or report, with its location), or with --fail-on-unverified when the contract is unverified.
 
 ```text
 apiome pact publish-provider-contract [OPTIONS] [CONTRACT]
@@ -100,12 +285,14 @@ apiome pact publish-provider-contract [OPTIONS] [CONTRACT]
 | `--verifier` | text |  |  | The tool that wrote the report (schemathesis, dredd, newman). |
 | `--verifier-version` | text |  |  | That tool's version. |
 | `--fail-on-unverified` | flag |  |  | Exit 1 when the published contract has no passing self-verification evidence. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 
 ## apiome pact publish-verification-results {#pact-publish-verification-results}
 
 Publish a verification report produced elsewhere (POST …/external-verification-results).
 
-Reads pact_verifier_cli --json output or JUnit XML on the server, stores it as a verification result of the pact version and prints the verdict and every note about what could not be used. Exits 2 when the server refuses (a malformed or empty report, an unknown pact version), and 1 with --fail-on-failure when the result is a failure.
+Reads pact_verifier_cli --json output or JUnit XML on the server, stores it as a verification result of the pact version and prints the verdict and every note about what could not be used. Exits 1 when the server refuses (a malformed or empty report, an unknown pact version), or with --fail-on-failure when the result is a failure.
 
 ```text
 apiome pact publish-verification-results [OPTIONS] REPORT
@@ -133,3 +320,78 @@ apiome pact publish-verification-results [OPTIONS] REPORT
 | `--verifier` | text |  |  | The tool that wrote the report. |
 | `--verifier-version` | text |  |  | That tool's version. |
 | `--fail-on-failure` | flag |  |  | Exit 1 when the published result is a failure. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact record-deployment {#pact-record-deployment}
+
+Record that a version is deployed to an environment (POST …/deployed-versions/environment/{uuid}).
+
+The environment is looked up by name; an unknown name exits 1 with the command that creates it. A deployment replaces the version previously deployed to the same environment and instance.
+
+```text
+apiome pact record-deployment [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text |  | yes | What was deployed. |
+| `--version`, `-e` | text |  | yes | Its version. |
+| `--environment` | text |  | yes | The environment's name. |
+| `--application-instance`, `--target` | text |  |  | The instance deployed to (a region, a customer). |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact record-release {#pact-record-release}
+
+Record that a version is released to an environment (POST …/released-versions/environment/{uuid}).
+
+Unlike a deployment, a release keeps earlier released versions supported until their support ends. An unknown environment name exits 1 with the command that creates it.
+
+```text
+apiome pact record-release [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text |  | yes | What was released. |
+| `--version`, `-e` | text |  | yes | Its version. |
+| `--environment` | text |  | yes | The environment's name. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact verify {#pact-verify}
+
+Verify a provider against its pacts with Apiome's hosted verifier (POST …/pact-verifier/…/verify).
+
+Selects the pacts the provider must honour, replays each interaction against the registered target and publishes a result per conclusive pact. Prints one row per pact and every interaction that could not be replayed, with its reason. Exits 0 when the run succeeded, 1 otherwise (a failed pact, an incomplete run, or no pacts selected).
+
+```text
+apiome pact verify [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--provider` | text |  | yes | The provider's name or handle. |
+| `--provider-app-version`, `-a` | text |  | yes | The provider build's version (a commit SHA is best). |
+| `--target` | text |  | yes | The registered verification target to replay against. |
+| `--branch` | text |  |  | The provider build's branch. |
+| `--build-url` | text |  |  | http(s) URL of the CI build. |
+| `--consumer-version-selector` | text (repeatable) |  |  | A selector as JSON, e.g. '{"mainBranch": true}' (repeatable). |
+| `--enable-pending` | flag |  |  | A pending pact's failure does not fail the run. |
+| `--include-wip-pacts-since` | text |  |  | Also verify work-in-progress pacts published since this date. |
+| `--allow-mutating` | flag |  |  | Replay POST/PUT/PATCH/DELETE interactions (the target must allow them). |
+| `--replay-without-state-setup` | flag |  |  | Replay interactions whose provider state nothing sets up. |
+| `--publish-verification-results` / `--no-publish-verification-results` | flag | `--publish-verification-results` |  | Publish the results. |
+| `--context` | text (repeatable) |  |  | Non-secret CI context KEY=VALUE stored with the evidence (repeatable). |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |

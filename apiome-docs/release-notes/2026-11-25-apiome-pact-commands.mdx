@@ -1,0 +1,30 @@
+---
+slug: apiome-pact-commands
+title: "The apiome pact command group"
+description: "pact-broker's commands in the Apiome CLI, with the same flags, output and exit codes."
+authors: [apiome]
+---
+
+The Apiome CLI now has the commands of the `pact-broker` CLI. `apiome pact publish`,
+`can-i-deploy`, `record-deployment` and the rest take the same flags, print the same sentences and
+exit the same way, and they read `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN`, so a pipeline moves
+over by changing the command name. See [The apiome pact commands](/ship/pact-broker/cli) and
+[Run Pact in CI](/ship/pact-broker/ci-pact).
+
+{/* truncate */}
+
+- **The broker commands.** `publish`, `list-pacticipants`, `describe-version`, `can-i-deploy`
+  (with `--retry-while-unknown` and `--dry-run`), `record-deployment`, `record-release`,
+  `create-environment` and `create-webhook`.
+- **Hosted verification in one step.** `apiome pact verify --provider … --target …` replays the
+  provider's pacts against a registered target and publishes the results.
+- **Your choice of output.** `--output table`, `json` or `markdown` — the last one ready for a job
+  summary or a pull-request comment.
+- **pact-broker's exit codes.** `0` when it worked, `1` for anything else — a refusal, a bad flag,
+  a `can-i-deploy` that says no. The existing `apiome pact` commands now exit `1` instead of `2`
+  for a refused request or a bad flag.
+- **Nothing dropped silently.** A file that is not a pact, `--merge`, a webhook method the broker
+  does not send, or basic-auth variables without a token stop the command with the reason, before
+  anything is sent.
+- **Not yet:** `apiome pact migrate`, the import of an existing Pact Broker or PactFlow workspace,
+  is listed but exits `1` and does nothing until it ships.

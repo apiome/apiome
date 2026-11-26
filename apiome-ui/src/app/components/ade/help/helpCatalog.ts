@@ -1317,6 +1317,22 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['hosted verifier', 'pact-verifier', 'mismatches', 'matching rules', 'mutating interactions', 'provider states', 'dry run', 'incomplete'],
   },
   {
+    id: 'cli',
+    title: 'The apiome pact commands',
+    summary: "Publish, check and record pacts from a terminal with pact-broker's flags and exit codes.",
+    page: 'apiome-docs/docs/ship/pact-broker/cli.mdx',
+    section: 'reference',
+    keywords: ['pact-broker', 'can-i-deploy', 'record-deployment', 'create-webhook', 'PACT_BROKER_TOKEN', 'exit codes', 'markdown', 'terminal'],
+  },
+  {
+    id: 'ci-pact',
+    title: 'Run Pact in CI',
+    summary: 'A consumer, provider and deploy pipeline built from the apiome pact commands.',
+    page: 'apiome-docs/docs/ship/pact-broker/ci-pact.mdx',
+    section: 'reference',
+    keywords: ['pipeline', 'github actions', 'gitlab', 'jenkins', 'deploy gate', 'can-i-deploy', 'record-deployment', 'webhook'],
+  },
+  {
     id: 'message-pacts',
     title: 'Message pacts',
     summary: "Check a consumer's message pact against the provider's AsyncAPI document.",
