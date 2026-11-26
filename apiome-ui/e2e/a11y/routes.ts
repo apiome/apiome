@@ -263,6 +263,17 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-provider-states.html'] },
   },
   {
+    // PFX-5.1 (#6945): the Pacticipants list and one pacticipant's page (versions, branches, tags,
+    // environments), dumped by `tests/pact-pacticipants-ui.test.tsx`.
+    id: 'pact-pacticipants',
+    mockup: null,
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-pacticipants.html', 'pact-pacticipant-detail.html'],
+    },
+  },
+  {
     // X3 (#6224): the released export surfaces of E1. The Source and Target steps (the target grid),
     // the several-targets Verify and the bulk dialog after a run are gated with the whole
     // `hive-export-studio` directory under the parity entry `export-studio`; this entry adds the

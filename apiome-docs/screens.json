@@ -2864,6 +2864,28 @@
         "apiome-ui/src/app/components/ade/pactProviderStates/ProviderStatesClient.tsx",
         "apiome-ui/lib/pact-provider-states.ts"
       ]
+    },
+    {
+      "id": "pact-pacticipants",
+      "route": "/ade/dashboard/pacts/pacticipants",
+      "waitFor": "[data-testid=\"ppx-pacticipants-table\"]",
+      "data": "fixture:hive-a11y/pact-pacticipants.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantsListClient.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantPanels.tsx",
+        "apiome-ui/lib/pact-pacticipants.ts"
+      ]
+    },
+    {
+      "id": "pact-pacticipant-detail",
+      "route": "/ade/dashboard/pacts/pacticipants/billing-service",
+      "waitFor": "[data-testid=\"ppx-versions-table\"]",
+      "data": "fixture:hive-a11y/pact-pacticipant-detail.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantDetailClient.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantPanels.tsx",
+        "apiome-ui/lib/pact-pacticipants.ts"
+      ]
     }
   ]
 }

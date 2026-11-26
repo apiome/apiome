@@ -92,7 +92,7 @@ describe('platform-nav model — shape', () => {
       home: ['home'],
       build: ['projects', 'primitives'],
       'bring-in': ['catalog', 'repositories', 'connectors', 'mcp'],
-      ship: ['published', 'products', 'sunset-timeline', 'export-studio'],
+      ship: ['published', 'products', 'contracts', 'sunset-timeline', 'export-studio'],
       govern: ['style-guides', 'lint-workspace', 'shadow-apis', 'dependency-graph', 'audit'],
       workspace: ['members', 'roles', 'teams', 'sso', 'api-keys', 'schema-registry'],
     });
@@ -113,6 +113,7 @@ describe('platform-nav model — shape', () => {
       'MCP servers',
       'Published',
       'Products',
+      'Contracts',
       'Sunset timeline',
       'Export studio',
       'Style guides',
@@ -206,6 +207,10 @@ describe('platform-nav model — active-state resolution', () => {
     ['/ade/dashboard/mcp/capabilities', 'mcp'],
     ['/ade/dashboard/mcp/e-1', 'mcp'],
     ['/ade/dashboard/published', 'published'],
+    ['/ade/dashboard/pacts', 'contracts'],
+    ['/ade/dashboard/pacts/pacticipants', 'contracts'],
+    ['/ade/dashboard/pacts/pacticipants/billing-service', 'contracts'],
+    ['/ade/dashboard/pacts/provider-states', 'contracts'],
     ['/ade/dashboard/export/studio', 'export-studio'],
     ['/ade/dashboard/style-guides', 'style-guides'],
     ['/ade/dashboard/lint-workspace', 'lint-workspace'],
@@ -293,6 +298,7 @@ describe('platform-nav model — workspace gating', () => {
     'mcp',
     'published',
     'products',
+    'contracts',
     'sunset-timeline',
     'export-studio',
     'style-guides',
@@ -542,11 +548,11 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 17 of the 22 modelled destinations in the rail while five features are held back; the preview override restores them', () => {
+  it('leaves 18 of the 23 modelled destinations in the rail while five features are held back; the preview override restores them', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(17);
+    expect(releasedRailCount()).toBe(18);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
-    expect(releasedRailCount()).toBe(22);
+    expect(releasedRailCount()).toBe(23);
   });
 
   it('takes Tenants and SDK settings out of the rail and gives every off-rail item a home', () => {

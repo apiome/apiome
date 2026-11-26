@@ -1341,6 +1341,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['asyncapi', 'kafka', 'topic', 'channel', 'asynchronous', 'event', 'queue', 'bi-directional'],
   },
   {
+    id: 'pacticipants',
+    title: 'Pacticipants',
+    summary: 'Browse the applications in your pacts: versions, branches, tags, environments and labels.',
+    page: 'apiome-docs/docs/ship/pact-broker/pacticipants.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'versions', 'branches', 'tags', 'environments', 'labels', 'main branch', 'deployed'],
+  },
+  {
     id: 'provider-states',
     title: 'Provider states',
     summary: "Register the states a provider's pacts name, and how Apiome sets them up.",

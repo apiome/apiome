@@ -44930,3 +44930,254 @@ tr[data-selected="true"] > td:first-child {
   color: var(--fg);
   overflow-wrap: anywhere;
 }
+
+/* ===========================================================================
+   Pacticipants — PFX-5.1 (#6945). `.ppx-*` is the Pacticipants list and one
+   pacticipant's page: the label filter, the tables (pacticipants, branches,
+   environments, versions), the facts and the CLI snippet of an empty state.
+   Branch and tag chips are buttons that narrow the versions. Tokens only.
+   =========================================================================== */
+.ppx {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ppx__toolbar,
+.ppx__filters,
+.ppx__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.ppx__field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.ppx__field-label {
+  color: var(--fg-muted);
+}
+
+.ppx__select {
+  min-inline-size: 12rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.ppx__select:focus-visible,
+.ppx__chip-button:focus-visible,
+.ppx__link:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.ppx__panel {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.ppx__panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ppx__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.ppx__statement {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.ppx__meta,
+.ppx__muted {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.ppx__mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.ppx__error {
+  margin: 0;
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+}
+
+.ppx__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.ppx__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.ppx__table th,
+.ppx__table td {
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--border);
+  color: var(--fg);
+  text-align: start;
+  vertical-align: top;
+}
+
+.ppx__table thead th {
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.ppx__table tbody th {
+  font-weight: 400;
+}
+
+.ppx__table tbody tr:last-child th,
+.ppx__table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+.ppx__table tbody tr:hover {
+  background: var(--bg-subtle);
+}
+
+.ppx__name-cell {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ppx__name {
+  font-weight: 600;
+}
+
+.ppx__link {
+  border-radius: var(--r-sm);
+  color: var(--accent-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.ppx__when {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ppx__chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.ppx__chip-button {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.ppx__chip-button:hover {
+  border-color: var(--border-strong);
+}
+
+.ppx__inline-badge {
+  margin-inline-start: var(--space-2);
+}
+
+.ppx__filter {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+}
+
+.ppx__plain-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppx__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.ppx__fact {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+}
+
+.ppx__fact dt {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.ppx__fact dd {
+  margin: 0;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+.ppx__snippet {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-align: start;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ppx__empty-note {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ppx__more {
+  display: flex;
+  justify-content: center;
+}
