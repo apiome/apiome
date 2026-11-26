@@ -24,8 +24,10 @@ You need two things:
    workspaces, the shorter `https://acme.<broker host>` is the same thing (see
    [The broker host alias](#the-broker-host-alias)).
 2. **An API key** from a member who holds **Pacts** → **Create** — the built-in **Editor** role
-   does. Create one on [API keys](../../workspace/api-keys.mdx). Pact tooling sends it as a bearer
-   token, and Apiome accepts that on every route under `/pact-broker`.
+   does. Create one on [API keys](../../workspace/api-keys.mdx) — the **Pact: consumer + deploy**
+   preset is enough. Pact tooling sends it as a bearer token or as the password of basic auth, and
+   Apiome accepts both on every route under `/pact-broker` (see
+   [Pact keys and scopes](./cli.mdx#pact-keys-and-scopes)).
 
 You do **not** need to register the applications first. The first publication that names a
 consumer or a provider registers it as a [pacticipant](./concepts.mdx).

@@ -15,8 +15,18 @@ every step is one shell command, so the same lines work in GitLab CI, Jenkins or
 1. **Two CI secrets.** `PACT_BROKER_BASE_URL` — your workspace's broker base URL, such as
    `https://api.apiome.dev/v1/tenants/acme/pact-broker` — and `PACT_BROKER_TOKEN`, an API key from a
    member whose role holds **Pacts** → **Create**. Create the key on
-   [API keys](../../workspace/api-keys.mdx).
-2. **The environments you deploy to**, created once:
+   [API keys](../../workspace/api-keys.mdx) with the narrowest
+   [Pact preset](./cli.mdx#pact-keys-and-scopes) each job needs:
+
+   | Job | Preset | Scopes |
+   | --- | --- | --- |
+   | Consumer (section 1) and deploy (section 3) | **Pact: consumer + deploy** | `pact:read` `pact:publish` |
+   | Provider (section 2) | **Pact: CI verifier** | `pact:read` `pact:verify` |
+   | A job that only asks `can-i-deploy` | **Pact: read-only** | `pact:read` |
+
+   A pipeline already set up for basic auth can keep `PACT_BROKER_USERNAME` and
+   `PACT_BROKER_PASSWORD` instead: the password is the API key.
+2. **The environments you deploy to**, created once with a **Full access** key:
 
    ```bash
    apiome pact create-environment --name test
@@ -77,7 +87,7 @@ report instead with
 [`apiome pact publish-verification-results`](./verification-results.mdx#send-a-report-from-your-own-ci).
 
 To start this job whenever a consumer publishes a pact that needs verifying, create a
-[webhook](./webhooks.mdx) once:
+[webhook](./webhooks.mdx) once, with a **Full access** key:
 
 ```bash
 apiome pact create-webhook https://ci.example.com/hooks/ledger-verify \
@@ -115,6 +125,7 @@ Every `apiome pact` command exits `0` when it worked and `1` otherwise, as `pact
 | --- | --- |
 | The key is missing, or belongs to another workspace | which setting to give, or the server's refusal |
 | The key's role lacks **Pacts** → **View** or **Create** | the missing permission |
+| The key's scopes do not allow the call — a verifier key publishing a pact, for example | the key's scopes and the one required |
 | A file is not a pact, or a flag is wrong | the file or flag and the reason |
 | `can-i-deploy` says no, or cannot decide in time | the reason for each integration |
 | `verify` fails or cannot replay everything | each failed pact and each interaction it could not replay |

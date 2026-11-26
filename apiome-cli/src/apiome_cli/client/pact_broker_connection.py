@@ -20,9 +20,10 @@ A broker base URL takes one of two forms:
   routes only, so the commands that call Apiome's own routes (``list-pacticipants``,
   ``describe-version --latest``, ``verify``) refuse it with the reason.
 
-``PACT_BROKER_USERNAME`` / ``PACT_BROKER_PASSWORD`` (basic auth) are not read: Apiome
-authenticates the broker with an API key. When they are set and no token or key is, the command
-says so instead of sending nothing.
+Basic auth (PFX-4.2, #6939): Apiome's broker maps basic auth onto an API key — the **password** is
+the key and the username is ignored. So when no token or key is configured by any of the above,
+``PACT_BROKER_PASSWORD`` is used as the API key. ``PACT_BROKER_USERNAME`` alone, without a
+password, is reported instead of sending nothing.
 """
 
 from __future__ import annotations
@@ -47,6 +48,7 @@ from apiome_cli.exit_codes import EXIT_ERROR
 ENV_BASE_URL = "PACT_BROKER_BASE_URL"
 ENV_TOKEN = "PACT_BROKER_TOKEN"
 ENV_USERNAME = "PACT_BROKER_USERNAME"
+ENV_PASSWORD = "PACT_BROKER_PASSWORD"
 
 #: ``<root>/v1/tenants/<tenant>/pact-broker`` — the path form of a broker base URL.
 _PATH_FORM = re.compile(r"^(?P<root>.*?)/v1/tenants/(?P<tenant>[^/]+)/pact-broker/?$")
@@ -179,7 +181,8 @@ def resolve_broker_settings(
         The settings to use and, when a broker base URL applied, its parsed address.
 
     Raises:
-        CliError: when the broker base URL is malformed, or only basic-auth credentials are set.
+        CliError: when the broker base URL is malformed, or a basic-auth username is set without a
+            password.
     """
     env = os.environ if environ is None else environ
     settings = settings_from_context(ctx)
@@ -206,12 +209,17 @@ def resolve_broker_settings(
     if update:
         settings = settings.model_copy(update=update)
 
-    if settings.api_key_value() is None and env.get(ENV_USERNAME):
-        raise CliError(
-            f"{ENV_USERNAME} / PACT_BROKER_PASSWORD are not used: Apiome's Pact Broker authenticates "
-            f"with an API key. Set {ENV_TOKEN} (or APIOME_API_KEY) to a workspace API key",
-            exit_code=EXIT_ERROR,
-        )
+    if settings.api_key_value() is None:
+        password = (env.get(ENV_PASSWORD) or "").strip()
+        if password:
+            # Basic auth: the password is the API key (the username is ignored by the server too).
+            settings = settings.model_copy(update={"api_key": SecretStr(password)})
+        elif env.get(ENV_USERNAME):
+            raise CliError(
+                f"{ENV_USERNAME} is set but {ENV_PASSWORD} is not: Apiome's Pact Broker reads the "
+                f"workspace API key from the password. Set {ENV_PASSWORD} (or {ENV_TOKEN}) to the key",
+                exit_code=EXIT_ERROR,
+            )
     return settings, address
 
 
@@ -242,7 +250,8 @@ def connect(
     )
     if settings.api_key_value() is None:
         raise CliError(
-            f"No credential: set {ENV_TOKEN} or APIOME_API_KEY to a workspace API key, or pass --broker-token",
+            f"No credential: set {ENV_TOKEN}, {ENV_PASSWORD} or APIOME_API_KEY to a workspace API key, "
+            "or pass --broker-token",
             exit_code=EXIT_ERROR,
         )
     client = RestClient(settings, verify=not insecure_from_context(ctx))

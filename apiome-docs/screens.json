@@ -1565,6 +1565,13 @@
       "data": "fixture:hive-a11y/api-keys-registry-scope.html"
     },
     {
+      "id": "api-keys-pact-scope",
+      "route": "/ade/dashboard/api-keys",
+      "waitFor": "[data-testid=\"api-key-create-dialog\"]",
+      "data": "fixture:hive-a11y/api-keys-pact-scope.html",
+      "scrollTo": "[data-testid=\"api-key-scope-pact_verify\"]"
+    },
+    {
       "id": "preferences-account",
       "route": "/ade/dashboard",
       "waitFor": "[data-testid=\"preferences-drawer\"]",

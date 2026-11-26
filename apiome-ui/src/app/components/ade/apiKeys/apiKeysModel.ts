@@ -18,8 +18,8 @@
  *
  * ### The one rule this module does not own
  *
- * The scope *vocabulary* — what `*`, `diff:read`, `lint:read`, `usage:ingest`, `registry:read` and
- * `registry:write` mean, and that `*` must
+ * The scope *vocabulary* — what `*`, `diff:read`, `lint:read`, `usage:ingest`, `registry:read`,
+ * `registry:write`, `pact:read`, `pact:publish` and `pact:verify` mean, and that `*` must
  * stand alone — is `@/app/utils/apiKeyScopes`, which the REST layer and `lib/db/helper`
  * share. This module presents those scopes; it does not decide them, so the strings a preset
  * produces here are the same strings the database has always stored.
@@ -29,6 +29,9 @@ import {
   API_KEY_SCOPE_DIFF_READ,
   API_KEY_SCOPE_FULL,
   API_KEY_SCOPE_LINT_READ,
+  API_KEY_SCOPE_PACT_PUBLISH,
+  API_KEY_SCOPE_PACT_READ,
+  API_KEY_SCOPE_PACT_VERIFY,
   API_KEY_SCOPE_PRESETS,
   API_KEY_SCOPE_REGISTRY_READ,
   API_KEY_SCOPE_REGISTRY_WRITE,
@@ -292,8 +295,9 @@ export interface ApiKeyScopeReference {
 }
 
 /**
- * The six scopes, in the order the reference card lists them (the mockup's three, then
- * `usage:ingest`, RDG-1.2 / #5760, then the schema registry pair, CDG-4.3 / #5975).
+ * The nine scopes, in the order the reference card lists them (the mockup's three, then
+ * `usage:ingest`, RDG-1.2 / #5760, then the schema registry pair, CDG-4.3 / #5975, then the Pact
+ * Broker trio, PFX-4.2 / #6939).
  *
  * Stated once so the card, the create dialog's badges and the table's legend cannot drift
  * into three different descriptions of `lint:read`.
@@ -329,6 +333,21 @@ export const API_KEY_SCOPE_REFERENCE: readonly ApiKeyScopeReference[] = [
     allows: 'Registers schemas and changes registry config at /registry/schema/… only.',
     full: false,
   },
+  {
+    scope: API_KEY_SCOPE_PACT_READ,
+    allows: 'Reads of the Pact Broker at …/pact-broker — can-i-deploy, fetching pacts.',
+    full: false,
+  },
+  {
+    scope: API_KEY_SCOPE_PACT_PUBLISH,
+    allows: 'Publishes pacts, tags versions and records deployments at …/pact-broker only.',
+    full: false,
+  },
+  {
+    scope: API_KEY_SCOPE_PACT_VERIFY,
+    allows: 'Publishes verification results and runs hosted verification only.',
+    full: false,
+  },
 ];
 
 /**
@@ -345,6 +364,9 @@ export function apiKeyScopeUsage(keys: readonly ApiKeyRecord[]): Record<string, 
     [API_KEY_SCOPE_USAGE_INGEST]: 0,
     [API_KEY_SCOPE_REGISTRY_READ]: 0,
     [API_KEY_SCOPE_REGISTRY_WRITE]: 0,
+    [API_KEY_SCOPE_PACT_READ]: 0,
+    [API_KEY_SCOPE_PACT_PUBLISH]: 0,
+    [API_KEY_SCOPE_PACT_VERIFY]: 0,
   };
   for (const key of keys) {
     const scopes = apiKeyScopeList(key);
@@ -359,7 +381,7 @@ export function apiKeyScopeUsage(keys: readonly ApiKeyRecord[]): Record<string, 
   return counts;
 }
 
-/** One of the create dialog's seven scope cards. */
+/** One of the create dialog's ten scope cards. */
 export interface ApiKeyScopePresetOption {
   /** The preset id, which is also the radio's value. */
   value: ApiKeyScopePreset;
@@ -372,8 +394,8 @@ export interface ApiKeyScopePresetOption {
 }
 
 /**
- * The seven presets: the mockup's four, in its order, then the usage-source preset (RDG-1.2), then
- * the two schema registry presets (CDG-4.3).
+ * The ten presets: the mockup's four, in its order, then the usage-source preset (RDG-1.2), then
+ * the two schema registry presets (CDG-4.3), then the three Pact Broker presets (PFX-4.2).
  *
  * `scopes` is read from {@link API_KEY_SCOPE_PRESETS} rather than restated, which is what
  * makes the second acceptance criterion — *"scope presets produce the same scope strings as
@@ -421,6 +443,24 @@ export const API_KEY_SCOPE_PRESET_OPTIONS: readonly ApiKeyScopePresetOption[] = 
     label: 'Schema registry: read + write',
     scopes: API_KEY_SCOPE_PRESETS.registry_client,
     hint: 'Also registers schemas — for Kafka producers that auto-register.',
+  },
+  {
+    value: 'pact_read',
+    label: 'Pact: read-only',
+    scopes: API_KEY_SCOPE_PRESETS.pact_read,
+    hint: 'Reads the Pact Broker only — for can-i-deploy checks.',
+  },
+  {
+    value: 'pact_publish',
+    label: 'Pact: consumer + deploy',
+    scopes: API_KEY_SCOPE_PRESETS.pact_publish,
+    hint: 'Also publishes pacts and records deployments — for consumer and deploy jobs.',
+  },
+  {
+    value: 'pact_verify',
+    label: 'Pact: CI verifier',
+    scopes: API_KEY_SCOPE_PRESETS.pact_verify,
+    hint: 'Reads pacts and publishes verification results; cannot publish pacts.',
   },
 ];
 

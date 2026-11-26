@@ -2155,7 +2155,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Create scoped keys for REST access, copy the secret once, rotate before expiry, and disable or delete keys.',
     page: 'apiome-docs/docs/workspace/api-keys.mdx',
     section: 'reference',
-    keywords: ['scopes', 'diff:read', 'lint:read', 'usage:ingest', 'registry:read', 'registry:write', 'schema registry', 'revoke', 'bearer', 'x-api-key', 'ci token'],
+    keywords: ['scopes', 'diff:read', 'lint:read', 'usage:ingest', 'registry:read', 'registry:write', 'schema registry', 'pact:read', 'pact:publish', 'pact:verify', 'pact broker', 'revoke', 'bearer', 'x-api-key', 'ci token'],
   },
   {
     id: 'tenants',

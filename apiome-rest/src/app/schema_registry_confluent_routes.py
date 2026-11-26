@@ -31,8 +31,6 @@ and ``registry:write`` for writes (:mod:`app.auth` allowlist), and the key's use
 from __future__ import annotations
 
 import asyncio
-import base64
-import binascii
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, Request
@@ -40,7 +38,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, Response
 
 from . import schema_registry_store as store
-from .auth import decode_jwt, validate_authentication
+from .auth import api_key_from_basic, decode_jwt, validate_authentication
 from .database import db
 from .permissions import Action, Resource, enforce_permission
 from .registry_audit import (
@@ -146,29 +144,6 @@ def _ok(content: Any) -> JSONResponse:
 def _registry_error(code: str, message: str, status_code: int = 404) -> ConfluentRegistryError:
     """Build a Confluent error from a registry code."""
     return ConfluentRegistryError.from_registry(SchemaRegistryError(code, message, status_code=status_code))
-
-
-def api_key_from_basic(authorization: str) -> Optional[str]:
-    """Return the password of an HTTP basic ``Authorization`` value — the API key — or ``None``.
-
-    Confluent clients send ``basic.auth.user.info = "<name>:<secret>"``; the name is ignored and the
-    secret is the workspace API key.
-
-    Args:
-        authorization: The full header value (``Basic <base64>``).
-
-    Returns:
-        The API key, or ``None`` when the value is not well-formed basic auth.
-    """
-    scheme, _, encoded = authorization.strip().partition(" ")
-    if scheme.lower() != "basic" or not encoded.strip():
-        return None
-    try:
-        decoded = base64.b64decode(encoded.strip(), validate=True).decode("utf-8")
-    except (binascii.Error, UnicodeDecodeError, ValueError):
-        return None
-    _, sep, password = decoded.partition(":")
-    return password if sep and password else None
 
 
 def registry_auth(

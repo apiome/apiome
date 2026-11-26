@@ -26,7 +26,8 @@ You need:
    `https://api.apiome.dev/v1/tenants/acme/pact-broker`.
 3. **An API key** from a member whose role holds **Pacts** → **Create** (the built-in **Editor**
    role does). Create one on [API keys](../../workspace/api-keys.mdx). Read-only commands such as
-   `can-i-deploy` need only **Pacts** → **View**.
+   `can-i-deploy` need only **Pacts** → **View**. Give each job a key with a
+   [Pact scope](#pact-keys-and-scopes) rather than full access.
 
 ## Point the CLI at your workspace
 
@@ -56,8 +57,55 @@ If your operator set up a [broker host](./publish-pacts.mdx#the-broker-host-alia
 `describe-version --latest` and `verify` call Apiome's own API, which the short form does not
 serve; they stop and ask for the long form.
 
-`PACT_BROKER_USERNAME` and `PACT_BROKER_PASSWORD` are not used: Apiome's broker signs in with an
-API key. When only those two are set, the command stops and says so.
+A pipeline set up for basic auth works too: when no token or key is set, `PACT_BROKER_PASSWORD` is
+used as the API key and `PACT_BROKER_USERNAME` is ignored. A username without a password stops the
+command with the reason.
+
+## Pact keys and scopes
+
+Apiome's broker has no users or passwords of its own: every credential is a workspace
+[API key](../../workspace/api-keys.mdx). Pact tooling may send it three ways, and all three are
+the same key:
+
+| Tooling setting | Sent as |
+| --- | --- |
+| `--broker-token`, `PACT_BROKER_TOKEN`, `pactBrokerToken` | `Authorization: Bearer <api-key>` |
+| `--broker-username` / `--broker-password`, `PACT_BROKER_USERNAME` / `PACT_BROKER_PASSWORD`, `pactBrokerUsername` / `pactBrokerPassword` | Basic auth: the **password** is the API key; the username can be anything |
+| `apiome pact` | `X-API-Key: <api-key>` |
+
+Basic auth with an empty password, or any other `Authorization` scheme, is refused with `401` and
+a message that says where the key goes.
+
+Three scopes keep a Pact key away from everything else in the workspace. Each admits only the
+broker (`/v1/tenants/<workspace>/pact-broker`) and the hosted verifier
+(`/v1/tenants/<workspace>/pact-verifier`); `pact:read` also reads the workspace's
+[pacticipants](./concepts.mdx):
+
+| Scope | Allows | Commands |
+| --- | --- | --- |
+| `pact:read` | Every read of the broker, the hosted verifier and the pacticipants, and fetching the pacts to verify | `can-i-deploy`, `describe-version`, `list-pacticipants`, a verifier fetching its pacts |
+| `pact:publish` | Publishing pacts and provider contracts, tagging a version or recording its branch, recording a deployment or release | `publish`, `publish-provider-contract`, `record-deployment`, `record-undeployment`, `record-release`, `record-support-ended` |
+| `pact:verify` | Publishing verification results, sending a verifier report, hosted verification, registering provider states, tagging the provider version | `verify`, `publish-verification-results`, a Pact verifier with `publishVerificationResults` |
+
+Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx):
+
+| Job | Preset | Scopes |
+| --- | --- | --- |
+| Gate a deploy with `can-i-deploy` only | **Pact: read-only** | `pact:read` |
+| Publish a consumer's pacts; record deployments | **Pact: consumer + deploy** | `pact:read` `pact:publish` |
+| Verify a provider in CI | **Pact: CI verifier** | `pact:read` `pact:verify` |
+
+:::note Security
+- A Pact scope is checked **before** the key's role: the member who created the key still needs
+  **Pacts** → **View** (reads) or **Create** (writes), and a key works only in its own workspace.
+- Deleting anything, webhooks, environments and cleanup need a **Full access** key — run
+  `create-environment` and `create-webhook` with one, once, outside the pipeline. So do
+  `export-consumer-contract` and `publish-consumer-contract`, which call a project's consumer
+  contracts rather than the broker.
+- A CI verifier key cannot publish a pact, so a compromised provider build cannot change what its
+  consumers expect.
+- Store the key as a CI secret and prefer the variables to `-k`.
+:::
 
 ## The commands
 

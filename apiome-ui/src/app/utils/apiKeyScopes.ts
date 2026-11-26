@@ -1,11 +1,14 @@
 /**
  * Workspace API key scopes (CTG-2.3 / #4473; `usage:ingest` RDG-1.2 / #5760; `registry:read` /
- * `registry:write` CDG-4.3 / #5975).
+ * `registry:write` CDG-4.3 / #5975; `pact:read` / `pact:publish` / `pact:verify` PFX-4.2 / #6939).
  *
  * `*` = full access (default). CI tokens use `diff:read` and/or `lint:read`. A usage source (an
  * OpenTelemetry Collector, a log shipper) uses `usage:ingest`, which admits only the usage ingest
  * route. A Kafka serializer uses `registry:read` (and `registry:write` to register schemas), which
- * admit only the Confluent-compatible schema registry at `/registry/schema/{tenant}`.
+ * admit only the Confluent-compatible schema registry at `/registry/schema/{tenant}`. Pact tooling
+ * uses `pact:read` (can-i-deploy, fetching pacts), `pact:publish` (publishing pacts, recording
+ * deployments) and `pact:verify` (publishing verification results), which admit only the Pact
+ * Broker at `/v1/tenants/{tenant}/pact-broker` and the hosted verifier.
  */
 
 export const API_KEY_SCOPE_FULL = '*';
@@ -14,6 +17,9 @@ export const API_KEY_SCOPE_LINT_READ = 'lint:read';
 export const API_KEY_SCOPE_USAGE_INGEST = 'usage:ingest';
 export const API_KEY_SCOPE_REGISTRY_READ = 'registry:read';
 export const API_KEY_SCOPE_REGISTRY_WRITE = 'registry:write';
+export const API_KEY_SCOPE_PACT_READ = 'pact:read';
+export const API_KEY_SCOPE_PACT_PUBLISH = 'pact:publish';
+export const API_KEY_SCOPE_PACT_VERIFY = 'pact:verify';
 
 export const API_KEY_SCOPE_VOCAB = new Set([
   API_KEY_SCOPE_FULL,
@@ -22,6 +28,9 @@ export const API_KEY_SCOPE_VOCAB = new Set([
   API_KEY_SCOPE_USAGE_INGEST,
   API_KEY_SCOPE_REGISTRY_READ,
   API_KEY_SCOPE_REGISTRY_WRITE,
+  API_KEY_SCOPE_PACT_READ,
+  API_KEY_SCOPE_PACT_PUBLISH,
+  API_KEY_SCOPE_PACT_VERIFY,
 ]);
 
 /** Preset ids for the Control Panel create-key scope picker. */
@@ -32,7 +41,10 @@ export type ApiKeyScopePreset =
   | 'ci_both'
   | 'usage'
   | 'registry_read'
-  | 'registry_client';
+  | 'registry_client'
+  | 'pact_read'
+  | 'pact_publish'
+  | 'pact_verify';
 
 export const API_KEY_SCOPE_PRESETS: Record<ApiKeyScopePreset, string[]> = {
   full: [API_KEY_SCOPE_FULL],
@@ -42,6 +54,9 @@ export const API_KEY_SCOPE_PRESETS: Record<ApiKeyScopePreset, string[]> = {
   usage: [API_KEY_SCOPE_USAGE_INGEST],
   registry_read: [API_KEY_SCOPE_REGISTRY_READ],
   registry_client: [API_KEY_SCOPE_REGISTRY_READ, API_KEY_SCOPE_REGISTRY_WRITE],
+  pact_read: [API_KEY_SCOPE_PACT_READ],
+  pact_publish: [API_KEY_SCOPE_PACT_READ, API_KEY_SCOPE_PACT_PUBLISH],
+  pact_verify: [API_KEY_SCOPE_PACT_READ, API_KEY_SCOPE_PACT_VERIFY],
 };
 
 /**
@@ -68,7 +83,7 @@ export function normalizeApiKeyScopes(raw?: string[] | string | null): string[] 
   for (const s of parts) {
     if (!API_KEY_SCOPE_VOCAB.has(s)) {
       throw new Error(
-        `Invalid API key scope "${s}". Allowed: *, diff:read, lint:read, usage:ingest, registry:read, registry:write.`,
+        `Invalid API key scope "${s}". Allowed: ${[...API_KEY_SCOPE_VOCAB].join(', ')}.`,
       );
     }
   }
@@ -97,5 +112,8 @@ export function presetFromScopes(scopes: string[] | null | undefined): ApiKeySco
   if (normalized === 'usage:ingest') return 'usage';
   if (normalized === 'registry:read') return 'registry_read';
   if (normalized === 'registry:read,registry:write') return 'registry_client';
+  if (normalized === 'pact:read') return 'pact_read';
+  if (normalized === 'pact:publish,pact:read') return 'pact_publish';
+  if (normalized === 'pact:read,pact:verify') return 'pact_verify';
   return 'full';
 }
