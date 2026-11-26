@@ -1,0 +1,25 @@
+---
+slug: pact-rbac-audit
+title: "Pact Broker: permissions, audit and isolation"
+description: "Every Pact Broker change is permission-checked, audited and kept in its workspace."
+authors: [apiome]
+---
+
+Every change to the Pact Broker is now checked against the **Pacts** permission, written to the
+**Access audit**, and kept inside its workspace by the database itself. See
+[Who can do what](/ship/pact-broker/concepts#who-can-do-what).
+
+{/* truncate */}
+
+- **One permission for the whole broker.** Publishing pacts and results, environments,
+  deployments, webhooks and provider states all use **Pacts**: **Viewer** reads, **Editor** creates
+  and edits, and only **Admin** and **Owner** delete. A role without the permission gets `403`
+  naming it.
+- **Every change is in the audit.** Each write adds a `pacts.*` event to the
+  [Access audit](/govern/access-audit#pact-broker-events), with who acted, what changed and the
+  route, but never the request body, so webhook tokens and pact contents stay out of it.
+- **Workspaces never share Pact data.** The database now refuses a webhook delivery, a webhook
+  firing or a commit status that points at another workspace's row. Operators: see the `V447`
+  note on [Operating Apiome](/admin/operating-apiome#upgrade-a-large-database-without-blocking-writes).
+
+*Last updated: November 26, 2026*

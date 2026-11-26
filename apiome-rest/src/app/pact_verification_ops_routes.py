@@ -25,6 +25,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .pact_audit import audited_write
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_routes import _base_url, _http_error
 from .pact_publication import PactPublicationError
@@ -253,6 +254,7 @@ def _enforce_run(auth_data: Dict[str, Any], provider: str) -> Optional[str]:
     ),
     responses=_RUN_ERRORS,
 )
+@audited_write("pacts.verification.run", "pact/provider/{provider}/consumer/{consumer}/pact-version/{sha}")
 def reverify(
     request: Request,
     tenant_slug: str,
@@ -309,6 +311,7 @@ def reverify(
     ),
     responses=_RUN_ERRORS,
 )
+@audited_write("pacts.verification.run", "pacticipant/{provider}/stale")
 def verify_stale(
     request: Request,
     tenant_slug: str,

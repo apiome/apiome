@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .pact_audit import audited_write
 from .pact_broker_auth import validate_broker_authentication
 from .pact_provider_state import (
     CODE_STATE_INVALID,
@@ -156,6 +157,7 @@ def list_states_route(
         422: {"description": "`provider-state-invalid`, with a JSON Pointer to the place."},
     },
 )
+@audited_write("pacts.provider_state.create", "pacticipant/{provider}/provider-states")
 def create_state_route(
     tenant_slug: str,
     provider: str,
@@ -272,6 +274,7 @@ def get_state_route(
         422: {"description": "`provider-state-invalid`, with a JSON Pointer to the place."},
     },
 )
+@audited_write("pacts.provider_state.update", "pacticipant/{provider}/provider-state/{state_id}")
 def replace_state_route(
     tenant_slug: str,
     provider: str,
@@ -311,6 +314,7 @@ def replace_state_route(
     ),
     responses={404: _REFUSALS[404]},
 )
+@audited_write("pacts.provider_state.delete", "pacticipant/{provider}/provider-state/{state_id}")
 def delete_state_route(
     tenant_slug: str,
     provider: str,

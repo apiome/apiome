@@ -33,6 +33,7 @@ from .bidirectional_verification import KIND_BIDIRECTIONAL
 from .config import settings
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .pact_audit import audited_write
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_routes import (
     _PAIR_PATH,
@@ -326,6 +327,7 @@ def _record_version(
     ),
     responses={201: {"description": "The version was created and recorded on the branch."}},
 )
+@audited_write("pacts.version.record", "pacticipant/{pacticipant}/version/{version}")
 def put_branch_version(
     tenant_slug: str,
     pacticipant: str,
@@ -362,6 +364,7 @@ def put_branch_version(
     ),
     responses={201: {"description": "The version was created with the tag."}},
 )
+@audited_write("pacts.tag.add", "pacticipant/{pacticipant}/version/{version}/tag/{tag}")
 def put_version_tag(
     tenant_slug: str,
     pacticipant: str,
@@ -528,6 +531,7 @@ _PUBLISH_DESCRIPTION = (
     openapi_extra={"requestBody": _RESULT_BODY},
     responses=_RESULT_ERRORS,
 )
+@audited_write("pacts.verification.publish", "pact/provider/{provider}/consumer/{consumer}/pact-version/{sha}")
 def publish_result(
     tenant_slug: str,
     provider: str,
@@ -566,6 +570,7 @@ def publish_result(
     openapi_extra={"requestBody": _RESULT_BODY},
     responses=_RESULT_ERRORS,
 )
+@audited_write("pacts.verification.publish", "pact/provider/{provider}/consumer/{consumer}/pact-version/{sha}")
 def publish_result_with_metadata(
     tenant_slug: str,
     provider: str,
@@ -651,6 +656,7 @@ _INGEST_BODY = {
         201: {"description": "The stored result, with an `ingestion` object (`format`, `interactions`, `notices`)."},
     },
 )
+@audited_write("pacts.verification.publish", "pact/provider/{provider}/consumer/{consumer}/pact-version/{sha}")
 def ingest_external_result(
     tenant_slug: str,
     provider: str,

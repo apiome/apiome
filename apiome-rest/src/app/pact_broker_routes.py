@@ -54,6 +54,7 @@ from .bidirectional_verification import ComparisonRun, run_notices
 from .config import settings
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .pact_audit import audited_write
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_host import alias_base_url
 from .pact_commit_status_store import post_publish_statuses
@@ -1057,6 +1058,7 @@ router.add_api_route(
     openapi_extra={"requestBody": _PUBLISH_BODY},
     responses={409: _CONFLICT_409, 413: _TOO_LARGE_413, 422: _LOCATED_422, 429: _RATE_429},
 )
+@audited_write("pacts.publication.create", "pact-broker/contracts/publish")
 def publish_contracts(
     tenant_slug: str,
     request: Request,
@@ -1148,6 +1150,7 @@ def publish_contracts(
         429: _RATE_429,
     },
 )
+@audited_write("pacts.publication.create", "pact/provider/{provider}/consumer/{consumer}/version/{consumer_version}")
 def publish_pact(
     tenant_slug: str,
     provider: str,

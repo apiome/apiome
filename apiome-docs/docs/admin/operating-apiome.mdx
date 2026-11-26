@@ -1060,6 +1060,16 @@ mcp_listed_at timestamptz`), build `idx_versions_mcp_public_listed`,
 `idx_versions_mcp_project_listed` and `idx_versions_mcp_public_listed_embedding_hnsw` concurrently
 with the definitions in the script, then deploy.
 
+`V447` (PFX-6.1) makes the database refuse a Pact row that points at another workspace's row: a
+webhook delivery naming another workspace's webhook, a webhook firing naming another workspace's
+delivery, and a commit status naming another workspace's repository. It adds a `UNIQUE (id,
+tenant_id)` key to `push_webhook_delivery_events` and `tenant_repositories`, which builds an index
+on each and blocks writes to that table while it builds, then checks every existing row against
+the new references. Apiome never wrote a crossed row, so the check passes; if it fails with a
+foreign-key violation, the row it names points across workspaces — send it to support rather than
+deleting it. Build its three `CREATE INDEX IF NOT EXISTS` indexes concurrently as above to shorten
+the upgrade; the two unique keys are built by the migration.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's

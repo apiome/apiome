@@ -37,6 +37,7 @@ from fastapi import APIRouter, Depends, Path, Query, Request, Response
 
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .pact_audit import audited_write
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_routes import (
     HalJSONResponse,
@@ -372,6 +373,7 @@ def read_environments(
         422: {"description": "`pact-environment-invalid`: the body is malformed; `detail.pointer` names the field."},
     },
 )
+@audited_write("pacts.environment.create", "pact-environments")
 def post_environment(
     tenant_slug: str,
     request: Request,
@@ -458,6 +460,7 @@ def read_environment(
         422: {"description": "`pact-environment-invalid`: the body is malformed."},
     },
 )
+@audited_write("pacts.environment.update", "pact-environment/{uuid}")
 def put_environment(
     tenant_slug: str,
     request: Request,
@@ -502,6 +505,7 @@ def put_environment(
     ),
     responses=_NOT_FOUND,
 )
+@audited_write("pacts.environment.delete", "pact-environment/{uuid}")
 def remove_environment(
     uuid: str = Path(description="The environment's `uuid`, as `GET …/environments` lists it."),
     auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
@@ -668,6 +672,7 @@ _RECORD_ERRORS = {
         **_RECORD_ERRORS,
     },
 )
+@audited_write("pacts.deployment.record", "pacticipant/{pacticipant}/version/{version}/environment/{uuid}")
 def post_deployment(
     tenant_slug: str,
     request: Request,
@@ -776,6 +781,7 @@ def read_deployments_of_version(
         **_RECORD_ERRORS,
     },
 )
+@audited_write("pacts.release.record", "pacticipant/{pacticipant}/version/{version}/environment/{uuid}")
 def post_release(
     tenant_slug: str,
     request: Request,
@@ -913,6 +919,7 @@ def read_deployed_version(
     openapi_extra={"requestBody": _patch_body("currentlyDeployed")},
     responses={**_DEPLOYED_404, 422: {"description": "`pact-deployment-invalid`: `currentlyDeployed` is not `false`."}},
 )
+@audited_write("pacts.deployment.update", "deployed-version/{uuid}")
 def patch_deployed_version(
     tenant_slug: str,
     request: Request,
@@ -989,6 +996,7 @@ def read_released_version(
         422: {"description": "`pact-deployment-invalid`: `currentlySupported` is not `false`."},
     },
 )
+@audited_write("pacts.release.update", "released-version/{uuid}")
 def patch_released_version(
     tenant_slug: str,
     request: Request,

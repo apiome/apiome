@@ -38,6 +38,7 @@ from fastapi.responses import PlainTextResponse, Response
 from .config import settings
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .pact_audit import audited_write
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_routes import (
     _PAIR_PATH,
@@ -626,6 +627,7 @@ _CREATE_DESCRIPTION = (
     openapi_extra={"requestBody": _WEBHOOK_BODY},
     responses=_WRITE_ERRORS,
 )
+@audited_write("pacts.webhook.create", "pact-webhooks")
 def post_webhook(
     tenant_slug: str,
     request: Request,
@@ -660,6 +662,7 @@ def post_webhook(
     openapi_extra={"requestBody": _WEBHOOK_BODY},
     responses={**_WRITE_ERRORS, **_RATE_429},
 )
+@audited_write("pacts.webhook.execute", "pact-webhooks/execute")
 def execute_unsaved_webhook(
     tenant_slug: str,
     request: Request,
@@ -738,6 +741,7 @@ def read_webhook(
     openapi_extra={"requestBody": _WEBHOOK_BODY},
     responses={201: {"description": "The webhook did not exist and was created."}, **_WRITE_ERRORS},
 )
+@audited_write("pacts.webhook.update", "pact-webhook/{uuid}")
 def put_webhook(
     tenant_slug: str,
     uuid: str,
@@ -789,6 +793,7 @@ def put_webhook(
     ),
     responses=_NOT_FOUND,
 )
+@audited_write("pacts.webhook.delete", "pact-webhook/{uuid}")
 def remove_webhook(
     tenant_slug: str,
     uuid: str,
@@ -831,6 +836,7 @@ def remove_webhook(
         503: {"description": "`pact-webhook-secrets-unavailable`: the webhook's secrets cannot be opened."},
     },
 )
+@audited_write("pacts.webhook.execute", "pact-webhook/{uuid}")
 def execute_saved_webhook(
     tenant_slug: str,
     uuid: str,
@@ -908,6 +914,7 @@ def _scoped_routes(path: str, what: str, *, consumer: bool, provider: bool) -> N
         """List the webhooks of the scope in the URL."""
         return _list(request, tenant_slug, auth_data, names(request))
 
+    @audited_write("pacts.webhook.create", "pact-webhooks")
     def post_scoped(
         tenant_slug: str,
         request: Request,

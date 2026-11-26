@@ -47,6 +47,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .auth_provider_resolved_routes import require_internal_service
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .pact_audit import record_pact_write
 from .pact_broker_routes import _http_error
 from .pact_environment import DeployedVersionRecord, parse_application_instance
 from .pact_environment_store import list_environments, record_deployment
@@ -635,6 +636,13 @@ def record_mcp_deployment(body: McpPactRecordDeploymentRequest) -> McpPactDeploy
         )
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
+    record_pact_write(
+        db,
+        auth_data,
+        "pacts.deployment.record",
+        f"pacticipant/{body.pacticipant}/version/{body.version}/environment/{environments[0].id}",
+        {"route": "record_mcp_deployment", "via": "mcp", "created": created},
+    )
     return McpPactDeploymentResponse(created=created, deployment=deployment_document(deployed))
 
 

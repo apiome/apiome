@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.861.0] - 2026-11-26
+
+### Added
+- **Pact Broker RBAC, audit and tenant isolation (PFX-6.1, #6953).** OpenAPI 1.685.0 (no route,
+  parameter or schema changes), apiome-db V447.
+  - **Audit on every write.** Every Pact write route appends a hash-chained `access_audit` row.
+    Deletes, restores, labels and retention already wrote theirs inside the change's transaction
+    (`app.pact_cleanup_store.audit_tx`); the other 36 write routes are wrapped in the new
+    `app.pact_audit.audited_write`, which appends the row once the route succeeds (best-effort, like
+    every other `write_access_audit` caller; a failed insert is logged and never fails the change).
+    Actions: `pacts.pacticipant.create|update`, `pacts.version.record`, `pacts.tag.add`,
+    `pacts.publication.create`, `pacts.verification.publish|run`, `pacts.environment.create|update|delete`,
+    `pacts.deployment.record|update`, `pacts.release.record|update`,
+    `pacts.webhook.create|update|delete|execute|redeliver`, `pacts.provider_state.create|update|delete`,
+    `pacts.commit_status.retry`. The MCP `record-deployment` route writes `pacts.deployment.record`.
+    The row's `detail` holds the route, its path parameters, the status of a `Response` and the
+    created id — never a request body. A refused call (raised error or a 4xx/5xx `Response`) writes
+    no row.
+  - **The `pacts` permission matrix.** `docs/pacts-permission-matrix.json` tables every Pact write
+    with its permission and audit action; `tests/test_pacts_permission_matrix.py` fails when a
+    mounted write route has no row, a row names no route, a row's audit is not wired, a role is
+    answered differently from the table, or the table drifts from `apiome.seed_builtin_roles`.
+  - **Tenant isolation (apiome-db V447).** Three single-column references between tenant-carrying
+    rows become composite `(…, tenant_id)` keys: `push_webhook_delivery_events.pact_webhook_id`,
+    `pact_triggered_webhook.delivery_event_id` and `pact_commit_status.repository_id`
+    (`push_webhook_delivery_events` and `tenant_repositories` gain `UNIQUE (id, tenant_id)`).
+    `tests/test_pact_tenant_isolation_migration.py` replays every PFX migration and fails on any
+    single-column reference left between tenant-carrying rows;
+    `tests/test_pact_tenant_isolation_db.py` proves the refusals on a migrated database.
+
+### Fixed
+- An endpoint wrapped by `audited_write` keeps its parameters in OpenAPI and request parsing: the
+  wrapper pins the endpoint's evaluated signature, so a body model is still read from the body.
+
 ## [1.860.0] - 2026-11-26
 
 ### Added
