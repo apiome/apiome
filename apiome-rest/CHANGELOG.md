@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.860.0] - 2026-11-26
+
+### Added
+- **Environments, deployment history and the deploy simulator (PFX-5.7, #6951).** OpenAPI 1.684.0,
+  apiome-db V446. Three read routes under `/v1/tenants/{tenant}/pact-environments`
+  (`app.pact_deployment_routes`, tag `pact-broker`, off the catalogued Pact Broker surface) for the
+  console's **Environments** pages; `{environment}` is the environment's name. All need `pacts:view`.
+  - `GET …/pact-environments` — every environment with each version currently deployed to it
+    (pacticipant, version, application instance, `deployedAt`) and each release it currently
+    supports (`releasedAt`); `truncated` when either list passes 2000 entries.
+  - `GET …/pact-environments/{environment}/deployments` — every deployment recorded to the
+    environment, current or replaced, newest first, with `currentlyDeployed`, `deployedAt`,
+    `undeployedAt` and `recordedBy`; `pacticipant` narrows (an unknown one is a 404
+    `pacticipant-not-found`), `cursor` pages (`nextCursor`; one it did not hand out is a 400
+    `pact-deployment-cursor-invalid`), `limit` ≤ 50.
+  - `GET …/pact-environments/{environment}/simulate?pacticipant=&version=[&applicationInstance=]` —
+    what deploying that version would do, recording nothing: the candidate's can-i-deploy
+    `verdict`, the version it `replaces` in that instance (`alreadyDeployed` when it is the same),
+    and `impacts` — for each version of a pacticipant it has a pact with that is **running** in the
+    environment or **pending** (deployed or released elsewhere, not here), the verdict `before` and
+    `after` and the `effect` (`breaks`, `fixes`, `clears`, `blocks`, `changes`, `unchanged`), plus a
+    `summary` of the effects. At most 20 versions are checked; the rest are in `notChecked` with the
+    reason (`pact-simulation-over-limit`). Both verdicts come from the one verdict function
+    `can-i-deploy` uses (`query_matrix` gains an `environment_override` for the what-if). An
+    unknown environment, pacticipant or version is a 404; a malformed `applicationInstance` a 400
+    `pact-simulation-invalid`.
+- apiome-db V446: `idx_deployed_version_environment_history (environment_id, tenant_id, seq DESC)`
+  replaces `idx_deployed_version_environment`.
+
 ## [1.859.0] - 2026-11-26
 
 ### Added

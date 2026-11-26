@@ -1,0 +1,150 @@
+---
+title: Environments and the deploy simulator
+description: See which version runs where, read deployment history, simulate a deployment.
+sidebar_position: 5.1
+tags: [contracts, pact, environments, ci, ui, rest]
+---
+
+The **Environments** pages show which version of each pacticipant runs in each of your
+[environments](./environments.mdx), every deployment recorded to an environment, and — before you
+deploy — what a deployment would change. The **Deploy simulator** answers *what if this version
+went to production?*: whether it is safe, and which other versions it would clear the way for or
+break. It records nothing.
+
+## Before you start
+
+- You hold **Pacts** → **View**. Without it, the pages show **Permission denied**.
+- Your deploy jobs [record each deployment](./environments.mdx#record-a-deployment) (or release).
+  The pages show what is recorded; a deployment nobody recorded is not there.
+- The simulator reads the same pacts and verification results as
+  [can-i-deploy](./can-i-deploy.mdx), so a version needs its pacts
+  [published](./publish-pacts.mdx) and [verified](./verification-results.mdx) for an answer other
+  than **Not known yet**.
+
+## Open the Environments page
+
+1. In the rail, under **Ship**, click **Contracts**.
+2. On the **Pacticipants** page, click **Environments**.
+
+The page is at `/ade/dashboard/pacts/environments`.
+
+<Screenshot id="pact-environments" alt="The Environments page: a Deployed versions grid with Billing Service, Ledger API, Mobile App and Reporting Job down the side and Production, Staging and QA across the top, each cell listing the versions deployed there (Reporting Job 1.4.2 in instances eu-west and us-east, Mobile App 5.2.0 released); below, the three environments with their name, counts and whether a contract is required."/>
+
+**Deployed versions** has a row for every pacticipant that is in any environment and a column for
+each environment:
+
+- each version **deployed** there now, with its application instance when it has one
+  (`1.4.2 · eu-west`);
+- each release the environment **supports** now, marked `released`;
+- `—` when the pacticipant has nothing there.
+
+A commit-SHA version is cut to 12 characters; point at it to read the whole number. Click an
+environment to open its page, or a pacticipant to open
+[its page](./pacticipants.mdx). **Environments** lists each environment with its name, how many
+versions are deployed and released there, and whether it requires a contract.
+
+When the workspace has more than 2000 current deployments or releases, the page says so and shows
+the first 2000.
+
+A workspace with no environment shows the commands that create one and record a deployment.
+
+## Read an environment
+
+Click an environment's name. The page is at `/ade/dashboard/pacts/environments/<name>`.
+
+<Screenshot id="pact-environment-detail" alt="The Production environment page: Overview (name production, Production yes, Contract required yes), Deployed now (Billing Service 2.3.1, Ledger API 3f2a9c1b7e6d, Reporting Job 1.4.2 in eu-west and us-east), Released and supported (Mobile App 5.2.0), and the Deployment history newest first with Deployed and Replaced states."/>
+
+- **Overview** — the name tooling uses, whether it is a production environment, and whether a
+  version must have a pact before it can be deployed here (**Contract required**).
+- **Deployed now** — each version deployed here, its instance (**Unnamed** for the environment's
+  only instance) and when it was recorded. An empty environment shows the `record-deployment`
+  command.
+- **Released and supported** — each release supported here (shown when there is one).
+- **Deployment history** — every deployment recorded here, current or replaced, newest first:
+  when, the pacticipant and version, the instance, **Deployed** or **Replaced** (with when it
+  stopped), and who recorded it. Choose a **Pacticipant** to see only its deployments; click
+  **Load more** for the next 25.
+
+Each section loads on its own: when the history cannot be read, the rest of the page stays and the
+history offers **Try again**.
+
+## Simulate a deployment
+
+1. On an environment's page, click **Simulate a deployment**.
+2. In **Pacticipant**, type or choose the pacticipant you want to deploy (for example
+   `ledger-api`).
+3. In **Version**, type or choose the version — the newest versions are suggested, such as the one
+   running in staging.
+4. Optional: in **Application instance**, name the instance you deploy to (`eu-west`). Leave it
+   empty for the environment's only, unnamed instance.
+5. Click **Simulate**.
+
+The page is at `/ade/dashboard/pacts/environments/<name>/simulate`, and the address carries the
+question (`?pacticipant=ledger-api&version=…`), so you can share a simulation. Opening such an
+address simulates straight away.
+
+<Screenshot id="pact-deploy-simulator" alt="The Deploy simulator for production: Ledger API 9c8b7a6f5e4d is Deployable and would replace 3f2a9c1b7e6d in the unnamed instance; What else changes lists Billing Service 2.4.0 in staging going from Not deployable to Deployable (Clears), Mobile App 5.3.0 Not known yet (No change) and the running Billing Service 2.3.1 (No change); below, the CLI commands that check and then record the deployment."/>
+
+### Read the answer
+
+- **Can … go to …?** — the version's own [can-i-deploy verdict](./can-i-deploy.mdx#how-the-answer-is-reached):
+  **Deployable**, **Not deployable** or **Not known yet**, with the reason. Below it, what the
+  deployment would replace in that instance, or that it is the pacticipant's first deployment
+  there, or that the version is already deployed (then nothing changes).
+- **What else changes** — every version of a pacticipant that has a pact with yours, and that is
+  either **running** in this environment or deployed or released **elsewhere** (staging, say) but
+  not here yet. For each: its side of the pact (**consumer** or **provider**), its verdict **Now**
+  and **After** the deployment (click **Why** for the reasons), and the **Effect**:
+
+  | Effect | Meaning |
+  | --- | --- |
+  | **Breaks** | A version running here is deployable now and would not be. |
+  | **Blocks** | A version elsewhere could come here now and could not. |
+  | **Changes** | The verdict moves between **Not deployable** and **Not known yet**. |
+  | **Fixes** | A version running here is not deployable now and would be. |
+  | **Clears** | A version elsewhere cannot come here now and could — deploy this first. |
+  | **No change** | The verdict stays the same. |
+
+  The line above the table counts the effects, the ones that need attention first.
+- **Not checked** — the simulator checks at most 20 versions; any others are listed with the reason,
+  never dropped.
+- **Deploy from a pipeline** — the `apiome pact can-i-deploy` command followed by
+  `apiome pact record-deployment`, so the deployment is recorded only when can-i-deploy says yes.
+
+Click **Check again** to simulate once more against what is recorded now — for example after a
+provider published a new verification result. The time the answer was read is shown beside the
+verdict.
+
+### How the simulator decides
+
+For each version it checks, the simulator asks can-i-deploy twice: once against the environment as
+recorded, once with your version in place of the one it replaces in that instance (every other
+instance and supported release stays). The answers come from the same verdict as `can-i-deploy`, so
+a **Clears** today is what `can-i-deploy` answers once you deploy.
+
+## Use the API
+
+The pages read three REST routes, all needing `pacts:view`:
+
+| Route | What it returns |
+| --- | --- |
+| `GET /v1/tenants/{tenant}/pact-environments` | Every environment with what is deployed and released to it now. |
+| `GET /v1/tenants/{tenant}/pact-environments/{name}/deployments` | The deployment history; `pacticipant`, `cursor`, `limit` (≤ 50). |
+| `GET /v1/tenants/{tenant}/pact-environments/{name}/simulate` | The simulation; `pacticipant`, `version`, optional `applicationInstance`. |
+
+See the [REST reference](../../reference/rest/pact-broker.md) for the full shapes.
+
+## When something is refused
+
+| What you see | Why | What to do |
+| --- | --- | --- |
+| **Permission denied** | You do not hold **Pacts** → **View**. | Ask a workspace admin for the role. |
+| **No such environment** | No environment has that name in this workspace. | Open **Environments** and choose one. |
+| `pacticipant-not-found` / `pacticipant-version-not-found` | The pacticipant or version is not recorded. | Check the spelling; [publish](./publish-pacts.mdx) the version's pacts first. |
+| The application instance … cannot start or end with a space | The instance has surrounding spaces or a control character. | Type the instance exactly as your deploy job records it. |
+
+## Related
+
+- [Environments and deployments](./environments.mdx) — create environments and record deployments.
+- [Can I deploy?](./can-i-deploy.mdx) — the verdict the simulator is built on.
+- [Pacticipants](./pacticipants.mdx) — each pacticipant's environments.

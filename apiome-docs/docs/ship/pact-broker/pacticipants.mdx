@@ -38,8 +38,8 @@ Each row shows:
 <Screenshot id="pact-pacticipants" alt="The Pacticipants page: Billing Service, Ledger API and Mobile App, each with its handle, main branch, labels, repository and last update, under a Label filter."/>
 
 The header also opens the [**Matrix**](./matrix.mdx),
-[**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console) and
-[**Webhooks**](./webhooks-console.mdx) pages.
+[**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console),
+[**Webhooks**](./webhooks-console.mdx) and [**Environments**](./environments-dashboard.mdx) pages.
 
 To see only some pacticipants, choose a label from the **Label** list. Choose **All labels** to see
 every pacticipant again. The list shows 50 pacticipants at a time. Click **Load more** to see the
@@ -63,7 +63,8 @@ Click a pacticipant's name. Its page has five sections:
   main branch is marked **Main**.
 - **Environments** lists every environment of the workspace. For each one, it shows the versions of
   this pacticipant that are **Deployed now**, with their application instance, and the releases that
-  are **Released and supported**. A production environment is marked **Production**.
+  are **Released and supported**. A production environment is marked **Production**. Click an
+  environment to open [its page](./environments-dashboard.mdx#read-an-environment).
 - **Pacts** lists every pact this pacticipant is in, as the consumer or the provider. Each row shows
   the consumer and provider, this pacticipant's **Role**, the **Latest consumer version** that
   published the pact, when it was published, and how its latest verification went. Click a pact to
@@ -117,5 +118,6 @@ Every read is scoped to your current workspace.
 - [Verification results and re-runs](./verification-console.mdx)
 - [Matrix](./matrix.mdx)
 - [Environments and deployments](./environments.mdx)
+- [Environments and the deploy simulator](./environments-dashboard.mdx)
 - [Labels, deletes and retention](./retention.mdx)
 - [Pacticipants API](../../reference/rest/pacticipants.md)

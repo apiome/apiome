@@ -107,6 +107,8 @@ describe('PacticipantsListClient', () => {
     );
     // PFX-5.6 (#6950): and the Webhooks page.
     expect(screen.getByRole('link', { name: 'Webhooks' })).toHaveAttribute('href', '/ade/dashboard/pacts/webhooks');
+    // PFX-5.7 (#6951): and the Environments dashboard.
+    expect(screen.getByRole('link', { name: 'Environments' })).toHaveAttribute('href', '/ade/dashboard/pacts/environments');
     await screen.findByRole('option', { name: 'tier-1' });
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipants', container.innerHTML);
@@ -182,6 +184,8 @@ describe('PacticipantDetailClient', () => {
     expect(within(branches).getByText('Main')).toBeInTheDocument();
     expect(branches).toHaveTextContent('3f2a9c1b7e6d');
     const production = await screen.findByTestId('ppx-env-production');
+    // PFX-5.7 (#6951): each environment opens its own page.
+    expect(within(production).getByRole('link')).toHaveAttribute('href', '/ade/dashboard/pacts/environments/production');
     expect(production).toHaveTextContent('Production');
     expect(production).toHaveTextContent('3f2a9c1b7e6d · 2026-11-22 17:00 UTC');
     expect(screen.getByTestId('ppx-env-staging')).toHaveTextContent('2.4.0 · us-east');

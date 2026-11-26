@@ -10,7 +10,9 @@ to know what runs in production now. You tell it with **environments** and **dep
 records**: create each environment once, then have your deploy job record every deployment or
 release. The `pact-broker` CLI does this against Apiome unchanged.
 
-There is no screen for environments yet. What is recorded here is also used by the `deployed`,
+The [**Environments** pages](./environments-dashboard.mdx) show what is recorded — which version
+runs where, each environment's deployment history — and simulate a deployment before you make it.
+What is recorded here is also used by the `deployed`,
 `released` and `environment` [consumer-version selectors](./selectors.mdx), so a provider verifies
 the pacts of the consumer versions that are really in production.
 
@@ -169,5 +171,6 @@ environment. This is how the CLI finds where to post.
 - [Pact Broker concepts](./concepts.mdx) — pacticipants, versions, environments and deployments.
 - [Choose pacts to verify with selectors](./selectors.mdx) — the environment selectors.
 - [Can I deploy?](./can-i-deploy.mdx) — gate a deployment on what is recorded here.
+- [Environments and the deploy simulator](./environments-dashboard.mdx) — see what is recorded and simulate a deployment.
 - [Publish verification results](./verification-results.mdx) — what can-i-deploy reads with this.
 - [Pact Broker API](../../reference/rest/pact-broker.md) — every endpoint, parameter and error code.

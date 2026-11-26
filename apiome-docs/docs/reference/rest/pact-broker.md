@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 87 operations."
+description: "REST endpoints tagged pact-broker: 90 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.683.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.684.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 87 operations
+Tag: `pact-broker` · 90 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2269,6 +2269,87 @@ Operation id: `read_fidelity_v1_tenants__tenant_slug__pact_comparisons__result_i
 | --- | --- | --- |
 | 200 | Successful response for read the fidelity report of a bi-directional comparison. | `application/json` object |
 | 404 | `pact-verification-not-found`: no bi-directional result with that id in this workspace, or the result was published by a Pact verifier and has no comparison. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-environments` {#read-environment-topology-v1-tenants-tenant-slug-pact-environments-get}
+
+**Environments and what is deployed to them**
+
+Every Pact environment of the workspace (by name) with each pacticipant version currently deployed to it (`deployed`: pacticipant, version, application instance, when) and each release it currently supports (`released`). `truncated` is true when either list stopped at 2000 entries. Requires `pacts:view`.
+
+Operation id: `read_environment_topology_v1_tenants__tenant_slug__pact_environments_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for environments and what is deployed to them. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-environments/{environment}/deployments` {#read-deployment-history-v1-tenants-tenant-slug-pact-environments-environment-deployments-get}
+
+**Deployment history of an environment**
+
+Every deployment recorded to the environment, current or replaced, newest first: pacticipant, version, application instance, `currentlyDeployed`, `deployedAt`, `undeployedAt` and who recorded it. `pacticipant` narrows to one pacticipant (handle or name). Pass `nextCursor` back as `cursor` for the next page. Requires `pacts:view`.
+
+Operation id: `read_deployment_history_v1_tenants__tenant_slug__pact_environments__environment__deployments_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `environment` | path | string | yes | Path parameter identifying the environment segment. |
+| `pacticipant` | query | string or null | no | Only this pacticipant's deployments (handle or name). |
+| `cursor` | query | string or null | no | The `nextCursor` of the previous page. |
+| `limit` | query | integer | no | The page size. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for deployment history of an environment. | `application/json` object |
+| 400 | `pact-deployment-cursor-invalid`. | — |
+| 404 | `pact-environment-not-found` or `pacticipant-not-found`. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-environments/{environment}/simulate` {#read-deployment-simulation-v1-tenants-tenant-slug-pact-environments-environment-simulate-get}
+
+**Simulate a deployment**
+
+What would happen if `pacticipant` `version` were deployed to the environment (to `applicationInstance`, or the unnamed instance) — without recording anything. Answers the candidate's own can-i-deploy `verdict`, the version it would `replace`, and `impacts`: for each version of a pacticipant it has a pact with that is **running** in the environment or **pending** (deployed or released elsewhere, not here), its verdict `before` and `after` and the `effect` (`breaks`, `fixes`, `clears`, `blocks`, `changes`, `unchanged`). At most 20 versions are checked; the rest are in `notChecked` with the reason. Requires `pacts:view`.
+
+Operation id: `read_deployment_simulation_v1_tenants__tenant_slug__pact_environments__environment__simulate_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `environment` | path | string | yes | Path parameter identifying the environment segment. |
+| `pacticipant` | query | string | yes | The pacticipant to deploy (handle or name). |
+| `version` | query | string | yes | The version to deploy. |
+| `applicationInstance` | query | string or null | no | The instance to deploy to; the unnamed one when omitted. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for simulate a deployment. | `application/json` object |
+| 400 | `pact-simulation-invalid`: a malformed `applicationInstance`. | — |
+| 404 | `pact-environment-not-found`, `pacticipant-not-found` or `pacticipant-version-not-found`. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-postman-collections` {#export-pact-postman-collection-v1-tenants-tenant-slug-pact-postman-collections-post}

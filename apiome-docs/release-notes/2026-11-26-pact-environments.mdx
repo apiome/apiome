@@ -1,0 +1,26 @@
+---
+slug: pact-environments-dashboard
+title: "Environments and the deploy simulator"
+description: "See which version runs where, read each environment's deployments, and simulate one first."
+authors: [apiome]
+---
+
+Pact environments now have pages of their own. On the **Pacticipants** page, click
+**Environments**. See [Environments and the deploy simulator](/ship/pact-broker/environments-dashboard).
+
+{/* truncate */}
+
+- **Which version runs where.** A grid of every pacticipant across every environment, with each
+  version deployed there now (and its application instance) and each release it supports.
+- **An environment's page.** What is deployed and released there now, and its **Deployment
+  history** — every deployment recorded, current or replaced, newest first, narrowed by
+  **Pacticipant**, with **Load more**.
+- **Deploy simulator.** Name a version and click **Simulate**: whether it can go to the
+  environment, what it would replace, and what else changes — each version of a pacticipant it has
+  a pact with, running there or waiting in another environment, with its verdict now and after.
+  **Clears** shows a version (one in staging, say) that this deployment would let through;
+  **Breaks** a running one it would break. Nothing is recorded. The page gives the
+  `can-i-deploy` and `record-deployment` commands that make the same deployment from a pipeline.
+
+Reading needs **Pacts** → **View**. The pages read three new REST routes under
+`/v1/tenants/{tenant}/pact-environments`: the topology, the deployment history and the simulator.
