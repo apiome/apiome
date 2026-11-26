@@ -1,0 +1,56 @@
+name: pact-action
+
+# Shell tests for the pact-action Action (PFX-4.3, #6940) plus the CI-recipe smoke matrix for the
+# GitLab / Bitbucket Pact pipelines. The recipe jobs run each published pipeline job against a stub
+# CLI and check the Run Pact in CI guide embeds the recipes byte for byte, so the documented
+# pipelines cannot rot as the CLI evolves.
+
+on:
+  # `push` is for `main` only; pull requests run through `pull_request` (no duplicate runs).
+  push:
+    branches: [ main ]
+    paths:
+      - "pact-action/**"
+      # pact-action reuses diff-action's sticky comment and recipe parser.
+      - "diff-action/sticky_comment.sh"
+      - "diff-action/tests/recipe_lib.sh"
+      - "apiome-docs/docs/ship/pact-broker/ci-pact.mdx"
+      - ".github/workflows/pact-action.yml"
+  pull_request:
+    paths:
+      - "pact-action/**"
+      - "diff-action/sticky_comment.sh"
+      - "diff-action/tests/recipe_lib.sh"
+      - "apiome-docs/docs/ship/pact-broker/ci-pact.mdx"
+      - ".github/workflows/pact-action.yml"
+  workflow_dispatch:
+
+jobs:
+  shell-tests:
+    name: Action shell tests
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Lint shell scripts
+        run: |
+          cd pact-action
+          bash -n entrypoint.sh install_cli.sh lib.sh tests/*.sh
+
+      - name: Run pact-action tests
+        run: bash pact-action/tests/run.sh
+
+  recipes:
+    name: Pact recipe smoke (${{ matrix.recipe }})
+    runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        recipe: [gitlab, bitbucket]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Execute the ${{ matrix.recipe }} recipe against a stub CLI
+        run: bash pact-action/tests/test_ci_recipes.sh --recipe ${{ matrix.recipe }}

@@ -1,0 +1,32 @@
+---
+slug: pact-ci-action-and-recipes
+title: "Pact in CI: a GitHub Action and GitLab and Bitbucket pipelines"
+description: "Publish pacts, gate on can-i-deploy and record deployments with ready-made CI steps."
+authors: [apiome]
+---
+
+The three Pact steps of a pipeline are now ready-made. On GitHub, `apiome/pact-action` publishes the
+consumer's pacts, asks `can-i-deploy` and keeps the answer in one pull-request comment, and records
+the deployment after a merge. GitLab CI and Bitbucket Pipelines get the same three jobs as
+copy-and-paste pipelines. See [Run Pact in CI](/ship/pact-broker/ci-pact) and
+[pact-action](/reference/ci/pact-action).
+
+{/* truncate */}
+
+- **One action, three steps.** `command: publish`, `can-i-deploy` or `record-deployment`. The
+  version is the pull request's head commit (or the pushed commit) and the branch is the pull
+  request's branch, so most steps need only the pacticipant and the environment.
+- **One comment per gate.** On a pull request, `publish` and `can-i-deploy` update the same comment
+  on every push instead of adding a new one, and every run writes its result to the job summary. A
+  comment that cannot be posted is a warning; it never changes the result.
+- **pact-broker's exit codes.** The step passes when the command worked or the version can be
+  deployed, and fails otherwise. `dry-run: "true"` reports the verdict without blocking.
+- **Nothing ignored.** An unknown command, a missing broker URL, token, pacticipant or environment,
+  a pact path that does not exist, or an input of the wrong kind stops the step with the reason
+  before anything is sent. `record-deployment` refuses to run in a pull-request run, so an unmerged
+  commit is never recorded as live.
+- **GitLab and Bitbucket.** Both pipelines publish and ask `can-i-deploy` on merge and pull
+  requests, record the deployment on the main branch, and keep the `can-i-deploy` answer as an
+  artifact. They run against a stub CLI on every change, and the guide shows them exactly as tested.
+
+*Last updated: November 25, 2026*

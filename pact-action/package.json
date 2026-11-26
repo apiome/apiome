@@ -1,0 +1,10 @@
+{
+  "name": "@apiome/pact-action",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub Action and GitLab / Bitbucket recipes for apiome pact publish, can-i-deploy and record-deployment",
+  "scripts": {
+    "test": "bash tests/run.sh",
+    "lint": "bash -n entrypoint.sh install_cli.sh lib.sh tests/run.sh tests/test_ci_recipes.sh tests/test_entrypoint.sh tests/test_install_cli.sh tests/test_lib.sh"
+  }
+}

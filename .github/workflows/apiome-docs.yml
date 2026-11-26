@@ -23,6 +23,7 @@ on:
       - 'apiome-mcp/src/**'
       - 'diff-action/README.md'
       - 'mock-action/README.md'
+      - 'pact-action/README.md'
       # Sources of the release notes (DOCS-1.12): "Unreleased" is regenerated on every build.
       - 'apiome-rest/CHANGELOG.md'
       - 'apiome-ui/public/WHATS_NEW.md'
@@ -62,6 +63,7 @@ on:
       - 'apiome-rest/src/app/mcp_*.py'
       - 'diff-action/README.md'
       - 'mock-action/README.md'
+      - 'pact-action/README.md'
       # Release notes (DOCS-1.12).
       - 'apiome-rest/CHANGELOG.md'
       - 'apiome-ui/public/WHATS_NEW.md'
@@ -159,7 +161,7 @@ jobs:
           uv sync --frozen
           uv run python scripts/generate_mcp_reference_docs.py --check
 
-      - name: CI action pages (diff-action / mock-action READMEs)
+      - name: CI action pages (diff-action / mock-action / pact-action READMEs)
         run: node apiome-docs/scripts/sync-action-pages.mjs --check
 
   # The gate runs on every docs-affecting pull request; the image only needs rebuilding when its own inputs moved.

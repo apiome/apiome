@@ -1,0 +1,58 @@
+# Apiome Pact pipeline for Bitbucket Pipelines (PFX-4.3 / #6940).
+#
+# Copy the steps into your bitbucket-pipelines.yml. Pull requests publish the pacts and ask
+# can-i-deploy; main does the same, deploys, then records the deployment.
+#
+# Required repository variables (Repository settings -> Repository variables, check "Secured"):
+#   PACT_BROKER_BASE_URL  https://api.apiome.dev/v1/tenants/<workspace>/pact-broker
+#   PACT_BROKER_TOKEN     Apiome API key with the "Pact: consumer + deploy" preset
+#
+# Every apiome pact command exits 0 when it worked and 1 otherwise, so each step fails on its own.
+
+# The image carries the Apiome CLI. Pin a version tag or digest - `latest` drifts.
+image: ghcr.io/apiome/diff-action:latest
+
+definitions:
+  steps:
+    - step: &pact-publish
+        name: Publish pacts
+        script:
+          - 'export PACT_DIR="${PACT_DIR:-pacts}"'
+          - 'export APIOME_LOAD_DOTENV=0'
+          - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'apiome pact publish "$PACT_DIR" --consumer-app-version "$BITBUCKET_COMMIT" --branch "$BITBUCKET_BRANCH" --build-url "$BITBUCKET_GIT_HTTP_ORIGIN/pipelines/results/$BITBUCKET_BUILD_NUMBER"'
+    - step: &pact-can-i-deploy
+        name: Pact can-i-deploy
+        script:
+          - 'export PACTICIPANT="${PACTICIPANT:-Billing Service}"'
+          - 'export DEPLOY_ENVIRONMENT="${DEPLOY_ENVIRONMENT:-production}"'
+          - 'export APIOME_LOAD_DOTENV=0'
+          - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'apiome pact can-i-deploy --pacticipant "$PACTICIPANT" --version "$BITBUCKET_COMMIT" --to-environment "$DEPLOY_ENVIRONMENT" --retry-while-unknown 12 --retry-interval 10 --output markdown > can-i-deploy.md || gate=$?'
+          - 'cat can-i-deploy.md'
+          - 'exit ${gate:-0}'
+        artifacts:
+          - can-i-deploy.md
+    - step: &pact-record-deployment
+        name: Record deployment
+        script:
+          - 'export PACTICIPANT="${PACTICIPANT:-Billing Service}"'
+          - 'export DEPLOY_ENVIRONMENT="${DEPLOY_ENVIRONMENT:-production}"'
+          - 'export APIOME_LOAD_DOTENV=0'
+          - 'test -n "$PACT_BROKER_BASE_URL" || { echo "PACT_BROKER_BASE_URL is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'test -n "$PACT_BROKER_TOKEN" || { echo "PACT_BROKER_TOKEN is not set - add it as a secured repository variable" >&2; exit 1; }'
+          - 'echo "deploy $BITBUCKET_COMMIT to $DEPLOY_ENVIRONMENT here, or add this step after your deploy step"'
+          - 'apiome pact record-deployment --pacticipant "$PACTICIPANT" --version "$BITBUCKET_COMMIT" --environment "$DEPLOY_ENVIRONMENT"'
+
+pipelines:
+  pull-requests:
+    '**':
+      - step: *pact-publish
+      - step: *pact-can-i-deploy
+  branches:
+    main:
+      - step: *pact-publish
+      - step: *pact-can-i-deploy
+      - step: *pact-record-deployment

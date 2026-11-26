@@ -21,6 +21,8 @@ export const SITE_EQUIVALENTS = Object.freeze([
   ['diff-action/recipes/', 'reference/ci/ci-gitlab-bitbucket.md'],
   ['diff-action/', 'reference/ci/diff-action.md'],
   ['mock-action/', 'reference/ci/mock-action.md'],
+  ['pact-action/recipes/', 'ship/pact-broker/ci-pact.mdx'],
+  ['pact-action/', 'reference/ci/pact-action.md'],
   ['docs/GOLDEN_PATH.md', 'getting-started/index.mdx'],
 ]);
 
