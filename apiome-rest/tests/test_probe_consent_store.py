@@ -188,6 +188,8 @@ def test_a_grant_rejects_unknown_and_empty_profiles_and_orders_the_rest() -> Non
         {"kind": "env", "scheme": "bearer", "ref": "sk_live_abc123"},
         {"kind": "stored", "scheme": "bearer", "ref": "not-a-uuid-but-a-token"},
         {"kind": "none"},
+        # A workspace secret (PFX-6.5) names a target's credential, not a probe identity (V386).
+        {"kind": "secret", "scheme": "bearer", "ref": "probeToken"},
     ],
 )
 def test_a_pasted_token_or_an_empty_reference_cannot_be_an_identity(identity: Dict[str, Any]) -> None:

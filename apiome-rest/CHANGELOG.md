@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.864.0] - 2026-11-26
+
+### Added
+- **Secrets for webhooks and verification targets (PFX-6.5, #6957).** OpenAPI 1.688.0, apiome-db V450.
+  - **Workspace secrets.** `GET`/`POST /v1/tenants/{t}/pact-secrets`, `GET`/`PUT`/`DELETE …/{id}`: a
+    named value (`name` is a letter, then up to 63 letters, digits and underscores; never renamed),
+    sealed with the credential vault's keys (`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`) and never
+    returned. Each secret reads its `reference` (`${user.<name>}`), `value_updated_at` and `used_by`
+    (the webhooks and verification targets that refer to it). `PUT` replaces the description and,
+    with `value`, rotates the value. At most 200 per workspace. Reads `pacts:view`, create
+    `pacts:create`, update `pacts:edit`, delete `pacts:delete`; writes audited `pacts.secret.create`,
+    `pacts.secret.update`, `pacts.secret.delete` (never with the body). Refusals:
+    `422 pact-secret-invalid` (with `pointer`; never repeats the value), `404 pact-secret-not-found`,
+    `409 pact-secret-name-taken` / `pact-secret-limit-reached` / `pact-secret-in-use` (names the
+    webhooks and targets), `503 pact-secret-vault-unavailable`.
+  - **Webhooks refer to secrets.** `${user.<name>}` may appear in a contract webhook's URL path or
+    query (never the host), headers, body, basic-auth credentials, GitHub `target.token` and
+    `signingSecret` (a referred signing secret must be 16 characters or more when sent). A
+    reference must name a secret of the webhook's own workspace when the webhook is saved or tested
+    (`422 pact-webhook-invalid` pointing at it); a malformed `${user.…}` is refused, not sent as
+    written. Secrets are resolved only when the request is sent, in one pass with `${pactbroker.*}`
+    (a parameter value cannot smuggle in a reference), and every resolved value is scrubbed from the
+    execution log. A firing whose secret is gone or cannot be opened fails with the reason, unsent.
+    Webhooks that refer to secrets read `secretReferences`.
+  - **Verification targets refer to secrets.** `auth.kind: secret` with `auth.ref: <name>` (checked
+    to exist in the target's workspace when stored, `target-auth-invalid` otherwise), presented with
+    the target's `scheme` like an `env` value; the contract runner, provider verification, the Pact
+    verifier and Arazzo runs open it when a run starts.
+  - apiome-db V450: `pact_secret` (ciphertext only, `UNIQUE (tenant_id, name)`),
+    `pact_webhook.secret_refs`, and `secret` in `verification_target.auth_kind`.
+
 ## [1.863.0] - 2026-11-26
 
 ### Added

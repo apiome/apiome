@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.687.0
+  version: 1.688.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -34684,6 +34684,390 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readonepairscontracthealthandtrendsresponse422.
+  /v1/tenants/{tenant_slug}/pact-secrets:
+    get:
+      tags:
+      - pact-broker
+      summary: List the workspace's secrets
+      description: 'Every secret of the workspace by name (PFX-6.5): its description,
+        the reference a webhook writes (`${user.<name>}`), when its value was last set,
+        and the webhooks and verification targets that use it. **Values are never returned.**
+        Requires `pacts:view`.'
+      operationId: read_secrets_v1_tenants__tenant_slug__pact_secrets_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspacessecretsauthorization schema.
+          - type: 'null'
+            description: Listtheworkspacessecretsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspacessecrets Xapikey schema.
+          - type: 'null'
+            description: Listtheworkspacessecrets Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the workspace's secrets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretList'
+                description: Response payload for listtheworkspacessecretsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listtheworkspacessecretsresponse422.
+    post:
+      tags:
+      - pact-broker
+      summary: Create a workspace secret
+      description: 'Keep a secret once, sealed in the credential vault, for webhooks
+        and verification targets to refer to (PFX-6.5). `name` is a letter, then up
+        to 63 letters, digits and underscores, unique in the workspace and never changed;
+        `value` is one line of up to 4,096 characters. A webhook refers to it as `${user.<name>}`
+        in its URL path or query, headers, body, credentials, GitHub token or signing
+        secret; a verification target with `auth.kind: secret` and `auth.ref: <name>`.
+        A workspace keeps at most 200 secrets. The answer never contains the value.
+        Requires `pacts:create`.'
+      operationId: post_secret_v1_tenants__tenant_slug__pact_secrets_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createaworkspacesecretauthorization schema.
+          - type: 'null'
+            description: Createaworkspacesecretauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Createaworkspacesecret Xapikey schema.
+          - type: 'null'
+            description: Createaworkspacesecret Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '201':
+          description: Successful response for create a workspace secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretRecord'
+                description: Response payload for createaworkspacesecretresponse201.
+        '422':
+          description: '`pact-secret-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
+        '409':
+          description: '`pact-secret-name-taken` or `pact-secret-limit-reached`.'
+        '503':
+          description: '`pact-secret-vault-unavailable`: the server has no key to seal
+            the value with (APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS).'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - value
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  pattern: ^[A-Za-z][A-Za-z0-9_]{0,63}$
+                  description: 'What references use: a letter, then up to 63 letters,
+                    digits and underscores. Never changes.'
+                  example: Pet
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Free-text description.
+                  example: A pet available for adoption in the store.
+                value:
+                  type: string
+                  minLength: 1
+                  maxLength: 4096
+                  writeOnly: true
+                  description: The secret, one line. Sealed; never returned.
+                  example: example
+              description: Request body for createaworkspacesecretrequest.
+            example:
+              name: ciToken
+              description: Token the provider's CI accepts for verification builds
+              value: ci-token-value
+        description: Request body for create a workspace secret.
+  /v1/tenants/{tenant_slug}/pact-secrets/{secret_id}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a workspace secret
+      description: One secret, without its value, and what refers to it (PFX-6.5). Requires
+        `pacts:view`.
+      operationId: read_secret_v1_tenants__tenant_slug__pact_secrets__secret_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: secret_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Secret Id
+          description: Secret Id schema.
+        description: Path parameter identifying the secret id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaworkspacesecretauthorization schema.
+          - type: 'null'
+            description: Readaworkspacesecretauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readaworkspacesecret Xapikey schema.
+          - type: 'null'
+            description: Readaworkspacesecret Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a workspace secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretRecord'
+                description: Response payload for readaworkspacesecretresponse200.
+        '404':
+          description: '`pact-secret-not-found`: no such secret in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readaworkspacesecretresponse422.
+    put:
+      tags:
+      - pact-broker
+      summary: Update or rotate a workspace secret
+      description: 'Replace the description and, when `value` is sent, rotate the value
+        (PFX-6.5): every webhook and verification target that refers to the secret uses
+        the new value from its next send or run. The name cannot change — references
+        use it; `name` may be sent only as the stored one. Requires `pacts:edit`.'
+      operationId: put_secret_v1_tenants__tenant_slug__pact_secrets__secret_id__put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: secret_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Secret Id
+          description: Secret Id schema.
+        description: Path parameter identifying the secret id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updateorrotateaworkspacesecretauthorization schema.
+          - type: 'null'
+            description: Updateorrotateaworkspacesecretauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Updateorrotateaworkspacesecret Xapikey schema.
+          - type: 'null'
+            description: Updateorrotateaworkspacesecret Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for update or rotate a workspace secret.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecretRecord'
+                description: Response payload for updateorrotateaworkspacesecretresponse200.
+        '422':
+          description: '`pact-secret-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
+        '404':
+          description: '`pact-secret-not-found`: no such secret in this workspace.'
+        '503':
+          description: '`pact-secret-vault-unavailable`: the server has no key to seal
+            the value with (APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS).'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  description: Ignored when it repeats the stored name.
+                  example: Pet
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: Omit or null to clear.
+                  example: A pet available for adoption in the store.
+                value:
+                  type: string
+                  minLength: 1
+                  maxLength: 4096
+                  writeOnly: true
+                  description: A new value (rotation). Omit to keep the stored one.
+                  example: example
+              description: Request body for updateorrotateaworkspacesecretrequest.
+            example:
+              description: Token the provider's CI accepts
+              value: rotated-ci-token
+        description: Request body for update or rotate a workspace secret.
+    delete:
+      tags:
+      - pact-broker
+      summary: Delete a workspace secret
+      description: 'Delete a secret (PFX-6.5). A secret a webhook or a verification
+        target still refers to is not deleted: the answer is `409 pact-secret-in-use`
+        naming them. Requires `pacts:delete`.'
+      operationId: remove_secret_v1_tenants__tenant_slug__pact_secrets__secret_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: secret_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Secret Id
+          description: Secret Id schema.
+        description: Path parameter identifying the secret id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteaworkspacesecretauthorization schema.
+          - type: 'null'
+            description: Deleteaworkspacesecretauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteaworkspacesecret Xapikey schema.
+          - type: 'null'
+            description: Deleteaworkspacesecret Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete a workspace secret.
+        '404':
+          description: '`pact-secret-not-found`: no such secret in this workspace.'
+        '409':
+          description: '`pact-secret-in-use`: names what still refers to it.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteaworkspacesecretresponse422.
   /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states:
     get:
       tags:
@@ -36916,7 +37300,10 @@ paths:
       tags:
       - pact-broker
       summary: List webhooks
-      description: 'Every webhook of the workspace — the index''s `pb:webhooks` link. Each is linked under `_links.pb:webhooks` and embedded under `_embedded.webhooks`. Secrets are never returned: a password and a secret header read `**********`, a signing secret reads `signed: true`.
+      description: 'Every webhook of the workspace — the index''s `pb:webhooks` link.
+        Each is linked under `_links.pb:webhooks` and embedded under `_embedded.webhooks`.
+        Secrets are never returned: a password and a secret header read `**********`,
+        a signing secret reads `signed: true`.
 
 
         Requires `pacts:view`.'
@@ -36941,7 +37328,8 @@ paths:
             description: Listwebhooksauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -36972,24 +37360,57 @@ paths:
       tags:
       - pact-broker
       summary: Create a webhook
-      description: 'Create a webhook — what `pact-broker create-webhook` posts. The body is the Pact Broker''s: `events` (default `contract_content_changed`), an optional `consumer` and `provider` (omit both for every pact of the workspace) and the `request` to send.
+      description: 'Create a webhook — what `pact-broker create-webhook` posts. The
+        body is the Pact Broker''s: `events` (default `contract_content_changed`), an
+        optional `consumer` and `provider` (omit both for every pact of the workspace)
+        and the `request` to send.
 
 
-        - **Events:** `contract_published`, `contract_content_changed`, `contract_requiring_verification_published` (once per provider version that has not verified the pact: the head of the provider''s main branch and what is deployed or released), `provider_verification_published`, `provider_verification_succeeded`, `provider_verification_failed`, and Apiome''s `consumer_version_branch_created` and stale-pact remediation events (`contract_became_stale`, `contract_no_longer_stale`, `contract_republish_requested`, `contract_republish_request_expired`).
+        - **Events:** `contract_published`, `contract_content_changed`, `contract_requiring_verification_published`
+        (once per provider version that has not verified the pact: the head of the provider''s
+        main branch and what is deployed or released), `provider_verification_published`,
+        `provider_verification_succeeded`, `provider_verification_failed`, and Apiome''s
+        `consumer_version_branch_created` and stale-pact remediation events (`contract_became_stale`,
+        `contract_no_longer_stale`, `contract_republish_requested`, `contract_republish_request_expired`).
 
-        - **Templates:** `${pactbroker.*}` parameters are substituted in the URL''s path and query, the headers, the credentials and the body when the webhook fires. Template parameters: `${pactbroker.consumerName}`, `${pactbroker.providerName}`, `${pactbroker.consumerVersionNumber}`, `${pactbroker.providerVersionNumber}`, `${pactbroker.providerVersionTags}`, `${pactbroker.providerVersionDescriptions}`, `${pactbroker.providerVersionBranch}`, `${pactbroker.consumerVersionTags}`, `${pactbroker.consumerVersionBranch}`, `${pactbroker.pactUrl}`, `${pactbroker.verificationResultUrl}`, `${pactbroker.githubVerificationStatus}`, `${pactbroker.bitbucketVerificationStatus}`, `${pactbroker.azureDevOpsVerificationStatus}`, `${pactbroker.gitlabVerificationStatus}`, `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}`, `${pactbroker.eventName}`, `${pactbroker.buildUrl}`, `${pactbroker.currentlyDeployedProviderVersionNumber}`.
+        - **Templates:** `${pactbroker.*}` parameters are substituted in the URL''s
+        path and query, the headers, the credentials and the body when the webhook fires.
+        Template parameters: `${pactbroker.consumerName}`, `${pactbroker.providerName}`,
+        `${pactbroker.consumerVersionNumber}`, `${pactbroker.providerVersionNumber}`,
+        `${pactbroker.providerVersionTags}`, `${pactbroker.providerVersionDescriptions}`,
+        `${pactbroker.providerVersionBranch}`, `${pactbroker.consumerVersionTags}`,
+        `${pactbroker.consumerVersionBranch}`, `${pactbroker.pactUrl}`, `${pactbroker.verificationResultUrl}`,
+        `${pactbroker.githubVerificationStatus}`, `${pactbroker.bitbucketVerificationStatus}`,
+        `${pactbroker.azureDevOpsVerificationStatus}`, `${pactbroker.gitlabVerificationStatus}`,
+        `${pactbroker.consumerLabels}`, `${pactbroker.providerLabels}`, `${pactbroker.eventName}`,
+        `${pactbroker.buildUrl}`, `${pactbroker.currentlyDeployedProviderVersionNumber}`.
 
-        - **Target:** send `request` for any HTTP endpoint (POST, PUT or PATCH), or Apiome''s `target` of type `github_repository_dispatch` to start a GitHub Actions workflow.
+        - **Target:** send `request` for any HTTP endpoint (POST, PUT or PATCH), or
+        Apiome''s `target` of type `github_repository_dispatch` to start a GitHub Actions
+        workflow.
 
-        - **Where it may go:** http or https, to a public address. Loopback, private and link-local addresses are refused when the webhook is saved and again on every send; redirects are not followed.
+        - **Where it may go:** http or https, to a public address. Loopback, private
+        and link-local addresses are refused when the webhook is saved and again on
+        every send; redirects are not followed.
 
-        - **Secrets:** `password`, the `target` token, secret headers (`Authorization`, anything naming a token, secret, API key or cookie) and `signingSecret` are sealed in the credential vault and never returned or logged.
+        - **Secrets:** `password`, the `target` token, secret headers (`Authorization`,
+        anything naming a token, secret, API key or cookie) and `signingSecret` are
+        sealed in the credential vault and never returned or logged.
 
-        - **Signing:** with `signingSecret`, each delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body.
+        - **Workspace secrets:** `${user.<name>}` in the URL''s path or query, a header,
+        the body, the credentials, the `target` token or `signingSecret` refers to a
+        secret kept under `/v1/tenants/{tenant}/pact-secrets`; it must exist when the
+        webhook is saved (`422` `pact-webhook-invalid` naming the field otherwise),
+        is resolved only when the webhook is sent, and is scrubbed from every log. The
+        webhook lists the names as `secretReferences`.
+
+        - **Signing:** with `signingSecret`, each delivery carries `X-Apiome-Signature:
+        sha256=<hex>`, the HMAC-SHA256 of the body.
 
         - **Limit:** 200 webhooks per workspace.
 
-        - **Delivery:** up to 4 attempts (after 10 s, 60 s and 5 min; `Retry-After` is honoured), then the firing is dead-lettered.
+        - **Delivery:** up to 4 attempts (after 10 s, 60 s and 5 min; `Retry-After`
+        is honoured), then the firing is dead-lettered.
 
 
         Answers `201` with the webhook and its URL in `Location`. Requires `pacts:create`.'
@@ -37014,7 +37435,8 @@ paths:
             description: Createawebhookauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -37035,11 +37457,14 @@ paths:
               schema:
                 description: Response payload for createawebhookresponse201.
         '409':
-          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+          description: '`pact-webhook-limit-reached`: the workspace already has 200
+            webhooks.'
         '422':
-          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
         '503':
-          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret
+            and the server has no key to seal it with.'
       requestBody:
         required: true
         content:
@@ -37120,7 +37545,9 @@ paths:
                       example: POST
                     url:
                       type: string
-                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      description: http(s), a public host. `${pactbroker.*}` parameters
+                        and `${user.<name>}` workspace secrets may appear in the path
+                        and query, not in the host.
                       example: https://example.com/resource
                     headers:
                       type: object
@@ -37128,14 +37555,15 @@ paths:
                         type: string
                       description: Headers.
                     body:
-                      description: A JSON value (sent as JSON) or a string (sent as text).
+                      description: A JSON value (sent as JSON) or a string (sent as
+                        text).
                     username:
                       type: string
                       description: Username.
                       example: Example
                     password:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: example
                 target:
                   type: object
@@ -37143,7 +37571,8 @@ paths:
                   - type
                   - repository
                   - token
-                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place
+                    of `request`.'
                   properties:
                     type:
                       type: string
@@ -37170,12 +37599,15 @@ paths:
                       example: example
                     token:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
                 signingSecret:
                   type: string
                   minLength: 16
-                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature:
+                    sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that
+                    has one reads `signed: true`. May be `${user.<name>}`, a workspace
+                    secret of 16 characters or more.'
                   example: exampleexampleex
               description: Request body for createawebhookrequest.
             examples:
@@ -37217,7 +37649,11 @@ paths:
       tags:
       - pact-broker
       summary: Run an unsaved webhook
-      description: Send the webhook in the body once, now, without saving it — to try a request before creating the webhook. Parameters are filled from the latest pact of the named consumer and provider, or with placeholders. The answer shows the request (secrets redacted), the response and the execution log. A workspace may make 30 test runs per rate-limit window. Requires `pacts:create`.
+      description: Send the webhook in the body once, now, without saving it — to try
+        a request before creating the webhook. Parameters are filled from the latest
+        pact of the named consumer and provider, or with placeholders. The answer shows
+        the request (secrets redacted), the response and the execution log. A workspace
+        may make 30 test runs per rate-limit window. Requires `pacts:create`.
       operationId: execute_unsaved_webhook_v1_tenants__tenant_slug__pact_broker_webhooks_execute_post
       parameters:
       - name: tenant_slug
@@ -37239,7 +37675,8 @@ paths:
             description: Runanunsavedwebhookauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -37260,13 +37697,17 @@ paths:
               schema:
                 description: Response payload for runanunsavedwebhookresponse200.
         '409':
-          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+          description: '`pact-webhook-limit-reached`: the workspace already has 200
+            webhooks.'
         '422':
-          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
         '503':
-          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret
+            and the server has no key to seal it with.'
         '429':
-          description: '`pact-webhook-test-rate-limited`: too many test runs; `Retry-After` says when to retry.'
+          description: '`pact-webhook-test-rate-limited`: too many test runs; `Retry-After`
+            says when to retry.'
       requestBody:
         required: true
         content:
@@ -37347,7 +37788,9 @@ paths:
                       example: POST
                     url:
                       type: string
-                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      description: http(s), a public host. `${pactbroker.*}` parameters
+                        and `${user.<name>}` workspace secrets may appear in the path
+                        and query, not in the host.
                       example: https://example.com/resource
                     headers:
                       type: object
@@ -37355,14 +37798,15 @@ paths:
                         type: string
                       description: Headers.
                     body:
-                      description: A JSON value (sent as JSON) or a string (sent as text).
+                      description: A JSON value (sent as JSON) or a string (sent as
+                        text).
                     username:
                       type: string
                       description: Username.
                       example: Example
                     password:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: example
                 target:
                   type: object
@@ -37370,7 +37814,8 @@ paths:
                   - type
                   - repository
                   - token
-                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place
+                    of `request`.'
                   properties:
                     type:
                       type: string
@@ -37397,12 +37842,15 @@ paths:
                       example: example
                     token:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
                 signingSecret:
                   type: string
                   minLength: 16
-                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature:
+                    sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that
+                    has one reads `signed: true`. May be `${user.<name>}`, a workspace
+                    secret of 16 characters or more.'
                   example: exampleexampleex
               description: Request body for runanunsavedwebhookrequest.
             examples:
@@ -37444,7 +37892,8 @@ paths:
       tags:
       - pact-broker
       summary: Read a webhook
-      description: One webhook by its `uuid` — the index's `pb:webhook` template. Requires `pacts:view`.
+      description: One webhook by its `uuid` — the index's `pb:webhook` template. Requires
+        `pacts:view`.
       operationId: read_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__get
       parameters:
       - name: tenant_slug
@@ -37474,7 +37923,8 @@ paths:
             description: Readawebhookauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -37507,13 +37957,18 @@ paths:
       tags:
       - pact-broker
       summary: Create or replace a webhook
-      description: 'Replace the webhook with this `uuid`, or create it when the workspace has none — what `pact-broker create-or-update-webhook --uuid …` puts, so a pipeline can declare its webhook on every run. The body is the same as for creating one, and replaces the whole webhook.
+      description: 'Replace the webhook with this `uuid`, or create it when the workspace
+        has none — what `pact-broker create-or-update-webhook --uuid …` puts, so a pipeline
+        can declare its webhook on every run. The body is the same as for creating one,
+        and replaces the whole webhook.
 
 
-        A secret sent back as `**********` keeps the stored value; a secret left out is removed.
+        A secret sent back as `**********` keeps the stored value; a secret left out
+        is removed.
 
 
-        Answers `200` for a replacement and `201` for a new webhook. Requires `pacts:edit` (`pacts:create` when it creates).'
+        Answers `200` for a replacement and `201` for a new webhook. Requires `pacts:edit`
+        (`pacts:create` when it creates).'
       operationId: put_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__put
       parameters:
       - name: tenant_slug
@@ -37543,7 +37998,8 @@ paths:
             description: Createorreplaceawebhookauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -37566,11 +38022,14 @@ paths:
         '201':
           description: The webhook did not exist and was created.
         '409':
-          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+          description: '`pact-webhook-limit-reached`: the workspace already has 200
+            webhooks.'
         '422':
-          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
         '503':
-          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret
+            and the server has no key to seal it with.'
       requestBody:
         required: true
         content:
@@ -37651,7 +38110,9 @@ paths:
                       example: POST
                     url:
                       type: string
-                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      description: http(s), a public host. `${pactbroker.*}` parameters
+                        and `${user.<name>}` workspace secrets may appear in the path
+                        and query, not in the host.
                       example: https://example.com/resource
                     headers:
                       type: object
@@ -37659,14 +38120,15 @@ paths:
                         type: string
                       description: Headers.
                     body:
-                      description: A JSON value (sent as JSON) or a string (sent as text).
+                      description: A JSON value (sent as JSON) or a string (sent as
+                        text).
                     username:
                       type: string
                       description: Username.
                       example: Example
                     password:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: example
                 target:
                   type: object
@@ -37674,7 +38136,8 @@ paths:
                   - type
                   - repository
                   - token
-                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place
+                    of `request`.'
                   properties:
                     type:
                       type: string
@@ -37701,12 +38164,15 @@ paths:
                       example: example
                     token:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
                 signingSecret:
                   type: string
                   minLength: 16
-                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature:
+                    sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that
+                    has one reads `signed: true`. May be `${user.<name>}`, a workspace
+                    secret of 16 characters or more.'
                   example: exampleexampleex
               description: Request body for createorreplaceawebhookrequest.
             examples:
@@ -37747,7 +38213,8 @@ paths:
       tags:
       - pact-broker
       summary: Delete a webhook
-      description: Delete a webhook. Its queued deliveries, its triggered-webhook history and their logs go with it. Requires `pacts:delete`.
+      description: Delete a webhook. Its queued deliveries, its triggered-webhook history
+        and their logs go with it. Requires `pacts:delete`.
       operationId: remove_webhook_v1_tenants__tenant_slug__pact_broker_webhooks__uuid__delete
       parameters:
       - name: tenant_slug
@@ -37777,7 +38244,8 @@ paths:
             description: Deleteawebhookauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -37878,7 +38346,8 @@ paths:
       tags:
       - pact-broker
       summary: List the webhooks of an integration
-      description: The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+      description: The webhooks defined for exactly this scope (a webhook for all pacts
+        is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
       operationId: read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__consumer__consumer__get
       parameters:
       - name: tenant_slug
@@ -37900,7 +38369,8 @@ paths:
             description: Listthewebhooksofanintegrationauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -37918,12 +38388,14 @@ paths:
         required: true
         schema:
           type: string
+          description: Listthewebhooksofanintegrationprovider schema.
         description: The provider.
       - name: consumer
         in: path
         required: true
         schema:
           type: string
+          description: Listthewebhooksofanintegrationconsumer schema.
         description: The consumer.
       responses:
         '200':
@@ -37945,7 +38417,8 @@ paths:
       tags:
       - pact-broker
       summary: Create a webhook for an integration
-      description: 'Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
+      description: 'Create a webhook for this scope: the consumer and provider of the
+        URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
       operationId: post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__consumer__consumer__post
       parameters:
       - name: tenant_slug
@@ -37967,7 +38440,8 @@ paths:
             description: Createawebhookforanintegrationauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -37985,12 +38459,14 @@ paths:
         required: true
         schema:
           type: string
+          description: Createawebhookforanintegrationprovider schema.
         description: The provider.
       - name: consumer
         in: path
         required: true
         schema:
           type: string
+          description: Createawebhookforanintegrationconsumer schema.
         description: The consumer.
       responses:
         '201':
@@ -38002,11 +38478,14 @@ paths:
         '404':
           description: '`pacticipant-not-found`: no such consumer or provider.'
         '409':
-          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+          description: '`pact-webhook-limit-reached`: the workspace already has 200
+            webhooks.'
         '422':
-          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
         '503':
-          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret
+            and the server has no key to seal it with.'
       requestBody:
         required: true
         content:
@@ -38087,7 +38566,9 @@ paths:
                       example: POST
                     url:
                       type: string
-                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      description: http(s), a public host. `${pactbroker.*}` parameters
+                        and `${user.<name>}` workspace secrets may appear in the path
+                        and query, not in the host.
                       example: https://example.com/resource
                     headers:
                       type: object
@@ -38095,14 +38576,15 @@ paths:
                         type: string
                       description: Headers.
                     body:
-                      description: A JSON value (sent as JSON) or a string (sent as text).
+                      description: A JSON value (sent as JSON) or a string (sent as
+                        text).
                     username:
                       type: string
                       description: Username.
                       example: Example
                     password:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: example
                 target:
                   type: object
@@ -38110,7 +38592,8 @@ paths:
                   - type
                   - repository
                   - token
-                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place
+                    of `request`.'
                   properties:
                     type:
                       type: string
@@ -38137,12 +38620,15 @@ paths:
                       example: example
                     token:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
                 signingSecret:
                   type: string
                   minLength: 16
-                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature:
+                    sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that
+                    has one reads `signed: true`. May be `${user.<name>}`, a workspace
+                    secret of 16 characters or more.'
                   example: exampleexampleex
               description: Request body for createawebhookforanintegrationrequest.
             examples:
@@ -38184,7 +38670,8 @@ paths:
       tags:
       - pact-broker
       summary: List the webhooks of a provider
-      description: The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+      description: The webhooks defined for exactly this scope (a webhook for all pacts
+        is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
       operationId: read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__get
       parameters:
       - name: tenant_slug
@@ -38206,7 +38693,8 @@ paths:
             description: Listthewebhooksofaproviderauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -38224,6 +38712,7 @@ paths:
         required: true
         schema:
           type: string
+          description: Listthewebhooksofaproviderprovider schema.
         description: The provider.
       responses:
         '200':
@@ -38245,7 +38734,8 @@ paths:
       tags:
       - pact-broker
       summary: Create a webhook for a provider
-      description: 'Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
+      description: 'Create a webhook for this scope: the consumer and provider of the
+        URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
       operationId: post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_provider__provider__post
       parameters:
       - name: tenant_slug
@@ -38267,7 +38757,8 @@ paths:
             description: Createawebhookforaproviderauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -38285,6 +38776,7 @@ paths:
         required: true
         schema:
           type: string
+          description: Createawebhookforaproviderprovider schema.
         description: The provider.
       responses:
         '201':
@@ -38296,11 +38788,14 @@ paths:
         '404':
           description: '`pacticipant-not-found`: no such consumer or provider.'
         '409':
-          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+          description: '`pact-webhook-limit-reached`: the workspace already has 200
+            webhooks.'
         '422':
-          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
         '503':
-          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret
+            and the server has no key to seal it with.'
       requestBody:
         required: true
         content:
@@ -38381,7 +38876,9 @@ paths:
                       example: POST
                     url:
                       type: string
-                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      description: http(s), a public host. `${pactbroker.*}` parameters
+                        and `${user.<name>}` workspace secrets may appear in the path
+                        and query, not in the host.
                       example: https://example.com/resource
                     headers:
                       type: object
@@ -38389,14 +38886,15 @@ paths:
                         type: string
                       description: Headers.
                     body:
-                      description: A JSON value (sent as JSON) or a string (sent as text).
+                      description: A JSON value (sent as JSON) or a string (sent as
+                        text).
                     username:
                       type: string
                       description: Username.
                       example: Example
                     password:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: example
                 target:
                   type: object
@@ -38404,7 +38902,8 @@ paths:
                   - type
                   - repository
                   - token
-                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place
+                    of `request`.'
                   properties:
                     type:
                       type: string
@@ -38431,12 +38930,15 @@ paths:
                       example: example
                     token:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
                 signingSecret:
                   type: string
                   minLength: 16
-                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature:
+                    sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that
+                    has one reads `signed: true`. May be `${user.<name>}`, a workspace
+                    secret of 16 characters or more.'
                   example: exampleexampleex
               description: Request body for createawebhookforaproviderrequest.
             examples:
@@ -38478,7 +38980,8 @@ paths:
       tags:
       - pact-broker
       summary: List the webhooks of a consumer
-      description: The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+      description: The webhooks defined for exactly this scope (a webhook for all pacts
+        is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
       operationId: read_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_consumer__consumer__get
       parameters:
       - name: tenant_slug
@@ -38500,7 +39003,8 @@ paths:
             description: Listthewebhooksofaconsumerauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -38518,6 +39022,7 @@ paths:
         required: true
         schema:
           type: string
+          description: Listthewebhooksofaconsumerconsumer schema.
         description: The consumer.
       responses:
         '200':
@@ -38539,7 +39044,8 @@ paths:
       tags:
       - pact-broker
       summary: Create a webhook for a consumer
-      description: 'Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
+      description: 'Create a webhook for this scope: the consumer and provider of the
+        URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
       operationId: post_scoped_v1_tenants__tenant_slug__pact_broker_webhooks_consumer__consumer__post
       parameters:
       - name: tenant_slug
@@ -38561,7 +39067,8 @@ paths:
             description: Createawebhookforaconsumerauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -38579,6 +39086,7 @@ paths:
         required: true
         schema:
           type: string
+          description: Createawebhookforaconsumerconsumer schema.
         description: The consumer.
       responses:
         '201':
@@ -38590,11 +39098,14 @@ paths:
         '404':
           description: '`pacticipant-not-found`: no such consumer or provider.'
         '409':
-          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+          description: '`pact-webhook-limit-reached`: the workspace already has 200
+            webhooks.'
         '422':
-          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
         '503':
-          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret
+            and the server has no key to seal it with.'
       requestBody:
         required: true
         content:
@@ -38675,7 +39186,9 @@ paths:
                       example: POST
                     url:
                       type: string
-                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      description: http(s), a public host. `${pactbroker.*}` parameters
+                        and `${user.<name>}` workspace secrets may appear in the path
+                        and query, not in the host.
                       example: https://example.com/resource
                     headers:
                       type: object
@@ -38683,14 +39196,15 @@ paths:
                         type: string
                       description: Headers.
                     body:
-                      description: A JSON value (sent as JSON) or a string (sent as text).
+                      description: A JSON value (sent as JSON) or a string (sent as
+                        text).
                     username:
                       type: string
                       description: Username.
                       example: Example
                     password:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: example
                 target:
                   type: object
@@ -38698,7 +39212,8 @@ paths:
                   - type
                   - repository
                   - token
-                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place
+                    of `request`.'
                   properties:
                     type:
                       type: string
@@ -38725,12 +39240,15 @@ paths:
                       example: example
                     token:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
                 signingSecret:
                   type: string
                   minLength: 16
-                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature:
+                    sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that
+                    has one reads `signed: true`. May be `${user.<name>}`, a workspace
+                    secret of 16 characters or more.'
                   example: exampleexampleex
               description: Request body for createawebhookforaconsumerrequest.
             examples:
@@ -38772,7 +39290,8 @@ paths:
       tags:
       - pact-broker
       summary: List the webhooks of a pact
-      description: The webhooks defined for exactly this scope (a webhook for all pacts is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
+      description: The webhooks defined for exactly this scope (a webhook for all pacts
+        is not listed here; see `GET …/webhooks`). Requires `pacts:view`.
       operationId: read_scoped_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__webhooks_get
       parameters:
       - name: tenant_slug
@@ -38794,7 +39313,8 @@ paths:
             description: Listthewebhooksofapactauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -38812,12 +39332,14 @@ paths:
         required: true
         schema:
           type: string
+          description: Listthewebhooksofapactprovider schema.
         description: The provider.
       - name: consumer
         in: path
         required: true
         schema:
           type: string
+          description: Listthewebhooksofapactconsumer schema.
         description: The consumer.
       responses:
         '200':
@@ -38839,7 +39361,8 @@ paths:
       tags:
       - pact-broker
       summary: Create a webhook for a pact
-      description: 'Create a webhook for this scope: the consumer and provider of the URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
+      description: 'Create a webhook for this scope: the consumer and provider of the
+        URL replace any in the body. Otherwise as `POST …/webhooks`. Requires `pacts:create`.'
       operationId: post_scoped_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__webhooks_post
       parameters:
       - name: tenant_slug
@@ -38861,7 +39384,8 @@ paths:
             description: Createawebhookforapactauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -38879,12 +39403,14 @@ paths:
         required: true
         schema:
           type: string
+          description: Createawebhookforapactprovider schema.
         description: The provider.
       - name: consumer
         in: path
         required: true
         schema:
           type: string
+          description: Createawebhookforapactconsumer schema.
         description: The consumer.
       responses:
         '201':
@@ -38896,11 +39422,14 @@ paths:
         '404':
           description: '`pacticipant-not-found`: no such consumer or provider.'
         '409':
-          description: '`pact-webhook-limit-reached`: the workspace already has 200 webhooks.'
+          description: '`pact-webhook-limit-reached`: the workspace already has 200
+            webhooks.'
         '422':
-          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer` names the field.'
+          description: '`pact-webhook-invalid`: the body is malformed; `detail.pointer`
+            names the field.'
         '503':
-          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret and the server has no key to seal it with.'
+          description: '`pact-webhook-secrets-unavailable`: the webhook carries a secret
+            and the server has no key to seal it with.'
       requestBody:
         required: true
         content:
@@ -38981,7 +39510,9 @@ paths:
                       example: POST
                     url:
                       type: string
-                      description: http(s), a public host. `${pactbroker.*}` parameters may appear in the path and query, not in the host.
+                      description: http(s), a public host. `${pactbroker.*}` parameters
+                        and `${user.<name>}` workspace secrets may appear in the path
+                        and query, not in the host.
                       example: https://example.com/resource
                     headers:
                       type: object
@@ -38989,14 +39520,15 @@ paths:
                         type: string
                       description: Headers.
                     body:
-                      description: A JSON value (sent as JSON) or a string (sent as text).
+                      description: A JSON value (sent as JSON) or a string (sent as
+                        text).
                     username:
                       type: string
                       description: Username.
                       example: Example
                     password:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: example
                 target:
                   type: object
@@ -39004,7 +39536,8 @@ paths:
                   - type
                   - repository
                   - token
-                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place of `request`.'
+                  description: 'Apiome: a GitHub Actions `repository_dispatch`, in place
+                    of `request`.'
                   properties:
                     type:
                       type: string
@@ -39031,12 +39564,15 @@ paths:
                       example: example
                     token:
                       type: string
-                      description: Sealed; reads as `**********`.
+                      description: Sealed; reads as `**********`. May be `${user.<name>}`.
                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
                 signingSecret:
                   type: string
                   minLength: 16
-                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`.'
+                  description: 'Apiome: when set, every delivery carries `X-Apiome-Signature:
+                    sha256=<hex>`, the HMAC-SHA256 of the body. Sealed; a webhook that
+                    has one reads `signed: true`. May be `${user.<name>}`, a workspace
+                    secret of 16 characters or more.'
                   example: exampleexampleex
               description: Request body for createawebhookforapactrequest.
             examples:
@@ -134456,7 +134992,7 @@ components:
           type: integer
           title: Compiler Version
           description: Version of the compilation rules.
-          default: 4
+          default: 5
           example: 1
         digest:
           type: string
@@ -202797,7 +203333,8 @@ components:
         kind:
           type: string
           title: Kind
-          description: 'Where the credential lives: `none`, `env`, or `stored`.'
+          description: 'Where the credential lives: `none`, `env`, `stored`, or `secret`
+            (a workspace secret).'
           default: none
           example: example
         scheme:
@@ -202807,8 +203344,7 @@ components:
           - type: 'null'
             description: Target Auth Reference schema.
           title: Scheme
-          description: 'How the resolved secret is presented: `bearer`, `header`,
-            or `basic`.'
+          description: 'How the resolved secret is presented: `bearer`, `header`, or `basic`.'
         ref:
           anyOf:
           - type: string
@@ -202817,8 +203353,8 @@ components:
             description: Target Auth Reference schema.
           title: Ref
           description: 'The reference itself: an environment-variable NAME for `env`,
-            a credential-vault UUID for `stored`. Never a secret value — a token cannot
-            satisfy either shape.'
+            a credential-vault UUID for `stored`, a workspace secret''s name for `secret`.
+            Never a secret value.'
         header_name:
           anyOf:
           - type: string
@@ -202830,19 +203366,20 @@ components:
       additionalProperties: false
       type: object
       title: TargetAuthReference
-      description: "How a runner obtains the credential for a target — a pointer,\
-        \ never the secret.\n\n``kind`` selects the mechanism and ``ref`` names the\
-        \ credential within it:\n\n* ``none``   — an anonymous target. Every other\
-        \ field must be absent.\n* ``env``    — ``ref`` is an **environment variable\
-        \ name** the runner reads from its own\n  environment (``APIOME_STAGING_TOKEN``).\
-        \ The platform stores the name and never sees the\n  value, which is what\
-        \ makes a self-hosted CI run work without handing the platform a secret.\n\
-        * ``stored`` — ``ref`` is the **id** of a row in the encrypted credential\
-        \ vault\n  (``apiome.mcp_endpoint_credentials``). The ciphertext and its key\
-        \ version stay there.\n\n``scheme`` says how the resolved value is presented\
-        \ (``Authorization: Bearer …``, a named\nheader, or HTTP Basic) and ``header_name``\
-        \ names the header for the ``header`` scheme. Both\nare shapes rather than\
-        \ secrets."
+      description: "How a runner obtains the credential for a target — a pointer, never\
+        \ the secret.\n\n``kind`` selects the mechanism and ``ref`` names the credential\
+        \ within it:\n\n* ``none``   — an anonymous target. Every other field must be\
+        \ absent.\n* ``env``    — ``ref`` is an **environment variable name** the runner\
+        \ reads from its own\n  environment (``APIOME_STAGING_TOKEN``). The platform stores\
+        \ the name and never sees the\n  value, which is what makes a self-hosted CI run\
+        \ work without handing the platform a secret.\n* ``stored`` — ``ref`` is the **id**\
+        \ of a row in the encrypted credential vault\n  (``apiome.mcp_endpoint_credentials``).\
+        \ The ciphertext and its key version stay there.\n* ``secret`` — ``ref`` is the\
+        \ **name** of a secret of the target's workspace\n  (``apiome.pact_secret``, PFX-6.5),\
+        \ opened by the runner service when a run starts.\n\n``scheme`` says how the resolved\
+        \ value is presented (``Authorization: Bearer …``, a named\nheader, or HTTP Basic)\
+        \ and ``header_name`` names the header for the ``header`` scheme. Both\nare shapes\
+        \ rather than secrets."
     TargetConformance:
       properties:
         target:
@@ -221835,6 +222372,141 @@ components:
       - republish_requests_enabled
       title: VerificationSettingsInput
       description: The workspace's verification settings, as ``PUT`` replaces them.
+    SecretList:
+      properties:
+        secrets:
+          items:
+            $ref: '#/components/schemas/SecretRecord'
+          type: array
+          title: Secrets
+          description: Secrets.
+          maxItems: 1000
+        limit:
+          type: integer
+          title: Limit
+          default: 200
+          description: Limit.
+          example: 50
+      additionalProperties: false
+      type: object
+      title: SecretList
+      description: "The workspace's secrets, by name.\n\nAttributes:\n    secrets: Every\
+        \ secret.\n    limit: The most a workspace may keep."
+    SecretRecord:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: Secret schema.
+          - type: 'null'
+            description: Secret schema.
+          title: Description
+          description: Free-text description.
+        reference:
+          type: string
+          title: Reference
+          description: Reference.
+          example: example
+        used_by:
+          $ref: '#/components/schemas/SecretUsage'
+          description: Used By.
+        value_updated_at:
+          anyOf:
+          - type: string
+            description: Secret schema.
+          - type: 'null'
+            description: Secret schema.
+          title: Value Updated At
+          description: Value Updated At timestamp (ISO 8601).
+        created_at:
+          anyOf:
+          - type: string
+            description: Secret schema.
+          - type: 'null'
+            description: Secret schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        updated_at:
+          anyOf:
+          - type: string
+            description: Secret schema.
+          - type: 'null'
+            description: Secret schema.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      - reference
+      title: SecretRecord
+      description: "A stored secret as everyone reads it: never its value.\n\nAttributes:\n\
+        \    id: The secret's id.\n    name: The name references use.\n    description:\
+        \ What it is for.\n    reference: How a webhook template writes it: ``${user.<name>}``.\n\
+        \    used_by: The webhooks and targets that refer to it.\n    value_updated_at:\
+        \ When the value was last set (created or rotated).\n    created_at: When it was\
+        \ created.\n    updated_at: When it was last changed."
+    SecretUsage:
+      properties:
+        webhooks:
+          items:
+            $ref: '#/components/schemas/SecretUser'
+          type: array
+          title: Webhooks
+          description: Webhooks.
+          maxItems: 1000
+        targets:
+          items:
+            $ref: '#/components/schemas/SecretUser'
+          type: array
+          title: Targets
+          description: Targets.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      title: SecretUsage
+      description: "What refers to a secret.\n\nAttributes:\n    webhooks: The contract\
+        \ webhooks whose templates use it.\n    targets: The verification targets whose\
+        \ credential it is."
+    SecretUser:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: Kind.
+          example: example
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - id
+      - name
+      title: SecretUser
+      description: "Something that refers to a secret.\n\nAttributes:\n    kind: ``webhook``\
+        \ or ``verification_target``.\n    id: Its id (a webhook's ``uuid``, a target's\
+        \ id).\n    name: How it is shown: the webhook's description or request, the target's\
+        \ slug."
   securitySchemes:
     Bearer:
       type: http

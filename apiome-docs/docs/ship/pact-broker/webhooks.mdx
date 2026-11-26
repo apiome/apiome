@@ -24,6 +24,8 @@ one.
 - The endpoint you send to is reachable from the internet over `http` or `https`.
 - To store a secret (a token, a password or a signing secret), the server needs a vault key. On
   Apiome Cloud it is set. If you host Apiome yourself, see [For operators](#for-operators).
+- To share one token between webhooks, keep it as a [workspace secret](./secrets.mdx) and write
+  `${user.<name>}` where the webhook needs it.
 
 The examples use these two variables:
 
@@ -201,6 +203,11 @@ string, so a quote in a name cannot break the JSON. In the URL, values are URL-e
 - **To let the receiver check a delivery**, set `signingSecret` (16 characters or more). Each
   request then carries `X-Apiome-Signature: sha256=<hex>`, the HMAC-SHA256 of the request body
   with that secret.
+- **To keep a token once for many webhooks**, create a [workspace secret](./secrets.mdx) and write
+  `${user.<name>}` in a header, the URL's path or query, the body, the `password`, the GitHub
+  `token` or the `signingSecret`. It must exist when you save the webhook, its value is put in only
+  when the webhook is sent, and it is redacted from the log like any secret. The webhook lists the
+  names it uses as `secretReferences`. Rotating the secret changes every webhook that uses it.
 
 Every request also carries `X-Apiome-Event` (`pact.` and the event name) and
 `X-Apiome-Delivery`, an id that is the same on every retry of one firing. Use it to ignore a
@@ -283,7 +290,7 @@ To try a webhook before you save it, post its body to `POST …/webhooks/execute
 | `404` | `pact-triggered-webhook-not-found` | No firing with that `uuid`. It goes when its webhook is deleted. |
 | `404` | `pacticipant-not-found` | The consumer or provider in the URL does not exist. |
 | `409` | `pact-webhook-limit-reached` | The workspace already has 200 webhooks. Delete one first. |
-| `422` | `pact-webhook-invalid` | The webhook is malformed. `pointer` names the field: `/request/url` for a private address or a parameter in the host, `/request/method`, `/events/0/name`, `/provider/name` for an unknown pacticipant, `/consumer/label` (choosing pacticipants by label is not supported). |
+| `422` | `pact-webhook-invalid` | The webhook is malformed. `pointer` names the field: `/request/url` for a private address or a parameter or secret reference in the host, the field of a `${user.…}` reference to a secret the workspace does not have (or a malformed one), `/request/method`, `/events/0/name`, `/provider/name` for an unknown pacticipant, `/consumer/label` (choosing pacticipants by label is not supported). |
 | `429` | `pact-webhook-test-rate-limited` | Too many test runs. Wait for the number of seconds in `Retry-After`. |
 | `503` | `pact-webhook-secrets-unavailable` | The webhook has a secret and the server has no vault key. See [For operators](#for-operators). |
 | `401` / `403` | — | The token is not a valid API key for this workspace, or its member lacks the **Pacts** permission below. |
@@ -317,6 +324,7 @@ To try a webhook before you save it, post its body to `POST …/webhooks/execute
 - **Private receivers.** `APIOME_SSRF_ALLOW_PRIVATE=true` turns the address check off for the
   whole server. Use it only for local development.
 - **Migration.** `V436` adds two tables and two nullable columns. Nothing existing is rewritten.
+  `V450` adds `secret_refs`, the [workspace secrets](./secrets.mdx) a webhook refers to.
 
 ## What differs from the Pact Broker
 
@@ -330,6 +338,7 @@ To try a webhook before you save it, post its body to `POST …/webhooks/execute
 ## Related
 
 - [Webhooks and delivery log](./webhooks-console.mdx) — the webhooks and their deliveries in the app.
+- [Secrets for webhooks and targets](./secrets.mdx) — keep a token once and refer to it as `${user.<name>}`.
 - [Publish pacts](./publish-pacts.mdx) — what fires the contract events.
 - [Publish verification results](./verification-results.mdx) — what fires the verification events.
 - [Environments and deployments](./environments.mdx) — which provider versions have to verify.

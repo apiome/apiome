@@ -15,10 +15,12 @@ Three invariants hold this module together, and each is enforced here *and* by a
 in apiome-db V211, so neither layer is the only thing standing between a mistake and the database:
 
 **A target never holds a secret.** ``auth.kind`` says where the credential lives — ``env`` (a
-variable name the runner reads from its own environment) or ``stored`` (a row id in the existing
-encrypted credential vault) — and the reference is shape-validated so a pasted token cannot
-masquerade as one. An env reference must match ``^[A-Z_][A-Z0-9_]*$``; a bearer token, a base64
-blob, and a JWT all fail it. A stored reference must be a UUID.
+variable name the runner reads from its own environment), ``stored`` (a row id in the existing
+encrypted credential vault) or ``secret`` (the name of a workspace secret, PFX-6.5) — and the
+reference is shape-validated so a pasted token cannot masquerade as one. An env reference must
+match ``^[A-Z_][A-Z0-9_]*$``; a bearer token, a base64 blob, and a JWT all fail it. A stored
+reference must be a UUID; a secret reference a secret name (a letter, then letters, digits and
+underscores, 64 at most).
 
 **A target cannot point inward by accident.** :func:`validate_base_url` runs the URL through
 :mod:`app.ssrf_guard`: http/https only, no ``user:pass@`` authority, and — for the default
@@ -43,6 +45,7 @@ from typing import Any, Dict, List, Mapping, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .contract_protocols import CONTRACT_PROTOCOLS, PROTOCOL_HTTP, target_protocols_for
+from .pact_secret import NAME_PATTERN as _SECRET_NAME_PATTERN
 from .ssrf_guard import SSRFError, validate_host, validate_url_policy
 
 __all__ = [
@@ -62,6 +65,7 @@ __all__ = [
     "CODE_URL_UNRESOLVABLE",
     "AUTH_KIND_ENV",
     "AUTH_KIND_NONE",
+    "AUTH_KIND_SECRET",
     "AUTH_KIND_STORED",
     "AUTH_SCHEMES",
     "AUTH_SCHEME_BASIC",
@@ -119,9 +123,11 @@ NETWORK_CLASSES = (NETWORK_CLASS_PUBLIC, NETWORK_CLASS_PRIVATE)
 AUTH_KIND_NONE = "none"
 AUTH_KIND_ENV = "env"
 AUTH_KIND_STORED = "stored"
+#: A workspace secret, by name (PFX-6.5): ``auth.ref`` names a secret under ``…/pact-secrets``.
+AUTH_KIND_SECRET = "secret"
 
 #: Where a credential lives. The target holds this and the reference; never the value.
-AUTH_KINDS = (AUTH_KIND_NONE, AUTH_KIND_ENV, AUTH_KIND_STORED)
+AUTH_KINDS = (AUTH_KIND_NONE, AUTH_KIND_ENV, AUTH_KIND_STORED, AUTH_KIND_SECRET)
 
 AUTH_SCHEME_BEARER = "bearer"
 AUTH_SCHEME_HEADER = "header"
@@ -177,6 +183,8 @@ _ENV_NAME_RE = re.compile(r"^[A-Z_][A-Z0-9_]*$")
 _UUID_RE = re.compile(
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 )
+# A workspace secret's name (mirrors the V450 CHECK).
+_SECRET_NAME_RE = re.compile(rf"^{_SECRET_NAME_PATTERN}$")
 # RFC 9110 §5.1 field-name token grammar (the same one app.mcp_auth enforces), so a stored header
 # name can never split a request.
 _HEADER_NAME_RE = re.compile(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$")
@@ -219,6 +227,8 @@ class TargetAuthReference(BaseModel):
       value, which is what makes a self-hosted CI run work without handing the platform a secret.
     * ``stored`` — ``ref`` is the **id** of a row in the encrypted credential vault
       (``apiome.mcp_endpoint_credentials``). The ciphertext and its key version stay there.
+    * ``secret`` — ``ref`` is the **name** of a secret of the target's workspace
+      (``apiome.pact_secret``, PFX-6.5), opened by the runner service when a run starts.
 
     ``scheme`` says how the resolved value is presented (``Authorization: Bearer …``, a named
     header, or HTTP Basic) and ``header_name`` names the header for the ``header`` scheme. Both
@@ -229,7 +239,7 @@ class TargetAuthReference(BaseModel):
 
     kind: str = Field(
         default=AUTH_KIND_NONE,
-        description="Where the credential lives: `none`, `env`, or `stored`.",
+        description="Where the credential lives: `none`, `env`, `stored`, or `secret` (a workspace secret).",
     )
     scheme: Optional[str] = Field(
         default=None,
@@ -239,7 +249,7 @@ class TargetAuthReference(BaseModel):
         default=None,
         description=(
             "The reference itself: an environment-variable NAME for `env`, a credential-vault "
-            "UUID for `stored`. Never a secret value — a token cannot satisfy either shape."
+            "UUID for `stored`, a workspace secret's name for `secret`. Never a secret value."
         ),
     )
     header_name: Optional[str] = Field(
@@ -299,6 +309,11 @@ class TargetAuthReference(BaseModel):
             raise ValueError(
                 "auth.ref must be the UUID of a stored credential — this field holds a "
                 "reference to a secret, never the secret itself"
+            )
+        if self.kind == AUTH_KIND_SECRET and not _SECRET_NAME_RE.match(self.ref):
+            raise ValueError(
+                "auth.ref must be the name of a workspace secret (a letter, then up to 63 letters, "
+                "digits and underscores) — this field holds a reference, never the secret itself"
             )
 
         if self.scheme == AUTH_SCHEME_HEADER:

@@ -51,6 +51,7 @@ from .probe_consent import (
 from .revision_deprecation import is_uuid_string
 from .verification_target import (
     AUTH_KIND_NONE,
+    AUTH_KIND_SECRET,
     TargetAuthReference,
     VerificationTargetRecord,
 )
@@ -121,7 +122,7 @@ class ProbeConsentStoreError(ValueError):
 
 
 def _identity_reference(value: Optional[TargetAuthReference]) -> Optional[TargetAuthReference]:
-    """Refuse an identity of kind ``none`` — an identity has to reference a credential.
+    """Refuse an identity of kind ``none`` (it has to reference a credential) or ``secret`` (V386 has no room for it).
 
     Args:
         value: The submitted reference.
@@ -136,6 +137,11 @@ def _identity_reference(value: Optional[TargetAuthReference]) -> Optional[Target
         raise ValueError(
             "a test identity must reference a credential (kind 'env' or 'stored'); omit the "
             "identity instead of sending kind 'none'"
+        )
+    if value is not None and value.kind == AUTH_KIND_SECRET:
+        # V386 stores env and stored identities only; workspace secrets (PFX-6.5) are for targets.
+        raise ValueError(
+            "a test identity cannot reference a workspace secret (kind 'secret'); use kind 'env' or 'stored'"
         )
     return value
 

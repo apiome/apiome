@@ -126,6 +126,7 @@
     "/v1/tenants/{tenant_slug}/ownership-drift": "capped-in-sql",
     "/v1/tenants/{tenant_slug}/pact-health": "capped-in-sql",
     "/v1/tenants/{tenant_slug}/pact-health/providers/{provider}/consumers/{consumer}": "single-resource",
+    "/v1/tenants/{tenant_slug}/pact-secrets": "bounded-by-parent",
     "/v1/tenants/{tenant_slug}/pact-verification-settings/overrides": "capped-in-sql",
     "/v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states": "bounded-by-parent",
     "/v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states/{state_id}": "single-resource",

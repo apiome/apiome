@@ -62,9 +62,11 @@ get it automatically — grant it on each custom role that should manage teams.
 
 **Pacts** (`pacts`) controls the [Pact Broker](../ship/pact-broker/concepts.mdx#who-can-do-what):
 pacticipants and their versions, branches and tags, and the pacts, verification results,
-environments, deployments, webhooks and provider states built on them, and the
-[verification settings and re-publish requests](../ship/pact-broker/stale-pacts.mdx#permissions) and
-[contract health](../ship/pact-broker/contract-health.mdx#who-can-do-what). The built-in **Owner** and
+environments, deployments, webhooks and provider states built on them, the
+[verification settings and re-publish requests](../ship/pact-broker/stale-pacts.mdx#permissions),
+[contract health](../ship/pact-broker/contract-health.mdx#who-can-do-what) and the
+[workspace secrets](../ship/pact-broker/secrets.mdx#who-can-do-what) webhooks and verification
+targets refer to (**Viewer** sees their names, never their values). The built-in **Owner** and
 **Admin** roles hold all of it; **Editor** can view, create and edit but not delete, because
 deleting a pacticipant removes its whole version history; **Viewer** can only view. Custom roles do
 not get it automatically. Every change it allows is recorded in the

@@ -92,6 +92,7 @@ from .verification_evidence import (
 from .verification_target import (
     AUTH_KIND_ENV,
     AUTH_KIND_NONE,
+    AUTH_KIND_SECRET,
     AUTH_KIND_STORED,
     AUTH_SCHEME_BASIC,
     AUTH_SCHEME_BEARER,
@@ -350,6 +351,7 @@ def materialize_auth_headers(
     *,
     environ: Optional[Mapping[str, str]] = None,
     stored_headers: Optional[Mapping[str, str]] = None,
+    secret_value: Optional[str] = None,
 ) -> Dict[str, str]:
     """Turn a secret-free auth reference into request headers.
 
@@ -358,6 +360,9 @@ def materialize_auth_headers(
         environ: Environment map for ``kind=env`` (defaults to ``os.environ``).
         stored_headers: Already-unsealed headers for ``kind=stored`` (the service loads them
             via the credential vault; this module never opens ciphertext).
+        secret_value: The already-opened workspace secret for ``kind=secret`` (PFX-6.5;
+            :func:`app.target_credentials.target_auth_headers` opens it), presented with
+            ``auth.scheme`` exactly as an ``env`` value is.
 
     Returns:
         Headers to attach to every case request — empty for ``kind=none``.
@@ -376,18 +381,25 @@ def materialize_auth_headers(
             )
         return dict(stored_headers)
 
-    if auth.kind != AUTH_KIND_ENV:
+    if auth.kind == AUTH_KIND_SECRET:
+        if not secret_value:
+            raise AuthResolutionError(
+                f"workspace secret {auth.ref!r} could not be resolved for this target; "
+                "check that it exists and the encryption keys"
+            )
+        value = secret_value
+    elif auth.kind != AUTH_KIND_ENV:
         raise AuthResolutionError(f"unsupported auth.kind {auth.kind!r}")
-
-    env = environ if environ is not None else os.environ
-    ref = (auth.ref or "").strip()
-    if not ref:
-        raise AuthResolutionError("env auth reference has no variable name")
-    value = env.get(ref)
-    if value is None or not str(value).strip():
-        raise AuthResolutionError(
-            f"environment variable {ref!r} is unset or empty; the runner cannot authorize"
-        )
+    else:
+        env = environ if environ is not None else os.environ
+        ref = (auth.ref or "").strip()
+        if not ref:
+            raise AuthResolutionError("env auth reference has no variable name")
+        value = env.get(ref)
+        if value is None or not str(value).strip():
+            raise AuthResolutionError(
+                f"environment variable {ref!r} is unset or empty; the runner cannot authorize"
+            )
 
     scheme = (auth.scheme or "").strip().lower()
     if scheme == AUTH_SCHEME_BEARER:

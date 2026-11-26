@@ -1469,6 +1469,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['create-webhook', 'repository_dispatch', 'GitHub Actions', 'pactbroker.pactUrl', 'signing secret', 'HMAC', 'dead-letter', 'retry', 'triggered'],
   },
   {
+    id: 'secrets',
+    title: 'Secrets for webhooks and targets',
+    summary: 'Keep a token once and refer to it from webhooks and verification targets.',
+    page: 'apiome-docs/docs/ship/pact-broker/secrets.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'pact', 'user.', 'credential vault', 'token', 'rotate', 'rotation', 'api key', 'verification', 'pactflow'],
+  },
+  {
     id: 'commit-statuses',
     title: 'Commit statuses',
     summary: "See each pact's verification verdict on GitHub and GitLab commits and pull requests.",
