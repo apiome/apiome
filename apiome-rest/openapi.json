@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.679.0",
+    "version": "1.680.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -21273,6 +21273,306 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/internal/mcp/pacts/list": {
+      "post": {
+        "tags": [
+          "internal-mcp-pacts"
+        ],
+        "summary": "Latest pacts for the MCP `pact.list` tool",
+        "description": "Internal (`X-Internal-Service-Token`). The latest pact of every consumer \u2192 provider integration of the tenant, with its latest verification result; optional `provider` / `consumer` filters; cursor-paginated. Requires the key owner's `pacts:view`.",
+        "operationId": "mcp_pact_list_v1_internal_mcp_pacts_list_post",
+        "parameters": [
+          {
+            "name": "X-Internal-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Latestpactsforthe Mcppactlisttool Xinternal Service Toke schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Latestpactsforthe Mcppactlisttool Xinternal Service Toke schema."
+                }
+              ],
+              "title": "X-Internal-Service-Token",
+              "description": "X-Internal-Service-Token schema."
+            },
+            "description": "Header parameter: X Internal Service Token."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpPactListRequest",
+                "description": "Request body for latestpactsforthe mcppactlisttoolrequest."
+              }
+            }
+          },
+          "description": "Request body for latest pacts for the mcp `pact.list` tool."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for latest pacts for the mcp `pact.list` tool.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpPactListResponse",
+                  "description": "Response payload for latestpactsforthe mcppactlisttoolresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent."
+          },
+          "403": {
+            "description": "`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`."
+          },
+          "404": {
+            "description": "`pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for latestpactsforthe mcppactlisttoolresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/internal/mcp/pacts/matrix": {
+      "post": {
+        "tags": [
+          "internal-mcp-pacts"
+        ],
+        "summary": "Matrix query for the MCP `pact.matrix` tool",
+        "description": "Internal (`X-Internal-Service-Token`). `GET \u2026/pact-broker/matrix` from structured selectors: the verdict (`summary.deployable` true / false / null), its notices and at most `maxRows` compact rows, with `rowsTotal` and `rowsTruncated`. `latestby` is one of cvp, cvpv, cp. Requires the key owner's `pacts:view`.",
+        "operationId": "mcp_pact_matrix_v1_internal_mcp_pacts_matrix_post",
+        "parameters": [
+          {
+            "name": "X-Internal-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Matrixqueryforthe Mcppactmatrixtool Xinternal Service Toke schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Matrixqueryforthe Mcppactmatrixtool Xinternal Service Toke schema."
+                }
+              ],
+              "title": "X-Internal-Service-Token",
+              "description": "X-Internal-Service-Token schema."
+            },
+            "description": "Header parameter: X Internal Service Token."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpPactMatrixRequest",
+                "description": "Request body for matrixqueryforthe mcppactmatrixtoolrequest."
+              }
+            }
+          },
+          "description": "Request body for matrix query for the mcp `pact.matrix` tool."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for matrix query for the mcp `pact.matrix` tool.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpPactMatrixResponse",
+                  "description": "Response payload for matrixqueryforthe mcppactmatrixtoolresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent."
+          },
+          "403": {
+            "description": "`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`."
+          },
+          "404": {
+            "description": "`pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for matrixqueryforthe mcppactmatrixtoolresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/internal/mcp/pacts/can-i-deploy": {
+      "post": {
+        "tags": [
+          "internal-mcp-pacts"
+        ],
+        "summary": "Can I deploy? for the MCP `pact.can_i_deploy` tool",
+        "description": "Internal (`X-Internal-Service-Token`). `GET \u2026/pact-broker/can-i-deploy`: one pacticipant version to `toEnvironment` or `toTag` (exactly one). The same bounded answer as the matrix route; `retryAfterSeconds` is set while the verdict is unknown. Requires the key owner's `pacts:view`.",
+        "operationId": "mcp_pact_can_i_deploy_v1_internal_mcp_pacts_can_i_deploy_post",
+        "parameters": [
+          {
+            "name": "X-Internal-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Can Ideployforthe Mcppactcanideploytool Xinternal Service Toke schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Can Ideployforthe Mcppactcanideploytool Xinternal Service Toke schema."
+                }
+              ],
+              "title": "X-Internal-Service-Token",
+              "description": "X-Internal-Service-Token schema."
+            },
+            "description": "Header parameter: X Internal Service Token."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpPactCanIDeployRequest",
+                "description": "Request body for can ideployforthe mcppactcanideploytoolrequest."
+              }
+            }
+          },
+          "description": "Request body for can i deploy? for the mcp `pact.can_i_deploy` tool."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for can i deploy? for the mcp `pact.can_i_deploy` tool.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpPactMatrixResponse",
+                  "description": "Response payload for can ideployforthe mcppactcanideploytoolresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent."
+          },
+          "403": {
+            "description": "`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`."
+          },
+          "404": {
+            "description": "`pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for can ideployforthe mcppactcanideploytoolresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/internal/mcp/pacts/record-deployment": {
+      "post": {
+        "tags": [
+          "internal-mcp-pacts"
+        ],
+        "summary": "Record a deployment for the MCP `pact.record_deployment` tool",
+        "description": "Internal (`X-Internal-Service-Token`). `pact-broker record-deployment`: the version is now deployed to the named environment (and application instance); the previous deployment there is marked undeployed. `created: false` when it already was the current deployment. Requires the key owner's `pacts:create`.",
+        "operationId": "mcp_pact_record_deployment_v1_internal_mcp_pacts_record_deployment_post",
+        "parameters": [
+          {
+            "name": "X-Internal-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Recordadeploymentforthe Mcppactrecorddepl Xinternal Service Toke schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Recordadeploymentforthe Mcppactrecorddepl Xinternal Service Toke schema."
+                }
+              ],
+              "title": "X-Internal-Service-Token",
+              "description": "X-Internal-Service-Token schema."
+            },
+            "description": "Header parameter: X Internal Service Token."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpPactRecordDeploymentRequest",
+                "description": "Request body for recordadeploymentforthe mcppactrecorddeplrequest."
+              }
+            }
+          },
+          "description": "Request body for record a deployment for the mcp `pact.record_deployment` tool."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for record a deployment for the mcp `pact.record_deployment` tool.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpPactDeploymentResponse",
+                  "description": "Response payload for recordadeploymentforthe mcppactrecorddeplresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent."
+          },
+          "403": {
+            "description": "`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`."
+          },
+          "404": {
+            "description": "`pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`."
+          },
+          "422": {
+            "description": "`pact-deployment-invalid`: a malformed application instance."
           }
         }
       }
@@ -150663,6 +150963,636 @@
         ],
         "title": "LabelNameListResponse",
         "description": "One page of the workspace's distinct labels."
+      },
+      "McpPactCanIDeployRequest": {
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "title": "Tenantid",
+            "description": "The MCP key's tenant (trusted: internal route).",
+            "example": "example"
+          },
+          "keyId": {
+            "type": "string",
+            "title": "Keyid",
+            "description": "The MCP key; its owner's `pacts` role is applied.",
+            "example": "example"
+          },
+          "pacticipant": {
+            "type": "string",
+            "title": "Pacticipant",
+            "description": "What is being deployed.",
+            "example": "example"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Its version number, exactly as recorded.",
+            "example": "1.0.0"
+          },
+          "toEnvironment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp pact can ideploy."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact can ideploy."
+              }
+            ],
+            "title": "Toenvironment",
+            "description": "Where it goes."
+          },
+          "toTag": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp pact can ideploy."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact can ideploy."
+              }
+            ],
+            "title": "Totag",
+            "description": "Or: the tag it is checked against."
+          },
+          "ignore": {
+            "items": {
+              "$ref": "#/components/schemas/McpPactIgnore"
+            },
+            "type": "array",
+            "title": "Ignore",
+            "description": "Rows that do not count.",
+            "maxItems": 1000
+          },
+          "maxRows": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Maxrows",
+            "description": "The most rows returned (the verdict reads them all).",
+            "default": 50,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tenantId",
+          "keyId",
+          "pacticipant",
+          "version"
+        ],
+        "title": "McpPactCanIDeployRequest",
+        "description": "``pact.can_i_deploy``: one version to an environment or a tag."
+      },
+      "McpPactDeploymentResponse": {
+        "properties": {
+          "created": {
+            "type": "boolean",
+            "title": "Created",
+            "description": "False when this version already was the current deployment there.",
+            "example": false
+          },
+          "deployment": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Deployment",
+            "description": "Deployment."
+          }
+        },
+        "type": "object",
+        "required": [
+          "created",
+          "deployment"
+        ],
+        "title": "McpPactDeploymentResponse",
+        "description": "The recorded deployment."
+      },
+      "McpPactIgnore": {
+        "properties": {
+          "pacticipant": {
+            "type": "string",
+            "title": "Pacticipant",
+            "description": "The pacticipant to ignore.",
+            "example": "example"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Pact Ignore schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Pact Ignore schema."
+              }
+            ],
+            "title": "Version",
+            "description": "Only this version of it."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pacticipant"
+        ],
+        "title": "McpPactIgnore",
+        "description": "A pacticipant (or one of its versions) whose rows do not count."
+      },
+      "McpPactListRequest": {
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "title": "Tenantid",
+            "description": "The MCP key's tenant (trusted: internal route).",
+            "example": "example"
+          },
+          "keyId": {
+            "type": "string",
+            "title": "Keyid",
+            "description": "The MCP key; its owner's `pacts` role is applied.",
+            "example": "example"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp pact list."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact list."
+              }
+            ],
+            "title": "Provider",
+            "description": "Only pacts for this provider (handle, id or name)."
+          },
+          "consumer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp pact list."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact list."
+              }
+            ],
+            "title": "Consumer",
+            "description": "Only pacts of this consumer (handle, id or name)."
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "description": "Pacts per page.",
+            "default": 50,
+            "example": 50
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp pact list."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact list."
+              }
+            ],
+            "title": "Cursor",
+            "description": "`nextCursor` of the previous page."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tenantId",
+          "keyId"
+        ],
+        "title": "McpPactListRequest",
+        "description": "``pact.list``: optional filters and a page."
+      },
+      "McpPactListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Items.",
+            "maxItems": 100
+          },
+          "hasMore": {
+            "type": "boolean",
+            "title": "Hasmore",
+            "description": "Has More.",
+            "example": false
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp pact list."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp pact list."
+              }
+            ],
+            "title": "Nextcursor",
+            "description": "Next Cursor."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "hasMore"
+        ],
+        "title": "McpPactListResponse",
+        "description": "One page of pacts."
+      },
+      "McpPactMatrixRequest": {
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "title": "Tenantid",
+            "description": "The MCP key's tenant (trusted: internal route).",
+            "example": "example"
+          },
+          "keyId": {
+            "type": "string",
+            "title": "Keyid",
+            "description": "The MCP key; its owner's `pacts` role is applied.",
+            "example": "example"
+          },
+          "selectors": {
+            "items": {
+              "$ref": "#/components/schemas/McpPactSelector"
+            },
+            "type": "array",
+            "title": "Selectors",
+            "description": "The versions in question (1 or more).",
+            "maxItems": 1000
+          },
+          "latestby": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "cvp",
+                  "cvpv",
+                  "cp"
+                ],
+                "description": "Request body for mcp pact matrix."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact matrix."
+              }
+            ],
+            "title": "Latestby",
+            "description": "How rows collapse."
+          },
+          "toEnvironment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp pact matrix."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact matrix."
+              }
+            ],
+            "title": "Toenvironment",
+            "description": "Destination: everything in this environment."
+          },
+          "toTag": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp pact matrix."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact matrix."
+              }
+            ],
+            "title": "Totag",
+            "description": "Destination: the latest version with this tag."
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Request body for mcp pact matrix."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact matrix."
+              }
+            ],
+            "title": "Latest",
+            "description": "Destination: each other pacticipant's latest."
+          },
+          "mainBranch": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Request body for mcp pact matrix."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact matrix."
+              }
+            ],
+            "title": "Mainbranch",
+            "description": "Destination: each other pacticipant's main branch."
+          },
+          "ignore": {
+            "items": {
+              "$ref": "#/components/schemas/McpPactIgnore"
+            },
+            "type": "array",
+            "title": "Ignore",
+            "description": "Rows that do not count.",
+            "maxItems": 1000
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0,
+                "description": "Request body for mcp pact matrix."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact matrix."
+              }
+            ],
+            "title": "Limit",
+            "description": "The most rows the query reads."
+          },
+          "maxRows": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Maxrows",
+            "description": "The most rows returned (the verdict reads them all).",
+            "default": 50,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tenantId",
+          "keyId",
+          "selectors"
+        ],
+        "title": "McpPactMatrixRequest",
+        "description": "``pact.matrix``: the selectors and options of a broker matrix query."
+      },
+      "McpPactMatrixResponse": {
+        "properties": {
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary",
+            "description": "Short summary suitable for navigation and reference docs."
+          },
+          "notices": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Notices",
+            "description": "Notices.",
+            "maxItems": 1000
+          },
+          "noticesTruncated": {
+            "type": "boolean",
+            "title": "Noticestruncated",
+            "description": "Notices Truncated.",
+            "example": false
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Rows",
+            "description": "Rows.",
+            "maxItems": 100
+          },
+          "rowsTotal": {
+            "type": "integer",
+            "title": "Rowstotal",
+            "description": "Rows Total.",
+            "example": 1
+          },
+          "rowsTruncated": {
+            "type": "boolean",
+            "title": "Rowstruncated",
+            "description": "Rows Truncated.",
+            "example": false
+          },
+          "retryAfterSeconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for mcp pact matrix."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp pact matrix."
+              }
+            ],
+            "title": "Retryafterseconds",
+            "description": "Retry After Seconds."
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "notices",
+          "noticesTruncated",
+          "rows",
+          "rowsTotal",
+          "rowsTruncated"
+        ],
+        "title": "McpPactMatrixResponse",
+        "description": "The verdict and a bounded set of the rows it was reached from."
+      },
+      "McpPactRecordDeploymentRequest": {
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "title": "Tenantid",
+            "description": "The MCP key's tenant (trusted: internal route).",
+            "example": "example"
+          },
+          "keyId": {
+            "type": "string",
+            "title": "Keyid",
+            "description": "The MCP key; its owner's `pacts` role is applied.",
+            "example": "example"
+          },
+          "pacticipant": {
+            "type": "string",
+            "title": "Pacticipant",
+            "description": "The deployed pacticipant.",
+            "example": "example"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "The deployed version number, exactly as recorded.",
+            "example": "1.0.0"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "The environment's name (as `pact-broker record-deployment --environment`).",
+            "example": "example"
+          },
+          "applicationInstance": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for mcp pact record deployment."
+              },
+              {
+                "type": "null",
+                "description": "Request body for mcp pact record deployment."
+              }
+            ],
+            "title": "Applicationinstance",
+            "description": "The instance deployed to; omit for the only one."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tenantId",
+          "keyId",
+          "pacticipant",
+          "version",
+          "environment"
+        ],
+        "title": "McpPactRecordDeploymentRequest",
+        "description": "``pact.record_deployment``: a version is now deployed to a named environment."
+      },
+      "McpPactSelector": {
+        "properties": {
+          "pacticipant": {
+            "type": "string",
+            "title": "Pacticipant",
+            "description": "The pacticipant's name, handle or id.",
+            "example": "example"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Pact Selector schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Pact Selector schema."
+              }
+            ],
+            "title": "Version",
+            "description": "Exactly this version."
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "MCP Pact Selector schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Pact Selector schema."
+              }
+            ],
+            "title": "Latest",
+            "description": "Only the latest of the versions described."
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Pact Selector schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Pact Selector schema."
+              }
+            ],
+            "title": "Tag",
+            "description": "Versions with this tag."
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Pact Selector schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Pact Selector schema."
+              }
+            ],
+            "title": "Branch",
+            "description": "Versions recorded on this branch."
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Pact Selector schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Pact Selector schema."
+              }
+            ],
+            "title": "Environment",
+            "description": "Versions currently in this environment."
+          },
+          "mainBranch": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "MCP Pact Selector schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Pact Selector schema."
+              }
+            ],
+            "title": "Mainbranch",
+            "description": "Versions on the pacticipant's main branch."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pacticipant"
+        ],
+        "title": "McpPactSelector",
+        "description": "One matrix selector: a pacticipant and which of its versions."
       },
       "PactVerification": {
         "properties": {

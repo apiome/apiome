@@ -181,6 +181,43 @@ The environment is found by name. An unknown name stops with the `create-environ
 creates it. Add `--application-instance` (`--target`) to `record-deployment` when the application
 runs several copies in one environment. See [Environments and deployments](./environments.mdx).
 
+## Ask from an AI agent (MCP)
+
+An agent connected to Apiome's [MCP server](../../getting-started/connect-an-mcp-host.mdx) can ask
+the same questions without a terminal. Four MCP tools cover the commands an agent needs most:
+
+| Tool | Does what this command does | Needs |
+| --- | --- | --- |
+| `pact.list` | Lists the latest pact of each consumer and provider pair, with how its latest verification went | **Pacts** → **View** |
+| `pact.matrix` | `GET …/matrix`: the verdict and the rows behind it | **Pacts** → **View** |
+| `pact.can_i_deploy` | `apiome pact can-i-deploy` | **Pacts** → **View** |
+| `pact.record_deployment` | `apiome pact record-deployment` | **Pacts** → **Create** |
+
+For example, an agent asks `pact.can_i_deploy` with
+`{"pacticipant": "Billing Service", "version": "4f1e2d0", "to_environment": "production"}`. It
+reads `summary.deployable`: `true`, `false`, or `null` while a verification result is still
+missing. On `null`, `retryAfterSeconds` says how many seconds to wait before asking again.
+
+- **Use an MCP key.** Create one with **Create MCP key** on
+  [API keys](../../workspace/api-keys.mdx#create-an-mcp-key). A REST API key does not work here.
+  Apiome checks the **Pacts** permissions of the person who created the key. If that person loses the permission,
+  the key loses it too. A key whose creator was removed is refused with
+  `mcp-pact-key-has-no-owner`. Create a new key in that case.
+- **Use the whole workspace.** Pacts belong to the whole workspace, so a key limited to projects
+  is refused.
+- **Answers are bounded.** `pact.list` returns up to 100 pacts a page. Pass `nextCursor` back as
+  `cursor` to get the next page. `pact.matrix` and `pact.can_i_deploy` return up to `max_rows`
+  rows (default 50, at most 100). `rowsTotal` and `rowsTruncated` say how many rows were left out.
+  The verdict always counts every row.
+- **Nothing is ignored.** If a selector has a key the tool doesn't know, or a value of the wrong
+  type, or you give both `to_environment` and `to_tag`, the tool refuses it and says why. A refusal
+  from Apiome includes its code in brackets, such as `[pact-matrix-invalid]`.
+- **Recording is a write.** `pact.record_deployment` is marked as a write, so MCP hosts can ask before
+  they run it. The four tools form the **pact** toolset. Admins can turn it off for the workspace,
+  or for one key, in [MCP settings](../../workspace/tenants.mdx#mcp-settings).
+
+Every argument is listed in the [MCP tool reference](../../reference/mcp/tools.md#pact-can-i-deploy).
+
 ## Create a webhook
 
 ```bash
@@ -255,5 +292,7 @@ writes nothing.
 - [pact-action (GitHub Action)](../../reference/ci/pact-action.md) — `publish`, `can-i-deploy` with
   a pull-request comment, and `record-deployment` as workflow steps.
 - [Commit statuses](./commit-statuses.mdx) — each pact's verdict on its GitHub or GitLab commit.
+- [MCP tool reference](../../reference/mcp/tools.md#pact-list) — `pact.list`, `pact.matrix`,
+  `pact.can_i_deploy` and `pact.record_deployment`.
 - [Pact Broker overview](./overview.mdx)
 - [Pact Broker compatibility](./compatibility.mdx)

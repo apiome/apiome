@@ -29,6 +29,7 @@ import httpx
 from fastmcp.exceptions import ToolError
 
 from apiome_mcp.mcp_auth import McpAuthContext
+from apiome_mcp.rest_internal import post_internal
 from apiome_mcp.settings import Settings, get_settings
 
 __all__ = ["build_export_targets_response", "build_version_export_response"]
@@ -45,19 +46,6 @@ def _require_in_scope(auth_ctx: McpAuthContext, artifact: str) -> None:
         raise ToolError("This MCP API key's scope does not include that artifact.")
 
 
-def _error_message(response: httpx.Response) -> str:
-    """The REST refusal's message, in one line."""
-    try:
-        detail = response.json().get("detail")
-    except ValueError:
-        return response.text[:500] or f"HTTP {response.status_code}"
-    if isinstance(detail, dict):
-        return str(detail.get("message") or detail.get("detail") or detail)
-    if isinstance(detail, list):  # FastAPI validation errors
-        return "; ".join(str(item.get("msg", item)) for item in detail if isinstance(item, dict)) or str(detail)
-    return str(detail or f"HTTP {response.status_code}")
-
-
 async def _post(
     path: str,
     body: dict[str, Any],
@@ -67,25 +55,14 @@ async def _post(
     transport: httpx.AsyncBaseTransport | None,
 ) -> dict[str, Any]:
     """POST one internal export route and return its JSON, or raise a ``ToolError`` naming the problem."""
-    base = (settings.rest_internal_url or "").strip().rstrip("/")
-    token = settings.rest_internal_service_token.get_secret_value() if settings.rest_internal_service_token else ""
-    if not base or not token:
-        raise ToolError(
-            "Export over MCP is not configured on this server: set APIOME_MCP_REST_INTERNAL_URL and "
-            "APIOME_MCP_REST_INTERNAL_SERVICE_TOKEN (apiome-rest's INTERNAL_SERVICE_TOKEN)."
-        )
-    timeout = httpx.Timeout(wait_seconds + _HTTP_MARGIN_SECONDS, connect=10.0)
-    try:
-        async with httpx.AsyncClient(timeout=timeout, transport=transport) as client:
-            response = await client.post(f"{base}{path}", json=body, headers={"X-Internal-Service-Token": token})
-    except httpx.HTTPError as exc:
-        raise ToolError(f"apiome-rest could not be reached for the export: {exc.__class__.__name__}.") from exc
-    if response.status_code >= 400:
-        raise ToolError(f"Export refused ({response.status_code}): {_error_message(response)}")
-    payload = response.json()
-    if not isinstance(payload, dict):
-        raise ToolError("apiome-rest answered the export with an unexpected payload.")
-    return payload
+    return await post_internal(
+        path,
+        body,
+        settings=settings,
+        what="export",
+        timeout_seconds=wait_seconds + _HTTP_MARGIN_SECONDS,
+        transport=transport,
+    )
 
 
 async def build_export_targets_response(

@@ -9,6 +9,7 @@ import structlog
 from fastmcp import Context, FastMCP
 from fastmcp.dependencies import Depends
 from fastmcp.server.lifespan import lifespan
+from mcp.types import ToolAnnotations
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from structlog.contextvars import bound_contextvars
@@ -22,6 +23,12 @@ from apiome_mcp.export_tools import build_export_targets_response, build_version
 from apiome_mcp.http_credential_middleware import StashHttpBearerInToolContextMiddleware
 from apiome_mcp.logging_config import configure_logging
 from apiome_mcp.mcp_auth import McpAuthContext, require_mcp_auth
+from apiome_mcp.pact_tools import (
+    build_pact_can_i_deploy_response,
+    build_pact_list_response,
+    build_pact_matrix_response,
+    build_pact_record_deployment_response,
+)
 from apiome_mcp.ping_tool import build_ping_response
 from apiome_mcp.project_list_tool import build_project_list_response
 from apiome_mcp.registry_middleware import RegistryFailClosedMiddleware
@@ -462,3 +469,131 @@ async def spec_list_tags(
 ) -> dict[str, Any]:
     pool = get_db_pool(ctx)
     return await build_spec_list_tags_response(pool, limit=limit, cursor=cursor)
+
+
+# PFX-4.5 (#6942): the workspace's Pact Broker. Reads need the key owner's pacts:view; recording a
+# deployment needs pacts:create. Pacts are workspace-wide: a project-limited key is refused.
+_PACT_READ = ToolAnnotations(readOnlyHint=True, idempotentHint=True, openWorldHint=False)
+
+
+@mcp.tool(
+    name="pact.list",
+    description=(
+        "List the latest pact of every consumer -> provider integration in the key's workspace (PFX-4.5): consumer, "
+        "provider, consumerVersion, sha, specificationVersion, interactionCount, publishedAt and the pact's "
+        "latestVerification (success, verifiedAt, providerVersion, kind) or null. No pact content. Optional "
+        "provider / consumer filters (handle, id or name). limit 1-100 (default 50); pass nextCursor as cursor for "
+        "the next page. Requires an MCP API key without a project limit, whose owner has pacts:view."
+    ),
+    annotations=_PACT_READ,
+)
+async def pact_list(
+    provider: str | None = None,
+    consumer: str | None = None,
+    limit: int | None = None,
+    cursor: str | None = None,
+    auth: McpAuthContext = Depends(require_mcp_auth),
+) -> dict[str, Any]:
+    return await build_pact_list_response(
+        auth_ctx=auth, provider=provider, consumer=consumer, limit=limit, cursor=cursor
+    )
+
+
+@mcp.tool(
+    name="pact.matrix",
+    description=(
+        "Pact Broker matrix query (PFX-4.5; what pact-broker can-i-deploy asks). selectors: [{pacticipant, version?, "
+        "latest?, tag?, branch?, environment?, main_branch?}] - one selector with a destination asks 'can I deploy "
+        "this?', two or more ask 'do these work together?'. Destination: to_environment, to_tag (with latest=true), "
+        "latest, or main_branch. latestby: cvp | cvpv | cp. ignore: ['Name' or {pacticipant, version?}]. Answers "
+        "summary.deployable (true / false / null = a verification result is missing; retryAfterSeconds says when to "
+        "ask again), summary.reason, notices [{type, code, text}] and at most max_rows (1-100, default 50) compact "
+        "rows with rowsTotal / rowsTruncated; the verdict always reads every row. Unknown selector keys are "
+        "refused. Requires pacts:view."
+    ),
+    annotations=_PACT_READ,
+)
+async def pact_matrix(
+    selectors: list[dict[str, Any]],
+    latestby: str | None = None,
+    to_environment: str | None = None,
+    to_tag: str | None = None,
+    latest: bool | None = None,
+    main_branch: bool | None = None,
+    ignore: list[Any] | None = None,
+    limit: int | None = None,
+    max_rows: int | None = None,
+    auth: McpAuthContext = Depends(require_mcp_auth),
+) -> dict[str, Any]:
+    return await build_pact_matrix_response(
+        auth_ctx=auth,
+        selectors=selectors,
+        latestby=latestby,
+        to_environment=to_environment,
+        to_tag=to_tag,
+        latest=latest,
+        main_branch=main_branch,
+        ignore=ignore,
+        limit=limit,
+        max_rows=max_rows,
+    )
+
+
+@mcp.tool(
+    name="pact.can_i_deploy",
+    description=(
+        "Can this pacticipant version be deployed? (PFX-4.5; pact-broker can-i-deploy). pacticipant and version name "
+        "what is deployed; give exactly one of to_environment (checked against everything currently deployed to or "
+        "released in it) or to_tag (the latest version of each other pacticipant with that tag). ignore leaves "
+        "pacticipants out of the verdict. Same answer as pact.matrix: read summary.deployable (true / false / null "
+        "while a result is missing - retry after retryAfterSeconds), summary.reason and notices; at most max_rows "
+        "rows. Requires pacts:view."
+    ),
+    annotations=_PACT_READ,
+)
+async def pact_can_i_deploy(
+    pacticipant: str,
+    version: str,
+    to_environment: str | None = None,
+    to_tag: str | None = None,
+    ignore: list[Any] | None = None,
+    max_rows: int | None = None,
+    auth: McpAuthContext = Depends(require_mcp_auth),
+) -> dict[str, Any]:
+    return await build_pact_can_i_deploy_response(
+        auth_ctx=auth,
+        pacticipant=pacticipant,
+        version=version,
+        to_environment=to_environment,
+        to_tag=to_tag,
+        ignore=ignore,
+        max_rows=max_rows,
+    )
+
+
+@mcp.tool(
+    name="pact.record_deployment",
+    description=(
+        "WRITE: record that a pacticipant version is now deployed to an environment (PFX-4.5; pact-broker "
+        "record-deployment). environment is the environment's name; application_instance names the instance "
+        "(region, customer) when the environment has several. The pacticipant's previous deployment there is "
+        "marked undeployed. Answers {created, deployment}; created=false when it already was the current "
+        "deployment. The version must already be recorded (published a pact or verified one). Requires an MCP API "
+        "key whose owner has pacts:create."
+    ),
+    annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False),
+)
+async def pact_record_deployment(
+    pacticipant: str,
+    version: str,
+    environment: str,
+    application_instance: str | None = None,
+    auth: McpAuthContext = Depends(require_mcp_auth),
+) -> dict[str, Any]:
+    return await build_pact_record_deployment_response(
+        auth_ctx=auth,
+        pacticipant=pacticipant,
+        version=version,
+        environment=environment,
+        application_instance=application_instance,
+    )

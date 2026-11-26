@@ -27,6 +27,10 @@ _LIVE_FASTMCP_TOOL_IDS = frozenset(
         "spec.describe_operation",
         "spec.list_components",
         "spec.describe_component",
+        "pact.list",
+        "pact.matrix",
+        "pact.can_i_deploy",
+        "pact.record_deployment",
     }
 )
 
@@ -56,6 +60,7 @@ _EXPECTED_TOOLSETS = {
             "spec.describe_component",
         }
     ),
+    "pact": frozenset({"pact.list", "pact.matrix", "pact.can_i_deploy", "pact.record_deployment"}),
 }
 
 
