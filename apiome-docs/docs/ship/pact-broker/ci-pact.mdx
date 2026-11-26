@@ -550,6 +550,28 @@ jobs:
           PACT_BROKER_TOKEN: $(PACT_BROKER_TOKEN)
 ```
 
+## Smoke-test a provider build with Newman
+
+A provider team that does not run a Pact verifier yet can still replay the consumer's requests.
+Export the pact as a Postman collection in the provider's build, and run it with Newman against the
+build:
+
+```yaml
+# a step of the provider's build, after the provider is up on port 8080
+- run: |
+    apiome pact export-postman --provider "Ledger API" --consumer "Billing Service" --branch main \
+      --provider-base-url http://localhost:8080 -o ledger.postman_collection.json
+    npx newman run ledger.postman_collection.json
+  env:
+    PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+    PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+```
+
+The provider must be in each request's provider states first. A Newman run does not publish a
+verification result, so it does not count for `can-i-deploy`. Use
+[`apiome pact verify`](./hosted-verification.mdx) for that. See
+[Export a pact as a Postman collection](./cli.mdx#export-a-pact-as-a-postman-collection).
+
 ## What fails a job
 
 Every `apiome pact` command exits `0` when it worked and `1` otherwise, as `pact-broker` does:
@@ -569,6 +591,8 @@ exits `0`.
 ## Related
 
 - [The apiome pact commands](./cli.mdx) — and the same checks as MCP tools for AI agents
+- [Export a pact as a Postman collection](./cli.mdx#export-a-pact-as-a-postman-collection) — the
+  consumer's requests, with test scripts, for Postman or Newman
 - [Commit statuses](./commit-statuses.mdx) — the verdict on each commit and pull request
 - [pact-action (GitHub Action)](../../reference/ci/pact-action.md) — every input and output
 - [Can I deploy?](./can-i-deploy.mdx)

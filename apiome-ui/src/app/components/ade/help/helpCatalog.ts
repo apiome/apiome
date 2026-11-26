@@ -1322,7 +1322,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: "Publish, check and record pacts from a terminal with pact-broker's flags and exit codes.",
     page: 'apiome-docs/docs/ship/pact-broker/cli.mdx',
     section: 'reference',
-    keywords: ['pact-broker', 'can-i-deploy', 'record-deployment', 'create-webhook', 'PACT_BROKER_TOKEN', 'exit codes', 'markdown', 'terminal'],
+    keywords: ['pact-broker', 'can-i-deploy', 'record-deployment', 'create-webhook', 'PACT_BROKER_TOKEN', 'exit codes', 'markdown', 'terminal', 'postman', 'newman', 'export-postman'],
   },
   {
     id: 'ci-pact',
@@ -1330,7 +1330,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'A consumer, provider and deploy pipeline built from the apiome pact commands.',
     page: 'apiome-docs/docs/ship/pact-broker/ci-pact.mdx',
     section: 'reference',
-    keywords: ['pipeline', 'github actions', 'gitlab', 'bitbucket', 'jenkins', 'deploy gate', 'can-i-deploy', 'record-deployment', 'webhook', 'pact-action', 'sticky comment', 'azure pipelines', 'jenkinsfile'],
+    keywords: ['pipeline', 'github actions', 'gitlab', 'bitbucket', 'jenkins', 'deploy gate', 'can-i-deploy', 'record-deployment', 'webhook', 'pact-action', 'sticky comment', 'azure pipelines', 'jenkinsfile', 'newman'],
   },
   {
     id: 'message-pacts',

@@ -11,6 +11,9 @@ changing the command name.
 turn a consumer surface declared in the UI picker into a Pact v4 file (sample values from the
 specification's examples) and write it, or publish it to the workspace's Pact Broker.
 
+``apiome pact export-postman --provider … --consumer …`` (or ``--pact-file``) writes a pact as a
+Postman Collection v2.1 with test scripts, and prints what the collection does not carry (PFX-4.7).
+
 ``apiome pact publish-verification-results <report> --provider … --consumer … --pact-version …
 --provider-app-version …`` publishes the result of a verification that ran elsewhere
 (``pact_verifier_cli --json`` output or JUnit XML) as a verification result in the broker, so
@@ -39,7 +42,7 @@ import click
 import typer
 from typer.core import TyperGroup
 
-from apiome_cli.client.errors import CliError
+from apiome_cli.client.errors import CliError, exit_on_api_error
 from apiome_cli.client.pact_broker_connection import connect
 from apiome_cli.client.pact_consumer_export import (
     build_publish_body as build_consumer_publish_body,
@@ -58,6 +61,15 @@ from apiome_cli.client.pact_external_verification import (
 )
 from apiome_cli.client.pact_external_verification import (
     summary_lines as verification_summary_lines,
+)
+from apiome_cli.client.pact_postman_export import (
+    build_export_body,
+    has_left_out,
+    postman_export_path,
+    refusal_message,
+)
+from apiome_cli.client.pact_postman_export import (
+    summary_lines as postman_summary_lines,
 )
 from apiome_cli.client.pact_provider_contract import (
     build_publish_body,
@@ -304,6 +316,104 @@ def export_consumer_contract(
         if output is not None:
             typer.echo(f"  wrote {output}")
     raise typer.Exit(EXIT_ERROR if fail_on_findings and has_findings(payload) else EXIT_SUCCESS)
+
+
+@app.command("export-postman")
+def export_postman(
+    ctx: typer.Context,
+    provider: Optional[str] = typer.Option(
+        None, "--provider", help="The provider pacticipant (handle, id or name); required for a stored pact."
+    ),
+    consumer: Optional[str] = typer.Option(
+        None, "--consumer", help="The consumer pacticipant (handle, id or name); required for a stored pact."
+    ),
+    consumer_version: Optional[str] = typer.Option(
+        None, "--consumer-version", help="The pact this consumer version published."
+    ),
+    tag: Optional[str] = typer.Option(None, "--tag", help="The latest pact of consumer versions with this tag."),
+    branch: Optional[str] = typer.Option(None, "--branch", help="The latest pact of consumer versions on this branch."),
+    pact_version: Optional[str] = typer.Option(
+        None, "--pact-version", help="The pact with this content SHA (64 hex characters)."
+    ),
+    pact_file: Optional[Path] = typer.Option(
+        None,
+        "--pact-file",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Export a local Pact file instead of a stored pact (nothing is published).",
+    ),
+    provider_base_url: Optional[str] = typer.Option(
+        None, "--provider-base-url", help="The value of the {{baseUrl}} collection variable (http or https URL)."
+    ),
+    tests: bool = typer.Option(True, "--tests/--no-tests", help="Give each request a test script."),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", dir_okay=False, writable=True, help="Write the collection here instead of stdout."
+    ),
+    fail_on_left_out: bool = typer.Option(
+        False, "--fail-on-left-out", help="Exit 1 when any interaction was left out of the collection."
+    ),
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Export a pact as a Postman Collection v2.1 (POST …/pact-postman-collections).
+
+    One request per HTTP interaction against {{baseUrl}}, a saved example of the expected response
+    and a test script checking it (status, headers, body by Pact's default rules). Name a stored
+    pact with --provider and --consumer (the latest pact, or one of --consumer-version, --tag,
+    --branch, --pact-version), or send a local file with --pact-file. Prints every notice — what was
+    left out, not asserted or not applied, with a reason, and the provider states to set up.
+    Without --output the collection goes to stdout and the summary to stderr. Exits 1 when the
+    server refuses (no such pact, no HTTP interaction to export), or with --fail-on-left-out when an
+    interaction was left out. For a collection from a specification, use apiome export postman.
+    """
+    document = None
+    if pact_file is not None:
+        try:
+            document = json.loads(pact_file.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeDecodeError) as exc:
+            raise CliError(f"{pact_file} is not a JSON Pact file: {exc}", exit_code=EXIT_ERROR) from exc
+        if not isinstance(document, dict):
+            raise CliError(f"{pact_file} is not a Pact file: the document must be a JSON object", exit_code=EXIT_ERROR)
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    tenant_slug = conn.tenant(command="export-postman")
+    response = conn.client.post_raw(
+        postman_export_path(tenant_slug),
+        json=build_export_body(
+            provider=provider,
+            consumer=consumer,
+            consumer_version=consumer_version,
+            tag=tag,
+            branch=branch,
+            pact_version=pact_version,
+            pact=document,
+            provider_base_url=provider_base_url,
+            tests=tests,
+        ),
+    )
+    if response.status_code >= 400:
+        try:
+            message = refusal_message(response.status_code, response.json())
+        except ValueError:
+            message = None
+        if message is not None:
+            raise CliError(message, exit_code=EXIT_ERROR)
+        exit_on_api_error(response)
+    payload = response.json()
+
+    text = json.dumps(payload.get("collection") or {}, indent=2, ensure_ascii=False) + "\n"
+    if output is not None:
+        output.write_text(text, encoding="utf-8")
+    if json_mode_from_context(ctx):
+        emit_json(payload)
+    else:
+        if output is None:
+            typer.echo(text, nl=False)
+        for line in postman_summary_lines(payload):
+            typer.echo(line, err=output is None)
+        if output is not None:
+            typer.echo(f"  wrote {output}")
+    raise typer.Exit(EXIT_ERROR if fail_on_left_out and has_left_out(payload) else EXIT_SUCCESS)
 
 
 @app.command("publish-consumer-contract")

@@ -13,7 +13,8 @@ over by changing `pact-broker` to `apiome pact`.
 It also has the commands only Apiome has: publishing an OpenAPI
 [provider contract](./bi-directional.mdx), [hosted verification](./hosted-verification.mdx),
 [sending a verifier report](./verification-results.mdx#send-a-report-from-your-own-ci) and
-[exporting a consumer surface as a pact](./publish-pacts.mdx). There is no screen for these
+[exporting a consumer surface as a pact](./publish-pacts.mdx) and
+[exporting a pact as a Postman collection](#export-a-pact-as-a-postman-collection). There is no screen for these
 commands; they run in a terminal or a CI job.
 
 ## Before you start
@@ -123,6 +124,7 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 | `publish-provider-contract` | Publish an OpenAPI provider contract with its evidence | `pactflow publish-provider-contract` |
 | `publish-verification-results` | Send a report from a verifier you ran | — |
 | `export-consumer-contract`, `publish-consumer-contract` | Turn a declared consumer surface into a pact | — |
+| `export-postman` | Write a pact as a Postman collection with test scripts | — |
 | `migrate` | Import a Pact Broker or PactFlow workspace | not available yet |
 
 Every option of every command is in the [CLI reference](../../reference/cli/pact.md).
@@ -250,6 +252,48 @@ replay, with the reason. `--no-publish-verification-results` is a dry run. See
 [Verify a provider from Apiome](./hosted-verification.mdx). Each published result is also posted as
 a [commit status](./commit-statuses.mdx) to the provider's commit and to the consumer's commit,
 when their version numbers are commit SHAs.
+
+## Export a pact as a Postman collection
+
+`export-postman` writes a pact as a **Postman Collection v2.1**. A provider team can then run the
+consumer's requests in Postman, or in CI with Newman, before any Pact tooling is set up:
+
+```bash
+apiome pact export-postman --provider "Ledger API" --consumer "Billing Service" --branch main \
+  --provider-base-url http://localhost:8080 -o ledger.postman_collection.json
+newman run ledger.postman_collection.json
+```
+
+1. **Choose the pact.** `--provider` and `--consumer` give the latest pact between them. Add one of
+   `--consumer-version`, `--tag`, `--branch` or `--pact-version` (the content SHA) to pick another
+   one. To export a pact file you have not published yet, use `--pact-file billing-ledger.json`
+   instead.
+2. **Point it at the provider.** Requests go to `{{baseUrl}}`. `--provider-base-url` fills in that
+   variable. Without it, the variable is empty: set it in Postman, or pass
+   `newman run … --env-var baseUrl=http://localhost:8080`.
+3. **Set up the provider states.** Postman cannot set them up for you. Each request's description
+   names its states (`Given: an invoice 1042 exists`), and the summary lists them all.
+
+Each HTTP interaction becomes one request, with a saved example of the expected response and a test
+script. The script checks the status, each expected header and the body by Pact's default rules: an
+object may carry extra keys, an array must have the same length, and every other value must be
+equal. `--no-tests` leaves the scripts out.
+
+The summary lists everything the collection does not carry, with the reason:
+
+| Outcome | For |
+| --- | --- |
+| `left-out` | Message interactions, gRPC calls, interactions without a method, and request bodies that are not text. Postman sends HTTP requests with text bodies only. |
+| `not-asserted` | Response values governed by a matching rule (a regex or type match would be stricter as an equality test), and response bodies that are not text. The saved example still shows the recorded values. |
+| `not-applied` | Request generators: the request sends the pact's example values. |
+| `info` | The provider states to set up before the run. |
+
+`--fail-on-left-out` exits `1` when an interaction was left out. A pact with no HTTP interaction at
+all is refused with `pact-postman-no-http-interactions`. To make a collection from an API
+specification rather than a pact, use `apiome export postman` (see
+[Export to an API client](../export-to-an-api-client.md)). The command calls
+`POST …/v1/tenants/<workspace>/pact-postman-collections`
+([REST reference](../../reference/rest/pact-broker.md)) and needs **Pacts** → **View**.
 
 ## Choose the output
 

@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.857.0] - 2026-11-26
+
+### Added
+- **Postman collection export of a pact (PFX-4.7, #6944).** OpenAPI 1.681.0.
+  `POST /v1/tenants/{tenant}/pact-postman-collections` (`app.pact_postman_routes`, tag `pact-broker`,
+  `pacts:view`, stateless) writes a Postman Collection v2.1 from a pact (`app.pact_postman`):
+  - The pact is a stored one — `provider` + `consumer` and at most one of `consumerVersion`, `tag`,
+    `branch`, `pactVersionSha` (none: the latest), read in the caller's tenant — or an inline `pact`
+    document (shape and `pact_max_bytes` checked; the names default to the document's own).
+  - One request per HTTP interaction, in document order, against a `{{baseUrl}}` collection variable
+    (`baseUrl`, an http(s) URL, or empty to fill in): method, path, query, headers and the example body
+    as recorded (a Pact 4 `contentType` becomes a `Content-Type` header when the request has none).
+    Provider states go into the request description. A saved example carries the expected status,
+    headers and body.
+  - `tests` (default `true`): a test script per request checks the status, each expected header (a
+    `Content-Type` by media type) and the body by Pact's default rules (extra object keys allowed,
+    arrays of the same length, other values equal).
+  - `notices` (`code`, `outcome` `left-out` | `not-asserted` | `not-applied` | `info`, `pointer`,
+    `message`, `description`, `paths`): message pacts (v3 `messages`, v4 `Asynchronous/Messages` and
+    `Synchronous/Messages`), plugin gRPC calls, interactions without a method and non-text request
+    bodies are left out; values governed by response matching rules and non-text response bodies are
+    not asserted; request generators are not applied; the provider states to set up are listed once.
+  - Refusals: `422 pact-postman-export-invalid` (no pact named, two selections, an inline pact with a
+    selection, a bad `baseUrl`), `422 pact-invalid`, `413 pact-too-large`, `404 pact-not-found` /
+    `pacticipant-not-found`, and `422 pact-postman-no-http-interactions` (with `notices`) when nothing
+    can be exported. Unknown body fields are `422`.
+  - The schema side is unchanged: the `postman` export target already writes a collection from a
+    version's specification.
+
 ## [1.856.0] - 2026-11-26
 
 ### Added

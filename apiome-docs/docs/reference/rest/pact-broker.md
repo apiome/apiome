@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 77 operations."
+description: "REST endpoints tagged pact-broker: 78 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.680.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.681.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 77 operations
+Tag: `pact-broker` · 78 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2271,6 +2271,41 @@ Operation id: `read_fidelity_v1_tenants__tenant_slug__pact_comparisons__result_i
 | 404 | `pact-verification-not-found`: no bi-directional result with that id in this workspace, or the result was published by a Pact verifier and has no comparison. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/tenants/{tenant_slug}/pact-postman-collections` {#export-pact-postman-collection-v1-tenants-tenant-slug-pact-postman-collections-post}
+
+**Export a pact as a Postman collection**
+
+Writes a **Postman Collection v2.1** from a pact: one request per HTTP interaction against a `{{baseUrl}}` variable, a saved example of the expected response, and (`tests`, default on) a test script that checks the status, the expected headers and the body by Pact's default rules (extra object keys allowed, arrays of the same length, other values equal). Provider states are named in each request's description.
+
+Send `provider` + `consumer` and at most one of `consumerVersion`, `tag`, `branch`, `pactVersionSha` for a stored pact (none: the latest), or `pact` for an inline document. Nothing is stored.
+
+`notices` lists what the collection does not carry, each with a code, outcome (`left-out`, `not-asserted`, `not-applied`, `info`), JSON Pointer and reason: message and gRPC interactions, non-text bodies, values governed by matching rules, generators, and the provider states to set up. A pact with no HTTP interaction to export is `422 pact-postman-no-http-interactions`. Requires `pacts:view`.
+
+Operation id: `export_pact_postman_collection_v1_tenants__tenant_slug__pact_postman_collections_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for export a pact as a postman collection.
+
+- `application/json` — [`PactPostmanRequest`](#schema-pactpostmanrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for export a pact as a postman collection. | `application/json` object |
+| 404 | `pacticipant-not-found` or `pact-not-found`: no such stored pact in this workspace. | — |
+| 413 | `pact-too-large`: the inline pact is over the workspace's pact size limit. | — |
+| 422 | `pact-postman-export-invalid` (no pact named, two selections, an inline pact with a selection, a bad `baseUrl`), `pact-invalid` (the inline document is not a pact) or `pact-postman-no-http-interactions` (with `notices`). | — |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-suites/provider/{provider}/consumer/{consumer}/pact-version/{sha}` {#compile-pact-version-suite-v1-tenants-tenant-slug-pact-suites-provider-provider-consumer-consumer-pact-version-sha-post}
 
 **Compile a pact version into a contract suite**
@@ -2552,6 +2587,22 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `PactPostmanRequest` {#schema-pactpostmanrequest}
+
+What to export: a stored pact (by pair and selection) or an inline Pact document.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `provider` | string or null | no | The provider pacticipant (handle, id or name). Required for a stored pact. |
+| `consumer` | string or null | no | The consumer pacticipant (handle, id or name). Required for a stored pact. |
+| `consumerVersion` | string or null | no | The pact this consumer version published. |
+| `tag` | string or null | no | The latest pact of consumer versions with this tag. |
+| `branch` | string or null | no | The latest pact of consumer versions on this branch. |
+| `pactVersionSha` | string or null | no | The pact with this content address (64 hex characters). |
+| `pact` | object or null | no | An inline Pact document (specification 1–4) instead of a stored pact. `consumer` and `provider` then only name the collection, and default to the document's own. |
+| `baseUrl` | string or null | no | The value of the `{{baseUrl}}` collection variable (an http or https URL). Omitted: empty, to fill in (Newman: `--env-var baseUrl=…`). |
+| `tests` | boolean | no | Give each request a test script that checks the expected response. |
 
 ### `PactSuiteCompileRequest` {#schema-pactsuitecompilerequest}
 
