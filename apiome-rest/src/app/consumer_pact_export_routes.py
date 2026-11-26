@@ -55,6 +55,7 @@ from .consumer_pact_export import (
 )
 from .consumer_pact_export_store import CODE_PROVIDER_AMBIGUOUS, PactNames, resolve_pact_names
 from .database import db
+from .pact_audit import audited_write
 from .pact_broker_routes import _base_url, _enforce_publish_budget, _publish_result
 from .pact_broker_routes import _http_error as _broker_error
 from .pact_commit_status_store import post_publish_statuses
@@ -351,6 +352,7 @@ def export_consumer_pact(
         429: {"description": "Over the publish budget."},
     },
 )
+@audited_write("pacts.publication.create", "project/{project_ref}/consumer/{consumer_ref}")
 def publish_consumer_pact(
     tenant_slug: str,
     project_ref: str,

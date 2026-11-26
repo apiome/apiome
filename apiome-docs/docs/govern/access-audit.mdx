@@ -110,6 +110,36 @@ a session token, an IP address or a full browser string.
 A request for a sign-in link is not recorded. A link that was never used leaves no trace in the
 audit.
 
+## Pact Broker events
+
+Every change to the [Pact Broker](../ship/pact-broker/overview.mdx) writes one row, whether it came
+from the Pact CLI, a Pact library, the console or an MCP tool. Source `api_key` is a CI runner's key;
+`web` is a signed-in member. The target names what changed, for example
+`pacticipant/billing-service/version/3f2a9c1` or `pact-webhook/<uuid>`.
+
+| Event | Recorded when |
+|---|---|
+| `pacts.pacticipant.create`, `pacts.pacticipant.update` | A pacticipant is registered or changed. |
+| `pacts.version.record`, `pacts.tag.add` | A version is recorded (also on a branch) or tagged. |
+| `pacts.publication.create` | Pacts are published (`pact-broker publish`, a single pact, or from a project's **Consumers** screen). |
+| `pacts.verification.publish` | A verifier publishes a result, or an external report is ingested. |
+| `pacts.verification.run` | Apiome runs a verification (**Verify**, **Re-verify**, **Verify stale pacts**). |
+| `pacts.environment.create`, `.update`, `.delete` | An environment is created, changed or deleted. |
+| `pacts.deployment.record`, `pacts.deployment.update` | A deployment is recorded, or marked undeployed. |
+| `pacts.release.record`, `pacts.release.update` | A release is recorded, or its support ended. |
+| `pacts.webhook.create`, `.update`, `.delete` | A webhook is created, changed or deleted. |
+| `pacts.webhook.execute`, `pacts.webhook.redeliver` | A webhook is tested, or a delivery is sent again. |
+| `pacts.provider_state.create`, `.update`, `.delete` | A provider state is created, changed or deleted. |
+| `pacts.commit_status.retry` | A commit status is sent again. |
+| `pacts.pacticipant.delete`, `.restore`, `pacts.version.delete`, `.restore` | A pacticipant or version is deleted or restored; the detail holds the `reason`. |
+| `pacts.label.add`, `pacts.label.remove` | A label is added or removed. |
+| `pacts.retention.apply`, `pacts.purge` | A retention run is applied, or deleted rows are purged after 30 days; the detail holds the counts. |
+
+The detail holds the route, its path parameters and, when the call created something, its id. It
+never holds a request body, so a webhook's token or a pact's content is never copied into the audit.
+A call that is refused changes nothing and writes no `pacts.*` row; a missing permission writes
+`permission.denied`.
+
 ## Security probe consent events
 
 [Security probe consent](../ship/contract-testing-and-ci-gates.mdx#grant-consent-before-security-probes)

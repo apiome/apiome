@@ -26,6 +26,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .consumer_contract_store import actor_from_auth
 from .database import db
+from .pact_audit import audited_write
 from .pact_broker_auth import validate_broker_authentication
 from .pact_broker_routes import _base_url, _http_error
 from .pact_publication import PactPublicationError
@@ -102,6 +103,7 @@ def _tenant_id(auth_data: Dict[str, Any]) -> str:
         },
     },
 )
+@audited_write("pacts.verification.run", "pacticipant/{provider}")
 def verify_provider(
     request: Request,
     tenant_slug: str,

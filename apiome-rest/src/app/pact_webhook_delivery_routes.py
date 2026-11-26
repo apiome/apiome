@@ -25,6 +25,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import validate_authentication
 from .database import db
+from .pact_audit import audited_write
 from .pact_publication import PactPublicationError
 from .pact_webhook import (
     CODE_TRIGGERED_WEBHOOK_NOT_FOUND,
@@ -240,6 +241,7 @@ def read_delivery(
         },
     },
 )
+@audited_write("pacts.webhook.redeliver", "pact-webhook-delivery/{delivery_id}")
 def post_redeliver(
     tenant_slug: str,
     delivery_id: str,

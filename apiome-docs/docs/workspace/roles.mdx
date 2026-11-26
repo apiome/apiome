@@ -60,11 +60,13 @@ The line above the matrix counts what is on — *24 of 81 cells on*.
 **Admin** roles hold all of it; **Editor** and **Viewer** can only view teams. Custom roles do not
 get it automatically — grant it on each custom role that should manage teams.
 
-**Pacts** (`pacts`) controls the [Pact Broker registry](../ship/pact-broker/concepts.mdx):
-pacticipants and their versions, branches and tags. The built-in **Owner** and **Admin** roles
-hold all of it; **Editor** can view, create and edit but not delete, because deleting a pacticipant
-removes its whole version history; **Viewer** can only view. Custom roles do not get it
-automatically.
+**Pacts** (`pacts`) controls the [Pact Broker](../ship/pact-broker/concepts.mdx#who-can-do-what):
+pacticipants and their versions, branches and tags, and the pacts, verification results,
+environments, deployments, webhooks and provider states built on them. The built-in **Owner** and
+**Admin** roles hold all of it; **Editor** can view, create and edit but not delete, because
+deleting a pacticipant removes its whole version history; **Viewer** can only view. Custom roles do
+not get it automatically. Every change it allows is recorded in the
+[Access audit](../govern/access-audit.mdx#pact-broker-events).
 
 **Document storage** (`document_store`) has one permission, **Manage**: choosing where the
 workspace's documents are kept — see

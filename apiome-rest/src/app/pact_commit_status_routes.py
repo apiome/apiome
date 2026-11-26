@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from .auth import validate_authentication
 from .database import db
 from .keyset_pagination import cursor_query, limit_query, parse_time_id_cursor
+from .pact_audit import audited_write
 from .pact_commit_status import (
     CODE_STATUS_NOT_FOUND,
     CODE_STATUS_NOT_RETRYABLE,
@@ -134,6 +135,7 @@ def get_pact_commit_statuses(
         409: {"description": "`pact-status-not-retryable`: the status was accepted or is being sent."},
     },
 )
+@audited_write("pacts.commit_status.retry", "pact-commit-status/{status_id}")
 def retry_pact_commit_status(
     tenant_slug: str,
     status_id: str,

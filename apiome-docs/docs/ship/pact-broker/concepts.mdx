@@ -178,19 +178,44 @@ up old versions in one retention run.
 
 ## Who can do what
 
-The registry is guarded by the **Pacts** resource (`pacts`):
+The whole Pact Broker — the registry, pacts, verification results, environments, webhooks and
+provider states — is guarded by the **Pacts** resource (`pacts`):
 
 | Action | Needs | Viewer | Editor | Admin | Owner |
 | --- | --- | --- | --- | --- | --- |
-| Read pacticipants, versions and branches | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
-| Register a pacticipant, record a version, add a tag | `pacts:create` | — | ✓ | ✓ | ✓ |
-| Change a pacticipant, add or remove a label | `pacts:edit` | — | ✓ | ✓ | ✓ |
-| Delete or restore a pacticipant or a version, apply a retention run | `pacts:delete` | — | — | ✓ | ✓ |
+| Read pacticipants, versions, pacts, results, the matrix and can-i-deploy | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Register a pacticipant, record a version, add a tag, publish pacts and verification results | `pacts:create` | — | ✓ | ✓ | ✓ |
+| Create an environment or a webhook, record a deployment or a release, create a provider state | `pacts:create` | — | ✓ | ✓ | ✓ |
+| Change a pacticipant, environment, webhook or provider state; add or remove a label | `pacts:edit` | — | ✓ | ✓ | ✓ |
+| Mark a deployment undeployed, test a saved webhook, redeliver a webhook, retry a commit status | `pacts:edit` | — | ✓ | ✓ | ✓ |
+| Delete or restore a pacticipant or a version, delete an environment, webhook or provider state, apply a retention run | `pacts:delete` | — | — | ✓ | ✓ |
+
+Running a verification from Apiome (**Verify**, **Re-verify**, **Verify stale pacts**) also needs
+**Verification evidence** → **Create**, and publishing a consumer's pact from its project also needs
+**Consumer contracts** → **View**. A role without the permission gets `403` naming it.
 
 An API key acts with the role of the member it belongs to. Give a CI job a key from a member with
-the **Editor** role: it can register its application and record versions, but cannot delete a
-pacticipant. Custom roles do not get **Pacts** automatically — grant it in the permission matrix on
-[Roles](../../workspace/roles.mdx).
+the **Editor** role: it can register its application, publish pacts and results and record
+deployments, but cannot delete anything. Custom roles do not get **Pacts** automatically — grant it
+in the permission matrix on [Roles](../../workspace/roles.mdx).
+
+### Every change is audited
+
+Every call that changes Pact data writes an entry to the workspace's
+[Access audit](../../govern/access-audit.mdx#pact-broker-events): who acted (the member, or the API
+key's runner), what changed (`pacticipant/billing-service/version/3f2a9c1`), and the route. The
+entry never holds a request body, so a webhook's token or a pact's content is never copied into it.
+Deletes, restores, label changes and retention runs write their entry in the same transaction as
+the change; every other change writes it as soon as the change succeeds. A refused call writes no
+change entry — a call refused for a missing permission writes `permission.denied` instead.
+
+### Workspaces never share Pact data
+
+Every pacticipant, pact, result, environment, deployment and webhook belongs to one workspace, and
+the database itself refuses a row that points at another workspace's row — not just the API. A
+publish, a verification result or a deployment can only name pacticipants, versions and
+environments of the workspace its API key belongs to; another workspace's handle is answered as
+unknown (`404`), never revealed.
 
 ## Related
 

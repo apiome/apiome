@@ -31,6 +31,7 @@ from .auth import validate_authentication
 from .consumer_contract_store import actor_from_auth
 from .database import db
 from .keyset_pagination import cursor_query, limit_query
+from .pact_audit import audited_write
 from .pact_cleanup_store import (
     LABELS_ORDER,
     add_label,
@@ -286,6 +287,7 @@ def list_tenant_pacticipants(
     ),
     responses={409: {"description": "`pacticipant-slug-taken`: the workspace already has that handle."}},
 )
+@audited_write("pacts.pacticipant.create", "pacticipants")
 def register_pacticipant(
     tenant_slug: str,
     body: PacticipantInput,
@@ -360,6 +362,7 @@ def read_pacticipant(
         "Requires `pacts:edit`."
     ),
 )
+@audited_write("pacts.pacticipant.update", "pacticipant/{pacticipant_ref}")
 def patch_pacticipant(
     tenant_slug: str,
     pacticipant_ref: str,
@@ -571,6 +574,7 @@ def list_pacticipant_versions(
     ),
     responses={201: {"description": "The version was created by this request.", "model": RecordedPacticipantVersion}},
 )
+@audited_write("pacts.version.record", "pacticipant/{pacticipant_ref}/version/{number}")
 def put_pacticipant_version(
     tenant_slug: str,
     pacticipant_ref: str,
@@ -760,6 +764,7 @@ def restore_deleted_version(
         "Requires `pacts:create`."
     ),
 )
+@audited_write("pacts.tag.add", "pacticipant/{pacticipant_ref}/version/{number}/tag/{tag}")
 def put_pacticipant_version_tag(
     tenant_slug: str,
     pacticipant_ref: str,

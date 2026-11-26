@@ -1,0 +1,579 @@
+{
+  "$comment": "Every Pact Broker write: the pacts permission it needs, and the access_audit action it writes (PFX-6.1, #6953). auditedBy: 'route' rows are wrapped in app.pact_audit.audited_write (row written after the change); 'transaction' rows append the row inside the change's own transaction (app.pact_cleanup_store.audit_tx); 'explicit' rows call app.pact_audit.record_pact_write. 'reads' are POST routes that change nothing and write no row. Routes under /pact-broker answered by pact_broker_compat_routes.pact_broker_not_implemented (501) change nothing. Checked by apiome-rest/tests/test_pacts_permission_matrix.py; the grants are apiome.seed_builtin_roles (V432).",
+  "roles": {
+    "viewer": {
+      "label": "Viewer",
+      "tenantAdmin": false,
+      "grants": [
+        "pacts:view"
+      ]
+    },
+    "editor": {
+      "label": "Editor",
+      "tenantAdmin": false,
+      "grants": [
+        "pacts:view",
+        "pacts:create",
+        "pacts:edit"
+      ]
+    },
+    "admin": {
+      "label": "Admin",
+      "tenantAdmin": false,
+      "grants": [
+        "pacts:view",
+        "pacts:create",
+        "pacts:edit",
+        "pacts:delete"
+      ]
+    },
+    "owner": {
+      "label": "Owner",
+      "tenantAdmin": true,
+      "grants": [
+        "pacts:view",
+        "pacts:create",
+        "pacts:edit",
+        "pacts:delete"
+      ]
+    }
+  },
+  "writes": [
+    {
+      "id": "pacticipant.register",
+      "label": "Register a pacticipant",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pacticipants",
+      "audit": "pacts.pacticipant.create",
+      "auditedBy": "route",
+      "body": {
+        "name": "Billing Service"
+      }
+    },
+    {
+      "id": "pacticipant.update",
+      "label": "Edit a pacticipant",
+      "permission": "pacts:edit",
+      "method": "PATCH",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}",
+      "audit": "pacts.pacticipant.update",
+      "auditedBy": "route",
+      "body": {}
+    },
+    {
+      "id": "pacticipant.delete",
+      "label": "Delete a pacticipant",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}",
+      "audit": "pacts.pacticipant.delete",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "pacticipant.restore",
+      "label": "Restore a deleted pacticipant",
+      "permission": "pacts:delete",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}/restore",
+      "audit": "pacts.pacticipant.restore",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "pacticipant.label.add",
+      "label": "Label a pacticipant",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}/labels/{label}",
+      "audit": "pacts.label.add",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "pacticipant.label.remove",
+      "label": "Remove a pacticipant label",
+      "permission": "pacts:edit",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}/labels/{label}",
+      "audit": "pacts.label.remove",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "version.record",
+      "label": "Record a pacticipant version",
+      "permission": "pacts:create",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{number}",
+      "audit": "pacts.version.record",
+      "auditedBy": "route",
+      "body": {}
+    },
+    {
+      "id": "version.delete",
+      "label": "Delete a pacticipant version",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{number}",
+      "audit": "pacts.version.delete",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "version.restore",
+      "label": "Restore a deleted version",
+      "permission": "pacts:delete",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{number}/restore",
+      "audit": "pacts.version.restore",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "version.tag",
+      "label": "Tag a pacticipant version",
+      "permission": "pacts:create",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{number}/tags/{tag}",
+      "audit": "pacts.tag.add",
+      "auditedBy": "route"
+    },
+    {
+      "id": "retention.apply",
+      "label": "Apply a retention run",
+      "permission": "pacts:delete",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-retention",
+      "audit": "pacts.retention.apply",
+      "auditedBy": "transaction",
+      "body": {
+        "keep": {
+          "latest_per_branch": 3
+        },
+        "dry_run": false,
+        "plan_digest": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "broker.pacticipant.delete",
+      "label": "Delete a pacticipant (Pact Broker API)",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}",
+      "audit": "pacts.pacticipant.delete",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "broker.version.delete",
+      "label": "Delete a pacticipant version (Pact Broker API)",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{number}",
+      "audit": "pacts.version.delete",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "broker.label.add",
+      "label": "Label a pacticipant (Pact Broker API)",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/labels/{label}",
+      "audit": "pacts.label.add",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "broker.label.remove",
+      "label": "Remove a label (Pact Broker API)",
+      "permission": "pacts:edit",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/labels/{label}",
+      "audit": "pacts.label.remove",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "broker.branch-version",
+      "label": "Record a version on a branch",
+      "permission": "pacts:create",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/branches/{branch}/versions/{version}",
+      "audit": "pacts.version.record",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.version.tag",
+      "label": "Tag a version (Pact Broker API)",
+      "permission": "pacts:create",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}/tags/{tag}",
+      "audit": "pacts.tag.add",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.contracts.publish",
+      "label": "Publish contracts",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/contracts/publish",
+      "audit": "pacts.publication.create",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.pact.publish",
+      "label": "Publish a pact",
+      "permission": "pacts:create",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/version/{version}",
+      "audit": "pacts.publication.create",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.verification.publish",
+      "label": "Publish a verification result",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/verification-results",
+      "audit": "pacts.verification.publish",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.verification.publish-metadata",
+      "label": "Publish a verification result (metadata URL)",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/metadata/{metadata}/verification-results",
+      "audit": "pacts.verification.publish",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.verification.external",
+      "label": "Ingest an external verification report",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/external-verification-results",
+      "audit": "pacts.verification.publish",
+      "auditedBy": "route",
+      "query": {
+        "providerApplicationVersion": "1.0.0"
+      }
+    },
+    {
+      "id": "broker.environment.create",
+      "label": "Create an environment",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/environments",
+      "audit": "pacts.environment.create",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.environment.update",
+      "label": "Edit an environment",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-broker/environments/{uuid}",
+      "audit": "pacts.environment.update",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.environment.delete",
+      "label": "Delete an environment",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-broker/environments/{uuid}",
+      "audit": "pacts.environment.delete",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.deployment.record",
+      "label": "Record a deployment",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}/deployed-versions/environment/{uuid}",
+      "audit": "pacts.deployment.record",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.release.record",
+      "label": "Record a release",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{uuid}",
+      "audit": "pacts.release.record",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.deployment.update",
+      "label": "Mark a deployment undeployed",
+      "permission": "pacts:edit",
+      "method": "PATCH",
+      "path": "/v1/tenants/{tenant}/pact-broker/deployed-versions/{uuid}",
+      "audit": "pacts.deployment.update",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.release.update",
+      "label": "Mark a release unsupported",
+      "permission": "pacts:edit",
+      "method": "PATCH",
+      "path": "/v1/tenants/{tenant}/pact-broker/released-versions/{uuid}",
+      "audit": "pacts.release.update",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.webhook.create",
+      "label": "Create a webhook",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/webhooks",
+      "audit": "pacts.webhook.create",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.webhook.create-consumer",
+      "label": "Create a consumer webhook",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/webhooks/consumer/{consumer}",
+      "audit": "pacts.webhook.create",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.webhook.create-provider",
+      "label": "Create a provider webhook",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/webhooks/provider/{provider}",
+      "audit": "pacts.webhook.create",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.webhook.create-pair",
+      "label": "Create a webhook for a pair",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/webhooks/provider/{provider}/consumer/{consumer}",
+      "audit": "pacts.webhook.create",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.webhook.create-pact",
+      "label": "Create a webhook for a pact",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/webhooks",
+      "audit": "pacts.webhook.create",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.webhook.update",
+      "label": "Edit a webhook",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-broker/webhooks/{uuid}",
+      "audit": "pacts.webhook.update",
+      "auditedBy": "route",
+      "stub": "webhook_exists",
+      "note": "PUT creates the webhook when the uuid is new; that needs pacts:create and is audited as pacts.webhook.update with status 201."
+    },
+    {
+      "id": "broker.webhook.delete",
+      "label": "Delete a webhook",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-broker/webhooks/{uuid}",
+      "audit": "pacts.webhook.delete",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.webhook.execute",
+      "label": "Test a saved webhook",
+      "permission": "pacts:edit",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/webhooks/{uuid}/execute",
+      "audit": "pacts.webhook.execute",
+      "auditedBy": "route"
+    },
+    {
+      "id": "broker.webhook.execute-unsaved",
+      "label": "Test an unsaved webhook",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/webhooks/execute",
+      "audit": "pacts.webhook.execute",
+      "auditedBy": "route"
+    },
+    {
+      "id": "webhook-delivery.redeliver",
+      "label": "Redeliver a webhook delivery",
+      "permission": "pacts:edit",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-webhook-deliveries/{delivery}/redeliver",
+      "audit": "pacts.webhook.redeliver",
+      "auditedBy": "route"
+    },
+    {
+      "id": "commit-status.retry",
+      "label": "Retry a commit status",
+      "permission": "pacts:edit",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-commit-statuses/{status}/retry",
+      "audit": "pacts.commit_status.retry",
+      "auditedBy": "route"
+    },
+    {
+      "id": "provider-state.create",
+      "label": "Create a provider state",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/providers/{provider}/provider-states",
+      "audit": "pacts.provider_state.create",
+      "auditedBy": "route",
+      "body": {
+        "name": "a user exists",
+        "setup": {
+          "kind": "fixture"
+        }
+      }
+    },
+    {
+      "id": "provider-state.update",
+      "label": "Edit a provider state",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-verifier/providers/{provider}/provider-states/{state}",
+      "audit": "pacts.provider_state.update",
+      "auditedBy": "route",
+      "body": {
+        "name": "a user exists",
+        "setup": {
+          "kind": "fixture"
+        }
+      }
+    },
+    {
+      "id": "provider-state.delete",
+      "label": "Delete a provider state",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-verifier/providers/{provider}/provider-states/{state}",
+      "audit": "pacts.provider_state.delete",
+      "auditedBy": "route"
+    },
+    {
+      "id": "verifier.verify",
+      "label": "Verify a provider",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify",
+      "audit": "pacts.verification.run",
+      "auditedBy": "route",
+      "body": {
+        "target_ref": "staging",
+        "provider_version": "1.0.0"
+      },
+      "alsoRequires": [
+        "verification_evidence:create"
+      ]
+    },
+    {
+      "id": "verifier.reverify",
+      "label": "Re-verify a pact",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/reverify",
+      "audit": "pacts.verification.run",
+      "auditedBy": "route",
+      "body": {
+        "target_ref": "staging"
+      },
+      "alsoRequires": [
+        "verification_evidence:create"
+      ]
+    },
+    {
+      "id": "verifier.verify-stale",
+      "label": "Verify stale pacts",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify-stale",
+      "audit": "pacts.verification.run",
+      "auditedBy": "route",
+      "body": {
+        "target_ref": "staging"
+      },
+      "alsoRequires": [
+        "verification_evidence:create"
+      ]
+    },
+    {
+      "id": "consumer.pact.publish",
+      "label": "Publish a consumer's pact",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/pact/publish",
+      "audit": "pacts.publication.create",
+      "auditedBy": "route",
+      "body": {
+        "consumer_version": "1.0.0"
+      },
+      "alsoRequires": [
+        "consumer_contracts:view"
+      ]
+    },
+    {
+      "id": "mcp.deployment.record",
+      "label": "Record a deployment (MCP tool)",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/internal/mcp/pacts/record-deployment",
+      "audit": "pacts.deployment.record",
+      "auditedBy": "explicit"
+    }
+  ],
+  "reads": [
+    {
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/for-verification",
+      "permission": "pacts:view",
+      "why": "Reads the pacts a provider must verify."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-postman-collections",
+      "permission": "pacts:view",
+      "why": "Builds a Postman collection; stores nothing."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-suites/provider/{provider}/consumer/{consumer}/pact-version/{sha}",
+      "permission": "pacts:view",
+      "why": "Compiles a suite; stores nothing."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/providers/{provider}/provider-states/check",
+      "permission": "pacts:view",
+      "why": "Checks provider states; stores nothing."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-retention",
+      "permission": "pacts:view",
+      "why": "A dry run (dry_run: true) plans a retention run and deletes nothing; applying it is the retention.apply write."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/internal/mcp/pacts/list",
+      "permission": "pacts:view",
+      "why": "MCP read."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/internal/mcp/pacts/matrix",
+      "permission": "pacts:view",
+      "why": "MCP read."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/internal/mcp/pacts/can-i-deploy",
+      "permission": "pacts:view",
+      "why": "MCP read."
+    }
+  ]
+}
