@@ -1,0 +1,28 @@
+---
+slug: pact-teams-ownership
+title: "Pacticipant owners"
+description: "Give each pacticipant an owner team that hears about its stale and failed pacts."
+authors: [apiome]
+---
+
+A pacticipant can now have an owner team, and that team is told when one of its pacts needs
+attention. Open a pacticipant and use its new **Owner** section. See
+[Give a pacticipant an owner](/ship/pact-broker/pacticipants#give-a-pacticipant-an-owner).
+
+{/* truncate */}
+
+- **Owner.** Under **Owner**, choose a team and click **Assign owner**, or **Confirm** a suggested
+  one. From the command line: `apiome teams assign pacticipant <id> --team <slug>`. A team page lists
+  the pacticipants it owns.
+- **Failed verifications.** When a verification result fails — published by a Pact verifier or run
+  by Apiome — the provider's and the consumer's owner teams get a **Verification drift**
+  notification and a chat message that opens the result. One team owning both is told once.
+- **Re-publish requests.** Stale-pact requests and their escalations now go to the pacticipant's own
+  owner team first.
+- **Fallback.** Without an owner team, notices go to the owner of the consumer or project the
+  pacticipant is bound to, and otherwise to the **Unowned findings** report or the workspace's
+  catch-all team. Nothing is dropped.
+
+Seeing a pacticipant's owner needs **Pacts** → **View**; changing it needs **Pacts** → **Edit**. The
+REST API takes `pacticipant` as an owner kind under `/v1/tenants/{tenant}/owners/{kind}/{id}`
+(REST API 1.688.0).

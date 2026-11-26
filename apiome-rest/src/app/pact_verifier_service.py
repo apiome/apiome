@@ -77,6 +77,7 @@ from .pact_verifier import (
     plan_pact_run,
     state_hooks,
 )
+from .pact_owner_routing import notify_failed_verification
 from .pact_webhook_events import fire_verification_events
 from .pact_wip import select_wip_pacts
 from .pacticipant import PacticipantRecord, validate_branch, validate_url, validate_version_number
@@ -580,6 +581,7 @@ def _published(db: Any, tenant_id: str, broker_base: str, stored: VerificationRe
     """Queue a stored result's webhooks and describe it for the response."""
     fired = fire_verification_events(db, tenant_id, broker_base, stored)
     post_verification_statuses(db, tenant_id, broker_base, stored)
+    notify_failed_verification(db, tenant_id, stored)
     return PublishedResult(
         number=stored.number,
         success=stored.success,

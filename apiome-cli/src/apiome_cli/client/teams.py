@@ -8,10 +8,14 @@ the ``detail: {code, message}`` shape teams and owners answer with.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Tuple
 
-#: The entity kinds an owner team can be assigned to (``/v1/tenants/{t}/owners/{kind}/{id}``).
+#: The catalog entity kinds — owner kinds and dependency-graph nodes (``/v1/tenants/{t}/owners/{kind}/{id}``).
 ENTITY_KINDS = ("project", "catalog_item", "mcp_endpoint", "consumer", "connector")
+
+#: The kinds ``teams assign`` accepts: the catalog kinds plus a Pact Broker pacticipant (PFX-6.4), which
+#: has an owner team but is not a dependency-graph node.
+OWNER_KINDS = ENTITY_KINDS + ("pacticipant",)
 
 #: Team roles REST accepts; ``member`` is the default.
 ROLES = ("lead", "member")
@@ -78,21 +82,23 @@ def parse_members(specs: list[str]) -> list[dict[str, str]]:
     return members
 
 
-def validate_kind(kind: str) -> str:
-    """Normalise and check an owner-entity kind.
+def validate_kind(kind: str, kinds: Tuple[str, ...] = ENTITY_KINDS) -> str:
+    """Normalise and check an entity kind.
 
     Args:
         kind: The ``<kind>`` argument (``catalog-item`` is accepted for ``catalog_item``).
+        kinds: The kinds allowed: :data:`ENTITY_KINDS` (graph entities) by default,
+            :data:`OWNER_KINDS` for an owner assignment.
 
     Returns:
         The kind as REST names it.
 
     Raises:
-        ValueError: The kind is not one of :data:`ENTITY_KINDS`.
+        ValueError: The kind is not one of ``kinds``.
     """
     normalised = (kind or "").strip().lower().replace("-", "_")
-    if normalised not in ENTITY_KINDS:
-        raise ValueError(f"must be one of {', '.join(ENTITY_KINDS)}")
+    if normalised not in kinds:
+        raise ValueError(f"must be one of {', '.join(kinds)}")
     return normalised
 
 

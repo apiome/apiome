@@ -43,7 +43,12 @@ class UnownedFinding(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     id: str
-    entity_kind: str = Field(description="`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.")
+    entity_kind: str = Field(
+        description=(
+            "The owner kind: `project`, `catalog_item`, `mcp_endpoint`, `consumer`, `connector`, `agent`, `model`, "
+            "`gateway_config`, `component` or `pacticipant`."
+        )
+    )
     entity_id: str
     finding_type: str
     payload: Dict[str, Any] = Field(

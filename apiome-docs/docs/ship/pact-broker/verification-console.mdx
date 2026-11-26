@@ -165,6 +165,22 @@ curl -X POST \
 A key with the `pact:verify` scope may run them. See the
 [Pact broker REST reference](../../reference/rest/pact-broker.md).
 
+## Who is told about a failure
+
+When a verification result fails — published by a Pact verifier, or run by Apiome — the provider's
+and the consumer's [owner teams](./pacticipants.mdx#give-a-pacticipant-an-owner) are told. Each
+team's members get a **Verification drift** notification, and its chat channel a message, such as
+*Verification failed: Ledger API 4f1e2d0 did not verify Billing Service's pact (version 1.4.0)*.
+Clicking it opens the result.
+
+- A pacticipant with no owner team falls back to the owner of the consumer or project it is bound
+  to. With none, the failure is recorded in the **Unowned findings** report, or sent to the
+  workspace's catch-all team.
+- When one team owns both pacticipants, it is told once.
+- A failed pending pact is reported too; the message says it does not block deploys.
+- A team hears about the same pacticipant at most once an hour.
+- A passing result tells nobody. Notifying never changes the result or fails the publish.
+
 ## Who can do what
 
 | Action | Permission |

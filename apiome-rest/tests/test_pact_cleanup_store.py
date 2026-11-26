@@ -214,3 +214,20 @@ def test_the_purge_stops_when_a_batch_is_short_and_audits_per_tenant() -> None:
     audit = db._append_access_audit.call_args.kwargs
     assert (audit["action"], audit["tenant_id"], audit["actor_label"]) == ("pacts.purge", TENANT, "system")
     assert audit["detail"]["versions"] == 1
+
+
+def test_a_purged_pacticipant_takes_its_owner_rows_and_unowned_findings_with_it() -> None:
+    # PFX-6.4: entity_owners / unowned_findings name the pacticipant by kind and id, with no foreign key.
+    purged = [{"id": PACTICIPANT.id, "tenant_id": TENANT, "slug": PACTICIPANT.slug}]
+    # versions: an empty claim; then the pacticipant batch and its two owner-row deletes.
+    cursor = _Cursor([[], purged, [], []])
+    totals = store.purge_deleted(_db(cursor), batch=10)
+    assert totals == {"versions": 0, "pacticipants": 1}
+    owner_deletes = [sql for sql in cursor.statements if "entity_kind = 'pacticipant'" in sql]
+    assert [sql.split()[2] for sql in owner_deletes] == ["apiome.entity_owners", "apiome.unowned_findings"]
+
+
+def test_a_batch_that_purges_nothing_touches_no_owner_rows() -> None:
+    cursor = _Cursor([])
+    assert store._purge_pacticipants_tx(cursor, store.datetime.now(store.timezone.utc), 10) == {}
+    assert not any("entity_owners" in sql for sql in cursor.statements)

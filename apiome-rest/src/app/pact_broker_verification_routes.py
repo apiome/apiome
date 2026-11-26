@@ -55,6 +55,7 @@ from .pact_external_verification import (
 )
 from .pact_publication import PactPublicationError
 from .pact_selectors import decode_metadata
+from .pact_owner_routing import notify_failed_verification
 from .pact_webhook_events import fire_verification_events
 from .pacticipant import PacticipantValidationError
 from .permissions import Action, Resource, enforce_permission
@@ -500,6 +501,7 @@ def _store_result(
     base = _base_url(request, tenant_slug)
     fire_verification_events(db, _tenant_id(auth_data), base, result)
     post_verification_statuses(db, _tenant_id(auth_data), base, result)
+    notify_failed_verification(db, _tenant_id(auth_data), result)
     document = _result_document(request, tenant_slug, base, result)
     if extra:
         document.update(extra)

@@ -31,6 +31,8 @@ export const OWNER_ENTITY_KINDS = [
   'gateway_config',
   // CDG-5.5: an accepted Backstage or Compass component.
   'component',
+  // PFX-6.4: an application in the workspace's Pact Broker.
+  'pacticipant',
 ] as const;
 
 /** One of {@link OWNER_ENTITY_KINDS}. */
@@ -47,6 +49,7 @@ export const OWNER_ENTITY_KIND_LABELS: Readonly<Record<OwnerEntityKind, string>>
   model: 'Models',
   gateway_config: 'Gateway configs',
   component: 'Components',
+  pacticipant: 'Pacticipants',
 };
 
 /** The team an owner names. */
@@ -229,6 +232,9 @@ export function ownedEntityHref(entity: Pick<OwnedEntity, 'kind' | 'id'>): strin
       return `/ade/dashboard/connectors/environments/${id}`;
     case 'component':
       return `/ade/dashboard/catalog/components/${id}`;
+    case 'pacticipant':
+      // The page is addressed by handle; an id address resolves to it (PFX-6.4).
+      return `/ade/dashboard/pacts/pacticipants/${id}`;
     default:
       return null;
   }

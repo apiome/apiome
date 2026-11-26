@@ -34,7 +34,7 @@ apiome teams assign [OPTIONS] KIND ENTITY_ID
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
-| `KIND` | text | yes | Entity kind: project, catalog_item, mcp_endpoint, consumer, connector. |
+| `KIND` | text | yes | Entity kind: project, catalog_item, mcp_endpoint, consumer, connector, pacticipant. |
 | `ENTITY_ID` | text | yes | The entity's id. |
 
 **Options**

@@ -74,6 +74,18 @@ function ownerFromResponse(body: { owner?: unknown; suggestions?: unknown }): En
 }
 
 /**
+ * Read an entity's owner: the confirmed one, else its first suggestion (PFX-6.4).
+ *
+ * @param kind - The entity kind.
+ * @param id - The entity id.
+ * @returns The owner, or `null` when it has none.
+ */
+export async function fetchOwner(kind: OwnerEntityKind, id: string): Promise<EntityOwner | null> {
+  const response = await fetch(`/api/owners/${kind}/${encodeURIComponent(id)}`, { cache: 'no-store' });
+  return ownerFromResponse(await readJson(response, 'Could not load the owner'));
+}
+
+/**
  * Confirm the suggested owner of an entity.
  *
  * @param kind - The entity kind.

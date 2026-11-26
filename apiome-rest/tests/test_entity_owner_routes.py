@@ -5,7 +5,7 @@ The store is faked (its rules are ``test_entity_owner_store``); asserted here:
 
 * each kind is gated by the permission that edits it, through the *real* ``enforce_permission`` —
   ``projects`` for projects, catalog items and MCP endpoints, ``consumer_contracts`` for consumers,
-  ``imports`` for connectors — ``view`` to read, ``edit`` to change;
+  ``imports`` for connectors, ``pacts`` for pacticipants — ``view`` to read, ``edit`` to change;
 * a bulk assignment needs ``edit`` on every kind it lists;
 * refusals map to 400 / 404 with their code.
 """
@@ -122,6 +122,8 @@ _KIND_RESOURCE = {
     "mcp_endpoint": "projects",
     "consumer": "consumer_contracts",
     "connector": "imports",
+    # PFX-6.4: a pacticipant's owner is a Pact Broker setting.
+    "pacticipant": "pacts",
 }
 
 

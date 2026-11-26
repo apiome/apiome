@@ -1086,6 +1086,11 @@ results inside its window without scanning every workspace's. It changes no tabl
 (`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_verification_result_tenant_window ON
 apiome.verification_result (tenant_id, created_at)`); the migration then skips it.
 
+`V450` (PFX-6.4) lets a Pact Broker pacticipant have an owner team: it adds `pacticipant` to the
+owner kinds of `entity_owners` and `unowned_findings` (two check-constraint swaps on small tables). It
+changes no column or index. Re-publish requests opened afterwards record `unowned` rather than
+`unlinked` when nobody owns the consumer.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's

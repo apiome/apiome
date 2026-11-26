@@ -56,10 +56,11 @@ apiome pact publish ./pacts \
 
 ## Open a pacticipant
 
-Click a pacticipant's name. Its page has five sections:
+Click a pacticipant's name. Its page has six sections:
 
 - **Overview** shows the handle, the main branch, the repository, the labels, what the pacticipant is
   **Bound to** (a project, a consumer, or nothing), and when it was registered.
+- **Owner** shows the team that owns the pacticipant. See [Give a pacticipant an owner](#give-a-pacticipant-an-owner).
 - **Branches** lists each branch with its **Head version**, the latest version recorded on it. The
   main branch is marked **Main**.
 - **Environments** lists every environment of the workspace. For each one, it shows the versions of
@@ -77,7 +78,7 @@ Click a pacticipant's name. Its page has five sections:
 - **Versions** lists the recorded versions, latest first, with their branches, tags, when they were
   recorded and by whom, and a link to the build.
 
-<Screenshot id="pact-pacticipant-detail" alt="The Billing Service page: Overview facts, two branches with main marked Main, Production and Staging with the versions deployed and released there, and three pacts with their roles and verdicts."/>
+<Screenshot id="pact-pacticipant-detail" alt="The Billing Service page: Overview facts, the Owner section naming the Billing team, two branches with main marked Main, Production and Staging with the versions deployed and released there, and three pacts with their roles and verdicts."/>
 
 A commit SHA is shortened to its first 12 characters. Hover over it to see the full version number.
 
@@ -92,6 +93,32 @@ A commit SHA is shortened to its first 12 characters. Hover over it to see the f
 You can narrow by a branch and a tag at the same time. The count next to **Versions** says what the
 list shows, for example `2 versions on branch main, tagged prod`. The list shows 50 versions at a
 time. Click **Load more** to see the next 50.
+
+### Give a pacticipant an owner
+
+A pacticipant's owner is a [team](../../workspace/teams.mdx). The team's members get a notification,
+and the team's chat channel gets a message, when something about the pacticipant needs attention:
+
+- a pact it consumes has gone stale and a [re-publish request](./stale-pacts.mdx#who-is-told) opens
+  or expires;
+- a [verification result](./verification-console.mdx#who-is-told-about-a-failure) for a pact it is
+  in fails.
+
+To assign or change the owner:
+
+1. Open the pacticipant.
+2. Under **Owner**, choose a team from **Choose a team…**.
+3. Click **Assign owner** (or **Change owner** when it already has one).
+
+A suggested owner shows a **Confirm** button. Click it to make that team the owner.
+
+From the command line, run `apiome teams assign pacticipant <id> --team <slug>`. The `<id>` is the
+pacticipant's `id` from `GET /v1/tenants/{tenant}/pacticipants/{handle}`. A team page lists the
+pacticipants it owns under **Pacticipants**.
+
+With no owner team, notices go to the owner of the consumer or project the pacticipant is
+**Bound to**, and otherwise to the **Unowned findings** report. See
+[Teams → Ownership](../../workspace/teams.mdx#ownership).
 
 ### When a section cannot be read
 
@@ -108,6 +135,8 @@ pacticipant yet, **Pacts** shows the `apiome pact publish` command.
 | Action | Permission |
 | --- | --- |
 | Open the Pacticipants page and a pacticipant's page | **Pacts** → **View** |
+| See a pacticipant's owner | **Pacts** → **View** |
+| Assign, change, confirm or remove a pacticipant's owner | **Pacts** → **Edit** |
 
 Every read is scoped to your current workspace.
 
@@ -121,4 +150,5 @@ Every read is scoped to your current workspace.
 - [Environments and deployments](./environments.mdx)
 - [Environments and the deploy simulator](./environments-dashboard.mdx)
 - [Labels, deletes and retention](./retention.mdx)
+- [Teams → Ownership](../../workspace/teams.mdx#ownership)
 - [Pacticipants API](../../reference/rest/pacticipants.md)

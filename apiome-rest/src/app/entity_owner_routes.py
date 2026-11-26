@@ -94,9 +94,11 @@ def _guard(auth_data: Dict[str, Any], kind: str, action: str, entity_id: str) ->
 
 
 _KIND_HELP = (
-    "`kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`; reading needs "
-    "the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP "
-    "endpoints, `consumer_contracts` for consumers, `imports` for connectors)."
+    "`kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer`, `connector`, `agent`, `model`, "
+    "`gateway_config`, `component` or `pacticipant`; reading needs the kind's `view` and changing "
+    "needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` "
+    "for consumers, agents and models, `imports` for connectors, gateway configs and components, "
+    "`pacts` for pacticipants)."
 )
 
 

@@ -20,11 +20,10 @@ replica) and the pair's own lock. A pair it cannot run is recorded with the reas
 provider version known, the target refused — never skipped silently; a pair whose slot or lock is
 busy stays due for the next tick.
 
-**Notifying the consumer.** A pacticipant has no owners of its own yet (PFX-6.4); the request goes
-to the owners of what the consumer pacticipant is linked to — its consumer-registry entry, else its
-project — through owner routing (CDG-2.3), which records it as an unowned finding when there is no
-confirmed owner. A pacticipant linked to neither is recorded as ``unlinked``; the request and its
-webhooks still stand.
+**Notifying the consumer.** The request goes to the consumer pacticipant's owner team (PFX-6.4,
+:mod:`app.pact_owner_routing`) — else the owners of what it is linked to, its consumer-registry
+entry, then its project — through owner routing (CDG-2.3), which records it as an unowned finding
+under the pacticipant when nobody owns it. The request and its webhooks stand either way.
 
 ``APIOME_PACT_REMEDIATION_ENABLED=false`` halts the whole tick, for incident response.
 """
@@ -38,8 +37,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import quote
 
 from .db_advisory_lock import SessionAdvisoryLock
-from .notifications import TYPE_OWNER_VERIFICATION_DRIFT
-from .owner_routing import OUTCOME_ROUTED, OUTCOME_SKIPPED, OwnerFinding, route_owner_finding_safely
+from .owner_routing import OUTCOME_ROUTED, OUTCOME_SKIPPED
+from .pact_owner_routing import route_pacticipant_finding
 from .pact_remediation import (
     ATTEMPT_ERRORED,
     ATTEMPT_FAILED,
@@ -97,7 +96,9 @@ __all__ = [
     "remediate_provider",
 ]
 
-#: The consumer pacticipant is linked to no consumer-registry entry or project: nobody to notify.
+#: Before PFX-6.4: the consumer pacticipant was linked to no consumer-registry entry or project.
+#: No longer written — an ownerless pacticipant's findings are recorded as unowned — but kept for
+#: the requests that carry it.
 STATUS_UNLINKED = "unlinked"
 #: Routing raised (logged by owner routing).
 STATUS_FAILED = "failed"
@@ -157,15 +158,6 @@ def _link(provider: PacticipantRecord) -> str:
     return f"/ade/dashboard/pacts/pacticipants/{quote(provider.slug, safe='')}/verification"
 
 
-def _owner_entity(pacticipant: PacticipantRecord) -> Optional[Tuple[str, str]]:
-    """What a pacticipant's owners are read from: its consumer-registry entry, else its project."""
-    if pacticipant.consumer_id:
-        return "consumer", str(pacticipant.consumer_id)
-    if pacticipant.project_id:
-        return "project", str(pacticipant.project_id)
-    return None
-
-
 def _notify(
     db: Any,
     tenant_id: str,
@@ -176,23 +168,13 @@ def _notify(
     request_id: str,
     details: Dict[str, Any],
 ) -> str:
-    """Route one finding to a pacticipant's owners; returns what routing did."""
-    entity = _owner_entity(party)
-    if entity is None:
-        return STATUS_UNLINKED
-    outcome = route_owner_finding_safely(
-        db,
-        OwnerFinding(
-            tenant_id=tenant_id,
-            entity_kind=entity[0],
-            entity_id=entity[1],
-            finding_type=TYPE_OWNER_VERIFICATION_DRIFT,
-            summary=summary,
-            link=link,
-            finding_id=request_id,
-            entity_name=party.name,
-            details=details,
-        ),
+    """Route one finding to a pacticipant's owners (PFX-6.4); returns what routing did.
+
+    The pacticipant's own owner team, else its consumer-registry entry's or project's, else the
+    finding is recorded as unowned — see :mod:`app.pact_owner_routing`.
+    """
+    outcome = route_pacticipant_finding(
+        db, tenant_id, party, summary=summary, link=link, finding_id=request_id, details=details
     )
     return STATUS_FAILED if outcome.status == OUTCOME_SKIPPED else outcome.status
 

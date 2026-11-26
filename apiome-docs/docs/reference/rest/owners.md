@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.687.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.688.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `owners` · 10 operations
 
@@ -19,7 +19,7 @@ Tag: `owners` · 10 operations
 
 The confirmed owner team, if any, and every suggested owner with its `source` (`gateway_tag`, `codeowners`, `spec_extension`, …) and `source_ref`.
 
-`kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`; reading needs the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, `imports` for connectors).
+`kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer`, `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`; reading needs the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, agents and models, `imports` for connectors, gateway configs and components, `pacts` for pacticipants).
 
 Operation id: `get_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_id__get`
 
@@ -46,7 +46,7 @@ Operation id: `get_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_i
 
 Make `team` (a team slug) the confirmed owner, replacing any previous one. A previous owner that came from a suggestion goes back to being a suggestion.
 
-Audited as `owner.assign`. `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`; reading needs the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, `imports` for connectors).
+Audited as `owner.assign`. `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer`, `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`; reading needs the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, agents and models, `imports` for connectors, gateway configs and components, `pacts` for pacticipants).
 
 Operation id: `put_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_id__put`
 
@@ -79,7 +79,7 @@ Request body for assign an entity's owner.
 
 Remove the confirmed owner. Suggestions are kept; an owner that came from a suggestion becomes a suggestion again.
 
-Audited as `owner.remove`. `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`; reading needs the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, `imports` for connectors).
+Audited as `owner.remove`. `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer`, `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`; reading needs the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, agents and models, `imports` for connectors, gateway configs and components, `pacts` for pacticipants).
 
 Operation id: `delete_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_id__delete`
 
@@ -106,7 +106,7 @@ Operation id: `delete_entity_owner_v1_tenants__tenant_slug__owners__kind___entit
 
 Make a suggested owner the confirmed owner. Name it with `team`; it may be omitted when only one team is suggested. The owner keeps its `source` and records who confirmed it (`confirmed_by`, `confirmed_at`).
 
-Audited as `owner.confirm`. `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`; reading needs the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, `imports` for connectors).
+Audited as `owner.confirm`. `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer`, `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`; reading needs the kind's `view` and changing needs its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers, agents and models, `imports` for connectors, gateway configs and components, `pacts` for pacticipants).
 
 Operation id: `confirm_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_id__confirm_post`
 

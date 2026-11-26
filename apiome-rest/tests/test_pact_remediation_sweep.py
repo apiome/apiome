@@ -21,7 +21,7 @@ from unittest.mock import patch
 
 import pytest
 
-from app.owner_routing import RoutingOutcome
+from app.owner_routing import OwnerRecipients, OwnerTeam, RoutingOutcome
 from app.pact_remediation import (
     CADENCE_MANUAL,
     CADENCE_ON_PUBLISH,
@@ -140,6 +140,10 @@ class _Store:
     last_request_at: Optional[datetime] = None
     provider_history: List[VerificationResultRecord] = field(default_factory=list)
     routing: str = "routed"
+    #: Confirmed owner teams by (kind, id); the 6.2 bindings are owned by default (PFX-6.4).
+    owners: Dict[Tuple[str, str], str] = field(
+        default_factory=lambda: {("consumer", "reg-billing"): "t-billing", ("project", "proj-ledger"): "t-ledger"}
+    )
     events: List[str] = field(default_factory=list)
     upserts: List[Dict[str, Any]] = field(default_factory=list)
     opened: List[Dict[str, Any]] = field(default_factory=list)
@@ -162,6 +166,10 @@ class _Store:
         def route(_db: Any, finding: Any) -> RoutingOutcome:
             self.findings.append(finding)
             return RoutingOutcome(status=self.routing)
+
+        def owner(_db: Any, _t: str, kind: str, entity_id: str) -> Any:
+            team = self.owners.get((kind, entity_id))
+            return None if team is None else OwnerRecipients(team=OwnerTeam(id=team, slug=team, name=team))
 
         def open_request(_db: Any, _t: str, _p: str, consumer_id: str, **values: Any) -> Optional[str]:
             self.opened.append({"consumer_id": consumer_id, **values})
@@ -192,7 +200,8 @@ class _Store:
             f"{_SWEEP}.set_escalation_status": lambda _db, _t, rid, s, d: self.escalations.append((rid, s, d)),
             f"{_SWEEP}.record_attempt": record,
             f"{_SWEEP}.get_pacticipant": lambda _db, _t, ref: lookup[ref],
-            f"{_SWEEP}.route_owner_finding_safely": route,
+            "app.pact_owner_routing.route_owner_finding_safely": route,
+            "app.pact_owner_routing.owner_recipients": owner,
             f"{_SWEEP}.fire_remediation_event": fire,
         }
         for target, replacement in replacements.items():
@@ -273,11 +282,30 @@ def test_a_stale_pact_opens_a_request_and_notifies_the_consumers_owners() -> Non
     assert store.notifications == [("req-new", "routed", 1)]
 
 
-def test_a_consumer_linked_to_nothing_is_recorded_as_unlinked() -> None:
-    store = _Store(candidates=[_candidate(LONE)])
+def test_an_ownerless_consumer_is_routed_under_itself_as_unowned() -> None:
+    # PFX-6.4: no owner anywhere is no longer `unlinked`; the finding is recorded as unowned under
+    # the pacticipant (owner routing's Unowned findings report or catch-all team).
+    store = _Store(candidates=[_candidate(LONE)], routing="unowned")
     store.sweep()
-    assert store.findings == []
-    assert store.notifications == [("req-new", STATUS_UNLINKED, 1)]
+    (finding,) = store.findings
+    assert (finding.entity_kind, finding.entity_id) == ("pacticipant", LONE.id)
+    assert finding.details["ownerSource"] == "pacticipant" and finding.details["pacticipant"] == "lone-app"
+    assert store.notifications == [("req-new", "unowned", 1)]
+    assert STATUS_UNLINKED not in [status for _rid, status, _d in store.notifications]
+
+
+def test_the_consumer_pacticipants_own_owner_wins_over_its_binding() -> None:
+    store = _Store(owners={("pacticipant", CONSUMER.id): "t-checkout", ("consumer", "reg-billing"): "t-billing"})
+    store.sweep()
+    (finding,) = store.findings
+    assert (finding.entity_kind, finding.entity_id) == ("pacticipant", CONSUMER.id)
+    assert finding.details["ownerSource"] == "pacticipant"
+
+
+def test_a_routing_failure_is_recorded_as_failed() -> None:
+    store = _Store(routing="skipped")
+    store.sweep()
+    assert store.notifications == [("req-new", "failed", 1)]
 
 
 def test_requests_can_be_turned_off() -> None:

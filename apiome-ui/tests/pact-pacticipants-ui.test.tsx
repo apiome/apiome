@@ -9,6 +9,10 @@
  *   section fails and retries on its own; an unknown pacticipant says so; a non-http(s) build URL
  *   is never a link; axe passes.
  *
+ * * **Owner** (PFX-6.4, #6956): the owner team and what it receives, **Assign owner** posts the
+ *   pacticipant kind, a failed owner read fails only its own section; an id address resolves to the
+ *   handle's.
+ *
  * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures `pact-pacticipants` and
  * `pact-pacticipant-detail`.
  */
@@ -18,6 +22,11 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import '@testing-library/jest-dom';
 import { axe } from 'jest-axe';
 import 'jest-axe/extend-expect';
+
+const mockReplace = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: mockReplace, push: jest.fn() }),
+}));
 
 jest.mock('next/link', () => ({
   __esModule: true,
@@ -32,6 +41,7 @@ import fixture from './fixtures/pact-pacticipants.json';
 import pactFixture from './fixtures/pact-detail.json';
 import PacticipantsListClient from '../src/app/components/ade/pactPacticipants/PacticipantsListClient';
 import PacticipantDetailClient from '../src/app/components/ade/pactPacticipants/PacticipantDetailClient';
+import PacticipantRouteClient from '../src/app/components/ade/pactPacticipants/PacticipantRouteClient';
 import { EnvironmentsTable, VersionsTable } from '../src/app/components/ade/pactPacticipants/PacticipantPanels';
 import type {
   Pacticipant,
@@ -52,13 +62,16 @@ type Route = (url: string) => { status: number; body: unknown };
 
 let routes: Record<string, Route>;
 let calls: string[];
+let posts: { url: string; body: unknown }[];
 
 /** Install a fetch that answers by exact URL. */
 function installFetch() {
   calls = [];
-  global.fetch = jest.fn(async (input: RequestInfo | URL) => {
+  posts = [];
+  global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     calls.push(url);
+    if (init?.method === 'POST') posts.push({ url, body: JSON.parse(String(init.body ?? '{}')) });
     const route = routes[url];
     const { status, body } = route ? route(url) : { status: 404, body: { success: false, error: 'not found' } };
     return { ok: status < 400, status, json: async () => body } as Response;
@@ -161,10 +174,25 @@ describe('PacticipantsListClient', () => {
 
 describe('PacticipantDetailClient', () => {
   const base = '/api/pact/pacticipants/billing-service';
+  const ownerUrl = `/api/owners/pacticipant/${BILLING.id}`;
+  const OWNED = {
+    kind: 'pacticipant',
+    entity_id: BILLING.id,
+    owner: { team: { id: 't-1', slug: 'billing-team', name: 'Billing team' }, status: 'confirmed', source: 'manual' },
+    suggestions: [],
+  };
 
   beforeEach(() => {
     routes = {
       [base]: ok(BILLING),
+      [ownerUrl]: ok(OWNED),
+      '/api/teams': ok({
+        teams: [
+          { id: 't-1', slug: 'billing-team', name: 'Billing team' },
+          { id: 't-2', slug: 'payments', name: 'Payments' },
+        ],
+      }),
+      '/api/owners/assign': ok({ count: 1 }),
       [`${base}/branches`]: ok({ branches: BRANCHES, count: 2, has_more: false }),
       [`${base}/environments`]: ok({ environments: ENVIRONMENTS }),
       [`${base}/versions`]: ok({ versions: VERSIONS, count: 3, has_more: false }),
@@ -210,6 +238,10 @@ describe('PacticipantDetailClient', () => {
       'href',
       '/ade/dashboard/pacts/pacticipants/billing-service/verification',
     );
+    // PFX-6.4 (#6956): the owner team and what it receives.
+    expect(await screen.findByTestId('entity-owner-cell')).toHaveTextContent('Billing team');
+    expect(screen.getByTestId('entity-owner-description')).toHaveTextContent('failed verifications go to this team');
+    await waitFor(() => expect(within(screen.getByTestId('entity-owner-select')).getByText('Payments')).toBeInTheDocument());
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipant-detail', container.innerHTML);
   });
@@ -261,6 +293,39 @@ describe('PacticipantDetailClient', () => {
     );
   });
 
+  it('assigns an owner team to the pacticipant and reads the owner again', async () => {
+    render(<PacticipantDetailClient slug="billing-service" />);
+    const select = await screen.findByTestId('entity-owner-select');
+    await waitFor(() => expect(within(select).getByText('Payments')).toBeInTheDocument());
+    const ownerReads = calls.filter((url) => url === ownerUrl).length;
+    fireEvent.change(select, { target: { value: 'payments' } });
+    fireEvent.click(screen.getByTestId('entity-owner-assign'));
+    await waitFor(() =>
+      expect(posts).toContainEqual({
+        url: '/api/owners/assign',
+        body: { team: 'payments', entities: [{ kind: 'pacticipant', id: BILLING.id }] },
+      }),
+    );
+    await waitFor(() => expect(calls.filter((url) => url === ownerUrl).length).toBeGreaterThan(ownerReads));
+  });
+
+  it('shows a pacticipant with no owner as unowned, still offering Assign owner', async () => {
+    routes[ownerUrl] = ok({ kind: 'pacticipant', entity_id: BILLING.id, owner: null, suggestions: [] });
+    render(<PacticipantDetailClient slug="billing-service" />);
+    expect(await screen.findByTestId('entity-owner-assign')).toHaveTextContent('Assign owner');
+  });
+
+  it('keeps the page when the owner cannot be read, and retries it', async () => {
+    routes[ownerUrl] = () => ({ status: 403, body: { success: false, error: 'Permission denied' } });
+    render(<PacticipantDetailClient slug="billing-service" />);
+    const failed = await screen.findByTestId('ppx-owner-error');
+    expect(failed).toHaveTextContent('Permission denied');
+    expect(await screen.findByTestId('ppx-versions-table')).toBeInTheDocument();
+    routes[ownerUrl] = ok(OWNED);
+    fireEvent.click(within(failed).getByRole('button', { name: /try again/i }));
+    expect(await screen.findByTestId('entity-owner-cell')).toHaveTextContent('Billing team');
+  });
+
   it('pages the versions with Load more', async () => {
     routes[`${base}/versions`] = ok({ versions: VERSIONS.slice(0, 2), count: 2, has_more: true, next_cursor: 'v2' });
     routes[`${base}/versions?cursor=v2`] = ok({ versions: VERSIONS.slice(2), count: 1, has_more: false });
@@ -268,6 +333,38 @@ describe('PacticipantDetailClient', () => {
     expect(await screen.findByTestId('ppx-versions-summary')).toHaveTextContent('2+ versions');
     fireEvent.click(screen.getByRole('button', { name: 'Load more' }));
     await waitFor(() => expect(screen.getByTestId('ppx-versions-summary')).toHaveTextContent(/^3 versions$/));
+  });
+});
+
+// --- an id address (PFX-6.4) ------------------------------------------------------------------
+
+describe('PacticipantRouteClient', () => {
+  beforeEach(() => {
+    mockReplace.mockClear();
+    routes = {};
+    installFetch();
+  });
+
+  it('replaces an id address with the handle it names', async () => {
+    routes[`/api/pact/pacticipants/${BILLING.id}`] = ok(BILLING);
+    render(<PacticipantRouteClient reference={BILLING.id} />);
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/ade/dashboard/pacts/pacticipants/billing-service'));
+    expect(screen.getByText('Opening the pacticipant…')).toBeInTheDocument();
+  });
+
+  it('renders a handle address without resolving it', async () => {
+    routes['/api/pact/pacticipants/billing-service'] = ok(BILLING);
+    render(<PacticipantRouteClient reference="billing-service" />);
+    expect(await screen.findByTestId('ppx-facts')).toBeInTheDocument();
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('renders the page (and its error) when an id names nothing', async () => {
+    const missing = '00000000-0000-4000-8000-000000000000';
+    routes[`/api/pact/pacticipants/${missing}`] = () => ({ status: 404, body: { success: false, error: 'No such pacticipant' } });
+    render(<PacticipantRouteClient reference={missing} />);
+    expect(await screen.findByText('No such pacticipant')).toBeInTheDocument();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });
 

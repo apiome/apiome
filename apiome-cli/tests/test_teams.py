@@ -16,6 +16,7 @@ from apiome_cli.client.teams import (
     parse_member,
     parse_members,
     team_rows,
+    OWNER_KINDS,
     validate_kind,
 )
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
@@ -93,6 +94,12 @@ def test_parse_members_refuses_duplicates() -> None:
     ]
     with pytest.raises(ValueError, match="more than once"):
         parse_members(["u1", "u1:lead"])
+
+
+def test_a_pacticipant_is_an_owner_kind_but_not_a_graph_kind() -> None:
+    assert validate_kind("pacticipant", OWNER_KINDS) == "pacticipant"
+    with pytest.raises(ValueError):
+        validate_kind("pacticipant")
 
 
 def test_validate_kind() -> None:
@@ -364,6 +371,17 @@ def test_assign_server_error_exits_one(httpx_mock: HTTPXMock) -> None:
     )
     result = runner.invoke(app, ["teams", "assign", "project", "p1", "--team", "payments"])
     assert result.exit_code == EXIT_ERROR
+
+
+def test_assign_a_pacticipant_owner(httpx_mock: HTTPXMock) -> None:
+    # PFX-6.4 (#6956): a pacticipant's owner receives its stale-pact and failed-verification notices.
+    httpx_mock.add_response(
+        url=f"{_BASE}/owners/pacticipant/c-1", method="PUT", json=_owners("pacticipant", "c-1")
+    )
+    result = runner.invoke(app, ["teams", "assign", "pacticipant", "c-1", "--team", "payments"])
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    (request,) = httpx_mock.get_requests()
+    assert json.loads(request.read()) == {"team": "payments"}
 
 
 def test_assign_bad_kind_is_usage_error(httpx_mock: HTTPXMock) -> None:

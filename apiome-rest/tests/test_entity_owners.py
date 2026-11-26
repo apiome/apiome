@@ -41,12 +41,19 @@ def test_each_kind_is_gated_by_the_permission_that_edits_it() -> None:
         "gateway_config": Resource.IMPORTS,
         # CDG-5.5: an accepted Backstage or Compass component is imported catalog data.
         "component": Resource.IMPORTS,
+        # PFX-6.4: a pacticipant is Pact Broker data.
+        "pacticipant": Resource.PACTS,
     }
 
 
 def test_projects_and_catalog_items_are_told_apart_by_publishable() -> None:
     assert "e.publishable" in KINDS["project"].where
     assert "NOT e.publishable" in KINDS["catalog_item"].where
+
+
+def test_a_pacticipant_is_found_live_in_the_pact_registry() -> None:
+    spec = KINDS["pacticipant"]
+    assert spec.table == "apiome.pacticipant" and spec.where == "e.deleted_at IS NULL"
 
 
 def test_an_unknown_kind_is_refused() -> None:

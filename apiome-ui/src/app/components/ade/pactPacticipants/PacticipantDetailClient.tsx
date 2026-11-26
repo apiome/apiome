@@ -8,7 +8,8 @@
  * (deployed versions and supported releases); its **Pacts** — every integration it is the consumer
  * or provider of, each linking to its newest pact (PFX-5.2, #6946), and a link to its **Network**
  * diagram (PFX-5.3, #6947); and its **Versions**, latest
- * recorded first, with their branches and tags. Choosing a branch or a tag anywhere on the page narrows the versions to
+ * recorded first, with their branches and tags. Its **Owner** team (PFX-6.4, #6956) receives the
+ * Pact findings about it. Choosing a branch or a tag anywhere on the page narrows the versions to
  * it; **Clear** widens them again.
  *
  * ### What this page owns
@@ -35,6 +36,7 @@ import {
 } from '@lib/pact-pacticipants';
 import { BranchesTable, CliSnippet, EnvironmentsTable, PacticipantFacts, VersionsTable } from './PacticipantPanels';
 import { fetchBranches, fetchEnvironments, fetchPacticipant, fetchVersions } from './pacticipantsApi';
+import PacticipantOwnerPanel from './PacticipantOwnerPanel';
 import { describeFailure } from './describeFailure';
 import { PacticipantPactsTable } from '../pactDetail/PactPanels';
 import { fetchPacticipantPacts } from '../pactDetail/pactDetailApi';
@@ -132,6 +134,7 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
   const [versions, setVersions] = React.useState<Section<VersionList>>({ data: null, error: null });
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [moreError, setMoreError] = React.useState<string | null>(null);
+  const [ownerRefresh, setOwnerRefresh] = React.useState(0);
 
   const loadPacticipant = React.useCallback(async () => {
     setPacticipant({ data: null, error: null });
@@ -216,6 +219,7 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
     void loadEnvironments();
     void loadPacts();
     void loadVersions(filter);
+    setOwnerRefresh((count) => count + 1);
   }, [filter, loadBranches, loadEnvironments, loadPacticipant, loadPacts, loadVersions]);
 
   React.useEffect(() => {
@@ -280,6 +284,8 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
               <Panel id="ppx-overview" title="Overview">
                 <PacticipantFacts pacticipant={pacticipant.data} />
               </Panel>
+
+              <PacticipantOwnerPanel pacticipantId={pacticipant.data.id} refreshKey={ownerRefresh} />
 
               <Panel
                 id="ppx-branches"

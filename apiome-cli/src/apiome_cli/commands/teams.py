@@ -22,7 +22,7 @@ from apiome_cli.client.connectors import refusal
 from apiome_cli.client.errors import http_exit_code
 from apiome_cli.client.teams import (
     CODE_OWNER_TEAM_NOT_FOUND,
-    ENTITY_KINDS,
+    OWNER_KINDS,
     detail_lines,
     member_rows,
     parse_members,
@@ -267,7 +267,7 @@ def team_members(
 @app.command("assign")
 def assign_owner(
     ctx: typer.Context,
-    kind: str = typer.Argument(..., help=f"Entity kind: {', '.join(ENTITY_KINDS)}."),
+    kind: str = typer.Argument(..., help=f"Entity kind: {', '.join(OWNER_KINDS)}."),
     entity_id: str = typer.Argument(..., help="The entity's id."),
     team: str = typer.Option(..., "--team", help="Slug of the team that will own it."),
     output_format: str = _format_option(),
@@ -280,7 +280,7 @@ def assign_owner(
     """
     fmt = _format(ctx, output_format)
     try:
-        normalised = validate_kind(kind)
+        normalised = validate_kind(kind, OWNER_KINDS)
     except ValueError as exc:
         raise typer.BadParameter(str(exc), param_hint="KIND") from exc
     client, tenant = tenant_scoped_client(ctx)

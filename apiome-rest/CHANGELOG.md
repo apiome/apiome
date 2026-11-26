@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.864.0] - 2026-11-26
+
+### Added
+- **Pacticipant owners and notifications to owners (PFX-6.4, #6956).** OpenAPI 1.688.0, apiome-db
+  V450.
+  - **Owner kind `pacticipant`.** `GET` / `PUT` / `DELETE /v1/tenants/{t}/owners/pacticipant/{id}`,
+    `POST …/confirm` and `POST …/owners:assign` accept a pacticipant (its id); reading needs
+    `pacts:view`, changing `pacts:edit`; audited as `owner.*` like every owner change. Team activity
+    lists owned pacticipants; Unowned findings can name one.
+  - **Failed verifications notify owners.** A failed verification result — published to the broker
+    or run by the hosted verifier — routes an `owner_verification_drift` finding
+    (`kind: pact-verification-failed`, role, result id, versions, pact version SHA, pending) to the
+    provider's and the consumer's owner teams, once per team, after the result commits; it never
+    changes or fails the publish. A passing result notifies nobody.
+  - **Owner resolution** (`app.pact_owner_routing`): the pacticipant's own confirmed owner, else its
+    consumer-registry entry's, else its project's; with none, the finding is recorded as unowned
+    under the pacticipant (Unowned findings / catch-all team). Every finding carries `pacticipant`
+    and `ownerSource`.
+
+### Changed
+- The PFX-6.2 remediation sweep routes re-publish requests and escalations through the same
+  resolution: a consumer with no owner anywhere is now `unowned` (recorded under the pacticipant)
+  rather than `unlinked`.
+- The retention purge removes a purged pacticipant's owner rows and unowned findings in the same
+  transaction; a soft-deleted pacticipant keeps its owner.
+
 ## [1.863.0] - 2026-11-26
 
 ### Added
