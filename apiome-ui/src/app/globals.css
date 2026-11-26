@@ -45515,3 +45515,252 @@ tr[data-selected="true"] > td:first-child {
   color: var(--fg);
   font-size: var(--fs-sm);
 }
+
+/* ===========================================================================
+   Matrix and can-i-deploy — PFX-5.4 (#6948). `.pmx-*` is the Matrix and Can
+   I deploy pages (they reuse the `.ppx-*` panels, tables and snippets): the
+   query builder's selector fieldsets and inputs, the verdict panel with its
+   notice groups, the grid's verdict cells and their key. Tokens only.
+   =========================================================================== */
+.pmx-selector {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+}
+
+.pmx-selector__legend {
+  padding: 0 var(--space-1);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.pmx-selector__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2) var(--space-3);
+}
+
+.pmx-field {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
+}
+
+.pmx-input {
+  min-inline-size: 12rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pmx-input:focus-visible,
+.pmx-cell:focus-visible,
+.pmx-check input:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pmx-select--narrow {
+  min-inline-size: 7rem;
+}
+
+.pmx-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pmx-radios {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pmx-radios legend {
+  float: inline-start;
+  margin-inline-end: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.pmx-ignored {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pmx-chip-icon {
+  display: inline;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.pmx-verdict {
+  border-inline-start-width: 4px;
+}
+
+.pmx-verdict[data-tone='ok'] {
+  border-inline-start-color: var(--ok-fg);
+}
+
+.pmx-verdict[data-tone='danger'] {
+  border-inline-start-color: var(--danger-fg);
+}
+
+.pmx-verdict[data-tone='warn'] {
+  border-inline-start-color: var(--warn-fg);
+}
+
+.pmx-verdict__headline {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+}
+
+.pmx-verdict[data-tone='ok'] .pmx-verdict__headline {
+  color: var(--ok-fg);
+}
+
+.pmx-verdict[data-tone='danger'] .pmx-verdict__headline {
+  color: var(--danger-fg);
+}
+
+.pmx-verdict[data-tone='warn'] .pmx-verdict__headline {
+  color: var(--warn-fg);
+}
+
+.pmx-notices {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pmx-notices__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pmx-notice {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pmx-notice__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pmx-notice__hint {
+  padding-inline-start: var(--space-4);
+}
+
+.pmx-grid-wrap {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pmx-grid th,
+.pmx-grid td {
+  white-space: nowrap;
+}
+
+.pmx-grid__cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.pmx-cell {
+  --pmx-tone: var(--fg-muted);
+  --pmx-soft: var(--bg-subtle);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-inline-size: 1.75rem;
+  block-size: 1.75rem;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--pmx-tone);
+  border-radius: var(--r-sm);
+  background: var(--pmx-soft);
+  color: var(--pmx-tone);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.pmx-cell[data-tone='ok'] {
+  --pmx-tone: var(--ok-fg);
+  --pmx-soft: var(--ok-soft);
+}
+
+.pmx-cell[data-tone='danger'] {
+  --pmx-tone: var(--danger-fg);
+  --pmx-soft: var(--danger-soft);
+}
+
+.pmx-cell[data-tone='warn'] {
+  --pmx-tone: var(--warn-fg);
+  --pmx-soft: var(--warn-soft);
+}
+
+.pmx-cell[data-ignored] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.pmx-cell--empty {
+  border-color: transparent;
+  background: transparent;
+}
+
+.pmx-cell--key {
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
+  font-size: var(--fs-xs);
+}
+
+.pmx-cell__count {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.pmx-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  list-style: none;
+}
+
+.pmx-key__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pmx-row-reason {
+  display: block;
+  margin-block-start: var(--space-1);
+}

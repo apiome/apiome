@@ -1,0 +1,150 @@
+---
+title: Matrix
+description: Query which consumer versions were verified against which provider versions.
+sidebar_position: 5.8
+tags: [contracts, pact, ui]
+---
+
+The **Matrix** page shows the Pact Broker's matrix: which consumer versions were verified against
+which provider versions, and how each verification went. Choose the versions you care about, and the
+page draws them as a grid, lists every row, and explains the verdict: whether those versions can be
+deployed together, and why not.
+
+The page only reads. It asks the same `GET …/matrix` that `pact-broker can-i-deploy` asks. To check one
+version before a deployment, use [Can I deploy?](./can-i-deploy.mdx#check-in-the-console) instead.
+
+## Before you start
+
+- You hold **Pacts** → **View**. Without it, the page shows **Permission denied**.
+- Consumers [publish their pacts](./publish-pacts.mdx), and providers
+  [publish verification results](./verification-results.mdx). Until then the matrix has no rows.
+
+## Open the matrix
+
+1. In the rail, under **Ship**, click **Contracts**.
+2. On the **Pacticipants** page, click **Matrix**.
+
+The page is at `/ade/dashboard/pacts/matrix`. If the workspace has no pacticipant yet, the page
+shows the `apiome pact publish` command that publishes your first pacts.
+
+## Build a query
+
+A query is one or more **selectors**. Each selector names a pacticipant and which of its versions to
+include.
+
+1. In **Selector 1**, type or choose the **Pacticipant**. The list suggests the workspace's
+   pacticipants.
+2. In **Versions**, choose which of its versions:
+
+   | Versions | What it includes |
+   | --- | --- |
+   | **Latest version** | Its most recently recorded version. |
+   | **Version** | Exactly the version number you enter. |
+   | **Branch** | Every version recorded on the branch you enter. Tick **Latest only** for the newest one. |
+   | **Main branch** | Every version on its main branch. Tick **Latest only** for the newest one. |
+   | **Tag** | Every version with the tag you enter. Tick **Latest only** for the newest one. |
+   | **Environment** | The versions deployed to, or released in, the environment you enter. |
+   | **All versions** | Every version. |
+
+3. To ask whether versions of two or more pacticipants work together, click **Add selector** and fill
+   it in the same way. A query has at most 10 selectors. Click **Remove** to drop one.
+4. In **Rows**, choose how results are collapsed:
+   - **Latest result per consumer version and provider** — one row for each consumer version and
+     provider. This is the default.
+   - **Latest result per consumer version and provider version** — one row for each pair of versions.
+   - **Latest result per consumer and provider** — one row for each integration.
+   - **Every result** — every verification result.
+5. In **Limit**, choose how many rows to read: **100 rows**, **500 rows** or **1000 rows**.
+6. Click **Show matrix**.
+
+If a selector is not finished, the page says what it needs, for example *Selector 1: enter the
+branch.*, and does not ask.
+
+The address of the page changes to carry the query, so you can bookmark it or share it with a
+teammate. The selectors are numbered in the address (`q[0][pacticipant]=billing-service&q[0][latest]=true`).
+If you open an address the page cannot read, it says why and leaves the query empty.
+
+<Screenshot id="pact-matrix" alt="The Matrix page for every version of Billing Service: the query builder with one selector, a verdict of No — not deployable with two blocking notices and a warning, each with what to do, and the top of the grid with six provider versions across."/>
+
+## Read the verdict
+
+**Verdict** says whether the versions you asked about can be deployed together:
+
+| Verdict | What it means |
+| --- | --- |
+| **Yes — deployable** | Every result that counts passed, or nothing depends on these versions. |
+| **No — not deployable** | A verification failed, or a version you named does not exist. |
+| **Not known yet** | A verification result is missing. The page says when to ask again, and **Check again** asks. |
+
+Under the verdict, the page shows the Pact Broker's sentence, the counts of verified, failed and
+unknown rows, and how many rows count towards the verdict. Each notice is listed under a heading,
+with what to do about it:
+
+- **Blocking** — each reason the answer is no or not known yet, such as a failed verification or a
+  missing result.
+- **Warnings** — something to look at that does not change the answer, such as a provider contract
+  without passing evidence.
+- **Passing** — why the answer is yes.
+
+The reasons and their codes are described in [How the answer is reached](./can-i-deploy.mdx#reasons).
+
+If the matrix returns as many rows as the **Limit** allows, the page says some rows may be missing.
+Raise the limit or narrow the selectors.
+
+## Read the grid
+
+**Grid** puts consumer versions in rows and provider versions in columns. Each cell is the newest
+result between that pair:
+
+| Mark | Result | What it means |
+| --- | --- | --- |
+| ✓ | **Verified** | The newest result passed. |
+| ✕ | **Failed** | The newest result failed. |
+| ! | **Pending** | The newest result failed, but the pact was pending, so the provider's build did not fail. See [Pending and work-in-progress pacts](./pending-and-wip.mdx). |
+| ? | **No result** | No provider version has verified the pact. It is in the provider's **no result** column. |
+
+A number next to the mark counts the results for that pair, when there is more than one. A cell with a
+dashed border is **ignored**: it does not count towards the verdict. An empty cell means the matrix has
+no row for that pair.
+
+- **Click a cell** to open the pact of that consumer version. See [Pact detail](./pact-detail.mdx).
+- **Click a pacticipant** in a heading to open its page.
+
+You can move through the grid with **Tab**. Each cell's name says the pair, the result and how many
+results there are. The grid draws at most 20 consumer versions and 20 provider versions. When there are
+more, a note says how many are left out. Every row is still in the rows table.
+
+## The rows table
+
+**Rows** lists every row the matrix returned:
+
+| Column | What it shows |
+| --- | --- |
+| **Consumer** | The consumer. Click it to open its page. |
+| **Consumer version** | The consumer version and its branch. A commit SHA is shortened to 12 characters. |
+| **Provider** | The provider. |
+| **Provider version** | The provider version that verified the pact, and its branch, or a dash when there is no result. |
+| **Result** | **Verified**, **Failed**, **Pending** or **No result**, with **Bi-directional**, **WIP** or **Ignored** when they apply, and the row's reason. |
+| **Verified** | When the result was published, in UTC. |
+| **Pact** | **Open pact** opens the pact of the consumer version. |
+
+## When a query is refused
+
+If the matrix cannot answer, the page shows the reason and **Try again**. For example, a selector that
+names an environment that does not exist reads *Environment nowhere does not exist*. If the workspace
+has no pact for the selectors, the page says **No rows**.
+
+## Who can do what
+
+| Action | Permission |
+| --- | --- |
+| Open the matrix | **Pacts** → **View** |
+
+Every read is scoped to your current workspace.
+
+## Related
+
+- [Can I deploy?](./can-i-deploy.mdx) — check one version before a deployment.
+- [Pact detail](./pact-detail.mdx) — one pact's interactions and verification status.
+- [Integration network](./network.mdx) — which applications depend on each other.
+- [Pact Broker API](../../reference/rest/pact-broker.md) — the matrix parameters.

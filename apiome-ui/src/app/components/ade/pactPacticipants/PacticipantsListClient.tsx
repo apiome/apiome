@@ -6,18 +6,21 @@
  * The applications registered in the workspace's Pact Broker, by handle: main branch, labels,
  * repository and when each was last changed. The **Label** filter narrows the list to the
  * pacticipants carrying one label; **Load more** reads the next page. Each name opens the
- * pacticipant's page (versions, branches, tags, environments).
+ * pacticipant's page (versions, branches, tags, environments). The header opens the **Matrix** and
+ * **Can I deploy?** pages (PFX-5.4, #6948).
  *
  * A workspace with no pacticipant shows the CLI command that registers them: publishing a pact
  * registers its consumer and its provider.
  */
 
 import * as React from 'react';
+import Link from 'next/link';
 import { RefreshCw } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { PUBLISH_SNIPPET, type Pacticipant } from '@lib/pact-pacticipants';
+import { CAN_I_DEPLOY_ROUTE, MATRIX_ROUTE } from '@lib/pact-matrix';
 import { CliSnippet, PacticipantsTable } from './PacticipantPanels';
 import { fetchLabels, fetchPacticipants } from './pacticipantsApi';
 import { describeFailure } from './describeFailure';
@@ -91,10 +94,18 @@ export default function PacticipantsListClient() {
         breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Pacticipants' }]}
         description="The applications that take part in this workspace's pacts."
         actions={
-          <Button variant="outline" onClick={() => void load(label)}>
-            <RefreshCw aria-hidden />
-            Refresh
-          </Button>
+          <div className="ppx__actions">
+            <Button variant="outline" asChild>
+              <Link href={MATRIX_ROUTE}>Matrix</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href={CAN_I_DEPLOY_ROUTE}>Can I deploy?</Link>
+            </Button>
+            <Button variant="outline" onClick={() => void load(label)}>
+              <RefreshCw aria-hidden />
+              Refresh
+            </Button>
+          </div>
         }
       />
       <PageBody>

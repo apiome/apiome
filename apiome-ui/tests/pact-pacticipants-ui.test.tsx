@@ -99,6 +99,12 @@ describe('PacticipantsListClient', () => {
     );
     expect(screen.getByTestId('ppx-row-mobile-app')).toHaveTextContent('develop');
     expect(screen.getByTestId('ppx-count')).toHaveTextContent('3 pacticipants');
+    // PFX-5.4 (#6948): the header opens the Matrix and Can I deploy pages.
+    expect(screen.getByRole('link', { name: 'Matrix' })).toHaveAttribute('href', '/ade/dashboard/pacts/matrix');
+    expect(screen.getByRole('link', { name: 'Can I deploy?' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/pacts/can-i-deploy',
+    );
     await screen.findByRole('option', { name: 'tier-1' });
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipants', container.innerHTML);

@@ -2910,6 +2910,28 @@
         "apiome-ui/src/app/components/ade/pactNetwork/networkLayoutModel.ts",
         "apiome-ui/lib/pact-network.ts"
       ]
+    },
+    {
+      "id": "pact-matrix",
+      "route": "/ade/dashboard/pacts/matrix",
+      "waitFor": "[data-testid=\"pmx-grid\"]",
+      "data": "fixture:hive-a11y/pact-matrix.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactMatrix/MatrixClient.tsx",
+        "apiome-ui/src/app/components/ade/pactMatrix/MatrixPanels.tsx",
+        "apiome-ui/lib/pact-matrix.ts"
+      ]
+    },
+    {
+      "id": "pact-can-i-deploy",
+      "route": "/ade/dashboard/pacts/can-i-deploy",
+      "waitFor": "[data-testid=\"pmx-verdict-panel\"]",
+      "data": "fixture:hive-a11y/pact-can-i-deploy.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactMatrix/CanIDeployClient.tsx",
+        "apiome-ui/src/app/components/ade/pactMatrix/MatrixPanels.tsx",
+        "apiome-ui/lib/pact-matrix.ts"
+      ]
     }
   ]
 }

@@ -1,5 +1,6 @@
 /**
- * Shared forwarding for the `/api/pact/*` proxies (PFX-5.1, #6945; PFX-5.2, #6946; PFX-5.3, #6947).
+ * Shared forwarding for the `/api/pact/*` proxies (PFX-5.1, #6945; PFX-5.2, #6946; PFX-5.3, #6947;
+ * PFX-5.4, #6948).
  *
  * Each proxy resolves the signed-in user's workspace, forwards one read to apiome-rest as that
  * user, and passes REST's answer through (a 403 stays a 403). Tenant scoping and the `pacts`
@@ -20,6 +21,7 @@ import {
 } from '@lib/pact-pacticipants';
 import { findPreviousDistinct } from '@lib/pact-detail';
 import { collectPactNetwork } from '@lib/pact-network';
+import { retryAfterSeconds } from '@lib/pact-matrix';
 
 /** What the browser is told when apiome-rest cannot be reached. */
 export const PACT_UNAVAILABLE = 'The Pact Broker is unavailable (apiome-rest not reachable). Try again shortly.';
@@ -116,6 +118,45 @@ export async function forwardPreviousPact(
  */
 export async function forwardPactNetwork(slug: string): Promise<NextResponse> {
   return answerWithReader((read) => collectPactNetwork(read, slug));
+}
+
+/**
+ * Forward one matrix or can-i-deploy read as the signed-in user (PFX-5.4, #6948). Like
+ * {@link forwardPactRead}, plus REST's `Retry-After` (sent while the verdict is unknown) as
+ * `retryAfterSeconds` in the body, so the page can say when asking again is worthwhile.
+ *
+ * @param path - The REST path below `/v1/tenants/{slug}`, with its (already checked) query.
+ * @returns REST's matrix document with `retryAfterSeconds`, or REST's refusal.
+ */
+export async function forwardPactVerdict(path: string): Promise<NextResponse> {
+  const resolved = await resolveConnectorTenant();
+  if ('error' in resolved) return resolved.error;
+  try {
+    const rest = await fetch(tenantUrl(resolved.slug, path), {
+      method: 'GET',
+      headers: createRestAuthHeaders(resolved.user),
+      cache: 'no-store',
+    });
+    const body = (await rest.json().catch(() => ({}))) as unknown;
+    if (!rest.ok) {
+      return pactError(rest.status >= 400 ? rest.status : 502, failureMessage(body, `HTTP ${rest.status}`));
+    }
+    const document = body && typeof body === 'object' && !Array.isArray(body) ? body : {};
+    return NextResponse.json({ ...document, retryAfterSeconds: retryAfterSeconds(rest.headers.get('Retry-After')) });
+  } catch {
+    return pactError(503, PACT_UNAVAILABLE);
+  }
+}
+
+/** REST's message from a refusal (`detail` string or `detail.message`), or the fallback. */
+function failureMessage(body: unknown, fallback: string): string {
+  const detail = body && typeof body === 'object' ? (body as Record<string, unknown>).detail : undefined;
+  if (typeof detail === 'string' && detail) return detail;
+  if (detail && typeof detail === 'object') {
+    const message = (detail as Record<string, unknown>).message;
+    if (typeof message === 'string' && message) return message;
+  }
+  return fallback;
 }
 
 /**

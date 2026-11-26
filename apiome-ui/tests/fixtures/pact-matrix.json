@@ -1,0 +1,767 @@
+{
+  "matrix": {
+    "summary": {
+      "deployable": false,
+      "reason": "The verification for the pact between version 2.0.0 of Billing Service and version 5.1.0 of Ledger API failed",
+      "success": 3,
+      "failed": 1,
+      "unknown": 1
+    },
+    "notices": [
+      {
+        "type": "error",
+        "code": "verification-failed",
+        "text": "The verification for the pact between version 2.0.0 of Billing Service and version 5.1.0 of Ledger API failed"
+      },
+      {
+        "type": "error",
+        "code": "no-verification-result",
+        "text": "There is no verified pact between version 2.0.0 of Billing Service and the latest version of Audit Log"
+      },
+      {
+        "type": "warning",
+        "code": "provider-contract-unverified",
+        "text": "WARN: The provider contract of Notification Service 1.4.0 has no passing self-verification evidence, so its bi-directional comparison with Billing Service 1.9.0 is unverified."
+      }
+    ],
+    "matrix": [
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "2.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/2.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Ledger API",
+          "version": {
+            "number": "5.1.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api/versions/5.1.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-24T09:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": false,
+          "verifiedAt": "2026-11-24T10:05:00+00:00",
+          "kind": "native",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          }
+        },
+        "reason": {
+          "code": "verification-failed",
+          "text": "verification failed"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "2.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/2.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Ledger API",
+          "version": {
+            "number": "5.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api/versions/5.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-24T09:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": true,
+          "verifiedAt": "2026-11-24T09:40:00+00:00",
+          "kind": "native",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          }
+        },
+        "reason": {
+          "code": "verified",
+          "text": "verified"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "2.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/2.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Audit Log",
+          "version": null,
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/audit-log"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-24T09:00:00+00:00"
+        },
+        "verificationResult": null,
+        "reason": {
+          "code": "no-verification-result",
+          "text": "no verification result"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "1.9.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/1.9.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Ledger API",
+          "version": {
+            "number": "5.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api/versions/5.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-20T11:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": true,
+          "verifiedAt": "2026-11-20T12:00:00+00:00",
+          "kind": "native",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          }
+        },
+        "reason": {
+          "code": "verified",
+          "text": "verified"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "1.9.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/1.9.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Ledger API",
+          "version": {
+            "number": "5.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api/versions/5.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-20T11:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": false,
+          "verifiedAt": "2026-11-19T12:00:00+00:00",
+          "kind": "native",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          }
+        },
+        "reason": {
+          "code": "verification-failed",
+          "text": "verification failed"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "1.9.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/1.9.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Notification Service",
+          "version": {
+            "number": "1.4.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/notification-service/versions/1.4.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/notification-service"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-20T11:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": true,
+          "verifiedAt": "2026-11-20T12:30:00+00:00",
+          "kind": "bidirectional",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          },
+          "providerContractVerified": false
+        },
+        "reason": {
+          "code": "verified",
+          "text": "verified by bi-directional comparison; provider contract unverified"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "1.9.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/1.9.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Audit Log",
+          "version": {
+            "number": "0.9.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/audit-log/versions/0.9.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/audit-log"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-20T11:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": false,
+          "verifiedAt": "2026-11-20T13:00:00+00:00",
+          "kind": "native",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          },
+          "pending": true
+        },
+        "reason": {
+          "code": "pact-pending",
+          "text": "pact is pending"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Mobile App",
+          "version": {
+            "number": "3.2.0",
+            "branch": "release",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/mobile-app/versions/3.2.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/mobile-app"
+            }
+          }
+        },
+        "provider": {
+          "name": "Billing Service",
+          "version": {
+            "number": "2.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/2.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-24T09:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": true,
+          "verifiedAt": "2026-11-24T11:00:00+00:00",
+          "kind": "native",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          }
+        },
+        "reason": {
+          "code": "verified",
+          "text": "verified"
+        },
+        "ignored": true
+      }
+    ]
+  },
+  "canIDeploy": {
+    "summary": {
+      "deployable": null,
+      "reason": "There is no verified pact between version 2.0.0 of Billing Service and the version of Audit Log currently in production (0.9.0)",
+      "success": 1,
+      "failed": 0,
+      "unknown": 1
+    },
+    "notices": [
+      {
+        "type": "error",
+        "code": "no-verification-result",
+        "text": "There is no verified pact between version 2.0.0 of Billing Service and the version of Audit Log currently in production (0.9.0)"
+      },
+      {
+        "type": "warning",
+        "code": "cannot-ignore",
+        "text": "WARN: Cannot ignore Payments Gateway"
+      }
+    ],
+    "matrix": [
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "2.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/2.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Ledger API",
+          "version": {
+            "number": "5.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api/versions/5.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/ledger-api"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-24T09:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": true,
+          "verifiedAt": "2026-11-24T09:40:00+00:00",
+          "kind": "native",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          }
+        },
+        "reason": {
+          "code": "verified",
+          "text": "verified"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Billing Service",
+          "version": {
+            "number": "2.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/2.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "provider": {
+          "name": "Audit Log",
+          "version": null,
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/audit-log"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-24T09:00:00+00:00"
+        },
+        "verificationResult": null,
+        "reason": {
+          "code": "no-verification-result",
+          "text": "no verification result"
+        }
+      },
+      {
+        "consumer": {
+          "name": "Mobile App",
+          "version": {
+            "number": "3.2.0",
+            "branch": "release",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/mobile-app/versions/3.2.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/mobile-app"
+            }
+          }
+        },
+        "provider": {
+          "name": "Billing Service",
+          "version": {
+            "number": "2.0.0",
+            "branch": "main",
+            "branches": [],
+            "branchVersions": [],
+            "environments": [],
+            "tags": [],
+            "_links": {
+              "self": {
+                "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service/versions/2.0.0"
+              }
+            }
+          },
+          "_links": {
+            "self": {
+              "href": "http://rest/v1/tenants/acme/pact-broker/pacticipants/billing-service"
+            }
+          }
+        },
+        "pact": {
+          "createdAt": "2026-11-24T09:00:00+00:00"
+        },
+        "verificationResult": {
+          "success": true,
+          "verifiedAt": "2026-11-24T11:00:00+00:00",
+          "kind": "native",
+          "_links": {
+            "self": {
+              "href": "x"
+            }
+          }
+        },
+        "reason": {
+          "code": "verified",
+          "text": "verified"
+        },
+        "ignored": true
+      }
+    ],
+    "retryAfterSeconds": 10
+  },
+  "environments": {
+    "_embedded": {
+      "environments": [
+        {
+          "uuid": "e1",
+          "name": "production",
+          "displayName": "Production",
+          "production": true
+        },
+        {
+          "uuid": "e2",
+          "name": "staging",
+          "displayName": "Staging",
+          "production": false
+        }
+      ]
+    }
+  },
+  "pacticipants": {
+    "pacticipants": [
+      {
+        "id": "p1",
+        "slug": "billing-service",
+        "name": "Billing Service",
+        "labels": []
+      },
+      {
+        "id": "p2",
+        "slug": "ledger-api",
+        "name": "Ledger API",
+        "labels": []
+      },
+      {
+        "id": "p3",
+        "slug": "audit-log",
+        "name": "Audit Log",
+        "labels": []
+      },
+      {
+        "id": "p4",
+        "slug": "mobile-app",
+        "name": "Mobile App",
+        "labels": []
+      },
+      {
+        "id": "p5",
+        "slug": "notification-service",
+        "name": "Notification Service",
+        "labels": []
+      }
+    ],
+    "count": 5,
+    "has_more": false
+  },
+  "versions": {
+    "versions": [
+      {
+        "id": "v2",
+        "pacticipant_id": "p1",
+        "number": "2.0.0",
+        "seq": 2,
+        "branches": [
+          "main"
+        ],
+        "tags": []
+      },
+      {
+        "id": "v1",
+        "pacticipant_id": "p1",
+        "number": "1.9.0",
+        "seq": 1,
+        "branches": [
+          "main"
+        ],
+        "tags": []
+      }
+    ],
+    "count": 2,
+    "has_more": false
+  }
+}
