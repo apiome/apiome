@@ -1,0 +1,54 @@
+---
+slug: pact-cli-ci-and-client-compatibility
+title: "CLI, CI and client compatibility"
+description: "Run Pact from apiome pact, ready-made CI pipelines, commit statuses, MCP and Postman."
+authors: [apiome]
+---
+
+CLI, CI and client compatibility for the Pact Broker is complete. A pipeline that runs
+`pact-broker` moves to Apiome by changing the command to `apiome pact`: the flags, the sentences in
+the log and the exit codes stay the same, and so do `PACT_BROKER_BASE_URL` and
+`PACT_BROKER_TOKEN`. Around the CLI there are ready-made CI steps, a verdict on each commit, pact
+tools for AI agents and a Postman export.
+
+{/* truncate */}
+
+**Move a pipeline over.** Keep the variables your Pact tooling already reads and swap the command:
+
+```bash
+export PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker
+export PACT_BROKER_TOKEN=<API key with the "Pact: consumer + deploy" preset>
+
+apiome pact publish ./pacts --consumer-app-version "$GIT_COMMIT" --branch "$GIT_BRANCH"
+apiome pact can-i-deploy --pacticipant "Billing Service" --version "$GIT_COMMIT" --to-environment production
+```
+
+**What the epic covers:**
+
+- **The `apiome pact` commands.** `publish`, `can-i-deploy`, `record-deployment`,
+  `record-release`, `describe-version`, `create-environment`, `create-webhook` and the rest take
+  `pact-broker`'s flags, exit `0` or `1` as it does, and print `table`, `json` or `markdown` —
+  [The apiome pact commands](/ship/pact-broker/cli).
+- **Broker-compatible auth and Pact scopes.** The API key works as a bearer token, as
+  `X-API-Key` or as the password of basic auth. The **Pact: read-only**, **Pact: consumer +
+  deploy** and **Pact: CI verifier** presets keep each job's key to the broker and the hosted
+  verifier — [Pact keys and scopes](/ship/pact-broker/cli#pact-keys-and-scopes).
+- **A GitHub Action.** `apiome/pact-action` runs `publish`, `can-i-deploy` or `record-deployment`
+  and keeps one pull-request comment up to date with the answer —
+  [Use the GitHub Action](/ship/pact-broker/ci-pact#use-the-github-action).
+- **Recipes for other runners.** Copy-and-paste pipelines for
+  [GitLab CI and Bitbucket Pipelines](/ship/pact-broker/ci-pact#gitlab-ci-and-bitbucket-pipelines)
+  and for [Jenkins and Azure Pipelines](/ship/pact-broker/ci-pact#jenkins-and-azure-pipelines),
+  each tested against the CLI in CI.
+- **Commit statuses.** A published pact puts **pending** on the consumer's GitHub or GitLab commit,
+  and the verification result turns it to pass or fail on both sides. A status that cannot be sent
+  is recorded with the reason — [Commit statuses](/ship/pact-broker/commit-statuses).
+- **Pact tools for AI agents.** `pact.list`, `pact.matrix`, `pact.can_i_deploy` and
+  `pact.record_deployment` in the `pact` MCP toolset —
+  [Ask from an AI agent](/ship/pact-broker/cli#ask-from-an-ai-agent-mcp).
+- **Postman collections.** `apiome pact export-postman` turns a pact into Postman requests with
+  test scripts, ready for Postman or Newman. Anything it leaves out is listed with the reason —
+  [Export a pact as a Postman collection](/ship/pact-broker/cli#export-a-pact-as-a-postman-collection).
+
+The [Pact Broker overview](/ship/pact-broker/overview) now lists CI pipelines and AI agents as
+places to work from, next to the Pact CLI, the Apiome CLI and the Pact libraries.
