@@ -63,6 +63,17 @@ Running **`uv run apiome-mcp serve`** without **`--transport`** loads settings a
 | **`spec.describe_operation`** | Fragments for one operation: `parameters`, `requestBody`, `responses`, `security`; internal `$ref` expanded. |
 | **`spec.list_components`** | Component keys grouped by kind (`schemas`, `parameters`, `responses`, `securitySchemes`). |
 | **`spec.describe_component`** | Single component definition by **`kind`** + **`name`**; internal `$ref` expanded. |
+| **`pact.list`** | PFX-4.5: latest pact of every consumer → provider integration with its latest verification; **`provider`** / **`consumer`** filters; cursor pages (**`limit`** ≤ 100). |
+| **`pact.matrix`** | PFX-4.5: Pact Broker matrix query from structured **`selectors`**, a destination, **`latestby`**, **`ignore`**; verdict + at most **`max_rows`** rows (≤ 100) with **`rowsTotal`** / **`rowsTruncated`**. |
+| **`pact.can_i_deploy`** | PFX-4.5: one **`pacticipant`** **`version`** to **`to_environment`** or **`to_tag`**; same bounded answer as **`pact.matrix`**. |
+| **`pact.record_deployment`** | PFX-4.5 (**write**): record a deployment to a named **`environment`** (optional **`application_instance`**). |
+
+**Pact tools (PFX-4.5):** the four `pact.*` tools call apiome-rest's internal
+`/v1/internal/mcp/pacts/*` routes (same `APIOME_MCP_REST_INTERNAL_URL` /
+`APIOME_MCP_REST_INTERNAL_SERVICE_TOKEN` as the export tools). The key must not be project-limited
+(pacts are workspace-wide); apiome-rest applies the key creator's `pacts:view` / `pacts:create`. Unknown
+selector keys, wrongly typed values and out-of-range limits are refused with the reason, never
+dropped or clamped. Implementation: `src/apiome_mcp/pact_tools.py`.
 
 **Tool & toolset registry (MTG-1.1):** Stable ids, descriptions, and toolset membership
 (`health`, `catalog`, `search`, `document`, `structure`) live in

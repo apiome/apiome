@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.856.0] - 2026-11-26
+
+### Added
+- **MCP tools for pacts (PFX-4.5, #6942).** OpenAPI 1.680.0. Four internal routes back the new
+  `apiome-mcp` tools `pact.list`, `pact.matrix`, `pact.can_i_deploy` and `pact.record_deployment`
+  (`app.mcp_pact_routes`, tag `internal-mcp-pacts`, fail-closed behind `X-Internal-Service-Token`):
+  - `POST /v1/internal/mcp/pacts/list` — the latest pact of every consumer → provider integration of
+    the tenant (newest consumer version per pair) with its latest verification result
+    (`success`, `verifiedAt`, `providerVersion`, `kind`); optional `provider` / `consumer` filters;
+    keyset pages by provider then consumer handle (`limit` ≤ 100, opaque `nextCursor`). No pact content.
+  - `POST /v1/internal/mcp/pacts/matrix` — the broker matrix query from structured `selectors`,
+    `latestby`, a destination (`toEnvironment`, `toTag`, `latest`, `mainBranch`) and `ignore`. The
+    request is turned into the `q[][…]` query string and read by `parse_matrix_query`, so validation and
+    semantics are the broker route's.
+  - `POST /v1/internal/mcp/pacts/can-i-deploy` — `pacticipant` + `version` to `toEnvironment` or `toTag`.
+  - `POST /v1/internal/mcp/pacts/record-deployment` — by environment **name** (404
+    `pact-environment-not-found` for an unknown one), optional `applicationInstance`; `created: false`
+    when the version already was the current deployment there.
+  - Bounded answers: the verdict reads every row; at most `maxRows` compact rows (default 50, ≤ 100) and
+    50 notices are returned, with `rowsTotal`, `rowsTruncated` and `noticesTruncated`;
+    `retryAfterSeconds` while the verdict is unknown.
+  - RBAC as the key's owner: the MCP key is re-read (same tenant, not revoked, not expired) and acts as
+    `mcp_api_keys.created_by`; `pacts:view` for the reads and `pacts:create` to record a deployment are
+    enforced through `enforce_permission`. A key without an owner is refused `403
+    mcp-pact-key-has-no-owner`; an unknown one `403 mcp-pact-key-unknown`. Unknown body fields are `422`.
+  - `app.mcp_tool_registry`: new `pact` toolset with the four tools (no capability preset includes it).
+
 ## [1.855.0] - 2026-11-25
 
 ### Added

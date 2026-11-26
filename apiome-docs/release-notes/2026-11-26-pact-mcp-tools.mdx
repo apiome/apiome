@@ -1,0 +1,29 @@
+---
+slug: pact-mcp-tools
+title: "Pact tools for AI agents"
+description: "Agents can list pacts, ask can-i-deploy and record deployments over MCP."
+authors: [apiome]
+---
+
+An AI agent connected to Apiome's MCP server can now work with your workspace's pacts. It gets the
+same answers your pipeline gets from `apiome pact`, so a coding agent can check whether a release is
+safe before it ships one. See
+[Ask from an AI agent](/ship/pact-broker/cli#ask-from-an-ai-agent-mcp).
+
+{/* truncate */}
+
+- **Four tools.** `pact.list` lists the latest pact of each consumer and provider, with how its last
+  verification went. `pact.matrix` runs the matrix query. `pact.can_i_deploy` asks whether one
+  version can go to an environment or a tag. `pact.record_deployment` records what was deployed
+  where.
+- **The key's creator's permissions.** The tools need an MCP key. Apiome checks the **Pacts**
+  permissions of the person who created the key: **View** to read, **Create** to record a
+  deployment. A key limited to projects is refused, because pacts belong to the whole workspace.
+- **Short answers.** Lists come a page at a time. A matrix answer has up to 100 rows and says how
+  many it left out. The verdict always counts every row.
+- **Nothing ignored.** An unknown selector key, a wrongly typed value or two destinations at once is
+  refused with the reason. A refusal from Apiome includes its code, such as `[pact-matrix-invalid]`.
+- **A new toolset.** The tools form the **pact** toolset in **MCP settings**.
+  `pact.record_deployment` is marked as a write, so MCP hosts can ask before they run it.
+
+*Last updated: November 26, 2026*

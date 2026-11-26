@@ -31,7 +31,7 @@ __all__ = [
     "mcp_tools_by_toolset",
 ]
 
-McpToolset = Literal["health", "catalog", "search", "document", "structure"]
+McpToolset = Literal["health", "catalog", "search", "document", "structure", "pact"]
 
 
 @dataclass(frozen=True)
@@ -168,6 +168,38 @@ _REGISTRY: Final[Tuple[McpToolDescriptor, ...]] = (
         id="spec.describe_component",
         description="Single OpenAPI component definition by kind + name (internal $ref expanded).",
         toolset="structure",
+    ),
+    McpToolDescriptor(
+        id="pact.list",
+        description=(
+            "The latest pact of every consumer → provider integration, with its latest verification "
+            "result (cursor-paginated; PFX-4.5)."
+        ),
+        toolset="pact",
+    ),
+    McpToolDescriptor(
+        id="pact.matrix",
+        description=(
+            "Pact Broker matrix query: the deployment verdict and a bounded set of verification rows "
+            "(PFX-4.5)."
+        ),
+        toolset="pact",
+    ),
+    McpToolDescriptor(
+        id="pact.can_i_deploy",
+        description=(
+            "Can one pacticipant version be deployed to an environment or tag? Verdict, reasons and "
+            "rows (PFX-4.5)."
+        ),
+        toolset="pact",
+    ),
+    McpToolDescriptor(
+        id="pact.record_deployment",
+        description=(
+            "Record that a pacticipant version is now deployed to a named environment (writes; "
+            "needs pacts:create; PFX-4.5)."
+        ),
+        toolset="pact",
     ),
 )
 

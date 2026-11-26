@@ -189,7 +189,10 @@ There is no anonymous access to switch on.
 1. Choose a **Default mode** — **All registry tools**, **Inherit registry defaults** or **Explicit
    per-tool flags**.
 2. Optionally pick a **Capability profile** — **Catalog only**, **Search + catalog** or **Full
-   read** set the toolset ceilings in one click; **Custom** stays editable afterwards.
+   read** set the toolset ceilings in one click; **Custom** stays editable afterwards. No profile
+   includes the **pact** toolset (the [pact tools](../ship/pact-broker/cli.mdx#ask-from-an-ai-agent-mcp),
+   one of which records deployments), so applying a profile switches it off. Switch it back on
+   under **Toolsets**.
 3. Under **Toolsets**, switch whole toolsets into or out of the ceiling. A card's badge reads **All
    in ceiling**, **Mixed** or **Off**. Tick **Advanced: individual tools** to set **In ceiling** and
    **Default** per tool.
