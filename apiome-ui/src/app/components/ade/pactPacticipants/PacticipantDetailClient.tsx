@@ -6,7 +6,8 @@
  * One application of the workspace's Pact Broker: its handle, main branch, repository, labels and
  * bindings; its **Branches** with their head versions; what each **Environment** runs of it now
  * (deployed versions and supported releases); its **Pacts** — every integration it is the consumer
- * or provider of, each linking to its newest pact (PFX-5.2, #6946); and its **Versions**, latest
+ * or provider of, each linking to its newest pact (PFX-5.2, #6946), and a link to its **Network**
+ * diagram (PFX-5.3, #6947); and its **Versions**, latest
  * recorded first, with their branches and tags. Choosing a branch or a tag anywhere on the page narrows the versions to
  * it; **Clear** widens them again.
  *
@@ -38,6 +39,7 @@ import { describeFailure } from './describeFailure';
 import { PacticipantPactsTable } from '../pactDetail/PactPanels';
 import { fetchPacticipantPacts } from '../pactDetail/pactDetailApi';
 import type { PacticipantPacts } from '@lib/pact-detail';
+import { networkRoute } from '@lib/pact-network';
 
 /** Where the breadcrumb's first step goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -327,10 +329,17 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
                 title="Pacts"
                 aside={
                   pacts.data ? (
-                    <span className="ppx__meta" data-testid="ppx-pacts-count">
-                      {pacts.data.pacts.length}
-                      {pacts.data.truncated ? '+' : ''}
-                    </span>
+                    <>
+                      <span className="ppx__meta" data-testid="ppx-pacts-count">
+                        {pacts.data.pacts.length}
+                        {pacts.data.truncated ? '+' : ''}
+                      </span>
+                      {pacts.data.pacts.length > 0 ? (
+                        <Link className="ppx__link ppx__panel-link" href={networkRoute(slug)} data-testid="ppx-network-link">
+                          Network diagram
+                        </Link>
+                      ) : null}
+                    </>
                   ) : null
                 }
               >

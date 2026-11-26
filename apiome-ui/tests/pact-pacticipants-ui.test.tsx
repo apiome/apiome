@@ -189,6 +189,10 @@ describe('PacticipantDetailClient', () => {
     );
     expect(screen.getByTestId('ppx-pacts-count')).toHaveTextContent('3');
     expect(within(pacts).getAllByText('Provider')).toHaveLength(1);
+    expect(screen.getByTestId('ppx-network-link')).toHaveAttribute(
+      'href',
+      '/ade/dashboard/pacts/pacticipants/billing-service/network',
+    );
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipant-detail', container.innerHTML);
   });
@@ -225,6 +229,8 @@ describe('PacticipantDetailClient', () => {
     routes[`${base}/pacts`] = ok({ matrix: [] });
     fireEvent.click(within(screen.getByTestId('ppx-pacts')).getByRole('button', { name: /try again/i }));
     expect(await screen.findByTestId('ppx-pacts-empty')).toHaveTextContent('apiome pact publish');
+    // No integration, so no network to draw.
+    expect(screen.queryByTestId('ppx-network-link')).not.toBeInTheDocument();
   });
 
   it('says when the pacticipant does not exist, with the way back', async () => {

@@ -1,0 +1,24 @@
+---
+slug: pact-network
+title: "Integration network graph"
+description: "See which pacticipants depend on each other, with each integration's verdict."
+authors: [apiome]
+---
+
+You can now see a pacticipant's network in the app: every application connected to it through
+pacts, and how the newest pact of each integration was verified. Open a pacticipant and click
+**Network diagram** in its **Pacts** section. See [Integration network](/ship/pact-broker/network).
+
+{/* truncate */}
+
+- **Dependencies at a glance.** Consumers sit on the left and their providers to the right, so a
+  chain of dependencies reads left to right. The whole connected group is drawn, not only direct
+  neighbours.
+- **Verdict colouring.** Each arrow is coloured and marked by its newest pact's verdict: **Verified**
+  ✓, **Failed** ✕, **Failed (pending)** ! or **Not verified yet** ? (dashed). A key counts each one.
+- **One click away.** Click an arrow to open the pact, or a pacticipant to see its own network. Each
+  one also takes keyboard focus.
+- **Nothing hidden.** The **Integrations** table under the diagram lists every integration. A large
+  network reads at most 25 pacticipants, and the page names any it did not read or could not read.
+
+The page reads only and needs **Pacts** → **View**.

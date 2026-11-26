@@ -2898,6 +2898,18 @@
         "apiome-ui/src/app/components/ade/pactDetail/PactPanels.tsx",
         "apiome-ui/lib/pact-detail.ts"
       ]
+    },
+    {
+      "id": "pact-network",
+      "route": "/ade/dashboard/pacts/pacticipants/billing-service/network",
+      "waitFor": "[data-testid=\"pact-network-plot\"]",
+      "data": "fixture:hive-a11y/pact-network.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactNetwork/PactNetworkClient.tsx",
+        "apiome-ui/src/app/components/ade/pactNetwork/NetworkGraphSvg.tsx",
+        "apiome-ui/src/app/components/ade/pactNetwork/networkLayoutModel.ts",
+        "apiome-ui/lib/pact-network.ts"
+      ]
     }
   ]
 }
