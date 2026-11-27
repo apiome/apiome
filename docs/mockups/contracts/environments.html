@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Environments · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/environments" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header page-header--with-tabs">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><span>Environments</span></div>
+          <h1 class="page-title">Environments</h1>
+          <p class="page-desc">What is running where, what is released to users, and what can move next.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" data-action="open" data-target="release-dialog"><i data-lucide="tag"></i>Record a release</button>
+          <button class="btn" data-action="open" data-target="env-dialog"><i data-lucide="plus"></i>New environment</button>
+          <button class="btn btn--primary" data-action="open" data-target="deploy-dialog"><i data-lucide="rocket"></i>Record a deployment</button>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Contracts">
+        <a class="tab" href="overview.html"><i data-lucide="layout-dashboard"></i>Overview</a>
+        <a class="tab" href="pacticipant.html"><i data-lucide="users"></i>Pacticipants</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="table-2"></i>Matrix</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="rocket"></i>Can I deploy</a>
+        <a class="tab" href="verify.html"><i data-lucide="shield-check"></i>Verification</a>
+        <a class="tab is-active" href="environments.html" aria-current="page"><i data-lucide="server-cog"></i>Environments</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="webhook"></i>Webhooks</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="activity"></i>Health</a>
+        <a class="tab" href="settings.html"><i data-lucide="settings-2"></i>Settings</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="facts"><span><b>4</b> environments</span><span class="sep"></span><span><b>11</b> services</span><span class="sep"></span><span><b>23</b> versions running</span><span class="sep"></span><span><b>1</b> blocked promotion</span><div class="segmented segmented--sm" style="margin-left:auto" role="group" aria-label="View" data-tabs="views"><button class="is-active" data-action="tab" data-target="v-board"><i data-lucide="layout-grid"></i>Board</button><button data-action="tab" data-target="v-time"><i data-lucide="history"></i>History</button></div></div>
+
+    <div id="views">
+      <!-- ============ Board: what is where ============ -->
+      <div data-tab-panel="v-board" class="col gap-4">
+        <section class="table-wrap" aria-label="What is running where">
+          <div class="scroll-x"><table class="table ct-board">
+            <thead><tr><th>Service</th>
+              <th><span class="row gap-2">Development<button class="btn btn--ghost btn--sm btn--icon" aria-label="Development actions" data-action="open" data-target="env-menu"><i data-lucide="ellipsis"></i></button></span></th>
+              <th><span class="row gap-2">Staging <span class="badge badge--info">Contracts required</span></span></th>
+              <th><span class="row gap-2">Production <span class="badge badge--danger">Production</span></span></th>
+              <th>Released to users</th></tr></thead>
+            <tbody>
+              <tr><td><span class="row gap-2"><span class="avatar avatar--sm avatar--hex avatar--c">BS</span><span><span class="cell-primary">Billing Service</span><div class="cell-sub">provider</div></span></span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--warn)"></span>2.8.0-rc1</span><div class="cell-sub">unverified</div></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--danger)"></span>2.7.0</span><div class="cell-sub">1 failing pact</div></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>2.6.1</span><div class="cell-sub">eu-west · us-east</div><div class="mt-1"><span class="t-xs" style="color:var(--danger-fg)"><i data-lucide="octagon-x" style="width:12px;height:12px"></i> 2.7.0 blocked by Orders UI</span></div></td><td class="ct-cell"><span class="t-faint">—</span></td></tr>
+              <tr><td><span class="row gap-2"><span class="avatar avatar--sm avatar--hex avatar--a">OU</span><span><span class="cell-primary">Orders UI</span><div class="cell-sub">consumer</div></span></span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>3.4.0</span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--danger)"></span>3.4.0</span><div class="cell-sub">needs Billing ≤ 2.6</div></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>3.3.2</span><div class="mt-1"><span class="t-xs" style="color:var(--danger-fg)">3.4.0 blocked</span></div></td><td class="ct-cell"><span class="t-faint">—</span></td></tr>
+              <tr><td><span class="row gap-2"><span class="avatar avatar--sm avatar--hex avatar--b">PA</span><span><span class="cell-primary">Payments API</span><div class="cell-sub">provider</div></span></span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>4.1.0</span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>4.0.0</span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>4.0.0</span></td><td class="ct-cell"><span class="t-faint">—</span></td></tr>
+              <tr><td><span class="row gap-2"><span class="avatar avatar--sm avatar--hex avatar--d">MA</span><span><span class="cell-primary">Mobile App</span><div class="cell-sub">consumer · app store</div></span></span></td><td class="ct-cell"><span class="t-faint">—</span></td><td class="ct-cell"><span class="t-faint">—</span></td><td class="ct-cell"><span class="t-faint">—</span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>1.9.2 · 1.8.7</span><div class="cell-sub">2 versions supported</div></td></tr>
+              <tr><td><span class="row gap-2"><span class="avatar avatar--sm avatar--hex avatar--c">OA</span><span><span class="cell-primary">Orders API</span><div class="cell-sub">provider</div></span></span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>5.2.0</span></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>5.1.0</span><div class="mt-1"><button class="btn btn--link btn--sm" data-action="open" data-target="deploy-dialog"><i data-lucide="arrow-up" style="width:12px;height:12px"></i>5.2.0 can go</button></div></td><td class="ct-cell"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>5.1.0</span></td><td class="ct-cell"><span class="t-faint">—</span></td></tr>
+            </tbody>
+          </table></div>
+          <div class="table-foot"><span class="t-xs t-subtle row gap-3"><span class="ct-ver"><span class="dot" style="background:var(--ok)"></span>verified with everything beside it</span><span class="ct-ver"><span class="dot" style="background:var(--warn)"></span>unverified</span><span class="ct-ver"><span class="dot" style="background:var(--danger)"></span>failing</span></span><a class="t-xs" href="#">Open the deploy simulator</a></div>
+        </section>
+      </div>
+
+      <!-- ============ History ============ -->
+      <div data-tab-panel="v-time" hidden>
+        <section class="card card--pad">
+          <div class="timeline">
+            <div class="tl-item is-accent"><div class="row gap-2"><span class="tl-title">Billing Service <span class="mono">2.7.0</span> deployed to Staging</span><span class="badge badge--warn">Not verified at the time</span></div><div class="t-xs t-muted">Replaced 2.6.1 · recorded by the GitHub Action</div><div class="tl-meta">Today 13:50 · billing-service CI</div></div>
+            <div class="tl-item is-accent"><div class="tl-title">Mobile App <span class="mono">1.9.2</span> released to Production</div><div class="t-xs t-muted">1.8.7 stays supported</div><div class="tl-meta">3 days ago · Grace Hopper</div></div>
+            <div class="tl-item"><div class="tl-title">Mobile App <span class="mono">1.7.4</span> — support ended</div><div class="t-xs t-muted">Its pacts no longer hold providers back</div><div class="tl-meta">3 days ago · Grace Hopper</div></div>
+            <div class="tl-item"><div class="tl-title">Orders UI <span class="mono">3.3.2</span> deployed to Production</div><div class="tl-meta">6 days ago · orders-ui CI</div></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="overlay" id="deploy-dialog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="dep-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="rocket"></i></span><div><div class="dialog__title" id="dep-t">Record a deployment</div><div class="dialog__desc">Say which version is now running. It replaces the one in that instance.</div></div></div>
+    <div class="dialog__body col gap-3">
+      <div class="grid grid-2"><div class="field"><label>Service</label><select class="select"><option>Billing Service</option></select></div><div class="field"><label>Version</label><select class="select"><option>2.7.0+9f31c20</option><option>2.6.1</option></select></div><div class="field"><label>Environment</label><select class="select"><option>Production</option><option>Staging</option></select></div><div class="field"><label>Instance <span class="t-subtle t-500">(optional)</span></label><input class="input" placeholder="eu-west" /><div class="hint">For the same service running in several places.</div></div></div>
+      <div class="card card--flat card--pad col gap-2">
+        <div class="row gap-2"><i data-lucide="octagon-x" style="color:var(--danger)"></i><span class="t-sm t-600">can-i-deploy says no</span></div>
+        <div class="t-sm t-muted">Orders UI 3.3.2 in Production needs <span class="mono">currency</span> on <span class="mono">POST /invoices</span>; 2.7.0 does not return it.</div>
+        <label class="check"><input type="checkbox" />Record it anyway — this already happened</label>
+      </div>
+      <pre class="code code--dark" aria-label="CLI"><span>apiome pact record-deployment --pacticipant "Billing Service" \</span>
+<span>  --version 2.7.0+9f31c20 --environment production</span></pre>
+    </div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="close" disabled>Record deployment</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="release-dialog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="rel-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--violet"><i data-lucide="tag"></i></span><div><div class="dialog__title" id="rel-t">Record a release</div><div class="dialog__desc">For apps people install: old versions stay in use, so several are supported at once.</div></div></div>
+    <div class="dialog__body col gap-3">
+      <div class="grid grid-3"><div class="field"><label>Service</label><select class="select"><option>Mobile App</option></select></div><div class="field"><label>Version</label><input class="input mono" value="1.9.3" /></div><div class="field"><label>Environment</label><select class="select"><option>Production</option></select></div></div>
+      <div class="field"><label>Still supported</label><label class="check"><input type="checkbox" checked /><span class="mono">1.9.2</span></label><label class="check"><input type="checkbox" checked /><span class="mono">1.8.7</span> <span class="t-xs t-subtle">— untick to end its support</span></label></div>
+      <pre class="code code--dark" aria-label="CLI"><span>apiome pact record-release --pacticipant "Mobile App" \</span>
+<span>  --version 1.9.3 --environment production</span></pre>
+    </div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="close">Record release</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="env-dialog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="env-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--honey"><i data-lucide="server-cog"></i></span><div><div class="dialog__title" id="env-t">New environment</div><div class="dialog__desc">A place services run. can-i-deploy answers for it.</div></div></div>
+    <div class="dialog__body col gap-3">
+      <div class="grid grid-2"><div class="field"><label for="e-d">Display name</label><input class="input" id="e-d" value="Production EU" /></div><div class="field"><label for="e-n">Name</label><input class="input mono" id="e-n" value="production-eu" /><div class="hint">Used in commands. Lowercase, no spaces.</div></div></div>
+      <div class="switch-row"><div><div class="sw-title">Production</div><div class="t-xs t-subtle">Marked red everywhere. Verification never sends requests that change data here.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Production"></button></div>
+      <div class="switch-row"><div><div class="sw-title">Contracts required</div><div class="t-xs t-subtle">A version with no verified contract gets a “no” from can-i-deploy.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Contracts required"></button></div>
+      <div class="grid grid-2"><div class="field"><label for="e-c">Contact</label><input class="input" id="e-c" placeholder="Platform team" /></div><div class="field"><label for="e-e">Contact email</label><input class="input" id="e-e" placeholder="platform@acme.dev" /></div></div>
+      <pre class="code code--dark" aria-label="CLI"><span>apiome pact create-environment --name production-eu \</span>
+<span>  --display-name "Production EU" --production --contract-required</span></pre>
+    </div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="close">Create environment</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="env-menu" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-start;padding:290px 0 0 560px">
+  <div class="menu" role="menu" style="min-width:220px"><button class="menu__item" role="menuitem" data-action="swap" data-target="env-dialog"><i data-lucide="pencil"></i>Edit environment</button><button class="menu__item" role="menuitem" data-action="swap" data-target="deploy-dialog"><i data-lucide="rocket"></i>Record a deployment here</button><button class="menu__item" role="menuitem"><i data-lucide="circle-minus"></i>Record an undeployment</button><div class="menu__sep"></div><button class="menu__item is-danger" role="menuitem"><i data-lucide="trash-2"></i>Delete environment</button></div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/environments</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>The Environments page of PFX-5.7 as a read-only list. Creating an environment, recording a release and recording a deployment were CLI-only.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>Environments, deployed versions with their instance, supported releases, the link to the deploy simulator. <code>create-environment</code>, <code>record-deployment</code> and <code>record-release</code> flags map one to one.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li>A <b>what-is-where board</b>: services down, environments across, each cell the running version with a verdict dot and — where a newer version exists — whether it can go next. PactFlow shows one environment at a time.</li>
+    <li>A <b>History</b> view (timeline, §8): who deployed, released or ended support for what, and whether it was verified at the time.</li>
+    <li>Record a deployment runs can-i-deploy first and shows the reason for a “no”. Recording is still possible — it states a fact — behind an explicit tick.</li>
+    <li>Record a release lists what stays supported; unticking ends support (needs <code>record-support-ended</code> in the CLI, and <code>record-undeployment</code> for the menu item).</li>
+    <li>Environment edit and delete in the column menu.</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>No environments: an <code>.empty</code> — “No environments yet. Add production and staging so can-i-deploy has somewhere to look.”</li>
+    <li>A service never deployed: its row shows dashes and “Record its first deployment”.</li>
+    <li>Delete with versions running: blocked — “Production still has 9 versions running.”</li>
+    <li>Read-only role: the three header actions and the cell actions are hidden.</li>
+  </ul>
+</template>
+</body>
+</html>

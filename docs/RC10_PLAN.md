@@ -13,7 +13,7 @@ _Status: **filed** (2026-11-19): milestone and project exist and the tickets are
 | Section | What | Roadmap |
 | --- | --- | --- |
 | §1 | Carry-over from RC8 | RC8_PLAN §1 |
-| §2 | **Pact Broker / PactFlow parity** — broker, bi-directional contract testing, verifier, CLI/CI, UI, migration | [`ROADMAP_PACTFLOW_PARITY.md`](ROADMAP_PACTFLOW_PARITY.md) (`PFX`, ~52 issues, 7 epics) |
+| §2 | **Pact Broker / PactFlow parity** — broker, bi-directional contract testing, verifier, CLI/CI, UI, migration | [`ROADMAP_PACTFLOW_PARITY.md`](ROADMAP_PACTFLOW_PARITY.md) (`PFX`, ~80 issues, 9 epics) |
 | §3 | **Contract agreements** — SLA builder, data sharing and consent, billing, audit and compliance, platform services | [`ROADMAP_CONTRACT_AGREEMENTS.md`](ROADMAP_CONTRACT_AGREEMENTS.md) (`CAG`, ~57 issues, 11 epics) |
 | §4 | Everything in `apiome/private-suite` about contracts / Pact, and where it goes | PACTFLOW roadmap §3 |
 | §5 | Foundations that already shipped and are reused (not re-planned) | CTG, ECA, XPC |
@@ -50,6 +50,8 @@ bi-directional testing wired to Apiome's spec model.
 | ✅ PFX-EPIC-5 ([#6911](https://github.com/apiome/apiome/issues/6911), done 2026-11-25) | UI: pacticipants, pact viewer, matrix and can-i-deploy console, webhooks, environments | 8 | 5.1, 5.2, 5.4, 5.6 |
 | PFX-EPIC-6 | RBAC and audit, scheduling, health analytics, ownership, scale, **migration from Pact Broker/PactFlow**, self-host | 8 | 6.1, 6.7 |
 | ✅ PFX-EPIC-7 ([#6913](https://github.com/apiome/apiome/issues/6913), done 2026-11-26) | Integration: one consumer model, can-i-deploy as a deploy-gate signal, publish quality gate | 5 | 7.1–7.3 |
+| PFX-EPIC-8 ([#7297](https://github.com/apiome/apiome/issues/7297), added 2026-11-26) | Contracts workspace: every `apiome pact` command gets a screen and every screen a command — landing, publish flows, verification runs, pacticipant and environment management, settings, migration wizard, export, guided set-up | 20 | 8.1–8.4, 8.6, 8.8–8.10, 8.12, 8.16, 8.18, 8.20 |
+| PFX-EPIC-9 ([#7318](https://github.com/apiome/apiome/issues/7318), added 2026-11-26) | Pacts from mocks: capture, generation engine, record page, `apiome pact record`, more sources, standing CI recording, pacts served as a stub | 8 | 9.1–9.4 |
 
 ### 2.2 Ranking (why this order)
 
@@ -61,6 +63,8 @@ bi-directional testing wired to Apiome's spec model.
 | 4 | PFX-3.2 hosted verifier | Teams without a Pact library in the provider language can still verify |
 | 5 | PFX-6.7 migration | Removes the main adoption blocker for existing Broker/PactFlow users |
 | 6 | PFX-7.2/7.3 gate integration | Connects the new verdict to the CTG-4.5 deploy gate and the publish guardrail |
+| 7 | PFX-8.1/8.2 landing and the CLI ↔ UI parity gate, then the publish, verify, manage, migrate and export screens | The functionality exists but is CLI-only; the mockups Epic 5 was built from never covered it (design: `docs/mockups/contracts/`) |
+| 8 | PFX-9.1–9.4 pact from a mock | A pact without a Pact library — something neither Pact Broker nor PactFlow offers |
 
 ---
 

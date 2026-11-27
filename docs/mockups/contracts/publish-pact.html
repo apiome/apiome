@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Publish a pact · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/publish-pact" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><span>Publish a pact</span></div>
+          <h1 class="page-title">Publish a consumer pact</h1>
+          <p class="page-desc">Bring a pact in, see how it fares against the provider today and tomorrow, then publish. Nothing is saved until you do.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="overview.html">Cancel</a>
+          <button class="btn" data-tip="Runs the checks and publishes nothing">Check only</button>
+          <button class="btn btn--primary" data-action="open" data-target="done-dialog"><i data-lucide="file-up"></i>Publish pact</button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="ct-split">
+      <div class="col gap-4">
+
+        <section class="card card--pad col gap-3" aria-labelledby="s1">
+          <div class="row-between wrap gap-2"><div class="ct-step"><span class="step__num">1</span><h2 class="t-h4" id="s1">The pact</h2></div><div class="segmented segmented--sm" role="group" aria-label="Kind of pact"><button class="is-active">HTTP</button><button>Messages</button><button>GraphQL</button><button>gRPC</button></div></div>
+          <div class="tabs" style="border-bottom:1px solid var(--border)" role="tablist" aria-label="Pact source" data-tabs="src-panels">
+            <button class="tab is-active" role="tab" data-action="tab" data-target="src-file"><i data-lucide="file-up"></i>Upload</button>
+            <button class="tab" role="tab" data-action="tab" data-target="src-paste"><i data-lucide="clipboard-paste"></i>Paste</button>
+            <button class="tab" role="tab" data-action="tab" data-target="src-derive"><i data-lucide="wand-sparkles"></i>Derive from a project</button>
+            <button class="tab" role="tab" data-action="tab" data-target="src-build"><i data-lucide="pencil-ruler"></i>Write interactions</button>
+            <a class="tab" href="pact-from-mock.html"><i data-lucide="radio-tower"></i>Record from a mock<span class="badge badge--honey">New</span></a>
+          </div>
+          <div id="src-panels">
+            <div data-tab-panel="src-file" class="col gap-3">
+              <div class="ct-drop" role="button" tabindex="0" aria-label="Drop pact files or a folder"><span class="icon-tile icon-tile--accent"><i data-lucide="upload"></i></span><div class="t-sm t-600">Drop pact files or a whole <span class="mono">pacts/</span> folder</div><div class="t-xs t-subtle">Pact v2, v3 or v4 · .json · several providers at once is fine</div><button class="btn btn--sm mt-1">Browse files</button></div>
+              <div class="table-wrap"><table class="table table--dense"><thead><tr><th>File</th><th>Consumer → provider</th><th>Spec</th><th>Interactions</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody>
+                <tr><td class="mono t-xs">orders-ui-billing-service.json</td><td>Orders UI → Billing Service</td><td><span class="badge badge--outline">Pact v3</span></td><td class="t-num">6</td><td><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove file"><i data-lucide="x"></i></button></td></tr>
+                <tr><td class="mono t-xs">orders-ui-orders-api.json</td><td>Orders UI → Orders API</td><td><span class="badge badge--outline">Pact v4</span></td><td class="t-num">11</td><td><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove file"><i data-lucide="x"></i></button></td></tr>
+              </tbody></table></div>
+            </div>
+            <div data-tab-panel="src-paste" hidden class="col gap-3">
+              <div class="row gap-2"><button class="btn btn--sm"><i data-lucide="clipboard"></i>Paste from clipboard</button><span class="badge badge--info">Pact v3 detected</span></div>
+              <pre class="code code--dark code--lines" style="min-height:170px" contenteditable="true" spellcheck="false" aria-label="Pact JSON"><span>{</span><span>  "consumer": { "name": "Orders UI" },</span><span>  "provider": { "name": "Billing Service" },</span><span>  "interactions": [ … ]</span><span>}</span></pre>
+            </div>
+            <div data-tab-panel="src-derive" hidden class="col gap-3">
+              <p class="t-sm t-muted">Draft a pact from a project’s own spec: pick the operations you call. Examples come from the spec; nothing is guessed silently.</p>
+              <div class="grid grid-2"><div class="field"><label>Project</label><select class="select"><option>Billing API</option></select></div><div class="field"><label>Revision</label><select class="select"><option>2.7.0</option></select></div></div>
+              <div class="table-wrap"><table class="table table--dense"><thead><tr><th><input type="checkbox" aria-label="All operations" /></th><th>Operation</th><th>Responses to include</th><th>Example</th></tr></thead><tbody>
+                <tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="method method--get">GET</span> <span class="ct-path">/invoices/{id}</span></td><td><span class="tag">200</span> <span class="tag">404</span></td><td class="t-xs t-muted">From the spec</td></tr>
+                <tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="method method--post">POST</span> <span class="ct-path">/invoices</span></td><td><span class="tag">201</span></td><td class="t-xs" style="color:var(--warn-fg)">Generated from the schema — review</td></tr>
+                <tr><td><input type="checkbox" aria-label="Include" /></td><td><span class="method method--delete">DELETE</span> <span class="ct-path">/invoices/{id}</span></td><td><span class="tag">204</span></td><td class="t-xs t-muted">From the spec</td></tr>
+              </tbody></table></div>
+            </div>
+            <div data-tab-panel="src-build" hidden class="col gap-3">
+              <div class="grid" style="grid-template-columns:220px minmax(0,1fr);gap:0;box-shadow:0 0 0 1px var(--border) inset;border-radius:var(--r-lg);overflow:hidden">
+                <div class="panel panel--muted"><div class="panel__head">Interactions<button class="btn btn--ghost btn--sm btn--icon ml-auto" aria-label="Add interaction"><i data-lucide="plus"></i></button></div><div class="panel__body">
+                  <div class="tree__item is-active"><span class="method method--get">GET</span><span class="t-truncate">get invoice 42</span></div>
+                  <div class="tree__item"><span class="method method--post">POST</span><span class="t-truncate">create an invoice</span></div>
+                  <div class="tree__item"><span class="method method--get">GET</span><span class="t-truncate">invoice not found</span></div>
+                </div></div>
+                <div class="panel"><div class="panel__body col gap-3" style="padding:14px">
+                  <div class="field"><label>Description</label><input class="input" value="get invoice 42" /></div>
+                  <div class="field"><label>Provider state <span class="t-subtle t-500">(what must be true first)</span></label><div class="row gap-2"><input class="input grow" value="an invoice exists" /><input class="input mono" style="width:150px" value="id = 42" aria-label="State parameters" /></div><div class="hint">Suggestions come from the provider’s state catalogue and the mock’s scenarios.</div></div>
+                  <div class="col gap-2"><div class="t-caps">Request</div><div class="row gap-2"><select class="select" style="width:96px" aria-label="Method"><option>GET</option></select><input class="input mono grow" value="/invoices/42" aria-label="Path" /></div><div class="row-between wrap gap-2"><span class="t-xs t-subtle">Matches <span class="mono">/invoices/{id}</span> in Billing API 2.7.0</span><button class="btn btn--link btn--sm">+ Header · + Query · + Body</button></div></div>
+                  <div class="col gap-2"><div class="row-between"><div class="t-caps">Response</div><button class="btn btn--sm"><i data-lucide="wand-sparkles"></i>Fill from the spec</button></div>
+                    <div class="row gap-2"><label class="t-sm" for="st-code">Status</label><input class="input mono" id="st-code" style="width:80px" value="200" /></div>
+                    <div class="ct-kv"><span>$.id</span><span class="tag">integer</span><span>$.amount</span><span class="tag">integer</span><span>$.currency</span><span class="tag">regex ^[A-Z]{3}$</span></div>
+                    <button class="btn btn--link btn--sm" style="align-self:flex-start">+ Field the consumer needs</button></div>
+                </div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card--pad col gap-3" aria-labelledby="s2">
+          <div class="row-between wrap gap-2"><div class="ct-step"><span class="step__num">2</span><h2 class="t-h4" id="s2">Whose version this is</h2></div><button class="btn btn--sm"><i data-lucide="git-commit-horizontal"></i>Fill from the linked repository</button></div>
+          <div class="grid grid-2">
+            <div class="field"><label for="c">Consumer</label><select class="select" id="c"><option>Orders UI</option><option>New pacticipant…</option></select></div>
+            <div class="field"><label for="cv">Consumer version</label><input class="input mono" id="cv" value="3.4.0+a1c9e02" /><div class="hint">A version that changes with every build — a git sha is ideal.</div></div>
+            <div class="field"><label for="b">Branch</label><div class="input-wrap"><i data-lucide="git-branch"></i><input class="input" id="b" value="feature/credit-notes" /></div></div>
+            <div class="field"><label for="t">Tags <span class="t-subtle t-500">(optional)</span></label><input class="input" id="t" value="dev" /></div>
+          </div>
+          <details><summary class="t-sm t-600">More options</summary>
+            <div class="col gap-2 mt-3">
+              <div class="field"><label for="bu">Build URL</label><div class="input-wrap"><i data-lucide="link"></i><input class="input" id="bu" placeholder="https://ci.acme.dev/builds/4821" /></div></div>
+              <div class="switch-row"><div><div class="sw-title">Merge with the pact already published for this version</div><div class="t-xs t-subtle">For test suites that publish in several parts. Off replaces it.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Merge"></button></div>
+              <div class="switch-row"><div><div class="sw-title">Also tag with the branch name</div><div class="t-xs t-subtle">For pipelines that still select pacts by tag.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Tag with branch"></button></div>
+            </div>
+          </details>
+        </section>
+
+        <section class="card card--pad col gap-3" aria-labelledby="s3">
+          <div class="row-between wrap gap-2"><div class="ct-step"><span class="step__num">3</span><h2 class="t-h4" id="s3">Check it before it counts</h2></div><span class="t-xs t-subtle">Checks write nothing</span></div>
+          <div class="field"><label>Compare with</label>
+            <div class="row wrap gap-2"><span class="chip is-active" data-action="chip"><i data-lucide="git-branch"></i>Provider’s main · 2.7.0</span><span class="chip is-active" data-action="chip"><i data-lucide="server"></i>Deployed to production · 2.6.1</span><span class="chip" data-action="chip">Deployed to staging · 2.7.0</span><span class="chip" data-action="chip">Draft · 2.8.0-rc1</span><button class="btn btn--link btn--sm">+ Another version</button></div>
+            <div class="hint">One pact, several provider versions at once — you see today’s answer and tomorrow’s.</div></div>
+          <div class="switch-row"><div><div class="sw-title">Ask the provider to verify after publishing</div><div class="t-xs t-subtle">Starts a hosted verification against Billing Service’s staging target and fires the provider’s webhooks.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Verify after publishing"></button></div>
+        </section>
+      </div>
+
+      <aside class="ct-aside" aria-label="Result of the check">
+        <section class="card card--pad col gap-1">
+          <div class="row-between"><div class="t-caps">Orders UI → Billing Service</div><button class="btn btn--ghost btn--sm"><i data-lucide="refresh-cw"></i>Re-check</button></div>
+          <div class="tabs tabs--pills mt-1" role="tablist" data-tabs="cmp"><button class="tab is-active" data-action="tab" data-target="cmp-main">main · 2.7.0<span class="count">4/6</span></button><button class="tab" data-action="tab" data-target="cmp-prod">production · 2.6.1<span class="count">6/6</span></button></div>
+          <div id="cmp">
+            <div data-tab-panel="cmp-main">
+              <div class="ct-ix"><i data-lucide="circle-check" style="color:var(--ok)"></i><div class="min-w-0"><div class="row gap-2"><span class="method method--get">GET</span><span class="ct-path">/invoices/{id}</span></div><div class="ct-ix__sub">“an invoice exists” · 200</div></div><span class="badge" data-status="passed">Match</span></div>
+              <div class="ct-ix"><i data-lucide="circle-check" style="color:var(--ok)"></i><div class="min-w-0"><div class="row gap-2"><span class="method method--get">GET</span><span class="ct-path">/customers/{id}</span></div><div class="ct-ix__sub">200</div></div><span class="badge" data-status="passed">Match</span></div>
+              <div class="ct-ix"><i data-lucide="circle-x" style="color:var(--danger)"></i><div class="min-w-0"><div class="row gap-2"><span class="method method--post">POST</span><span class="ct-path">/invoices</span></div><div class="ct-ix__sub">Needs <span class="mono">currency</span> in the 201 body. 2.7.0 dropped it. <a href="#" data-action="open" data-target="diff-drawer">See the difference</a></div></div><span class="badge" data-status="failed">Differs</span></div>
+              <div class="ct-ix"><i data-lucide="circle-help" style="color:var(--warn)"></i><div class="min-w-0"><div class="row gap-2"><span class="method method--get">GET</span><span class="ct-path">/invoices/{id}/pdf</span></div><div class="ct-ix__sub">Not in the spec. The provider may serve it undocumented.</div></div><span class="badge" data-status="warn">Not in spec</span></div>
+              <div class="t-xs t-subtle mt-1">2 more match · <a href="#">show all 6</a></div>
+            </div>
+            <div data-tab-panel="cmp-prod" hidden>
+              <div class="empty empty--inline" style="padding:var(--space-5)"><div class="empty__art"><span class="hex"></span><span class="hex hex--2"></span><i data-lucide="circle-check"></i></div><div class="t-sm t-600">All 6 interactions match 2.6.1</div><div class="t-xs t-muted">What production runs today already satisfies this pact.</div></div>
+            </div>
+          </div>
+          <div class="t-xs t-subtle mt-1">You can still publish. The pact records what the consumer needs; a difference becomes a failing verdict the provider sees.</div>
+        </section>
+        <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="cli"><button class="tab is-active" role="tab" data-action="tab" data-target="cli-0">apiome</button><button class="tab" role="tab" data-action="tab" data-target="cli-1">Pact CLI</button><button class="tab" role="tab" data-action="tab" data-target="cli-2">GitHub Action</button><button class="tab" role="tab" data-action="tab" data-target="cli-3">REST</button></div>
+          <div id="cli"><div data-tab-panel="cli-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact publish pacts/ \</span>
+<span>  --consumer-app-version 3.4.0+a1c9e02 \</span>
+<span>  --branch feature/credit-notes --tag dev</span></pre></div><div data-tab-panel="cli-1" hidden><pre class="code code--dark" aria-label="Pact CLI"><span>pact-broker publish pacts/ \</span>
+<span>  --consumer-app-version 3.4.0+a1c9e02 \</span>
+<span>  --branch feature/credit-notes \</span>
+<span>  --broker-base-url $PACT_BROKER_BASE_URL</span></pre></div><div data-tab-panel="cli-2" hidden><pre class="code code--dark" aria-label="GitHub Action"><span>- uses: apiome/pact-action@v1</span>
+<span>  with:</span>
+<span>    command: publish</span>
+<span>    pacts: pacts</span>
+<span>    tags: dev</span></pre></div><div data-tab-panel="cli-3" hidden><pre class="code code--dark" aria-label="REST"><span>POST /v1/tenants/acme/pact-broker/contracts/publish</span></pre></div></div>
+          <div class="t-xs t-subtle mt-2">Version and branch default to the commit and branch of the run in CI.</div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<div class="overlay overlay--drawer" id="diff-drawer" data-overlay>
+  <div class="drawer" role="dialog" aria-label="Difference">
+    <div class="drawer__header"><div><div class="drawer__title"><span class="method method--post">POST</span> /invoices — 201</div><div class="t-xs t-muted">What the pact needs, beside what Billing API 2.7.0 promises</div></div><button class="btn btn--ghost btn--icon" style="margin-left:auto" data-action="close" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="drawer__body col gap-3">
+      <div class="grid grid-2">
+        <div><div class="t-caps mb-1">Pact expects</div><pre class="code code--dark"><span>{</span>
+<span>  "id": integer,</span>
+<span>  "amount": integer,</span>
+<span class="diff-del">  "currency": /^[A-Z]{3}$/</span>
+<span>}</span></pre></div>
+        <div><div class="t-caps mb-1">Spec returns</div><pre class="code code--dark"><span>{</span>
+<span>  "id": integer,</span>
+<span>  "amount": integer,</span>
+<span class="diff-add">  "money": { "currency": … }</span>
+<span>}</span></pre></div>
+      </div>
+      <div class="callout callout--accent"><span class="t-600">Why this matters.</span> <span class="mono">currency</span> moved under <span class="mono">money</span> in 2.7.0 (<a href="../build/versions.html">changes</a>). Either the consumer follows, or the provider keeps both until Orders UI ships.</div>
+      <div class="row gap-2"><a class="btn btn--sm" href="../build/versions.html">Open the spec change</a><button class="btn btn--sm">Notify Billing’s owners</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="done-dialog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="dn-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--ok"><i data-lucide="check"></i></span><div><div class="dialog__title" id="dn-t">2 pacts published</div><div class="dialog__desc">Orders UI 3.4.0+a1c9e02 on feature/credit-notes</div></div></div>
+    <div class="dialog__body col gap-2">
+      <div class="row gap-2 t-sm"><i data-lucide="hourglass" style="color:var(--accent)"></i>Billing Service — new content, <b>pending</b>: it cannot fail their build until they pass it once.</div>
+      <div class="row gap-2 t-sm"><i data-lucide="circle-check" style="color:var(--ok)"></i>Orders API — unchanged since 2.1.0; already verified, nothing to do.</div>
+      <div class="row gap-2 t-sm t-muted"><i data-lucide="play"></i>Hosted verification started for Billing Service · 3 webhooks fired</div>
+    </div>
+    <div class="dialog__footer"><a class="btn" href="overview.html">Back to Contracts</a><a class="btn" href="#">Can I deploy?</a><a class="btn btn--primary" href="verify.html">Watch the verification</a></div>
+  </div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/publish</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>The “Import a Pact file” dialog (PFX-5.8) as the only way in. The dialog stays as a shortcut on a pacticipant and opens this page pre-filled.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>Every flag of <code>apiome pact publish</code> / <code>publish-consumer-contract</code>: files or directories, consumer-app-version, branch, auto-detect-version-properties (“Fill from the linked repository”), tag, tag-with-git-branch, build-url, merge. Same publish route and webhooks.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li>Several files or a folder at once, across providers; each row shows its pair, spec version and interaction count.</li>
+    <li>Kinds: HTTP, message, GraphQL and gRPC pacts (the comparison engine already reads all four).</li>
+    <li>A real interaction editor: list on the left, request / response on the right, matchers as chips, provider states suggested from the provider’s catalogue and mock scenarios, “Fill from the spec”.</li>
+    <li><b>Compare with several provider versions at once</b> — main, what is deployed, a draft — before anything is saved. PactFlow checks one.</li>
+    <li>A difference drawer: what the pact needs beside what the spec returns, with the spec change that caused it.</li>
+    <li>After publishing: which pacts are new and pending, which were unchanged, and a hosted verification already running.</li>
+    <li>“Check only” — the dry run, without publishing.</li>
+    <li>The command for the same action on four surfaces.</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>Nothing to compare with: the aside reads “Billing Service has no contract or deployed version yet. Publish anyway — the verdict appears when the provider shows up.”</li>
+    <li>Invalid file: the row turns red with “Not a pact: missing <code>consumer</code>”; the others still publish.</li>
+    <li>Same content as an existing pact: “Unchanged since 8d2f1c — its verification results still apply.”</li>
+    <li>Conflict (same version, different content, merge off): “3.4.0 already has a different pact. Use a new version or turn on merge.”</li>
+    <li>Read-only role: the page explains who can publish and shows the CLI block.</li>
+  </ul>
+</template>
+</body>
+</html>

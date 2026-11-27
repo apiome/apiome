@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Export a contract · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/export" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><span>Export</span></div>
+          <h1 class="page-title">Export a contract</h1>
+          <p class="page-desc">Take a contract out of Apiome — as a pact, a Postman collection, a file, or a head start on provider tests.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="../ship/export-studio.html"><i data-lucide="package-open"></i>Export studio</a>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="page-body">
+    <section aria-label="What to export" class="grid grid-4" role="radiogroup" data-panels="kinds">
+      <label class="ct-opt is-active" data-show="pact"><input type="radio" name="kind" checked /><span class="icon-tile icon-tile--sm"><i data-lucide="wand-sparkles"></i></span><span class="grow min-w-0"><span class="ct-opt__title">A pact from a project </span><div class="ct-opt__desc">One interaction per operation you pick.</div></span></label>
+      <label class="ct-opt" data-show="postman"><input type="radio" name="kind" /><span class="icon-tile icon-tile--sm"><i data-lucide="mailbox"></i></span><span class="grow min-w-0"><span class="ct-opt__title">A Postman collection </span><div class="ct-opt__desc">Replay a pact as requests with tests.</div></span></label>
+      <label class="ct-opt" data-show="file"><input type="radio" name="kind" /><span class="icon-tile icon-tile--sm"><i data-lucide="file-json-2"></i></span><span class="grow min-w-0"><span class="ct-opt__title">A pact file </span><div class="ct-opt__desc">Any published pact, exactly as stored.</div></span></label>
+      <label class="ct-opt" data-show="tests"><input type="radio" name="kind" /><span class="icon-tile icon-tile--sm"><i data-lucide="flask-conical"></i></span><span class="grow min-w-0"><span class="ct-opt__title">Provider test scaffolding <span class="badge badge--honey">New</span></span><div class="ct-opt__desc">A starting test suite from the pacts a provider must honour.</div></span></label>
+    </section>
+
+    <div id="kinds">
+      <!-- ---------- pact from a project ---------- -->
+      <div data-opt-panel="pact">
+        <div class="ct-split">
+          <section class="card card--pad col gap-3" aria-labelledby="p1">
+            <div class="row-between"><h2 class="t-h4" id="p1">Derive a pact from a project</h2><span class="fmt fmt--openapi">OpenAPI 3.1</span></div>
+            <div class="grid grid-2">
+              <div class="field"><label for="x-pj">Project</label><select class="select" id="x-pj"><option>Billing API</option></select></div>
+              <div class="field"><label for="x-rv">Revision</label><select class="select" id="x-rv"><option>2.7.0</option><option>2.6.1</option></select></div>
+              <div class="field"><label for="x-c">Consumer</label><select class="select" id="x-c"><option>Orders UI</option><option>New pacticipant…</option></select></div>
+              <div class="field"><label for="x-p">Provider</label><select class="select" id="x-p"><option>Billing Service</option></select></div>
+            </div>
+            <div class="table-wrap"><table class="table table--dense"><thead><tr><th><input type="checkbox" aria-label="All" /></th><th>Operation</th><th>Example comes from</th></tr></thead><tbody>
+              <tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="method method--get">GET</span> <span class="ct-path">/invoices/{id}</span></td><td class="t-xs t-muted">The spec’s example</td></tr>
+              <tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="method method--post">POST</span> <span class="ct-path">/invoices</span></td><td class="t-xs" style="color:var(--warn-fg)">Generated from the schema — review</td></tr>
+              <tr><td><input type="checkbox" disabled aria-label="Cannot include" /></td><td><span class="method method--delete">DELETE</span> <span class="ct-path">/invoices/{id}</span></td><td class="t-xs t-muted">Left out — no response to assert on</td></tr>
+            </tbody></table></div>
+            <div class="switch-row"><div><div class="sw-title">Fail if anything needs review</div><div class="t-xs t-subtle">In CI, exit non-zero when an example had to be generated.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Fail on findings"></button></div>
+          </section>
+          <aside class="ct-aside">
+            <section class="card card--pad col gap-2"><div class="row-between"><div class="t-caps">Preview</div><span class="t-xs t-subtle">8 interactions · Pact v4</span></div>
+              <pre class="code code--dark code--lines" style="max-height:200px;overflow:auto" aria-label="Pact preview"><span>{</span><span>  "consumer": { "name": "Orders UI" },</span><span>  "provider": { "name": "Billing Service" },</span><span>  "interactions": [</span><span>    { "description": "get invoice 42", … }</span><span>  ]</span><span>}</span></pre>
+              <div class="row gap-2"><button class="btn btn--primary"><i data-lucide="download"></i>Download pact</button><a class="btn" href="publish-pact.html"><i data-lucide="file-up"></i>Review and publish</a></div>
+            </section>
+            <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="c1"><button class="tab is-active" role="tab" data-action="tab" data-target="c1-0">apiome</button></div>
+          <div id="c1"><div data-tab-panel="c1-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact export-consumer-contract \</span>
+<span>  --project billing-api --revision 2.7.0 \</span>
+<span>  --consumer &quot;Orders UI&quot; --provider &quot;Billing Service&quot; \</span>
+<span>  --output pact.json --fail-on-findings</span></pre></div></div>
+          
+        </section>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ---------- Postman ---------- -->
+      <div data-opt-panel="postman" hidden>
+        <div class="ct-split">
+          <section class="card card--pad col gap-3" aria-labelledby="m1">
+            <div class="row-between"><h2 class="t-h4" id="m1">A Postman collection from a pact</h2><span class="fmt fmt--postman">Postman v2.1</span></div>
+            <div class="grid grid-2">
+              <div class="field"><label>Provider</label><select class="select"><option>Billing Service</option></select></div>
+              <div class="field"><label>Consumer</label><select class="select"><option>Orders UI</option><option>All consumers — one folder each</option></select></div>
+              <div class="field"><label>Which pact</label><select class="select"><option>Latest on branch main</option><option>Consumer version 3.4.0</option><option>Tag prod</option><option>Deployed to production</option><option>Upload a pact file…</option></select></div>
+              <div class="field"><label for="bu">Provider base URL</label><input class="input mono" id="bu" value="{{baseUrl}}" /><div class="hint">A Postman variable, or a fixed URL. Point it at the <a href="pact-from-mock.html">mock</a> to try it safely.</div></div>
+            </div>
+            <div class="row-between"><div class="t-sm t-600">What the collection keeps</div><span class="t-xs t-subtle">5 of 6 interactions</span></div>
+            <div class="ct-bar" role="img" aria-label="5 of 6 interactions included"><span style="width:83%;background:var(--ok)"></span><span style="width:17%;background:var(--warn)"></span></div>
+            <div class="t-xs t-subtle">1 left out: a message interaction — Postman cannot replay an event.</div>
+            <div class="switch-row"><div><div class="sw-title">Include provider-state setup as pre-request scripts</div><div class="t-xs t-subtle">Each request first asks the provider to get into the right state.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="State setup"></button></div>
+            <div class="switch-row"><div><div class="sw-title">Fail if any interaction is left out</div><div class="t-xs t-subtle">In CI, exit non-zero instead of writing a partial collection.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Fail if left out"></button></div>
+          </section>
+          <aside class="ct-aside">
+            <section class="card card--pad col gap-2"><div class="t-caps">Result</div>
+              <div class="row gap-3"><span class="icon-tile icon-tile--honey"><i data-lucide="mailbox"></i></span><div class="min-w-0"><div class="t-sm t-600 t-truncate">orders-ui-billing-service.postman.json</div><div class="t-xs t-subtle">5 requests, each with the pact’s assertions as tests</div></div></div>
+              <div class="row gap-2"><button class="btn btn--primary"><i data-lucide="download"></i>Download collection</button><button class="btn"><i data-lucide="link"></i>Copy import link</button></div>
+            </section>
+            <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="c2"><button class="tab is-active" role="tab" data-action="tab" data-target="c2-0">apiome</button></div>
+          <div id="c2"><div data-tab-panel="c2-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact export-postman \</span>
+<span>  --provider &quot;Billing Service&quot; --consumer &quot;Orders UI&quot; \</span>
+<span>  --branch main \</span>
+<span>  --provider-base-url &quot;{{baseUrl}}&quot; \</span>
+<span>  --output collection.json --fail-on-left-out</span></pre></div></div>
+          
+        </section>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ---------- pact file ---------- -->
+      <div data-opt-panel="file" hidden>
+        <section class="card card--pad col gap-3" style="max-width:920px">
+          <h2 class="t-h4">Download a published pact</h2>
+          <div class="grid grid-3"><div class="field"><label>Consumer</label><select class="select"><option>Orders UI</option></select></div><div class="field"><label>Provider</label><select class="select"><option>Billing Service</option></select></div><div class="field"><label>Which pact</label><select class="select"><option>Latest on main</option><option>Consumer version 3.4.0</option><option>Deployed to production</option></select></div></div>
+          <div class="row gap-2"><button class="btn btn--primary"><i data-lucide="download"></i>Download pact.json</button><button class="btn"><i data-lucide="archive"></i>Every pact for this provider (.zip)</button></div>
+          <pre class="code code--dark"><span>GET /v1/tenants/acme/pact-broker/pacts/provider/billing-service/consumer/orders-ui/latest</span></pre>
+        </section>
+      </div>
+
+      <!-- ---------- provider tests ---------- -->
+      <div data-opt-panel="tests" hidden>
+        <section class="card card--pad col gap-3" style="max-width:920px">
+          <div class="row-between"><h2 class="t-h4">Provider test scaffolding</h2><span class="badge badge--honey">New</span></div>
+          <p class="t-sm t-muted">A provider team’s starting point: a verification test wired to this broker, with a stub for every provider state the pacts use.</p>
+          <div class="grid grid-3"><div class="field"><label>Provider</label><select class="select"><option>Billing Service</option></select></div><div class="field"><label>Language</label><select class="select"><option>TypeScript · pact-js</option><option>Java · pact-jvm</option><option>Go · pact-go</option><option>Python · pact-python</option></select></div><div class="field"><label>Pacts</label><select class="select"><option>Recommended selectors</option></select></div></div>
+          <pre class="code code--dark code--lines"><span>new Verifier({</span><span>  provider: 'Billing Service',</span><span>  pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,</span><span>  consumerVersionSelectors: [{ mainBranch: true }, { deployedOrReleased: true }],</span><span>  enablePending: true,</span><span>  stateHandlers: {</span><span>    'an invoice exists': async ({ id }) =&gt; { /* TODO: seed invoice */ },</span><span>    'a customer 7 exists': async () =&gt; { /* TODO */ },</span><span>  },</span><span>}).verifyProvider()</span></pre>
+          <div class="row gap-2"><button class="btn btn--primary"><i data-lucide="download"></i>Download</button><button class="btn"><i data-lucide="copy"></i>Copy</button><span class="t-xs t-subtle">11 provider states · 2 have no handler in Apiome either</span></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/export</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>Nothing. The screen for <code>export-consumer-contract</code> and <code>export-postman</code>; also reachable from a pact’s page, a pacticipant and Export studio.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li><code>export-consumer-contract</code>: project, revision, consumer, provider, output, fail-on-findings. <code>export-postman</code>: provider, consumer, consumer-version / tag / branch / pact-version / pact-file, provider-base-url, output, fail-on-left-out.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li>Four kinds as option cards (one visible at a time), not two tabs.</li>
+    <li>Derive: per-operation choice with where each example comes from and why an operation is left out.</li>
+    <li>Postman: all consumers at once, a variable base URL, provider-state setup as pre-request scripts, and a fidelity bar.</li>
+    <li><b>A pact file</b>: download any published pact, or every pact for a provider.</li>
+    <li><b>Provider test scaffolding</b> (new): a ready verifier test in four languages with a stub per provider state. Needs a CLI counterpart to ship.</li>
+    <li>One primary per kind; no primary in the header.</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>Nothing to derive: “This revision has no operations a pact can describe.”</li>
+    <li>No pact for the pair: “Orders UI has not published a pact for Billing Service. Record one from a mock, or upload a file.”</li>
+    <li>Large output: download only, no inline preview.</li>
+  </ul>
+</template>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Run a verification · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/verify" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header page-header--with-tabs">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><a href="#">Verification</a><i data-lucide="chevron-right"></i><span>Run</span></div>
+          <h1 class="page-title">Run a verification</h1>
+          <p class="page-desc">Replay consumers’ pacts against a running provider and record what it really answers.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" data-action="open" data-target="upload-dialog"><i data-lucide="file-up"></i>Upload results</button>
+          <a class="btn" href="settings.html#schedule"><i data-lucide="calendar-clock"></i>Schedules</a>
+          <button class="btn btn--primary" data-action="open" data-target="run-drawer"><i data-lucide="play"></i>Run verification</button>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Contracts">
+        <a class="tab" href="overview.html"><i data-lucide="layout-dashboard"></i>Overview</a>
+        <a class="tab" href="pacticipant.html"><i data-lucide="users"></i>Pacticipants</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="table-2"></i>Matrix</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="rocket"></i>Can I deploy</a>
+        <a class="tab is-active" href="verify.html" aria-current="page"><i data-lucide="shield-check"></i>Verification</a>
+        <a class="tab" href="environments.html"><i data-lucide="server-cog"></i>Environments</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="webhook"></i>Webhooks</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="activity"></i>Health</a>
+        <a class="tab" href="settings.html"><i data-lucide="settings-2"></i>Settings</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="ct-split">
+      <div class="col gap-4">
+
+        <section class="card card--pad col gap-3" aria-labelledby="s1">
+          <div class="ct-step"><span class="step__num">1</span><h2 class="t-h4" id="s1">The provider under test</h2></div>
+          <div class="grid grid-2">
+            <div class="field"><label for="pv">Provider</label><select class="select" id="pv"><option>Billing Service</option></select></div>
+            <div class="field"><label for="ver">Version being verified</label><input class="input mono" id="ver" value="2.7.0+9f31c20" /><div class="hint">Results are recorded against this version.</div></div>
+          </div>
+          <div class="grid grid-2" role="radiogroup" aria-label="Where it runs" data-panels="where-panels">
+            <label class="ct-opt is-active" data-show="hosted"><input type="radio" name="where" checked /><span class="grow"><span class="ct-opt__title">Apiome runs it</span><div class="ct-opt__desc">The hosted verifier calls a reachable instance. Nothing to install.</div></span></label>
+            <label class="ct-opt" data-show="self"><input type="radio" name="where" /><span class="grow"><span class="ct-opt__title">Your pipeline runs it</span><div class="ct-opt__desc">For providers Apiome cannot reach. Copy the command; results come back here.</div></span></label>
+          </div>
+          <div id="where-panels">
+            <div data-opt-panel="hosted" class="grid grid-2">
+              <div class="field"><label>Target</label><select class="select"><option>staging — https://billing.staging.acme.dev</option><option>Preview for PR #482</option><option>Add a target…</option></select></div>
+              <div class="field"><label>Sign in with</label><select class="select"><option>Secret · billing-staging-token</option><option>None</option></select><div class="hint"><a href="settings.html#secrets">Manage secrets</a></div></div>
+            </div>
+            <div data-opt-panel="self" hidden><div class="callout callout--accent">Set everything below, then copy the command from the right. It carries the same selectors and options, and publishes its results back.</div></div>
+          </div>
+        </section>
+
+        <section class="card card--pad col gap-3" aria-labelledby="s2">
+          <div class="row-between wrap gap-2"><div class="ct-step"><span class="step__num">2</span><h2 class="t-h4" id="s2">Which pacts to verify</h2></div><div class="segmented segmented--sm" role="group" aria-label="Preset"><button class="is-active">Recommended</button><button>Everything</button><button>Custom</button></div></div>
+          <div class="col gap-2">
+            <div class="ct-rule"><span>Each consumer’s latest pact on its <b>main branch</b></span><span class="row gap-2"><span class="t-xs t-subtle">4 pacts</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove rule"><i data-lucide="x"></i></button></span></div>
+            <div class="ct-rule"><span>Pacts of every consumer version <b>deployed or released</b> anywhere</span><span class="row gap-2"><span class="t-xs t-subtle">5 pacts</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove rule"><i data-lucide="x"></i></button></span></div>
+            <div class="ct-rule"><span>Pacts on a consumer branch named like this one — <span class="mono">feature/credit-notes</span></span><span class="row gap-2"><span class="t-xs t-subtle">1 pact</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove rule"><i data-lucide="x"></i></button></span></div>
+            <div class="row gap-2"><button class="btn btn--sm"><i data-lucide="plus"></i>Add a rule</button><span class="t-xs t-subtle">By branch, tag, environment, consumer or “latest”. Duplicates are verified once.</span></div>
+          </div>
+          <div class="switch-row"><div><div class="sw-title">Pending pacts cannot fail this run</div><div class="t-xs t-subtle">A pact this provider has never passed is reported, not enforced.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Pending"></button></div>
+          <div class="switch-row"><div><div class="sw-title">Include work-in-progress pacts</div><div class="t-xs t-subtle">Also try pacts from feature branches newer than <input class="input mono" style="display:inline-block;width:120px;height:24px" value="2026-11-01" aria-label="WIP since" />.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="WIP"></button></div>
+        </section>
+
+        <section class="card card--pad col gap-3" aria-labelledby="s3">
+          <div class="ct-step"><span class="step__num">3</span><h2 class="t-h4" id="s3">Getting the provider into the right state</h2></div>
+          <div class="col gap-2" role="radiogroup" aria-label="Provider states">
+            <label class="ct-opt is-active"><input type="radio" name="st" checked /><span class="grow"><span class="ct-opt__title">Apiome’s state handlers</span><div class="ct-opt__desc">9 of the 11 states these pacts use have a handler. <a href="#">2 are missing</a> — those interactions will be skipped and reported.</div></span></label>
+            <label class="ct-opt"><input type="radio" name="st" /><span class="grow"><span class="ct-opt__title">The provider’s own setup endpoint</span><div class="ct-opt__desc">Apiome POSTs each state to a URL on the provider before the interaction.</div></span></label>
+            <label class="ct-opt"><input type="radio" name="st" /><span class="grow"><span class="ct-opt__title">No setup</span><div class="ct-opt__desc">Replay as-is. Interactions that need a state are likely to fail.</div></span></label>
+          </div>
+          <div class="switch-row"><div><div class="sw-title">Allow requests that change data</div><div class="t-xs t-subtle">POST, PUT, PATCH and DELETE are sent. Off, they are reported as “not run”. Never on for a production target.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Allow mutating"></button></div>
+        </section>
+      </div>
+
+      <aside class="ct-aside" aria-label="This run">
+        <section class="card card--pad col gap-1">
+          <div class="row-between"><div class="t-caps">This run will verify</div><span class="t-xs t-subtle">8 pacts · 61 interactions</span></div>
+          <div class="ct-ix"><span></span><div class="min-w-0"><div class="row gap-2"><span class="avatar avatar--xs avatar--hex avatar--a">OU</span><span class="t-sm t-600">Orders UI</span><span class="mono t-xs t-subtle">3.4.0 · main</span></div><div class="ct-ix__sub">6 interactions · last result: failed 12 min ago</div></div><span></span></div>
+          <div class="ct-ix"><span></span><div class="min-w-0"><div class="row gap-2"><span class="avatar avatar--xs avatar--hex avatar--a">OU</span><span class="t-sm t-600">Orders UI</span><span class="mono t-xs t-subtle">3.3.2 · production</span></div><div class="ct-ix__sub">6 interactions · verified</div></div><span></span></div>
+          <div class="ct-ix"><span></span><div class="min-w-0"><div class="row gap-2"><span class="avatar avatar--xs avatar--hex avatar--d">MA</span><span class="t-sm t-600">Mobile App</span><span class="mono t-xs t-subtle">1.9.2 · production</span><span class="badge badge--warn">Stale</span></div><div class="ct-ix__sub">4 interactions · <b>stale</b>, 19 days</div></div><span></span></div>
+          <div class="ct-ix"><span></span><div class="min-w-0"><div class="row gap-2"><span class="avatar avatar--xs avatar--hex avatar--e">C</span><span class="t-sm t-600">Checkout</span><span class="mono t-xs t-subtle">0.8.0 · feature/credit-notes</span><span class="badge badge--info">Pending</span></div><div class="ct-ix__sub">2 interactions · never verified</div></div><span></span></div>
+          <div class="t-xs t-subtle mt-1">+ 4 more · 2 already verified for this exact version are skipped</div>
+        </section>
+        <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="cli"><button class="tab is-active" role="tab" data-action="tab" data-target="cli-0">apiome</button><button class="tab" role="tab" data-action="tab" data-target="cli-1">Pact verifier</button><button class="tab" role="tab" data-action="tab" data-target="cli-2">REST</button></div>
+          <div id="cli"><div data-tab-panel="cli-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact verify \</span>
+<span>  --provider &quot;Billing Service&quot; \</span>
+<span>  --provider-app-version 2.7.0+9f31c20 \</span>
+<span>  --target https://billing.staging.acme.dev \</span>
+<span>  --consumer-version-selector &#x27;{&quot;mainBranch&quot;:true}&#x27; \</span>
+<span>  --consumer-version-selector &#x27;{&quot;deployedOrReleased&quot;:true}&#x27; \</span>
+<span>  --enable-pending \</span>
+<span>  --include-wip-pacts-since 2026-11-01</span></pre></div><div data-tab-panel="cli-1" hidden><pre class="code code--dark" aria-label="Pact verifier"><span>pact-provider-verifier \</span>
+<span>  --provider &quot;Billing Service&quot; \</span>
+<span>  --provider-base-url http://localhost:8080 \</span>
+<span>  --pact-broker-base-url $PACT_BROKER_BASE_URL \</span>
+<span>  --consumer-version-selector &#x27;{&quot;mainBranch&quot;:true}&#x27; \</span>
+<span>  --enable-pending --publish-verification-results \</span>
+<span>  --provider-app-version $GIT_SHA</span></pre></div><div data-tab-panel="cli-2" hidden><pre class="code code--dark" aria-label="REST"><span>POST /v1/tenants/acme/pact-verifier/runs</span></pre></div></div>
+          
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<div class="overlay overlay--drawer" id="run-drawer" data-overlay>
+  <div class="drawer drawer--lg" role="dialog" aria-label="Verification run">
+    <div class="drawer__header"><div><div class="drawer__title">Verifying Billing Service 2.7.0+9f31c20</div><div class="t-xs t-muted">Against staging · started 14:02:11 · 38 of 61 interactions</div></div><button class="btn btn--ghost btn--icon" style="margin-left:auto" data-action="close" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="drawer__body col gap-3">
+      <div class="progress progress--striped"><span style="width:62%"></span></div>
+      <table class="table table--dense"><thead><tr><th>Consumer</th><th>Pact</th><th>Result</th><th>Interactions</th></tr></thead><tbody>
+        <tr><td class="cell-primary">Orders UI <span class="mono t-xs t-subtle">3.4.0</span></td><td class="mono">8d2f1c</td><td><span class="badge badge--dot" data-status="failed">Failed</span></td><td class="t-num">5 / 6</td></tr>
+        <tr><td class="cell-primary">Orders UI <span class="mono t-xs t-subtle">3.3.2</span></td><td class="mono">77c0aa</td><td><span class="badge badge--dot" data-status="passed">Passed</span></td><td class="t-num">6 / 6</td></tr>
+        <tr><td class="cell-primary">Mobile App</td><td class="mono">51ab90</td><td><span class="badge badge--dot" data-status="running">Running</span></td><td class="t-num">2 / 4</td></tr>
+        <tr><td class="cell-primary">Checkout</td><td class="mono">c07e33</td><td><span class="badge badge--dot" data-status="pending">Queued</span></td><td class="t-num">0 / 2</td></tr>
+      </tbody></table>
+      <div class="card card--flat card--pad col gap-2">
+        <div class="row gap-2"><span class="method method--post">POST</span><span class="ct-path">/invoices</span><span class="badge" data-status="failed">Body differs</span><span class="t-xs t-subtle">Orders UI 3.4.0 · state “a customer 7 exists”</span></div>
+        <div class="grid grid-2"><div><div class="t-caps mb-1">Expected</div><pre class="code code--dark"><span class="diff-del">"currency": /^[A-Z]{3}$/</span></pre></div><div><div class="t-caps mb-1">Provider returned</div><pre class="code code--dark"><span class="diff-add">"money": { "currency": "EUR" }</span></pre></div></div>
+        <div class="row gap-2"><button class="btn btn--sm"><i data-lucide="send"></i>Show the request</button><button class="btn btn--sm"><i data-lucide="rotate-cw"></i>Re-run this interaction</button><a class="btn btn--sm" href="pact-from-mock.html">Reproduce on the mock</a></div>
+      </div>
+      <pre class="ct-log" aria-label="Run log">14:02:11 state  “a customer 7 exists”      ok   38 ms
+14:02:11 POST   /invoices                   201  body differs at $.currency
+14:02:12 state  “an invoice exists” id=42   ok   22 ms
+14:02:12 GET    /invoices/42                200  ok</pre>
+    </div>
+    <div class="drawer__footer"><span class="t-xs t-subtle" style="margin-right:auto">Closing keeps it running; a toast tells you when it ends.</span><button class="btn btn--sm btn--danger-soft">Stop run</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="upload-dialog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="up-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="file-up"></i></span><div><div class="dialog__title" id="up-t">Upload verification results</div><div class="dialog__desc">Ran a verifier yourself? Attach its report to the pact it verified.</div></div></div>
+    <div class="dialog__body col gap-3">
+      <div class="grid grid-2"><div class="field"><label>Consumer</label><select class="select"><option>Orders UI</option></select></div><div class="field"><label>Pact version</label><select class="select"><option>8d2f1c · consumer 3.4.0</option></select></div><div class="field"><label>Provider version</label><input class="input mono" value="2.7.0+9f31c20" /></div><div class="field"><label>Report format</label><select class="select"><option>Detect</option><option>Pact verifier JSON</option><option>JUnit XML</option><option>Schemathesis</option><option>Newman</option><option>Dredd</option></select></div></div>
+      <div class="ct-drop ct-drop--sm"><i data-lucide="file-up"></i><span class="t-sm">Drop the report here</span><button class="btn btn--sm">Browse</button></div>
+      <pre class="code code--dark"><span>apiome pact publish-verification-results report.json \</span>
+<span>  --provider "Billing Service" --consumer "Orders UI" \</span>
+<span>  --pact-version 8d2f1c --provider-app-version 2.7.0+9f31c20</span></pre>
+    </div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="close">Upload results</button></div>
+  </div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/verification/new</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>Nothing. Verification (PFX-5.5) could re-run an existing result; starting a run with a target, selectors and options was CLI-only (<code>apiome pact verify</code>), and so was <code>publish-verification-results</code>.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>Every flag of <code>verify</code>: provider, provider-app-version, target, branch, build-url, consumer-version-selector, enable-pending, include-wip-pacts-since, allow-mutating, replay-without-state-setup, context. The Verification list, result page and Re-run are unchanged.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li>Hosted or self-run: the same form produces a run, or the command for a pipeline that Apiome cannot reach.</li>
+    <li>A <b>selector builder</b> in plain sentences with a count per rule and a Recommended preset (main branch + deployed or released + matching branch), instead of JSON.</li>
+    <li>Provider states: Apiome’s handlers (with how many are missing), the provider’s setup URL, or none.</li>
+    <li>A preview of exactly which pacts will run and which are skipped as already verified.</li>
+    <li>A live run drawer: per-consumer progress, the failing interaction with expected beside actual, the log, re-run one interaction, reproduce on the mock.</li>
+    <li>Upload results (dialog) with format detection.</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>No target yet: the Target select opens “Add a target” (URL, secret, production flag).</li>
+    <li>Target is production and mutating is on: blocked — “Requests that change data are never sent to a production target.”</li>
+    <li>Nothing to verify: “Every selected pact is already verified for 2.7.0+9f31c20.” with Run anyway.</li>
+    <li>Unreachable target: the run ends “Could not connect to billing.staging.acme.dev (timeout)” — not a failed verification.</li>
+  </ul>
+</template>
+</body>
+</html>

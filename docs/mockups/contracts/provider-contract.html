@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Publish a provider contract · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/provider-contract" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><span>Publish a provider contract</span></div>
+          <h1 class="page-title">Publish a provider contract</h1>
+          <p class="page-desc">Say what a provider promises, show that it is true, and see which consumers it would break — before it is recorded.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="overview.html">Cancel</a>
+          <button class="btn" data-tip="Compares and publishes nothing">Compare only</button>
+          <button class="btn btn--primary" data-action="open" data-target="verdict-dialog"><i data-lucide="file-check-2"></i>Publish contract</button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="ct-split">
+      <div class="col gap-4">
+
+        <section class="card card--pad col gap-3" aria-labelledby="s1">
+          <div class="row-between wrap gap-2"><div class="ct-step"><span class="step__num">1</span><h2 class="t-h4" id="s1">The contract</h2></div><span class="fmt fmt--openapi">OpenAPI 3.1</span></div>
+          <div class="tabs" style="border-bottom:1px solid var(--border)" role="tablist" aria-label="Contract source" data-tabs="src-panels">
+            <button class="tab is-active" role="tab" data-action="tab" data-target="src-project"><i data-lucide="folder-kanban"></i>A project version</button>
+            <button class="tab" role="tab" data-action="tab" data-target="src-file"><i data-lucide="file-up"></i>Upload</button>
+            <button class="tab" role="tab" data-action="tab" data-target="src-url"><i data-lucide="link"></i>URL</button>
+            <button class="tab" role="tab" data-action="tab" data-target="src-repo"><i data-lucide="git-branch"></i>Repository</button>
+          </div>
+          <div id="src-panels">
+            <div data-tab-panel="src-project" class="col gap-3">
+              <div class="grid grid-2">
+                <div class="field"><label for="pj">Project</label><select class="select" id="pj"><option>Billing API</option><option>Payments API</option><option>Ledger Events (AsyncAPI)</option></select></div>
+                <div class="field"><label for="vr">Version</label><select class="select" id="vr"><option>2.7.0 · published</option><option>2.6.1 · published</option><option>2.8.0-rc1 · draft</option></select></div>
+              </div>
+              <div class="switch-row"><div><div class="sw-title">Do this on every publish <span class="badge badge--honey">Recommended</span></div><div class="t-xs t-subtle">Each time a version of Billing API is published, it becomes Billing Service’s provider contract. You never come back to this page.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Publish on every version"></button></div>
+            </div>
+            <div data-tab-panel="src-file" hidden class="col gap-3">
+              <div class="ct-drop"><span class="icon-tile icon-tile--accent"><i data-lucide="upload"></i></span><div class="t-sm t-600">Drop an OpenAPI or AsyncAPI document</div><div class="t-xs t-subtle">.yaml · .yml · .json · the format is detected</div><button class="btn btn--sm mt-1">Browse files</button></div>
+            </div>
+            <div data-tab-panel="src-url" hidden class="col gap-3">
+              <div class="field"><label for="u">Specification URL</label><div class="input-wrap"><i data-lucide="globe"></i><input class="input" id="u" value="https://api.acme.dev/billing/openapi.yaml" /></div><div class="hint">Fetched once, now. Use Repository to follow a file as it changes.</div></div>
+            </div>
+            <div data-tab-panel="src-repo" hidden class="col gap-3">
+              <div class="grid grid-2"><div class="field"><label>Repository</label><select class="select"><option>acme/billing-service</option></select></div><div class="field"><label>Path</label><input class="input mono" value="api/openapi.yaml" /></div></div>
+              <div class="hint">Published on every push to the main branch, with the commit as the provider version.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card--pad col gap-3" aria-labelledby="s2">
+          <div class="ct-step"><span class="step__num">2</span><h2 class="t-h4" id="s2">Whose version this is</h2></div>
+          <div class="grid grid-2">
+            <div class="field"><label for="prov">Provider</label><select class="select" id="prov"><option>Billing Service</option><option>New pacticipant…</option></select><div class="hint">Billing API is linked to this pacticipant. <a href="pacticipant.html">Change</a></div></div>
+            <div class="field"><label for="pav">Provider version</label><input class="input mono" id="pav" value="2.7.0+9f31c20" /></div>
+            <div class="field"><label for="br">Branch</label><div class="input-wrap"><i data-lucide="git-branch"></i><input class="input" id="br" value="main" /></div></div>
+            <div class="field"><label for="tg">Tags <span class="t-subtle t-500">(optional)</span></label><input class="input" id="tg" placeholder="comma separated" /></div>
+          </div>
+          <details><summary class="t-sm t-600">More options</summary><div class="field mt-3"><label for="bu">Build URL</label><div class="input-wrap"><i data-lucide="link"></i><input class="input" id="bu" placeholder="https://ci.acme.dev/builds/4821" /></div></div></details>
+        </section>
+
+        <section class="card card--pad col gap-3" aria-labelledby="s3">
+          <div class="ct-step"><span class="step__num">3</span><h2 class="t-h4" id="s3">Evidence the provider really behaves this way</h2></div>
+          <p class="t-sm t-muted">A spec is a claim. Verdicts built on it are marked with how well the claim is backed.</p>
+          <div class="col gap-2" role="radiogroup" aria-label="Evidence" data-panels="ev-panels">
+            <label class="ct-opt is-active" data-show="run"><input type="radio" name="ev" checked /><span class="grow min-w-0"><span class="row-between"><span class="ct-opt__title">Run it now against a provider</span><span class="badge badge--ok">Strong</span></span><div class="ct-opt__desc">Apiome’s hosted verifier calls a running instance and checks every operation against the spec.</div></span></label>
+            <label class="ct-opt" data-show="report"><input type="radio" name="ev" /><span class="grow min-w-0"><span class="row-between"><span class="ct-opt__title">Attach a verifier’s report</span><span class="badge badge--ok">Strong</span></span><div class="ct-opt__desc">From Schemathesis, Dredd, Newman or a Pact run. Parsed per operation, not just stored.</div></span></label>
+            <label class="ct-opt" data-show="reuse"><input type="radio" name="ev" /><span class="grow min-w-0"><span class="row-between"><span class="ct-opt__title">Reuse an Apiome contract-test run</span><span class="badge badge--ok">Strong</span></span><div class="ct-opt__desc">A provider-verification report already recorded for this version.</div></span></label>
+            <label class="ct-opt" data-show="exit"><input type="radio" name="ev" /><span class="grow min-w-0"><span class="row-between"><span class="ct-opt__title">My pipeline vouches for it</span><span class="badge badge--warn">Weak</span></span><div class="ct-opt__desc">Only the tool’s name, version and exit code are recorded.</div></span></label>
+            <label class="ct-opt" data-show="none"><input type="radio" name="ev" /><span class="grow min-w-0"><span class="row-between"><span class="ct-opt__title">None yet</span><span class="badge badge--outline">None</span></span><div class="ct-opt__desc">Publish now, add evidence later. Verdicts read “unverified” and never unblock a deploy.</div></span></label>
+          </div>
+          <div id="ev-panels">
+            <div data-opt-panel="run" class="card card--flat card--pad col gap-2">
+              <div class="grid grid-2"><div class="field"><label>Target</label><select class="select"><option>staging — https://billing.staging.acme.dev</option><option>Add a target…</option></select></div><div class="field"><label>Sign in with</label><select class="select"><option>Secret · billing-staging-token</option></select></div></div>
+              <div class="t-xs t-subtle">Read-only operations by default. <a href="verify.html">Verification options</a></div>
+            </div>
+            <div data-opt-panel="report" hidden class="col gap-2"><div class="ct-drop ct-drop--sm"><i data-lucide="file-up"></i><span class="t-sm">Drop a report — JUnit XML, Schemathesis, Newman or Dredd JSON</span><button class="btn btn--sm">Browse</button></div></div>
+            <div data-opt-panel="reuse" hidden><div class="field"><label>Run</label><select class="select"><option>Yesterday 16:40 · 412 checks · 0 failed</option></select></div></div>
+            <div data-opt-panel="exit" hidden class="grid grid-3"><div class="field"><label>Verifier</label><input class="input" value="schemathesis" /></div><div class="field"><label>Version</label><input class="input mono" value="3.39.2" /></div><div class="field"><label>Exit code</label><input class="input mono" value="0" /></div></div>
+            <div data-opt-panel="none" hidden><div class="callout callout--honey">Nothing is blocked by publishing unverified — and nothing is unblocked either.</div></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="ct-aside" aria-label="If you publish now">
+        <section class="card card--pad col gap-1">
+          <div class="row-between"><div class="t-caps">If you publish now</div><span class="t-xs t-subtle">live · nothing saved</span></div>
+          <div class="row gap-3 mt-1"><span class="ring ring--lg" style="--p:67;--c:var(--warn)"><span>2/3</span></span><div><div class="t-sm t-600">2 of 3 consumers stay compatible</div><div class="t-xs t-subtle">Compared with each consumer’s newest pact on its main branch and everything deployed.</div></div></div>
+          <div class="ct-ix"><span></span><div class="min-w-0"><div class="row gap-2"><span class="avatar avatar--xs avatar--hex avatar--a">OU</span><span class="t-sm t-600">Orders UI</span><span class="mono t-xs t-subtle">8d2f1c</span></div><div class="ct-ix__sub"><span class="mono">POST /invoices</span> no longer returns <span class="mono">currency</span>. Orders UI 3.3.2 is in production.</div></div><span class="badge badge--dot" data-status="failed">Breaks</span></div>
+          <div class="ct-ix"><span></span><div class="min-w-0"><div class="row gap-2"><span class="avatar avatar--xs avatar--hex avatar--d">MA</span><span class="t-sm t-600">Mobile App</span><span class="mono t-xs t-subtle">51ab90</span></div><div class="ct-ix__sub">4 interactions covered.</div></div><span class="badge badge--dot" data-status="passed">Fine</span></div>
+          <div class="ct-ix"><span></span><div class="min-w-0"><div class="row gap-2"><span class="avatar avatar--xs avatar--hex avatar--e">C</span><span class="t-sm t-600">Checkout</span><span class="mono t-xs t-subtle">c07e33</span></div><div class="ct-ix__sub">2 interactions covered.</div></div><span class="badge badge--dot" data-status="passed">Fine</span></div>
+          <div class="callout callout--accent mt-2"><span class="t-600">You can still publish.</span> Publishing records the truth; <a href="#">can-i-deploy</a> is what stops 2.7.0 reaching production before Orders UI moves.</div>
+        </section>
+        <section class="card card--pad col gap-2">
+          <div class="t-caps">Nobody uses</div>
+          <div class="ct-bar" role="img" aria-label="7 of 12 operations are used by a consumer"><span style="width:58%;background:var(--accent)"></span></div>
+          <div class="t-xs t-subtle">5 of 12 operations appear in no pact — including <span class="mono">DELETE /invoices/{id}</span>. Safe to change, as far as contracts know.</div>
+        </section>
+        <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="cli"><button class="tab is-active" role="tab" data-action="tab" data-target="cli-0">apiome</button><button class="tab" role="tab" data-action="tab" data-target="cli-1">CI</button><button class="tab" role="tab" data-action="tab" data-target="cli-2">Exit code only</button></div>
+          <div id="cli"><div data-tab-panel="cli-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact publish-provider-contract \</span>
+<span>  --provider &quot;Billing Service&quot; \</span>
+<span>  --provider-app-version 2.7.0+9f31c20 \</span>
+<span>  --apiome-version billing-api/2.7.0 \</span>
+<span>  --branch main \</span>
+<span>  --evidence-report schemathesis.xml \</span>
+<span>  --fail-on-unverified</span></pre></div><div data-tab-panel="cli-1" hidden><pre class="code code--dark" aria-label="CI"><span># after your provider tests</span>
+<span>schemathesis run openapi.yaml --report junit.xml</span>
+<span>apiome pact publish-provider-contract openapi.yaml \</span>
+<span>  --provider &quot;Billing Service&quot; \</span>
+<span>  --provider-app-version $GIT_SHA --branch $GIT_BRANCH \</span>
+<span>  --evidence-report junit.xml</span></pre></div><div data-tab-panel="cli-2" hidden><pre class="code code--dark" aria-label="Exit code only"><span>apiome pact publish-provider-contract openapi.yaml \</span>
+<span>  --provider &quot;Billing Service&quot; \</span>
+<span>  --provider-app-version $GIT_SHA \</span>
+<span>  --verifier schemathesis --verifier-version 3.39.2 \</span>
+<span>  --verification-exit-code $?</span></pre></div></div>
+          
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<div class="overlay" id="verdict-dialog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="vd-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--ok"><i data-lucide="check"></i></span><div><div class="dialog__title" id="vd-t">Provider contract published</div><div class="dialog__desc">Billing Service 2.7.0+9f31c20 · evidence: hosted verification, 412 checks passed</div></div></div>
+    <div class="dialog__body col gap-2">
+      <div class="row gap-2 t-sm"><i data-lucide="circle-check" style="color:var(--ok)"></i>2 verdicts recorded as compatible</div>
+      <div class="row gap-2 t-sm"><i data-lucide="circle-x" style="color:var(--danger)"></i>1 recorded as incompatible — Orders UI’s owners were notified</div>
+      <div class="row gap-2 t-sm t-muted"><i data-lucide="webhook"></i>2 webhooks fired · commit status set on 9f31c20</div>
+    </div>
+    <div class="dialog__footer"><a class="btn" href="overview.html">Back to Contracts</a><a class="btn btn--primary" href="#">Can I deploy 2.7.0?</a></div>
+  </div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/provider-contracts/new</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>Nothing. The screen for <code>apiome pact publish-provider-contract</code>, which had none.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>Every flag: provider, provider-app-version, apiome-version (project + version) or a file, content-type (detected, shown as the format pill), branch, tag, build-url, evidence / verification-results / evidence-report and their content types, verification-exit-code, verifier, verifier-version, fail-on-unverified.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li>Four sources, two of them standing: “on every publish” of a project version and “on every push” of a file in a linked repository. Set once.</li>
+    <li>Evidence as five explicit choices, each labelled with its strength, each with its own inputs. “Run it now” uses the hosted verifier.</li>
+    <li><b>If you publish now</b>: the verdict per consumer before anything is saved, including consumers already in production.</li>
+    <li><b>Nobody uses</b>: operations no pact touches — what a provider can change freely.</li>
+    <li>One primary action; “Compare only” is the dry run. Uploading results for a consumer’s pact moved to Verification.</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>No consumers yet: the aside reads “No pacts to compare with. The verdicts appear the moment a consumer publishes.”</li>
+    <li>Unreadable document: “Could not read this file: line 42, mapping values are not allowed here.” Publish is disabled.</li>
+    <li>Evidence run fails: the contract is not published; the failing operations are listed with a link to the run.</li>
+    <li>409 for the same version with different content: “2.7.0+9f31c20 already has a different contract — use the new commit’s version.”</li>
+  </ul>
+</template>
+</body>
+</html>

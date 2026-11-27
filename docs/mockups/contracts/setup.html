@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Set up contracts · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+<style>
+  /* page-local helpers only (token-based) */
+  .su { padding: 0; }
+  .su__sum { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; list-style: none; }
+  .su__sum::-webkit-details-marker { display: none; }
+  .su__ico { display: grid; place-items: center; width: 24px; flex: none; }
+  .su__ico [data-lucide] { width: 20px; height: 20px; }
+  .su__desc { display: block; }
+  .su__chev { width: 16px; height: 16px; color: var(--fg-subtle); transition: transform var(--dur-fast); }
+  .su[open] .su__chev { transform: rotate(180deg); }
+  .su__body { padding: 4px 18px 18px 54px; }
+</style>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/setup" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><span>Set-up</span></div>
+          <h1 class="page-title">Set up contracts</h1>
+          <p class="page-desc">From nothing to a yes-or-no before every deploy. Six steps; stop and resume whenever you like.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="migrate.html"><i data-lucide="import"></i>I already have a broker</a>
+          <a class="btn" href="overview.html">Finish later</a>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="ct-split">
+      <div class="col gap-3">
+        <details class="card su"><summary class="su__sum"><span class="su__ico"><i data-lucide="circle-check" style="color:var(--ok)"></i></span><span class="grow min-w-0"><span class="t-h4">Who talks to whom</span><span class="t-sm t-muted su__desc">3 pacticipants from your projects and repositories</span></span><span class="badge badge--ok">Done</span><i data-lucide="chevron-down" class="su__chev"></i></summary><div class="su__body col gap-3"><p class="t-sm t-muted">Apiome found services in your projects and linked repositories. Tick the ones that talk to each other; each becomes a pacticipant.</p>
+<div class="table-wrap"><table class="table table--dense"><thead><tr><th><input type="checkbox" checked aria-label="All" /></th><th>Service</th><th>From</th><th>Role</th><th>Owner</th></tr></thead><tbody>
+<tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="row gap-2"><span class="avatar avatar--sm avatar--hex avatar--c">BS</span><span class="cell-primary">Billing Service</span></span></td><td>Project · Billing API</td><td><span class="badge badge--outline">Provider</span></td><td>Payments team</td></tr>
+<tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="row gap-2"><span class="avatar avatar--sm avatar--hex avatar--a">OU</span><span class="cell-primary">Orders UI</span></span></td><td>Repository · acme/orders-ui</td><td><span class="badge badge--outline">Consumer</span></td><td>Storefront team</td></tr>
+<tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="row gap-2"><span class="avatar avatar--sm avatar--hex avatar--b">PA</span><span class="cell-primary">Payments API</span></span></td><td>Project · Payments API</td><td><span class="badge badge--outline">Provider</span></td><td><span style="color:var(--warn-fg)">No owner</span></td></tr>
+</tbody></table></div><div class="row gap-2"><button class="btn btn--sm"><i data-lucide="plus"></i>Add one by hand</button><span class="t-xs t-subtle">3 pacticipants created · editable any time in <a href="pacticipant.html">Pacticipants</a></span></div></div></details>
+        <details class="card su"><summary class="su__sum"><span class="su__ico"><i data-lucide="circle-check" style="color:var(--ok)"></i></span><span class="grow min-w-0"><span class="t-h4">Where things run</span><span class="t-sm t-muted su__desc">production and staging</span></span><span class="badge badge--ok">Done</span><i data-lucide="chevron-down" class="su__chev"></i></summary><div class="su__body col gap-3"><p class="t-sm t-muted">can-i-deploy needs to know where things run.</p>
+<div class="row wrap gap-2"><span class="chip is-active" data-action="chip">production <span class="badge badge--danger">Production</span></span><span class="chip is-active" data-action="chip">staging</span><span class="chip" data-action="chip">development</span><button class="btn btn--link btn--sm">+ Another</button></div>
+<label class="check"><input type="checkbox" checked />Require a verified contract before anything reaches production</label>
+<div class="t-xs t-subtle">2 environments created · <a href="environments.html">Environments</a></div></div></details>
+        <details class="card su" open><summary class="su__sum"><span class="su__ico"><span class="step__num" style="background:var(--fg);color:var(--bg-surface)">3</span></span><span class="grow min-w-0"><span class="t-h4">Connect your pipelines</span><span class="t-sm t-muted su__desc">A key and two variables</span></span><span class="badge badge--info">Next</span><i data-lucide="chevron-down" class="su__chev"></i></summary><div class="su__body col gap-3"><p class="t-sm t-muted">One key, two variables. Existing Pact tooling works unchanged.</p>
+<div class="grid grid-2"><div class="col gap-2"><div class="t-caps">1 · A key for CI</div><div class="row gap-2"><input class="input mono grow" value="apk_live_••••••••••••a91f" readonly aria-label="API key" /><button class="btn btn--sm"><i data-lucide="copy"></i>Copy</button></div><div class="t-xs t-subtle">Scopes: publish pacts, read verdicts, record deployments. Shown once.</div></div>
+<div class="col gap-2"><div class="t-caps">2 · Where to point</div><pre class="code code--dark"><span>PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker</span>
+<span>PACT_BROKER_TOKEN=$APIOME_API_KEY</span></pre></div></div>
+<div class="row wrap gap-2"><span class="t-sm t-600">Add them to</span><button class="btn btn--sm"><i data-lucide="github"></i>acme/orders-ui secrets</button><button class="btn btn--sm"><i data-lucide="github"></i>acme/billing-service secrets</button><span class="t-xs t-subtle">Uses your linked GitHub account.</span></div></div></details>
+        <details class="card su"><summary class="su__sum"><span class="su__ico"><span class="step__num">4</span></span><span class="grow min-w-0"><span class="t-h4">The first consumer pact</span><span class="t-sm t-muted su__desc">Record, publish or derive one</span></span><span class="badge badge--outline">To do</span><i data-lucide="chevron-down" class="su__chev"></i></summary><div class="su__body col gap-3"><p class="t-sm t-muted">Pick how Orders UI’s first pact comes to be. You can use the others later.</p>
+<div class="grid grid-3" role="radiogroup" aria-label="First pact">
+<label class="ct-opt is-active"><input type="radio" name="fp" checked /><span class="grow"><span class="ct-opt__title">Record it from the mock <span class="badge badge--honey">Fastest</span></span><div class="ct-opt__desc">Run the app against Billing API’s hosted mock. No Pact library.</div></span></label>
+<label class="ct-opt"><input type="radio" name="fp" /><span class="grow"><span class="ct-opt__title">We already write Pact tests</span><div class="ct-opt__desc">Publish the files your tests produce.</div></span></label>
+<label class="ct-opt"><input type="radio" name="fp" /><span class="grow"><span class="ct-opt__title">Start from the spec</span><div class="ct-opt__desc">Tick the operations Orders UI calls.</div></span></label></div>
+<div class="row gap-2"><a class="btn btn--primary" href="pact-from-mock.html"><i data-lucide="radio-tower"></i>Record a pact</a><span class="t-xs t-subtle">The mock for Billing API 2.7.0 is on.</span></div></div></details>
+        <details class="card su"><summary class="su__sum"><span class="su__ico"><span class="step__num">5</span></span><span class="grow min-w-0"><span class="t-h4">The provider’s side</span><span class="t-sm t-muted su__desc">Spec as the contract, a live verification, or both</span></span><span class="badge badge--outline">To do</span><i data-lucide="chevron-down" class="su__chev"></i></summary><div class="su__body col gap-3"><p class="t-sm t-muted">Two ways for a provider to answer a pact. Most teams turn on both.</p>
+<div class="switch-row"><div><div class="sw-title">Use each published version of Billing API as the provider contract</div><div class="t-xs t-subtle">Bi-directional: pacts are compared with the spec. No provider test to write.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Auto provider contract"></button></div>
+<div class="switch-row"><div><div class="sw-title">Replay pacts against a running Billing Service</div><div class="t-xs t-subtle">The hosted verifier calls a real instance whenever a pact changes.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Hosted verification"></button></div>
+<div class="grid grid-2"><div class="field"><label>Target URL</label><input class="input mono" placeholder="https://billing.staging.acme.dev" /></div><div class="field"><label>Sign in with</label><select class="select"><option>New secret…</option></select></div></div>
+<a class="btn btn--sm" href="verify.html" style="align-self:flex-start">More verification options</a></div></details>
+        <details class="card su"><summary class="su__sum"><span class="su__ico"><span class="step__num">6</span></span><span class="grow min-w-0"><span class="t-h4">Gate deploys and tell people</span><span class="t-sm t-muted su__desc">can-i-deploy in CI, commit statuses, notifications</span></span><span class="badge badge--outline">To do</span><i data-lucide="chevron-down" class="su__chev"></i></summary><div class="su__body col gap-3"><p class="t-sm t-muted">Make the verdict count where decisions are made.</p>
+<label class="check"><input type="checkbox" checked />Add a can-i-deploy step to each pipeline <span class="t-xs t-subtle">— opens a pull request with the change</span></label>
+<label class="check"><input type="checkbox" checked />Record deployments on merge</label>
+<label class="check"><input type="checkbox" checked />Show the verdict as a commit status on pull requests</label>
+<label class="check"><input type="checkbox" />Tell owners in Slack when a pact fails or goes stale</label>
+<div class="row gap-2"><button class="btn btn--sm">Open 2 pull requests</button><a class="btn btn--sm" href="settings.html">All CI and notification settings</a></div></div></details>
+      </div>
+      <aside class="ct-aside">
+        <section class="card card--honey card--pad col gap-2">
+          <div class="row gap-3"><span class="ring ring--lg" style="--p:33;--c:var(--honey)"><span>2/6</span></span><div><div class="t-sm t-600">About 10 minutes left</div><div class="t-xs t-muted">Progress is saved. Anyone with the Contracts admin role can pick it up.</div></div></div>
+        </section>
+        <section class="card card--pad col gap-2">
+          <div class="t-caps">What you get at the end</div>
+          <div class="row gap-2 t-sm"><i data-lucide="check" style="color:var(--ok)"></i>Every change to Billing API checked against its real consumers</div>
+          <div class="row gap-2 t-sm"><i data-lucide="check" style="color:var(--ok)"></i>A yes or no before each deploy</div>
+          <div class="row gap-2 t-sm"><i data-lucide="check" style="color:var(--ok)"></i>Owners told when something breaks</div>
+        </section>
+        <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><span class="badge badge--honey">New</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="cli"><button class="tab is-active" role="tab" data-action="tab" data-target="cli-0">apiome</button><button class="tab" role="tab" data-action="tab" data-target="cli-1">Terraform</button></div>
+          <div id="cli"><div data-tab-panel="cli-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact setup \</span>
+<span>  --from-projects --environments production,staging \</span>
+<span>  --ci github</span></pre></div><div data-tab-panel="cli-1" hidden><pre class="code code--dark" aria-label="Terraform"><span>resource &quot;apiome_pacticipant&quot; &quot;orders_ui&quot; {</span>
+<span>  name        = &quot;Orders UI&quot;</span>
+<span>  main_branch = &quot;main&quot;</span>
+<span>}</span></pre></div></div>
+          <div class="t-xs t-subtle mt-2">The same set-up as code, for workspaces that are created by script.</div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/setup</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>Nothing. Today a new workspace reaches a working contract loop only by reading the docs and running six commands. This is the same path as one resumable page.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>Every step writes through an existing route: pacticipants, environments, API keys, the publish paths, provider contracts, verification targets and secrets, commit statuses, webhooks.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li>Six sections in the order they depend on each other, each collapsible, each showing Done / Next / To do. Only the next one is open.</li>
+    <li><b>Detection</b>: pacticipants proposed from projects and linked repositories, with role, main branch and owner.</li>
+    <li>Pipeline connection that can write the two secrets into linked GitHub repositories, and open pull requests adding can-i-deploy and record-deployment.</li>
+    <li>Three ways to the first pact, with the mock recorder as the default.</li>
+    <li>Provider side as two switches: spec-as-contract (bi-directional) and hosted verification.</li>
+    <li>Shown from the overview’s first-run checklist and the ⋯ menu until all six are done; after that it stays reachable from Settings.</li>
+    <li>To ship with it: <code>apiome pact setup</code>; the Terraform block is a later, separate decision.</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>Nothing detected: section 1 starts with “Add one by hand” and a link to import a project.</li>
+    <li>No linked GitHub account: the secrets and pull-request buttons become copyable snippets.</li>
+    <li>A workspace that migrated from a broker: sections 1 and 2 arrive done.</li>
+    <li>Not an admin: the page is readable; every action is replaced by “Ask a Contracts admin”.</li>
+  </ul>
+</template>
+</body>
+</html>

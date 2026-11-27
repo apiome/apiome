@@ -96,6 +96,7 @@
           { label: 'Ship', items: [
             { id: 'published', label: 'Published', icon: 'globe', href: p('ship/published.html') },
             { id: 'sunset', label: 'Sunset timeline', icon: 'sunset', href: p('ship/sunset-timeline.html') },
+            { id: 'contracts', label: 'Contracts', icon: 'handshake', href: p('contracts/overview.html') },
             { id: 'export', label: 'Export studio', icon: 'package-open', href: p('ship/export-studio.html') },
           ]},
           { label: 'Govern', items: [

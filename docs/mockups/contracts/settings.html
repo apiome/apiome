@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Contracts settings · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/settings" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header page-header--with-tabs">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><span>Settings</span></div>
+          <h1 class="page-title">Contracts settings</h1>
+          <p class="page-desc">How long things are kept, the secrets the broker may use, and how it talks to your pipelines and agents.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="../workspace/api-keys.html"><i data-lucide="key-round"></i>API keys</a>
+          <a class="btn" href="../workspace/audit.html"><i data-lucide="scroll-text"></i>Audit log</a>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Contracts">
+        <a class="tab" href="overview.html"><i data-lucide="layout-dashboard"></i>Overview</a>
+        <a class="tab" href="pacticipant.html"><i data-lucide="users"></i>Pacticipants</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="table-2"></i>Matrix</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="rocket"></i>Can I deploy</a>
+        <a class="tab" href="verify.html"><i data-lucide="shield-check"></i>Verification</a>
+        <a class="tab" href="environments.html"><i data-lucide="server-cog"></i>Environments</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="webhook"></i>Webhooks</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="activity"></i>Health</a>
+        <a class="tab is-active" href="settings.html" aria-current="page"><i data-lucide="settings-2"></i>Settings</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="tabs" role="tablist" aria-label="Settings" data-tabs="st">
+      <button class="tab is-active" role="tab" data-action="tab" data-target="st-clean"><i data-lucide="eraser"></i>Clean-up</button>
+      <button class="tab" role="tab" data-action="tab" data-target="st-sec"><i data-lucide="lock-keyhole"></i>Secrets<span class="count">4</span></button>
+      <button class="tab" role="tab" data-action="tab" data-target="st-ci"><i data-lucide="git-pull-request"></i>CI and commit statuses</button>
+      <button class="tab" role="tab" data-action="tab" data-target="st-sched"><i data-lucide="calendar-clock"></i>Verification schedule</button>
+      <button class="tab" role="tab" data-action="tab" data-target="st-agents"><i data-lucide="bot"></i>Agents</button>
+    </div>
+    <div id="st">
+
+      <!-- ============ Clean-up ============ -->
+      <div data-tab-panel="st-clean">
+        <div class="ct-split">
+          <div class="col gap-4">
+            <section class="card card--pad col gap-3" aria-labelledby="k-h">
+              <div class="row-between"><h2 class="t-h4" id="k-h">What to keep</h2><span class="t-xs t-subtle">Everything else is removed nightly</span></div>
+              <div class="col gap-2">
+                <div class="ct-rule"><span>Every version <b>deployed or released</b> anywhere</span><span class="row gap-2"><span class="t-xs t-subtle">always · 9 versions</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove rule"><i data-lucide="x"></i></button></span></div>
+                <div class="ct-rule"><span>The latest <b>5</b> versions on each pacticipant’s <b>main branch</b></span><span class="row gap-2"><span class="t-xs t-subtle">55 versions</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove rule"><i data-lucide="x"></i></button></span></div>
+                <div class="ct-rule"><span>The latest <b>1</b> version on <b>every other branch</b>, for <b>90 days</b></span><span class="row gap-2"><span class="t-xs t-subtle">131 versions</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove rule"><i data-lucide="x"></i></button></span></div>
+                <div class="ct-rule"><span>Anything tagged <span class="mono">keep</span></span><span class="row gap-2"><span class="t-xs t-subtle">4 versions</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Remove rule"><i data-lucide="x"></i></button></span></div>
+                <div class="row gap-2"><button class="btn btn--sm"><i data-lucide="plus"></i>Add a rule</button><span class="t-xs t-subtle">By branch, tag, environment, count or age. A version kept by any rule stays.</span></div>
+              </div>
+              <div class="switch-row"><div><div class="sw-title">Run clean-up nightly</div><div class="t-xs t-subtle">Off: nothing is ever removed. Next run 02:00 UTC.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Nightly clean-up"></button></div>
+              <div class="grid grid-2">
+                <div class="field"><label>Keep deleted items restorable for</label><select class="select"><option>30 days</option><option>7 days</option><option>90 days</option></select></div>
+                <div class="field"><label>Keep mock captures for</label><select class="select"><option>7 days</option><option>30 days</option></select><div class="hint">Recorded calls used by <a href="pact-from-mock.html">Pact from a mock</a>.</div></div>
+              </div>
+              <div class="row gap-2"><button class="btn btn--primary">Save rules</button><button class="btn">Discard</button></div>
+            </section>
+
+            <section class="table-wrap" aria-label="Recently deleted">
+              <div class="table-toolbar"><span class="t-sm t-600">Recently deleted</span><span class="spacer"></span><span class="t-xs t-subtle">Gone for good after 30 days</span></div>
+              <table class="table table--dense"><thead><tr><th>Item</th><th>Deleted</th><th>By</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
+                <tr><td class="cell-primary">Orders UI <span class="mono t-xs t-subtle">3.2.9+c4410b7</span><div class="cell-sub">1 pact · 2 results</div></td><td class="t-muted">2 days ago</td><td>Clean-up</td><td><div class="cell-actions"><button class="btn btn--sm">Restore</button></div></td></tr>
+                <tr><td class="cell-primary">Legacy Cart <span class="badge badge--outline">pacticipant</span><div class="cell-sub">41 versions · 6 pacts</div></td><td class="t-muted">11 days ago</td><td>Ada Lovelace</td><td><div class="cell-actions"><button class="btn btn--sm">Restore</button></div></td></tr>
+              </tbody></table>
+            </section>
+          </div>
+          <aside class="ct-aside">
+            <section class="card card--pad col gap-2">
+              <div class="row-between"><div class="t-caps">If it ran now</div><button class="btn btn--ghost btn--sm"><i data-lucide="refresh-cw"></i>Preview</button></div>
+              <div class="row gap-3"><span class="ring ring--lg" style="--p:22;--c:var(--warn)"><span>412</span></span><div><div class="t-sm t-600">412 of 1,904 versions would go</div><div class="t-xs t-subtle">with 618 pacts and 2,140 results. Nothing deployed, nothing on a main branch’s latest five.</div></div></div>
+              <a class="btn btn--sm" href="#">See the list</a>
+            </section>
+            <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="cli"><button class="tab is-active" role="tab" data-action="tab" data-target="cli-0">REST</button></div>
+          <div id="cli"><div data-tab-panel="cli-0"><pre class="code code--dark" aria-label="REST"><span>PUT /v1/tenants/acme/pact-retention</span></pre></div></div>
+          <div class="t-xs t-subtle mt-2">There is no apiome pact command for this yet — one should ship with the screen.</div>
+        </section>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ============ Secrets ============ -->
+      <div data-tab-panel="st-sec" hidden class="col gap-4">
+        <section class="table-wrap" aria-label="Secrets">
+          <div class="table-toolbar"><span class="t-sm t-muted">Values that webhooks and verification targets need. Write-only: a value is never shown again.</span><span class="spacer"></span><button class="btn btn--primary btn--sm" data-action="open" data-target="sec-dialog"><i data-lucide="plus"></i>New secret</button></div>
+          <table class="table"><thead><tr><th>Name</th><th>Used by</th><th>Updated</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
+            <tr><td class="mono">billing-staging-token</td><td>Verification target · staging</td><td class="t-muted">3 weeks ago · Ada Lovelace</td><td><div class="cell-actions"><button class="btn btn--sm">Replace value</button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Delete"><i data-lucide="trash-2"></i></button></div></td></tr>
+            <tr><td class="mono">github-ci-token</td><td>3 webhooks · commit statuses</td><td class="t-muted">2 months ago · Grace Hopper</td><td><div class="cell-actions"><button class="btn btn--sm">Replace value</button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Delete"><i data-lucide="trash-2"></i></button></div></td></tr>
+            <tr><td class="mono">slack-contracts-hook</td><td>1 webhook</td><td class="t-muted">2 months ago · Grace Hopper</td><td><div class="cell-actions"><button class="btn btn--sm">Replace value</button><button class="btn btn--ghost btn--sm btn--icon" aria-label="Delete"><i data-lucide="trash-2"></i></button></div></td></tr>
+            <tr><td class="mono">migrated-webhook-7 <span class="badge badge--warn">No value</span></td><td>1 webhook · disabled</td><td class="t-muted">from migration</td><td><div class="cell-actions"><button class="btn btn--sm">Set value</button></div></td></tr>
+          </tbody></table>
+        </section>
+      </div>
+
+      <!-- ============ CI ============ -->
+      <div data-tab-panel="st-ci" hidden>
+        <div class="ct-split">
+          <div class="col gap-4">
+            <section class="card card--pad col gap-3"><h2 class="t-h4">Commit statuses</h2>
+              <p class="t-sm t-muted">Put the contract verdict on the commit, where the pull request is decided.</p>
+              <div class="switch-row"><div><div class="sw-title">On the consumer’s commit when its pact is verified</div><div class="t-xs t-subtle">“Pact · Billing Service — verified” on orders-ui@a1c9e02</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Consumer status"></button></div>
+              <div class="switch-row"><div><div class="sw-title">On the provider’s commit when a consumer’s pact changes</div><div class="t-xs t-subtle">“Pact · Orders UI — needs verification”</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Provider status"></button></div>
+              <div class="switch-row"><div><div class="sw-title">For bi-directional verdicts too</div><div class="t-xs t-subtle">Spec comparisons set a status the same way a verification does.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Bi-directional status"></button></div>
+              <div class="field"><label>Using</label><select class="select"><option>Linked repositories’ own connections</option><option>Secret · github-ci-token</option></select></div>
+            </section>
+            <section class="card card--pad col gap-3"><h2 class="t-h4">Pipeline recipes</h2>
+              <p class="t-sm t-muted">Copy a working pipeline for a consumer or a provider.</p>
+              <div class="row wrap gap-2"><span class="chip is-active" data-action="chip"><i data-lucide="github"></i>GitHub Actions</span><span class="chip" data-action="chip"><i data-lucide="gitlab"></i>GitLab CI</span><span class="chip" data-action="chip">Jenkins</span><span class="chip" data-action="chip">Azure Pipelines</span></div>
+              <pre class="code code--dark code--lines"><span>- uses: apiome/pact-action@v1        # consumer: publish, then gate</span><span>  with: { command: publish, pacts: pacts }</span><span>- uses: apiome/pact-action@v1</span><span>  with: { command: can-i-deploy, pacticipant: Orders UI, environment: production }</span><span>- uses: apiome/pact-action@v1        # on merge</span><span>  with: { command: record-deployment, pacticipant: Orders UI, environment: production }</span></pre>
+            </section>
+          </div>
+          <aside class="ct-aside">
+            <section class="card card--pad col gap-2"><div class="t-caps">Broker address</div>
+              <pre class="code code--dark"><span>PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker</span>
+<span>PACT_BROKER_TOKEN=&lt;an Apiome API key&gt;</span></pre>
+              <div class="t-xs t-subtle">The official Pact CLI and libraries work unchanged with these two variables.</div>
+              <a class="btn btn--sm" href="../workspace/api-keys.html"><i data-lucide="key-round"></i>Create a key with Pact scopes</a></section>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ============ Schedule ============ -->
+      <div data-tab-panel="st-sched" hidden class="col gap-4" id="schedule">
+        <section class="card card--pad col gap-3"><div class="row-between"><h2 class="t-h4">When Apiome verifies on its own</h2><a class="t-xs" href="#">Stale thresholds and re-publish requests (PFX-6.2)</a></div>
+          <table class="table"><thead><tr><th>Provider</th><th>Target</th><th>When</th><th>Pacts</th><th>Last run</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
+            <tr><td class="cell-primary">Billing Service</td><td>staging</td><td>When a pact changes · nightly 03:00</td><td>Recommended</td><td><span class="badge badge--dot" data-status="failed">Failed</span> <span class="t-xs t-subtle">12 min ago</span></td><td><div class="cell-actions"><a class="btn btn--sm" href="verify.html">Edit</a></div></td></tr>
+            <tr><td class="cell-primary">Payments API</td><td>staging</td><td>When a pact changes</td><td>Recommended</td><td><span class="badge badge--dot" data-status="passed">Passed</span> <span class="t-xs t-subtle">2 h ago</span></td><td><div class="cell-actions"><a class="btn btn--sm" href="verify.html">Edit</a></div></td></tr>
+          </tbody></table>
+          <div><a class="btn btn--sm" href="verify.html"><i data-lucide="plus"></i>Schedule a verification</a></div>
+        </section>
+      </div>
+
+      <!-- ============ Agents ============ -->
+      <div data-tab-panel="st-agents" hidden class="col gap-4">
+        <section class="card card--pad col gap-3"><div class="row-between"><h2 class="t-h4">What an AI agent may do with contracts</h2><span class="badge badge--outline">MCP</span></div>
+          <p class="t-sm t-muted">Agents connected through Apiome’s MCP server see contracts as tools. Reading is on; anything that writes is yours to allow.</p>
+          <div class="switch-row"><div><div class="sw-title">Read pacts, verdicts and can-i-deploy</div><div class="t-xs t-subtle">“Is it safe to change this field?” answered from real consumers.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Read"></button></div>
+          <div class="switch-row"><div><div class="sw-title">Draft a pact from a project or a mock capture</div><div class="t-xs t-subtle">Returns a draft for a person to review. Publishes nothing.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Draft"></button></div>
+          <div class="switch-row"><div><div class="sw-title">Publish pacts and provider contracts</div><div class="t-xs t-subtle">Only on branches that are not a main branch.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Publish"></button></div>
+          <div class="switch-row"><div><div class="sw-title">Record deployments</div><div class="t-xs t-subtle">Never to an environment marked production.</div></div><button class="switch" role="switch" aria-checked="false" data-action="switch" aria-label="Record"></button></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="overlay" id="sec-dialog" data-overlay>
+  <div class="dialog dialog--sm" role="dialog" aria-labelledby="sc-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="lock-keyhole"></i></span><div><div class="dialog__title" id="sc-t">New secret</div><div class="dialog__desc">Reference it from a webhook, or pick it as a verification target’s sign-in.</div></div></div>
+    <div class="dialog__body col gap-3"><div class="field"><label for="sn">Name</label><input class="input mono" id="sn" placeholder="billing-staging-token" /></div><div class="field"><label for="sv">Value</label><input class="input" id="sv" type="password" /><div class="hint">Stored encrypted. You will not be able to read it back.</div></div></div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="close">Save secret</button></div>
+  </div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/settings</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>Nothing. Retention, clean-up, restore, secrets, commit statuses and the MCP pact tools all exist in REST with no screen. Verification schedule gathers what PFX-6.2 put on its own settings page and links to it.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>The retention model and its nightly sweep; the secret store used by webhooks and the verifier; the commit-status hooks; the stale threshold and re-publish settings (linked, not redrawn).</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li><b>Clean-up</b>: keep-rules as sentences with a count each, a live “if it ran now” preview, and a Recently deleted list with Restore.</li>
+    <li><b>Secrets</b>: write-only values, where each is used, and migrated webhooks waiting for a value.</li>
+    <li><b>CI and commit statuses</b>: three switches, including bi-directional verdicts (which set no status today), plus pipeline recipes for four CI systems and the broker address.</li>
+    <li><b>Verification schedule</b>: one list of what Apiome verifies on its own, editable in Run a verification.</li>
+    <li><b>Agents</b>: what MCP-connected agents may read, draft and write.</li>
+    <li>No primary in the header: each tab owns its one primary (§1.2).</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>Clean-up off: the preview reads “Nothing is removed while clean-up is off.”</li>
+    <li>A rule that would remove a deployed version cannot be saved: “Deployed and released versions are always kept.”</li>
+    <li>Deleting a secret in use: blocked, with the list of webhooks and targets that use it.</li>
+    <li>Needs the Contracts admin permission; otherwise every tab is read-only and says so once, in a callout.</li>
+  </ul>
+</template>
+</body>
+</html>

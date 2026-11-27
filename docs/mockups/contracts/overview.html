@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Contracts · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/overview" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header page-header--with-tabs">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><span>Ship</span><i data-lucide="chevron-right"></i><span>Contracts</span></div>
+          <h1 class="page-title">Contracts</h1>
+          <p class="page-desc">What your services need from each other, and whether a version is safe to deploy.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="provider-contract.html"><i data-lucide="file-check-2"></i>Publish provider contract</a>
+          <button class="btn btn--icon" data-action="open" data-target="more-menu" aria-label="More actions" aria-haspopup="menu"><i data-lucide="ellipsis"></i></button>
+          <a class="btn btn--primary" href="publish-pact.html"><i data-lucide="file-up"></i>Publish a pact</a>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Contracts">
+        <a class="tab is-active" href="overview.html" aria-current="page"><i data-lucide="layout-dashboard"></i>Overview</a>
+        <a class="tab" href="pacticipant.html"><i data-lucide="users"></i>Pacticipants</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="table-2"></i>Matrix</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="rocket"></i>Can I deploy</a>
+        <a class="tab" href="verify.html"><i data-lucide="shield-check"></i>Verification</a>
+        <a class="tab" href="environments.html"><i data-lucide="server-cog"></i>Environments</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="webhook"></i>Webhooks</a>
+        <a class="tab" href="#" title="Shipped with PFX-5 / PFX-6 — not redrawn in this set"><i data-lucide="activity"></i>Health</a>
+        <a class="tab" href="settings.html"><i data-lucide="settings-2"></i>Settings</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="callout callout--dismiss" role="note" id="ct-explainer">
+      <i data-lucide="info"></i>
+      <div><span class="t-600">A contract is what one service needs from another.</span> Consumers publish pacts, providers publish their spec or verify against the pacts, and Apiome tells you whether a version is safe to deploy.</div>
+      <div class="callout__actions"><a class="btn btn--sm btn--ghost" href="../foundations/help.html">Learn more</a><button class="btn btn--sm" data-action="toggle" data-target="ct-explainer">Got it</button></div>
+    </div>
+
+    <!-- Several statuses, one row (DESIGN.md §5.4) -->
+    <section class="status-strip" aria-label="Contract status">
+      <div class="status-strip__row" role="group" aria-label="Contract status">
+        <span class="t-caps" style="margin-right:4px">Needs you</span>
+        <button class="status-chip status-chip--danger is-open" data-detail="fail" aria-expanded="true"><i data-lucide="circle-x"></i>1 failing <span class="t-faint">Orders UI → Billing</span></button>
+        <button class="status-chip status-chip--warn" data-detail="stale" aria-expanded="false"><i data-lucide="clock-alert"></i>2 stale <span class="t-faint">14+ days</span></button>
+        <button class="status-chip status-chip--warn" data-detail="nopc" aria-expanded="false"><i data-lucide="file-question"></i>1 without a provider contract</button>
+        <button class="status-chip status-chip--accent" data-detail="pending" aria-expanded="false"><i data-lucide="hourglass"></i>3 pending <span class="t-faint">new pacts</span></button>
+      </div>
+      <div aria-live="polite">
+        <div class="status-strip__detail" data-tone="danger" data-detail-for="fail">
+          <i data-lucide="circle-x"></i>
+          <div><span class="banner-title">Orders UI 3.4.0 needs something Billing Service 2.7.0 does not return.</span> <span class="mono">POST /invoices</span> — the pact expects <span class="mono">currency</span> in the 201 body. Production is not affected: 2.6.1 still returns it.</div>
+          <div class="banner-actions"><a class="btn btn--sm" href="verify.html">Open result</a><a class="btn btn--sm" href="verify.html">Re-run</a></div>
+        </div>
+        <div class="status-strip__detail" data-tone="warn" data-detail-for="stale" hidden><i data-lucide="clock-alert"></i><div><span class="banner-title">2 pacts have not been verified for more than 14 days.</span> Mobile App → Payments API (19 days) and Checkout → Orders API (16 days). Their consumers were asked to re-publish.</div><div class="banner-actions"><a class="btn btn--sm" href="verify.html">Verify the stale ones</a></div></div>
+        <div class="status-strip__detail" data-tone="warn" data-detail-for="nopc" hidden><i data-lucide="file-question"></i><div><span class="banner-title">Checkout → Payments API has a pact but nothing to compare it with.</span> Publish the provider’s spec, or run a verification against the provider.</div><div class="banner-actions"><a class="btn btn--sm" href="provider-contract.html">Publish provider contract</a></div></div>
+        <div class="status-strip__detail" data-tone="accent" data-detail-for="pending" hidden><i data-lucide="hourglass"></i><div><span class="banner-title">3 new pacts are pending.</span> A pending pact cannot fail the provider’s build until the provider has passed it once.</div><div class="banner-actions"><a class="btn btn--sm" href="#">Show them</a></div></div>
+      </div>
+    </section>
+
+    <div class="facts"><span><b>18</b> integrations</span><span class="sep"></span><span><b>14</b> verified</span><span class="sep"></span><span><b>11</b> pacticipants</span><span class="sep"></span><span><b>16</b> of 18 can deploy to production</span><span class="sep"></span><span><b>4</b> environments</span><button class="btn btn--link btn--sm" style="margin-left:auto">Show stats</button></div>
+
+    <!-- Integrations: the one table -->
+    <section class="table-wrap" aria-label="Integrations">
+      <div class="table-toolbar">
+        <div class="input-wrap"><i data-lucide="search"></i><input class="input" placeholder="Search consumers and providers…" aria-label="Search integrations" /></div>
+        <span class="chip is-active" data-action="chip">All</span><span class="chip" data-action="chip">Failing</span><span class="chip" data-action="chip">Stale</span><span class="chip" data-action="chip">Bi-directional</span><span class="chip" data-action="chip">Mine</span>
+        <span class="spacer"></span>
+        <div class="segmented segmented--sm" role="group" aria-label="View"><button class="is-active"><i data-lucide="table-2"></i>Table</button><a href="#" title="Network graph (PFX-5.3)"><i data-lucide="waypoints"></i>Network</a></div>
+      </div>
+      <div class="scroll-x"><table class="table">
+        <thead><tr><th>Integration</th><th>Kind</th><th>Latest verdict</th><th>Deployed together in</th><th>Verified</th><th><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody>
+          <tr><td><span class="ct-pair"><span class="avatar avatar--sm avatar--hex avatar--a">OU</span><b class="t-truncate">Orders UI</b><i data-lucide="arrow-right"></i><span class="avatar avatar--sm avatar--hex avatar--c">BS</span><b class="t-truncate">Billing Service</b></span><div class="cell-sub mono" style="padding-left:2px">consumer 3.4.0 · provider 2.7.0</div></td><td><span class="badge badge--violet">Bi-directional</span></td><td><span class="badge badge--dot" data-status="failed">Failing</span></td><td><span class="tag">staging</span> </td><td class="t-muted t-num" style="white-space:nowrap">12 min ago</td><td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions" data-action="open" data-target="row-menu"><i data-lucide="ellipsis"></i></button></div></td></tr>
+          <tr><td><span class="ct-pair"><span class="avatar avatar--sm avatar--hex avatar--d">MA</span><b class="t-truncate">Mobile App</b><i data-lucide="arrow-right"></i><span class="avatar avatar--sm avatar--hex avatar--b">PA</span><b class="t-truncate">Payments API</b></span><div class="cell-sub mono" style="padding-left:2px">consumer 1.9.2 · provider 4.0.0</div></td><td><span class="badge badge--outline">Pact</span></td><td><span class="badge badge--dot" data-status="warn">Stale</span></td><td><span class="tag">production</span> </td><td class="t-muted t-num" style="white-space:nowrap">19 days ago</td><td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions" data-action="open" data-target="row-menu"><i data-lucide="ellipsis"></i></button></div></td></tr>
+          <tr><td><span class="ct-pair"><span class="avatar avatar--sm avatar--hex avatar--e">C</span><b class="t-truncate">Checkout</b><i data-lucide="arrow-right"></i><span class="avatar avatar--sm avatar--hex avatar--b">PA</span><b class="t-truncate">Payments API</b></span><div class="cell-sub mono" style="padding-left:2px">consumer 0.8.0</div></td><td><span class="badge badge--outline">Pact</span></td><td><span class="badge badge--dot" data-status="unknown">No provider contract</span></td><td><span class="t-faint">—</span></td><td class="t-muted t-num" style="white-space:nowrap">never</td><td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions" data-action="open" data-target="row-menu"><i data-lucide="ellipsis"></i></button></div></td></tr>
+          <tr><td><span class="ct-pair"><span class="avatar avatar--sm avatar--hex avatar--a">OU</span><b class="t-truncate">Orders UI</b><i data-lucide="arrow-right"></i><span class="avatar avatar--sm avatar--hex avatar--c">OA</span><b class="t-truncate">Orders API</b></span><div class="cell-sub mono" style="padding-left:2px">consumer 3.4.0 · provider 5.1.0</div></td><td><span class="badge badge--outline">Pact</span></td><td><span class="badge badge--dot" data-status="passed">Verified</span></td><td><span class="tag">production</span> <span class="tag">staging</span> </td><td class="t-muted t-num" style="white-space:nowrap">2 h ago</td><td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions" data-action="open" data-target="row-menu"><i data-lucide="ellipsis"></i></button></div></td></tr>
+          <tr><td><span class="ct-pair"><span class="avatar avatar--sm avatar--hex avatar--c">BS</span><b class="t-truncate">Billing Service</b><i data-lucide="arrow-right"></i><span class="avatar avatar--sm avatar--hex avatar--d">LE</span><b class="t-truncate">Ledger Events</b></span><div class="cell-sub mono" style="padding-left:2px">message pact · AsyncAPI 3.0</div></td><td><span class="badge badge--violet">Bi-directional</span></td><td><span class="badge badge--dot" data-status="passed">Verified</span></td><td><span class="tag">production</span> <span class="tag">staging</span> </td><td class="t-muted t-num" style="white-space:nowrap">yesterday</td><td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Row actions" data-action="open" data-target="row-menu"><i data-lucide="ellipsis"></i></button></div></td></tr>
+        </tbody>
+      </table></div>
+      <div class="table-foot"><span class="t-xs t-subtle">5 of 18 integrations</span><div class="pager"><button class="btn btn--sm" disabled>Previous</button><button class="btn btn--sm">Next</button></div></div>
+    </section>
+
+    <!-- Ways in, by who you are -->
+    <section aria-labelledby="ways-h" class="col gap-3">
+      <div class="row-between"><h2 class="t-h3" id="ways-h">Start something</h2><button class="btn btn--link btn--sm" data-action="toggle" data-target="first-run">Show the first-run checklist</button></div>
+      <div class="card card--honey card--pad" id="first-run" hidden>
+        <div class="row-between"><div class="t-h4">Your first contract, in four steps</div><span class="row gap-3"><span class="t-xs t-subtle">1 of 4 done</span><a class="btn btn--sm" href="setup.html">Open the guided set-up</a></span></div>
+        <div class="progress progress--honey mt-2"><span style="width:25%"></span></div>
+        <div class="grid grid-4 mt-3">
+          <div class="row gap-2 t-sm"><i data-lucide="circle-check" style="color:var(--ok)"></i>Turn on a hosted mock</div>
+          <div class="row gap-2 t-sm"><i data-lucide="circle"></i><a href="pact-from-mock.html">Record a pact from it</a></div>
+          <div class="row gap-2 t-sm"><i data-lucide="circle"></i><a href="provider-contract.html">Publish the provider’s spec</a></div>
+          <div class="row gap-2 t-sm"><i data-lucide="circle"></i><a href="environments.html">Add an environment and ask can-i-deploy</a></div>
+        </div>
+      </div>
+      <div class="grid grid-3">
+        <div class="card" style="padding:8px">
+          <div class="t-caps" style="padding:8px 12px 4px">I consume an API</div>
+          <a class="ct-way" href="pact-from-mock.html"><span class="icon-tile icon-tile--sm"><i data-lucide="radio-tower"></i></span><span class="min-w-0"><span class="ct-way__title">Record a pact from a mock<span class="badge badge--honey">New</span></span><span class="ct-way__desc">Run your app against the mock; Apiome writes the pact.</span></span><i data-lucide="chevron-right"></i></a>
+          <a class="ct-way" href="publish-pact.html"><span class="icon-tile icon-tile--sm"><i data-lucide="file-up"></i></span><span class="min-w-0"><span class="ct-way__title">Publish a pact</span><span class="ct-way__desc">Upload, paste or write one, and test it against the spec.</span></span><i data-lucide="chevron-right"></i></a>
+          <a class="ct-way" href="export.html"><span class="icon-tile icon-tile--sm"><i data-lucide="wand-sparkles"></i></span><span class="min-w-0"><span class="ct-way__title">Derive a pact from a project</span><span class="ct-way__desc">Start from the operations you call.</span></span><i data-lucide="chevron-right"></i></a>
+        </div>
+        <div class="card" style="padding:8px">
+          <div class="t-caps" style="padding:8px 12px 4px">I provide an API</div>
+          <a class="ct-way" href="provider-contract.html"><span class="icon-tile icon-tile--sm"><i data-lucide="file-check-2"></i></span><span class="min-w-0"><span class="ct-way__title">Publish a provider contract</span><span class="ct-way__desc">Your OpenAPI or AsyncAPI, with evidence it is true.</span></span><i data-lucide="chevron-right"></i></a>
+          <a class="ct-way" href="verify.html"><span class="icon-tile icon-tile--sm"><i data-lucide="shield-check"></i></span><span class="min-w-0"><span class="ct-way__title">Run a verification</span><span class="ct-way__desc">Replay consumers’ pacts against a running provider.</span></span><i data-lucide="chevron-right"></i></a>
+          <a class="ct-way" href="pact-from-mock.html#stub"><span class="icon-tile icon-tile--sm"><i data-lucide="server"></i></span><span class="min-w-0"><span class="ct-way__title">Serve pacts as a mock<span class="badge badge--honey">New</span></span><span class="ct-way__desc">Give consumers a stub that answers what the pacts promise.</span></span><i data-lucide="chevron-right"></i></a>
+        </div>
+        <div class="card" style="padding:8px">
+          <div class="t-caps" style="padding:8px 12px 4px">I run the pipeline</div>
+          <a class="ct-way" href="environments.html"><span class="icon-tile icon-tile--sm"><i data-lucide="server-cog"></i></span><span class="min-w-0"><span class="ct-way__title">Environments and releases</span><span class="ct-way__desc">Record what is deployed where.</span></span><i data-lucide="chevron-right"></i></a>
+          <a class="ct-way" href="migrate.html"><span class="icon-tile icon-tile--sm"><i data-lucide="import"></i></span><span class="min-w-0"><span class="ct-way__title">Migrate from a broker</span><span class="ct-way__desc">Pact Broker or PactFlow, read-only at the source.</span></span><i data-lucide="chevron-right"></i></a>
+          <a class="ct-way" href="settings.html"><span class="icon-tile icon-tile--sm"><i data-lucide="settings-2"></i></span><span class="min-w-0"><span class="ct-way__title">Retention, secrets and CI</span><span class="ct-way__desc">Clean-up rules, webhook secrets, commit statuses.</span></span><i data-lucide="chevron-right"></i></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Parity strip -->
+    <section class="card card--pad" aria-labelledby="any-h">
+      <div class="row-between wrap gap-2"><div><h2 class="t-h4" id="any-h">One system, however you drive it</h2><p class="t-sm t-muted">Anything you can do on a screen has a command, and the other way round. Each page shows its own.</p></div>
+        <div class="row wrap gap-2"><span class="badge badge--outline"><i data-lucide="mouse-pointer-click"></i>This UI</span><span class="badge badge--outline"><i data-lucide="terminal"></i>apiome pact</span><span class="badge badge--outline"><i data-lucide="terminal-square"></i>Official Pact CLI</span><span class="badge badge--outline"><i data-lucide="github"></i>GitHub Action</span><span class="badge badge--outline"><i data-lucide="braces"></i>REST</span><span class="badge badge--outline"><i data-lucide="bot"></i>MCP for agents</span></div></div>
+    </section>
+  </div>
+</main>
+
+<div class="overlay" id="more-menu" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-end;padding:64px 150px 0 0">
+  <div class="menu" role="menu" style="min-width:230px">
+    <a class="menu__item" role="menuitem" href="pact-from-mock.html"><i data-lucide="radio-tower"></i>Record a pact from a mock</a>
+    <a class="menu__item" role="menuitem" href="verify.html"><i data-lucide="shield-check"></i>Run a verification</a>
+    <a class="menu__item" role="menuitem" href="export.html"><i data-lucide="package-open"></i>Export a contract</a>
+    <div class="menu__sep"></div>
+    <a class="menu__item" role="menuitem" href="pacticipant.html#new"><i data-lucide="plus"></i>New pacticipant</a>
+    <a class="menu__item" role="menuitem" href="migrate.html"><i data-lucide="import"></i>Migrate from a broker</a>
+    <a class="menu__item" role="menuitem" href="setup.html"><i data-lucide="list-checks"></i>Guided set-up</a>
+  </div>
+</div>
+<div class="overlay" id="row-menu" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-end;padding:420px 60px 0 0">
+  <div class="menu" role="menu" style="min-width:220px">
+    <a class="menu__item" role="menuitem" href="#"><i data-lucide="file-text"></i>Open the pact</a>
+    <a class="menu__item" role="menuitem" href="verify.html"><i data-lucide="shield-check"></i>Verify now</a>
+    <a class="menu__item" role="menuitem" href="#"><i data-lucide="rocket"></i>Can I deploy?</a>
+    <a class="menu__item" role="menuitem" href="export.html"><i data-lucide="mailbox"></i>Export as Postman</a>
+    <a class="menu__item" role="menuitem" href="pact-from-mock.html#stub"><i data-lucide="server"></i>Serve as a mock</a>
+    <div class="menu__sep"></div>
+    <button class="menu__item" role="menuitem"><i data-lucide="link"></i>Copy badge</button>
+  </div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>The redirect from <code>/ade/dashboard/pacts</code> to Pacticipants. This is the Contracts landing; every shipped PFX-5 / PFX-6 screen is a tab on it.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>Every shipped screen and route: Pacticipants, Matrix, Can I deploy, Verification, Webhooks, Environments, Health. The Network graph stays as the table’s second view.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li>A shared tab row for the whole Contracts area (it was a set of pages linked from one header).</li>
+    <li>A <b>status strip</b> (§5.4) for failing, stale, provider-less and pending integrations, one detail row open at a time.</li>
+    <li>A <b>facts line</b> (§8) instead of a stat strip; <i>Show stats</i> expands the PFX-6.3 rollup.</li>
+    <li>One integrations table: pair, kind (Pact or bi-directional), verdict, the environments both sides are deployed in, when it was last verified. Filters are chips and live in the URL.</li>
+    <li>“Start something” grouped by who is asking: consumer, provider, pipeline owner. Nine entry points, including the screens the CLI had and the UI did not.</li>
+    <li>A first-run checklist (honey card) shown until the workspace has one verified integration.</li>
+    <li>Header: one primary (Publish a pact), one secondary, the rest in ⋯ (§5.3 action cap).</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>Empty workspace: the strip and facts line are absent; the table shows an <code>.empty</code> with hex art — “No contracts yet. Record a pact from a mock, or publish one.” — and the first-run checklist is open.</li>
+    <li>Loading: skeleton rows in the table, never a spinner. Error: one inline banner with Retry.</li>
+    <li>Read-only role: the header actions and “Start something” are hidden; the table and strip stay.</li>
+  </ul>
+</template>
+</body>
+</html>

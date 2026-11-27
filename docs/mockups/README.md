@@ -13,8 +13,15 @@ it is the top-level navigation page; every screen is one click away.
   the ⌘K palette, user & workspace menus, What’s new, and the **Preferences pane**
   (theme grid · font-size slider · density · reduce motion · rail default). These
   preferences are *live* on every mockup and persist in `localStorage`.
-* One HTML file per screen, grouped by job: `home/ build/ sources/ ship/ govern/
+* One HTML file per screen, grouped by job: `home/ build/ sources/ ship/ contracts/ govern/
   workspace/ account/ auth/ tools/ admin/ foundations/`.
+* **`contracts/`** — the Contracts (Pact) area: the screens the CLI had and the UI did not, plus
+  pact generation from the hosted mock. The pages share `contracts/contracts.css` (helpers prefixed
+  `ct-`, and the status strip / facts line / first-visit callout that are still page-local in
+  `build/versions.html` and `sources/catalog.html` — promote all three to `hive.css`) and
+  `contracts/contracts.js` (option cards, status strip, wizard steps). Every page carries a
+  **The same, from anywhere** block: the action as an `apiome pact` command, the official Pact CLI,
+  the GitHub Action and REST.
 * **`PROPOSALS.md` + `proposals/`** — round-2 proposals from the 2026-10-07 look & feel
   review of the *shipped* redesign (density, header actions, rail fit, launcher focus, honey
   usage). All four were **adopted** in the quiet pass (HIVE-11 / 12, folded in by HIVE-13.4):
@@ -80,6 +87,7 @@ and what it ships, are in `DESIGN.md §12`.
 | `govern/style-guides.html` · `style-guide-detail.html` · `lint-posture.html` | `/ade/dashboard/style-guides[/id]` · `/lint-workspace` | app |
 | `build/projects.html` · `versions.html` · `version-dialogs.html` · `import-wizard.html` · `primitives.html` · `primitive-detail.html` | `/ade/dashboard/projects` · `/versions` · (dialogs) · ImportDialog · `/primitives[/id]` | app |
 | `ship/published.html` · `sunset-timeline.html` · `export-studio.html` | `/ade/dashboard/published` · `/versions/sunset-timeline` · `/export/studio` | app |
+| `contracts/overview.html` · `setup.html` · `publish-pact.html` · `pact-from-mock.html` · `provider-contract.html` · `verify.html` · `pacticipant.html` · `environments.html` · `settings.html` · `migrate.html` · `export.html` | `/ade/dashboard/pacts` · `/pacts/setup` · `/pacts/publish` · `/pacts/from-mock` · `/pacts/provider-contracts/new` · `/pacts/verification/new` · `/pacts/pacticipants/{handle}` · `/pacts/environments` · `/pacts/settings` · `/pacts/migrate` · `/pacts/export` | app |
 | `sources/catalog.html` · `catalog-item.html` | `/ade/dashboard/catalog[/id]` | app |
 | `sources/repositories.html` · `repository-new.html` · `repository-detail.html` · `repository-catalog.html` · `repository-telemetry.html` · `webhook-allowlist.html` | `/ade/dashboard/repositories/**` | app |
 | `sources/mcp-servers.html` · `mcp-endpoint.html` · `mcp-analytics.html` · `mcp-capabilities.html` · `mcp-compare.html` | `/ade/dashboard/mcp/**` | app |

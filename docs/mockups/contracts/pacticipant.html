@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pacticipant · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/pacticipant" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><a href="#">Pacticipants</a><i data-lucide="chevron-right"></i><button class="crumb-switch" aria-haspopup="menu" title="Switch pacticipant">Orders UI<i data-lucide="chevrons-up-down"></i></button></div>
+          <h1 class="page-title">Orders UI <span class="badge badge--outline">Consumer</span> <span class="badge badge--dot" data-status="failed">1 failing</span></h1>
+          <p class="page-desc">A consumer of Billing Service and Orders API · owned by Storefront team</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="verify.html"><i data-lucide="shield-check"></i>Verify</a>
+          <button class="btn btn--icon" data-action="open" data-target="more-menu" aria-label="More actions" aria-haspopup="menu"><i data-lucide="ellipsis"></i></button>
+          <a class="btn btn--primary" href="publish-pact.html"><i data-lucide="file-up"></i>Publish a pact</a>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="tabs" role="tablist" aria-label="Pacticipant" data-tabs="pp">
+      <button class="tab" role="tab" data-action="tab" data-target="pp-over"><i data-lucide="layout-dashboard"></i>Overview</button>
+      <button class="tab is-active" role="tab" data-action="tab" data-target="pp-ver"><i data-lucide="git-commit-horizontal"></i>Versions<span class="count">214</span></button>
+      <button class="tab" role="tab" data-action="tab" data-target="pp-set"><i data-lucide="settings-2"></i>Settings</button>
+    </div>
+    <div id="pp">
+      <div data-tab-panel="pp-over" hidden>
+        <div class="empty"><div class="empty__art"><span class="hex"></span><span class="hex hex--2"></span><i data-lucide="users"></i></div><div class="t-h4">Overview is the shipped PFX-5.1 page</div><div class="t-sm t-muted">Branches, environments, bindings and integrations are unchanged. This mockup draws what was missing: managing versions and settings.</div></div>
+      </div>
+
+      <div data-tab-panel="pp-ver" class="col gap-4">
+        <section class="table-wrap" aria-label="Versions">
+          <div class="table-toolbar">
+            <div class="input-wrap"><i data-lucide="search"></i><input class="input" placeholder="Search versions, branches, tags…" aria-label="Search versions" /></div>
+            <span class="chip is-active" data-action="chip">All</span><span class="chip" data-action="chip">main</span><span class="chip" data-action="chip">Deployed</span><span class="chip" data-action="chip">Unverified</span><span class="chip" data-action="chip">Deleted <span class="count">3</span></span>
+            <span class="spacer"></span><span class="t-xs t-subtle">Deleted versions can be restored for 30 days</span>
+          </div>
+          <div class="scroll-x"><table class="table">
+            <thead><tr><th><input type="checkbox" aria-label="Select all" /></th><th>Version</th><th>Branch</th><th>Tags</th><th>Running in</th><th>Created</th><th><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" aria-label="Select" /></td><td class="mono">3.4.0+a1c9e02</td><td><span class="row gap-1"><i data-lucide="git-branch" style="width:12px;height:12px"></i>feature/credit-notes</span></td><td><span class="tag">dev</span> <button class="btn btn--link btn--sm">+ tag</button></td><td><span class="t-faint">—</span></td><td class="t-muted" style="white-space:nowrap">12 min ago</td><td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Version actions" data-action="open" data-target="ver-menu"><i data-lucide="ellipsis"></i></button></div></td></tr>
+              <tr><td><input type="checkbox" aria-label="Select" /></td><td class="mono">3.3.2+77c0aa1</td><td><span class="row gap-1"><i data-lucide="git-branch" style="width:12px;height:12px"></i>main</span></td><td><span class="tag">prod</span> <button class="btn btn--link btn--sm">+ tag</button></td><td><span class="tag">production</span> <span class="tag">staging</span></td><td class="t-muted" style="white-space:nowrap">6 days ago</td><td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Version actions" data-action="open" data-target="ver-menu"><i data-lucide="ellipsis"></i></button></div></td></tr>
+              <tr><td><input type="checkbox" aria-label="Select" /></td><td class="mono">3.3.1+1d09ffe</td><td><span class="row gap-1"><i data-lucide="git-branch" style="width:12px;height:12px"></i>main</span></td><td><button class="btn btn--link btn--sm">+ tag</button></td><td><span class="t-faint">—</span></td><td class="t-muted" style="white-space:nowrap">3 weeks ago</td><td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Version actions" data-action="open" data-target="ver-menu"><i data-lucide="ellipsis"></i></button></div></td></tr>
+              <tr style="opacity:.6"><td><input type="checkbox" aria-label="Select" /></td><td class="mono">3.2.9+c4410b7</td><td><span class="row gap-1"><i data-lucide="git-branch" style="width:12px;height:12px"></i>spike/new-cart</span></td><td><button class="btn btn--link btn--sm">+ tag</button></td><td><span class="t-faint">—</span></td><td class="t-muted" style="white-space:nowrap">2 months ago</td><td><div class="cell-actions"><button class="btn btn--sm">Restore</button></div></td></tr>
+            </tbody>
+          </table></div>
+          <div class="table-foot"><span class="t-xs t-subtle">4 of 214 versions</span><div class="pager"><button class="btn btn--sm" disabled>Previous</button><button class="btn btn--sm">Next</button></div></div>
+        </section>
+        <div class="bulk-bar" role="region" aria-label="Selection"><span>2 selected</span><button class="btn btn--sm"><i data-lucide="tag"></i>Add a tag</button><button class="btn btn--sm"><i data-lucide="trash-2"></i>Delete</button><button class="btn btn--sm">Clear</button></div>
+      </div>
+
+      <div data-tab-panel="pp-set" hidden>
+        <div class="ct-split">
+          <div class="col gap-4">
+            <section class="card card--pad col gap-3" aria-labelledby="g-h">
+              <h2 class="t-h4" id="g-h">General</h2>
+              <div class="grid grid-2">
+                <div class="field"><label for="n">Name</label><input class="input" id="n" value="Orders UI" /><div class="hint">The name pacts use. Renaming keeps history; old names keep resolving.</div></div>
+                <div class="field"><label for="d">Display name</label><input class="input" id="d" value="Orders UI (web)" /></div>
+                <div class="field"><label for="mb">Main branch</label><div class="input-wrap"><i data-lucide="git-branch"></i><input class="input" id="mb" value="main" /></div><div class="hint">“Latest on main” selectors read this.</div></div>
+                <div class="field"><label for="r">Repository</label><div class="input-wrap"><i data-lucide="github"></i><input class="input" id="r" value="https://github.com/acme/orders-ui" /></div></div>
+                <div class="field"><label>Owner</label><select class="select"><option>Storefront team</option><option>No owner</option></select><div class="hint">Gets failures, stale requests and re-publish asks.</div></div>
+                <div class="field"><label>Linked project</label><select class="select"><option>None — this is a consumer only</option><option>Orders API</option></select><div class="hint">A linked project’s published versions can become provider contracts.</div></div>
+              </div>
+              <div class="field"><label>Labels</label><div class="row wrap gap-2"><span class="chip is-active">web<i data-lucide="x"></i></span><span class="chip is-active">storefront<i data-lucide="x"></i></span><input class="input" style="width:160px" placeholder="Add a label" aria-label="Add a label" /></div></div>
+              <div class="row gap-2"><button class="btn btn--primary">Save changes</button><button class="btn">Discard</button></div>
+            </section>
+
+            <section class="card card--pad col gap-3" aria-labelledby="b-h">
+              <h2 class="t-h4" id="b-h">Badges</h2>
+              <p class="t-sm t-muted">Put the verdict in a README. Badges show a state, never contract content.</p>
+              <div class="grid grid-2">
+                <div class="field"><label>For</label><select class="select"><option>Orders UI → Billing Service</option><option>Orders UI (all integrations)</option></select></div>
+                <div class="field"><label>Show</label><select class="select"><option>Latest on main</option><option>Deployed to production</option></select></div>
+              </div>
+              <div class="row gap-3"><span class="badge badge--dot" data-status="failed">pact · failing</span><span class="t-xs t-subtle">preview</span></div>
+              <pre class="code code--dark"><span>[![Pact](https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/billing-service/consumer/orders-ui/badge.svg)](…)</span></pre>
+            </section>
+
+            <section class="card card--pad col gap-3" aria-labelledby="dz-h" style="box-shadow:0 0 0 1px var(--danger) inset">
+              <h2 class="t-h4" id="dz-h">Danger zone</h2>
+              <div class="row-between wrap gap-3"><div><div class="t-sm t-600">Delete this pacticipant</div><div class="t-xs t-muted">Removes its 214 versions, 31 pacts and their results. Restorable for 30 days.</div></div><button class="btn btn--danger-soft" data-action="open" data-target="del-dialog">Delete Orders UI…</button></div>
+            </section>
+          </div>
+          <aside class="ct-aside">
+            <section class="card card--pad"><dl class="kv"><dt>Handle</dt><dd class="mono">orders-ui</dd><dt>Registered</dt><dd>14 Mar 2026</dd><dt>Versions</dt><dd>214</dd><dt>Consumes</dt><dd>Billing Service, Orders API</dd><dt>Provides</dt><dd>—</dd><dt>In production</dt><dd class="mono">3.3.2+77c0aa1</dd></dl></section>
+            <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="cli"><button class="tab is-active" role="tab" data-action="tab" data-target="cli-0">apiome</button><button class="tab" role="tab" data-action="tab" data-target="cli-1">Pact CLI</button><button class="tab" role="tab" data-action="tab" data-target="cli-2">REST</button></div>
+          <div id="cli"><div data-tab-panel="cli-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact describe-version \</span>
+<span>  --pacticipant &quot;Orders UI&quot; --latest</span></pre></div><div data-tab-panel="cli-1" hidden><pre class="code code--dark" aria-label="Pact CLI"><span>pact-broker create-or-update-pacticipant \</span>
+<span>  --name &quot;Orders UI&quot; --main-branch main \</span>
+<span>  --repository-url https://github.com/acme/orders-ui</span></pre></div><div data-tab-panel="cli-2" hidden><pre class="code code--dark" aria-label="REST"><span>PATCH /v1/tenants/acme/pacticipants/orders-ui</span></pre></div></div>
+          
+        </section>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="overlay" id="more-menu" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-end;padding:64px 150px 0 0">
+  <div class="menu" role="menu" style="min-width:220px"><a class="menu__item" role="menuitem" href="provider-contract.html"><i data-lucide="file-check-2"></i>Publish provider contract</a><a class="menu__item" role="menuitem" href="#"><i data-lucide="rocket"></i>Can I deploy?</a><a class="menu__item" role="menuitem" href="#"><i data-lucide="waypoints"></i>Network</a><div class="menu__sep"></div><button class="menu__item" role="menuitem" data-action="swap" data-target="new-dialog"><i data-lucide="plus"></i>New pacticipant</button></div>
+</div>
+<div class="overlay" id="ver-menu" data-overlay style="background:transparent;align-items:flex-start;justify-content:flex-end;padding:330px 60px 0 0">
+  <div class="menu" role="menu" style="min-width:220px"><a class="menu__item" role="menuitem" href="#"><i data-lucide="file-text"></i>Pacts of this version</a><a class="menu__item" role="menuitem" href="#"><i data-lucide="rocket"></i>Can I deploy this?</a><a class="menu__item" role="menuitem" href="environments.html"><i data-lucide="server-cog"></i>Record a deployment</a><div class="menu__sep"></div><button class="menu__item is-danger" role="menuitem"><i data-lucide="trash-2"></i>Delete version</button></div>
+</div>
+
+<div class="overlay" id="new-dialog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="nw-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="plus"></i></span><div><div class="dialog__title" id="nw-t">New pacticipant</div><div class="dialog__desc">A service that provides or consumes an API. Publishing a pact creates one for you; this is for setting one up first.</div></div></div>
+    <div class="dialog__body col gap-3">
+      <div class="field"><label for="nn">Name</label><input class="input" id="nn" placeholder="Billing Service" /></div>
+      <div class="grid grid-2"><div class="field"><label for="nb">Main branch</label><input class="input" id="nb" value="main" /></div><div class="field"><label>Owner</label><select class="select"><option>No owner</option><option>Storefront team</option></select></div></div>
+      <div class="field"><label for="nr">Repository <span class="t-subtle t-500">(optional)</span></label><input class="input" id="nr" placeholder="https://github.com/acme/billing" /></div>
+      <div class="field"><label>Start from a project <span class="t-subtle t-500">(optional)</span></label><select class="select"><option>None</option><option>Billing API — name, repository and provider contracts come from it</option></select></div>
+    </div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="close">Create pacticipant</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="del-dialog" data-overlay>
+  <div class="dialog dialog--sm" role="alertdialog" aria-labelledby="dl-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--danger"><i data-lucide="trash-2"></i></span><div><div class="dialog__title" id="dl-t">Delete Orders UI?</div><div class="dialog__desc">Its 214 versions, 31 pacts and their verification results go with it. 2 providers lose a consumer; their can-i-deploy answers change. You can restore it for 30 days.</div></div></div>
+    <div class="dialog__body"><div class="field"><label for="cf">Type <span class="mono">orders-ui</span> to confirm</label><input class="input mono" id="cf" /></div></div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--danger" data-action="close">Delete Orders UI</button></div>
+  </div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/pacticipants/{handle}</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>Nothing is removed. The shipped pacticipant page (PFX-5.1) is read-only apart from the owner panel: a pacticipant could not be created, renamed, labelled or deleted in the UI, and a version could not be tagged, deleted or restored.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>Overview, Branches, Environments and Versions as shipped; the owner panel (PFX-6.4); the record switcher in the breadcrumb.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li><b>Versions</b> as a managed list: search, filter chips, add a tag inline, delete, and a Deleted filter with Restore (the REST restore route exists; the UI had no way to reach it). Bulk actions in a sticky bar.</li>
+    <li><b>Settings</b>: name, display name, main branch, repository, owner, linked project, labels.</li>
+    <li><b>Badges</b>: pick the pair and the selector, preview, copy the Markdown (the badge routes exist; nothing surfaced them).</li>
+    <li><b>New pacticipant</b> dialog, optionally seeded from a project.</li>
+    <li><b>Delete</b> with the consequence spelled out and type-to-confirm (§8 destructive).</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>No versions: “Nothing published under Orders UI yet. Publish a pact, or record one from a mock.”</li>
+    <li>Deleting a version that is deployed: blocked — “3.3.2 is running in production. Record its undeployment first.”</li>
+    <li>Rename collision: “A pacticipant named Billing Service already exists.”</li>
+    <li>Read-only role: Settings shows values without inputs; tag, delete and restore are hidden.</li>
+  </ul>
+</template>
+</body>
+</html>

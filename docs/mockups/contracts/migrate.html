@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Migrate from a broker · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/migrate" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><span>Migrate</span></div>
+          <h1 class="page-title">Migrate from a broker</h1>
+          <p class="page-desc">Bring a Pact Broker or PactFlow over — pacticipants, versions, pacts, results and environments — and switch pipelines when you are ready.</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn" data-action="open" data-target="runs-drawer"><i data-lucide="history"></i>Past migrations</button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="page-body">
+    <section class="card ct-wiz" aria-labelledby="wiz-t" data-wizard>
+      <div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="import"></i></span><div><div class="dialog__title" id="wiz-t">Move a broker into Apiome</div><div class="dialog__desc">Your source is only read. Run it as often as you like — repeats copy only what changed.</div></div></div>
+      <div class="ct-wiz__steps">
+        <div class="stepper">
+          <button class="step is-done" data-step-go="1"><span class="step__num">1</span>Connect</button><span class="step__line is-done"></span>
+          <button class="step is-active" data-step-go="2"><span class="step__num">2</span>Choose</button><span class="step__line"></span>
+          <button class="step" data-step-go="3"><span class="step__num">3</span>Copy</button><span class="step__line"></span>
+          <button class="step" data-step-go="4"><span class="step__num">4</span>Switch over</button>
+        </div>
+      </div>
+
+      <!-- 1 · Connect -->
+      <div data-step-panel="1" hidden>
+        <div class="dialog__body col gap-3" style="padding-top:16px">
+          <div class="field"><label for="cn-u">Broker URL</label><div class="input-wrap"><i data-lucide="globe"></i><input class="input" id="cn-u" value="https://acme.pactflow.io" /></div><div class="hint">Pact Broker (open source), PactFlow, or anything that speaks the Pact Broker HTTP API.</div></div>
+          <div class="field"><label>Sign in with</label><div><div class="segmented" role="group"><button class="is-active"><i data-lucide="key-round"></i>API token</button><button><i data-lucide="user"></i>Username and password</button></div></div></div>
+          <div class="field"><label for="cn-t">Token</label><input class="input" id="cn-t" type="password" value="••••••••••••" /><div class="hint">A read-only token is enough. Used for this migration only; not stored.</div></div>
+          <div class="row gap-2"><button class="btn btn--sm">Test connection</button><span class="row gap-2 t-sm"><i data-lucide="circle-check" style="color:var(--ok)"></i>PactFlow · 1,284 pacts found</span></div>
+        </div>
+        <div class="dialog__footer"><button class="btn" style="margin-right:auto">Save &amp; close</button><a class="btn btn--ghost" href="overview.html">Cancel</a><button class="btn btn--primary" data-step-go="2">Continue</button></div>
+      </div>
+
+      <!-- 2 · Choose -->
+      <div data-step-panel="2">
+        <div class="dialog__body col gap-4" style="padding-top:16px">
+          <div class="row-between"><h2 class="t-h4">What to copy</h2><span class="t-xs t-subtle">Counted by a dry run · nothing written yet</span></div>
+          <div class="grid grid-4">
+            <label class="ct-tile"><span class="row-between"><span class="t-caps">Pacticipants</span><input type="checkbox" checked aria-label="Copy Pacticipants" /></span><div class="ct-tile__v">42</div><div class="t-xs t-subtle">all, or <a href="#">pick some</a></div></label><label class="ct-tile"><span class="row-between"><span class="t-caps">Versions</span><input type="checkbox" checked aria-label="Copy Versions" /></span><div class="ct-tile__v">3,816</div></label><label class="ct-tile"><span class="row-between"><span class="t-caps">Pacts</span><input type="checkbox" checked aria-label="Copy Pacts" /></span><div class="ct-tile__v">1,284</div></label><label class="ct-tile"><span class="row-between"><span class="t-caps">Verification results</span><input type="checkbox" checked aria-label="Copy Verification results" /></span><div class="ct-tile__v">9,402</div></label>
+            <label class="ct-tile"><span class="row-between"><span class="t-caps">Environments</span><input type="checkbox" checked aria-label="Copy Environments" /></span><div class="ct-tile__v">4</div></label><label class="ct-tile"><span class="row-between"><span class="t-caps">Deployments</span><input type="checkbox" checked aria-label="Copy Deployments" /></span><div class="ct-tile__v">57</div></label><label class="ct-tile"><span class="row-between"><span class="t-caps">Webhooks</span><input type="checkbox" checked aria-label="Copy Webhooks" /></span><div class="ct-tile__v">11</div><div class="t-xs t-subtle">created disabled</div></label><label class="ct-tile"><span class="row-between"><span class="t-caps">Labels and tags</span><input type="checkbox" checked aria-label="Copy Labels and tags" /></span><div class="ct-tile__v">318</div></label>
+          </div>
+          <div class="grid grid-2">
+            <div class="card card--flat card--pad col gap-3">
+              <div class="t-sm t-600">How much history</div>
+              <div class="field"><label>Verification results</label><div><div class="segmented segmented--sm" role="group"><button class="is-active">All</button><button>Latest per pact</button><button>None</button></div></div></div>
+              <div class="field"><label>Versions</label><div><div class="segmented segmented--sm" role="group"><button>All</button><button class="is-active">What clean-up would keep</button></div></div><div class="hint">Skips 1,912 versions your <a href="settings.html">keep-rules</a> would remove anyway.</div></div>
+            </div>
+            <div class="card card--flat card--pad col gap-3">
+              <div class="t-sm t-600">When something already exists here</div>
+              <div class="col gap-2" role="radiogroup" aria-label="Conflicts">
+                <label class="radio"><input type="radio" name="cf" checked />Keep Apiome’s, skip the source’s</label>
+                <label class="radio"><input type="radio" name="cf" />Replace with the source’s</label>
+              </div>
+              <div class="t-xs t-subtle">6 pacticipants exist on both sides. Their names match; nothing else conflicts.</div>
+            </div>
+          </div>
+          <section class="status-strip" aria-label="Before you copy">
+            <div class="status-strip__row" role="group"><span class="t-caps" style="margin-right:4px">Before you copy</span>
+              <button class="status-chip status-chip--warn is-open" data-detail="sec" aria-expanded="true"><i data-lucide="lock-keyhole"></i>11 webhook secrets</button>
+              <button class="status-chip status-chip--accent" data-detail="v1" aria-expanded="false"><i data-lucide="info"></i>3 old pacts</button>
+              <button class="status-chip status-chip--accent" data-detail="team" aria-expanded="false"><i data-lucide="users"></i>Teams</button>
+            </div>
+            <div aria-live="polite">
+              <div class="status-strip__detail" data-tone="warn" data-detail-for="sec"><i data-lucide="lock-keyhole"></i><div><span class="banner-title">Secrets cannot be read from a broker.</span> The 11 webhooks are created disabled, each waiting for its value.</div><div class="banner-actions"><a class="btn btn--sm" href="settings.html">Secrets</a></div></div>
+              <div class="status-strip__detail" data-tone="accent" data-detail-for="v1" hidden><i data-lucide="info"></i><div><span class="banner-title">3 pacts use Pact v1.</span> They are stored as they are and read as v2; their history says so.</div></div>
+              <div class="status-strip__detail" data-tone="accent" data-detail-for="team" hidden><i data-lucide="users"></i><div><span class="banner-title">Teams are not copied.</span> Assign owners in Apiome after the copy; unowned pacticipants are listed for you.</div></div>
+            </div>
+          </section>
+        </div>
+        <div class="dialog__footer"><button class="btn" style="margin-right:auto">Save &amp; close</button><button class="btn btn--ghost" data-step-go="1">Back</button><button class="btn btn--primary" data-step-go="3">Start copying</button></div>
+      </div>
+
+      <!-- 3 · Copy -->
+      <div data-step-panel="3" hidden>
+        <div class="dialog__body col gap-3" style="padding-top:16px">
+          <div class="row-between"><div class="t-sm t-600">Copying from acme.pactflow.io</div><span class="t-xs t-subtle">about 4 minutes left</span></div>
+          <div class="meter"><div class="progress progress--striped"><span style="width:48%"></span></div><span class="meter-val">48%</span></div>
+          <table class="table table--dense"><thead><tr><th>Kind</th><th>Copied</th><th>Skipped</th><th>Failed</th></tr></thead><tbody>
+            <tr><td>Pacticipants</td><td class="t-num">36 / 42</td><td class="t-num">6 <span class="t-xs t-subtle">exist</span></td><td class="t-num">0</td></tr>
+            <tr><td>Versions</td><td class="t-num">1,904 / 1,904</td><td class="t-num">1,912</td><td class="t-num">0</td></tr>
+            <tr><td>Pacts</td><td class="t-num">612 / 1,284</td><td class="t-num">0</td><td class="t-num" style="color:var(--danger-fg)">2</td></tr>
+            <tr><td>Verification results</td><td class="t-num t-faint">waiting</td><td></td><td></td></tr>
+          </tbody></table>
+          <pre class="ct-log" aria-label="Log">14:21:07 pact   orders-ui → billing-service  8d2f1c  ok
+14:21:07 pact   legacy-cart → payments-api   0aa41e  failed: consumer version missing at source
+14:21:08 pact   mobile-app → payments-api    51ab90  ok</pre>
+          <div class="t-xs t-subtle">You can leave this page. The copy continues and a notification tells you when it ends; stopping is safe and it resumes where it stopped.</div>
+        </div>
+        <div class="dialog__footer"><button class="btn btn--danger-soft" style="margin-right:auto">Stop</button><button class="btn btn--ghost" data-step-go="2">Back</button><button class="btn btn--primary" data-step-go="4">Continue</button></div>
+      </div>
+
+      <!-- 4 · Switch over -->
+      <div data-step-panel="4" hidden>
+        <div class="dialog__body col gap-4" style="padding-top:16px">
+          <div class="row gap-3"><span class="icon-tile icon-tile--ok"><i data-lucide="check"></i></span><div><div class="t-sm t-600">Copied. Apiome and acme.pactflow.io give the same answers.</div><div class="t-xs t-subtle">Checked 40 can-i-deploy questions on both sides: 40 agree.</div></div></div>
+          <div class="grid grid-2">
+            <div class="col gap-2"><div class="t-sm t-600">1 · Point your pipelines here</div>
+              <pre class="code code--dark" aria-label="Environment"><span>PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker</span>
+<span>PACT_BROKER_TOKEN=&lt;an Apiome API key&gt;</span></pre>
+              <div class="t-xs t-subtle">Nothing else changes: the official Pact CLI and libraries keep working.</div></div>
+            <div class="col gap-2"><div class="t-sm t-600">2 · Watch who has moved</div>
+              <table class="table table--dense"><thead><tr><th>Pacticipant</th><th>Last published to</th></tr></thead><tbody>
+                <tr><td>Orders UI</td><td><span class="badge badge--dot" data-status="passed">Apiome</span> <span class="t-xs t-subtle">12 min ago</span></td></tr>
+                <tr><td>Mobile App</td><td><span class="badge badge--dot" data-status="warn">Old broker</span> <span class="t-xs t-subtle">yesterday</span></td></tr>
+                <tr><td>Billing Service</td><td><span class="badge badge--dot" data-status="passed">Apiome</span> <span class="t-xs t-subtle">1 h ago</span></td></tr>
+              </tbody></table></div>
+          </div>
+          <div class="switch-row"><div><div class="sw-title">Keep copying until everyone has moved</div><div class="t-xs t-subtle">Every 15 minutes, anything new at the old broker is brought over, so stragglers lose nothing.</div></div><button class="switch is-on" role="switch" aria-checked="true" data-action="switch" aria-label="Keep in sync"></button></div>
+        </div>
+        <div class="dialog__footer"><button class="btn" style="margin-right:auto">Download report</button><button class="btn btn--ghost" data-step-go="3">Back</button><a class="btn btn--primary" href="overview.html">Finish</a></div>
+      </div>
+    </section>
+
+    <div class="ct-wiz" style="overflow:visible"><section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="cli"><button class="tab is-active" role="tab" data-action="tab" data-target="cli-0">apiome</button><button class="tab" role="tab" data-action="tab" data-target="cli-1">Resume</button><button class="tab" role="tab" data-action="tab" data-target="cli-2">From scratch</button></div>
+          <div id="cli"><div data-tab-panel="cli-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact migrate --from https://acme.pactflow.io \</span>
+<span>  --token $PACTFLOW_TOKEN --dry-run</span></pre></div><div data-tab-panel="cli-1" hidden><pre class="code code--dark" aria-label="Resume"><span>apiome pact migrate --from https://acme.pactflow.io \</span>
+<span>  --token $PACTFLOW_TOKEN --state migrate.state</span></pre></div><div data-tab-panel="cli-2" hidden><pre class="code code--dark" aria-label="From scratch"><span>apiome pact migrate --from https://acme.pactflow.io \</span>
+<span>  --token $PACTFLOW_TOKEN --restart --matrix-limit 10000</span></pre></div></div>
+          
+        </section></div>
+  </div>
+</main>
+
+<div class="overlay overlay--drawer" id="runs-drawer" data-overlay>
+  <div class="drawer" role="dialog" aria-label="Past migrations">
+    <div class="drawer__header"><div><div class="drawer__title">Past migrations</div><div class="t-xs t-muted">Open one to resume it or read its report.</div></div><button class="btn btn--ghost btn--icon" style="margin-left:auto" data-action="close" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="drawer__body"><table class="table table--dense"><thead><tr><th>Source</th><th>State</th><th>When</th></tr></thead><tbody>
+      <tr><td class="mono">acme.pactflow.io</td><td><span class="badge" data-status="running">copying · 48%</span></td><td class="t-muted">now</td></tr>
+      <tr><td class="mono">broker.internal</td><td><span class="badge" data-status="completed">completed</span></td><td class="t-muted">2 weeks ago</td></tr>
+    </tbody></table></div>
+  </div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/migrate</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>Nothing. The screen for <code>apiome pact migrate</code> (PFX-6.7).</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li><code>--from</code>, <code>--token</code> or <code>--username</code>/<code>--password</code>, <code>--dry-run</code>, <code>--state</code>, <code>--restart</code>, <code>--matrix-limit</code>, <code>--batch-bytes</code>. The source is only read.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li>A real wizard (§8): four steps, one primary each, ghost Back, Save &amp; close; the steps are clickable in this mockup to review each state.</li>
+    <li><b>Choose</b>: tick what to copy by kind (or pick pacticipants), how much history, and what happens on a conflict.</li>
+    <li>Warnings as one status strip, not stacked banners (§5.4).</li>
+    <li><b>Copy</b>: striped progress, a per-kind table with skipped and failed counts, a live log; it survives leaving the page.</li>
+    <li><b>Switch over</b>: an agreement check (the same can-i-deploy questions asked on both sides), the two variables to change, a list of who has moved, and <b>keep copying until everyone has</b>.</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>Cannot connect: “Could not sign in to acme.pactflow.io (401). Check the token.” Continue stays disabled.</li>
+    <li>Some failed: the Failed column links to the list; “Retry the 2 that failed” replaces Continue until resolved or dismissed.</li>
+    <li>Answers disagree: “38 of 40 agree” with the two differences and why (a result not copied, a selector unsupported).</li>
+    <li>Without the migrate permission: “Ask a workspace admin to run this migration.”</li>
+  </ul>
+</template>
+</body>
+</html>

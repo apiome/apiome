@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pact from a mock · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="contracts.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="contracts.js" defer></script>
+</head>
+<body data-shell="app" data-nav="contracts" data-page="contracts/pact-from-mock" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><a href="overview.html">Contracts</a><i data-lucide="chevron-right"></i><span>Pact from a mock</span></div>
+          <h1 class="page-title">Generate a pact from a mock</h1>
+          <p class="page-desc">Run your consumer against the hosted mock. Apiome watches what it asks for and writes the pact — no Pact library, no test rewrite.</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="publish-pact.html">Other ways to publish</a>
+          <button class="btn" data-action="open" data-target="stub-dialog"><i data-lucide="server"></i>Serve pacts as a mock</button>
+          <button class="btn btn--primary" data-action="open" data-target="review-dialog"><i data-lucide="wand-sparkles"></i>Review pact</button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="page-body">
+    <section class="card card--pad">
+      <div class="ct-flow"><span class="badge badge--info">How it works</span><span>Spec</span><i data-lucide="arrow-right"></i><span>Hosted mock</span><i data-lucide="arrow-right"></i><span class="t-600">Your consumer calls it</span><i data-lucide="arrow-right"></i><span>Captured calls</span><i data-lucide="arrow-right"></i><span class="t-600">Pact</span><i data-lucide="arrow-right"></i><span>Verified against the real provider</span></div>
+      <p class="t-xs t-subtle mt-2">The mock answers from the spec, so every captured call already agrees with the provider contract. The pact adds the part only you know: which of it this consumer relies on. REST, GraphQL, gRPC and event channels all record the same way.</p>
+    </section>
+
+    <div class="ct-split">
+      <div class="col gap-4">
+
+        <section class="card card--pad col gap-3" aria-labelledby="s1">
+          <div class="ct-step"><span class="step__num">1</span><h2 class="t-h4" id="s1">Where the interactions come from</h2></div>
+          <div class="grid grid-2">
+            <div class="field"><label for="mk">Mock</label><select class="select" id="mk"><option>Billing API · 2.7.0</option><option>Payments API · 4.0.0</option><option>Ledger Events · 1.2.0 (Kafka)</option></select><div class="hint mono">mock.apiome.dev/acme/billing-api/2.7.0</div></div>
+            <div class="field"><label for="cn">Consumer</label><select class="select" id="cn"><option>Orders UI</option><option>New pacticipant…</option></select></div>
+          </div>
+          <div class="grid grid-2" role="radiogroup" aria-label="Source" data-panels="mode-panels">
+            <label class="ct-opt is-active" data-show="rec"><input type="radio" name="mode" checked /><span class="grow min-w-0"><span class="ct-opt__title">Record a session</span><div class="ct-opt__desc">Start, run your app or its tests against the mock, stop.</div></span><span class="badge" data-status="running"><span class="ct-rec"></span>Recording</span></label>
+            <label class="ct-opt" data-show="past"><input type="radio" name="mode" /><span class="grow min-w-0"><span class="ct-opt__title">Use past traffic</span><div class="ct-opt__desc">Pick a window or a session from the capture history. Nothing to re-run.</div></span></label>
+            <label class="ct-opt" data-show="scen"><input type="radio" name="mode" /><span class="grow min-w-0"><span class="ct-opt__title">Build from scenarios</span><div class="ct-opt__desc">No traffic at all: operations × mock scenarios become interactions.</div></span></label>
+            <label class="ct-opt" data-show="ci"><input type="radio" name="mode" /><span class="grow min-w-0"><span class="ct-opt__title">Keep it current from CI</span><div class="ct-opt__desc">Every CI run against the mock publishes that build’s pact.</div></span><span class="badge badge--honey">Set once</span></label>
+          </div>
+          <div id="mode-panels">
+            <div data-opt-panel="rec" class="card card--flat card--pad col gap-2">
+              <div class="row-between"><div class="t-sm t-600">Point your consumer here</div><span class="t-xs t-subtle row gap-2"><span class="ct-rec"></span>Recording for 02:14 · 23 calls</span></div>
+              <pre class="code code--dark" aria-label="Recording setup"><span>BILLING_API_URL=https://mock.apiome.dev/acme/billing-api/2.7.0</span>
+<span>X-Mock-Capture: orders-ui@3.4.0     # on every request, or once in your HTTP client</span></pre>
+              <div class="row wrap gap-2"><button class="btn btn--sm"><i data-lucide="copy"></i>Copy</button><button class="btn btn--sm btn--danger-soft"><i data-lucide="square"></i>Stop recording</button><span class="t-xs t-subtle">Only calls carrying the header are captured. Others using this mock are untouched.</span></div>
+              <details><summary class="t-xs t-600">No way to add a header?</summary><div class="t-xs t-muted mt-2">Use a private capture URL instead — <span class="mono">mock.apiome.dev/acme/billing-api/2.7.0/~capture/k3f9…</span> — or run the browser recorder for a web app.</div></details>
+            </div>
+            <div data-opt-panel="past" hidden class="card card--flat card--pad col gap-3">
+              <div class="grid grid-3"><div class="field"><label>From</label><select class="select"><option>Last 24 hours</option><option>Last 7 days</option><option>A session id…</option></select></div><div class="field"><label>Caller</label><select class="select"><option>API key · orders-ui-ci</option><option>Anyone</option></select></div><div class="field"><label>Environment label</label><select class="select"><option>Any</option></select></div></div>
+              <div class="t-xs t-subtle">1,840 calls in range · kept for 7 days · <a href="settings.html">retention</a></div>
+            </div>
+            <div data-opt-panel="scen" hidden class="card card--flat card--pad col gap-2">
+              <div class="t-sm t-600">Operations × scenarios</div>
+              <div class="table-wrap"><table class="table table--dense"><thead><tr><th>Operation</th><th>default</th><th>not-found</th><th>validation-error</th><th>rate-limited</th></tr></thead><tbody>
+                <tr><td><span class="method method--get">GET</span> <span class="ct-path">/invoices/{id}</span></td><td><input type="checkbox" checked aria-label="default" /></td><td><input type="checkbox" checked aria-label="not-found" /></td><td><span class="t-faint">—</span></td><td><input type="checkbox" aria-label="rate-limited" /></td></tr>
+                <tr><td><span class="method method--post">POST</span> <span class="ct-path">/invoices</span></td><td><input type="checkbox" checked aria-label="default" /></td><td><span class="t-faint">—</span></td><td><input type="checkbox" checked aria-label="validation-error" /></td><td><input type="checkbox" aria-label="rate-limited" /></td></tr>
+              </tbody></table></div>
+              <div class="t-xs t-subtle">4 interactions. Each scenario becomes the interaction’s provider state. <a href="../ship/published.html">Edit scenarios</a></div>
+            </div>
+            <div data-opt-panel="ci" hidden class="card card--flat card--pad col gap-2">
+              <div class="t-sm t-600">Add two lines to the consumer’s pipeline</div>
+              <pre class="code code--dark"><span>- run: apiome pact record --mock billing-api/2.7.0 --consumer "Orders UI" --publish -- npm test</span></pre>
+              <div class="grid grid-2"><div class="field"><label>Publish when</label><select class="select"><option>The tests pass</option><option>Always</option></select></div><div class="field"><label>If the pact got looser</label><select class="select"><option>Publish and tell me</option><option>Hold for review</option></select></div></div>
+              <div class="t-xs t-subtle">Last run: main · 3.4.0+a1c9e02 · 6 interactions · unchanged.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card--pad col gap-3" aria-labelledby="s2">
+          <div class="row-between wrap gap-2"><div class="ct-step"><span class="step__num">2</span><h2 class="t-h4" id="s2">Captured calls</h2></div><div class="row gap-2"><span class="t-xs t-subtle">23 calls → 6 distinct</span><div class="segmented segmented--sm" role="group" aria-label="Grouping"><button class="is-active">Grouped</button><button>Every call</button></div></div></div>
+          <div class="table-wrap"><div class="scroll-x"><table class="table table--dense">
+            <thead><tr><th><input type="checkbox" checked aria-label="Include all" /></th><th>Request</th><th>Response</th><th>Provider state</th><th>Calls</th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="method method--get">GET</span> <span class="ct-path">/invoices/{id}</span><div class="cell-sub">ids 42, 43, 107 · 3 ids merged into one interaction</div></td><td><span class="badge" data-status="passed">200</span></td><td><span class="tag">scenario: default</span><div class="cell-sub">“an invoice exists”</div></td><td class="t-num">9</td></tr>
+              <tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="method method--get">GET</span> <span class="ct-path">/invoices/{id}</span><div class="cell-sub">State from X-Mock-Scenario</div></td><td><span class="badge" data-status="warn">404</span></td><td><span class="tag">scenario: not-found</span><div class="cell-sub">“no invoice with that id”</div></td><td class="t-num">2</td></tr>
+              <tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="method method--post">POST</span> <span class="ct-path">/invoices</span><div class="cell-sub">sends 4 of 11 fields · Stateful: the invoice is read back later</div></td><td><span class="badge" data-status="passed">201</span></td><td><span class="tag">session</span><div class="cell-sub">“a customer 7 exists”</div></td><td class="t-num">5</td></tr>
+              <tr><td><input type="checkbox" checked aria-label="Include" /></td><td><span class="method method--get">GET</span> <span class="ct-path">/customers/{id}</span></td><td><span class="badge" data-status="passed">200</span></td><td><span class="tag">scenario: default</span></td><td class="t-num">4</td></tr>
+              <tr><td><input type="checkbox" aria-label="Include" /></td><td><span class="method method--get">GET</span> <span class="ct-path">/invoices/{id}</span><div class="cell-sub">Injected by chaos mode — left out</div></td><td><span class="badge" data-status="failed">503</span></td><td><span class="tag">chaos</span></td><td class="t-num">2</td></tr>
+              <tr><td><input type="checkbox" aria-label="Include" /></td><td><span class="method method--get">GET</span> <span class="ct-path">/health</span><div class="cell-sub">Not in the spec — left out</div></td><td><span class="badge" data-status="passed">200</span></td><td></td><td class="t-num">1</td></tr>
+            </tbody>
+          </table></div></div>
+        </section>
+
+        <section class="card card--pad col gap-3" aria-labelledby="s3">
+          <div class="row-between wrap gap-2"><div class="ct-step"><span class="step__num">3</span><h2 class="t-h4" id="s3">How strict the pact should be</h2></div><div class="segmented segmented--sm" role="group" aria-label="Preset"><button>Loose</button><button class="is-active">Balanced</button><button>Strict</button></div></div>
+          <div class="grid grid-2">
+            <div class="field"><label>Values</label><div><div class="segmented segmented--sm" role="group" aria-label="Matching"><button>Exact</button><button class="is-active">By type</button><button>From the spec</button></div></div><div class="hint"><span class="mono">"amount": 1250</span> → any integer. “From the spec” also takes formats and patterns.</div></div>
+            <div class="field"><label>Response fields</label><div><div class="segmented segmented--sm" role="group" aria-label="Fields"><button class="is-active">Only what was read</button><button>All returned</button></div></div><div class="hint">Needs the client SDK or browser recorder to report which fields were read.</div></div>
+          </div>
+          <div class="grid grid-2">
+            <div class="col gap-2"><div class="t-sm t-600">Sensitive values</div><div class="ct-kv"><span>Authorization</span><span class="badge">Removed</span><span>customer.email</span><span class="badge">Example</span><span>card.number</span><span class="badge">Example</span></div><div class="hint">The mock’s redaction rules. <a href="settings.html">Edit</a></div></div>
+            <div class="col gap-2"><div class="t-sm t-600">Per-field overrides</div><div class="ct-kv"><span>POST /invoices → $.id</span><span class="tag">uuid</span><span>GET /invoices/{id} → $.issued_at</span><span class="tag">ISO-8601</span></div><button class="btn btn--link btn--sm" style="align-self:flex-start">+ Override</button></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="ct-aside" aria-label="The pact so far">
+        <section class="card card--pad col gap-2">
+          <div class="t-caps">The pact so far</div>
+          <div class="row gap-3"><span class="avatar avatar--lg avatar--hex avatar--a">OU</span><div><div class="t-sm t-600">Orders UI → Billing Service</div><div class="t-xs t-subtle">4 interactions · Pact v4 · 3.4.0</div></div></div>
+          <div class="t-caps mt-2">Of the spec, this consumer uses</div>
+          <div class="ct-bar" role="img" aria-label="3 of 12 operations used"><span style="width:25%;background:var(--accent)"></span></div>
+          <div class="t-xs t-subtle">3 of 12 operations · 9 of 31 response fields. The provider can change the rest without breaking Orders UI.</div>
+          <div class="t-caps mt-2">Against</div>
+          <div class="row gap-2 t-sm"><i data-lucide="circle-check" style="color:var(--ok)"></i>2.7.0 — the mocked spec</div>
+          <div class="row gap-2 t-sm"><i data-lucide="circle-check" style="color:var(--ok)"></i>2.6.1 — in production</div>
+          <div class="row gap-2 t-sm"><i data-lucide="triangle-alert" style="color:var(--warn)"></i>2.8.0-rc1 drops <span class="mono">currency</span> — this pact will catch it</div>
+        </section>
+        <section class="card card--pad ct-cli" aria-label="The same from anywhere">
+          <div class="row-between mb-2"><div class="t-caps">The same, from anywhere</div><div class="row gap-1"><span class="badge badge--honey">New commands</span><button class="btn btn--ghost btn--sm btn--icon" aria-label="Copy" data-tip="Copy"><i data-lucide="copy"></i></button></div></div>
+          <div class="tabs tabs--pills" role="tablist" data-tabs="cli"><button class="tab is-active" role="tab" data-action="tab" data-target="cli-0">apiome</button><button class="tab" role="tab" data-action="tab" data-target="cli-1">GitHub Action</button><button class="tab" role="tab" data-action="tab" data-target="cli-2">Stub</button></div>
+          <div id="cli"><div data-tab-panel="cli-0"><pre class="code code--dark" aria-label="apiome"><span>apiome pact record \</span>
+<span>  --mock billing-api/2.7.0 \</span>
+<span>  --consumer &quot;Orders UI&quot; \</span>
+<span>  --consumer-app-version 3.4.0 \</span>
+<span>  --matching type --publish \</span>
+<span>  -- npm test</span></pre></div><div data-tab-panel="cli-1" hidden><pre class="code code--dark" aria-label="GitHub Action"><span>- uses: apiome/pact-action@v1</span>
+<span>  with:</span>
+<span>    command: record</span>
+<span>    mock: billing-api/2.7.0</span>
+<span>    pacticipant: Orders UI</span>
+<span>    run: npm test</span></pre></div><div data-tab-panel="cli-2" hidden><pre class="code code--dark" aria-label="Stub"><span>apiome pact stub \</span>
+<span>  --provider &quot;Billing Service&quot; \</span>
+<span>  --pacts main,deployed</span></pre></div></div>
+          <div class="t-xs t-subtle mt-2">Wraps a command: starts a capture, runs it, stops, writes the pact.</div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<div class="overlay" id="review-dialog" data-overlay>
+  <div class="dialog dialog--lg" role="dialog" aria-labelledby="rv-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--accent"><i data-lucide="wand-sparkles"></i></span><div><div class="dialog__title" id="rv-t">Review the generated pact</div><div class="dialog__desc">Orders UI 3.4.0 → Billing Service · 4 interactions · from capture <span class="mono">orders-ui@3.4.0</span></div></div></div>
+    <div class="dialog__body col gap-3">
+      <div class="tabs tabs--pills" role="tablist" data-tabs="rv"><button class="tab is-active" data-action="tab" data-target="rv-diff">Changes since the last pact</button><button class="tab" data-action="tab" data-target="rv-json">Pact JSON</button></div>
+      <div id="rv">
+        <div data-tab-panel="rv-diff" class="col gap-2">
+          <div class="row gap-2 t-sm"><i data-lucide="plus" style="color:var(--ok)"></i><span><b>New</b> <span class="method method--get">GET</span> <span class="mono">/invoices/{id}</span> → 404 “no invoice with that id”</span></div>
+          <div class="row gap-2 t-sm"><i data-lucide="minus" style="color:var(--fg-subtle)"></i><span><b>No longer needed</b> <span class="mono">$.customer.phone</span> on <span class="method method--get">GET</span> <span class="mono">/customers/{id}</span></span></div>
+          <div class="row gap-2 t-sm"><i data-lucide="equal" style="color:var(--fg-subtle)"></i><span>3 interactions unchanged</span></div>
+          <div class="callout callout--accent mt-2">Looser than before in one place. A provider that was verified against the old pact stays verified for the unchanged parts.</div>
+        </div>
+        <div data-tab-panel="rv-json" hidden><pre class="code code--dark code--lines" style="max-height:240px;overflow:auto" aria-label="Pact"><span>{ "description": "create an invoice",</span><span>  "providerStates": [{ "name": "a customer 7 exists" }],</span><span>  "request": { "method": "POST", "path": "/invoices" },</span><span>  "response": { "status": 201,</span><span>    "body": { "id": "…", "amount": 1250, "currency": "EUR" },</span><span>    "matchingRules": { "$.id": "uuid", "$.amount": "integer" } } }</span></pre></div>
+      </div>
+      <div class="field"><label>After publishing</label><label class="check"><input type="checkbox" checked />Ask the provider to verify it</label><label class="check"><input type="checkbox" checked />Keep this pact current from CI</label></div>
+    </div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Keep editing</button><button class="btn"><i data-lucide="download"></i>Download</button><button class="btn btn--primary" data-action="close">Publish pact</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="stub-dialog" data-overlay>
+  <div class="dialog" role="dialog" aria-labelledby="st-t">
+    <div class="dialog__header"><span class="icon-tile icon-tile--violet"><i data-lucide="server"></i></span><div><div class="dialog__title" id="st-t">Serve pacts as a mock</div><div class="dialog__desc">A hosted stub that answers with what the pacts promise. Each provider state becomes a scenario.</div></div></div>
+    <div class="dialog__body col gap-3">
+      <div class="grid grid-2"><div class="field"><label>Provider</label><select class="select"><option>Billing Service</option></select></div><div class="field"><label>Pacts to serve</label><select class="select"><option>All consumers · latest on main</option><option>Orders UI · 3.4.0</option><option>Whatever is deployed to production</option></select></div></div>
+      <div class="field"><label>When no interaction matches</label><div><div class="segmented" role="group"><button class="is-active">Answer from the spec</button><button>Return 501</button></div></div><div class="hint">Falling back to the spec mock means the stub is never a dead end.</div></div>
+      <pre class="code code--dark" aria-label="Stub URL"><span>https://mock.apiome.dev/acme/pacts/billing-service/main</span></pre>
+    </div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="close">Create stub</button></div>
+  </div>
+</div>
+<template id="notes">
+  <p class="route">/ade/dashboard/pacts/from-mock</p>
+  <h4>Replaces</h4>
+  <ul>
+    <li>Nothing. New: neither the CLI nor PactFlow turns mock traffic into a pact. It joins the hosted mock’s capture store (<code>X-Mock-Capture</code>, scenarios, sessions, redaction, chaos) to the broker.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul>
+    <li>The mock’s headers, scenarios, session behaviour and redaction rules. The result is an ordinary Pact v4 file, published through the existing route with the same webhooks.</li>
+  </ul>
+  <h4>Adds</h4>
+  <ul>
+    <li><b>Four sources</b>, each with its own panel: record a session, past traffic (window, caller), operations × scenarios with no traffic, or standing CI recording with a “pact got looser” policy.</li>
+    <li>A capture URL and the browser recorder for consumers that cannot add a header.</li>
+    <li><b>Grouping</b> with the reason on every row; chaos-injected and off-spec calls are out by default.</li>
+    <li><b>Provider states for free</b> from the scenario or session behind each response.</li>
+    <li><b>Strictness</b>: Loose / Balanced / Strict presets over two axes (values, fields), redaction and per-field overrides.</li>
+    <li>Live aside: how much of the spec the consumer uses, and the result against the mocked, deployed and draft provider versions.</li>
+    <li>Review shows the <b>change since the previous pact</b> first, JSON second.</li>
+    <li><b>Serve pacts as a mock</b> — the reverse direction — in the header.</li>
+    <li>To ship with it (the parity rule): <code>apiome pact record -- &lt;cmd&gt;</code>, <code>apiome pact stub</code>, and a <code>record</code> command in the GitHub Action.</li>
+  </ul>
+  <h4>States</h4>
+  <ul>
+    <li>Mock off for the version: “Turn on the hosted mock for Billing API 2.7.0 to record against it”, with the switch inline.</li>
+    <li>Recording, no calls yet: “Waiting for the first call. Check the URL and the X-Mock-Capture header.”</li>
+    <li>Only off-spec calls: “Nothing here matches the spec, so there is nothing to put in a pact.”</li>
+    <li>Field usage unknown: “Only what was read” is disabled and says why.</li>
+    <li>Capture expired: “This session’s calls are gone (kept 7 days).”</li>
+  </ul>
+</template>
+</body>
+</html>
