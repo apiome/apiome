@@ -34,6 +34,7 @@ from .keyset_pagination import cursor_query, limit_query
 from .pact_audit import audited_write
 from .pact_cleanup_store import (
     LABELS_ORDER,
+    PACTICIPANT_LABELS_ORDER,
     add_label,
     delete_pacticipant,
     delete_version,
@@ -140,12 +141,16 @@ class PacticipantVersionListResponse(BaseModel):
 
 
 class PacticipantLabelListResponse(BaseModel):
-    """The labels of one pacticipant."""
+    """One page of a pacticipant's labels."""
 
     model_config = ConfigDict(extra="forbid")
 
     labels: List[PacticipantLabelRecord] = Field(default_factory=list, description="By name.")
     count: int = Field(description="How many labels were returned.")
+    has_more: bool = Field(default=False, description="Whether another page exists.")
+    next_cursor: Optional[str] = Field(
+        default=None, description="Pass as `cursor` to read the next page; null on the last page."
+    )
 
 
 class LabelName(BaseModel):
@@ -896,34 +901,45 @@ def list_workspace_labels(
     "/{tenant_slug}/pacticipants/{pacticipant_ref}/labels",
     response_model=PacticipantLabelListResponse,
     summary="List a pacticipant's labels",
-    description="The labels on this pacticipant, by name.\n\nRequires `pacts:view`.",
+    description=f"The labels on this pacticipant, by name.\n\n{_PAGING_NOTE}\n\nRequires `pacts:view`.",
 )
 def list_labels_of_pacticipant(
     tenant_slug: str,
     pacticipant_ref: str,
+    limit: int = limit_query(),
+    cursor: Optional[str] = cursor_query(),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> PacticipantLabelListResponse:
-    """List a pacticipant's labels.
+    """List one page of a pacticipant's labels.
 
     Args:
         tenant_slug: The tenant in the URL.
         pacticipant_ref: Handle, id or display name.
+        limit: Page size.
+        cursor: Where the page starts (the previous page's ``next_cursor``).
         auth_data: The authenticated principal.
 
     Returns:
-        Its labels.
+        The labels of the page and whether another follows.
 
     Raises:
-        HTTPException: 404 for an unknown pacticipant, 403 without ``pacts:view``.
+        HTTPException: 400 for a malformed cursor, 404 for an unknown pacticipant, 403 without
+            ``pacts:view``.
     """
     enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    after = PACTICIPANT_LABELS_ORDER.parse(cursor)
     _ = tenant_slug
     try:
         pacticipant = get_pacticipant(db, _tenant_id(auth_data), pacticipant_ref)
     except PacticipantValidationError as exc:
         raise _http_error(exc) from exc
-    labels = list_pacticipant_labels(db, pacticipant)
-    return PacticipantLabelListResponse(labels=labels, count=len(labels))
+    page = PACTICIPANT_LABELS_ORDER.page(
+        list_pacticipant_labels(db, pacticipant, limit=limit + 1, cursor=after), limit
+    )
+    labels = list(page.items)
+    return PacticipantLabelListResponse(
+        labels=labels, count=len(labels), has_more=page.has_more, next_cursor=page.next_cursor
+    )
 
 
 @router.get(

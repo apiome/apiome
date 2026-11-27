@@ -1,13 +1,15 @@
-"""Benchmark the Pact matrix on a scratch database — PFX-1.6 (#6919).
+"""Benchmark the Pact matrix on a scratch database — PFX-1.6 (#6919), PFX-6.6 (#6958).
 
-Acceptance: a matrix query's p95 stays under 200 ms with 10,000 pact versions. This script seeds
-that many into a **scratch** database, times the queries a Pact client really sends, prints the
-percentiles, and removes what it seeded.
+Acceptance: a matrix query's p95 stays under 200 ms with 10,000 pact versions (PFX-1.6), and with
+100,000 pacticipant versions (PFX-6.6). This script seeds a workspace into a **scratch** database,
+times the queries a Pact client really sends — and the verification console's status read —
+prints the percentiles, and removes what it seeded.
 
-It seeds one workspace with 5 consumers and 5 providers; each consumer has 400 versions and every
-one of them publishes a different pact for every provider (10,000 pact versions, 10,000
-publications); every pact is verified by two provider versions (20,000 results); one version of
-each application is deployed to ``production``.
+It seeds one workspace with ``--apps`` consumers and as many providers; each application has
+``--versions`` versions and every consumer version publishes a different pact for every provider;
+every pact is verified by two provider versions; one version of each application is deployed to
+``production``. The defaults (5 apps, 400 versions) give 10,000 pact versions; ``--versions 10000``
+gives 100,000 pacticipant versions, 250,000 pact versions and 500,000 results (about 30 s to seed).
 
 Run it against a database that has the migrations applied and nothing you care about::
 
@@ -15,6 +17,7 @@ Run it against a database that has the migrations applied and nothing you care a
     (cd ../apiome-db && node --import tsx src/cli.ts --database-url "postgresql:///pfx_bench" \
         migrate --scripts-dir scripts)
     DATABASE_URL="postgresql:///pfx_bench" PYTHONPATH=src python scripts/bench_pact_matrix.py
+    DATABASE_URL="postgresql:///pfx_bench" PYTHONPATH=src python scripts/bench_pact_matrix.py --versions 10000
 
 Exits ``1`` when a query's p95 is over the budget. Each measured call is the whole of what a
 request does after authentication: parse, resolve the selectors, read the rows, decide the
@@ -28,11 +31,13 @@ import statistics
 import sys
 import time
 import uuid
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from app.database import Database
+from app.db_timeouts import long_statements
 from app.pact_matrix import deployment_verdict, parse_can_i_deploy_query, parse_matrix_query
 from app.pact_matrix_store import query_matrix, read_version_details
+from app.pact_verification_ops import verification_status
 
 BUDGET_MS = 200.0
 
@@ -50,19 +55,21 @@ WITH roles AS (
 ), numbered AS (
     SELECT v.id, v.pacticipant_id, substr(v.number, 2)::int AS n, a.slug
     FROM versions v JOIN apps a ON a.id = v.pacticipant_id
-), pacts AS (
-    INSERT INTO apiome.pact_version (tenant_id, consumer_id, provider_id, sha, content, interaction_count)
-    SELECT %(tenant)s::uuid, cv.pacticipant_id, p.id,
-           encode(sha256((cv.id::text || p.id::text)::bytea), 'hex'), '{}'::jsonb, 1
+), pairs AS (
+    -- Every consumer version x provider, with the content hash of the pact it publishes. Hashed
+    -- once here, so the publication below finds its pact by an equality join on the hash.
+    SELECT cv.id AS consumer_version_id, cv.pacticipant_id AS consumer_id, p.id AS provider_id,
+           encode(sha256((cv.id::text || p.id::text)::bytea), 'hex') AS sha
     FROM numbered cv JOIN apps p ON p.slug LIKE 'provider-%%'
     WHERE cv.slug LIKE 'consumer-%%'
+), pacts AS (
+    INSERT INTO apiome.pact_version (tenant_id, consumer_id, provider_id, sha, content, interaction_count)
+    SELECT %(tenant)s::uuid, consumer_id, provider_id, sha, '{}'::jsonb, 1 FROM pairs
     RETURNING id, consumer_id, provider_id, sha
 ), publications AS (
     INSERT INTO apiome.pact_publication (consumer_id, provider_id, consumer_version_id, pact_version_id)
-    SELECT pv.consumer_id, pv.provider_id, cv.id, pv.id
-    FROM pacts pv
-    JOIN numbered cv ON cv.pacticipant_id = pv.consumer_id
-     AND pv.sha = encode(sha256((cv.id::text || pv.provider_id::text)::bytea), 'hex')
+    SELECT pv.consumer_id, pv.provider_id, pairs.consumer_version_id, pv.id
+    FROM pacts pv JOIN pairs ON pairs.sha = pv.sha
     RETURNING consumer_version_id, pact_version_id, consumer_id, provider_id
 ), results AS (
     INSERT INTO apiome.verification_result
@@ -71,7 +78,9 @@ WITH roles AS (
            1 + (cv.n - rv.n), (cv.n + rv.n) %% 17 <> 0
     FROM publications pub
     JOIN numbered cv ON cv.id = pub.consumer_version_id
-    JOIN numbered rv ON rv.pacticipant_id = pub.provider_id AND rv.n IN (cv.n, cv.n - 1)
+    -- The provider versions with the same number and the one before: an equality join each.
+    CROSS JOIN (VALUES (0), (1)) back(k)
+    JOIN numbered rv ON rv.pacticipant_id = pub.provider_id AND rv.n = cv.n - back.k
     RETURNING 1
 ), branches AS (
     INSERT INTO apiome.pacticipant_branch (pacticipant_id, name, head_version_id)
@@ -98,21 +107,39 @@ SELECT (SELECT count(*) FROM pacts) AS pact_versions,
 """
 
 
+#: The tables the matrix reads, analysed after seeding so the planner sees their real size.
+_ANALYZED = (
+    "pacticipant",
+    "pacticipant_version",
+    "pacticipant_branch",
+    "pacticipant_branch_version",
+    "pact_version",
+    "pact_publication",
+    "verification_result",
+    "deployed_version",
+)
+
+
 def _seed(db: Database, apps: int, versions: int) -> str:
     """Create a workspace with ``apps`` consumers and providers of ``versions`` versions each."""
     slug = f"pfx-bench-{uuid.uuid4().hex[:10]}"
     tenant = db.execute_query(
         "INSERT INTO apiome.tenants (name, slug) VALUES (%s, %s) RETURNING id::text AS id", (slug, slug)
     )[0]["id"]
-    counts = db.execute_query(_SEED, {"tenant": tenant, "apps": apps, "versions": versions})[0]
-    for table in ("pact_version", "pact_publication", "verification_result", "pacticipant_version"):
-        db._execute_write(f"ANALYZE apiome.{table}")
+    # A 100k-version seed runs for minutes: lift the request ceiling for the seed only.
+    with long_statements(0):
+        counts = db.execute_query(_SEED, {"tenant": tenant, "apps": apps, "versions": versions})[0]
+        for table in _ANALYZED:
+            db._execute_write(f"ANALYZE apiome.{table}")
     print("seeded:", ", ".join(f"{value} {key}" for key, value in dict(counts).items()))
     return tenant
 
 
-def _matrix(db: Database, tenant: str, parse: Callable[[str], Any], query: str) -> Dict[str, Any]:
-    """Everything a matrix request does after authentication."""
+def _matrix(db: Database, tenant: str, parse: Optional[Callable[[str], Any]], query: str) -> Dict[str, Any]:
+    """Everything a matrix request does after authentication (``parse`` ``None``: the status read)."""
+    if parse is None:
+        status = verification_status(db, tenant, query)
+        return {"rows": len(status.pacts), "deployable": None}
     selectors, options = parse(query)
     result = query_matrix(db, tenant, selectors, options)
     verdict = deployment_verdict(result)
@@ -160,6 +187,7 @@ def main() -> int:
             "q[][pacticipant]=consumer-1&q[][pacticipant]=provider-1&latestby=cvpv",
         ),
         "one pacticipant, every row (limit 100)": (parse_matrix_query, "q[][pacticipant]=provider-1"),
+        "verification status (console)": (None, "provider-1"),
     }
     worst = 0.0
     try:

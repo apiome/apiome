@@ -59,6 +59,7 @@ __all__ = [
     "get_latest_pact",
     "get_pact",
     "get_pact_by_sha",
+    "list_latest_pact_candidates",
     "list_pact_candidates",
     "publish_pacts",
 ]
@@ -484,6 +485,89 @@ _CANDIDATE_SELECT = """
 """
 
 
+#: Each consumer's newest publication for a provider (PFX-6.6): the latest-recorded live consumer
+#: version that published one. Found without reading the provider's history: the consumers are
+#: walked through ``idx_pact_publication_pair`` one index entry at a time (a loose index scan, as in
+#: :mod:`app.pact_matrix_store`), and for each the newest versions are tried through
+#: ``idx_pacticipant_version_latest (pacticipant_id, seq DESC)`` until one published for the
+#: provider. The per-version branches, tags and environments of :data:`_CANDIDATE_SELECT` are then
+#: read for these rows only (at 100,000 versions: ~490 ms for every publication before).
+_LATEST_CANDIDATE_IDS = """
+    AND p.id IN (
+        WITH RECURSIVE consumers AS (
+            SELECT step.consumer_id
+            FROM (SELECT lp.provider_id, lp.consumer_id FROM apiome.pact_publication lp
+                  WHERE lp.provider_id >= %s::uuid
+                  ORDER BY lp.provider_id, lp.consumer_id LIMIT 1) step
+            WHERE step.provider_id = %s::uuid
+            UNION ALL
+            SELECT step.consumer_id
+            FROM consumers w
+            CROSS JOIN LATERAL (SELECT lp.provider_id, lp.consumer_id FROM apiome.pact_publication lp
+                                WHERE (lp.provider_id, lp.consumer_id) > (%s::uuid, w.consumer_id)
+                                ORDER BY lp.provider_id, lp.consumer_id LIMIT 1) step
+            WHERE step.provider_id = %s::uuid
+        )
+        SELECT newest.id
+        FROM consumers w
+        CROSS JOIN LATERAL (SELECT lp.id
+                            FROM apiome.pacticipant_version lv
+                            JOIN apiome.pact_publication lp
+                              ON lp.consumer_version_id = lv.id AND lp.consumer_id = lv.pacticipant_id
+                             AND lp.provider_id = %s::uuid
+                            WHERE lv.pacticipant_id = w.consumer_id AND lv.deleted_at IS NULL
+                            ORDER BY lv.seq DESC LIMIT 1) newest
+    )
+"""
+
+
+def _candidates(rows: Any) -> List[PactCandidate]:
+    """Build :class:`~app.pact_selectors.PactCandidate` records from :data:`_CANDIDATE_SELECT` rows."""
+    return [
+        PactCandidate(
+            consumer_id=row["consumer_id"],
+            consumer_slug=row["consumer_slug"],
+            consumer_name=row["consumer_name"],
+            consumer_main_branch=row.get("consumer_main_branch"),
+            version_id=row["version_id"],
+            version_number=row["version_number"],
+            version_seq=int(row["version_seq"]),
+            sha=row["sha"],
+            branches=tuple(row.get("branches") or ()),
+            tags=tuple(row.get("tags") or ()),
+            deployed_to=tuple(row.get("deployed_to") or ()),
+            released_in=tuple(row.get("released_in") or ()),
+            published_at=row.get("published_at"),
+        )
+        for row in rows or []
+    ]
+
+
+def list_latest_pact_candidates(
+    db: Any, tenant_id: str, provider_ref: str
+) -> Tuple[PacticipantRecord, List[PactCandidate]]:
+    """Read each consumer's newest publication of a pact for a provider.
+
+    The same as :func:`list_pact_candidates` followed by
+    :func:`app.pact_selectors.latest_per_consumer` with no predicate, without reading every
+    publication: the verification console, the stale-pact sweep and "verify stale" need only these.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider_ref: The provider's handle, id or name.
+
+    Returns:
+        The provider, and one publication per consumer in the order their versions were recorded.
+
+    Raises:
+        PacticipantValidationError: ``pacticipant-not-found`` for an unknown provider.
+    """
+    provider = get_pacticipant(db, tenant_id, provider_ref)
+    query = _CANDIDATE_SELECT.replace("    ORDER BY v.seq\n", _LATEST_CANDIDATE_IDS + "    ORDER BY v.seq\n")
+    return provider, _candidates(db.execute_query(query, (provider.id,) * 6))
+
+
 def list_pact_candidates(db: Any, tenant_id: str, provider_ref: str) -> Tuple[PacticipantRecord, List[PactCandidate]]:
     """Read every publication of a pact for a provider, for selectors to choose from.
 
@@ -504,23 +588,4 @@ def list_pact_candidates(db: Any, tenant_id: str, provider_ref: str) -> Tuple[Pa
         PacticipantValidationError: ``pacticipant-not-found`` for an unknown provider.
     """
     provider = get_pacticipant(db, tenant_id, provider_ref)
-    rows = db.execute_query(_CANDIDATE_SELECT, (provider.id,)) or []
-    candidates = [
-        PactCandidate(
-            consumer_id=row["consumer_id"],
-            consumer_slug=row["consumer_slug"],
-            consumer_name=row["consumer_name"],
-            consumer_main_branch=row.get("consumer_main_branch"),
-            version_id=row["version_id"],
-            version_number=row["version_number"],
-            version_seq=int(row["version_seq"]),
-            sha=row["sha"],
-            branches=tuple(row.get("branches") or ()),
-            tags=tuple(row.get("tags") or ()),
-            deployed_to=tuple(row.get("deployed_to") or ()),
-            released_in=tuple(row.get("released_in") or ()),
-            published_at=row.get("published_at"),
-        )
-        for row in rows
-    ]
-    return provider, candidates
+    return provider, _candidates(db.execute_query(_CANDIDATE_SELECT, (provider.id,)))

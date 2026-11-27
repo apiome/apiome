@@ -45,7 +45,7 @@ from .consumer_contract_store import ConsumerActor
 from .db_advisory_lock import SessionAdvisoryLock
 from .pact_pending_store import load_pending_evidence
 from .pact_publication import CODE_PACT_NOT_FOUND, PactPublicationError
-from .pact_publication_store import list_pact_candidates
+from .pact_publication_store import list_latest_pact_candidates, list_pact_candidates
 from .pact_remediation import (
     EffectiveSettings,
     RepublishRequestRecord,
@@ -58,7 +58,6 @@ from .pact_selectors import (
     PactCandidate,
     VerifiablePact,
     is_pending,
-    latest_per_consumer,
     parse_for_verification_request,
 )
 from .pact_verifier import MAX_PACTS_PER_RUN, PactVerificationOptions, ProviderStateHandler
@@ -425,8 +424,7 @@ def _parse(value: Any) -> Optional[datetime]:
 
 def _latest_pacts(db: Any, tenant_id: str, provider_ref: str) -> Tuple[PacticipantRecord, List[PactCandidate]]:
     """The provider and each consumer's newest publication, by consumer handle."""
-    provider, candidates = list_pact_candidates(db, tenant_id, provider_ref)
-    latest = latest_per_consumer(candidates, lambda _candidate: True)
+    provider, latest = list_latest_pact_candidates(db, tenant_id, provider_ref)
     return provider, sorted(latest, key=lambda candidate: candidate.consumer_slug)
 
 

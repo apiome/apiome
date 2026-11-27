@@ -34,7 +34,10 @@ A label is a free-form name on a pacticipant. A pacticipant can carry any number
    may contain `/` (`team/billing`).
 2. **List the pacticipants with a label:** `GET /v1/tenants/acme/pacticipants?label=team-billing`.
 3. **List every label in the workspace:** `GET /v1/tenants/acme/pacticipant-labels`.
-4. **Remove a label:** `DELETE …/pacticipants/billing-service/labels/team-billing`.
+4. **List one pacticipant's labels:** `GET …/pacticipants/billing-service/labels`. The answer comes a
+   page at a time, by name: pass `limit` (1 to 200, default 50), and while `has_more` is `true`
+   pass the answer's `next_cursor` as `cursor` to read the next page.
+5. **Remove a label:** `DELETE …/pacticipants/billing-service/labels/team-billing`.
 
 The Pact Broker's label routes work too, so a script written for a Pact Broker runs unchanged:
 

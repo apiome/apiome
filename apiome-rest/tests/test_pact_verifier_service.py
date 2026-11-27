@@ -93,6 +93,14 @@ class _Broker:
             raise PacticipantValidationError("pacticipant-not-found", f"no pacticipant '{provider_ref}'")
         return _PROVIDER, list(self.candidates)
 
+    def list_latest_pact_candidates(self, db: Any, tenant_id: str, provider_ref: str):
+        """Each consumer's newest candidate, as the store's ``DISTINCT ON`` reads it (PFX-6.6)."""
+        from app.pact_selectors import latest_per_consumer
+
+        provider, candidates = self.list_pact_candidates(db, tenant_id, provider_ref)
+        latest = latest_per_consumer(candidates, lambda _candidate: True)
+        return provider, sorted(latest, key=lambda candidate: candidate.version_seq)
+
     def get_pact_by_sha(self, _db: Any, tenant_id: str, provider: str, consumer: str, sha: str) -> PactRecord:
         assert (tenant_id, provider) == (_TENANT, "ledger-api")
         candidate = next(c for c in self.candidates if c.sha == sha and c.consumer_slug == consumer)

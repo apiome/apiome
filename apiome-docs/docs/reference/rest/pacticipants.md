@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.689.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.690.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pacticipants` · 21 operations
 
@@ -335,6 +335,8 @@ Operation id: `list_pacticipant_branches_v1_tenants__tenant_slug__pacticipants__
 
 The labels on this pacticipant, by name.
 
+Pass the previous page's `next_cursor` as `cursor` until `has_more` is false.
+
 Requires `pacts:view`.
 
 Operation id: `list_labels_of_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels_get`
@@ -345,6 +347,8 @@ Operation id: `list_labels_of_pacticipant_v1_tenants__tenant_slug__pacticipants_
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -748,12 +752,14 @@ Attributes:
 
 ### `PacticipantLabelListResponse` {#schema-pacticipantlabellistresponse}
 
-The labels of one pacticipant.
+One page of a pacticipant's labels.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `labels` | array of [`PacticipantLabelRecord`](#schema-pacticipantlabelrecord) | no | By name. |
 | `count` | integer | yes | How many labels were returned. |
+| `has_more` | boolean | no | Whether another page exists. |
+| `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
 
 ### `PacticipantLabelRecord` {#schema-pacticipantlabelrecord}
 

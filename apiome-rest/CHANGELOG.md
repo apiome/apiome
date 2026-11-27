@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.866.0] - 2026-11-26
+
+### Changed
+- **Pact matrix at 100,000 versions (PFX-6.6, #6958).** OpenAPI 1.690.0, apiome-db V452. Measured
+  with `scripts/bench_pact_matrix.py --versions 10000` (100,000 pacticipant versions, 250,000 pact
+  versions, 500,000 results): worst p95 565 ms → 26 ms; every matrix / can-i-deploy query < 30 ms.
+  - **Integrations** (`app.pact_matrix_store`): found by a loose index scan (row-comparison steps
+    through `pact_version_content_key` and `idx_pact_publication_pair`), now the named statement
+    `pfx_matrix_integrations`, instead of a `DISTINCT` over every publication (provider to
+    environment p95 35.5 → 5.2 ms).
+  - **Rows**: each named pacticipant's newest publications are read in order (a `LATERAL` branch
+    per pacticipant over the new indexes) instead of sorted from the whole history (one
+    pacticipant's rows 44.9 → 26.4 ms).
+  - **Environment selectors**: read from `deployed_version` / `released_version` rows instead of
+    testing every version.
+  - **Verification status**, the stale-pact sweep and verify-all-stale: each consumer's newest pact
+    (`list_latest_pact_candidates`) and each pact's newest result (`latest_results_by_pact`) are
+    found by key, not from every publication and result of the provider (564.9 → 11.2 ms).
+  - Results are identical to the previous statements (checked against them in
+    `tests/test_pact_scale_db.py`).
+  - apiome-db V452: `idx_pact_publication_consumer_recent (consumer_id, created_at DESC, id)` and
+    `idx_pact_publication_provider_recent (provider_id, created_at DESC, id)`.
+
+### Added
+- `GET /v1/tenants/{t}/pacticipants/{pacticipant}/labels` is paged: `limit` (1–200, default 50) and
+  `cursor`; the answer gains `has_more` and `next_cursor`. A bad cursor is a `400`.
+
 ## [1.865.0] - 2026-11-26
 
 ### Added

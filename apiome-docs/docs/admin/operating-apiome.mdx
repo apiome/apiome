@@ -1097,6 +1097,15 @@ owner kinds of `entity_owners` and `unowned_findings` (two check-constraint swap
 changes no column or index. Re-publish requests opened afterwards record `unowned` rather than
 `unlinked` when nobody owns the consumer.
 
+`V452` (PFX-6.6) adds two indexes on `pact_publication` so the
+[matrix stays fast at 100,000 versions](../ship/pact-broker/scale.mdx):
+`idx_pact_publication_consumer_recent (consumer_id, created_at DESC, id)` and
+`idx_pact_publication_provider_recent (provider_id, created_at DESC, id)`. It changes no table. On a
+large `pact_publication`, build them concurrently first as above
+(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pact_publication_consumer_recent ON
+apiome.pact_publication (consumer_id, created_at DESC, id)`, and the same for the provider one); the
+migration then skips them.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's

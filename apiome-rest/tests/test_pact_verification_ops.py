@@ -138,6 +138,7 @@ def _run(
             (_SERVICE, "record_run", broker.record_run),
             (_SERVICE, "fire_verification_events", broker.fire),
             (_OPS, "list_pact_candidates", broker.list_pact_candidates),
+            (_OPS, "list_latest_pact_candidates", broker.list_latest_pact_candidates),
             (_OPS, "record_broker_version", broker.record_branch),
         ):
             stack.enter_context(patch(f"{module}.{name}", side_effect=fake))
@@ -448,7 +449,7 @@ def test_the_status_marks_stale_pacts_and_counts_the_kpi_strip() -> None:
         ),
     }
     with (
-        patch(f"{_OPS}.list_pact_candidates", side_effect=broker.list_pact_candidates),
+        patch(f"{_OPS}.list_latest_pact_candidates", side_effect=broker.list_latest_pact_candidates),
         patch(f"{_OPS}.latest_results_by_pact", return_value=results) as latest,
     ):
         status = verification_status(None, _TENANT, "ledger-api")
@@ -470,7 +471,7 @@ def test_the_status_marks_stale_pacts_and_counts_the_kpi_strip() -> None:
 
 def test_a_provider_with_no_pacts_has_an_empty_status() -> None:
     with (
-        patch(f"{_OPS}.list_pact_candidates", return_value=(_PROVIDER, [])),
+        patch(f"{_OPS}.list_latest_pact_candidates", return_value=(_PROVIDER, [])),
         patch(f"{_OPS}.latest_results_by_pact", return_value={}),
     ):
         status = verification_status(None, _TENANT, "ledger-api")
