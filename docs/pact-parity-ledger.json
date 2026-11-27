@@ -1,0 +1,199 @@
+{
+  "$comment": [
+    "The CLI <-> UI parity ledger for Pact (PFX-8.2, #7299). Every `apiome pact` command has a screen, and every Contracts write route has a command.",
+    "commands: one row per command in apiome-cli/pact-commands.json (regenerate it with `cd apiome-cli && uv run python scripts/export_pact_commands.py`). `ui` is the page (an App Router route under apiome-ui/src/app) where the same action is done; when there is none yet, `ui` is null and `reason` says why and which ticket adds it.",
+    "writeRoutes: one row per POST / PUT / PATCH / DELETE handler under apiome-ui/src/app/api/pact. `ui` is the page that sends it; `cli` is the `apiome pact` command that does the same, or null with a `reason`.",
+    "apiome-ui/tests/pact-parity-ledger.test.ts enforces both directions. See apiome-docs/docs/admin/contribute-to-the-docs.mdx (The CLI <-> UI parity ledger)."
+  ],
+  "commands": [
+    {
+      "cli": "can-i-deploy",
+      "ui": "/ade/dashboard/pacts/can-i-deploy",
+      "rest": "GET /v1/tenants/{tenant}/pact-broker/matrix"
+    },
+    {
+      "cli": "create-environment",
+      "ui": null,
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/environments",
+      "reason": "No screen creates an environment yet; the Create environment dialog ships with PFX-8.12 (#7309)."
+    },
+    {
+      "cli": "create-webhook",
+      "ui": "/ade/dashboard/pacts/webhooks",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/webhooks"
+    },
+    {
+      "cli": "describe-version",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]",
+      "rest": "GET /v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}"
+    },
+    {
+      "cli": "export-consumer-contract",
+      "ui": null,
+      "rest": "GET /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/pact",
+      "reason": "No screen exports a project's consumer surface as a pact yet; the Export page ships with PFX-8.18 (#7315)."
+    },
+    {
+      "cli": "export-postman",
+      "ui": null,
+      "rest": "POST /v1/tenants/{tenant}/pact-postman-collections",
+      "reason": "No screen exports a pact as a Postman collection yet; the Export page ships with PFX-8.18 (#7315)."
+    },
+    {
+      "cli": "list-pacticipants",
+      "ui": "/ade/dashboard/pacts/pacticipants",
+      "rest": "GET /v1/tenants/{tenant}/pacticipants"
+    },
+    {
+      "cli": "migrate",
+      "ui": null,
+      "rest": "POST /v1/tenants/{tenant}/pact-migration/import",
+      "reason": "No screen migrates a broker yet; the Migration wizard ships with PFX-8.16 (#7313)."
+    },
+    {
+      "cli": "publish",
+      "ui": "/ade/dashboard/projects/[projectId]/consumers",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/contracts/publish"
+    },
+    {
+      "cli": "publish-consumer-contract",
+      "ui": null,
+      "rest": "POST /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/pact/publish",
+      "reason": "No screen publishes a project's consumer surface straight to the broker yet; Derive from a project on the Publish page ships with PFX-8.3 (#7300) and PFX-8.18 (#7315)."
+    },
+    {
+      "cli": "publish-provider-contract",
+      "ui": null,
+      "rest": "PUT /v1/tenants/{tenant}/pact-broker/contracts/provider/{provider}/version/{version}",
+      "reason": "No screen publishes a provider contract yet; the Publish a provider contract page ships with PFX-8.6 (#7303)."
+    },
+    {
+      "cli": "publish-verification-results",
+      "ui": null,
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/external-verification-results",
+      "reason": "No screen uploads a verification report produced elsewhere yet; the results upload dialog ships with PFX-8.9 (#7306)."
+    },
+    {
+      "cli": "record-deployment",
+      "ui": null,
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}/deployed-versions/environment/{environment}",
+      "reason": "No screen records a deployment yet; the Record a deployment dialog ships with PFX-8.12 (#7309)."
+    },
+    {
+      "cli": "record-release",
+      "ui": null,
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{environment}",
+      "reason": "No screen records a release yet; the Record a release dialog ships with PFX-8.12 (#7309)."
+    },
+    {
+      "cli": "verify",
+      "ui": null,
+      "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify",
+      "reason": "The Verification page re-runs recorded verifications only; starting one with a target and selectors ships with the Run a verification page, PFX-8.8 (#7305)."
+    }
+  ],
+  "writeRoutes": [
+    {
+      "method": "POST",
+      "bff": "/api/pact/pacticipants/[pacticipant]/verification/reverify",
+      "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/reverify",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/verification",
+      "cli": null,
+      "reason": "Re-runs one recorded pact version. `apiome pact verify` starts a run from selectors and cannot name a single pact version; a command for it would be a new `verify` option, not yet designed."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/pacticipants/[pacticipant]/verification/verify-stale",
+      "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify-stale",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/verification",
+      "cli": null,
+      "reason": "Verify all stale is a console shortcut over recorded results; in a pipeline `apiome pact verify` with the default selectors re-verifies the same pacts."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/publish",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/contracts/publish",
+      "ui": "/ade/dashboard/projects/[projectId]/consumers",
+      "cli": "publish"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/republish-requests/[requestId]/acknowledge",
+      "rest": "POST /v1/tenants/{tenant}/pact-republish-requests/{request}/acknowledge",
+      "ui": "/ade/dashboard/pacts/republish-requests/[requestId]",
+      "cli": null,
+      "reason": "A person answering a re-publish request in the console; the request is closed by publishing the pact again, which `apiome pact publish` does."
+    },
+    {
+      "method": "DELETE",
+      "bff": "/api/pact/verification-settings/overrides/[overrideId]",
+      "rest": "DELETE /v1/tenants/{tenant}/pact-verification-settings/overrides/{override}",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": null,
+      "reason": "Workspace verification settings are edited on the Settings page only; no `apiome pact` command manages them yet."
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/verification-settings/overrides",
+      "rest": "PUT /v1/tenants/{tenant}/pact-verification-settings/overrides",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": null,
+      "reason": "Workspace verification settings are edited on the Settings page only; no `apiome pact` command manages them yet."
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/verification-settings",
+      "rest": "PUT /v1/tenants/{tenant}/pact-verification-settings",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": null,
+      "reason": "Workspace verification settings are edited on the Settings page only; no `apiome pact` command manages them yet."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/webhooks/[webhookId]/execute",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/webhooks/{webhook}/execute",
+      "ui": "/ade/dashboard/pacts/webhooks/[webhookId]",
+      "cli": null,
+      "reason": "Pact CLI's `test-webhook` has no `apiome pact` counterpart yet; the REST route is in the command block of the webhook page."
+    },
+    {
+      "method": "DELETE",
+      "bff": "/api/pact/webhooks/[webhookId]",
+      "rest": "DELETE /v1/tenants/{tenant}/pact-broker/webhooks/{webhook}",
+      "ui": "/ade/dashboard/pacts/webhooks/[webhookId]",
+      "cli": null,
+      "reason": "Pact CLI has no delete-webhook command and `apiome pact` follows it; the REST route is the scripted way."
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/webhooks/[webhookId]",
+      "rest": "PUT /v1/tenants/{tenant}/pact-broker/webhooks/{webhook}",
+      "ui": "/ade/dashboard/pacts/webhooks/[webhookId]",
+      "cli": null,
+      "reason": "Pact CLI's `create-or-update-webhook` has no `apiome pact` counterpart yet; the editor's command block shows the REST call."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/webhooks/deliveries/[deliveryId]/redeliver",
+      "rest": "POST /v1/tenants/{tenant}/pact-webhook-deliveries/{delivery}/redeliver",
+      "ui": "/ade/dashboard/pacts/webhooks/deliveries/[deliveryId]",
+      "cli": null,
+      "reason": "Redelivering one failed firing is a console action on the delivery log; no `apiome pact` command reads deliveries yet."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/webhooks/execute",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/webhooks/execute",
+      "ui": "/ade/dashboard/pacts/webhooks",
+      "cli": null,
+      "reason": "Test sends an unsaved webhook once from the editor; Pact CLI's `test-webhook` has no `apiome pact` counterpart yet."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/webhooks",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/webhooks",
+      "ui": "/ade/dashboard/pacts/webhooks",
+      "cli": "create-webhook"
+    }
+  ]
+}

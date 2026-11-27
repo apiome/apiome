@@ -80,6 +80,24 @@ Until the form is complete, the dialog says what is missing — for example *Ent
 send to.* When Apiome refuses the webhook, the dialog shows why and names the field, for example
 `/request/url: …` for a private address.
 
+### The same, from anywhere
+
+Under the form, **The same, from anywhere** shows the webhook you are building as a command. It
+changes as you type. Click a pill to switch between **apiome** (`apiome pact create-webhook`),
+**Pact CLI** (`pact-broker create-webhook`), **GitHub Action** (a pipeline step) and **REST** (the
+`POST` and its body), then click **Copy**.
+
+- **Secrets are never shown.** The password, any `Authorization`, token, key or cookie header, the
+  GitHub token and the signing secret appear as variables — `$WEBHOOK_PASSWORD`,
+  `$WEBHOOK_AUTHORIZATION` — with the same name on every pill. Set them in your shell or as CI
+  secrets before you run the command.
+- **Nothing is left out quietly.** Anything `create-webhook` cannot carry is listed under **Not carried
+  by the command**, with the reason: the stale and re-publish events, a webhook that is turned off,
+  and the signing secret. The REST request carries all of them.
+- **A GitHub Actions workflow** and **editing a saved webhook** have no `apiome pact` command. The
+  CLI pills say so, and **REST** shows the request (`PUT …/pact-broker/webhooks/<uuid>` for an
+  edit). Replace `{tenant}` in the path with your workspace's handle.
+
 ## Manage one webhook
 
 Click a webhook to open its page.

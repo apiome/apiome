@@ -56,6 +56,10 @@ export * from './FactsLine';
 export * from './ComingNext';
 export * from './DismissibleCallout';
 
+// "The same, from anywhere" (PFX-8.2, #7299): a screen's action as a command on each surface a
+// pipeline uses, built from the form's current values, secrets as variables.
+export * from './CommandBlock';
+
 // The list surface (HIVE-2.3, #5282): one composable table — toolbar, sticky sortable
 // header, selection with a bulk bar, foot with count and pager, and the loading / empty /
 // error states — plus the codec that keeps its filters, sort and page in the address bar.

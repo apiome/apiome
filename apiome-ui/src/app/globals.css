@@ -46695,3 +46695,103 @@ tr[data-selected="true"] > td:first-child {
   margin: 0 0 var(--space-2);
   font-size: var(--fs-sm);
 }
+
+/* ==========================================================================
+ * The same, from anywhere — CommandBlock (PFX-8.2, #7299).
+ * Authority: docs/mockups/contracts/*.html (.ct-cli). A card of pills, the
+ * command in an inset well, notes, and what the command cannot carry.
+ * Tokens only.
+ * ========================================================================== */
+
+.command-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  min-width: 0;
+}
+
+.command-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.command-block__title {
+  margin: 0;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.command-block__pills {
+  margin-bottom: 0;
+}
+
+.command-block__panel {
+  margin-top: var(--space-2);
+}
+
+.command-block__code {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+  tab-size: 2;
+}
+
+.command-block__unavailable {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.command-block__notes,
+.command-block__unsupported ul {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-4);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.command-block__unsupported {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.command-block__unsupported-title {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.command-block__status,
+.command-block__footnote {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.command-block__status {
+  color: var(--danger-fg);
+}
+
+.pwx-command-block {
+  margin-top: var(--space-3);
+}

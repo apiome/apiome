@@ -33,6 +33,7 @@ export const HIVE_GALLERY_SECTIONS: readonly GallerySection[] = [
   { id: 'metrics', label: 'Metrics' },
   { id: 'quiet-list', label: 'Facts line & callout' },
   { id: 'coming-next', label: 'Coming next' },
+  { id: 'command-block', label: 'The same, from anywhere' },
 ];
 
 /** The supporting primitive sections, in the order `SupportingGallery` draws them. */
