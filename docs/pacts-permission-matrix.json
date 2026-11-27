@@ -572,6 +572,40 @@
       "audit": "pacts.republish_request.acknowledge",
       "auditedBy": "route",
       "body": {}
+    },
+    {
+      "id": "secret.create",
+      "label": "Create a workspace secret",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-secrets",
+      "audit": "pacts.secret.create",
+      "auditedBy": "route",
+      "body": {
+        "name": "ciToken",
+        "value": "ci-token-value"
+      }
+    },
+    {
+      "id": "secret.update",
+      "label": "Update or rotate a workspace secret",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-secrets/{uuid}",
+      "audit": "pacts.secret.update",
+      "auditedBy": "route",
+      "body": {
+        "value": "rotated-ci-token"
+      }
+    },
+    {
+      "id": "secret.delete",
+      "label": "Delete a workspace secret",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-secrets/{uuid}",
+      "audit": "pacts.secret.delete",
+      "auditedBy": "route"
     }
   ],
   "reads": [

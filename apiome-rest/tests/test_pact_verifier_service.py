@@ -458,7 +458,7 @@ def test_the_target_is_resolved_for_a_pact_run_by_the_acting_principal() -> None
 
 def test_an_unusable_credential_refuses_before_a_single_request() -> None:
     broker, api = _Broker([PACT_JS]), LedgerApi()
-    with patch(f"{_SERVICE}.materialize_auth_headers", side_effect=AuthResolutionError("variable unset")):
+    with patch(f"{_SERVICE}.target_auth_headers", side_effect=AuthResolutionError("variable unset")):
         with pytest.raises(PactVerifierError) as refused:
             _verify(broker, api)
     assert refused.value.code == CODE_TARGET_AUTH_UNAVAILABLE

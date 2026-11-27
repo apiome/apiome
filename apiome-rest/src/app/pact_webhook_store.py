@@ -9,6 +9,11 @@ written (apiome-db V436).
 Every read returns a :class:`~app.pact_webhook.WebhookRecord`, which has no field a secret could
 be in. The only function that opens them is :func:`load_for_delivery`, for the sender.
 
+**References to workspace secrets are checked and recorded** (PFX-6.5). Every ``${user.<name>}`` a
+webhook writes must name a secret of its workspace when it is saved (``pact-webhook-invalid``
+pointing at the first reference to a missing one), and the names are stored in ``secret_refs`` so a
+secret still in use can be found without opening any sealed value.
+
 **A firing is a queued delivery.** :func:`enqueue_triggered_webhook` writes a
 ``push_webhook_delivery_events`` row (the queue every outbound webhook uses, so retries and
 dead-lettering are shared) and a ``pact_triggered_webhook`` row saying what caused it. The payload
@@ -32,6 +37,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS
 from .consumer_contract_store import ConsumerActor
 from .pact_publication import PactPublicationError
+from .pact_secret_store import missing_secret_names
 from .pact_webhook import (
     CODE_TRIGGERED_WEBHOOK_NOT_FOUND,
     CODE_WEBHOOK_INVALID,
@@ -42,9 +48,11 @@ from .pact_webhook import (
     REDACTED,
     SECRET_PASSWORD,
     SECRET_SIGNING,
+    TARGET_GITHUB,
     WebhookInput,
     WebhookRecord,
     header_secret_field,
+    reference_locations,
     request_description,
 )
 from .pact_webhook_secrets import (
@@ -62,6 +70,7 @@ __all__ = [
     "DeliveryWebhook",
     "TriggeredWebhookLogs",
     "TriggeredWebhookRecord",
+    "checked_references",
     "create_webhook",
     "delete_webhook",
     "enqueue_triggered_webhook",
@@ -84,7 +93,7 @@ EVENT_TYPE_PREFIX = "pact."
 _WEBHOOK_SELECT = """
     SELECT w.id::text AS id, w.description, w.enabled, w.events, w.target_kind, w.target_config,
            w.request_method, w.request_url, w.request_headers, w.request_body, w.request_username,
-           w.secret_fields, w.secret_ciphertext, w.key_version, w.created_at, w.updated_at,
+           w.secret_fields, w.secret_refs, w.secret_ciphertext, w.key_version, w.created_at, w.updated_at,
            c.name AS consumer_name, c.slug AS consumer_slug,
            pr.name AS provider_name, pr.slug AS provider_slug
     FROM apiome.pact_webhook w
@@ -225,6 +234,7 @@ def _record(row: Mapping[str, Any]) -> WebhookRecord:
         body=row.get("request_body"),
         username=row.get("request_username"),
         secret_fields=list(row.get("secret_fields") or []),
+        secret_refs=list(row.get("secret_refs") or []),
         created_at=_iso(row.get("created_at")),
         updated_at=_iso(row.get("updated_at")),
     )
@@ -359,13 +369,51 @@ def _sealed_columns(secrets: Mapping[str, Any]) -> Tuple[Optional[bytes], Option
     return ciphertext, key_version, fields
 
 
+def checked_references(db: Any, tenant_id: str, webhook: WebhookInput, secrets: Mapping[str, Any]) -> List[str]:
+    """The workspace secrets a webhook refers to, each checked to exist.
+
+    Args:
+        db: The database.
+        tenant_id: The webhook's tenant: a reference names a secret of this workspace only.
+        webhook: The checked body.
+        secrets: Its secret values as they will be stored (kept values filled in).
+
+    Returns:
+        The names, in the order they first appear.
+
+    Raises:
+        PactPublicationError: ``pact-webhook-invalid`` pointing at the first reference to a name the
+            workspace has no secret for.
+    """
+    located = reference_locations(
+        url=webhook.url,
+        headers=webhook.headers,
+        body=webhook.body,
+        username=webhook.username,
+        secrets=secrets,
+        github=webhook.target_kind == TARGET_GITHUB,
+    )
+    names = [name for name, _ in located]
+    missing = set(missing_secret_names(db, tenant_id, names))
+    for name, pointer in located:
+        if name in missing:
+            raise PactPublicationError(
+                CODE_WEBHOOK_INVALID,
+                f"{pointer}: no secret named '{name}' in this workspace; create it under Pact secrets first",
+                pointer=pointer,
+            )
+    return names
+
+
 def _write_values(
     db: Any, tenant_id: str, webhook: WebhookInput, stored: Optional[Mapping[str, Any]]
 ) -> Dict[str, Any]:
-    """The column values of a webhook write: scope resolved, secrets sealed."""
+    """The column values of a webhook write: scope resolved, references checked, secrets sealed."""
     consumer = _scope_pacticipant(db, tenant_id, webhook.consumer_name, "consumer")
     provider = _scope_pacticipant(db, tenant_id, webhook.provider_name, "provider")
-    ciphertext, key_version, fields = _sealed_columns(_secrets_to_seal(webhook, stored))
+    secrets = _secrets_to_seal(webhook, stored)
+    refs = checked_references(db, tenant_id, webhook, secrets)
+    ciphertext, key_version, fields = _sealed_columns(secrets)
     return {
         "description": webhook.description,
         "consumer_id": consumer.id if consumer else None,
@@ -382,6 +430,7 @@ def _write_values(
         "secret_ciphertext": ciphertext,
         "key_version": key_version,
         "secret_fields": fields,
+        "secret_refs": refs,
     }
 
 

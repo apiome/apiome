@@ -1,6 +1,6 @@
 """Pacticipant owners against a live Postgres — PFX-6.4 (#6956).
 
-What only the real schema proves (apiome-db V450):
+What only the real schema proves (apiome-db V451):
 
 * a pacticipant can be given a confirmed owner team (``entity_kind = 'pacticipant'``), and an
   unknown kind is still refused by the check;
@@ -10,7 +10,7 @@ What only the real schema proves (apiome-db V450):
 * purging a deleted pacticipant for good removes its owner rows and unowned findings.
 
 Runs inside one always-rolled-back transaction (the ``broker`` fixture of ``test_pact_matrix_db``).
-Skipped when no database is reachable or V450 is not applied.
+Skipped when no database is reachable or V451 is not applied.
 """
 
 from __future__ import annotations
@@ -35,13 +35,13 @@ pytestmark = pytest.mark.requires_db
 
 @pytest.fixture
 def owners(broker: Dict[str, Any]) -> Iterator[Dict[str, Any]]:
-    """The broker stack, skipped before V450 (the owner kinds lack ``pacticipant``)."""
+    """The broker stack, skipped before V451 (the owner kinds lack ``pacticipant``)."""
     broker["cursor"].execute(
         "SELECT pg_get_constraintdef(oid) AS def FROM pg_constraint WHERE conname = 'entity_owners_kind_check'"
     )
     row = broker["cursor"].fetchone()
     if not row or "pacticipant" not in row["def"]:
-        pytest.skip("V450 not applied")
+        pytest.skip("V451 not applied")
     yield broker
 
 

@@ -132,7 +132,7 @@ KINDS: Dict[str, KindSpec] = {
     "component": KindSpec(
         "component", "apiome.catalog_components", "e.deleted_at IS NULL", Resource.IMPORTS
     ),
-    # PFX-6.4 (V450): an application in the workspace's Pact Broker. Its owner team receives the
+    # PFX-6.4 (V451): an application in the workspace's Pact Broker. Its owner team receives the
     # Pact findings about it (stale pacts, re-publish requests, failed verifications).
     "pacticipant": KindSpec(
         "pacticipant", "apiome.pacticipant", "e.deleted_at IS NULL", Resource.PACTS

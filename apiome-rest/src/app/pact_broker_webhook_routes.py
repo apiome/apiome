@@ -25,6 +25,12 @@ replacing or running a saved one ``pacts:edit``; deleting ``pacts:delete``. Resp
 
 **No response ever carries a secret.** A password and a secret header read as ``**********``; a
 signing secret reads as ``"signed": true``. Sending ``**********`` back keeps the stored value.
+
+**Workspace secrets** (PFX-6.5): ``${user.<name>}`` in the URL's path or query, a header, the body,
+the credentials, the GitHub token or the signing secret refers to a secret kept under
+``/v1/tenants/{tenant}/pact-secrets`` (:mod:`app.pact_secret_routes`). A reference must name a secret
+of the workspace when the webhook is saved or tested, and is resolved only when it is sent; a webhook
+that refers to any lists them as ``secretReferences``.
 """
 
 from __future__ import annotations
@@ -52,6 +58,7 @@ from .pact_broker_routes import (
 )
 from .pact_publication import PactPublicationError
 from .pact_publication_store import get_latest_pact
+from .pact_secret import CODE_SECRET_VAULT_UNAVAILABLE
 from .pact_webhook import (
     CODE_WEBHOOK_INVALID,
     CODE_WEBHOOK_SECRETS_UNAVAILABLE,
@@ -72,12 +79,13 @@ from .pact_webhook import (
     template_parameters,
     validate_webhook_uuid,
 )
-from .pact_webhook_delivery import ExecutionResult, execute_webhook
+from .pact_webhook_delivery import ExecutionResult, UnsendableWebhookError, execute_webhook
 from .pact_webhook_events import pact_url
 from .pact_webhook_secrets import KEYS_SETTING
 from .pact_webhook_store import (
     ANY_SCOPE,
     TriggeredWebhookRecord,
+    checked_references,
     create_webhook,
     delete_webhook,
     get_triggered_webhook_logs,
@@ -170,14 +178,17 @@ _WEBHOOK_BODY = {
                             "url": {
                                 "type": "string",
                                 "description": (
-                                    "http(s), a public host. `${pactbroker.*}` parameters may appear in the "
-                                    "path and query, not in the host."
+                                    "http(s), a public host. `${pactbroker.*}` parameters and `${user.<name>}` "
+                                    "workspace secrets may appear in the path and query, not in the host."
                                 ),
                             },
                             "headers": {"type": "object", "additionalProperties": {"type": "string"}},
                             "body": {"description": "A JSON value (sent as JSON) or a string (sent as text)."},
                             "username": {"type": "string"},
-                            "password": {"type": "string", "description": "Sealed; reads as `**********`."},
+                            "password": {
+                                "type": "string",
+                                "description": "Sealed; reads as `**********`. May be `${user.<name>}`.",
+                            },
                         },
                     },
                     "target": {
@@ -190,7 +201,10 @@ _WEBHOOK_BODY = {
                             "eventType": {"type": "string", "default": "${pactbroker.eventName}"},
                             "clientPayload": {"type": "object", "maxProperties": 10},
                             "apiUrl": {"type": "string", "description": "GitHub Enterprise Server API root."},
-                            "token": {"type": "string", "description": "Sealed; reads as `**********`."},
+                            "token": {
+                                "type": "string",
+                                "description": "Sealed; reads as `**********`. May be `${user.<name>}`.",
+                            },
                         },
                     },
                     "signingSecret": {
@@ -198,7 +212,8 @@ _WEBHOOK_BODY = {
                         "minLength": 16,
                         "description": (
                             "Apiome: when set, every delivery carries `X-Apiome-Signature: sha256=<hex>`, the "
-                            "HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`."
+                            "HMAC-SHA256 of the body. Sealed; a webhook that has one reads `signed: true`. "
+                            "May be `${user.<name>}`, a workspace secret of 16 characters or more."
                         ),
                     },
                 },
@@ -258,8 +273,9 @@ def _display_description(webhook: WebhookRecord) -> str:
 def _webhook_document(base: str, webhook: WebhookRecord) -> Dict[str, Any]:
     """Render a webhook the way a Pact Broker returns one, without any secret.
 
-    Apiome adds ``signed`` (whether deliveries carry an HMAC signature) and, for a GitHub target,
-    ``target`` with the token redacted.
+    Apiome adds ``signed`` (whether deliveries carry an HMAC signature), ``secretReferences`` (the
+    workspace secrets it refers to, when any) and, for a GitHub target, ``target`` with the token
+    redacted.
 
     Args:
         base: The broker base URL.
@@ -289,6 +305,8 @@ def _webhook_document(base: str, webhook: WebhookRecord) -> Dict[str, Any]:
         body["target"] = {"type": TARGET_GITHUB, **(webhook.target_config or {}), "token": REDACTED}
     body["events"] = [{"name": name} for name in webhook.events]
     body["signed"] = SECRET_SIGNING in webhook.secret_fields
+    if webhook.secret_refs:
+        body["secretReferences"] = list(webhook.secret_refs)
     body["createdAt"] = webhook.created_at
     if webhook.updated_at and webhook.updated_at != webhook.created_at:
         body["updatedAt"] = webhook.updated_at
@@ -519,12 +537,12 @@ def _test_parameters(tenant_id: str, base: str, consumer: Optional[str], provide
     return template_parameters(**values)
 
 
-def _transient(webhook: WebhookInput) -> tuple:
+def _transient(webhook: WebhookInput, tenant_id: str) -> tuple:
     """An unsaved webhook as a record and its secrets, for a test run.
 
     Raises:
         PactPublicationError: ``pact-webhook-invalid`` for a ``**********`` secret — nothing is
-            stored to stand in for it.
+            stored to stand in for it — or a reference to a secret the workspace does not have.
     """
     secrets: Dict[str, Any] = {"headers": dict(webhook.secret_headers)}
     if webhook.password:
@@ -552,8 +570,30 @@ def _transient(webhook: WebhookInput) -> tuple:
         body=webhook.body,
         username=webhook.username,
         secret_fields=[header_secret_field(name) for name in webhook.secret_headers],
+        secret_refs=checked_references(db, tenant_id, webhook, secrets),
     )
     return record, secrets
+
+
+def _run(record: WebhookRecord, secrets: Dict[str, Any], tenant_id: str, base: str) -> ExecutionResult:
+    """Send a webhook once for a test run, its workspace secret references resolved.
+
+    Raises:
+        HTTPException: 422 ``pact-webhook-invalid`` when a referred secret is gone or too short to
+            sign with; 503 ``pact-webhook-secrets-unavailable`` when one cannot be opened.
+    """
+    try:
+        return execute_webhook(
+            record,
+            secrets,
+            _test_parameters(tenant_id, base, record.consumer_name, record.provider_name),
+            database=db,
+            tenant_id=tenant_id,
+        )
+    except UnsendableWebhookError as exc:
+        cause = getattr(exc.__cause__, "code", "")
+        code = CODE_WEBHOOK_SECRETS_UNAVAILABLE if cause == CODE_SECRET_VAULT_UNAVAILABLE else CODE_WEBHOOK_INVALID
+        raise _http_error(PactPublicationError(code, f"the webhook cannot be sent: {exc}")) from exc
 
 
 # ---------------------------------------------------------------------------------------------
@@ -611,6 +651,11 @@ _CREATE_DESCRIPTION = (
     "- **Secrets:** `password`, the `target` token, secret headers (`Authorization`, anything "
     "naming a token, secret, API key or cookie) and `signingSecret` are sealed in the credential "
     "vault and never returned or logged.\n"
+    "- **Workspace secrets:** `${user.<name>}` in the URL's path or query, a header, the body, the "
+    "credentials, the `target` token or `signingSecret` refers to a secret kept under "
+    "`/v1/tenants/{tenant}/pact-secrets`; it must exist when the webhook is saved (`422` "
+    "`pact-webhook-invalid` naming the field otherwise), is resolved only when the webhook is sent, and "
+    "is scrubbed from every log. The webhook lists the names as `secretReferences`.\n"
     "- **Signing:** with `signingSecret`, each delivery carries `X-Apiome-Signature: sha256=<hex>`, "
     "the HMAC-SHA256 of the body.\n"
     "- **Limit:** 200 webhooks per workspace.\n"
@@ -686,13 +731,11 @@ def execute_unsaved_webhook(
     tenant_id = _tenant_id(auth_data)
     _enforce_test_budget(tenant_id)
     try:
-        record, secrets = _transient(parse_webhook_request(raw))
+        record, secrets = _transient(parse_webhook_request(raw), tenant_id)
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
     base = _base_url(request, tenant_slug)
-    result = execute_webhook(
-        record, secrets, _test_parameters(tenant_id, base, record.consumer_name, record.provider_name)
-    )
+    result = _run(record, secrets, tenant_id, base)
     return HalJSONResponse(_execution_document(base, result, None, _self_href(request)))
 
 
@@ -874,9 +917,7 @@ def execute_saved_webhook(
         raise _http_error(exc) from exc
     base = _base_url(request, tenant_slug)
     record = hook.record
-    result = execute_webhook(
-        record, hook.secrets, _test_parameters(tenant_id, base, record.consumer_name, record.provider_name)
-    )
+    result = _run(record, hook.secrets, tenant_id, base)
     return HalJSONResponse(_execution_document(base, result, record.id, _self_href(request)))
 
 

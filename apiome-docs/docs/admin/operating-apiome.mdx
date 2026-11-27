@@ -1086,7 +1086,13 @@ results inside its window without scanning every workspace's. It changes no tabl
 (`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_verification_result_tenant_window ON
 apiome.verification_result (tenant_id, created_at)`); the migration then skips it.
 
-`V450` (PFX-6.4) lets a Pact Broker pacticipant have an owner team: it adds `pacticipant` to the
+`V450` (PFX-6.5) adds the [workspace secrets](../ship/pact-broker/secrets.mdx) table
+`pact_secret` (sealed values only), a `secret_refs` column on `pact_webhook` (an empty array for
+every existing webhook, no rewrite) and the `secret` kind for verification target credentials (a
+CHECK swapped on `verification_target`; every existing row satisfies it). Secrets are sealed with
+`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`, the key webhook secrets already use; nothing new to set.
+
+`V451` (PFX-6.4) lets a Pact Broker pacticipant have an owner team: it adds `pacticipant` to the
 owner kinds of `entity_owners` and `unowned_findings` (two check-constraint swaps on small tables). It
 changes no column or index. Re-publish requests opened afterwards record `unowned` rather than
 `unlinked` when nobody owns the consumer.

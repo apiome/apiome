@@ -134,6 +134,7 @@ from the Pact CLI, a Pact library, the console or an MCP tool. Source `api_key` 
 | `pacts.verification_settings.update` | The workspace's [verification settings](../ship/pact-broker/stale-pacts.mdx) are saved. |
 | `pacts.verification_override.save`, `.delete` | A verification override is saved or removed. |
 | `pacts.republish_request.acknowledge` | A consumer acknowledges a re-publish request. |
+| `pacts.secret.create`, `.update`, `.delete` | A [workspace secret](../ship/pact-broker/secrets.mdx) is created, rotated or changed, or deleted. The entry never holds the value. |
 | `pacts.pacticipant.delete`, `.restore`, `pacts.version.delete`, `.restore` | A pacticipant or version is deleted or restored; the detail holds the `reason`. |
 | `pacts.label.add`, `pacts.label.remove` | A label is added or removed. |
 | `pacts.retention.apply`, `pacts.purge` | A retention run is applied, or deleted rows are purged after 30 days; the detail holds the counts. |

@@ -1,7 +1,7 @@
 /**
  * Structural assertions over the pacticipant owners migration (#6956, PFX-6.4).
  *
- * V450 lets a pacticipant have an owner team (CDG-2.2) and be reported in Unowned findings. DB-free
+ * V451 lets a pacticipant have an owner team (CDG-2.2) and be reported in Unowned findings. DB-free
  * contract tests pin it:
  *
  *   1. It sets its own search path first.
@@ -17,7 +17,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { listMigrationFiles } from "../src/migrate.js";
 
 const SCRIPTS_DIR = new URL("../scripts", import.meta.url).pathname;
-const MIGRATION = "V450__pacticipant_owners_6956.sql";
+const MIGRATION = "V451__pacticipant_owners_6956.sql";
 
 /** The owner kinds V299 left, every one of which must survive the swap. */
 const V299_KINDS = [
@@ -58,7 +58,7 @@ describe("pacticipant owners migration (PFX-6.4)", () => {
   it("is present in scripts/ and ordered after the contract-health migration", async () => {
     const files = await listMigrationFiles(SCRIPTS_DIR);
     expect(files).toContain(MIGRATION);
-    expect(files.indexOf(MIGRATION)).toBeGreaterThan(files.indexOf("V449__pact_health_window_6955.sql"));
+    expect(files.indexOf(MIGRATION)).toBeGreaterThan(files.indexOf("V450__pact_secrets_6957.sql"));
   });
 
   it("sets its own search path before changing anything", () => {

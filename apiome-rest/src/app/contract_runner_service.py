@@ -22,7 +22,6 @@ from .contract_runner import (
     RUNNER_NAME,
     RUNNER_VERSION,
     AuthResolutionError,
-    materialize_auth_headers,
     run_suite,
 )
 from .contract_suite import ContractSuiteOptions, SuiteUnsupportedOperation
@@ -32,11 +31,10 @@ from .contract_suite_service import (
     compile_version_contract_suite,
 )
 from .import_source_pipeline import build_job_error
-from .mcp_credentials import load_endpoint_auth_headers
 from .models import SpecImportJobError
+from .target_credentials import target_auth_headers
 from .verification_evidence import VerificationRunInput, VerificationRunRecord
 from .verification_evidence_store import TargetActor, record_run
-from .verification_target import AUTH_KIND_STORED
 from .verification_target_store import resolve_target
 
 __all__ = [
@@ -169,14 +167,8 @@ def run_version_contract_suite(
         protocol=manifest.protocol,
     )
 
-    stored_headers: Optional[Dict[str, str]] = None
-    if resolved.auth.kind == AUTH_KIND_STORED and resolved.auth.ref:
-        stored_headers = load_endpoint_auth_headers(resolved.auth.ref)
-
     try:
-        auth_headers = materialize_auth_headers(
-            resolved.auth, stored_headers=stored_headers
-        )
+        auth_headers = target_auth_headers(tenant_id, resolved.auth)
     except AuthResolutionError as exc:
         return ContractRunResponse(
             ok=False,

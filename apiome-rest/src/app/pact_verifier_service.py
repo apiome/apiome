@@ -38,10 +38,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .consumer_contract_store import ConsumerActor
 from .contract_protocols import PACT_VERIFICATION
-from .contract_runner import AuthResolutionError, materialize_auth_headers, run_suite
+from .contract_runner import AuthResolutionError, run_suite
 from .contract_suite import ContractSuiteManifest, PactSuiteOptions, SuiteSourceInfo, SuiteUnsupportedOperation
 from .contract_suite_pact import compile_pact_suite
-from .mcp_credentials import load_endpoint_auth_headers
 from .pact_broker_verification_routes import _result_url
 from .pact_commit_status_store import post_verification_statuses
 from .pact_pending_store import load_pending_evidence
@@ -81,11 +80,12 @@ from .pact_owner_routing import notify_failed_verification
 from .pact_webhook_events import fire_verification_events
 from .pact_wip import select_wip_pacts
 from .pacticipant import PacticipantRecord, validate_branch, validate_url, validate_version_number
+from .target_credentials import target_auth_headers
 from .verification_evidence import VerificationRunInput, duration_ms_between
 from .verification_evidence_store import record_run
 from .verification_result import TRIGGER_HOSTED, VerificationRequest, VerificationResultRecord
 from .verification_result_store import publish_verification_result, record_broker_version
-from .verification_target import AUTH_KIND_STORED, ResolvedTarget
+from .verification_target import ResolvedTarget
 from .verification_target_store import TargetActor, resolve_target
 
 logger = logging.getLogger(__name__)
@@ -821,11 +821,8 @@ def open_verification_session(
     target_actor = TargetActor(user_id=actor.user_id, label=actor.label, kind=actor.kind)
     # An http target replays HTTP interactions, a grpc / connect one the gRPC calls (PFX-3.7).
     target = resolve_target(tenant_id, request.target_ref, actor=target_actor, protocol=PACT_VERIFICATION)
-    stored_headers: Optional[Dict[str, str]] = None
-    if target.auth.kind == AUTH_KIND_STORED and target.auth.ref:
-        stored_headers = load_endpoint_auth_headers(target.auth.ref)
     try:
-        auth_headers = materialize_auth_headers(target.auth, stored_headers=stored_headers)
+        auth_headers = target_auth_headers(tenant_id, target.auth)
     except AuthResolutionError as exc:
         raise PactVerifierError(CODE_TARGET_AUTH_UNAVAILABLE, str(exc)) from exc
     handler = state_handler or provider_state_handler(db, tenant_id, provider, target, auth_headers)

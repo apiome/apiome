@@ -1,6 +1,6 @@
 """Pacticipant owners and the Pact findings routed to them — PFX-6.4 (#6956).
 
-A pacticipant can have an owner team (CDG-2.2 kind ``pacticipant``, apiome-db V450), assigned on its
+A pacticipant can have an owner team (CDG-2.2 kind ``pacticipant``, apiome-db V451), assigned on its
 page in the Contracts workspace or through ``PUT /v1/tenants/{t}/owners/pacticipant/{id}``. This
 module decides **which owner a Pact finding about a pacticipant goes to** and routes it with owner
 routing (CDG-2.3), so the team's members get an inbox notification and its chat channel a post:
@@ -60,7 +60,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-#: The owner kind of a pacticipant (apiome-db V450).
+#: The owner kind of a pacticipant (apiome-db V451).
 KIND_PACTICIPANT = "pacticipant"
 #: The pacticipant a failed verification is told to, by its part in the pact.
 ROLE_PROVIDER = "provider"

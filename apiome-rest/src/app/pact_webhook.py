@@ -14,7 +14,11 @@ no database, no network:
   Pact Broker substitutes — and **rendering** a request from them (:func:`render_request`);
 * **redaction**: which header values are secret (:func:`is_secret_header`), how a stored webhook
   is shown without them, and :func:`scrub`, which removes secret values from any text bound for a
-  log.
+  log;
+* **workspace secret references** (PFX-6.5): ``${user.<name>}`` anywhere a template parameter may
+  be — and in the credentials and the signing secret — names a secret of the workspace
+  (:mod:`app.pact_secret`). :func:`reference_locations` lists what a webhook refers to; the value is
+  substituted only when the request is rendered, and scrubbed from every log like any secret.
 
 Three rules are enforced here so no caller has to remember them:
 
@@ -41,6 +45,7 @@ from urllib.parse import quote_plus, urlsplit
 from pydantic import BaseModel, ConfigDict, Field
 
 from .pact_publication import PactPublicationError
+from .pact_secret import REFERENCE_BODY, is_reference, malformed_references, references_in
 from .revision_deprecation import is_uuid_string
 from .ssrf_guard import SSRFError, validate_host, validate_url_policy
 
@@ -80,6 +85,8 @@ __all__ = [
     "header_secret_field",
     "is_secret_header",
     "parse_webhook_request",
+    "reference_locations",
+    "resolve_signing_secret",
     "render_request",
     "render_text",
     "request_description",
@@ -186,6 +193,9 @@ _SECRET_HEADER = re.compile(r"authorization|token|secret|api[-_]?key|cookie|pass
 _HEADER_NAME = re.compile(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _PARAMETER = re.compile(r"\$\{(pactbroker\.[A-Za-z]+)\}")
+#: A template parameter or a workspace secret reference: what rendering substitutes, in one pass —
+#: so a substituted value is never searched again (a consumer name cannot smuggle in a reference).
+_TEMPLATE = re.compile(r"\$\{(pactbroker\.[A-Za-z]+|" + REFERENCE_BODY + r")\}")
 _REPOSITORY = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$")
 
 _MAX_URL = 2048
@@ -343,6 +353,7 @@ class WebhookRecord(BaseModel):
         body: The body template.
         username: The basic-auth user.
         secret_fields: Which values are sealed: ``password``, ``signingSecret``, ``header:<Name>``.
+        secret_refs: The workspace secrets its templates refer to as ``${user.<name>}`` (PFX-6.5).
         created_at: When it was created.
         updated_at: When it was last changed.
     """
@@ -365,6 +376,7 @@ class WebhookRecord(BaseModel):
     body: Any = None
     username: Optional[str] = None
     secret_fields: List[str] = Field(default_factory=list)
+    secret_refs: List[str] = Field(default_factory=list)
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -389,7 +401,7 @@ def request_description(method: str, url: str) -> str:
     Returns:
         The method and the URL's host.
     """
-    host = urlsplit(_PARAMETER.sub("placeholder", url or "")).hostname or ""
+    host = urlsplit(_TEMPLATE.sub("placeholder", url or "")).hostname or ""
     return f"{(method or '').upper()} {host}".strip()
 
 
@@ -483,7 +495,8 @@ def _events(value: Any) -> List[str]:
 def check_url(url: Any, pointer: str, *, resolve: bool = True) -> str:
     """Vet a webhook URL template and return it.
 
-    Template parameters may appear in the path and the query, never in the host. The URL passes
+    Template parameters and secret references may appear in the path and the query, never in the
+    host. The URL passes
     the SSRF policy: http or https, no ``user:pass@``, and — when ``resolve`` — a host whose every
     address is public (unless ``APIOME_SSRF_ALLOW_PRIVATE`` is set).
 
@@ -502,12 +515,12 @@ def check_url(url: Any, pointer: str, *, resolve: bool = True) -> str:
     if any(character.isspace() for character in text):
         raise _invalid(pointer, "must not contain whitespace")
     try:
-        host = validate_url_policy(_PARAMETER.sub("placeholder", text))
-        other = validate_url_policy(_PARAMETER.sub("otherplaceholder", text))
+        host = validate_url_policy(_TEMPLATE.sub("placeholder", text))
+        other = validate_url_policy(_TEMPLATE.sub("otherplaceholder", text))
     except SSRFError as exc:
         raise _invalid(pointer, str(exc)) from exc
     if host != other:
-        raise _invalid(pointer, "a template parameter cannot be used in the host of the URL")
+        raise _invalid(pointer, "a template parameter or secret reference cannot be used in the host of the URL")
     if resolve:
         try:
             validate_host(host)
@@ -568,7 +581,9 @@ def _body(value: Any, pointer: str) -> Any:
 def _secret(value: Any, pointer: str, *, minimum: int = 1) -> Optional[str]:
     """A secret value of ``minimum`` to 4,096 characters, or ``None`` when absent or empty.
 
-    The message never repeats the value.
+    A value that is exactly one workspace secret reference (``${user.<name>}``) is taken as it is:
+    the length rule applies to the value it resolves to, when the webhook is sent. The message
+    never repeats the value.
 
     Raises:
         PactPublicationError: ``pact-webhook-invalid`` for a value of the wrong type or length.
@@ -579,6 +594,8 @@ def _secret(value: Any, pointer: str, *, minimum: int = 1) -> Optional[str]:
         raise _invalid(pointer, "must be a string")
     if value == REDACTED:
         return REDACTED
+    if is_reference(value):
+        return value
     if _CONTROL.search(value) or not minimum <= len(value) <= _MAX_SECRET:
         raise _invalid(pointer, f"must be a single line of {minimum} to {_MAX_SECRET} characters")
     return value
@@ -615,8 +632,8 @@ def _github_request(target: Mapping[str, Any], *, resolve: bool) -> Dict[str, An
     elif len(payload) > 10:
         raise _invalid("/target/clientPayload", "GitHub accepts at most 10 top-level properties")
     api_url = (_text(target.get("apiUrl"), "/target/apiUrl", limit=_MAX_URL) or _GITHUB_API).rstrip("/")
-    if _PARAMETER.search(api_url):
-        raise _invalid("/target/apiUrl", "cannot contain a template parameter")
+    if _TEMPLATE.search(api_url):
+        raise _invalid("/target/apiUrl", "cannot contain a template parameter or secret reference")
     url = check_url(f"{api_url}/repos/{repository}/dispatches", "/target/apiUrl", resolve=resolve)
     token = _secret(target.get("token"), "/target/token")
     if token is None:
@@ -713,6 +730,19 @@ def parse_webhook_request(raw: bytes, *, resolve: bool = True) -> WebhookInput:
         fields = _github_request(target, resolve=resolve)
     else:
         fields = _http_request(body.get("request"), resolve=resolve)
+
+    for pointer, value in (
+        ("/request", body.get("request")),
+        ("/target", body.get("target")),
+        ("/signingSecret", body.get("signingSecret")),
+    ):
+        bad = malformed_references(value)
+        if bad:
+            raise _invalid(
+                pointer,
+                f"'{bad[0]}' is not a secret reference; write ${{user.<name>}} with a name of letters, "
+                "digits and underscores",
+            )
 
     return WebhookInput(
         description=_text(body.get("description"), "/description", limit=_MAX_DESCRIPTION),
@@ -815,11 +845,14 @@ def render_text(
     parameters: Mapping[str, str],
     escape: Optional[Callable[[str], str]] = None,
 ) -> Optional[str]:
-    """Substitute ``${pactbroker.*}`` parameters in a string.
+    """Substitute ``${pactbroker.*}`` parameters and ``${user.*}`` secret references in a string.
+
+    Both are replaced in one pass, so a substituted value is never searched again.
 
     Args:
         template: The text; ``None`` stays ``None``.
-        parameters: The values, from :func:`template_parameters`.
+        parameters: The values, from :func:`template_parameters`, plus ``user.<name>`` for each
+            resolved secret.
         escape: Applied to each substituted value (URL-encoding, for a URL).
 
     Returns:
@@ -835,7 +868,7 @@ def render_text(
             return match.group(0)
         return escape(str(value)) if escape else str(value)
 
-    return _PARAMETER.sub(replace, template)
+    return _TEMPLATE.sub(replace, template)
 
 
 def _render_json(value: Any, parameters: Mapping[str, str]) -> Any:
@@ -884,6 +917,7 @@ def render_request(
     username: Optional[str] = None,
     password: Optional[str] = None,
     secret_headers: Optional[Mapping[str, str]] = None,
+    secret_values: Optional[Mapping[str, str]] = None,
 ) -> RenderedRequest:
     """Render a webhook's request for one firing.
 
@@ -891,6 +925,11 @@ def render_request(
     credentials and in the body. In a JSON body they are substituted inside each string, so a
     value containing a quote can not break the document. A JSON body is sent as
     ``application/json`` unless the webhook sets its own ``Content-Type``.
+
+    Workspace secret references (``${user.<name>}``) are substituted the same way, from
+    ``secret_values``, and every resolved value (and its URL-encoded form) joins
+    :attr:`RenderedRequest.secrets`, so it is scrubbed from every log even where it was written in
+    a plain header or the body.
 
     Args:
         method: The request method.
@@ -901,10 +940,14 @@ def render_request(
         username: The basic-auth user.
         password: The basic-auth password, opened from the vault.
         secret_headers: Secret header templates, opened from the vault.
+        secret_values: The workspace secrets the webhook refers to, by name, opened from the vault.
 
     Returns:
         The request, and the secret values it carries.
     """
+    vault = dict(secret_values or {})
+    if vault:
+        parameters = {**parameters, **{f"user.{name}": value for name, value in vault.items()}}
     rendered: Dict[str, str] = {name: _one_line(render_text(value, parameters)) for name, value in headers.items()}
     secrets: List[str] = []
     for name, value in (secret_headers or {}).items():
@@ -930,6 +973,9 @@ def render_request(
         if not any(name.lower() == "content-type" for name in rendered):
             rendered["Content-Type"] = "application/json; charset=utf-8"
 
+    for value in vault.values():
+        secrets.extend((value, quote_plus(value), json.dumps(value, ensure_ascii=False)[1:-1]))
+
     return RenderedRequest(
         method=method.upper(),
         url=render_text(url, parameters, escape=quote_plus) or "",
@@ -937,6 +983,74 @@ def render_request(
         body=payload,
         secrets=sorted({secret for secret in secrets if secret}, key=len, reverse=True),
     )
+
+
+def resolve_signing_secret(template: Optional[str], secret_values: Mapping[str, str]) -> Optional[str]:
+    """The signing secret a send uses: the stored one, or the workspace secret it refers to.
+
+    Args:
+        template: The stored signing secret — a value, or ``${user.<name>}``.
+        secret_values: The resolved workspace secrets, by name.
+
+    Returns:
+        The secret, or ``None`` when the webhook is not signed.
+
+    Raises:
+        ValueError: The referred secret is shorter than 16 characters (the message names the
+            reference, never the value).
+    """
+    if not template:
+        return None
+    if not is_reference(template):
+        return template
+    value = render_text(template, {f"user.{name}": text for name, text in secret_values.items()}) or ""
+    if value == template or len(value) < _MIN_SIGNING_SECRET:
+        raise ValueError(
+            f"the signing secret {template} must resolve to at least {_MIN_SIGNING_SECRET} characters"
+        )
+    return value
+
+
+def reference_locations(
+    *,
+    url: str,
+    headers: Mapping[str, str],
+    body: Any,
+    username: Optional[str],
+    secrets: Mapping[str, Any],
+    github: bool = False,
+) -> List[Tuple[str, str]]:
+    """Every workspace secret a webhook refers to, with where the first reference to it is.
+
+    Args:
+        url: The URL template.
+        headers: Header templates that are not secret.
+        body: The body template.
+        username: The basic-auth user.
+        secrets: The webhook's secret values as stored: ``{"password", "signingSecret", "headers"}``.
+        github: Whether it is a GitHub ``repository_dispatch`` target (the pointers differ).
+
+    Returns:
+        ``[(name, pointer)]`` — each name once, in the order: URL, headers, body, credentials,
+        signing secret.
+    """
+    request = "/target" if github else "/request"
+    secret_headers = secrets.get("headers") or {}
+    places: List[Tuple[str, Any]] = [(f"{request}/url" if not github else "/target/apiUrl", url)]
+    places += [(f"{request}/headers/{name}", value) for name, value in headers.items()]
+    places.append(("/target/clientPayload" if github else f"{request}/body", body))
+    places.append((f"{request}/username", username))
+    places.append((f"{request}/password", secrets.get("password")))
+    places += [
+        ("/target/token" if github else f"{request}/headers/{name}", value) for name, value in secret_headers.items()
+    ]
+    places.append(("/signingSecret", secrets.get("signingSecret")))
+    found: List[Tuple[str, str]] = []
+    for pointer, value in places:
+        for name in references_in(value):
+            if name not in {known for known, _ in found}:
+                found.append((name, pointer))
+    return found
 
 
 def scrub(text: Optional[str], secrets: Sequence[str]) -> Optional[str]:
