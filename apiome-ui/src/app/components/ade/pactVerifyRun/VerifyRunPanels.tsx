@@ -8,7 +8,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { CircleAlert, CircleCheck, CircleX, Clock, Plus, X } from 'lucide-react';
+import { CircleCheck, CircleX, Clock, Plus, X } from 'lucide-react';
 import { Badge, Button, Input, Label, Switch } from '@/app/components/ui';
 import {
   Dialog,
@@ -20,7 +20,6 @@ import {
   DialogTitle,
 } from '@/app/components/ui/Dialog';
 import { CADENCES, CADENCE_TEXT, type Cadence } from '@lib/pact-remediation';
-import { verificationRoute } from '@lib/pact-verification';
 import {
   RULE_KINDS,
   RULE_KIND_LABELS,
@@ -29,15 +28,12 @@ import {
   rule as makeRule,
   ruleSentence,
   ruleValueField,
-  runHeadline,
   type NewTargetForm,
   type PreviewPact,
   type RuleKind,
   type SelectorRule,
   type VerifyPreview,
-  type VerifyRunAnswer,
 } from '@lib/pact-verify-run';
-import { RunOutcome } from '../pactVerification/VerificationPanels';
 
 /** How many pacts the aside lists before *+ N more*. */
 export const ASIDE_PACTS = 4;
@@ -479,52 +475,6 @@ export function ScheduleDialog({
             <Button onClick={() => void save()} disabled={state.busy} data-testid="pvr-schedule-save">
               <Clock aria-hidden />
               {state.busy ? 'Saving…' : 'Save schedule'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      ) : null}
-    </Dialog>
-  );
-}
-
-/**
- * The run's outcome: the sentence, each pact's outcome and every pact not run, and where to read more.
- *
- * @param props - The answer, how to close.
- * @returns The dialog.
- */
-export function RunResultDialog({ run, onClose }: { run: VerifyRunAnswer | null; onClose: () => void }) {
-  const tone = run?.connection_error || run?.outcome === 'failed' ? 'danger' : run?.success ? 'ok' : 'warn';
-  return (
-    <Dialog open={run !== null} onOpenChange={(next) => !next && onClose()}>
-      {run ? (
-        <DialogContent data-testid="pvr-result">
-          <DialogHeader>
-            <DialogTitle>{run.connection_error ? 'Could not connect' : run.success ? 'Verification passed' : 'Verification finished'}</DialogTitle>
-            <DialogDescription>
-              {run.provider} {run.provider_version}
-              {run.target.slug ? ` · against ${run.target.slug}` : ''}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogBody>
-            <p className={`ppc-result__line ppc-result__line--${tone}`} data-testid="pvr-result-headline">
-              {tone === 'ok' ? (
-                <CircleCheck aria-hidden className="ppub-ix__glyph ppub-ix__glyph--ok" />
-              ) : tone === 'danger' ? (
-                <CircleX aria-hidden className="ppub-ix__glyph ppub-ix__glyph--danger" />
-              ) : (
-                <CircleAlert aria-hidden className="ppub-ix__glyph ppub-ix__glyph--warn" />
-              )}
-              <span>{runHeadline(run)}</span>
-            </p>
-            {run.pacts.length || run.skipped.length ? <RunOutcome run={run} /> : null}
-          </DialogBody>
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-            <Button asChild>
-              <Link href={verificationRoute(run.provider)}>Open the Verification page</Link>
             </Button>
           </DialogFooter>
         </DialogContent>

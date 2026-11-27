@@ -9,7 +9,8 @@
  *   when it is production) and chooses it;
  * * **Production and mutating**: blocked — the rule is said and Run is disabled;
  * * **Nothing to verify**: every pact already verified for this version, with **Run anyway**;
- * * **Unreachable target**: the run ends “Could not connect …” — not a failed verification;
+ * * **Unreachable target**: the run ends “Could not connect …” — not a failed verification (the
+ *   live run's drawer says so, PFX-8.9);
  * * Custom adds a rule; a self-run shows the Pact verifier command and no Run; a read-only role
  *   sees no Run; **Save as a schedule** saves the provider's cadence and target.
  *
@@ -105,7 +106,7 @@ const PREVIEW = {
   refusals: [],
 };
 
-const RUN = {
+const RESULT = {
   provider: 'billing-service',
   provider_version: '2.7.0+9f31c20',
   provider_branch: 'feature/credit-notes',
@@ -115,6 +116,32 @@ const RUN = {
   connection_error: 'Could not connect to billing.staging.acme.dev (timeout)',
   pacts: [],
   skipped: [],
+};
+
+/** A live run (PFX-8.9) that has already ended: the drawer opens on its verdict. */
+const RUN = {
+  run_id: '6f9c2d1e-0b7a-4c3e-9a51-2f8e7d6c5b4a',
+  provider: 'billing-service',
+  provider_name: 'Billing Service',
+  provider_version: '2.7.0+9f31c20',
+  provider_branch: 'feature/credit-notes',
+  target: 'staging',
+  target_base_url: 'https://billing.staging.acme.dev',
+  environment: 'staging',
+  status: 'finished',
+  stop_requested: false,
+  started_at: '2026-11-29T14:02:11Z',
+  finished_at: '2026-11-29T14:02:41Z',
+  interactions: 0,
+  done: 0,
+  pacts: [],
+  skipped: [],
+  failure: null,
+  log: [],
+  log_next: 0,
+  log_dropped: 0,
+  result: RESULT,
+  error: null,
 };
 
 const TARGETS = [
@@ -135,7 +162,7 @@ beforeEach(() => {
         ? { status: 201, body: { ...call.body, enabled: true } }
         : { status: 200, body: { targets: TARGETS } },
     '/api/pact/verification/preview': () => ({ status: 200, body: PREVIEW }),
-    '/api/pact/verification/run': () => ({ status: 200, body: RUN }),
+    '/api/pact/verification/runs': () => ({ status: 200, body: RUN }),
     '/api/pact/verification-settings/overrides': () => ({ status: 200, body: { id: 'o-1' } }),
   };
   installFetch();
@@ -186,7 +213,7 @@ describe('Run a verification', () => {
         skip_already_verified: true,
       },
     });
-    expect(posts('/api/pact/verification/run')).toHaveLength(0);
+    expect(posts('/api/pact/verification/runs')).toHaveLength(0);
 
     const block = screen.getByTestId('pvr-command-block');
     expect(block).toHaveTextContent('apiome pact verify');
@@ -195,7 +222,8 @@ describe('Run a verification', () => {
 
     expect(within(screen.getByTestId('contracts-tabs')).getByRole('link', { name: /Verification/ })).toHaveAttribute('aria-current', 'page');
     const header = container.querySelector('[data-testid="page-header"]')!;
-    expect(countHeaderActions(header)).toEqual({ primary: 1, secondary: 1, overflow: 0, selects: [] });
+    // Run verification, then Upload results and Save as a schedule (DESIGN.md §5.3: at most two).
+    expect(countHeaderActions(header)).toEqual({ primary: 1, secondary: 2, overflow: 0, selects: [] });
     expect(pageGateViolations(container)).toEqual([]);
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-verify-run', liveMarkup(container.firstElementChild!));
@@ -217,12 +245,13 @@ describe('Run a verification', () => {
     render(<VerifyRunClient />);
     await fill();
     fireEvent.click(screen.getByTestId('pvr-run'));
-    const result = await screen.findByTestId('pvr-result');
-    expect(within(result).getByText('Could not connect')).toBeInTheDocument();
-    expect(screen.getByTestId('pvr-result-headline')).toHaveTextContent(
+    await screen.findByTestId('pvl-drawer');
+    const verdict = screen.getByTestId('pvl-verdict');
+    expect(within(verdict).getByText('Could not connect — nothing published')).toBeInTheDocument();
+    expect(verdict).toHaveTextContent(
       'Could not connect to billing.staging.acme.dev (timeout) — not a failed verification; nothing was published.',
     );
-    expect(posts('/api/pact/verification/run')[0].body).toMatchObject({
+    expect(posts('/api/pact/verification/runs')[0].body).toMatchObject({
       provider: 'billing-service',
       body: { target_ref: 'staging', provider_version: '2.7.0+9f31c20', skip_already_verified: true, publish: true },
     });
@@ -240,8 +269,8 @@ describe('Run a verification', () => {
     );
     expect(screen.getByTestId('pvr-run')).toBeDisabled();
     fireEvent.click(screen.getByTestId('pvr-run-anyway'));
-    await screen.findByTestId('pvr-result');
-    expect(posts('/api/pact/verification/run')[0].body?.body).not.toHaveProperty('skip_already_verified');
+    await screen.findByTestId('pvl-drawer');
+    expect(posts('/api/pact/verification/runs')[0].body?.body).not.toHaveProperty('skip_already_verified');
   });
 
   it('adds a target from the Target select and chooses it', async () => {
@@ -304,5 +333,6 @@ describe('Run a verification', () => {
     await waitFor(() => expect(calls.some((c) => c.url === '/api/access/permissions/me')).toBe(true));
     expect(screen.queryByTestId('pvr-run')).not.toBeInTheDocument();
     expect(screen.queryByTestId('pvr-save-schedule')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pvu-open')).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 111 operations."
+description: "REST endpoints tagged pact-broker: 115 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.701.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.702.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 111 operations
+Tag: `pact-broker` · 115 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -1179,9 +1179,12 @@ Publish the result of a verification that ran **elsewhere** — the report a tea
 The body is the report itself, not a Pact Broker result:
 
 - **`pact_verifier_cli --json`** output (`Content-Type: application/json`): the verifier's `result` / `errors` / `pendingErrors`, or a `pacts[].interactions[]` listing;
-- **JUnit XML** (`application/xml`): one `<testcase>` per interaction; a `<failure>` or `<error>` fails it, a `<skipped>` case is not verified and makes the result unsuccessful.
+- **JUnit XML** (`application/xml`): one `<testcase>` per interaction; a `<failure>` or `<error>` fails it, a `<skipped>` case is not verified and makes the result unsuccessful;
+- **Schemathesis** (PFX-8.9): `--report ndjson` (`application/x-ndjson`; one interaction per operation, each failed check a mismatch, skipped scenarios noticed and not counted, a run without `EngineFinished` recorded as failed) or `--report junit`;
+- **Newman**: `newman run -r json` (one interaction per execution, each failed assertion a mismatch) or `-r junit`;
+- **Dredd**: `--reporter xunit`.
 
-The format is taken from `format`, else the content type, else the body. The report is mapped to the verification-result model of `POST …/verification-results` and stored as an ordinary result, so the matrix, can-i-deploy, pending pacts and webhooks see it. Nothing is dropped silently: the answer is the stored result plus an `ingestion` object whose `notices` name, with a JSON Pointer or location, every field the reader could not use and every judgement it made. A report with no interactions is refused (`422 pact-verification-invalid`) rather than published as a pass. The report is the verifier's word: it is not cross-checked against the interactions of the pact version.
+The format is taken from `format`, else the content type, else the body: JUnit whose suite is named `schemathesis` or `Dredd Tests` is that tool's, JSON with `run.executions` and `collection` is Newman's, NDJSON with a Schemathesis `Initialize` event is Schemathesis'. A `format` the body does not match (a Dredd report that is not XML) is refused with the reason. `ingestion.format` names the tool read and `ingestion.syntax` how it was written (`json`, `ndjson`, `xml`). The report is mapped to the verification-result model of `POST …/verification-results` and stored as an ordinary result, so the matrix, can-i-deploy, pending pacts and webhooks see it. Nothing is dropped silently: the answer is the stored result plus an `ingestion` object whose `notices` name, with a JSON Pointer or location, every field the reader could not use and every judgement it made. A report with no interactions is refused (`422 pact-verification-invalid`) rather than published as a pass. The report is the verifier's word: it is not cross-checked against the interactions of the pact version.
 
 `providerApplicationVersion` is required because neither format carries it. `branch` and `tag` record the provider version first, as a verifier's `PUT` calls would. Requires `pacts:create`.
 
@@ -1199,7 +1202,7 @@ Operation id: `ingest_external_result_v1_tenants__tenant_slug__pact_broker_pacts
 | `buildUrl` | query | string or null | no | http(s) URL of the CI build. |
 | `branch` | query | string or null | no | Record the provider version on this branch first. |
 | `tag` | query | array of string or null | no | Tag the provider version first (repeatable). |
-| `format` | query | string | no | One of auto, pact-verifier-json, junit; `auto` reads the content type, then the body. |
+| `format` | query | string | no | One of auto, pact-verifier-json, junit, schemathesis, newman, dredd; `auto` reads the content type, then the body. |
 | `verifier` | query | string or null | no | The verifier's name, recorded in `verifiedBy`. |
 | `verifierVersion` | query | string or null | no | The verifier's version, recorded in `verifiedBy`. |
 | `providerVerificationReportId` | query | string or null | no | Link a CTG-4.3 provider verification report (a UUID). |
@@ -1217,7 +1220,7 @@ Request body for ingest a verification report produced elsewhere.
 
 | Status | Description | Body |
 | --- | --- | --- |
-| 201 | The stored result, with an `ingestion` object (`format`, `interactions`, `notices`). | `application/hal+json` any |
+| 201 | The stored result, with an `ingestion` object (`format`, `syntax`, `interactions`, `notices`). | `application/hal+json` any |
 | 404 | `pacticipant-not-found` or `pact-not-found`: no such pair or pact version. | — |
 | 422 | `pact-verification-invalid`: the body is malformed (`detail.pointer` names the field); `pact-verification-report-not-found`: `providerVerificationReportId` is not this workspace's. | — |
 
@@ -3275,6 +3278,43 @@ Request body for preview a hosted verification.
 | 404 | `pacticipant-not-found` in this workspace. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify/runs` {#start-live-run-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-verify-runs-post}
+
+**Start a live hosted verification**
+
+Start the run `POST …/verify` would make, and answer at once (PFX-8.9) — the body is the same, field for field, and so is every refusal: a malformed provider version, `pact-verify-too-many-pacts`, an unknown or disabled target, `pact-verify-mutating-production`, all raised before anything is sent.
+
+The run then replays in the background. Read it with `GET …/pact-verifier/runs/{run_id}` — one row per pact with interactions done of the total, the newest failing interaction with expected beside actual, and the log — and stop it with `…/stop`. Interactions are sent one at a time so a stop takes effect before the next one. Results are published exactly as `…/verify` publishes them, as each pact finishes.
+
+A workspace runs at most 3 live runs at once (`429 pact-verify-run-limit`). A run lives in the API worker that started it and is kept for 30 minutes after it ends. Requires `pacts:create` and `verification_evidence:create`.
+
+Operation id: `start_live_run_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verify_runs_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for start a live hosted verification.
+
+- `application/json` — [`PactVerifyRequest`](#schema-pactverifyrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 202 | Successful response for start a live hosted verification. | `application/json` [`LiveRunSnapshot`](#schema-liverunsnapshot) |
+| 400 | `pact-selector-invalid`, or a malformed provider version, branch or build URL. | — |
+| 404 | `pacticipant-not-found` or `target-not-found` in this workspace. | — |
+| 422 | The same refusals as `POST …/verify`. | — |
+| 429 | `pact-verify-run-limit`: the workspace already has 3 runs going. | — |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states` {#list-states-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-get}
 
 **List a provider's registered provider states**
@@ -3462,6 +3502,89 @@ Operation id: `delete_state_route_v1_tenants__tenant_slug__pact_verifier_provide
 | 404 | `pacticipant-not-found` or `provider-state-not-found` in this workspace. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-verifier/runs/{run_id}` {#read-live-run-v1-tenants-tenant-slug-pact-verifier-runs-run-id-get}
+
+**Read a live hosted verification**
+
+A live run as it stands (PFX-8.9): `status` (`running`, `finished`, `errored`), one row per pact (`queued`, `running`, `passed`, `failed`, `incomplete`, `stopped`) with interactions done of the total, the newest interaction that did not pass with its mismatches (expected beside actual), the log lines after `log_after`, and — once finished — `result`, exactly what `POST …/verify` would have answered. Poll it every second or so; read the log on with `log_after=<log_next>`. A log keeps its newest 2000 lines and counts the older ones in `log_dropped`. Requires `pacts:view`.
+
+Operation id: `read_live_run_v1_tenants__tenant_slug__pact_verifier_runs__run_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `run_id` | path | string | yes | Path parameter identifying the run id segment. |
+| `log_after` | query | integer | no | Return only log lines after this `seq`. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a live hosted verification. | `application/json` [`LiveRunSnapshot`](#schema-liverunsnapshot) |
+| 404 | `pact-verify-run-not-found`: no live run with that id in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/runs/{run_id}/rerun` {#rerun-live-interaction-v1-tenants-tenant-slug-pact-verifier-runs-run-id-rerun-post}
+
+**Re-run one interaction of a live hosted verification**
+
+Replay one interaction of a pact the run verified, against the run's target with the run's options (PFX-8.9) — provider states set up and torn down, the target's policy and the production rule enforced as in any run. **Nothing is published and no evidence is recorded**: one interaction does not verify a pact; start a run to record a result. The run must have finished (`409 pact-verify-run-busy` while it is going). Requires `pacts:create` and `verification_evidence:create`.
+
+Operation id: `rerun_live_interaction_v1_tenants__tenant_slug__pact_verifier_runs__run_id__rerun_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `run_id` | path | string | yes | Path parameter identifying the run id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for re-run one interaction of a live hosted verification.
+
+- `application/json` — [`RerunRequest`](#schema-rerunrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for re-run one interaction of a live hosted verification. | `application/json` [`RerunResponse`](#schema-rerunresponse) |
+| 404 | `pact-verify-run-not-found`, `pact-verify-run-pact-not-found`, `pact-verify-run-interaction-not-found`, or the target is gone. | — |
+| 409 | `pact-verify-run-busy`: the run is still going. | — |
+| 422 | The target can no longer be used, or would be sent a mutating request in production. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/runs/{run_id}/stop` {#stop-live-run-v1-tenants-tenant-slug-pact-verifier-runs-run-id-stop-post}
+
+**Stop a live hosted verification**
+
+Ask a live run to stop (PFX-8.9). It ends before its next interaction: the pact being replayed publishes nothing (`run-stopped`), the pacts not reached are listed under `skipped` with `pact-verify-stopped`, pacts already finished keep their published results, and the outcome is `stopped`. Stopping a finished run changes nothing. Requires `pacts:create`.
+
+Operation id: `stop_live_run_v1_tenants__tenant_slug__pact_verifier_runs__run_id__stop_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `run_id` | path | string | yes | Path parameter identifying the run id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for stop a live hosted verification. | `application/json` [`LiveRunSnapshot`](#schema-liverunsnapshot) |
+| 404 | `pact-verify-run-not-found`: no live run with that id in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/pact-webhook-deliveries` {#read-deliveries-v1-tenants-tenant-slug-pact-webhook-deliveries-get}
 
 **List webhook deliveries**
@@ -3599,7 +3722,7 @@ A console run: the hosted verifier's answer, its trigger, and what it did not ru
 | `provider_branch` | string or null | no | Its branch, when stated. |
 | `target` | `VerifiedTarget` | yes | The verification target replayed against. |
 | `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed` — or, for `already-verified`, when every skipped pact's newest result for this provider version passed. |
-| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target — see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version) or `no-pacts` (the selectors chose nothing). |
+| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target — see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version), `no-pacts` (the selectors chose nothing) or `stopped` (a live run was stopped before it finished; PFX-8.9). |
 | `pacts` | array of `PactVerification` | no | One entry per pact verified. |
 | `skipped` | array of `SkippedPact` | no | Chosen but not verified, each with why. |
 | `connection_error` | string or null | no | With outcome `could-not-connect`: the target never answered (`Could not connect to billing.staging.example (timeout)`). Not a failed verification — nothing was published. |
@@ -3612,6 +3735,35 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `LiveRunSnapshot` {#schema-liverunsnapshot}
+
+A live run as it stands.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `run_id` | string | yes | The run's id. |
+| `provider` | string | yes | The provider's handle. |
+| `provider_name` | string | yes | The provider's display name. |
+| `provider_version` | string | yes | The provider version being verified. |
+| `provider_branch` | string or null | no | Its branch, when stated. |
+| `target` | string | yes | The verification target's handle. |
+| `target_base_url` | string | yes | Where the interactions are sent. |
+| `environment` | string | yes | The target's environment class. |
+| `status` | string | yes | `running`, `finished` or `errored`. |
+| `stop_requested` | boolean | yes | Whether someone asked the run to stop. |
+| `started_at` | string (date-time) | yes | When the run started. |
+| `finished_at` | string (date-time) or null | no | When it ended. |
+| `interactions` | integer | yes | Interactions of every pact, as far as they are compiled. |
+| `done` | integer | yes | Interactions replayed or held back so far. |
+| `pacts` | array of `LiveRunPact` | no | One row per pact, in run order. |
+| `skipped` | array of `SkippedPact` | no | Chosen but not verified, each with why. |
+| `failure` | `LiveRunFailure` or null | no | The newest interaction that did not pass. |
+| `log` | array of `LiveRunLogLine` | no | Log lines after `log_after`, oldest first. |
+| `log_next` | integer | yes | The newest line's `seq`: send it as `log_after` to read on. |
+| `log_dropped` | integer | no | Older lines let go beyond the 2000 a run keeps. |
+| `result` | [`PactVerifyResponse`](#schema-pactverifyresponse) or null | no | Once finished: exactly what `POST …/verify` would have answered. |
+| `error` | `LiveRunFault` or null | no | With status `errored`: why. |
 
 ### `MigrationReport` {#schema-migrationreport}
 
@@ -3774,7 +3926,7 @@ The outcome of one hosted verification.
 | `provider_branch` | string or null | no | Its branch, when stated. |
 | `target` | `VerifiedTarget` | yes | The verification target replayed against. |
 | `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed` — or, for `already-verified`, when every skipped pact's newest result for this provider version passed. |
-| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target — see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version) or `no-pacts` (the selectors chose nothing). |
+| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target — see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version), `no-pacts` (the selectors chose nothing) or `stopped` (a live run was stopped before it finished; PFX-8.9). |
 | `pacts` | array of `PactVerification` | no | One entry per pact verified. |
 | `skipped` | array of `SkippedPact` | no | Chosen but not verified, each with why. |
 | `connection_error` | string or null | no | With outcome `could-not-connect`: the target never answered (`Could not connect to billing.staging.example (timeout)`). Not a failed verification — nothing was published. |
@@ -3842,6 +3994,26 @@ A request to a consumer to re-publish a stale pact.
 | `notification_status` | string or null | no | What notifying the consumer's owners did: `routed`, `throttled`, `unowned`, `catch_all`, `unlinked` (the consumer is linked to no consumer or project with owners) or `failed`. |
 | `escalation_status` | string or null | no | The same, for the escalation on expiry. |
 | `webhook_deliveries` | integer | no | Contract webhook deliveries queued for it. |
+
+### `RerunRequest` {#schema-rerunrequest}
+
+Which interaction of the run to replay again.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `pact_version_sha` | string | yes | The pact version, as the run listed it. |
+| `case_id` | string | yes | The interaction's suite case (`failure.interaction.case_id`). |
+
+### `RerunResponse` {#schema-rerunresponse}
+
+One interaction replayed again; nothing published.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `run_id` | string | yes | The run it belongs to. |
+| `pact_version_sha` | string | yes | The pact version. |
+| `interaction` | `InteractionVerification` | yes | What replaying it showed this time. |
+| `published` | boolean | no | Always false: one interaction does not verify a pact. |
 
 ### `ResultDetail` {#schema-resultdetail}
 

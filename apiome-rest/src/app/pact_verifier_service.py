@@ -32,15 +32,31 @@ is sent.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+import time
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Protocol, Sequence, Tuple
 from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from .consumer_contract_store import ConsumerActor
 from .contract_protocols import PACT_VERIFICATION
-from .contract_runner import FAILURE_TIMEOUT, FAILURE_TRANSPORT_ERROR, AuthResolutionError, run_suite
-from .contract_suite import ContractSuiteManifest, PactSuiteOptions, SuiteSourceInfo, SuiteUnsupportedOperation
+from .contract_runner import (
+    FAILURE_TIMEOUT,
+    FAILURE_TRANSPORT_ERROR,
+    AuthResolutionError,
+    CaseDecision,
+    CaseHooks,
+    OperationResultInput,
+    run_suite,
+)
+from .contract_suite import (
+    ContractCase,
+    ContractSuiteManifest,
+    PactSuiteOptions,
+    SuiteSourceInfo,
+    SuiteUnsupportedOperation,
+)
 from .contract_suite_pact import compile_pact_suite
 from .pact_broker_verification_routes import _result_url
 from .pact_commit_status_store import post_verification_statuses
@@ -67,6 +83,8 @@ from .pact_verifier import (
     OUTCOME_INCOMPLETE,
     OUTCOME_NO_PACTS,
     OUTCOME_PASSED,
+    OUTCOME_STOPPED,
+    SKIP_RUN_STOPPED,
     VERIFIER_NAME,
     VERIFIER_VERSION,
     InteractionCounts,
@@ -74,6 +92,7 @@ from .pact_verifier import (
     PactVerificationOptions,
     ProviderStateHandler,
     interaction_counts,
+    interaction_result,
     interaction_results,
     pact_outcome,
     pact_test_results,
@@ -100,16 +119,20 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "CODE_ALREADY_VERIFIED",
     "CODE_MUTATING_PRODUCTION",
+    "CODE_STOPPED",
     "CODE_TARGET_AUTH_UNAVAILABLE",
     "CODE_TOO_MANY_PACTS",
     "MUTATING_PRODUCTION_MESSAGE",
     "NOT_PUBLISHED_DISABLED",
     "NOT_PUBLISHED_INCOMPLETE",
+    "NOT_PUBLISHED_STOPPED",
     "PactVerification",
     "PactVerifierError",
     "PactVerifyRequest",
     "PactVerifyResponse",
+    "PreparedVerification",
     "PublishedResult",
+    "RunObserver",
     "SkippedPact",
     "VerificationSession",
     "VerifiedTarget",
@@ -117,7 +140,9 @@ __all__ = [
     "connection_failure",
     "mutating_refusal",
     "open_verification_session",
+    "prepare_verification",
     "provider_state_handler",
+    "run_prepared_verification",
     "select_provider_pacts",
     "verify_provider_pacts",
 ]
@@ -130,6 +155,8 @@ CODE_TARGET_AUTH_UNAVAILABLE = "pact-verify-target-auth-unavailable"
 CODE_MUTATING_PRODUCTION = "pact-verify-mutating-production"
 #: Why a selected pact was skipped: it already has a result for this provider version (PFX-8.8).
 CODE_ALREADY_VERIFIED = "pact-verify-already-verified"
+#: Why a selected pact was skipped: the live run was stopped before it started (PFX-8.9).
+CODE_STOPPED = "pact-verify-stopped"
 
 #: What a run that asks to send mutating requests to a production target is told — the same
 #: sentence the Run a verification page shows before anything is sent.
@@ -142,6 +169,73 @@ MUTATING_PRODUCTION_MESSAGE = (
 NOT_PUBLISHED_DISABLED = "publish-disabled"
 #: Why a pact's result was not published: the run was inconclusive.
 NOT_PUBLISHED_INCOMPLETE = "run-incomplete"
+#: Why a pact's result was not published: the run was stopped while it was being replayed (PFX-8.9).
+NOT_PUBLISHED_STOPPED = "run-stopped"
+
+
+class RunObserver(Protocol):
+    """Who watches a run as it happens — the live run (PFX-8.9, :mod:`app.pact_verify_runs`).
+
+    Every call is made on the run's own thread, in order. An observer watches and may ask the run
+    to stop; it never changes what a replay finds or what is published.
+    """
+
+    def stop_requested(self) -> bool:
+        """Whether someone asked the run to stop (checked before each pact and each interaction)."""
+
+    def pact_started(self, pact: VerifiablePact, interactions: int) -> None:
+        """A pact is about to be replayed; ``interactions`` is how many cases its suite holds."""
+
+    def state_set_up(self, states: List[str], problem: Optional[str], duration_ms: int) -> None:
+        """The provider states of the next interaction were set up (``problem`` when they were not)."""
+
+    def interaction_done(self, pact: VerifiablePact, result: InteractionVerification) -> None:
+        """One interaction of the pact was replayed, or held back with its reason."""
+
+    def pact_finished(self, verification: PactVerification) -> None:
+        """A pact's replay is over and its result was published or not."""
+
+
+def _stop_decision() -> CaseDecision:
+    """What an interaction not sent because the run was stopped is recorded as."""
+    return CaseDecision(
+        run=False,
+        skip_code=SKIP_RUN_STOPPED,
+        skip_message="the run was stopped before this interaction was sent",
+    )
+
+
+def observed_hooks(inner: Optional[CaseHooks], observer: RunObserver, *, assumed: Sequence[str] = ()) -> CaseHooks:
+    """Wrap a run's provider-state hooks so a live run can stop it and log each state set up.
+
+    With the wrapper the runner sends one case at a time (any hooks do), so a stop takes effect
+    before the very next interaction.
+
+    Args:
+        inner: The provider-state hooks (:func:`app.pact_verifier.state_hooks`), or ``None``.
+        observer: Who watches the run.
+        assumed: Case ids replayed without their states set up (the plan's ``states_assumed``);
+            ``inner`` does not set those up, so nothing is logged for them.
+
+    Returns:
+        Hooks that check for a stop, then set the case's states up exactly as ``inner`` would.
+    """
+    skip = set(assumed)
+
+    def before(case: ContractCase) -> Optional[CaseDecision]:
+        if observer.stop_requested():
+            return _stop_decision()
+        if inner is None or inner.before is None:
+            return None
+        started = time.monotonic()
+        verdict = inner.before(case)
+        states = [state.name for state in case.pact.provider_states] if case.pact is not None else []
+        if states and case.case_id not in skip:
+            problem = verdict.skip_message if verdict is not None and not verdict.run else None
+            observer.state_set_up(states, problem, int((time.monotonic() - started) * 1000))
+        return verdict
+
+    return CaseHooks(before=before, after=inner.after if inner is not None else None)
 
 
 class PactVerifierError(Exception):
@@ -177,7 +271,10 @@ class SkippedPact(BaseModel):
     consumer_version: str = Field(description="The consumer version of the pact.")
     pact_version_sha: str = Field(description="The pact version.")
     code: str = Field(
-        description="`pact-verify-already-verified`, `pact-verify-in-progress` or `pact-verify-over-limit`."
+        description=(
+            "`pact-verify-already-verified`, `pact-verify-in-progress`, `pact-verify-over-limit` or "
+            "`pact-verify-stopped` (a live run was stopped before it reached the pact)."
+        )
     )
     reason: str = Field(description="Why it was not verified, and what to do.")
 
@@ -310,7 +407,7 @@ class PactVerification(BaseModel):
     published: bool = Field(description="Whether a verification result was published for this pact.")
     not_published_reason: Optional[str] = Field(
         default=None,
-        description="`run-incomplete` or `publish-disabled` when `published` is false.",
+        description="`run-incomplete`, `publish-disabled` or `run-stopped` when `published` is false.",
     )
     result: Optional[PublishedResult] = Field(default=None, description="The published result.")
     evidence_run_id: Optional[str] = Field(
@@ -349,8 +446,9 @@ class PactVerifyResponse(BaseModel):
             "`passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one "
             "could not be fully replayed), `could-not-connect` (no request reached the target — "
             "see `connection_error`), `already-verified` (with `skip_already_verified`, every "
-            "selected pact already has a result for this provider version) or `no-pacts` (the "
-            "selectors chose nothing)."
+            "selected pact already has a result for this provider version), `no-pacts` (the "
+            "selectors chose nothing) or `stopped` (a live run was stopped before it finished; "
+            "PFX-8.9)."
         )
     )
     pacts: List[PactVerification] = Field(default_factory=list, description="One entry per pact verified.")
@@ -547,6 +645,7 @@ def _verify_one(
     pending: bool,
     trigger: str = TRIGGER_HOSTED,
     description: Optional[str] = None,
+    observer: Optional[RunObserver] = None,
 ) -> PactVerification:
     """Verify one selected pact and, when the run is conclusive, publish its result.
 
@@ -567,6 +666,9 @@ def _verify_one(
         trigger: What started the run, stored on the published result (PFX-5.5): ``hosted`` for a
             ``…/verify`` request, ``manual`` or ``stale-recheck`` from the Verification console.
         description: Why the pact is verified, when no selector chose it (a console run).
+        observer: Who watches the run live (PFX-8.9): told about each interaction as it is done,
+            and asked before each one whether to stop. A pact cut short by a stop publishes
+            nothing (``run-stopped``).
 
     Returns:
         The pact's verification.
@@ -582,12 +684,25 @@ def _verify_one(
         state_issue=getattr(handler, "issue", None),
         target_protocol=target.protocol,
     )
+    hooks = state_hooks(handler, plan.states_assumed)
+    on_result = None
+    if observer is not None:
+        observer.pact_started(selected, len(manifest.cases))
+        hooks = observed_hooks(hooks, observer, assumed=plan.states_assumed)
+
+        def on_result(case: ContractCase, operation: OperationResultInput) -> None:
+            if case.pact is not None:
+                observer.interaction_done(
+                    selected, interaction_result(case, operation, states_assumed=plan.states_assumed)
+                )
+
     run = run_suite(
         manifest,
         target,
         auth_headers=auth_headers,
         decisions=plan.decisions,
-        hooks=state_hooks(handler, plan.states_assumed),
+        hooks=hooks,
+        on_result=on_result,
     )
     drain = getattr(handler, "drain_teardown_failures", None)
     teardown_failures: List[str] = list(drain()) if callable(drain) else []
@@ -597,7 +712,10 @@ def _verify_one(
 
     published: Optional[PublishedResult] = None
     reason: Optional[str] = None
-    if outcome == OUTCOME_INCOMPLETE:
+    if any(interaction.code == SKIP_RUN_STOPPED for interaction in interactions):
+        # A verifier killed half-way publishes nothing; neither does a stopped run.
+        reason = NOT_PUBLISHED_STOPPED
+    elif outcome == OUTCOME_INCOMPLETE:
         reason = NOT_PUBLISHED_INCOMPLETE
     elif not request.publish:
         reason = NOT_PUBLISHED_DISABLED
@@ -740,17 +858,44 @@ def _run_outcome(pacts: Sequence[PactVerification]) -> str:
     return OUTCOME_PASSED
 
 
-def verify_provider_pacts(
+@dataclass
+class PreparedVerification:
+    """A run that has passed every check and is ready to replay (see :func:`prepare_verification`).
+
+    Attributes:
+        session: The resolved target, credentials and provider-state handler; closed by the run.
+        query: The checked for-verification query.
+        version: The checked provider version.
+        branch: The checked provider branch.
+        build_url: The checked build URL.
+        selected: The pacts to replay, in order.
+        skipped: The pacts chosen but not replayed, each with why.
+        previous: For ``skip_already_verified``: the newest result of each skipped pact.
+    """
+
+    session: "VerificationSession"
+    query: ForVerificationQuery
+    version: str
+    branch: Optional[str]
+    build_url: Optional[str]
+    selected: List[VerifiablePact]
+    skipped: List[SkippedPact] = field(default_factory=list)
+    previous: Dict[Tuple[str, str], VerificationResultRecord] = field(default_factory=dict)
+
+
+def prepare_verification(
     db: Any,
     tenant_id: str,
     provider_ref: str,
     request: PactVerifyRequest,
     *,
     actor: ConsumerActor,
-    broker_base: str,
     state_handler: Optional[ProviderStateHandler] = None,
-) -> PactVerifyResponse:
-    """Verify a provider against the pacts its selectors choose.
+) -> PreparedVerification:
+    """Check a run and choose its pacts, sending nothing (the first half of a hosted run).
+
+    Everything that can refuse a run refuses here — so a live run (PFX-8.9) that starts in the
+    background has already been told every reason it could not.
 
     Args:
         db: The database.
@@ -758,11 +903,10 @@ def verify_provider_pacts(
         provider_ref: The provider's handle, id or name.
         request: Target, provider version, selection and what the run may send.
         actor: Who is verifying.
-        broker_base: The Pact Broker base URL the client would use (for result links and webhooks).
         state_handler: A provider-state handler to use instead of the registered one (tests).
 
     Returns:
-        The run: one entry per pact, each with its interactions, mismatches and published result.
+        The prepared run; :func:`run_prepared_verification` replays it and closes its session.
 
     Raises:
         PacticipantValidationError: ``pacticipant-not-found`` for an unknown provider; a malformed
@@ -795,21 +939,130 @@ def verify_provider_pacts(
         )
 
     session = open_verification_session(db, tenant_id, provider, request, actor=actor, state_handler=state_handler)
-    if not selected and skipped:
+    return PreparedVerification(
+        session=session,
+        query=query,
+        version=version,
+        branch=branch,
+        build_url=build_url,
+        selected=selected,
+        skipped=skipped,
+        previous=previous,
+    )
+
+
+def _stopped_pact(pact: VerifiablePact) -> SkippedPact:
+    """A pact a stopped run never reached."""
+    candidate = pact.candidate
+    return SkippedPact(
+        consumer=candidate.consumer_slug,
+        consumer_name=candidate.consumer_name,
+        consumer_version=candidate.version_number,
+        pact_version_sha=candidate.sha,
+        code=CODE_STOPPED,
+        reason="the run was stopped before this pact was verified; start a new run to verify it.",
+    )
+
+
+def run_prepared_verification(
+    db: Any,
+    tenant_id: str,
+    prepared: PreparedVerification,
+    *,
+    actor: ConsumerActor,
+    broker_base: str,
+    observer: Optional[RunObserver] = None,
+) -> PactVerifyResponse:
+    """Replay a prepared run, publish its results and close its session (the second half).
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        prepared: What :func:`prepare_verification` returned.
+        actor: Who is verifying.
+        broker_base: The Pact Broker base URL the client would use (for result links and webhooks).
+        observer: Who watches the run live (PFX-8.9). When it asks to stop, the pacts not yet
+            started are listed under ``skipped`` with :data:`CODE_STOPPED` and the outcome is
+            ``stopped``.
+
+    Returns:
+        The run: one entry per pact, each with its interactions, mismatches and published result.
+    """
+    session = prepared.session
+    if not prepared.selected and prepared.skipped:
         session.close()
-        return session.response(version, branch, [], skipped=skipped, previous_success=_all_passed(previous))
+        return session.response(
+            prepared.version,
+            prepared.branch,
+            [],
+            skipped=prepared.skipped,
+            previous_success=_all_passed(prepared.previous),
+        )
+    pacts: List[PactVerification] = []
+    skipped = list(prepared.skipped)
+    stopped = False
     try:
-        if selected and request.publish and branch:
+        if prepared.selected and session.request.publish and prepared.branch:
             # A verifier records the provider version's branch before it publishes, so each result
             # carries it; the version itself is recorded by the publication.
-            record_broker_version(db, tenant_id, provider.slug, version, actor=actor, branch=branch)
-        pacts = [
-            session.verify(pact, pending=_excused(pact, query), broker_base=broker_base, build_url=build_url)
-            for pact in selected
-        ]
+            record_broker_version(
+                db, tenant_id, session.provider.slug, prepared.version, actor=actor, branch=prepared.branch
+            )
+        for index, pact in enumerate(prepared.selected):
+            if observer is not None and observer.stop_requested():
+                stopped = True
+                skipped.extend(_stopped_pact(rest) for rest in prepared.selected[index:])
+                break
+            verification = session.verify(
+                pact,
+                pending=_excused(pact, prepared.query),
+                broker_base=broker_base,
+                build_url=prepared.build_url,
+                observer=observer,
+            )
+            pacts.append(verification)
+            if observer is not None:
+                observer.pact_finished(verification)
+        if observer is not None and not stopped:
+            stopped = any(verification.not_published_reason == NOT_PUBLISHED_STOPPED for verification in pacts)
     finally:
         session.close()
-    return session.response(version, branch, pacts, skipped=skipped)
+    return session.response(prepared.version, prepared.branch, pacts, skipped=skipped, stopped=stopped)
+
+
+def verify_provider_pacts(
+    db: Any,
+    tenant_id: str,
+    provider_ref: str,
+    request: PactVerifyRequest,
+    *,
+    actor: ConsumerActor,
+    broker_base: str,
+    state_handler: Optional[ProviderStateHandler] = None,
+) -> PactVerifyResponse:
+    """Verify a provider against the pacts its selectors choose, in one request.
+
+    :func:`prepare_verification` then :func:`run_prepared_verification`; a live run (PFX-8.9) runs
+    the same two halves with the second on a background thread.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant; every lookup is scoped to it.
+        provider_ref: The provider's handle, id or name.
+        request: Target, provider version, selection and what the run may send.
+        actor: Who is verifying.
+        broker_base: The Pact Broker base URL the client would use (for result links and webhooks).
+        state_handler: A provider-state handler to use instead of the registered one (tests).
+
+    Returns:
+        The run: one entry per pact, each with its interactions, mismatches and published result.
+
+    Raises:
+        PacticipantValidationError, PactPublicationError, TargetValidationError, PactVerifierError:
+            As :func:`prepare_verification` documents.
+    """
+    prepared = prepare_verification(db, tenant_id, provider_ref, request, actor=actor, state_handler=state_handler)
+    return run_prepared_verification(db, tenant_id, prepared, actor=actor, broker_base=broker_base)
 
 
 def _split_verified(
@@ -896,6 +1149,7 @@ class VerificationSession:
         build_url: Optional[str],
         trigger: str = TRIGGER_HOSTED,
         description: Optional[str] = None,
+        observer: Optional[RunObserver] = None,
     ) -> PactVerification:
         """Verify one pact on this session's target (see :func:`_verify_one`).
 
@@ -906,6 +1160,7 @@ class VerificationSession:
             build_url: The checked build URL.
             trigger: What started the run (stored on the published result).
             description: Why the pact is verified, when no selector chose it.
+            observer: Who watches the run live (PFX-8.9).
 
         Returns:
             The pact's verification.
@@ -926,7 +1181,52 @@ class VerificationSession:
             pending=pending,
             trigger=trigger,
             description=description,
+            observer=observer,
         )
+
+    def replay_interaction(self, consumer: str, sha: str, case_id: str) -> Optional[InteractionVerification]:
+        """Replay one interaction of one pact on this session's target, publishing nothing (PFX-8.9).
+
+        The interaction is planned exactly as in a full run — the target's policy, the run's
+        mutating opt-in and fixtures, its provider states set up and torn down — but no evidence
+        is recorded and no verification result is published: one interaction does not verify a
+        pact.
+
+        Args:
+            consumer: The consumer's handle.
+            sha: The pact version.
+            case_id: The suite case to replay (``InteractionVerification.case_id``).
+
+        Returns:
+            The interaction's result, or ``None`` when the pact has no such case.
+
+        Raises:
+            PactPublicationError: ``pact-not-found`` for an unknown pact version.
+        """
+        pact = get_pact_by_sha(self.db, self.tenant_id, self.provider.slug, consumer, sha)
+        manifest = compile_stored_pact(pact)
+        case = next((item for item in manifest.cases if item.case_id == case_id), None)
+        if case is None:
+            return None
+        single = manifest.model_copy(update={"cases": [case]})
+        plan = plan_pact_run(
+            single,
+            self.request.verification,
+            target_allows_mutating=self.target.policy.allow_mutating_methods,
+            has_state_handler=self.handler is not None,
+            state_issue=getattr(self.handler, "issue", None),
+            target_protocol=self.target.protocol,
+        )
+        run = run_suite(
+            single,
+            self.target,
+            auth_headers=self.auth_headers,
+            decisions=plan.decisions,
+            hooks=state_hooks(self.handler, plan.states_assumed),
+        )
+        if not run.operations:
+            return None
+        return interaction_result(case, run.operations[0], states_assumed=plan.states_assumed)
 
     def close(self) -> None:
         """Release the provider-state handler, if it holds anything."""
@@ -942,6 +1242,7 @@ class VerificationSession:
         *,
         skipped: Optional[List[SkippedPact]] = None,
         previous_success: bool = False,
+        stopped: bool = False,
     ) -> PactVerifyResponse:
         """The run's answer: the target as resolved, the verdict and every pact.
 
@@ -952,12 +1253,15 @@ class VerificationSession:
             skipped: The pacts chosen but not verified.
             previous_success: For a run that skipped every pact as already verified: whether
                 the results it stands on all passed.
+            stopped: Whether a live run was stopped before it finished (PFX-8.9).
 
         Returns:
             The response.
         """
         connection_error = connection_failure(pacts, self.target.base_url)
-        if connection_error:
+        if stopped:
+            outcome = OUTCOME_STOPPED
+        elif connection_error:
             outcome = OUTCOME_COULD_NOT_CONNECT
         elif not pacts and skipped and all(item.code == CODE_ALREADY_VERIFIED for item in skipped):
             outcome = OUTCOME_ALREADY_VERIFIED

@@ -1,0 +1,30 @@
+---
+slug: live-verification-run-and-results-upload
+title: "Live verification runs and results upload"
+description: "Watch a verification run live, stop it, and upload any verifier's report."
+authors: [apiome]
+---
+
+A hosted verification used to be invisible until it finished, and a report from a verifier you ran
+yourself could only be attached with `apiome pact publish-verification-results`. **Run a
+verification** now opens a live **run drawer**, and **Upload results** attaches a report from the
+app. See [Watch a run as it happens](/ship/pact-broker/verification-console#watch-a-run-as-it-happens)
+and [Upload a report in the app](/ship/pact-broker/verification-results#upload-a-report-in-the-app).
+
+{/* truncate */}
+
+- **Progress as it happens.** The drawer shows each consumer's pact (Queued, Running, Passed,
+  Failed), interactions done of the total, and the run's log, read again every second.
+- **Expected beside actual.** The newest failing interaction shows what the pact expected beside
+  what the provider returned, with **Show the request**, **Re-run this interaction** (nothing is
+  published) and **Reproduce on the mock** (the provider's project).
+- **Close it, keep it running.** Closing the drawer never stops the run; a toast says when it ends.
+  **Stop run** ends it before its next interaction, and the pact cut short publishes nothing.
+- **Upload any verifier's report.** Pact verifier JSON, JUnit XML, Schemathesis, Newman or Dredd —
+  **Detect** tells them apart. A report Apiome cannot read is refused with the reason, and nothing is
+  recorded.
+- **CLI:** `apiome pact publish-verification-results --format` accepts `schemathesis`, `newman` and
+  `dredd`.
+- **REST:** `POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify/runs`, then
+  `GET`, `…/stop` and `…/rerun` under `/v1/tenants/{tenant}/pact-verifier/runs/{run_id}`;
+  `…/external-verification-results` reads Schemathesis, Newman and Dredd reports.

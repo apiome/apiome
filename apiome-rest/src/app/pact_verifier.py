@@ -104,6 +104,7 @@ __all__ = [
     "MAX_PACTS_PER_RUN",
     "MAX_SETUP_URL_CHARS",
     "OUTCOME_ALREADY_VERIFIED",
+    "OUTCOME_STOPPED",
     "OUTCOME_COULD_NOT_CONNECT",
     "OUTCOME_FAILED",
     "OUTCOME_INCOMPLETE",
@@ -114,6 +115,7 @@ __all__ = [
     "SKIP_PROTOCOL_MISMATCH",
     "VERIFIABLE_TARGET_PROTOCOLS",
     "SKIP_STATE_NOT_SET_UP",
+    "SKIP_RUN_STOPPED",
     "SKIP_STATE_SETUP_FAILED",
     "VERIFIER_NAME",
     "VERIFIER_VERSION",
@@ -124,6 +126,7 @@ __all__ = [
     "PactVerificationOptions",
     "ProviderStateHandler",
     "interaction_counts",
+    "interaction_result",
     "interaction_results",
     "pact_outcome",
     "pact_test_results",
@@ -154,6 +157,8 @@ _RPC_TARGET_PROTOCOLS = frozenset({PROTOCOL_GRPC, PROTOCOL_CONNECT})
 SKIP_STATE_NOT_SET_UP = "provider-state-not-set-up"
 #: A provider-state handler was asked to set a state up and could not.
 SKIP_STATE_SETUP_FAILED = "provider-state-setup-failed"
+#: A live run was stopped before the interaction was sent (PFX-8.9).
+SKIP_RUN_STOPPED = "run-stopped"
 
 #: Every interaction of the pact was replayed and matched.
 OUTCOME_PASSED = "passed"
@@ -169,6 +174,9 @@ OUTCOME_COULD_NOT_CONNECT = "could-not-connect"
 #: Every selected pact already has a result for this provider version, and the run was asked to
 #: skip those (a run's outcome only, PFX-8.8). Nothing is replayed or published.
 OUTCOME_ALREADY_VERIFIED = "already-verified"
+#: Someone stopped a live run before it finished (a run's outcome only, PFX-8.9). A pact whose
+#: replay was cut short publishes nothing; pacts finished before the stop keep their results.
+OUTCOME_STOPPED = "stopped"
 
 #: The longest provider-state setup URL a run accepts (the registry's own limit).
 MAX_SETUP_URL_CHARS = 2048
@@ -602,6 +610,40 @@ def _mismatches(case: ContractCase, operation: OperationResultInput) -> List[Int
     return found
 
 
+def interaction_result(
+    case: ContractCase, operation: OperationResultInput, *, states_assumed: Collection[str] = ()
+) -> InteractionVerification:
+    """Read one replayed case back as the result of its interaction.
+
+    Args:
+        case: The compiled case (it must come from a pact: ``case.pact`` is set).
+        operation: The runner's record for it.
+        states_assumed: Case ids replayed without their provider states (from the plan).
+
+    Returns:
+        The interaction's result, mismatches included.
+    """
+    pact = case.pact
+    assert pact is not None, "a pact suite's case always carries its pact"
+    return InteractionVerification(
+        case_id=case.case_id,
+        description=pact.description,
+        key=pact.key,
+        pointer=pact.pointer,
+        operation=case.operation_key,
+        provider_states=_state_names(case),
+        states_set_up=case.case_id not in set(states_assumed),
+        pending=pact.pending,
+        outcome=operation.outcome,
+        code=operation.failure_code,
+        message=operation.failure_message,
+        expected_status=operation.expected_status,
+        actual_status=operation.actual_status,
+        duration_ms=operation.duration_ms,
+        mismatches=_mismatches(case, operation),
+    )
+
+
 def interaction_results(
     manifest: ContractSuiteManifest,
     operations: Sequence[OperationResultInput],
@@ -626,25 +668,7 @@ def interaction_results(
         operation = by_case.get(case.case_id)
         if operation is None or case.pact is None:
             continue
-        results.append(
-            InteractionVerification(
-                case_id=case.case_id,
-                description=case.pact.description,
-                key=case.pact.key,
-                pointer=case.pact.pointer,
-                operation=case.operation_key,
-                provider_states=_state_names(case),
-                states_set_up=case.case_id not in assumed,
-                pending=case.pact.pending,
-                outcome=operation.outcome,
-                code=operation.failure_code,
-                message=operation.failure_message,
-                expected_status=operation.expected_status,
-                actual_status=operation.actual_status,
-                duration_ms=operation.duration_ms,
-                mismatches=_mismatches(case, operation),
-            )
-        )
+        results.append(interaction_result(case, operation, states_assumed=assumed))
     return results
 
 

@@ -86,6 +86,10 @@ def _scopes(method: str, path: str) -> Set[str]:
         ("POST", f"{SHA}/metadata/e30/verification-results", {VERIFY}),
         ("POST", f"{SHA}/external-verification-results", {VERIFY}),
         ("POST", f"{PV}/pacts/provider/Ledger/verify", {VERIFY}),
+        ("POST", f"{PV}/pacts/provider/Ledger/verify/runs", {VERIFY}),
+        ("GET", f"{PV}/runs/r1", {READ}),
+        ("POST", f"{PV}/runs/r1/stop", {VERIFY}),
+        ("POST", f"{PV}/runs/r1/rerun", {VERIFY}),
         ("POST", f"{PV}/providers/Ledger/provider-states", {VERIFY}),
         ("PUT", f"{PV}/providers/Ledger/provider-states/state-1", {VERIFY}),
         # The pacticipant registry's reads (list-pacticipants, describe-version --latest).

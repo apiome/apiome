@@ -476,7 +476,7 @@ def publish_verification_results(
         exists=True,
         dir_okay=False,
         readable=True,
-        help="The report: pact_verifier_cli --json output, or JUnit XML.",
+        help="The report: pact_verifier_cli --json output, JUnit XML, or a Schemathesis, Newman or Dredd report.",
     ),
     provider: str = typer.Option(
         ..., "--provider", help="The provider's name in the broker."
@@ -510,7 +510,7 @@ def publish_verification_results(
     content_type: Optional[str] = typer.Option(
         None,
         "--content-type",
-        help="The report's media type; inferred from .json / .xml.",
+        help="The report's media type; inferred from .json / .xml / .ndjson.",
     ),
     verifier: Optional[str] = typer.Option(
         None, "--verifier", help="The tool that wrote the report."
@@ -528,7 +528,8 @@ def publish_verification_results(
 ) -> None:
     """Publish a verification report produced elsewhere (POST …/external-verification-results).
 
-    Reads pact_verifier_cli --json output or JUnit XML on the server, stores it as a verification
+    Reads pact_verifier_cli --json output, JUnit XML, or a Schemathesis (NDJSON or JUnit), Newman
+    (JSON or JUnit) or Dredd (xunit) report on the server, stores it as a verification
     result of the pact version and prints the verdict and every note about what could not be used.
     Exits 1 when the server refuses (a malformed or empty report, an unknown pact version), or
     with --fail-on-failure when the result is a failure.

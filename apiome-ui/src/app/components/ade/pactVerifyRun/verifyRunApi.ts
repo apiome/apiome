@@ -7,14 +7,13 @@
 import type { Cadence } from '@lib/pact-remediation';
 import {
   VERIFY_PREVIEW_PROXY,
-  VERIFY_RUN_PROXY,
   readPreview,
-  readRun,
   readTargets,
   type VerifyPreview,
-  type VerifyRunAnswer,
   type VerifyTarget,
 } from '@lib/pact-verify-run';
+import { LIVE_RUNS_PROXY, readInteraction, readLiveRun, type LiveInteraction, type LiveRun } from '@lib/pact-verify-live';
+import { UPLOAD_PROXY, readUploadAnswer, type UploadAnswer } from '@lib/pact-verify-upload';
 
 /** A refusal: the message and the status. */
 export interface CallFailure {
@@ -27,6 +26,8 @@ export interface ProviderChoice {
   slug: string;
   name: string;
   mainBranch: string | null;
+  /** The project it is linked to (its hosted mock is reproduced on), PFX-8.9. */
+  projectId: string | null;
 }
 
 /** The status and body of an answer, or `null` offline. */
@@ -81,6 +82,7 @@ export async function fetchProviders(): Promise<ProviderChoice[] | CallFailure> 
       slug: String(row.slug),
       name: typeof row.name === 'string' && row.name ? row.name : String(row.slug),
       mainBranch: typeof row.main_branch === 'string' && row.main_branch ? row.main_branch : null,
+      projectId: typeof row.project_id === 'string' && row.project_id ? row.project_id : null,
     }));
 }
 
@@ -122,19 +124,6 @@ export async function previewVerification(provider: string, body: Record<string,
 }
 
 /**
- * Run the hosted verifier.
- *
- * @param provider - The provider's handle.
- * @param body - `verifyBody(form)`.
- * @returns The run, or the refusal (with REST's reason, e.g. a production target and mutating requests).
- */
-export async function runVerification(provider: string, body: Record<string, unknown>): Promise<VerifyRunAnswer | CallFailure> {
-  const answer = await send(VERIFY_RUN_PROXY, json('POST', { provider, body }));
-  if (!answer || answer.status >= 400) return failure(answer, 'The verification could not start');
-  return readRun(answer.body);
-}
-
-/**
  * Save the run as the provider's schedule: a provider-wide override of PFX-6.2's cadence and target.
  *
  * @param provider - The provider's handle.
@@ -146,4 +135,106 @@ export async function saveSchedule(provider: string, cadence: Cadence, target: s
   const answer = await send('/api/pact/verification-settings/overrides', json('PUT', { provider, cadence, target_ref: target }));
   if (!answer || answer.status >= 400) return failure(answer, 'The schedule could not be saved');
   return null;
+}
+
+// --- the live run and the upload (PFX-8.9, #7306) ---------------------------------------------------
+
+/** A failure that also carries REST's pointer into the report (an upload refusal). */
+export interface UploadFailure extends CallFailure {
+  pointer: string | null;
+}
+
+/**
+ * Start a live run (the body of `POST …/verify`), answered at once.
+ *
+ * @param provider - The provider's handle.
+ * @param body - `verifyBody(form)`.
+ * @returns The run as it starts, or the refusal (with REST's reason).
+ */
+export async function startLiveRun(provider: string, body: Record<string, unknown>): Promise<LiveRun | CallFailure> {
+  const answer = await send(LIVE_RUNS_PROXY, json('POST', { provider, body }));
+  if (!answer || answer.status >= 400) return failure(answer, 'The verification could not start');
+  return readLiveRun(answer.body) ?? failure(answer, 'The run could not be read');
+}
+
+/**
+ * Read a live run from a log cursor.
+ *
+ * @param runId - The run's id.
+ * @param logAfter - The newest log line already shown.
+ * @returns The run, or the failure.
+ */
+export async function pollLiveRun(runId: string, logAfter: number): Promise<LiveRun | CallFailure> {
+  const answer = await send(`${LIVE_RUNS_PROXY}/${encodeURIComponent(runId)}?log_after=${logAfter}`);
+  if (!answer || answer.status >= 400) return failure(answer, 'The run could not be read');
+  return readLiveRun(answer.body) ?? failure(answer, 'The run could not be read');
+}
+
+/**
+ * Ask a live run to stop.
+ *
+ * @param runId - The run's id.
+ * @returns The run as it stands, or the refusal.
+ */
+export async function stopLiveRun(runId: string): Promise<LiveRun | CallFailure> {
+  const answer = await send(`${LIVE_RUNS_PROXY}/${encodeURIComponent(runId)}/stop`, { method: 'POST' });
+  if (!answer || answer.status >= 400) return failure(answer, 'The run could not be stopped');
+  return readLiveRun(answer.body) ?? failure(answer, 'The run could not be read');
+}
+
+/**
+ * Re-run one interaction of a finished run; nothing is published.
+ *
+ * @param runId - The run's id.
+ * @param sha - The pact version.
+ * @param caseId - The interaction's case id.
+ * @returns What replaying it showed, or the refusal (409 while the run is going).
+ */
+export async function rerunInteraction(runId: string, sha: string, caseId: string): Promise<LiveInteraction | CallFailure> {
+  const answer = await send(`${LIVE_RUNS_PROXY}/${encodeURIComponent(runId)}/rerun`, json('POST', { pact_version_sha: sha, case_id: caseId }));
+  if (!answer || answer.status >= 400) return failure(answer, 'The interaction could not be re-run');
+  return readInteraction(answer.body.interaction);
+}
+
+/** A consumer's newest pact, as the upload dialog offers it. */
+export interface ConsumerPact {
+  consumer: string;
+  consumerName: string;
+  consumerVersion: string;
+  sha: string;
+}
+
+/**
+ * The provider's consumers and each one's newest pact (the Verification page's status read).
+ *
+ * @param provider - The provider's handle.
+ * @returns The pacts, or the failure.
+ */
+export async function fetchConsumerPacts(provider: string): Promise<ConsumerPact[] | CallFailure> {
+  const answer = await send(`/api/pact/pacticipants/${encodeURIComponent(provider)}/verification/status`);
+  if (!answer || answer.status >= 400) return failure(answer, 'Could not read the provider’s pacts');
+  const rows = Array.isArray(answer.body.pacts) ? (answer.body.pacts as Record<string, unknown>[]) : [];
+  return rows
+    .filter((row) => typeof row.consumer === 'string' && typeof row.pact_version_sha === 'string')
+    .map((row) => ({
+      consumer: String(row.consumer),
+      consumerName: typeof row.consumer_name === 'string' && row.consumer_name ? row.consumer_name : String(row.consumer),
+      consumerVersion: typeof row.consumer_version === 'string' ? row.consumer_version : '',
+      sha: String(row.pact_version_sha),
+    }));
+}
+
+/**
+ * Upload a verifier's report as a verification result.
+ *
+ * @param body - `uploadBody(provider, form)`.
+ * @returns What the server read, or its refusal with the reason and the pointer into the report.
+ */
+export async function uploadResults(body: Record<string, unknown>): Promise<UploadAnswer | UploadFailure> {
+  const answer = await send(UPLOAD_PROXY, json('POST', body));
+  if (!answer || answer.status >= 400) {
+    const pointer = answer && typeof answer.body.pointer === 'string' ? answer.body.pointer : null;
+    return { ...failure(answer, 'The report could not be uploaded'), pointer };
+  }
+  return readUploadAnswer(answer.body);
 }

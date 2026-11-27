@@ -1,7 +1,7 @@
 """Publishing a verification report produced elsewhere — PFX-3.5 (#6935).
 
 ``apiome pact publish-verification-results <report>`` sends the report a team's own CI already has —
-``pact_verifier_cli --json`` output or JUnit XML — to ``POST …/pact-broker/pacts/provider/{p}/
+``pact_verifier_cli --json`` output, JUnit XML, or a Schemathesis, Newman or Dredd report (PFX-8.9) — to ``POST …/pact-broker/pacts/provider/{p}/
 consumer/{c}/pact-version/{sha}/external-verification-results``. The server reads the report; the CLI
 only names its media type, builds the query and prints what the server read and could not use.
 
@@ -16,10 +16,22 @@ from typing import Any, Optional
 from urllib.parse import quote, urlencode
 
 #: Report media types by file extension. Anything else is sent without a type and sniffed.
-_REPORT_TYPES = {".json": "application/json", ".xml": "application/xml"}
+_REPORT_TYPES = {
+    ".json": "application/json",
+    ".xml": "application/xml",
+    ".ndjson": "application/x-ndjson",
+    ".jsonl": "application/x-ndjson",
+}
 
 #: The values of ``--format``.
-REPORT_FORMATS = ("auto", "pact-verifier-json", "junit")
+REPORT_FORMATS = (
+    "auto",
+    "pact-verifier-json",
+    "junit",
+    "schemathesis",
+    "newman",
+    "dredd",
+)
 
 
 def report_content_type(path: Path, explicit: Optional[str]) -> str:

@@ -512,6 +512,49 @@
       ]
     },
     {
+      "id": "verifier.live-run.start",
+      "label": "Start a live verification run",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify/runs",
+      "audit": "pacts.verification.run",
+      "auditedBy": "route",
+      "body": {
+        "target_ref": "staging",
+        "provider_version": "1.0.0"
+      },
+      "alsoRequires": [
+        "verification_evidence:create"
+      ]
+    },
+    {
+      "id": "verifier.live-run.stop",
+      "label": "Stop a live verification run",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/runs/{run}/stop",
+      "audit": "pacts.verification.stop",
+      "auditedBy": "route",
+      "stub": "live_run_exists"
+    },
+    {
+      "id": "verifier.live-run.rerun",
+      "label": "Re-run one interaction of a live run",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/runs/{run}/rerun",
+      "audit": "pacts.verification.run",
+      "auditedBy": "route",
+      "stub": "live_run_exists",
+      "body": {
+        "pact_version_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "case_id": "pact:0"
+      },
+      "alsoRequires": [
+        "verification_evidence:create"
+      ]
+    },
+    {
       "id": "consumer.pact.publish",
       "label": "Publish a consumer's pact",
       "permission": "pacts:create",

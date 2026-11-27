@@ -67,9 +67,15 @@ the run would not start is listed there too.
 **More options** holds the **Build URL**, the **CI context**, **Publish the results** (off is a dry
 run) and **Skip pacts already verified for this version**.
 
-Select **Run verification**. The dialog says how the run went and links to the provider's
-[Verification page](./verification-console.mdx). **Save as a schedule** stores the provider's cadence
-and target, so [scheduled runs](./stale-pacts.mdx) keep its pacts verified.
+Select **Run verification**. The run starts at once and the **run drawer** opens beside the page:
+progress for each consumer, the failing interaction with what the pact expected beside what the
+provider returned, and the run's log. Closing the drawer does not stop the run. See
+[Watch a run as it happens](./verification-console.mdx#watch-a-run-as-it-happens). **Save as a
+schedule** stores the provider's cadence and target, so [scheduled runs](./stale-pacts.mdx) keep its
+pacts verified.
+
+Ran a verifier yourself? **Upload results** attaches its report to the pact it verified. See
+[Upload a report in the app](./verification-results.mdx#upload-a-report-in-the-app).
 
 ## Run a verification with the REST API
 

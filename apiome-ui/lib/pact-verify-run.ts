@@ -31,8 +31,8 @@ export const VERIFY_RUN_ROUTE = '/ade/dashboard/pacts/verification/new';
 /** The preview proxy. */
 export const VERIFY_PREVIEW_PROXY = '/api/pact/verification/preview';
 
-/** The run proxy. */
-export const VERIFY_RUN_PROXY = '/api/pact/verification/run';
+/** The run proxy: a live run (PFX-8.9) the drawer follows — see `lib/pact-verify-live.ts`. */
+export const VERIFY_RUN_PROXY = '/api/pact/verification/runs';
 
 /**
  * The page for one provider.
@@ -760,6 +760,9 @@ export function runHeadline(run: VerifyRunAnswer): string {
   if (run.connection_error) return `${run.connection_error} — not a failed verification; nothing was published.`;
   if (run.outcome === 'already-verified') return `Every selected pact is already verified for ${run.provider_version}.`;
   if (run.outcome === 'no-pacts') return 'The rules chose no pact: nothing was verified.';
+  if (run.outcome === 'stopped') {
+    return `Stopped: pacts finished before the stop kept their results; the pact cut short and those not reached published nothing.`;
+  }
   if (run.outcome === 'passed') return `Verified ${run.provider} ${run.provider_version}: every pact passed.`;
   if (run.outcome === 'failed') return `Verified ${run.provider} ${run.provider_version}: a pact failed.`;
   return `Verified ${run.provider} ${run.provider_version}: incomplete — something could not be replayed, nothing failed.`;

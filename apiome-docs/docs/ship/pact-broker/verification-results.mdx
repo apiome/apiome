@@ -108,10 +108,40 @@ curl -X POST \
 
 `<sha>` is the pact version: the `name` of the pact's `pb:pact-version` link.
 
+## Upload a report in the app
+
+To attach a report by hand — a verifier you ran on your machine, or a CI job that could not reach
+Apiome — use **Upload results**.
+
+1. In the rail, under **Ship**, click **Contracts**, then the **Verification** tab.
+2. Choose the **Provider** under test.
+3. In the header, click **Upload results**.
+4. Choose the **Consumer**. The **Pact version** is set to that consumer's newest pact; choose
+   **Another pact version…** to paste a SHA.
+5. Check the **Provider version** the verifier ran against (it is filled in from the page).
+6. Leave **Report format** on **Detect**, or choose **Pact verifier JSON**, **JUnit XML**,
+   **Schemathesis**, **Newman** or **Dredd**.
+7. Drop the report on **Drop the report here**, or click **Browse**. The dialog says what Detect will
+   read it as, such as *Looks like a Dredd report (xunit XML)*. A file that is neither JSON nor XML
+   is refused there, before anything is sent.
+8. Optionally open **More options** for the **Branch**, **Build URL**, **Tags**, **Verifier** and
+   **Verifier version**.
+9. Click **Upload results**.
+
+<Screenshot id="pact-verify-upload" alt="The Upload verification results dialog: Ran a verifier yourself? Attach its report to the pact it verified. Consumer Orders UI, Pact version 8d2f1c · consumer 3.4.0, Provider version 2.7.0+9f31c20, Report format Detect; the report dredd.xml with the line Looks like a Dredd report (xunit XML); More options; and The same, from anywhere with the apiome pact publish-verification-results command."/>
+
+The dialog then says what Apiome recorded, such as *Recorded a failed result from a Dredd report:
+1 interaction*, and lists every note about what it could not use. A report Apiome cannot read is
+refused with the reason — for example *format is dredd but the report is JSON* — and **nothing is
+recorded**. **The same, from anywhere** shows the `apiome pact publish-verification-results` command
+and the REST call for the same upload.
+
+You need **Pacts** → **Create** to upload.
+
 ## Send a report from your own CI
 
-If your pipeline already runs `pact_verifier_cli`, or a test runner that writes JUnit, you do not
-need a Pact library to publish the result. Send the **report** and Apiome reads it into a
+If your pipeline already runs `pact_verifier_cli`, Schemathesis, Newman, Dredd, or a test runner that
+writes JUnit, you do not need a Pact library to publish the result. Send the **report** and Apiome reads it into a
 verification result: the matrix, can-i-deploy, pending pacts and webhooks see it like any other.
 
 ```bash
@@ -139,9 +169,17 @@ curl -X POST \
 | --- | --- | --- |
 | `pact_verifier_cli --json` | `application/json` | The verifier's `result` is the verdict. Each entry of `errors` is a failed interaction with its mismatches; each entry of `pendingErrors` is kept and marked `pending`. A `pacts[].interactions[]` listing is read interaction by interaction. |
 | JUnit XML | `application/xml` | Each `<testcase>` is an interaction. A `<failure>` or `<error>` fails it and its message is the mismatch. A `<skipped>` case was not replayed, so it makes the result unsuccessful. |
+| Schemathesis `--report ndjson` | `application/x-ndjson` | One interaction per operation (`GET /invoices/{id}`). It fails when any scenario of it failed or errored, and each failed check is a mismatch. Skipped scenarios tested nothing: they are noted, not counted. A stream without `EngineFinished` did not finish and is recorded as failed. |
+| Schemathesis `--report junit` | `application/xml` | Read as JUnit, recorded as Schemathesis. |
+| Newman `-r json` | `application/json` | One interaction per execution (request). Each failed assertion is a mismatch; a skipped assertion makes the result unsuccessful. |
+| Newman `-r junit` | `application/xml` | Read as JUnit. Choose `format=newman` to record it as Newman. |
+| Dredd `--reporter xunit` | `application/xml` | Read as JUnit, recorded as Dredd. |
 
-The format comes from the `format` query parameter (`auto`, `pact-verifier-json` or `junit`), then
-the content type, then the body. The other query parameters are `providerApplicationVersion`
+The format comes from the `format` query parameter (`auto`, `pact-verifier-json`, `junit`,
+`schemathesis`, `newman` or `dredd`), then the content type, then the body. With `auto`, JUnit whose
+suite is named `schemathesis` or `Dredd Tests` is that tool's, JSON with `run.executions` and
+`collection` is Newman's, and NDJSON with a Schemathesis `Initialize` event is Schemathesis'. A
+`format` the report does not match is refused with the report it expects. The other query parameters are `providerApplicationVersion`
 (required), `buildUrl`, `branch`, `tag` (repeatable), `verifier`, `verifierVersion` and
 `providerVerificationReportId`.
 
@@ -152,6 +190,7 @@ The answer is `201` with the stored result, plus an `ingestion` object:
   "success": false,
   "ingestion": {
     "format": "pact-verifier-json",
+    "syntax": "json",
     "interactions": 1,
     "notices": [
       {"pointer": "/output", "reason": "12 line(s) of verifier log output are not stored"}
@@ -186,7 +225,7 @@ its pact with `pb:pact-version`.
 | Status | Code | What to do |
 | --- | --- | --- |
 | `422` | `pact-verification-invalid` | The body is malformed. `pointer` names the field — `/success` missing, `/testResults` not an array. |
-| `422` | `pact-verification-invalid` | An ingested report is empty, is neither JSON nor XML, proves nothing, or names an unknown `format`. |
+| `422` | `pact-verification-invalid` | An ingested report is empty, is neither JSON nor XML, proves nothing, names an unknown `format`, or is not what `format` names (`pointer` is `/format`). |
 | `422` | `pact-verification-report-not-found` | `providerVerificationReportId` is not a report of this workspace. |
 | `400` | `pacticipant-invalid-version`, `pacticipant-invalid-url` | The provider version has a leading or trailing space, or `buildUrl` is not an http(s) URL. |
 | `404` | `pact-not-found`, `pacticipant-not-found` | No such pact version between the two applications. |

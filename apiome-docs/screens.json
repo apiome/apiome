@@ -3025,6 +3025,27 @@
       ]
     },
     {
+      "id": "pact-verify-live",
+      "route": "/ade/dashboard/pacts/verification/new",
+      "waitFor": "[data-testid=\"pvl-drawer\"]",
+      "data": "fixture:hive-a11y/pact-verify-live.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactVerifyRun/RunDrawer.tsx",
+        "apiome-ui/src/app/components/ade/pactVerifyRun/useLiveRun.ts",
+        "apiome-ui/lib/pact-verify-live.ts"
+      ]
+    },
+    {
+      "id": "pact-verify-upload",
+      "route": "/ade/dashboard/pacts/verification/new",
+      "waitFor": "[data-testid=\"pvu-dialog\"]",
+      "data": "fixture:hive-a11y/pact-verify-upload.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactVerifyRun/UploadResultsDialog.tsx",
+        "apiome-ui/lib/pact-verify-upload.ts"
+      ]
+    },
+    {
       "id": "pact-health",
       "route": "/ade/dashboard/pacts/health",
       "waitFor": "[data-testid=\"phx-pairs-table\"]",
