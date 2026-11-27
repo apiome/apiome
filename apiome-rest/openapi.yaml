@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.691.0
+  version: 1.692.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -30580,6 +30580,12 @@ paths:
 
         - **Safe to repeat.** Publishing the same pacts for the same version again changes
         nothing. Publishing a *different* pact for a version that already has one is `409`.
+
+        - **One consumer model.** Each new pact refreshes the consumer''s declared surface in
+        the provider''s project (its next contract revision) when the provider pacticipant
+        is bound to a project; interactions that cannot be placed stay on the revision with
+        reason codes. The response lists the outcome in `consumerContracts` and as notices;
+        a pact that cannot be placed is reported with a reason, never dropped.
 
         - **Bi-directional comparison.** When a provider has published a provider contract,
         each pact is compared with the contracts of its latest provider version, the head

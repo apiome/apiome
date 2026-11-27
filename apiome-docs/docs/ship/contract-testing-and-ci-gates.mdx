@@ -293,6 +293,15 @@ back to the consumer's commit, create **contract webhooks**: `pact-broker create
 unchanged, and a GitHub Actions workflow can be started directly. See
 [Contract webhooks](./pact-broker/webhooks.mdx).
 
+## One consumer model
+
+Pact tooling and the registry's consumer contracts describe the same thing. When a consumer
+publishes a pact to the [Pact Broker API](./pact-broker/publish-pacts.mdx#one-consumer-model), its
+declared surface in the provider's project is refreshed as the next contract revision, so
+[consumer-aware breaking analysis](#what-counts-as-breaking) sees the consumers that publish pacts
+without a second upload. Interactions that cannot be placed are kept with reason codes, and a
+provider that is not bound to a project is reported, never ignored.
+
 ## How the pieces fit
 
 - **One classifier.** The CLI, the GitHub Action, the changelog, the webhook, the guardrail and the
