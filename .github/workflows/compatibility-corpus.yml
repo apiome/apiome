@@ -62,7 +62,6 @@ jobs:
     runs-on: self-hosted
     env:
       DATABASE_URL: ""
-      APIOME_COMPAT_APICURIO_URL: http://localhost:18080/apis/ccompat/v7
       # Every reference tool this job installs must answer; a missing one fails instead of skipping.
       APIOME_COMPAT_CORPUS_STRICT: apicurio-registry,buf,graphql-inspector,asyncapi-diff
       APIOME_COMPAT_CORPUS_REPORT: ${{ github.workspace }}/apiome-rest/compatibility-corpus-report.json
@@ -74,7 +73,8 @@ jobs:
       apicurio:
         image: apicurio/apicurio-registry:3.3.4
         ports:
-          - 18080:8080
+          # Dynamic host port: a fixed one collides with other jobs on the shared runner.
+          - 8080
 
     steps:
       - name: Checkout code
@@ -117,6 +117,9 @@ jobs:
             printf '#!/bin/sh\nexec node %s/%s.mjs "$@"\n' "$prefix" "$tool" > ".tools/bin/${tool}"
             chmod +x ".tools/bin/${tool}"
           done
+
+      - name: Resolve the Apicurio registry URL
+        run: echo "APIOME_COMPAT_APICURIO_URL=http://localhost:${{ job.services.apicurio.ports['8080'] }}/apis/ccompat/v7" >> "$GITHUB_ENV"
 
       - name: Wait for the Apicurio registry
         run: |
