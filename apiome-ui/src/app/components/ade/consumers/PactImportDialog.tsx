@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { Upload } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
@@ -21,9 +22,11 @@ import { Textarea } from '@/app/components/ui/Textarea';
 
 import {
   pactConsumerName,
+  parseTags,
   validatePublishDraft,
   type PublishDraft,
 } from '@lib/pact-publish';
+import { PUBLISH_HANDOFF_KEY, publishRoute } from '@lib/pact-publish-page';
 import { groupUnresolved, type UnresolvedInteraction } from './consumersModel';
 
 /**
@@ -167,6 +170,19 @@ export default function PactImportDialog({
 
   const groups = outcome ? groupUnresolved(outcome.unresolved) : [];
 
+  /**
+   * The shortcut to the Publish page (PFX-8.3): the fields travel in the address, the pact itself
+   * through sessionStorage (it can be megabytes). A refused storage only means the page opens
+   * without it.
+   */
+  const handOff = () => {
+    try {
+      if (pact.trim()) window.sessionStorage.setItem(PUBLISH_HANDOFF_KEY, JSON.stringify({ pact }));
+    } catch {
+      // The page opens with the fields only.
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="cns-dialog cns-dialog--wide">
@@ -244,7 +260,22 @@ export default function PactImportDialog({
             </div>
             <p className="cns-form__hint">
               Files the pact under a consumer version so the provider can verify it and can-i-deploy
-              can see it. Without this the pact is stored as a consumer contract only.
+              can see it. Without this the pact is stored as a consumer contract only. Several
+              files, a check before publishing, or tag-with-branch:{' '}
+              <Link
+                href={publishRoute({
+                  source: 'paste',
+                  version: draft.version,
+                  branch: draft.branch,
+                  buildUrl: draft.buildUrl,
+                  tags: parseTags(draft.tags),
+                })}
+                onClick={handOff}
+                data-testid="pact-publish-page-link"
+              >
+                open the Publish page
+              </Link>
+              .
             </p>
             {publish && (
               <div className="cns-publish__fields" data-testid="pact-publish-fields">

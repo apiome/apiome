@@ -23,6 +23,7 @@
  */
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FileCheck2, FileUp, Import, Rocket, Search, ShieldCheck, Table2, Waypoints, WandSparkles } from 'lucide-react';
 import {
@@ -40,6 +41,7 @@ import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 import { CAN_I_DEPLOY_ROUTE } from '@lib/pact-matrix';
+import { PUBLISH_ROUTE } from '@lib/pact-publish-page';
 import type { HealthOverview } from '@lib/pact-health';
 import {
   CONTRACTS_CRUMBS,
@@ -204,9 +206,11 @@ export default function PactOverviewClient({ query }: { query: OverviewQuery }) 
         }
         primaryAction={
           canWrite ? (
-            <Button onClick={() => setCommand(commandFor('publish-pact'))} data-testid="ctx-publish">
-              <FileUp aria-hidden />
-              Publish a pact
+            <Button asChild data-testid="ctx-publish">
+              <Link href={PUBLISH_ROUTE}>
+                <FileUp aria-hidden />
+                Publish a pact
+              </Link>
             </Button>
           ) : undefined
         }

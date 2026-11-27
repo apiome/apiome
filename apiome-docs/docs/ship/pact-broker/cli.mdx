@@ -135,8 +135,9 @@ Every option of every command is in the [CLI reference](../../reference/cli/pact
 Every `apiome pact` command has a screen in **Contracts**, or a ticket that adds one. Every Contracts
 screen that changes something shows **The same, from anywhere** — its action as an `apiome pact`
 command, a Pact CLI command, a GitHub Action step and a REST request, built from what you filled in,
-with secrets written as variables. The first is the
-[webhook editor](./webhooks-console.mdx#the-same-from-anywhere).
+with secrets written as variables. The first were the
+[webhook editor](./webhooks-console.mdx#the-same-from-anywhere) and the
+[Publish page](./publish-pacts.mdx#publish-from-the-ui).
 
 | Command | Where in the app |
 | --- | --- |
@@ -144,17 +145,21 @@ with secrets written as variables. The first is the
 | `create-webhook` | **Contracts** → **Webhooks** → **New webhook** |
 | `describe-version` | **Contracts** → **Pacticipants** → a pacticipant |
 | `list-pacticipants` | **Contracts** → **Pacticipants** |
-| `publish` | A project's **Consumers** → **Import Pact file** |
+| `publish` | **Contracts** → **Publish a pact** (also a project's **Consumers** → **Import Pact file**) |
+| `publish-consumer-contract` | **Contracts** → **Publish a pact** → **Derive from a project** |
 | `create-environment`, `record-deployment`, `record-release` | Coming: environment dialogs (PFX-8.12) |
 | `verify` | Coming: **Run a verification** (PFX-8.8); today **Re-run** on a provider's verification page |
 | `publish-provider-contract` | Coming: **Publish a provider contract** (PFX-8.6) |
 | `publish-verification-results` | Coming: the results upload dialog (PFX-8.9) |
-| `export-consumer-contract`, `export-postman`, `publish-consumer-contract` | Coming: the **Export** and **Publish** pages (PFX-8.18, PFX-8.3) |
+| `export-consumer-contract`, `export-postman` | Coming: the **Export** page (PFX-8.18) |
 | `migrate` | Coming: the migration wizard (PFX-8.16) |
 
 A few things in the app have no command yet, and say so in their **The same, from anywhere** block:
 editing, deleting and testing a webhook, redelivering a delivery, re-running one verification,
 answering a re-publish request, and the verification settings. Each has a REST route.
+
+On the Publish page every flag of `publish` and `publish-consumer-contract` has a field; the ledger
+row lists which (`fields`), and the same check holds it to the command's flags.
 
 The table is kept honest by a check in CI: adding a command without its row in
 `docs/pact-parity-ledger.json`, or a Contracts screen that writes without a command or a written

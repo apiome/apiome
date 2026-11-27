@@ -244,14 +244,10 @@ describe('Contracts landing', () => {
     expect(replace).toHaveBeenLastCalledWith('/ade/dashboard/pacts');
   });
 
-  it('opens the command of an action with no screen yet', async () => {
+  it('links Publish a pact to its page and opens the command of an action with no screen yet', async () => {
     open();
-    fireEvent.click(await screen.findByTestId('ctx-publish'));
-    const dialog = await screen.findByTestId('ctx-command-dialog');
-    expect(dialog).toHaveTextContent('Publish a pact');
-    expect(dialog).toHaveTextContent('apiome pact publish ./pacts');
-    fireEvent.click(within(dialog).getAllByRole('button', { name: 'Close' })[0]);
-    await waitFor(() => expect(screen.queryByTestId('ctx-command-dialog')).toBeNull());
+    expect(await screen.findByTestId('ctx-publish')).toHaveAttribute('href', '/ade/dashboard/pacts/publish');
+    expect(screen.getByTestId('ctx-way-publish-pact')).toHaveAttribute('href', '/ade/dashboard/pacts/publish');
 
     fireEvent.click(screen.getByTestId('ctx-way-migrate'));
     expect(await screen.findByTestId('ctx-command-dialog')).toHaveTextContent('apiome pact migrate');

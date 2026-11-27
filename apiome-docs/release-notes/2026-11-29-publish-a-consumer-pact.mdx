@@ -1,0 +1,36 @@
+---
+slug: publish-a-consumer-pact
+title: "Publish a consumer pact from the app"
+description: "Upload, paste or derive pacts, check them, then publish."
+authors: [apiome]
+---
+
+**Contracts** has a **Publish a consumer pact** page: everything `apiome pact publish` does, from the
+browser. **Click “Publish a pact”** on the Contracts landing. See
+[Publish from the UI](/ship/pact-broker/publish-pacts#publish-from-the-ui).
+
+{/* truncate */}
+
+- **Several files or a whole folder.** Drop a `pacts/` folder or pick files: each row shows its
+  consumer → provider, the Pact specification, the kinds of interaction and how many there are.
+  Several providers and consumers at once are fine — one request per consumer, as the CLI sends.
+- **A bad file doesn't block the rest.** A file that is not a pact is marked with the reason
+  (*Not a pact: missing consumer*, *Not a .json file*, a second file for the same pair) and the others
+  still publish. If the broker refuses one pact, that row is marked and the rest are sent again.
+- **Paste, or derive from a project.** Paste a pact, or publish a consumer's declared surface as its
+  pact (`apiome pact publish-consumer-contract`), with its findings listed afterwards and the pact
+  ready to download.
+- **Every flag has a field.** Consumer version, branch, tags, build URL, **Also tag with the branch
+  name**, and **Fill from the linked repository** for the branch. **Merge** is there too, and says why
+  Apiome does not merge pacts — as `--merge` does.
+- **Check only.** See, before anything is written, whether each pact is new for the version,
+  unchanged (*its verification results still apply*), or a different pact for a version that already
+  has one.
+- **What happened.** The result lists which pacts are new and pending, which were unchanged, what was
+  not sent and why, and whether contract webhooks and bi-directional comparisons ran.
+- **The command beside the form.** **The same, from anywhere** shows the page as `apiome pact
+  publish pacts/`, the Pact CLI, a GitHub Action step and the REST request. A role that cannot publish
+  sees why, and the command.
+
+The **Import Pact file** dialog keeps its **Also publish to the Pact Broker** box, and now links to the
+page with the pact and its version already filled in.
