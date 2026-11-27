@@ -1,0 +1,29 @@
+---
+slug: write-a-pact-by-hand
+title: "Interaction editor: write a pact by hand"
+description: "Write HTTP, message, GraphQL and gRPC interactions without Pact tests."
+authors: [apiome]
+---
+
+A team without Pact tests used to have to write its contract as raw JSON. The Publish page now has
+a **Write interactions** tab: describe what the consumer sends and the answer it needs, and Apiome
+writes the Pact v4 document, which is checked and published like any other. See
+[Write interactions](/ship/pact-broker/publish-pacts#write-interactions).
+
+{/* truncate */}
+
+- **A list and a form.** Interactions on the left (arrow keys move through them), the selected one on
+  the right: description, provider state with parameters, the request and the response.
+- **Four kinds in one list.** HTTP, message, GraphQL and gRPC interactions sit side by side in one
+  pact.
+- **Matchers as chips.** Each body field the consumer relies on gets a rule — **integer**, **regex**
+  `^[A-Z]{3}$`, **min items** `1` — and **+ Field the consumer needs** puts the example in the body
+  for you.
+- **Checked against the provider's spec.** The path is matched against the latest revision of the
+  provider's project. A path the spec does not have is flagged, never blocked. **Fill from the spec**
+  takes the response's status, example and a matcher for every field.
+- **Provider states suggested** from the provider's state catalogue and its mock's scenarios; a
+  catalogue state fills in its parameters.
+- **Nothing lost quietly.** **Edit in Write interactions** on the Paste tab opens an existing pact in
+  the editor, and lists anything the editor does not write with the reason. **Download the pact**
+  saves the file for `apiome pact publish pacts/` in CI.

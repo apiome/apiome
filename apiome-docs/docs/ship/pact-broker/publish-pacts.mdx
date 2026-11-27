@@ -15,7 +15,8 @@ This page covers publication and retrieval. A provider's verifier fetches the pa
 with [consumer-version selectors](./selectors.mdx) and [publishes its results](./verification-results.mdx).
 Deploy jobs [record where each version runs](./environments.mdx) and
 [ask whether a version can be deployed](./can-i-deploy.mdx). To publish from the app instead of a
-build, use the [Publish page](#publish-from-the-ui); to see how a pact fares against several provider
+build, use the [Publish page](#publish-from-the-ui) — where you can also
+[write a pact by hand](#write-interactions); to see how a pact fares against several provider
 versions first, [check it before publishing](#check-before-publishing).
 
 ## Before you start
@@ -149,10 +150,63 @@ Choose one of the tabs under **The pact**:
 | **Upload** | **Drop** pact files or a whole `pacts/` folder on the box, or **click “Browse files”** or **“Browse a folder”**. Each file gets a row: its consumer → provider, its Pact specification, its kinds of interaction (HTTP, Message, GraphQL, gRPC) and how many interactions it carries. Several providers and several consumers at once are fine. |
 | **Paste** | Paste a Pact document into **Pact JSON**, or **click “Paste from clipboard”**. The detected specification is shown beside the button. |
 | **Derive from a project** | Publish a consumer's declared surface as its pact, as `apiome pact publish-consumer-contract` does. Pick the **Project** and the **Consumer**; optionally a **Revision** (the current one otherwise) and the **Provider** pacticipant. Only a consumer declared with the picker can be derived — one imported from a Pact file says so in the list. |
+| **Write interactions** | Write the pact by hand in the interaction editor — for a team with no Pact tests yet. See [Write interactions](#write-interactions). |
 
 A file that is not a pact is marked in red with the reason — for example *Not a pact: missing
 consumer*, *Not a .json file*, or a second file for the same consumer and provider. The other rows
 still publish. Remove a row with its **×** button.
+
+### Write interactions
+
+No Pact tests yet? Write what the consumer sends and the answer it needs, and Apiome writes the Pact
+v4 document. It is checked and published like an uploaded file.
+
+<Screenshot id="pact-publish-editor" alt="The Write interactions tab: Consumer Orders UI and Provider Billing Service, a line saying paths are checked against revision 2.7.0, the list of interactions on the left — GET get invoice 42, POST create an invoice, and GET list credit notes flagged as not in the spec — and on the right the selected interaction with its provider state an invoice exists (id = 42), the request GET /invoices/42 matching GET /invoices/{id} in revision 2.7.0, and Fill from the spec beside Response."/>
+
+1. **Click the “Write interactions” tab** and type the **Consumer** (`Orders UI`) and the
+   **Provider** (`Billing Service`). When you leave the provider field, Apiome reads that provider's
+   spec — the latest revision of the project its pacticipant is linked to — with its registered
+   [provider states](./provider-states.mdx) and its mock's scenarios. The line under the fields
+   says which revision paths are checked against, or why none is (not a pacticipant yet, not linked
+   to a project). **Click “Read it again”** after the spec changes.
+2. **Choose a kind** — **HTTP**, **Message**, **GraphQL** or **gRPC** — and **click +** beside
+   **Interactions**. The list holds every kind; **press ↑ and ↓** (or **Home** and **End**) to move
+   through it.
+3. Fill in the interaction on the right:
+
+   | Field | What to enter |
+   | --- | --- |
+   | **Description** | What the call is for: `get invoice 42`. Two interactions with the same description and provider states are refused — a verifier could not tell them apart. |
+   | **Provider state** | **Click “+ Provider state”**, then type or pick what must be true first: `an invoice exists`. Suggestions come from the provider's state catalogue and its mock's scenarios; a catalogue state fills its parameters in. Type parameters as `id = 42, currency = EUR` — numbers, `true` and quoted `"text"` are read as JSON. |
+   | **Request** | The **Method** and the **Path**, such as `/invoices/42`. Under **Headers, query and body**, **click “+ Header”**, **“+ Query parameter”**, or type a **Request body**. |
+   | **Response** | The **Status**, the **Headers** and the **Response body**. |
+   | **Fields the consumer relies on** | One row per field with its matcher chip — `$.id` **integer**, `$.currency` **regex** `^[A-Z]{3}$`, `$.lines` **min items** `1`. **Click “+ Field the consumer needs”**, type the **Field path**, an **Example value** and choose the **Matcher**, then **click “Add field”**: the value goes into the body and the rule onto the field. |
+
+   A **Message** has **Contents**, **Metadata** and its fields. A **GraphQL** interaction is a `POST`
+   of its **Operation**, **Variables** and **Operation name** to the path (`/graphql`). A **gRPC**
+   call names its **Service and method** (`billing.Invoices/GetInvoice`) with a **Request message**
+   and a **Reply**, written as JSON — the editor does not compile the `.proto`, so Apiome's hosted
+   verifier reports *descriptors missing* for these until a protobuf-plugin test publishes the same
+   calls. Publishing and checking still work.
+4. **Check the path.** Under the path, *Matches `GET /invoices/{id}` in revision 2.7.0* means the
+   provider's spec has the operation. **Click “Fill from the spec”** to take its response: the
+   status, the content type, the example body and a matcher for every field. An example the spec does
+   not give is generated from its schema and says *review the values*. A path the spec does not
+   have reads *GET /credit-notes is not in the spec* and is marked in the list — it is **flagged,
+   not blocked**: the pact still publishes, and the [check](#check-before-publishing) reports it.
+
+While something stops an interaction from being written — no description, a body that is not JSON,
+a path without its leading `/` — the interaction lists what to fix, the list marks it, and the row
+under the editor reads *Not ready to publish*. Nothing is sent until it is fixed.
+
+The row under the editor is the written pact: its pair, **Pact v4**, its kinds and how many
+interactions it holds. **Click “Download the pact”** to save it — commit it under `pacts/` and the
+command beside publishes it from CI.
+
+To change a pact you already have, paste it on the **Paste** tab and **click “Edit in Write
+interactions”**. Anything the editor does not write — generators, header matching rules, `pending`,
+a second gRPC reply — is listed above the editor with the reason, so nothing is lost without you
+knowing.
 
 ### 2. Say whose version it is
 

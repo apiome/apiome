@@ -17,6 +17,7 @@ import {
 } from '@lib/pact-publish-page';
 import type { Pacticipant } from '@lib/pact-pacticipants';
 import { readCompareAnswer, type CompareAnswer } from '@lib/pact-publish-check';
+import type { ProviderSpec } from '@lib/pact-provider-spec';
 
 /** A refusal: REST's message and status. */
 export interface CallFailure {
@@ -220,4 +221,24 @@ export async function comparePact(row: PactFileRow, against: string[]): Promise<
   if (!answer) return { error: UNREACHABLE, status: 503 };
   if (answer.status >= 400) return { error: errorOf(answer.body, answer.status, 'The check was refused'), status: answer.status };
   return readCompareAnswer(answer.body) ?? { error: 'The check returned an answer this page cannot read.', status: 502 };
+}
+
+/**
+ * The provider's spec, catalogue states and mock scenarios, for **Write interactions** (PFX-8.5).
+ *
+ * @param provider - The provider's name, as the pact names it.
+ * @returns The spec (its `problems` name each part that could not be read), or the refusal.
+ */
+export async function fetchProviderSpec(provider: string): Promise<ProviderSpec | CallFailure> {
+  const answer = await send(`/api/pact/publish/provider-spec?${new URLSearchParams({ provider }).toString()}`);
+  if (!answer) return { error: 'The provider’s spec could not be read. Try again shortly.', status: 503 };
+  if (answer.status >= 400) return { error: errorOf(answer.body, answer.status, 'Could not read the provider’s spec'), status: answer.status };
+  const body = (answer.body ?? {}) as Partial<ProviderSpec>;
+  return {
+    provider: typeof body.provider === 'string' ? body.provider : provider,
+    revision: body.revision ?? null,
+    operations: Array.isArray(body.operations) ? body.operations : [],
+    states: Array.isArray(body.states) ? body.states : [],
+    problems: Array.isArray(body.problems) ? body.problems : [],
+  };
 }

@@ -48,7 +48,8 @@ export interface FileTableProps {
   verdicts: Record<string, CheckVerdict>;
   /** The version the verdicts were read for. */
   checkedVersion: string;
-  onRemove: (id: string) => void;
+  /** Remove a row; without it the rows have no remove button (the written pact, PFX-8.5). */
+  onRemove?: (id: string) => void;
 }
 
 /**
@@ -109,9 +110,11 @@ export function FileTable({ rows, verdicts, checkedVersion, onRemove }: FileTabl
                 </td>
                 <td className="ppub-table__num">{row.problem ? '—' : row.interactions}</td>
                 <td className="ppub-table__remove">
-                  <Button type="button" variant="ghost" size="sm" aria-label={`Remove ${row.fileName}`} onClick={() => onRemove(row.id)}>
-                    <X aria-hidden />
-                  </Button>
+                  {onRemove ? (
+                    <Button type="button" variant="ghost" size="sm" aria-label={`Remove ${row.fileName}`} onClick={() => onRemove(row.id)}>
+                      <X aria-hidden />
+                    </Button>
+                  ) : null}
                 </td>
               </tr>
             );

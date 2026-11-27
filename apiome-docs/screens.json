@@ -2977,6 +2977,17 @@
       ]
     },
     {
+      "id": "pact-publish-editor",
+      "route": "/ade/dashboard/pacts/publish",
+      "waitFor": "[data-testid=\"ppub-editor\"]",
+      "data": "fixture:hive-a11y/pact-publish-editor.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactPublish/InteractionEditor.tsx",
+        "apiome-ui/src/app/components/ade/pactPublish/InteractionFields.tsx",
+        "apiome-ui/lib/pact-interaction-editor.ts"
+      ]
+    },
+    {
       "id": "pact-health",
       "route": "/ade/dashboard/pacts/health",
       "waitFor": "[data-testid=\"phx-pairs-table\"]",
