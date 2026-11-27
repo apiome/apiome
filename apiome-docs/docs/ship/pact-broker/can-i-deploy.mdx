@@ -382,6 +382,36 @@ being gated.
 - **Permissions.** The signal needs `pacts:view`; without it, it reports `unknown`. If the read
   fails, only this signal is lost, not the whole gate.
 
+## Block a publish on failing contracts
+
+Publishing a version can be stopped by the same verdict. Set **`contracts.publishPolicy`** in the
+deploy-gate policy (`PUT …/gate/policy`) to one of three levels:
+
+| Level | A failing contract does this to a publish |
+| --- | --- |
+| `off` | Nothing. The publish dialog shows no contracts card. |
+| `warn` (default) | The publish dialog warns, and the publish goes ahead. The warning is recorded in the audit trail. |
+| `block` | The publish is refused with a `422` unless it is force-published with a reason. |
+
+- **What counts as failing.** The verdict for the pacticipant bound to the project and the version
+  named like the revision is **not deployable**. A verdict that leans only on an unverified provider
+  contract is a warning. A verification result that has not arrived yet shows as **Pending** and never
+  blocks, because "not verified yet" is not "failed".
+- **What never blocks.** A project with no bound pacticipant, no published version or no pacts; a
+  caller without `pacts:view`, who is told the gate was not checked rather than shown the verdict; and
+  a read that fails.
+- **In the publish dialog.** Open **Publish** on a version. The **Contracts** card lists the failing
+  rows and, under `block`, says that publishing is blocked. The card stays hidden when there is nothing
+  to report.
+- **Get past a block.** Turn on **Force publish** and enter a reason. The reason and the verdict are
+  written to the audit trail as `version.contracts_gate` (action `forced`).
+- **From the API.** `GET /v1/versions/{tenant}/{project}/{revision}/contracts-publish-gate` returns the
+  same assessment without publishing anything. A refused publish carries it in
+  `detail.contractsPublishGate`.
+
+The policy only decides what a verdict does to a publish. It does not change the deploy gate's own
+verdict.
+
 ## Related
 
 - [Environments and deployments](./environments.mdx) — record what runs where.

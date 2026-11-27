@@ -170,6 +170,7 @@
     "/v1/tenants/{tenant_slug}/verification-targets": "capped-in-sql",
     "/v1/versions/{tenant_slug}/{project_id}/version-branches/{branch_id}/divergence": "single-resource",
     "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/breaking-publish-guardrail": "single-resource",
+    "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/contracts-publish-gate": "single-resource",
     "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint": "single-resource",
     "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/fixes": "single-resource",
     "/v1/versions/{tenant_slug}/{project_id}/{version_record_id}/lint/level": "single-resource",

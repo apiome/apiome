@@ -11,6 +11,7 @@ from fastapi import HTTPException
 from .api_check_suite_gate import assess_check_suite_gate
 from .approval_publish_gate import assess_approval_gate
 from .breaking_publish_guardrail import assess_breaking_publish
+from .contracts_publish_gate import assess_contracts_publish_gate
 from .compatibility_engine import CompatibilityCheckEngine, openapi_for_revision
 from .database import db
 from .maturity_publish_gate import assess_maturity_gate
@@ -46,6 +47,7 @@ class PublishPrecheckOutcome:
         check_suite_gate: GNC-3.1 API change check suite verdict when assessed.
         owner_gate: CDG-2.5 "require an owner to publish" verdict when assessed.
         maturity_gate: GVM-1.3 required-publish-level verdict when assessed.
+        contracts_gate: PFX-7.3 contract verdict (``off`` / ``warn`` / ``block``) when assessed.
     """
 
     lint_error_count: Optional[int] = None
@@ -59,6 +61,7 @@ class PublishPrecheckOutcome:
     check_suite_gate: Optional[Dict[str, Any]] = None
     owner_gate: Optional[Dict[str, Any]] = None
     maturity_gate: Optional[Dict[str, Any]] = None
+    contracts_gate: Optional[Dict[str, Any]] = None
 
 
 def enforce_publish_prechecks(
@@ -68,6 +71,7 @@ def enforce_publish_prechecks(
     project_id: str,
     existing: Dict[str, Any],
     request: VersionPublishRequest,
+    pacts_permitted: bool = False,
 ) -> PublishPrecheckOutcome:
     """
     Ensure draft revisions satisfy publication gates unless ``skip_publish_checks`` is set.
@@ -88,6 +92,9 @@ def enforce_publish_prechecks(
     collected the required review approvals is refused with the same 422 contract.
     Since GVM-1.3 (#5856) the maturity gate runs just before the approval gate: a draft below
     its guide's ``required_publish_level`` is refused with the blockers to its next level.
+    Since PFX-7.3 (#6963) the contracts gate runs right after the maturity gate: under the
+    ``block`` policy a revision whose Pact can-i-deploy verdict is "not deployable" is refused;
+    ``pacts_permitted`` (the caller's ``pacts:view``) lets it read the verdict at all.
     Since CDG-2.5 (#5964) the owner gate is applied last: with ``require_owner_to_publish`` on, a
     project with no confirmed owner team is refused with reason ``no-owner``.
 
@@ -272,6 +279,14 @@ def enforce_publish_prechecks(
         version=existing,
     )
 
+    outcome = _with_contracts_gate(
+        outcome,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        version=existing,
+        pacts_permitted=pacts_permitted,
+    )
+
     outcome = _with_approval_gate(
         outcome,
         tenant_id=tenant_id,
@@ -355,6 +370,56 @@ def _with_maturity_gate(
             },
         )
     return replace(outcome, maturity_gate=payload)
+
+
+def _with_contracts_gate(
+    outcome: PublishPrecheckOutcome,
+    *,
+    tenant_id: str,
+    project_id: str,
+    version: Dict[str, Any],
+    pacts_permitted: bool,
+) -> PublishPrecheckOutcome:
+    """Attach the PFX-7.3 verdict and refuse publish when failing contracts block.
+
+    Runs after the maturity gate and before the approval gate, for the same reason as the other
+    automated gates: a failing contract is fixed by a provider verification, which a publisher
+    should do before collecting approvals.
+
+    Args:
+        outcome: The precheck outcome so far.
+        tenant_id: Tenant context.
+        project_id: Project of the revision being published.
+        version: The candidate revision row.
+        pacts_permitted: Whether the caller holds ``pacts:view``.
+
+    Returns:
+        ``outcome`` with ``contracts_gate`` set — always a payload, including ``disabled`` and
+        ``unavailable``, so a caller can tell "checked and clean" from "not checked".
+
+    Raises:
+        HTTPException: 422 when the policy is ``block`` and the verdict is "not deployable".
+    """
+    assessment = assess_contracts_publish_gate(
+        tenant_id=tenant_id,
+        project_id=project_id,
+        version=version,
+        permitted=pacts_permitted,
+    )
+    payload = assessment.as_payload()
+    if assessment.blocked:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": (
+                    f"{assessment.message()} Get the contracts verified (a provider "
+                    "verification result), relax the contracts publish policy, or "
+                    "force-publish with a reason."
+                ),
+                "contractsPublishGate": payload,
+            },
+        )
+    return replace(outcome, contracts_gate=payload)
 
 
 def _with_approval_gate(

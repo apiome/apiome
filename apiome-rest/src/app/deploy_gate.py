@@ -41,7 +41,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 from .consumer_impact import ConsumerImpactReport
@@ -363,6 +363,22 @@ class ContractThresholds(_CamelModel):
             "of each counterpart."
         ),
     )
+    publish_policy: str = Field(
+        default="warn",
+        description=(
+            "PFX-7.3: what a failing contract does to a version publish — `off` (never "
+            "surfaces), `warn` (the publish dialog warns; publish proceeds) or `block` "
+            "(refused unless force-published with a reason). Does not change the gate verdict."
+        ),
+    )
+
+    @field_validator("publish_policy", mode="before")
+    @classmethod
+    def _normalize_publish_policy(cls, value: Any) -> str:
+        """Coerce to the closed off/warn/block vocabulary; unknown values never escalate."""
+        from .breaking_publish_policy import normalize_breaking_publish_policy
+
+        return normalize_breaking_publish_policy(value)
 
 
 class DeployGateThresholds(_CamelModel):
@@ -415,6 +431,9 @@ def thresholds_content_fingerprint(thresholds: DeployGateThresholds) -> str:
     body = canonical_thresholds_body(thresholds)
     if not thresholds.maturity.min_maturity_level:
         body.pop("maturity", None)
+    # PFX-7.3: the publish policy decides what a verdict does to a publish, not the verdict, so
+    # it stays out of the digest the check-suite evaluations are keyed on.
+    body.get("contracts", {}).pop("publishPolicy", None)
     blob = json.dumps(
         body,
         sort_keys=True,

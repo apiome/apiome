@@ -163,7 +163,7 @@ def test_the_fingerprint_covers_every_threshold_even_the_defaulted_ones():
         "maturity",
         "contracts",
     }
-    assert body["contracts"] == {"environment": None}
+    assert body["contracts"] == {"environment": None, "publishPolicy": "warn"}
     assert body["maturity"] == {"minMaturityLevel": None}
     assert body["lint"] == {"warnBelowGrade": "B", "failBelowGrade": "D"}
 

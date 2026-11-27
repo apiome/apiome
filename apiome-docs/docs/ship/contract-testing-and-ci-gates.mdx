@@ -115,6 +115,10 @@ the project. It always answers
 `200` with the verdict in the body, so a pipeline can tell a failing gate from a network error. A
 signal that nothing has produced yet is reported as `not_configured` and left out of the verdict.
 
+The same contract verdict can also stop a **publish**: under the `block` policy a version whose
+contracts fail is refused unless it is force-published with a reason. See
+[Block a publish on failing contracts](./pact-broker/can-i-deploy.mdx#block-a-publish-on-failing-contracts).
+
 ### Grant consent before security probes
 
 Security probes check that a deployment enforces what its contract says about authentication.

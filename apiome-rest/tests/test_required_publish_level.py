@@ -173,6 +173,7 @@ def test_update_policy_settings_writes_the_level_only_when_asked():
 def test_deploy_gate_thresholds_without_a_min_level_keep_their_fingerprint():
     body = canonical_thresholds_body(DEFAULT_THRESHOLDS)
     body.pop("maturity")
+    body["contracts"].pop("publishPolicy")  # PFX-7.3: not part of the digest
     legacy = "sha256:" + hashlib.sha256(
         json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     ).hexdigest()
