@@ -148,6 +148,10 @@ def _gate(
     changelog_side_effect: Optional[Exception] = None,
     revision_id: Optional[str] = None,
     maturity: Optional[Any] = None,
+    pacticipants: Optional[List[Dict[str, Any]]] = None,
+    recorded: bool = True,
+    matrix: Optional[Any] = None,
+    pacts_permitted: bool = True,
 ):
     """Run the service with every store patched.
 
@@ -161,10 +165,25 @@ def _gate(
         consumers_permitted: Whether the caller may read the registry.
         changelog_side_effect: Raise this instead of returning a changelog.
         revision_id: An explicit revision to gate.
+        pacticipants: The pacticipants bound to the project (default: none).
+        recorded: Whether the revision's version is recorded on the first pacticipant.
+        matrix: The ``MatrixResult`` (or an exception) ``query_matrix`` gives.
+        pacts_permitted: Whether the caller holds ``pacts:view``.
 
     Returns:
         The gate report.
     """
+
+    def _execute(query, _params=None):
+        if "FROM apiome.pacticipant_version" in query:
+            return [{"?column?": 1}] if recorded else []
+        return pacticipants or []
+
+    def _query_matrix(*_args, **_kwargs):
+        if isinstance(matrix, Exception):
+            raise matrix
+        _gate.matrix_args = (_args, _kwargs)
+        return matrix
 
     def _version(vid, _tenant):
         if vid == _BASELINE:
@@ -178,7 +197,9 @@ def _gate(
             return passing_reports or []
         return listed
 
-    with patch(
+    with patch("app.deploy_gate_service.db.execute_query", side_effect=_execute), patch(
+        "app.deploy_gate_service.query_matrix", side_effect=_query_matrix
+    ), patch(
         "app.deploy_gate_service.db.get_project_core", return_value=_PROJECT_ROW
     ), patch("app.deploy_gate_service.db.get_project_by_slug", return_value=_PROJECT_ROW), patch(
         "app.deploy_gate_service.db.list_version_changelogs_for_project",
@@ -221,6 +242,7 @@ def _gate(
             project_ref=_PROJECT,
             revision_id=revision_id,
             consumers_permitted=consumers_permitted,
+            pacts_permitted=pacts_permitted,
             now=_NOW,
         )
 
@@ -553,7 +575,7 @@ def test_without_a_ladder_the_maturity_signal_is_not_configured_and_excluded():
     assert maturity.status == STATUS_NOT_CONFIGURED
     assert maturity.reason == "maturity-no-ladder"
     assert maturity.link.endswith(f"/{_REVISION}/lint/level")
-    assert [s.signal for s in report.signals][-1] == SIGNAL_MATURITY
+    assert [s.signal for s in report.signals][-2:] == [SIGNAL_MATURITY, SIGNAL_CONTRACTS]
 
 
 def test_a_revision_below_min_maturity_level_fails_the_gate():
@@ -571,8 +593,6 @@ def test_a_revision_below_min_maturity_level_fails_the_gate():
 
 
 def test_min_maturity_level_is_passed_to_the_shared_read():
-    from app.deploy_gate import DeployGatePolicyOut, thresholds_from_body
-
     policy = DeployGatePolicyOut(
         source="tenant", thresholds=thresholds_from_body({"maturity": {"minMaturityLevel": "gold"}})
     )
@@ -588,3 +608,166 @@ def test_an_unreadable_maturity_level_costs_only_that_signal():
     assert maturity.status == STATUS_UNKNOWN
     assert maturity.reason == REASON_SIGNAL_UNAVAILABLE
     assert _signal(report, SIGNAL_LINT).status == STATUS_PASS
+
+
+# ---------------------------------------------------------------------------------------------
+# contracts (PFX-7.2, #6962)
+# ---------------------------------------------------------------------------------------------
+
+from app.deploy_gate import (  # noqa: E402
+    REASON_CONTRACTS_FORBIDDEN,
+    REASON_CONTRACTS_NO_INTEGRATIONS,
+    REASON_CONTRACTS_NOT_BOUND,
+    REASON_CONTRACTS_VERSION_NOT_RECORDED,
+    SIGNAL_CONTRACTS,
+    DeployGatePolicyOut,
+    thresholds_from_body,
+)
+from app.pact_matrix import (  # noqa: E402
+    Integration,
+    MatrixResult,
+    MatrixRow,
+    Reason,
+    Verdict,
+)
+
+_BOUND = [{"id": "00000000-0000-4000-8000-0000000000a1", "slug": "billing"}]
+
+
+def _integration() -> Integration:
+    return Integration(
+        consumer_id="c1", consumer_name="web", provider_id="p1", provider_name="billing", required=True
+    )
+
+
+def _row(success):
+    return MatrixRow(
+        consumer_id="c1",
+        consumer_slug="web",
+        consumer_name="web",
+        consumer_version_id="cv1",
+        consumer_version_number="1",
+        consumer_version_seq=1,
+        provider_id="p1",
+        provider_slug="billing",
+        provider_name="billing",
+        pact_sha="abc",
+        provider_version_id="pv1",
+        provider_version_number="2.0.0",
+        success=success,
+    )
+
+
+def _contracts(**kwargs):
+    return _signal(_gate(changelog=_changelog_row(), **kwargs), SIGNAL_CONTRACTS)
+
+
+def test_a_project_with_no_pacticipant_has_no_contract_signal():
+    signal = _contracts()
+    assert signal.status == STATUS_NOT_CONFIGURED
+    assert signal.reason == REASON_CONTRACTS_NOT_BOUND
+
+
+def test_a_version_never_published_to_the_pacticipant_is_not_configured():
+    signal = _contracts(pacticipants=_BOUND, recorded=False)
+    assert signal.status == STATUS_NOT_CONFIGURED
+    assert signal.reason == REASON_CONTRACTS_VERSION_NOT_RECORDED
+
+
+def test_a_pacticipant_with_no_pacts_is_not_configured():
+    signal = _contracts(pacticipants=_BOUND, matrix=MatrixResult())
+    assert signal.status == STATUS_NOT_CONFIGURED
+    assert signal.reason == REASON_CONTRACTS_NO_INTEGRATIONS
+
+
+def test_a_caller_without_pacts_view_gets_unknown_and_nothing_is_read():
+    signal = _contracts(pacticipants=_BOUND, pacts_permitted=False)
+    assert signal.status == STATUS_UNKNOWN
+    assert signal.reason == REASON_CONTRACTS_FORBIDDEN
+
+
+def test_a_verified_pact_passes_with_the_shared_verdict_in_the_data():
+    result = MatrixResult(considered_rows=[_row(True)], integrations=[_integration()])
+    signal = _contracts(pacticipants=_BOUND, matrix=result)
+    assert signal.status == STATUS_PASS
+    assert signal.satisfied is True
+    assert signal.data["deployable"] is True
+    assert signal.data["pacticipant"] == "billing"
+    assert signal.data["version"] == "1.2.0"
+    assert signal.data["counts"]["success"] == 1
+
+
+def test_a_failed_verification_fails_the_gate():
+    result = MatrixResult(considered_rows=[_row(False)], integrations=[_integration()])
+    report = _gate(changelog=_changelog_row(), pacticipants=_BOUND, matrix=result)
+    signal = _signal(report, SIGNAL_CONTRACTS)
+    assert signal.status == STATUS_FAIL
+    assert signal.satisfied is False
+    assert report.status == STATUS_FAIL
+    assert "failed" in signal.detail
+
+
+def test_a_missing_verification_result_is_unknown_and_excluded_but_counted():
+    result = MatrixResult(considered_rows=[_row(None)], integrations=[_integration()])
+    report = _gate(changelog=_changelog_row(), pacticipants=_BOUND, matrix=result)
+    signal = _signal(report, SIGNAL_CONTRACTS)
+    assert signal.status == STATUS_UNKNOWN
+    assert signal.data["deployable"] is None
+    assert report.counts[STATUS_UNKNOWN] >= 1
+
+
+def test_the_verdict_is_the_one_the_can_i_deploy_route_gives():
+    from app.pact_matrix import deployment_verdict
+
+    result = MatrixResult(considered_rows=[_row(False)], integrations=[_integration()])
+    signal = _contracts(pacticipants=_BOUND, matrix=result)
+    verdict = deployment_verdict(result)
+    assert signal.data["reasons"] == [
+        {"type": r.type, "code": r.code, "text": r.text} for r in verdict.reasons
+    ]
+
+
+def test_the_configured_environment_is_what_is_asked():
+    policy = DeployGatePolicyOut(
+        source="tenant", thresholds=thresholds_from_body({"contracts": {"environment": "production"}})
+    )
+    result = MatrixResult(considered_rows=[_row(True)], integrations=[_integration()])
+    with patch("app.deploy_gate_service.load_policy", return_value=policy):
+        report = _gate(changelog=_changelog_row(), pacticipants=_BOUND, matrix=result)
+    args, _ = _gate.matrix_args
+    assert args[3].environment_name == "production"
+    assert args[2][0].version_number == "1.2.0"
+    assert _signal(report, SIGNAL_CONTRACTS).data["environment"] == "production"
+
+
+def test_without_an_environment_the_latest_counterparts_are_asked():
+    result = MatrixResult(considered_rows=[_row(True)], integrations=[_integration()])
+    _contracts(pacticipants=_BOUND, matrix=result)
+    args, _ = _gate.matrix_args
+    assert args[3].latest is True and args[3].environment_name is None
+
+
+def test_a_second_bound_pacticipant_is_reported_not_dropped():
+    both = _BOUND + [{"id": "00000000-0000-4000-8000-0000000000a2", "slug": "billing-b"}]
+    result = MatrixResult(considered_rows=[_row(True)], integrations=[_integration()])
+    signal = _contracts(pacticipants=both, matrix=result)
+    assert signal.data["otherPacticipants"] == ["billing-b"]
+
+
+def test_an_unreadable_matrix_costs_only_the_contract_signal():
+    report = _gate(changelog=_changelog_row(), pacticipants=_BOUND, matrix=RuntimeError("db down"))
+    assert _signal(report, SIGNAL_CONTRACTS).status == STATUS_UNKNOWN
+    assert _signal(report, SIGNAL_CONTRACTS).reason == REASON_SIGNAL_UNAVAILABLE
+    assert _signal(report, SIGNAL_LINT).status == STATUS_PASS
+
+
+def test_an_unverified_provider_contract_warns():
+    from app.deploy_gate import evaluate_contracts
+
+    verdict = Verdict(
+        deployable=True,
+        reasons=(Reason("warning", "provider-contract-unverified", "unverified"), Reason("success", "verified", "ok")),
+        counts={"success": 1, "failed": 0, "unknown": 0},
+    )
+    signal = evaluate_contracts(verdict=verdict, pacticipant="p", version="1", environment=None)
+    assert signal.status == STATUS_WARN

@@ -161,7 +161,9 @@ def test_the_fingerprint_covers_every_threshold_even_the_defaulted_ones():
         "consumers",
         "verification",
         "maturity",
+        "contracts",
     }
+    assert body["contracts"] == {"environment": None}
     assert body["maturity"] == {"minMaturityLevel": None}
     assert body["lint"] == {"warnBelowGrade": "B", "failBelowGrade": "D"}
 
@@ -500,13 +502,14 @@ def test_the_report_always_carries_every_signal_in_a_fixed_order():
             _signal(SIGNAL_BREAKING, STATUS_PASS),
             _signal(SIGNAL_LINT, STATUS_WARN),
             _signal(SIGNAL_MATURITY, STATUS_PASS),
+            _signal("contracts", STATUS_PASS),
         ],
         policy=_policy(),
         evaluated_at=_NOW,
     )
     assert [s.signal for s in report.signals] == list(GATE_SIGNALS)
     assert report.status == STATUS_FAIL
-    assert report.evaluated_signals == 5
+    assert report.evaluated_signals == 6
     assert "consumers" in report.summary
 
 

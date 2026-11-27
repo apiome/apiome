@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.692.0
+  version: 1.693.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -9813,8 +9813,8 @@ paths:
       - deploy-gate
       - deploy-gate
       summary: Can I promote this API version?
-      description: 'One aggregate verdict for a CD pipeline, composed of five signals
-        that already exist elsewhere in the platform:
+      description: 'One aggregate verdict for a CD pipeline, composed of six signals that
+        already exist elsewhere in the platform:
 
 
         * **lint** — the GOV grade stored on the revision (never recomputed here);
@@ -9825,29 +9825,32 @@ paths:
 
         * **verification** — CTG-4.4 freshness, falling back to a manual CTG-4.3 report;
 
-        * **maturity** — the GVM-1.3 ladder level against `maturity.minMaturityLevel`
-        (or the style guide''s `requiredPublishLevel`); `not_configured` without a
-        ladder.
+        * **maturity** — the GVM-1.3 ladder level against `maturity.minMaturityLevel` (or
+        the style guide''s `requiredPublishLevel`); `not_configured` without a ladder;
+
+        * **contracts** — the Pact `can-i-deploy` verdict (the same function as `GET …/pact-broker/can-i-deploy`)
+        for the pacticipant bound to the project, against `contracts.environment` or the
+        latest counterparts; `not_configured` without a bound pacticipant, a recorded version
+        or any pacts, `unknown` while a verification result is missing.
 
 
         **Partial inputs are the normal case.** A signal with nothing behind it reports
-        `not_configured` and is excluded from the verdict rather than failing it;
-        a signal that exists but could not be read reports `unknown` and is also excluded,
-        counted apart. `evaluatedSignals` says how many actually took part — branch
-        on that, not on `status`, if a project with nothing configured must not read
-        as a green light.
+        `not_configured` and is excluded from the verdict rather than failing it; a signal
+        that exists but could not be read reports `unknown` and is also excluded, counted
+        apart. `evaluatedSignals` says how many actually took part — branch on that, not
+        on `status`, if a project with nothing configured must not read as a green light.
 
 
-        **The status is always 200.** The verdict lives in `status` (`pass` / `warn`
-        / `fail`); the pipeline owns the exit code.
+        **The status is always 200.** The verdict lives in `status` (`pass` / `warn` / `fail`);
+        the pipeline owns the exit code.
 
 
-        By default the gate judges the project''s newest **published** revision. Pass
-        `revisionId` to judge a specific one.
+        By default the gate judges the project''s newest **published** revision. Pass `revisionId`
+        to judge a specific one.
 
 
         Requires `versions:view`. The consumer signal additionally needs `consumer_contracts:view`;
-        without it that one signal reports `unknown`.'
+        without it that one signal reports `unknown`; likewise `contracts` needs `pacts:view`.'
       operationId: get_project_deploy_gate_v1_projects__tenant_slug___project_ref__gate_get
       parameters:
       - name: tenant_slug
@@ -135571,6 +135574,26 @@ components:
       - version_ref
       title: ContractSuiteResponse
       description: The compiled suite for one version.
+    ContractThresholds:
+      properties:
+        environment:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Contract Thresholds schema.
+          - type: 'null'
+            description: Contract Thresholds schema.
+          title: Environment
+          description: Pact environment can-i-deploy is asked against; `null` checks the
+            latest version of each counterpart.
+      additionalProperties: false
+      type: object
+      title: ContractThresholds
+      description: "Where the Pact ``can-i-deploy`` question (PFX-7.2) is asked.\n\nThe\
+        \ verdict itself has no rungs: it is the shared :func:`app.pact_matrix.deployment_verdict`.\n\
+        Only the destination is configurable.\n\nAttributes:\n    environment: The Pact\
+        \ environment to check against (every version deployed to or\n        released\
+        \ in it); ``None`` checks against the latest version of each counterpart."
     ConversionDefaultsRequest:
       properties:
         title:
@@ -137522,11 +137545,14 @@ components:
         maturity:
           $ref: '#/components/schemas/MaturityThresholds'
           description: Maturity.
+        contracts:
+          $ref: '#/components/schemas/ContractThresholds'
+          description: Contracts.
       additionalProperties: false
       type: object
       title: DeployGateThresholds
-      description: 'The complete ``ctg.gate-policy.v1`` body: one threshold group
-        per signal.'
+      description: 'The complete ``ctg.gate-policy.v1`` body: one threshold group per
+        signal.'
     DeprecationBody:
       properties:
         id:
@@ -149259,7 +149285,8 @@ components:
         signal:
           type: string
           title: Signal
-          description: '`lint` | `breaking` | `consumers` | `verification` | `maturity`.'
+          description: '`lint` | `breaking` | `consumers` | `verification` | `maturity`
+          | `contracts`.'
           example: example
         status:
           type: string

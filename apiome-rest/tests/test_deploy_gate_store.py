@@ -133,6 +133,7 @@ def test_saving_stores_the_full_canonical_body_not_the_submitted_fragment():
         "consumers",
         "verification",
         "maturity",
+        "contracts",
     }
     assert stored["verification"]["warnAfterSeconds"] == 86_400
     assert upsert.call_args.kwargs["content_fingerprint"].startswith("sha256:")

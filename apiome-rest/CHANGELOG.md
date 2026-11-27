@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.869.0] - 2026-11-26
+
+### Added
+- **can-i-deploy as a deploy-gate signal (PFX-7.2, #6962).** OpenAPI 1.693.0; no migration.
+  `GET /v1/projects/{tenant}/{project}/gate` gains a `contracts` signal (last in `signals`) judged by
+  the same `app.pact_matrix.deployment_verdict` as `GET …/pact-broker/can-i-deploy`, so the two
+  cannot disagree. It asks the pacticipant bound to the project about the revision's version label,
+  against `contracts.environment` or, without one, the latest version of each counterpart.
+  - `pass` (deployable), `warn` (deployable but leaning on an unverified provider contract), `fail`
+    (not deployable), `unknown` (a verification result is missing: excluded and counted).
+  - `not_configured` (excluded) when no pacticipant is bound to the project, the version was never
+    published to it, or it has no pacts. A caller without `pacts:view` gets `unknown`; a read that
+    fails costs only this signal. Everything is read within the caller's tenant.
+  - The policy body gains `contracts.environment` (default `null`). With several bound
+    pacticipants the first by handle is judged and the others are listed in `data.otherPacticipants`.
+
 ## [1.868.0] - 2026-11-26
 
 ### Added
