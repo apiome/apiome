@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.692.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.693.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `deploy-gate` · 4 operations
 
@@ -17,13 +17,14 @@ Tag: `deploy-gate` · 4 operations
 
 **Can I promote this API version?**
 
-One aggregate verdict for a CD pipeline, composed of five signals that already exist elsewhere in the platform:
+One aggregate verdict for a CD pipeline, composed of six signals that already exist elsewhere in the platform:
 
 * **lint** — the GOV grade stored on the revision (never recomputed here);
 * **breaking** — the CTG-3.1 classification of the publish against its predecessor;
 * **consumers** — the CTG-4.2 per-consumer verdicts ("breaks 2 of 7");
 * **verification** — CTG-4.4 freshness, falling back to a manual CTG-4.3 report;
-* **maturity** — the GVM-1.3 ladder level against `maturity.minMaturityLevel` (or the style guide's `requiredPublishLevel`); `not_configured` without a ladder.
+* **maturity** — the GVM-1.3 ladder level against `maturity.minMaturityLevel` (or the style guide's `requiredPublishLevel`); `not_configured` without a ladder;
+* **contracts** — the Pact `can-i-deploy` verdict (the same function as `GET …/pact-broker/can-i-deploy`) for the pacticipant bound to the project, against `contracts.environment` or the latest counterparts; `not_configured` without a bound pacticipant, a recorded version or any pacts, `unknown` while a verification result is missing.
 
 **Partial inputs are the normal case.** A signal with nothing behind it reports `not_configured` and is excluded from the verdict rather than failing it; a signal that exists but could not be read reports `unknown` and is also excluded, counted apart. `evaluatedSignals` says how many actually took part — branch on that, not on `status`, if a project with nothing configured must not read as a green light.
 
@@ -31,7 +32,7 @@ One aggregate verdict for a CD pipeline, composed of five signals that already e
 
 By default the gate judges the project's newest **published** revision. Pass `revisionId` to judge a specific one.
 
-Requires `versions:view`. The consumer signal additionally needs `consumer_contracts:view`; without it that one signal reports `unknown`.
+Requires `versions:view`. The consumer signal additionally needs `consumer_contracts:view`; without it that one signal reports `unknown`; likewise `contracts` needs `pacts:view`.
 
 Operation id: `get_project_deploy_gate_v1_projects__tenant_slug___project_ref__gate_get`
 

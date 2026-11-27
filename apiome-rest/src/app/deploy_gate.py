@@ -46,6 +46,7 @@ from pydantic.alias_generators import to_camel
 
 from .consumer_impact import ConsumerImpactReport
 from .maturity_gate import MaturityJudgement, is_level_key
+from .pact_matrix import Verdict as ContractVerdict
 
 __all__ = [
     "BREAKING_SEVERITIES",
@@ -61,6 +62,7 @@ __all__ = [
     "POLICY_SOURCE_TENANT",
     "SIGNAL_BREAKING",
     "SIGNAL_CONSUMERS",
+    "SIGNAL_CONTRACTS",
     "SIGNAL_LINT",
     "SIGNAL_MATURITY",
     "SIGNAL_VERIFICATION",
@@ -71,6 +73,7 @@ __all__ = [
     "STATUS_WARN",
     "BreakingThresholds",
     "ConsumerThresholds",
+    "ContractThresholds",
     "DeployGatePolicyOut",
     "DeployGateReport",
     "DeployGateThresholds",
@@ -83,6 +86,7 @@ __all__ = [
     "canonical_thresholds_body",
     "evaluate_breaking",
     "evaluate_consumers",
+    "evaluate_contracts",
     "evaluate_lint",
     "evaluate_maturity",
     "evaluate_verification",
@@ -109,15 +113,18 @@ SIGNAL_BREAKING = "breaking"
 SIGNAL_CONSUMERS = "consumers"
 SIGNAL_VERIFICATION = "verification"
 SIGNAL_MATURITY = "maturity"
+SIGNAL_CONTRACTS = "contracts"
 
 #: The signals, in the order they are reported. Fixed so a diff of two gate responses lines up;
-#: ``maturity`` (GVM-1.3) is appended so existing positions do not move.
+#: ``maturity`` (GVM-1.3) and ``contracts`` (PFX-7.2) are appended so existing positions do not
+#: move.
 GATE_SIGNALS: Tuple[str, ...] = (
     SIGNAL_LINT,
     SIGNAL_BREAKING,
     SIGNAL_CONSUMERS,
     SIGNAL_VERIFICATION,
     SIGNAL_MATURITY,
+    SIGNAL_CONTRACTS,
 )
 
 STATUS_PASS = "pass"
@@ -190,6 +197,15 @@ REASON_VERIFICATION_FRESH = "verification-fresh"
 REASON_VERIFICATION_PARTIAL = "verification-partial"
 
 #: Appended to every "could not read this signal" detail by the service.
+REASON_CONTRACTS_NOT_BOUND = "contracts-no-pacticipant"
+REASON_CONTRACTS_VERSION_NOT_RECORDED = "contracts-version-not-recorded"
+REASON_CONTRACTS_NO_INTEGRATIONS = "contracts-no-integrations"
+REASON_CONTRACTS_FORBIDDEN = "contracts-forbidden"
+REASON_CONTRACTS_DEPLOYABLE = "contracts-deployable"
+REASON_CONTRACTS_UNVERIFIED_PROVIDER = "contracts-provider-contract-unverified"
+REASON_CONTRACTS_NOT_DEPLOYABLE = "contracts-not-deployable"
+REASON_CONTRACTS_PENDING_RESULTS = "contracts-verification-pending"
+
 REASON_SIGNAL_UNAVAILABLE = "signal-unavailable"
 
 #: Verification outcomes that mean the deployment did not agree with its contract.
@@ -328,6 +344,27 @@ class MaturityThresholds(_CamelModel):
     )
 
 
+class ContractThresholds(_CamelModel):
+    """Where the Pact ``can-i-deploy`` question (PFX-7.2) is asked.
+
+    The verdict itself has no rungs: it is the shared :func:`app.pact_matrix.deployment_verdict`.
+    Only the destination is configurable.
+
+    Attributes:
+        environment: The Pact environment to check against (every version deployed to or
+            released in it); ``None`` checks against the latest version of each counterpart.
+    """
+
+    environment: Optional[str] = Field(
+        default=None,
+        max_length=200,
+        description=(
+            "Pact environment can-i-deploy is asked against; `null` checks the latest version "
+            "of each counterpart."
+        ),
+    )
+
+
 class DeployGateThresholds(_CamelModel):
     """The complete ``ctg.gate-policy.v1`` body: one threshold group per signal."""
 
@@ -336,6 +373,7 @@ class DeployGateThresholds(_CamelModel):
     consumers: ConsumerThresholds = Field(default_factory=ConsumerThresholds)
     verification: VerificationThresholds = Field(default_factory=VerificationThresholds)
     maturity: MaturityThresholds = Field(default_factory=MaturityThresholds)
+    contracts: ContractThresholds = Field(default_factory=ContractThresholds)
 
 
 #: What a tenant that has configured nothing is judged against.
@@ -510,7 +548,7 @@ class GateSignal(_CamelModel):
     """
 
     signal: str = Field(
-        description="`lint` | `breaking` | `consumers` | `verification` | `maturity`."
+        description="`lint` | `breaking` | `consumers` | `verification` | `maturity` | `contracts`."
     )
     status: str = Field(description="`pass` | `warn` | `fail` | `not_configured` | `unknown`.")
     satisfied: Optional[bool] = Field(
@@ -1206,6 +1244,90 @@ def evaluate_maturity(
         satisfied=judgement.status == STATUS_PASS,
         reason=judgement.reason,
         detail=judgement.message(),
+        link=link,
+        data=data,
+    )
+
+
+def evaluate_contracts(
+    *,
+    verdict: ContractVerdict,
+    pacticipant: str,
+    version: str,
+    environment: Optional[str],
+    link: Optional[str] = None,
+    extra: Optional[Mapping[str, Any]] = None,
+) -> GateSignal:
+    """Turn the shared can-i-deploy verdict into the gate's ``contracts`` signal (PFX-7.2).
+
+    The verdict comes from :func:`app.pact_matrix.deployment_verdict` — the function behind
+    ``GET /can-i-deploy`` — so the gate and the broker route cannot disagree:
+
+    * ``deployable`` ``True`` → ``pass`` (``warn`` when it leans on an unverified provider
+      contract, i.e. the verdict carries warnings);
+    * ``deployable`` ``False`` → ``fail``;
+    * ``deployable`` ``None`` (a verification result is missing) → ``unknown``: excluded from the
+      verdict but counted, because "not verified yet" is not "verified".
+
+    Args:
+        verdict: The shared verdict.
+        pacticipant: The pacticipant gated.
+        version: The pacticipant version asked about.
+        environment: The destination environment, or ``None`` for the latest counterparts.
+        link: Path to the can-i-deploy read.
+        extra: Facts to carry beside the verdict.
+
+    Returns:
+        The judged signal.
+    """
+    warnings = [r for r in verdict.reasons if r.type == "warning"]
+    data: Dict[str, Any] = {
+        "pacticipant": pacticipant,
+        "version": version,
+        "environment": environment,
+        "deployable": verdict.deployable,
+        "counts": dict(verdict.counts),
+        "reasons": [
+            {"type": r.type, "code": r.code, "text": r.text} for r in verdict.reasons
+        ],
+    }
+    data.update(dict(extra or {}))
+    detail = verdict.reason or "No verification rows."
+    if verdict.deployable is None:
+        return unavailable_signal(
+            SIGNAL_CONTRACTS,
+            status=STATUS_UNKNOWN,
+            reason=REASON_CONTRACTS_PENDING_RESULTS,
+            detail=detail,
+            link=link,
+            data=data,
+        )
+    if verdict.deployable is False:
+        return GateSignal(
+            signal=SIGNAL_CONTRACTS,
+            status=STATUS_FAIL,
+            satisfied=False,
+            reason=REASON_CONTRACTS_NOT_DEPLOYABLE,
+            detail=detail,
+            link=link,
+            data=data,
+        )
+    if warnings:
+        return GateSignal(
+            signal=SIGNAL_CONTRACTS,
+            status=STATUS_WARN,
+            satisfied=False,
+            reason=REASON_CONTRACTS_UNVERIFIED_PROVIDER,
+            detail=detail,
+            link=link,
+            data=data,
+        )
+    return GateSignal(
+        signal=SIGNAL_CONTRACTS,
+        status=STATUS_PASS,
+        satisfied=True,
+        reason=REASON_CONTRACTS_DEPLOYABLE,
+        detail=detail,
         link=link,
         data=data,
     )

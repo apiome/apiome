@@ -40,9 +40,14 @@ from .database import db
 from .deploy_gate import (
     REASON_CONSUMERS_FORBIDDEN,
     REASON_CONSUMERS_NO_CHANGELOG,
+    REASON_CONTRACTS_FORBIDDEN,
+    REASON_CONTRACTS_NO_INTEGRATIONS,
+    REASON_CONTRACTS_NOT_BOUND,
+    REASON_CONTRACTS_VERSION_NOT_RECORDED,
     REASON_SIGNAL_UNAVAILABLE,
     SIGNAL_BREAKING,
     SIGNAL_CONSUMERS,
+    SIGNAL_CONTRACTS,
     SIGNAL_LINT,
     SIGNAL_MATURITY,
     SIGNAL_VERIFICATION,
@@ -50,17 +55,21 @@ from .deploy_gate import (
     STATUS_NOT_CONFIGURED,
     STATUS_UNKNOWN,
     DeployGatePolicyOut,
+    ContractThresholds,
     DeployGateReport,
     GateSignal,
     build_gate_report,
     evaluate_breaking,
     evaluate_consumers,
+    evaluate_contracts,
     evaluate_lint,
     evaluate_maturity,
     evaluate_verification,
     unavailable_signal,
 )
 from .deploy_gate_store import load_policy
+from .pact_matrix import MatrixOptions, UnresolvedSelector, deployment_verdict
+from .pact_matrix_store import query_matrix
 from .provider_verification_store import (
     ConformanceReportSummary,
     ProviderVerificationStoreError,
@@ -756,6 +765,118 @@ def _verification_signal(
 # -------------------------------------------------------------------------------------------
 
 
+def _contracts_signal(
+    tenant_id: str,
+    project_id: str,
+    version_label: Optional[str],
+    *,
+    thresholds: ContractThresholds,
+    link: str,
+    permitted: bool = True,
+) -> GateSignal:
+    """Ask the Pact ``can-i-deploy`` question for the revision (PFX-7.2, #6962).
+
+    The pacticipant bound to the project (``pacticipant.project_id``) is asked whether the version
+    named like the revision can be deployed, to ``thresholds.environment`` or, without one, next to
+    the latest version of each counterpart. The verdict is the shared
+    :func:`app.pact_matrix.deployment_verdict`, so it matches ``GET …/can-i-deploy``.
+
+    ``not_configured``: no pacticipant is bound to the project, the revision's version was never
+    recorded on it, or it has no integrations (no pacts). ``unknown``: the caller lacks
+    ``pacts:view``, or a verification result is missing. Everything is read within ``tenant_id``.
+
+    Args:
+        tenant_id: The caller's tenant.
+        project_id: The gated project.
+        version_label: The revision's version label (the pacticipant version number).
+        thresholds: The destination environment.
+        link: The evidence path.
+        permitted: Whether the caller holds ``pacts:view``.
+
+    Returns:
+        The judged signal.
+    """
+    if not permitted:
+        return unavailable_signal(
+            SIGNAL_CONTRACTS,
+            status=STATUS_UNKNOWN,
+            reason=REASON_CONTRACTS_FORBIDDEN,
+            detail="The caller may not read pacts, so the contract signal was not evaluated.",
+            link=link,
+        )
+    rows = db.execute_query(
+        """
+        SELECT id::text AS id, slug FROM apiome.pacticipant
+        WHERE tenant_id = %s::uuid AND project_id = %s::uuid AND deleted_at IS NULL
+        ORDER BY slug
+        """,
+        (tenant_id, project_id),
+    )
+    if not rows:
+        return unavailable_signal(
+            SIGNAL_CONTRACTS,
+            status=STATUS_NOT_CONFIGURED,
+            reason=REASON_CONTRACTS_NOT_BOUND,
+            detail="No Pact pacticipant is bound to this project, so there are no contracts to check.",
+            link=link,
+        )
+    pacticipant = rows[0]["slug"]
+    others = [row["slug"] for row in rows[1:]]
+    extra = {"otherPacticipants": others} if others else {}
+    recorded = (
+        db.execute_query(
+            """
+            SELECT 1 FROM apiome.pacticipant_version
+            WHERE pacticipant_id = %s::uuid AND number = %s AND deleted_at IS NULL
+            """,
+            (rows[0]["id"], version_label),
+        )
+        if version_label
+        else []
+    )
+    if not recorded:
+        return unavailable_signal(
+            SIGNAL_CONTRACTS,
+            status=STATUS_NOT_CONFIGURED,
+            reason=REASON_CONTRACTS_VERSION_NOT_RECORDED,
+            detail=(
+                f"Pacticipant {pacticipant} has no version {version_label or '(unlabelled)'}, "
+                "so no contract has been published for this revision."
+            ),
+            link=link,
+            data={"pacticipant": pacticipant, "version": version_label, **extra},
+        )
+    environment = thresholds.environment
+    options = (
+        MatrixOptions(latestby="cvpv", environment_name=environment)
+        if environment
+        else MatrixOptions(latestby="cvp", latest=True)
+    )
+    result = query_matrix(
+        db,
+        tenant_id,
+        [UnresolvedSelector(pacticipant_name=pacticipant, version_number=version_label)],
+        options,
+    )
+    if not result.integrations and not result.considered_rows and not result.ignored_rows:
+        return unavailable_signal(
+            SIGNAL_CONTRACTS,
+            status=STATUS_NOT_CONFIGURED,
+            reason=REASON_CONTRACTS_NO_INTEGRATIONS,
+            detail=f"Pacticipant {pacticipant} has no pacts with another pacticipant.",
+            link=link,
+            data={"pacticipant": pacticipant, "version": version_label, **extra},
+        )
+    return evaluate_contracts(
+        verdict=deployment_verdict(result),
+        pacticipant=pacticipant,
+        version=str(version_label),
+        environment=environment,
+        link=link,
+        extra=extra,
+    )
+
+
 def _links(tenant_slug: str, project_id: str, revision_id: str) -> Dict[str, str]:
     """API paths a reader follows for each signal's underlying evidence.
 
@@ -773,6 +894,7 @@ def _links(tenant_slug: str, project_id: str, revision_id: str) -> Dict[str, str
         SIGNAL_CONSUMERS: f"/v1/tenants/{tenant_slug}/projects/{project_id}/consumers",
         SIGNAL_VERIFICATION: f"/v1/tenants/{tenant_slug}/verification-schedules",
         SIGNAL_MATURITY: f"/v1/versions/{tenant_slug}/{project_id}/{revision_id}/lint/level",
+        SIGNAL_CONTRACTS: f"/v1/tenants/{tenant_slug}/pact-broker/can-i-deploy",
     }
 
 
@@ -820,6 +942,7 @@ def build_project_gate(
     project_ref: str,
     revision_id: Optional[str] = None,
     consumers_permitted: bool = True,
+    pacts_permitted: bool = True,
     now: Optional[datetime] = None,
 ) -> DeployGateReport:
     """Answer "can I promote this?" for one project, in one call.
@@ -830,6 +953,8 @@ def build_project_gate(
         project_ref: The project's id or slug.
         revision_id: A specific published revision, or ``None`` for the newest published one.
         consumers_permitted: Whether the caller may read the consumer registry.
+        pacts_permitted: Whether the caller may read pacts (``pacts:view``); without it the
+            ``contracts`` signal reports ``unknown``.
         now: Reference instant (tests).
 
     Returns:
@@ -922,6 +1047,19 @@ def build_project_gate(
         ),
     )
 
+    contracts = _guarded(
+        SIGNAL_CONTRACTS,
+        links[SIGNAL_CONTRACTS],
+        lambda: _contracts_signal(
+            tenant_id,
+            project_id,
+            version_label,
+            thresholds=thresholds.contracts,
+            link=links[SIGNAL_CONTRACTS],
+            permitted=pacts_permitted,
+        ),
+    )
+
     version_ref = (
         f"{KIND_PROJECT}/{project.get('slug') or project_id}/{version_label}"
         if version_label
@@ -934,7 +1072,7 @@ def build_project_gate(
         version_label=version_label,
         version_ref=version_ref,
         published_at=version.get("published_at"),
-        signals=[lint, breaking, consumers, verification, maturity],
+        signals=[lint, breaking, consumers, verification, maturity, contracts],
         policy=policy,
         evaluated_at=evaluated_at,
     )

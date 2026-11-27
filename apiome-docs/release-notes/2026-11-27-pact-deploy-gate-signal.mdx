@@ -1,0 +1,21 @@
+---
+slug: pact-deploy-gate-signal
+title: "The deploy gate asks can-i-deploy"
+description: "The project deploy gate gains a contracts signal that uses the Pact can-i-deploy verdict."
+authors: [apiome]
+---
+
+The project deploy gate now includes your Pact contracts. See
+[the deploy gate and contracts](/ship/pact-broker/can-i-deploy#in-the-deploy-gate).
+
+{/* truncate */}
+
+- A new `contracts` signal gives the same verdict as `GET …/pact-broker/can-i-deploy`, for the
+  pacticipant bound to the project and the version you are gating.
+- A failing verdict fails the gate. A verification result that is still missing is `unknown`:
+  counted, but left out of the verdict.
+- A project with no bound pacticipant, no published version or no pacts reports `not_configured`.
+- Set `contracts.environment` in the gate policy to check against an environment; otherwise the
+  latest version of each counterpart is used. OpenAPI 1.693.0.
+
+*Last updated: November 26, 2026*

@@ -147,8 +147,11 @@ def test_the_consumer_signal_is_gated_on_the_callers_registry_permission():
         "app.deploy_gate_routes.build_project_gate", return_value=_report()
     ) as build:
         assert client.get(_GATE).status_code == 200
-    assert permitted.call_args.args[2:] == (Resource.CONSUMER_CONTRACTS, Action.VIEW)
+    asked = [call.args[2:] for call in permitted.call_args_list]
+    assert (Resource.CONSUMER_CONTRACTS, Action.VIEW) in asked
+    assert (Resource.PACTS, Action.VIEW) in asked
     assert _kwargs(build)["consumers_permitted"] is False
+    assert _kwargs(build)["pacts_permitted"] is False
 
 
 def test_an_explicit_revision_is_forwarded():

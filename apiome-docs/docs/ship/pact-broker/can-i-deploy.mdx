@@ -360,6 +360,28 @@ A version that does not exist is not a refusal: the answer is no, with the code 
 | --- | --- | --- | --- | --- | --- |
 | Ask can-i-deploy and read the matrix | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 
+## In the deploy gate
+
+The project [deploy gate](../../reference/rest/deploy-gate.md) includes a **`contracts`** signal that
+asks this same question, using the same verdict function, so the gate and `can-i-deploy` never
+disagree. It judges the pacticipant bound to the project, for the version named like the revision
+being gated.
+
+| Verdict | Signal | In the gate verdict |
+| --- | --- | --- |
+| Deployable | `pass` | counts |
+| Deployable, but it leans on an unverified provider contract | `warn` | counts |
+| Not deployable | `fail` | fails the gate |
+| A verification result is missing | `unknown` | left out, counted apart |
+| No pacticipant bound, version never published to it, or no pacts | `not_configured` | left out |
+
+- **Destination.** Set `contracts.environment` in the gate policy (`PUT …/gate/policy`) to check
+  against what is in that environment. Left empty, the latest version of each counterpart is used.
+- **Several pacticipants.** If more than one is bound to the project, the first by handle is judged
+  and the others are listed in the signal's `data.otherPacticipants`.
+- **Permissions.** The signal needs `pacts:view`; without it, it reports `unknown`. If the read
+  fails, only this signal is lost, not the whole gate.
+
 ## Related
 
 - [Environments and deployments](./environments.mdx) — record what runs where.

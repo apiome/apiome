@@ -109,7 +109,9 @@ unless the target allows changes, the run asks for them, and a fixture names the
 
 The deploy gate combines the lint grade, the breaking-change status, broken consumers, how
 recently the deployment was verified and the version's
-[maturity level](../govern/maturity-ladders.mdx#gate-publishing-on-a-level). It always answers
+[maturity level](../govern/maturity-ladders.mdx#gate-publishing-on-a-level), and the Pact
+[can-i-deploy verdict](./pact-broker/can-i-deploy.mdx#in-the-deploy-gate) for the pacticipant bound to
+the project. It always answers
 `200` with the verdict in the body, so a pipeline can tell a failing gate from a network error. A
 signal that nothing has produced yet is reported as `not_configured` and left out of the verdict.
 
