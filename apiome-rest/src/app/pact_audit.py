@@ -80,6 +80,7 @@ AUDIT_ACTIONS = (
     "pacts.secret.create",
     "pacts.secret.update",
     "pacts.secret.delete",
+    "pacts.migration.import",
 )
 
 #: Every endpoint :func:`audited_write` wraps, by qualified name, with the action it writes. The

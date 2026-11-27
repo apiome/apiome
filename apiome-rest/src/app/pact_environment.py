@@ -38,6 +38,7 @@ from .pacticipant import MAX_LABEL_LENGTH
 
 __all__ = [
     "CODE_DEPLOYED_VERSION_NOT_FOUND",
+    "CODE_DEPLOYMENT_CONFLICT",
     "CODE_DEPLOYMENT_INVALID",
     "CODE_ENVIRONMENT_INVALID",
     "CODE_ENVIRONMENT_NAME_TAKEN",
@@ -64,6 +65,8 @@ CODE_ENVIRONMENT_NAME_TAKEN = "pact-environment-name-taken"
 CODE_ENVIRONMENT_NOT_FOUND = "pact-environment-not-found"
 #: A deployment, undeployment, release or support-ended body is malformed (HTTP 422).
 CODE_DEPLOYMENT_INVALID = "pact-deployment-invalid"
+#: An import found another version already recorded as deployed in that place (PFX-6.7, #6959).
+CODE_DEPLOYMENT_CONFLICT = "pact-deployment-conflict"
 #: No such deployed version (HTTP 404).
 CODE_DEPLOYED_VERSION_NOT_FOUND = "pact-deployed-version-not-found"
 #: No such released version (HTTP 404).

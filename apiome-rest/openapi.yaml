@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.690.0
+  version: 1.691.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -34713,6 +34713,285 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for readonepairscontracthealthandtrendsresponse422.
+  /v1/tenants/{tenant_slug}/pact-migration/check:
+    post:
+      tags:
+      - pact-broker
+      summary: Check records from a Pact Broker or PactFlow (dry run)
+      description: Read a batch exactly as the import does and answer, per record, `exists`,
+        `would-create` or `refused` (with the reason) — the dry run of `apiome pact
+        migrate`. Nothing is written. References between records (the pact a result
+        verifies, the environment a deployment names) are not checked, since an earlier
+        batch of the same migration may create them. Requires `pacts:view`.
+      operationId: post_migration_check_v1_tenants__tenant_slug__pact_migration_check_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Checkrecordsfroma Pact Brokeror Pact Flowdryauthorization schema.
+          - type: 'null'
+            description: Checkrecordsfroma Pact Brokeror Pact Flowdryauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Checkrecordsfroma Pact Brokeror Pact Flowdry Xapikey schema.
+          - type: 'null'
+            description: Checkrecordsfroma Pact Brokeror Pact Flowdry Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for check records from a pact broker or pactflow
+            (dry run).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrationReport'
+                description: Response payload for checkrecordsfroma pact brokeror pact
+                  flowdryresponse200.
+        '422':
+          description: '`pact-migration-invalid`: the body is not `{"records": [...]}`
+            or holds more than 100 records. A malformed *record* is answered `refused`
+            instead.'
+        '413':
+          description: '`pact-too-large`: the batch is over twice the pact size limit;
+            send fewer records.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - records
+              properties:
+                source:
+                  type: string
+                  maxLength: 2048
+                  description: The source broker's URL.
+                  example: human
+                records:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: object
+                    required:
+                    - kind
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                        - pacticipant
+                        - environment
+                        - version
+                        - pact
+                        - verification
+                        - deployment
+                        - release
+                        - webhook
+                        description: Kind.
+                        example: pacticipant
+                      created_at:
+                        type: string
+                        format: date-time
+                        description: When the source recorded it; kept on the rows the
+                          import creates.
+                        example: '2026-07-12T00:00:00Z'
+                    additionalProperties: true
+                    description: '`pacticipant` (`name`, `repository_url`, `main_branch`,
+                      `labels`), `version` (`pacticipant`, `number`, `build_url`, `branches`,
+                      `tags` — strings or `{name, created_at}`), `pact` (`consumer`,
+                      `provider`, `consumer_version`, `content` — the Pact), `verification`
+                      (`consumer`, `provider`, `consumer_version`, `number`, `result`
+                      — the Pact Broker verification body), `environment` (`name`, `display_name`,
+                      `production`, `contacts`), `deployment` (`pacticipant`, `version`,
+                      `environment`, `application_instance`), `release` (`pacticipant`,
+                      `version`, `environment`), `webhook` (`uuid`, `webhook` — the
+                      Pact Broker webhook body).'
+                  description: Records.
+              description: Request body for checkrecordsfroma pact brokeror pact flowdryrequest.
+            example:
+              source: https://broker.example.com
+              records:
+              - kind: pacticipant
+                name: Billing Service
+                main_branch: main
+                labels:
+                - team-billing
+                created_at: '2025-03-01T09:30:00Z'
+              - kind: version
+                pacticipant: Billing Service
+                number: 4f2a9c1
+                branches:
+                - main
+                tags:
+                - name: prod
+                  created_at: '2025-03-02T10:00:00Z'
+                created_at: '2025-03-01T09:31:00Z'
+        description: Request body for check records from a pact broker or pactflow (dry
+          run).
+  /v1/tenants/{tenant_slug}/pact-migration/import:
+    post:
+      tags:
+      - pact-broker
+      summary: Import records from a Pact Broker or PactFlow
+      description: 'Write a batch of records read from another Pact Broker (PFX-6.7,
+        what `apiome pact migrate` sends): up to 100 pacticipants, versions, pacts,
+        verification results, environments, deployments, releases and webhooks. Each
+        record is written in its own transaction with the source''s `created_at`; importing
+        it again changes nothing (`unchanged`), and what it adds to an existing row
+        — a label, a tag, a branch — is `updated`. Each record is answered in order;
+        a refused one carries `code` and `message` (`pact-migration-reference-missing`
+        for a result whose pact or a deployment whose environment is not there yet,
+        `pact-migration-conflict` for a pact or deployment Apiome already records differently,
+        or the Pact rule it breaks). An import fires no webhooks, commit statuses or
+        notifications. Requires `pacts:create` and `pacts:edit`.'
+      operationId: post_migration_import_v1_tenants__tenant_slug__pact_migration_import_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Importrecordsfroma Pact Brokeror Pact Flowauthorization schema.
+          - type: 'null'
+            description: Importrecordsfroma Pact Brokeror Pact Flowauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Importrecordsfroma Pact Brokeror Pact Flow Xapikey schema.
+          - type: 'null'
+            description: Importrecordsfroma Pact Brokeror Pact Flow Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for import records from a pact broker or
+            pactflow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrationReport'
+                description: Response payload for importrecordsfroma pact brokeror pact
+                  flowresponse200.
+        '422':
+          description: '`pact-migration-invalid`: the body is not `{"records": [...]}`
+            or holds more than 100 records. A malformed *record* is answered `refused`
+            instead.'
+        '413':
+          description: '`pact-too-large`: the batch is over twice the pact size limit;
+            send fewer records.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - records
+              properties:
+                source:
+                  type: string
+                  maxLength: 2048
+                  description: The source broker's URL.
+                  example: human
+                records:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: object
+                    required:
+                    - kind
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                        - pacticipant
+                        - environment
+                        - version
+                        - pact
+                        - verification
+                        - deployment
+                        - release
+                        - webhook
+                        description: Kind.
+                        example: pacticipant
+                      created_at:
+                        type: string
+                        format: date-time
+                        description: When the source recorded it; kept on the rows the
+                          import creates.
+                        example: '2026-07-12T00:00:00Z'
+                    additionalProperties: true
+                    description: '`pacticipant` (`name`, `repository_url`, `main_branch`,
+                      `labels`), `version` (`pacticipant`, `number`, `build_url`, `branches`,
+                      `tags` — strings or `{name, created_at}`), `pact` (`consumer`,
+                      `provider`, `consumer_version`, `content` — the Pact), `verification`
+                      (`consumer`, `provider`, `consumer_version`, `number`, `result`
+                      — the Pact Broker verification body), `environment` (`name`, `display_name`,
+                      `production`, `contacts`), `deployment` (`pacticipant`, `version`,
+                      `environment`, `application_instance`), `release` (`pacticipant`,
+                      `version`, `environment`), `webhook` (`uuid`, `webhook` — the
+                      Pact Broker webhook body).'
+                  description: Records.
+              description: Request body for importrecordsfroma pact brokeror pact flowrequest.
+            example:
+              source: https://broker.example.com
+              records:
+              - kind: pacticipant
+                name: Billing Service
+                main_branch: main
+                labels:
+                - team-billing
+                created_at: '2025-03-01T09:30:00Z'
+              - kind: version
+                pacticipant: Billing Service
+                number: 4f2a9c1
+                branches:
+                - main
+                tags:
+                - name: prod
+                  created_at: '2025-03-02T10:00:00Z'
+                created_at: '2025-03-01T09:31:00Z'
+        description: Request body for import records from a pact broker or pactflow.
   /v1/tenants/{tenant_slug}/pact-secrets:
     get:
       tags:
@@ -173923,6 +174202,92 @@ components:
       - pacticipant
       title: McpPactSelector
       description: 'One matrix selector: a pacticipant and which of its versions.'
+    MigrationOutcome:
+      properties:
+        index:
+          type: integer
+          title: Index
+          description: The record's position in `records`.
+          example: 1
+        kind:
+          anyOf:
+          - type: string
+            description: Migration Outcome schema.
+          - type: 'null'
+            description: Migration Outcome schema.
+          title: Kind
+          description: The record's kind, as sent.
+        key:
+          anyOf:
+          - type: string
+            description: Migration Outcome schema.
+          - type: 'null'
+            description: Migration Outcome schema.
+          title: Key
+          description: Its natural key; null when it could not be read.
+        outcome:
+          type: string
+          title: Outcome
+          description: '`created`, `updated`, `unchanged`, `refused`, `would-create` or
+            `exists`.'
+          example: example
+        code:
+          anyOf:
+          - type: string
+            description: Migration Outcome schema.
+          - type: 'null'
+            description: Migration Outcome schema.
+          title: Code
+          description: 'For `refused`: why, as a code.'
+        message:
+          anyOf:
+          - type: string
+            description: Migration Outcome schema.
+          - type: 'null'
+            description: Migration Outcome schema.
+          title: Message
+          description: 'For `refused`: why, as a sentence.'
+        note:
+          anyOf:
+          - type: string
+            description: Migration Outcome schema.
+          - type: 'null'
+            description: Migration Outcome schema.
+          title: Note
+          description: Something about how it was imported (a new uuid, a merged handle).
+      type: object
+      required:
+      - index
+      - outcome
+      title: MigrationOutcome
+      description: What happened to one record of the batch.
+    MigrationReport:
+      properties:
+        dry_run:
+          type: boolean
+          title: Dry Run
+          description: 'True for a check: nothing was written.'
+          example: true
+        results:
+          items:
+            $ref: '#/components/schemas/MigrationOutcome'
+          type: array
+          title: Results
+          description: One entry per record, in batch order.
+          maxItems: 100
+        counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Counts
+          description: How many records had each outcome.
+      type: object
+      required:
+      - dry_run
+      - results
+      - counts
+      title: MigrationReport
+      description: The answer to an import or a check.
     PactVerification:
       properties:
         consumer:

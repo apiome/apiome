@@ -148,6 +148,7 @@ from .pact_postman_routes import router as pact_postman_router
 from .pact_suite_routes import router as pact_suite_router
 from .pact_remediation_routes import router as pact_remediation_router
 from .pact_health_routes import router as pact_health_router
+from .pact_migration_routes import router as pact_migration_router
 from .pact_secret_routes import router as pact_secret_router
 from .pact_verification_ops_routes import router as pact_verification_ops_router
 from .pact_verifier_routes import router as pact_verifier_router
@@ -597,6 +598,7 @@ app.include_router(pact_verification_ops_router)  # PFX-5.5 (#6949): verificatio
 app.include_router(pact_remediation_router)  # PFX-6.2 (#6954): verification settings, re-publish requests
 app.include_router(pact_health_router)  # PFX-6.3 (#6955): contract health rollup and verification analytics
 app.include_router(pact_secret_router)  # PFX-6.5 (#6957): workspace secrets for webhooks and targets
+app.include_router(pact_migration_router)  # PFX-6.7 (#6959): import from a Pact Broker / PactFlow
 app.include_router(pact_provider_state_router)  # PFX-3.3 (#6933): provider-state registry
 app.include_router(pact_broker_environment_router)
 app.include_router(pact_broker_matrix_router)

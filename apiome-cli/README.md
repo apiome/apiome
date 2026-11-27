@@ -680,8 +680,16 @@ apiome pact list-pacticipants -o markdown
 apiome pact describe-version -a "Billing Service" --latest
 ```
 
-`apiome pact migrate` is reserved for the Pact Broker / PactFlow import (PFX-6.7) and exits `1`
-until it ships.
+`apiome pact migrate --from https://acme.pactflow.io` (PFX-6.7) imports a Pact Broker or PactFlow
+workspace — pacticipants and labels, versions with branches and tags, pacts, verification results,
+environments, current deployments and releases, webhooks — into the workspace `PACT_BROKER_BASE_URL`
+names, keeping the source's timestamps (`POST /v1/tenants/{t}/pact-migration/import`, batches of
+≤ 100 records). The source token comes from `--token` or `PACT_SOURCE_BROKER_TOKEN` (basic auth:
+`--username` / `--password`). `--dry-run` checks every record (`…/pact-migration/check`) and writes
+nothing. Progress is kept in `--state` (default `apiome-pact-migrate.state.json`), so a second run
+resumes; `--restart` sends everything again. The report lists what is not portable (PactFlow
+secrets for re-entry, redacted webhook credentials — imported disabled, unknown events, display
+names) and every refused record with its reason; exit `1` when any record was refused.
 
 ### API change check suite (`checks`)
 

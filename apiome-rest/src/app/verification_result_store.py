@@ -22,6 +22,7 @@ pass one bound to a rolled-back transaction.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import psycopg2
@@ -127,6 +128,8 @@ def publish_verification_result(
     trigger: Optional[str] = TRIGGER_PUBLISHED,
     duration_ms: Optional[int] = None,
     evidence_run_id: Optional[str] = None,
+    number: Optional[int] = None,
+    created_at: Optional[datetime] = None,
 ) -> VerificationResultRecord:
     """Store one verification of a pact version by a provider version.
 
@@ -144,6 +147,10 @@ def publish_verification_result(
             ``published`` for a Pact verifier's post, the hosted verifier's own trigger otherwise.
         duration_ms: How long the run took, when Apiome ran it.
         evidence_run_id: The evidence run holding the run's assertions, when Apiome ran it.
+        number: The result's number on its pact version, for an import from another broker that
+            keeps the source's numbering (PFX-6.7, #6959); the next free number when ``None``.
+        created_at: When the source recorded the result, for an import; ``None`` is now. It also
+            dates the provider version when this call records it.
 
     Returns:
         The stored result.
@@ -172,7 +179,14 @@ def publish_verification_result(
             raise _missing_pact(consumer, provider, sha)
         pact_version_id = found["id"]
         version = record_version_tx(
-            cursor, provider, request.provider_version, build_url=None, branch=None, tags=[], actor=actor
+            cursor,
+            provider,
+            request.provider_version,
+            build_url=None,
+            branch=None,
+            tags=[],
+            actor=actor,
+            created_at=created_at,
         )
         cursor.execute(
             """
@@ -184,12 +198,15 @@ def publish_verification_result(
             (version.version.id, provider.id),
         )
         branch_row = cursor.fetchone()
-        cursor.execute(
-            "SELECT COALESCE(MAX(number), 0) + 1 AS next FROM apiome.verification_result"
-            " WHERE pact_version_id = %s::uuid",
-            (pact_version_id,),
-        )
-        number = int(cursor.fetchone()["next"])
+        if number is not None:
+            result_number = int(number)
+        else:
+            cursor.execute(
+                "SELECT COALESCE(MAX(number), 0) + 1 AS next FROM apiome.verification_result"
+                " WHERE pact_version_id = %s::uuid",
+                (pact_version_id,),
+            )
+            result_number = int(cursor.fetchone()["next"])
         cursor.execute(
             """
             INSERT INTO apiome.verification_result (
@@ -198,11 +215,11 @@ def publish_verification_result(
                 verified_by_implementation, verified_by_version, verified_by_client_implementation,
                 verified_by_client_version, verified_by_client_test_framework,
                 pact_pending, wip, provider_verification_report_id, created_by, actor_label,
-                trigger, duration_ms, evidence_run_id
+                trigger, duration_ms, evidence_run_id, created_at
             )
             VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s,
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s::uuid, %s,
-                    %s, %s, %s::uuid)
+                    %s, %s, %s::uuid, COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
             RETURNING id::text AS id
             """,
             (
@@ -211,7 +228,7 @@ def publish_verification_result(
                 provider.id,
                 pact_version_id,
                 version.version.id,
-                number,
+                result_number,
                 request.success,
                 request.build_url,
                 branch_row["name"] if branch_row else None,
@@ -229,6 +246,7 @@ def publish_verification_result(
                 trigger,
                 max(0, int(duration_ms)) if duration_ms is not None else None,
                 evidence_run_id if evidence_run_id and is_uuid_string(str(evidence_run_id)) else None,
+                created_at,
             ),
         )
         return cursor.fetchone()["id"]

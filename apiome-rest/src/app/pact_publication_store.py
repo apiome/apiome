@@ -26,6 +26,7 @@ pass one bound to a rolled-back transaction.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, List, Optional, Sequence, Tuple
 
 import psycopg2
@@ -123,6 +124,7 @@ def _store_pact(
     *,
     actor: ConsumerActor,
     allow_modification: bool,
+    created_at: Optional[datetime] = None,
 ) -> PublishedPact:
     """Store one pact of a consumer version, inside the publish transaction.
 
@@ -135,6 +137,8 @@ def _store_pact(
         pact: The validated pact.
         actor: Who is publishing.
         allow_modification: Whether a version's existing pact may be replaced by new content.
+        created_at: When the source broker published it, for an import (PFX-6.7, #6959); ``None``
+            is now. Only rows this call inserts take it.
 
     Returns:
         The stored pact and what the write did.
@@ -146,9 +150,10 @@ def _store_pact(
     cursor.execute(
         """
         INSERT INTO apiome.pact_version (
-            tenant_id, consumer_id, provider_id, sha, content, specification_version, interaction_count
+            tenant_id, consumer_id, provider_id, sha, content, specification_version, interaction_count,
+            created_at
         )
-        VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s)
+        VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
         ON CONFLICT (consumer_id, provider_id, sha) DO NOTHING
         RETURNING id::text AS id
         """,
@@ -160,6 +165,7 @@ def _store_pact(
             Json(pact.document),
             pact.specification_version,
             pact.interaction_count,
+            created_at,
         ),
     )
     inserted = cursor.fetchone()
@@ -178,13 +184,24 @@ def _store_pact(
     cursor.execute(
         """
         INSERT INTO apiome.pact_publication (
-            consumer_id, provider_id, consumer_version_id, pact_version_id, created_by, actor_label
+            consumer_id, provider_id, consumer_version_id, pact_version_id, created_by, actor_label,
+            created_at, updated_at
         )
-        VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s)
+        VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s,
+                COALESCE(%s::timestamptz, CURRENT_TIMESTAMP), COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
         ON CONFLICT (consumer_version_id, consumer_id, provider_id) DO NOTHING
         RETURNING id::text AS id
         """,
-        (consumer.id, provider.id, version.version.id, pact_version_id, _user_id(actor), actor.label),
+        (
+            consumer.id,
+            provider.id,
+            version.version.id,
+            pact_version_id,
+            _user_id(actor),
+            actor.label,
+            created_at,
+            created_at,
+        ),
     )
     created = cursor.fetchone() is not None
     replaced = False

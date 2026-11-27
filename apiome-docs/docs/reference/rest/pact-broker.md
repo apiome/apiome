@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 105 operations."
+description: "REST endpoints tagged pact-broker: 107 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.690.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.691.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 105 operations
+Tag: `pact-broker` · 107 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2410,6 +2410,76 @@ Operation id: `read_pair_health_v1_tenants__tenant_slug__pact_health_providers__
 | 404 | `pacticipant-not-found`, or `pact-health-pair-not-found` when the consumer has published no pact for the provider. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/tenants/{tenant_slug}/pact-migration/check` {#post-migration-check-v1-tenants-tenant-slug-pact-migration-check-post}
+
+**Check records from a Pact Broker or PactFlow (dry run)**
+
+Read a batch exactly as the import does and answer, per record, `exists`, `would-create` or `refused` (with the reason) — the dry run of `apiome pact migrate`. Nothing is written. References between records (the pact a result verifies, the environment a deployment names) are not checked, since an earlier batch of the same migration may create them. Requires `pacts:view`.
+
+Operation id: `post_migration_check_v1_tenants__tenant_slug__pact_migration_check_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for check records from a pact broker or pactflow (dry run).
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `source` | string | no | The source broker's URL. |
+| `records` | array of object | yes | Records. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for check records from a pact broker or pactflow (dry run). | `application/json` [`MigrationReport`](#schema-migrationreport) |
+| 413 | `pact-too-large`: the batch is over twice the pact size limit; send fewer records. | — |
+| 422 | `pact-migration-invalid`: the body is not `{"records": [...]}` or holds more than 100 records. A malformed *record* is answered `refused` instead. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-migration/import` {#post-migration-import-v1-tenants-tenant-slug-pact-migration-import-post}
+
+**Import records from a Pact Broker or PactFlow**
+
+Write a batch of records read from another Pact Broker (PFX-6.7, what `apiome pact migrate` sends): up to 100 pacticipants, versions, pacts, verification results, environments, deployments, releases and webhooks. Each record is written in its own transaction with the source's `created_at`; importing it again changes nothing (`unchanged`), and what it adds to an existing row — a label, a tag, a branch — is `updated`. Each record is answered in order; a refused one carries `code` and `message` (`pact-migration-reference-missing` for a result whose pact or a deployment whose environment is not there yet, `pact-migration-conflict` for a pact or deployment Apiome already records differently, or the Pact rule it breaks). An import fires no webhooks, commit statuses or notifications. Requires `pacts:create` and `pacts:edit`.
+
+Operation id: `post_migration_import_v1_tenants__tenant_slug__pact_migration_import_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for import records from a pact broker or pactflow.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `source` | string | no | The source broker's URL. |
+| `records` | array of object | yes | Records. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for import records from a pact broker or pactflow. | `application/json` [`MigrationReport`](#schema-migrationreport) |
+| 413 | `pact-too-large`: the batch is over twice the pact size limit; send fewer records. | — |
+| 422 | `pact-migration-invalid`: the body is not `{"records": [...]}` or holds more than 100 records. A malformed *record* is answered `refused` instead. | — |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-postman-collections` {#export-pact-postman-collection-v1-tenants-tenant-slug-pact-postman-collections-post}
 
 **Export a pact as a Postman collection**
@@ -3382,6 +3452,16 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `MigrationReport` {#schema-migrationreport}
+
+The answer to an import or a check.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `dry_run` | boolean | yes | True for a check: nothing was written. |
+| `results` | array of `MigrationOutcome` | yes | One entry per record, in batch order. |
+| `counts` | map of integer | yes | How many records had each outcome. |
 
 ### `OverrideInput` {#schema-overrideinput}
 

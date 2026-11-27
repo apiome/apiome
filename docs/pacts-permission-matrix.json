@@ -606,6 +606,23 @@
       "path": "/v1/tenants/{tenant}/pact-secrets/{uuid}",
       "audit": "pacts.secret.delete",
       "auditedBy": "route"
+    },
+    {
+      "id": "migration.import",
+      "label": "Import from a Pact Broker or PactFlow",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-migration/import",
+      "audit": "pacts.migration.import",
+      "auditedBy": "route",
+      "body": {
+        "records": [
+          {
+            "kind": "environment",
+            "name": "staging"
+          }
+        ]
+      }
     }
   ],
   "reads": [
@@ -656,6 +673,12 @@
       "path": "/v1/internal/mcp/pacts/can-i-deploy",
       "permission": "pacts:view",
       "why": "MCP read."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-migration/check",
+      "permission": "pacts:view",
+      "why": "The dry run of an import: reads a batch and writes nothing."
     }
   ]
 }

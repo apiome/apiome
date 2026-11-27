@@ -126,7 +126,7 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 | `publish-verification-results` | Send a report from a verifier you ran | — |
 | `export-consumer-contract`, `publish-consumer-contract` | Turn a declared consumer surface into a pact | — |
 | `export-postman` | Write a pact as a Postman collection with test scripts | — |
-| `migrate` | Import a Pact Broker or PactFlow workspace | not available yet |
+| `migrate` | Import a Pact Broker or PactFlow workspace | — |
 
 Every option of every command is in the [CLI reference](../../reference/cli/pact.md).
 
@@ -326,9 +326,13 @@ wrong.
 
 ## Migrating from a Pact Broker
 
-`apiome pact migrate` is listed so that pipelines can find it, but the import of an existing Pact
-Broker or PactFlow workspace is not available yet. The command exits `1`, says so, and reads and
-writes nothing.
+`apiome pact migrate --from <source broker URL>` imports an existing Pact Broker or PactFlow
+workspace into the workspace that `PACT_BROKER_BASE_URL` names. It carries over pacticipants,
+versions, pacts, verification results, environments, deployments and webhooks, and keeps their
+timestamps. Read the token for the source from `PACT_SOURCE_BROKER_TOKEN`. Start with `--dry-run`,
+which writes nothing. A run that stops resumes where it left off. The checklist, what is not carried
+over and what each refusal means are on
+[Migrate from Pact Broker or PactFlow](./migration.mdx).
 
 ## Related
 

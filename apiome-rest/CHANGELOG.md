@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.867.0] - 2026-11-26
+
+### Added
+- **Import from a Pact Broker or PactFlow (PFX-6.7, #6959).** OpenAPI 1.691.0; no migration.
+  `apiome pact migrate` reads a source broker and sends what it read here.
+  - `POST /v1/tenants/{t}/pact-migration/import` (`app.pact_migration_routes`): up to 100 records —
+    `pacticipant`, `environment`, `version`, `pact`, `verification`, `deployment`, `release`,
+    `webhook` — each written in its own transaction (`app.pact_migration_store`) with the source's
+    `created_at`. Natural keys make a repeat `unchanged`; a label, tag, branch, repository or main
+    branch a record adds is `updated`; a refused record carries `code` and `message`
+    (`pact-migration-invalid` with a `/records/{i}/…` pointer, `pact-migration-reference-missing`,
+    `pact-migration-conflict`, or the Pact rule it breaks) and never stops the batch. Verification
+    results keep the source's number; a colliding number with a different verdict is refused. A
+    deployment never replaces what Apiome already records as deployed. Fires no webhooks, commit
+    statuses or notifications. `pacts:create` + `pacts:edit`; audited `pacts.migration.import`
+    (permission-matrix row `migration.import`).
+  - `POST /v1/tenants/{t}/pact-migration/check`: the dry run — `exists` / `would-create` /
+    `refused` per record, nothing written; `pacts:view` (matrix read row).
+  - Store writes take an optional `created_at` (`record_version_tx`, tags and branches, `_store_pact`,
+    `publish_verification_result` with `number`, `create_environment`, `record_deployment` with
+    `replace_current`, `record_release`, `create_webhook`); `None` keeps `CURRENT_TIMESTAMP`, so
+    every existing caller is unchanged. New code `pact-deployment-conflict`.
+
 ## [1.866.0] - 2026-11-26
 
 ### Changed

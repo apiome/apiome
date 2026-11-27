@@ -1,0 +1,194 @@
+---
+title: Migrate from Pact Broker or PactFlow
+description: Import a Pact Broker or PactFlow workspace into Apiome with one command.
+sidebar_position: 6.95
+tags: [contracts, pact, migration, cli]
+---
+
+`apiome pact migrate` moves an existing Pact Broker or PactFlow workspace into Apiome in one
+command. It reads the source through its REST API and re-creates everything in your Apiome workspace:
+
+- pacticipants, with their repository, main branch and labels;
+- versions, with their build URL, branches and tags;
+- pacts and verification results;
+- environments, current deployments and current releases;
+- webhooks.
+
+Each row keeps the time the source recorded it, so history, **latest** and branch heads read the
+same as before. Running the command again changes nothing that is already there, and a run that
+stops part-way **resumes** where it left off. Before it writes anything, a **dry run** tells you
+what would be created and what cannot be carried over.
+
+An import fires nothing. No webhook, commit status or notification is sent for history that
+happened at the source.
+
+## Before you start
+
+Work through this checklist before the first run.
+
+- [ ] **A read token for the source.** On PactFlow, a read-only token from **Settings › API
+      Tokens**. On an open-source Pact Broker, its token, or the basic-auth username and password.
+- [ ] **A workspace API key for Apiome** whose member can create and edit Pacts (the built-in
+      **Editor**, **Admin** or **Owner** role; see [Who can do what](#who-can-do-what)). Use a key
+      without a Pact scope: a key limited to `pact:read`, `pact:publish` or `pact:verify` reaches
+      the broker routes only, and the import is not one of them.
+- [ ] **The secrets your webhooks use.** PactFlow never exports secret values. For each secret the
+      source has (the dry run lists them), [create a workspace secret](./secrets.mdx#create-a-secret)
+      with the **same name**, so webhooks that refer to `${user.<name>}` keep working.
+- [ ] **No retention run yet.** Imported versions keep their source dates. A
+      [retention](./retention.mdx#clean-up-old-versions-with-a-retention-run) rule such as *older than 90 days* would
+      treat years of imported history as old. Run retention after the import, with a dry run first.
+- [ ] **A pause on publishing to the source** while you migrate, or plan a second run after the
+      cut-over to pick up what was published meanwhile.
+
+Set up the target as for every `apiome pact` command, and the source token in its own variable:
+
+```bash
+export PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker
+export PACT_BROKER_TOKEN=$APIOME_API_KEY
+export PACT_SOURCE_BROKER_TOKEN=<read token for the source>
+```
+
+Prefer the variable to `--token`: other users of the machine can read a command line.
+
+## Check first: the dry run
+
+```bash
+apiome pact migrate --from https://acme.pactflow.io --dry-run
+```
+
+The dry run reads the whole source and checks every record with Apiome, without writing anything.
+For each kind of record, the report shows how many were read, how many **would be created** and how
+many already **exist**. It then lists:
+
+- **Not portable**: what the source holds that cannot be carried over as it is, with what to do
+  about it (see [What is not carried over](#what-is-not-carried-over)).
+- **Would be refused**: each record Apiome would not accept, with the reason. An example is a
+  webhook whose URL points at a private address.
+- **Not read from the source**: what the migration never reads.
+
+The dry run checks each record on its own. It does not check whether one record finds another: a
+verification result whose pact is not imported yet, or a deployment to an environment that does
+not exist yet. The import itself checks those.
+
+## Import
+
+```bash
+apiome pact migrate --from https://acme.pactflow.io
+```
+
+The command reads the source, then sends the records in the order they depend on each other:
+pacticipants, environments, versions (oldest first), pacts, verification results, deployments,
+releases and webhooks. They go in batches of up to 100 records. It prints a line on stderr as it
+reads each part and sends each kind, then the report.
+
+Each record is imported on its own. A refused record does not stop the others. The report lists it
+with the reason, and the command exits `1`.
+
+### Resume and run again
+
+Progress is kept in `apiome-pact-migrate.state.json` in the current directory (`--state` picks
+another file). A second run with the same `--from` and workspace skips every record the first run
+imported, and does not even read its pact or result again. Only what was refused, or not reached,
+is sent. Fix what the report names, then run the same command again.
+
+Importing a record that is already in Apiome changes nothing, so running again is always safe, even
+without the state file. `--restart` ignores the state file and sends everything again.
+
+### Exit codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Every record was imported or was already there (with `--dry-run`: would be imported) |
+| `1` | At least one record was refused, the source or Apiome refused a credential, or a flag was wrong |
+
+## What is carried over
+
+| Source | In Apiome | Kept |
+| --- | --- | --- |
+| Pacticipant | [Pacticipant](./pacticipants.mdx), handle derived from the name | name, repository URL, main branch, labels, creation time |
+| Version | Pacticipant version | number, build URL, branches, tags (each with its own time), creation time |
+| Pact | Pact of that consumer version | the document, publication time |
+| Verification result | [Verification result](./verification-results.mdx) of that pact | number, verdict, provider version, build URL, test results, verifier, time |
+| Environment | [Environment](./environments.mdx) | name, display name, production flag, contacts, creation time |
+| Current deployment | Deployment | version, application instance, time |
+| Current release | Release | version, time |
+| Webhook | [Contract webhook](./webhooks.mdx) | uuid, description, events, consumer and provider, request, creation time |
+
+What is already in Apiome stays as it is. A record only **adds** what is missing: a label, a tag, a
+branch, or a repository or main branch the Apiome pacticipant does not have yet. The report counts
+those as **updated**.
+
+## What is not carried over
+
+The report lists each of these with what to do.
+
+| What | Why | What to do |
+| --- | --- | --- |
+| PactFlow secret values | PactFlow never exports them; the dry run lists each secret's name | Create each one as a [workspace secret](./secrets.mdx) with the same name before the import |
+| A webhook header or password the source shows as `**********` | The source redacts credentials | The webhook is imported **disabled**. Add the credential (or a `${user.<name>}` reference) in [Webhooks](./webhooks-console.mdx), then enable it |
+| A webhook that refers to a secret Apiome does not have | Apiome resolves `${user.<name>}` from its own secrets | Create the secret, then run again |
+| Webhook events Apiome does not fire | PactFlow-only events | They are left out; a webhook with no event left is not imported |
+| A pacticipant's display name | An Apiome pacticipant has one name: the one pacts use | Nothing; the name is kept |
+| Test results in a shape Apiome does not store | Apiome stores an array, or an object with a `tests` array | The result is imported without them |
+| Deployment history and releases whose support ended | The source lists only current deployments and releases | Nothing; history starts with the current state |
+| PactFlow teams, users, roles, API tokens and provider contracts | Not part of a Pact Broker workspace | Set them up in Apiome: [teams](../../workspace/teams.mdx), [roles](../../workspace/roles.mdx), [API keys](../../workspace/api-keys.mdx), [provider contracts](./bi-directional.mdx) |
+| Webhook execution history | Deliveries are not exported | Nothing; Apiome keeps its own [delivery log](./webhooks-console.mdx) from now on |
+
+For a workspace with a very long history, the source's matrix may hold more rows for one
+integration than the command asks for (1,000 by default). The report says so for that integration.
+Run again with a larger `--matrix-limit`.
+
+## When a record is refused
+
+| Code | Meaning | What to do |
+| --- | --- | --- |
+| `pact-migration-invalid` | The record cannot be read; the message names the field, e.g. `/records/3/number` | Usually a value the source holds that Apiome does not accept; fix it at the source or leave it |
+| `pact-migration-reference-missing` | A verification result whose pact, or a deployment whose environment, is not in Apiome | Run again: the earlier record is usually refused for another reason listed above it |
+| `pact-migration-conflict` | Apiome already records it differently: another pact for that consumer version, another version deployed there, or another result with that number | Decide which one is right; Apiome's own record is kept |
+| `pact-webhook-invalid` | The webhook breaks a webhook rule, such as a private host or a missing secret | Fix the webhook or create the secret, then run again |
+| `source-unreadable` | The source listed a pact or result but no longer returns it | Nothing, or run again if the source was briefly unavailable |
+
+## After the import
+
+- [ ] **Re-enter the secrets** the report lists, and **enable** the webhooks it imported disabled.
+- [ ] **Compare a few answers.** Run `apiome pact can-i-deploy` for one application against Apiome
+      and against the source; the verdicts should match.
+- [ ] **Point CI at Apiome.** Change `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` in your pipelines
+      (see [Run Pact in CI](./ci-pact.mdx)). Your `pact-broker` commands keep working, or move them
+      to [`apiome pact`](./cli.mdx).
+- [ ] **Run the migration once more** after the last publish to the source, to pick up anything
+      published meanwhile.
+- [ ] **Set up retention** for the imported history, with a dry run first
+      ([Labels, deletes and retention](./retention.mdx)).
+- [ ] **Assign owners** to the pacticipants so failures reach a team
+      ([Give a pacticipant an owner](./pacticipants.mdx#give-a-pacticipant-an-owner)).
+
+## Who can do what
+
+| Action | Permission |
+| --- | --- |
+| Run the import | **Pacts** create and edit (Editor, Admin, Owner) |
+| Run a dry run | **Pacts** view (every role) |
+
+Each import request is recorded in the [Access audit](../../govern/access-audit.mdx#pact-broker-events)
+as `pacts.migration.import`. The audit entry holds the request's route, never its records.
+
+## For automation: the REST API
+
+The command sends what it reads to two routes, which any tool can call:
+
+- `POST /v1/tenants/{tenant}/pact-migration/import` writes a batch of up to 100 records;
+- `POST /v1/tenants/{tenant}/pact-migration/check` answers the same batch without writing it.
+
+Each record has a `kind` (`pacticipant`, `environment`, `version`, `pact`, `verification`,
+`deployment`, `release` or `webhook`) and an optional `created_at`. The answer lists one outcome
+per record, in order: `created`, `updated`, `unchanged` or `refused` (with `code` and `message`),
+and `would-create` or `exists` for a check. The fields of each kind are in the
+[REST reference](../../reference/rest/pact-broker.md).
+
+## Related
+
+- [`apiome pact migrate` options](../../reference/cli/pact.md#pact-migrate)
+- [Pact Broker compatibility](./compatibility.mdx): the broker routes Apiome serves after the move
+- [Scale and performance](./scale.mdx#importing-history): how fast an import runs

@@ -29,6 +29,7 @@ live-database tests can pass one bound to a rolled-back transaction.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from psycopg2.extras import Json
@@ -497,6 +498,7 @@ def create_webhook(
     *,
     actor: ConsumerActor,
     webhook_id: Optional[str] = None,
+    created_at: Optional[datetime] = None,
 ) -> WebhookRecord:
     """Create a webhook.
 
@@ -506,6 +508,7 @@ def create_webhook(
         webhook: The checked body.
         actor: Who is creating it.
         webhook_id: The ``uuid`` the client chose (``PUT …/webhooks/{uuid}``); generated when omitted.
+        created_at: When the source broker created it, for an import (PFX-6.7, #6959); ``None`` is now.
 
     Returns:
         The stored webhook.
@@ -529,13 +532,23 @@ def create_webhook(
             )
         cursor.execute(
             f"""
-            INSERT INTO apiome.pact_webhook (id, tenant_id, created_by, updated_by, {", ".join(columns)})
+            INSERT INTO apiome.pact_webhook
+                (id, tenant_id, created_by, updated_by, created_at, updated_at, {", ".join(columns)})
             VALUES (COALESCE(%s::uuid, apiome.uuid_generate_v4()), %s::uuid, %s::uuid, %s::uuid,
+                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP), COALESCE(%s::timestamptz, CURRENT_TIMESTAMP),
                     {", ".join(["%s"] * len(columns))})
             ON CONFLICT (id) DO NOTHING
             RETURNING id::text AS id
             """,
-            (webhook_id, tenant_id, user_id, user_id, *[values[column] for column in columns]),
+            (
+                webhook_id,
+                tenant_id,
+                user_id,
+                user_id,
+                created_at,
+                created_at,
+                *[values[column] for column in columns],
+            ),
         )
         row = cursor.fetchone()
         return row["id"] if row else ""

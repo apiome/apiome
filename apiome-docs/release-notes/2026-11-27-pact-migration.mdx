@@ -1,0 +1,32 @@
+---
+slug: pact-migration
+title: "Move from Pact Broker or PactFlow in one command"
+description: "apiome pact migrate imports a whole Pact Broker or PactFlow workspace."
+authors: [apiome]
+---
+
+`apiome pact migrate --from https://acme.pactflow.io` imports an existing Pact Broker or PactFlow
+workspace into Apiome. It carries over pacticipants and labels, versions with branches and tags,
+pacts, verification results, environments, current deployments and releases, and webhooks, each
+with the time the source recorded it. See
+[Migrate from Pact Broker or PactFlow](/ship/pact-broker/migration).
+
+{/* truncate */}
+
+- **Dry run first.** `--dry-run` reads the whole source and checks every record with Apiome, writing
+  nothing. It reports what would be created, what already exists and what would be refused, with
+  the reason for each.
+- **Nothing dropped without a word.** The report lists everything the source holds that cannot be
+  carried over, and what to do about it. PactFlow secrets are listed by name for re-entry, because
+  their values are never exported. Webhooks whose credentials the source redacts are imported
+  disabled.
+- **Safe to run again.** Importing a record that is already there changes nothing. Progress is kept
+  in a state file, so a run that stops resumes where it left off, and a second run after the
+  cut-over picks up what was published meanwhile.
+- **Quiet.** An import fires no webhooks, commit statuses or notifications for history that
+  happened at the source.
+- **A REST API underneath.** `POST /v1/tenants/{tenant}/pact-migration/import` and `…/check` take
+  batches of up to 100 records, so other tools can import too. Importing needs **Pacts** create and
+  edit; a check needs **Pacts** view. Each import request is recorded in the access audit.
+
+REST API 1.691.0.
