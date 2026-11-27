@@ -555,6 +555,8 @@ def build_verify_body(
     replay_without_state_setup: bool,
     publish: bool,
     context: Mapping[str, str],
+    provider_states_setup_url: Optional[str] = None,
+    skip_already_verified: bool = False,
 ) -> dict[str, Any]:
     """The ``POST …/pact-verifier/pacts/provider/{p}/verify`` body.
 
@@ -570,10 +572,22 @@ def build_verify_body(
         replay_without_state_setup: Replay interactions whose provider state nothing sets up.
         publish: Publish the results (``False`` is a dry run).
         context: Non-secret CI context.
+        provider_states_setup_url: The provider's own state setup endpoint — a path on the target or
+            an absolute http(s) URL — instead of the registered states (PFX-8.8).
+        skip_already_verified: Skip pacts that already have a result for this provider version.
 
     Returns:
         The body, with only what was given.
+
+    Raises:
+        ValueError: A setup URL that is neither a path on the target nor an http(s) URL.
     """
+    setup_url = (provider_states_setup_url or "").strip()
+    if setup_url and not (
+        (setup_url.startswith("/") and not setup_url.startswith("//"))
+        or setup_url.lower().startswith(("http://", "https://"))
+    ):
+        raise ValueError("must be a path on the target (/_pact/provider-states) or an http(s) URL")
     selection: dict[str, Any] = {}
     if selectors:
         selection["consumerVersionSelectors"] = list(selectors)
@@ -593,8 +607,12 @@ def build_verify_body(
         verification["allow_mutating"] = True
     if replay_without_state_setup:
         verification["replay_without_state_setup"] = True
+    if setup_url:
+        verification["provider_states_setup_url"] = setup_url
     if verification:
         body["verification"] = verification
+    if skip_already_verified:
+        body["skip_already_verified"] = True
     if context:
         body["context"] = dict(context)
     return body

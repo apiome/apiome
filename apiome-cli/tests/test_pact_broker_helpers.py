@@ -329,6 +329,23 @@ def test_the_verify_body_has_only_what_was_given() -> None:
     assert full["provider_branch"] == "main" and full["publish"] is False and full["context"] == {"commit": "abc"}
 
 
+def test_the_verify_body_carries_the_setup_url_and_the_skip_switch() -> None:
+    common = dict(
+        target="staging", provider_app_version="1", branch=None, build_url=None, selectors=[],
+        include_pending=False, include_wip_pacts_since=None, allow_mutating=False,
+        replay_without_state_setup=False, publish=True, context={},
+    )
+    body = build_verify_body(**common, provider_states_setup_url=" /_pact/states ", skip_already_verified=True)
+    assert body["verification"] == {"provider_states_setup_url": "/_pact/states"}
+    assert body["skip_already_verified"] is True
+    absolute = build_verify_body(**common, provider_states_setup_url="https://states.example/setup")
+    assert absolute["verification"]["provider_states_setup_url"] == "https://states.example/setup"
+    assert "skip_already_verified" not in absolute
+    for bad in ("//elsewhere/x", "ftp://x/y", "states"):
+        with pytest.raises(ValueError, match="path on the target"):
+            build_verify_body(**common, provider_states_setup_url=bad)
+
+
 def test_selectors_and_context_are_checked() -> None:
     assert parse_selectors(['{"deployedOrReleased": true}']) == [{"deployedOrReleased": True}]
     with pytest.raises(ValueError, match="not JSON"):
@@ -444,3 +461,19 @@ def test_recorded_webhook_and_verify_lines() -> None:
     assert "passed 2, skipped 1" in lines[2] and "no (run-incomplete)" in lines[2]
     assert "Verification of ledger 1 against staging: incomplete" in lines
     assert "  not replayed: msg-1 (message): message interactions" in lines
+
+
+def test_verify_lines_say_why_a_run_did_not_reach_the_target_and_what_it_skipped() -> None:
+    response = {
+        "provider": "ledger",
+        "provider_version": "1",
+        "target": {"slug": "staging"},
+        "outcome": "could-not-connect",
+        "connection_error": "Could not connect to ledger.example (timeout)",
+        "skipped": [{"consumer_name": "Billing", "reason": "already verified for 1 (result 2, passed)"}],
+        "pacts": [],
+    }
+    lines = verify_lines(response, "table")
+    assert "Verification of ledger 1 against staging: could-not-connect" in lines
+    assert "  Could not connect to ledger.example (timeout) — not a failed verification; nothing was published." in lines
+    assert "  skipped: Billing — already verified for 1 (result 2, passed)" in lines

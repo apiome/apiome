@@ -435,7 +435,7 @@ apiome pact record-release [OPTIONS]
 
 Verify a provider against its pacts with Apiome's hosted verifier (POST …/pact-verifier/…/verify).
 
-Selects the pacts the provider must honour, replays each interaction against the registered target and publishes a result per conclusive pact. Prints one row per pact and every interaction that could not be replayed, with its reason. Exits 0 when the run succeeded, 1 otherwise (a failed pact, an incomplete run, or no pacts selected).
+Selects the pacts the provider must honour, replays each interaction against the registered target and publishes a result per conclusive pact. Prints one row per pact and every interaction that could not be replayed, with its reason, every pact skipped as already verified, and why the target could not be reached. Exits 0 when the run succeeded, 1 otherwise (a failed pact, an incomplete run, a target that could not be reached, or no pacts selected). A production target never receives mutating requests: --allow-mutating against one is refused.
 
 ```text
 apiome pact verify [OPTIONS]
@@ -455,6 +455,8 @@ apiome pact verify [OPTIONS]
 | `--include-wip-pacts-since` | text |  |  | Also verify work-in-progress pacts published since this date. |
 | `--allow-mutating` | flag |  |  | Replay POST/PUT/PATCH/DELETE interactions (the target must allow them). |
 | `--replay-without-state-setup` | flag |  |  | Replay interactions whose provider state nothing sets up. |
+| `--provider-states-setup-url` | text |  |  | POST each provider state to this endpoint (a path on the target or an http(s) URL) instead of the registry. |
+| `--skip-already-verified` | flag |  |  | Skip pacts that already have a result for this provider version. |
 | `--publish-verification-results` / `--no-publish-verification-results` | flag | `--publish-verification-results` |  | Publish the results. |
 | `--context` | text (repeatable) |  |  | Non-secret CI context KEY=VALUE stored with the evidence (repeatable). |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |

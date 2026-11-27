@@ -662,6 +662,12 @@
     },
     {
       "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify/preview",
+      "permission": "pacts:view",
+      "why": "Previews a hosted verification; sends nothing to any target and stores nothing."
+    },
+    {
+      "method": "POST",
       "path": "/v1/tenants/{tenant}/pact-retention",
       "permission": "pacts:view",
       "why": "A dry run (dry_run: true) plans a retention run and deletes nothing; applying it is the retention.apply write."

@@ -68,6 +68,7 @@ def _scopes(method: str, path: str) -> Set[str]:
         ("POST", f"{PB}/contracts/provider/Ledger/version/1.0.0/check", {READ}),
         ("GET", f"{PV}/providers/Ledger/provider-states", {READ}),
         ("POST", f"{PV}/providers/Ledger/provider-states/check", {READ}),
+        ("POST", f"{PV}/pacts/provider/Ledger/verify/preview", {READ}),
         # Consumer and deploy pipeline.
         ("POST", f"{PB}/contracts/publish", {PUBLISH}),
         ("PUT", f"{PAIR}/version/1.0.0", {PUBLISH}),

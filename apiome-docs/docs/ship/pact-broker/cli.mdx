@@ -150,7 +150,7 @@ with secrets written as variables. The first were the
 | `publish-consumer-contract` | **Contracts** → **Publish a pact** → **Derive from a project** |
 | `check` | **Contracts** → **Publish a pact** → **Check it before it counts** |
 | `create-environment`, `record-deployment`, `record-release` | Coming: environment dialogs (PFX-8.12) |
-| `verify` | Coming: **Run a verification** (PFX-8.8); today **Re-run** on a provider's verification page |
+| `verify` | **Contracts** → **Verification** (**Run a verification**) |
 | `publish-provider-contract` | **Contracts** → **Publish a provider contract** |
 | `publish-verification-results` | Coming: the results upload dialog (PFX-8.9) |
 | `export-consumer-contract`, `export-postman` | Coming: the **Export** page (PFX-8.18) |
@@ -302,7 +302,11 @@ apiome pact verify \
 
 Apiome replays each selected pact against the registered verification target `ledger-staging`
 and publishes a result per pact. It prints one row per pact and every interaction it could not
-replay, with the reason. `--no-publish-verification-results` is a dry run. See
+replay, with the reason. `--no-publish-verification-results` is a dry run.
+`--skip-already-verified` skips pacts that already have a result for `--provider-app-version`, and
+`--provider-states-setup-url` sends each provider state to the provider's own endpoint instead of the
+registered states. A target that could not be reached ends the run as `could-not-connect`, which is
+not a failed verification. `--allow-mutating` against a production target is refused. See
 [Verify a provider from Apiome](./hosted-verification.mdx). Each published result is also posted as
 a [commit status](./commit-statuses.mdx) to the provider's commit and to the consumer's commit,
 when their version numbers are commit SHAs.

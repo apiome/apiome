@@ -11,6 +11,10 @@ exactly what failed, copy or download its log, **Re-run** a pact, or **Verify al
 once. Re-runs use the [hosted verifier](./hosted-verification.mdx): Apiome replays the pact against
 a registered verification target and publishes a new result.
 
+To start a new run with your own selectors and options instead of re-running a recorded pact, use
+**Contracts** → **Verification** (**Run a verification**). See
+[Run a verification from the app](./hosted-verification.mdx#run-a-verification-from-the-app).
+
 ## Before you start
 
 - You hold **Pacts** → **View** to read the page. Without it, the page shows **Permission denied**.
@@ -71,11 +75,13 @@ whose scheduled verification was skipped says why. See
    build. If the pact has no result yet, enter the version.
 4. Optionally change the **Provider branch**, and tick **Send mutating requests** if the pact's
    `POST`, `PUT`, `PATCH` and `DELETE` interactions may be sent. The target's own policy must allow
-   them too.
+   them too, and the target must not be a production target: such a run is refused with
+   *Requests that change data are never sent to a production target*.
 5. Click **Re-run verification**.
 
-The dialog then says how the run went: **Passed**, **Failed**, or **Incomplete — nothing published**
-when an interaction could not be replayed. Click **Done**. The page reads the results again, and
+The dialog then says how the run went: **Passed**, **Failed**, **Incomplete — nothing published**
+when an interaction could not be replayed, or **Could not connect — nothing published** when no
+request reached the target. A target that cannot be reached is not a failed verification. Click **Done**. The page reads the results again, and
 the new result is first in the history, with the trigger **Re-run**.
 
 You can also re-run from a result's own page: click **Re-run verification** in its header.

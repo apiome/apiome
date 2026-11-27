@@ -1,0 +1,33 @@
+---
+slug: run-a-verification-page
+title: "Run a verification page"
+description: "Start a hosted or self-run verification from the app, with a preview."
+authors: [apiome]
+---
+
+Starting a verification with your own target, selectors and options used to need
+`apiome pact verify`. **Contracts** → **Verification** now opens **Run a verification**, and it shows
+what will run before anything is sent. See
+[Run a verification from the app](/ship/pact-broker/hosted-verification#run-a-verification-from-the-app).
+
+{/* truncate */}
+
+- **Hosted or self-run.** Choose a target and Apiome runs the verification. Or choose **Your pipeline
+  runs it** and copy the Pact verifier command: it fetches the same pacts and publishes its results
+  back. **Add a target…** creates one from the Target select.
+- **Selectors as sentences.** Each rule reads like "each consumer's latest pact on its main branch",
+  with the number of pacts it chooses. Use the **Recommended**, **Everything** or **Custom** presets,
+  turn pending pacts on, and include work-in-progress pacts since a date.
+- **Provider states.** Use Apiome's state handlers (the page counts the missing ones), the provider's
+  own setup endpoint, or no setup.
+- **Never on production.** Requests that change data are never sent to a target marked production.
+  The server refuses such a run, from the app, the CLI and every console or scheduled run.
+- **Preview first.** The page lists the pacts the run will verify and those skipped because they
+  are already verified for this exact version, with **Run anyway**. **Save as a schedule** keeps the
+  provider verified on a cadence.
+- **Could not connect is not a failure.** A target that never answers ends the run as
+  *Could not connect*, and nothing is published.
+- **CLI:** `apiome pact verify --provider-states-setup-url` and `--skip-already-verified`.
+- **REST:** `POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify/preview`.
+  `…/verify` adds `skip_already_verified`, `verification.provider_states_setup_url`, the
+  `could-not-connect` and `already-verified` outcomes, and `pact-verify-mutating-production`.

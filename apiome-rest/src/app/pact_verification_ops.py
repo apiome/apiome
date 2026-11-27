@@ -66,6 +66,7 @@ from .pact_verifier_service import (
     PactVerifierError,
     PactVerifyRequest,
     PactVerifyResponse,
+    SkippedPact,
     open_verification_session,
 )
 from .pacticipant import PacticipantRecord, validate_branch, validate_url, validate_version_number
@@ -332,24 +333,10 @@ class ConsoleRunRequest(BaseModel):
     )
 
 
-class SkippedPact(BaseModel):
-    """A pact the run chose but did not verify, with the reason."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    consumer: str = Field(description="The consumer's handle.")
-    consumer_name: str = Field(description="The consumer's display name.")
-    consumer_version: str = Field(description="The consumer version of the pact.")
-    pact_version_sha: str = Field(description="The pact version.")
-    code: str = Field(description="`pact-verify-in-progress` or `pact-verify-over-limit`.")
-    reason: str = Field(description="Why it was not verified, and what to do.")
-
-
 class ConsoleRunResponse(PactVerifyResponse):
     """A console run: the hosted verifier's answer, its trigger, and what it did not run."""
 
     trigger: str = Field(description="`manual` (re-run), `stale-recheck` (verify all stale) or `scheduled`.")
-    skipped: List[SkippedPact] = Field(default_factory=list, description="Chosen but not verified, each with why.")
 
 
 # =============================================================================================
@@ -794,8 +781,8 @@ def _run(
                 lock.release()
     finally:
         session.close()
-    answer = session.response(version, branch, verified)
-    return ConsoleRunResponse(**answer.model_dump(), trigger=trigger, skipped=skipped)
+    answer = session.response(version, branch, verified, skipped=skipped)
+    return ConsoleRunResponse(**answer.model_dump(), trigger=trigger)
 
 
 def reverify_pact(

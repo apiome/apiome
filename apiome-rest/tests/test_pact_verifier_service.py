@@ -30,6 +30,8 @@ from app.pact_publication import PactPublicationError, PactRecord, pact_content_
 from app.pact_selectors import CODE_SELECTOR_INVALID, PactCandidate
 from app.pact_verifier import PactVerificationOptions
 from app.pact_verifier_service import (
+    CODE_ALREADY_VERIFIED,
+    CODE_MUTATING_PRODUCTION,
     CODE_TARGET_AUTH_UNAVAILABLE,
     CODE_TOO_MANY_PACTS,
     NOT_PUBLISHED_DISABLED,
@@ -37,6 +39,8 @@ from app.pact_verifier_service import (
     PactVerifierError,
     PactVerifyRequest,
     PactVerifyResponse,
+    connection_failure,
+    mutating_refusal,
     provider_state_handler,
     verify_provider_pacts,
 )
@@ -161,6 +165,7 @@ def _verify(
     allow_mutating_target: bool = True,
     resolve: Any = None,
     states: Any = (),
+    verified: Optional[Dict[Any, Any]] = None,
     **request: Any,
 ) -> PactVerifyResponse:
     """Run the service with the stores faked and the transport pointed at ``api``."""
@@ -180,6 +185,7 @@ def _verify(
             stack.enter_context(patch(f"{_SERVICE}.{name}", side_effect=fake))
         stack.enter_context(patch(f"{_SERVICE}.load_pending_evidence", return_value=NO_EVIDENCE))
         stack.enter_context(patch(f"{_SERVICE}.list_states", return_value=list(states)))
+        stack.enter_context(patch(f"{_SERVICE}.results_for_provider_version", return_value=dict(verified or {})))
         stack.enter_context(
             patch(
                 f"{_SERVICE}.resolve_target",
@@ -617,3 +623,156 @@ def test_the_registry_handler_is_built_from_the_provider_s_states() -> None:
         handler = provider_state_handler(None, _TENANT, _PROVIDER, target(), {"Authorization": "x"})
     assert handler is not None and set(handler.registry) == {"invoice 1042 exists"}
     assert handler.auth_headers == {"Authorization": "x"}
+
+
+
+# ---------------------------------------------------------------------------
+# PFX-8.8 (#7305): production targets, unreachable targets, the setup URL, already verified
+# ---------------------------------------------------------------------------
+
+
+def _production(**policy: Any):
+    return lambda *_a, **_k: target(allow_mutating=True, **policy).model_copy(update={"environment": "production"})
+
+
+def test_mutating_requests_are_never_sent_to_a_production_target() -> None:
+    broker, api = _Broker([PACT_JVM]), LedgerApi()
+    with pytest.raises(PactVerifierError) as refused:
+        _verify(broker, api, resolve=_production())
+    assert refused.value.code == CODE_MUTATING_PRODUCTION
+    assert "never sent to a production target" in str(refused.value)
+    assert api.sent == [] and broker.published == [] and broker.evidence == []
+
+
+def test_a_production_target_is_verified_read_only() -> None:
+    broker, api = _Broker([PACT_JVM]), LedgerApi()
+    response = _verify(
+        broker, api, resolve=_production(), verification=PactVerificationOptions(replay_without_state_setup=True)
+    )
+    assert api.sent == ["GET /invoices"]
+    assert response.pacts[0].interactions[1].code == "mutating-method-blocked"
+
+
+def test_the_production_rule_is_one_function() -> None:
+    assert mutating_refusal(True, "production")
+    assert mutating_refusal(False, "production") is None
+    assert mutating_refusal(True, "staging") is None
+
+
+def test_an_unreachable_target_ends_the_run_as_could_not_connect() -> None:
+    def down(_request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("refused")
+
+    broker = _Broker([PACT_GO])
+    response = _verify(broker, LedgerApi({"GET /summary": down}))
+    assert (response.outcome, response.success) == ("could-not-connect", False)
+    assert response.connection_error and response.connection_error.startswith(
+        "Could not connect to ledger.staging.example.test ("
+    )
+    assert broker.published == []
+
+
+def test_a_timeout_is_named_as_one() -> None:
+    def slow(_request: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("slow")
+
+    response = _verify(_Broker([PACT_GO]), LedgerApi({"GET /summary": slow}))
+    assert response.connection_error == "Could not connect to ledger.staging.example.test (timeout)"
+
+
+def test_a_provider_that_answers_at_all_was_reached() -> None:
+    response = _verify(_Broker([PACT_GO]), LedgerApi({"GET /summary": lambda _r: httpx.Response(500)}))
+    assert response.outcome == "failed" and response.connection_error is None
+
+
+def test_nothing_sent_is_not_a_connection_failure() -> None:
+    assert connection_failure([], "https://x.example") is None
+
+
+_SETUP = "https://states.example.test/_pact/provider-states"
+
+
+def test_the_setup_url_sets_every_state_up_and_tears_it_down() -> None:
+    broker = _Broker([PACT_JS])
+    api = LedgerApi({"POST /_pact/provider-states": lambda _r: httpx.Response(200)})
+    options = PactVerificationOptions(provider_states_setup_url=_SETUP)
+    response = _verify(broker, api, verification=options, states=[_registered("some other state")])
+    (pact,) = response.pacts
+    assert (pact.outcome, pact.published) == ("passed", True)
+    posts = [json.loads(r.content) for r in api.requests if r.method == "POST"]
+    assert posts == [
+        {"state": "invoice 1042 exists", "params": {"id": 1042}, "action": "setup"},
+        {"state": "invoice 1042 exists", "params": {"id": 1042}, "action": "teardown"},
+    ]
+    assert all(not r.headers.get("Authorization") for r in api.requests if r.method == "POST")
+
+
+def test_a_setup_path_on_a_target_that_forbids_mutating_is_held_back() -> None:
+    broker, api = _Broker([PACT_JS]), _state_api()
+    options = PactVerificationOptions(provider_states_setup_url="/_pact/states")
+    response = _verify(broker, api, verification=options, allow_mutating_target=False)
+    (pact,) = response.pacts
+    assert pact.interactions[0].code == "provider-state-setup-blocked"
+    assert _STATE_CHANGE not in api.sent
+
+
+def test_a_failed_setup_through_the_url_names_the_call() -> None:
+    broker = _Broker([PACT_JS])
+    api = LedgerApi({"POST /_pact/provider-states": lambda _r: httpx.Response(503)})
+    response = _verify(broker, api, verification=PactVerificationOptions(provider_states_setup_url=_SETUP))
+    assert response.pacts[0].interactions[0].code == "provider-state-setup-failed"
+    assert "answered 503" in (response.pacts[0].interactions[0].message or "")
+
+
+@pytest.mark.parametrize("url", ["//elsewhere.example/x", "ftp://x.example/y", "states", "javascript:alert(1)"])
+def test_a_setup_url_must_be_a_path_or_an_http_url(url: str) -> None:
+    with pytest.raises(ValueError):
+        PactVerificationOptions(provider_states_setup_url=url)
+
+
+def test_a_blank_setup_url_means_the_registry() -> None:
+    assert PactVerificationOptions(provider_states_setup_url="  ").provider_states_setup_url is None
+
+
+def _previous(broker: _Broker, *, success: bool = True) -> Dict[Any, Any]:
+    return {
+        (c.consumer_id, c.sha): VerificationResultRecord(
+            id="r-old",
+            number=3,
+            consumer_slug=c.consumer_slug,
+            consumer_name=c.consumer_name,
+            provider_slug="ledger-api",
+            provider_name="Ledger API",
+            provider_version="4f1e2d0",
+            sha=c.sha,
+            success=success,
+            test_results=[],
+            verified_by={},
+        )
+        for c in broker.candidates[:1]
+    }
+
+
+def test_already_verified_pacts_are_skipped_when_asked() -> None:
+    broker, api = _Broker([PACT_JS, PACT_GO]), LedgerApi()
+    first, second = broker.candidates
+    response = _verify(broker, api, skip_already_verified=True, verified=_previous(broker))
+    assert [pact.consumer for pact in response.pacts] == [second.consumer_slug]
+    (skipped,) = response.skipped
+    assert (skipped.consumer, skipped.code) == (first.consumer_slug, CODE_ALREADY_VERIFIED)
+    assert "already verified for 4f1e2d0 (result 3, passed)" in skipped.reason
+    assert "GET /invoices/1042" not in api.sent
+
+
+def test_without_the_switch_every_selected_pact_is_verified_again() -> None:
+    broker, api = _Broker([PACT_JS]), LedgerApi()
+    response = _verify(broker, api, verified=_previous(broker))
+    assert len(response.pacts) == 1 and response.skipped == []
+
+
+@pytest.mark.parametrize("success", [True, False])
+def test_a_run_with_everything_already_verified_stands_on_those_results(success: bool) -> None:
+    broker, api = _Broker([PACT_JS]), LedgerApi()
+    response = _verify(broker, api, skip_already_verified=True, verified=_previous(broker, success=success))
+    assert (response.outcome, response.success, response.pacts) == ("already-verified", success, [])
+    assert api.sent == [] and broker.published == []

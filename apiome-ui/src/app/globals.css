@@ -47810,3 +47810,101 @@ tr[data-selected="true"] > td:first-child {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Run a verification — PFX-8.8 (#7305), docs/mockups/contracts/verify.html. Builds on .ppub / .ppc. */
+.pvr-modes {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pvr-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pvr-rules__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pvr-rule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pvr-rule__text {
+  flex: 1;
+  min-inline-size: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pvr-rule__count {
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--bg-inset);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pvr-rule__problem {
+  flex-basis: 100%;
+}
+
+.pvr-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .pvr-add {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pvr-narrow {
+  max-inline-size: 16rem;
+}
+
+.pvr-context {
+  min-block-size: 3.5rem;
+  padding-block: var(--space-1);
+  font-family: var(--font-mono);
+}
+
+.pvr-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.pvr-nothing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}

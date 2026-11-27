@@ -197,6 +197,8 @@ export interface ConsoleRunResponse {
   pacts: RunPact[];
   trigger: string;
   skipped: SkippedPact[];
+  /** With outcome `could-not-connect` (PFX-8.8): why the target never answered. */
+  connection_error?: string | null;
 }
 
 /** A verification target, as the picker lists it. */
@@ -458,6 +460,8 @@ export const OUTCOME_LABELS: Record<string, string> = {
   failed: 'Failed',
   incomplete: 'Incomplete — nothing published',
   'no-pacts': 'Nothing to verify',
+  'could-not-connect': 'Could not connect — nothing published',
+  'already-verified': 'Already verified',
 };
 
 /**

@@ -56,6 +56,7 @@ __all__ = [
     "get_provider_result",
     "get_verification_result",
     "latest_results_by_pact",
+    "results_for_provider_version",
     "list_bidirectional_results",
     "list_provider_results",
     "publish_verification_result",
@@ -535,6 +536,69 @@ def latest_results_by_pact(
                 tenant_id,
                 tenant_id,
                 provider.id,
+            ),
+        )
+        or []
+    )
+    found: Dict[Tuple[str, str], VerificationResultRecord] = {}
+    for row in rows:
+        record = verification_result_from_row(dict(row))
+        found[(str(row["consumer_id"]), record.sha)] = record
+    return found
+
+
+def results_for_provider_version(
+    db: Any,
+    tenant_id: str,
+    provider: PacticipantRecord,
+    provider_version: str,
+    pacts: Sequence[Tuple[str, str]],
+) -> Dict[Tuple[str, str], VerificationResultRecord]:
+    """The newest result of each pact version for one provider version (PFX-8.8, #7305).
+
+    What *already verified for this exact version* means on the Run a verification page and for
+    ``skip_already_verified``: a result published by ``provider_version`` (not deleted) against
+    the pact version. Shaped like :func:`latest_results_by_pact` — one probe per key through the
+    pact version's unique key and its results' index — with the provider version as one more join.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider: The provider (already resolved in the tenant).
+        provider_version: The provider version number.
+        pacts: ``(consumer_id, sha)`` pairs.
+
+    Returns:
+        ``{(consumer_id, sha): result}`` for every pact version this provider version has a result for.
+    """
+    if not pacts:
+        return {}
+    keys = sorted({(str(consumer_id), _normalise_sha(sha)) for consumer_id, sha in pacts})
+    rows = (
+        db.execute_query(
+            _RESULT_SELECT
+            + """
+        WHERE r.id IN (
+            SELECT DISTINCT ON (r2.pact_version_id) r2.id
+            FROM unnest(%s::uuid[], %s::text[]) k(consumer_id, sha)
+            JOIN apiome.pact_version pv2
+              ON pv2.consumer_id = k.consumer_id AND pv2.provider_id = %s::uuid AND pv2.sha = k.sha
+             AND pv2.tenant_id = %s::uuid
+            JOIN apiome.verification_result r2
+              ON r2.pact_version_id = pv2.id AND r2.tenant_id = %s::uuid AND r2.provider_id = %s::uuid
+            JOIN apiome.pacticipant_version v2
+              ON v2.id = r2.provider_version_id AND v2.deleted_at IS NULL AND v2.number = %s
+            ORDER BY r2.pact_version_id, r2.seq DESC
+        )
+        """,
+            (
+                [consumer_id for consumer_id, _ in keys],
+                [sha for _, sha in keys],
+                provider.id,
+                tenant_id,
+                tenant_id,
+                provider.id,
+                provider_version,
             ),
         )
         or []

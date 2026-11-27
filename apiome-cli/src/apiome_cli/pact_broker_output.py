@@ -345,10 +345,15 @@ def verify_lines(response: Mapping[str, Any], fmt: str) -> list[str]:
         f"{target.get('slug') or target.get('base_url')}: {response.get('outcome')}"
     )
     lines.append(f"**{headline}**" if fmt == "markdown" else headline)
+    prefix = "- " if fmt == "markdown" else "  "
+    if response.get("connection_error"):
+        lines.append(f"{prefix}{response.get('connection_error')} — not a failed verification; nothing was published.")
+    for item in response.get("skipped") or []:
+        if isinstance(item, dict):
+            lines.append(f"{prefix}skipped: {item.get('consumer_name') or item.get('consumer')} — {item.get('reason')}")
     for pact in pacts:
         for item in pact.get("unsupported") or []:
             if isinstance(item, dict):
-                prefix = "- " if fmt == "markdown" else "  "
                 lines.append(
                     f"{prefix}not replayed: {item.get('operation_key')} ({item.get('code')}): {item.get('reason')}"
                 )

@@ -33,19 +33,21 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from .consumer_contract_store import ConsumerActor
 from .contract_protocols import PACT_VERIFICATION
-from .contract_runner import AuthResolutionError, run_suite
+from .contract_runner import FAILURE_TIMEOUT, FAILURE_TRANSPORT_ERROR, AuthResolutionError, run_suite
 from .contract_suite import ContractSuiteManifest, PactSuiteOptions, SuiteSourceInfo, SuiteUnsupportedOperation
 from .contract_suite_pact import compile_pact_suite
 from .pact_broker_verification_routes import _result_url
 from .pact_commit_status_store import post_verification_statuses
+from .pact_owner_routing import notify_failed_verification
 from .pact_pending_store import load_pending_evidence
 from .pact_provider_state import registry_of
-from .pact_provider_state_handler import RegistryStateHandler
+from .pact_provider_state_handler import RegistryStateHandler, SetupUrlStateHandler
 from .pact_provider_state_store import list_states
 from .pact_publication import PactRecord
 from .pact_publication_store import get_pact_by_sha, list_pact_candidates
@@ -59,6 +61,8 @@ from .pact_selectors import (
 from .pact_suite_routes import pact_suite_reference
 from .pact_verifier import (
     MAX_PACTS_PER_RUN,
+    OUTCOME_ALREADY_VERIFIED,
+    OUTCOME_COULD_NOT_CONNECT,
     OUTCOME_FAILED,
     OUTCOME_INCOMPLETE,
     OUTCOME_NO_PACTS,
@@ -76,23 +80,29 @@ from .pact_verifier import (
     plan_pact_run,
     state_hooks,
 )
-from .pact_owner_routing import notify_failed_verification
 from .pact_webhook_events import fire_verification_events
 from .pact_wip import select_wip_pacts
 from .pacticipant import PacticipantRecord, validate_branch, validate_url, validate_version_number
 from .target_credentials import target_auth_headers
-from .verification_evidence import VerificationRunInput, duration_ms_between
+from .verification_evidence import OPERATION_OUTCOME_SKIPPED, VerificationRunInput, duration_ms_between
 from .verification_evidence_store import record_run
 from .verification_result import TRIGGER_HOSTED, VerificationRequest, VerificationResultRecord
-from .verification_result_store import publish_verification_result, record_broker_version
-from .verification_target import ResolvedTarget
+from .verification_result_store import (
+    publish_verification_result,
+    record_broker_version,
+    results_for_provider_version,
+)
+from .verification_target import ENVIRONMENT_PRODUCTION, ResolvedTarget
 from .verification_target_store import TargetActor, resolve_target
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "CODE_ALREADY_VERIFIED",
+    "CODE_MUTATING_PRODUCTION",
     "CODE_TARGET_AUTH_UNAVAILABLE",
     "CODE_TOO_MANY_PACTS",
+    "MUTATING_PRODUCTION_MESSAGE",
     "NOT_PUBLISHED_DISABLED",
     "NOT_PUBLISHED_INCOMPLETE",
     "PactVerification",
@@ -100,9 +110,12 @@ __all__ = [
     "PactVerifyRequest",
     "PactVerifyResponse",
     "PublishedResult",
+    "SkippedPact",
     "VerificationSession",
     "VerifiedTarget",
     "compile_stored_pact",
+    "connection_failure",
+    "mutating_refusal",
     "open_verification_session",
     "provider_state_handler",
     "select_provider_pacts",
@@ -113,6 +126,17 @@ __all__ = [
 CODE_TOO_MANY_PACTS = "pact-verify-too-many-pacts"
 #: The target's credential reference could not be turned into request headers (HTTP 422).
 CODE_TARGET_AUTH_UNAVAILABLE = "pact-verify-target-auth-unavailable"
+#: The run asked to send mutating requests to a target marked production (HTTP 422, PFX-8.8).
+CODE_MUTATING_PRODUCTION = "pact-verify-mutating-production"
+#: Why a selected pact was skipped: it already has a result for this provider version (PFX-8.8).
+CODE_ALREADY_VERIFIED = "pact-verify-already-verified"
+
+#: What a run that asks to send mutating requests to a production target is told — the same
+#: sentence the Run a verification page shows before anything is sent.
+MUTATING_PRODUCTION_MESSAGE = (
+    "Requests that change data are never sent to a production target. Turn allow_mutating off, "
+    "or verify against a staging or test target."
+)
 
 #: Why a pact's result was not published: the request said ``publish: false``.
 NOT_PUBLISHED_DISABLED = "publish-disabled"
@@ -141,6 +165,21 @@ class PactVerifierError(Exception):
 # =============================================================================================
 # Request and response
 # =============================================================================================
+
+
+class SkippedPact(BaseModel):
+    """A pact the run chose but did not verify, with the reason."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    consumer: str = Field(description="The consumer's handle.")
+    consumer_name: str = Field(description="The consumer's display name.")
+    consumer_version: str = Field(description="The consumer version of the pact.")
+    pact_version_sha: str = Field(description="The pact version.")
+    code: str = Field(
+        description="`pact-verify-already-verified`, `pact-verify-in-progress` or `pact-verify-over-limit`."
+    )
+    reason: str = Field(description="Why it was not verified, and what to do.")
 
 
 class PactVerifyRequest(BaseModel):
@@ -192,6 +231,16 @@ class PactVerifyRequest(BaseModel):
         description=(
             "Publish a verification result for every pact whose run is conclusive (`passed` or "
             "`failed`). `false` is a dry run: everything is replayed and reported, nothing is published."
+        ),
+    )
+    skip_already_verified: bool = Field(
+        default=False,
+        description=(
+            "Skip every selected pact that already has a verification result for this exact "
+            "`provider_version` (PFX-8.8): it is listed under `skipped` with "
+            "`pact-verify-already-verified` and its newest result, and not replayed. When every "
+            "pact is skipped the run's outcome is `already-verified`. Off by default: a Pact "
+            "verifier re-verifies whatever its selectors choose."
         ),
     )
     context: Dict[str, Any] = Field(
@@ -291,16 +340,28 @@ class PactVerifyResponse(BaseModel):
     success: bool = Field(
         description=(
             "What a CI job should exit on: true when at least one pact was verified and every pact "
-            "that is not pending `passed`."
+            "that is not pending `passed` — or, for `already-verified`, when every skipped pact's "
+            "newest result for this provider version passed."
         )
     )
     outcome: str = Field(
         description=(
             "`passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one "
-            "could not be fully replayed) or `no-pacts` (the selectors chose nothing)."
+            "could not be fully replayed), `could-not-connect` (no request reached the target — "
+            "see `connection_error`), `already-verified` (with `skip_already_verified`, every "
+            "selected pact already has a result for this provider version) or `no-pacts` (the "
+            "selectors chose nothing)."
         )
     )
     pacts: List[PactVerification] = Field(default_factory=list, description="One entry per pact verified.")
+    skipped: List[SkippedPact] = Field(default_factory=list, description="Chosen but not verified, each with why.")
+    connection_error: Optional[str] = Field(
+        default=None,
+        description=(
+            "With outcome `could-not-connect`: the target never answered (`Could not connect to "
+            "billing.staging.example (timeout)`). Not a failed verification — nothing was published."
+        ),
+    )
 
 
 # =============================================================================================
@@ -314,12 +375,16 @@ def provider_state_handler(
     provider: PacticipantRecord,
     target: ResolvedTarget,
     auth_headers: Optional[Dict[str, str]] = None,
+    *,
+    setup_url: Optional[str] = None,
 ) -> Optional[RegistryStateHandler]:
-    """The handler that sets this provider's registered states up on this target (PFX-3.3).
+    """The handler that sets this provider's states up on this target (PFX-3.3; PFX-8.8).
 
-    A provider with no registered state gets ``None``: an interaction with a provider state is
-    then skipped with ``provider-state-not-set-up`` unless the run sets
-    ``replay_without_state_setup`` (:func:`app.pact_verifier.plan_pact_run`).
+    With ``setup_url`` (the run's ``provider_states_setup_url``) every state goes to the provider's
+    own setup endpoint and the registry is not read. Otherwise a provider with no registered state
+    gets ``None``: an interaction with a provider state is then skipped with
+    ``provider-state-not-set-up`` unless the run sets ``replay_without_state_setup``
+    (:func:`app.pact_verifier.plan_pact_run`).
 
     Args:
         db: The database.
@@ -327,10 +392,13 @@ def provider_state_handler(
         provider: The provider being verified.
         target: The resolved verification target.
         auth_headers: The target's materialised credential headers.
+        setup_url: The provider's setup endpoint, when the run names one.
 
     Returns:
-        The registry's handler, or ``None`` when the provider has registered no state.
+        The handler, or ``None`` when there is no setup URL and the provider has registered no state.
     """
+    if setup_url:
+        return SetupUrlStateHandler(setup_url, target, auth_headers or {})
     states = list_states(db, tenant_id, provider)
     if not states:
         return None
@@ -608,6 +676,58 @@ def _excused(selected: VerifiablePact, query: ForVerificationQuery) -> bool:
     return bool(selected.pending and (query.include_pending_status or selected.wip))
 
 
+def mutating_refusal(allow_mutating: bool, environment: Optional[str]) -> Optional[str]:
+    """Why a run may not start because it would send mutating requests to production (PFX-8.8).
+
+    The rule holds whatever the target's own policy says: a production target that allows mutating
+    methods (for its own CTG-4.3 checks) still never receives a *pact's* POST, PUT, PATCH or DELETE.
+
+    Args:
+        allow_mutating: The run's ``verification.allow_mutating``.
+        environment: The target's environment class.
+
+    Returns:
+        :data:`MUTATING_PRODUCTION_MESSAGE`, or ``None`` when the run may start.
+    """
+    if allow_mutating and environment == ENVIRONMENT_PRODUCTION:
+        return MUTATING_PRODUCTION_MESSAGE
+    return None
+
+
+#: The interaction codes that mean the request never reached the target.
+_CONNECT_FAILURES = frozenset({FAILURE_TRANSPORT_ERROR, FAILURE_TIMEOUT})
+
+
+def connection_failure(pacts: Sequence[PactVerification], base_url: str) -> Optional[str]:
+    """Whether the target never answered, and the sentence that says so (PFX-8.8).
+
+    A run *could not connect* when at least one interaction was sent and every interaction sent
+    ended in a transport error or a timeout — no status came back at all. One answer, even a 500,
+    means the provider was reached, and the run is judged as usual.
+
+    Args:
+        pacts: The pacts verified.
+        base_url: The target's base URL (its host is named).
+
+    Returns:
+        ``Could not connect to billing.staging.example (timeout)``, or ``None``.
+    """
+    sent = [
+        interaction
+        for pact in pacts
+        for interaction in pact.interactions
+        if interaction.outcome != OPERATION_OUTCOME_SKIPPED
+    ]
+    if not sent or any(interaction.actual_status is not None for interaction in sent):
+        return None
+    if not all(interaction.code in _CONNECT_FAILURES for interaction in sent):
+        return None
+    host = urlsplit(base_url).netloc or base_url
+    first = sent[0]
+    why = "timeout" if first.code == FAILURE_TIMEOUT else (first.message or "transport error")
+    return f"Could not connect to {host} ({why})"
+
+
 def _run_outcome(pacts: Sequence[PactVerification]) -> str:
     """The verdict on the whole run: pending pacts never decide it."""
     if not pacts:
@@ -650,7 +770,8 @@ def verify_provider_pacts(
         PactPublicationError: ``pact-selector-invalid`` for a malformed selection.
         TargetValidationError: ``target-not-found``, ``target-disabled``,
             ``target-protocol-mismatch`` or a URL code — the target could not be resolved.
-        PactVerifierError: :data:`CODE_TOO_MANY_PACTS` or :data:`CODE_TARGET_AUTH_UNAVAILABLE`.
+        PactVerifierError: :data:`CODE_TOO_MANY_PACTS`, :data:`CODE_TARGET_AUTH_UNAVAILABLE` or
+            :data:`CODE_MUTATING_PRODUCTION`.
     """
     version = validate_version_number(request.provider_version)
     branch = validate_branch(request.provider_branch) if request.provider_branch else None
@@ -659,6 +780,13 @@ def verify_provider_pacts(
 
     query = _selection(request, branch)
     provider, selected = select_provider_pacts(db, tenant_id, provider_ref, query)
+    skipped: List[SkippedPact] = []
+    previous: Dict[Tuple[str, str], VerificationResultRecord] = {}
+    if request.skip_already_verified and selected:
+        previous = results_for_provider_version(
+            db, tenant_id, provider, version, [(pact.candidate.consumer_id, pact.candidate.sha) for pact in selected]
+        )
+        selected, skipped = _split_verified(selected, previous, version)
     if len(selected) > MAX_PACTS_PER_RUN:
         raise PactVerifierError(
             CODE_TOO_MANY_PACTS,
@@ -667,6 +795,9 @@ def verify_provider_pacts(
         )
 
     session = open_verification_session(db, tenant_id, provider, request, actor=actor, state_handler=state_handler)
+    if not selected and skipped:
+        session.close()
+        return session.response(version, branch, [], skipped=skipped, previous_success=_all_passed(previous))
     try:
         if selected and request.publish and branch:
             # A verifier records the provider version's branch before it publishes, so each result
@@ -678,7 +809,50 @@ def verify_provider_pacts(
         ]
     finally:
         session.close()
-    return session.response(version, branch, pacts)
+    return session.response(version, branch, pacts, skipped=skipped)
+
+
+def _split_verified(
+    selected: List[VerifiablePact], previous: Dict[Tuple[str, str], VerificationResultRecord], version: str
+) -> Tuple[List[VerifiablePact], List[SkippedPact]]:
+    """Set aside the pacts that already have a result for this provider version.
+
+    Args:
+        selected: The pacts the selectors chose.
+        previous: Their newest result for the version, by ``(consumer_id, sha)``.
+        version: The provider version.
+
+    Returns:
+        ``(to_run, skipped)``.
+    """
+    to_run: List[VerifiablePact] = []
+    skipped: List[SkippedPact] = []
+    for pact in selected:
+        candidate = pact.candidate
+        found = previous.get((str(candidate.consumer_id), candidate.sha))
+        if found is None:
+            to_run.append(pact)
+            continue
+        verdict = "passed" if found.success else "failed"
+        skipped.append(
+            SkippedPact(
+                consumer=candidate.consumer_slug,
+                consumer_name=candidate.consumer_name,
+                consumer_version=candidate.version_number,
+                pact_version_sha=candidate.sha,
+                code=CODE_ALREADY_VERIFIED,
+                reason=(
+                    f"already verified for {version} (result {found.number}, {verdict}); "
+                    "turn skip_already_verified off to verify it again."
+                ),
+            )
+        )
+    return to_run, skipped
+
+
+def _all_passed(previous: Dict[Tuple[str, str], VerificationResultRecord]) -> bool:
+    """Whether every result a fully skipped run stands on passed."""
+    return bool(previous) and all(record.success for record in previous.values())
 
 
 class VerificationSession:
@@ -760,18 +934,36 @@ class VerificationSession:
         if callable(close):
             close()
 
-    def response(self, version: str, branch: Optional[str], pacts: List[PactVerification]) -> PactVerifyResponse:
+    def response(
+        self,
+        version: str,
+        branch: Optional[str],
+        pacts: List[PactVerification],
+        *,
+        skipped: Optional[List[SkippedPact]] = None,
+        previous_success: bool = False,
+    ) -> PactVerifyResponse:
         """The run's answer: the target as resolved, the verdict and every pact.
 
         Args:
             version: The checked provider version.
             branch: The checked provider branch.
             pacts: The pacts verified.
+            skipped: The pacts chosen but not verified.
+            previous_success: For a run that skipped every pact as already verified: whether
+                the results it stands on all passed.
 
         Returns:
             The response.
         """
-        outcome = _run_outcome(pacts)
+        connection_error = connection_failure(pacts, self.target.base_url)
+        if connection_error:
+            outcome = OUTCOME_COULD_NOT_CONNECT
+        elif not pacts and skipped and all(item.code == CODE_ALREADY_VERIFIED for item in skipped):
+            outcome = OUTCOME_ALREADY_VERIFIED
+        else:
+            outcome = _run_outcome(pacts)
+        success = outcome == OUTCOME_PASSED or (outcome == OUTCOME_ALREADY_VERIFIED and previous_success)
         return PactVerifyResponse(
             provider=self.provider.slug,
             provider_version=version,
@@ -784,9 +976,11 @@ class VerificationSession:
                 protocol=self.target.protocol,
                 allow_mutating_methods=self.target.policy.allow_mutating_methods,
             ),
-            success=outcome == OUTCOME_PASSED,
+            success=success,
             outcome=outcome,
             pacts=pacts,
+            skipped=list(skipped or []),
+            connection_error=connection_error,
         )
 
 
@@ -816,16 +1010,24 @@ def open_verification_session(
 
     Raises:
         TargetValidationError: The target could not be resolved.
-        PactVerifierError: :data:`CODE_TARGET_AUTH_UNAVAILABLE`.
+        PactVerifierError: :data:`CODE_TARGET_AUTH_UNAVAILABLE`, or :data:`CODE_MUTATING_PRODUCTION`
+            for a run that opts in to mutating requests against a production target — every
+            path (``…/verify``, the console's re-run and verify-all-stale, a scheduled run) opens
+            its target here, so none can send one.
     """
     target_actor = TargetActor(user_id=actor.user_id, label=actor.label, kind=actor.kind)
     # An http target replays HTTP interactions, a grpc / connect one the gRPC calls (PFX-3.7).
     target = resolve_target(tenant_id, request.target_ref, actor=target_actor, protocol=PACT_VERIFICATION)
+    refusal = mutating_refusal(request.verification.allow_mutating, target.environment)
+    if refusal:
+        raise PactVerifierError(CODE_MUTATING_PRODUCTION, refusal)
     try:
         auth_headers = target_auth_headers(tenant_id, target.auth)
     except AuthResolutionError as exc:
         raise PactVerifierError(CODE_TARGET_AUTH_UNAVAILABLE, str(exc)) from exc
-    handler = state_handler or provider_state_handler(db, tenant_id, provider, target, auth_headers)
+    handler = state_handler or provider_state_handler(
+        db, tenant_id, provider, target, auth_headers, setup_url=request.verification.provider_states_setup_url
+    )
     return VerificationSession(
         db,
         tenant_id,

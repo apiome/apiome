@@ -61,6 +61,27 @@ The pact at https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/provider/le
     * latest version from the main branch 'main' (2f4c1a9)
 ```
 
+## Build selectors in the app
+
+On **Run a verification** (**Contracts** → **Verification**), **Which pacts to verify** writes each
+selector as a sentence, with the number of pacts it chooses on its own:
+
+| Rule | Selector |
+| --- | --- |
+| Each consumer's latest pact on its main branch | `{"mainBranch": true}` |
+| Pacts of every consumer version deployed or released anywhere (or to an environment) | `{"deployedOrReleased": true}`, with `environment` |
+| Pacts on a consumer branch named like this one | `{"matchingBranch": true}` |
+| The latest pact on branch … | `{"branch": "…"}` |
+| The latest pact tagged … | `{"tag": "…", "latest": true}` |
+| Pacts of every consumer version currently deployed, or released and supported | `{"deployed": true}`, `{"released": true}` |
+| Each consumer's latest pact, wherever it was published | `{"latest": true}` |
+
+Any rule can be narrowed to one consumer, which adds `consumer`. **Recommended** is the first three
+rules, as in the example above. **Everything** adds the last one. **Custom** lets you add and remove
+rules. Two rules that are the same selector are sent once. The page's **The same, from anywhere**
+block prints the same rules as `--consumer-version-selector` options, for `apiome pact verify` and
+for the Pact verifier. See [Verify a provider from Apiome](./hosted-verification.mdx#run-a-verification-from-the-app).
+
 ## Selectors
 
 Each selector is a JSON object. Add `consumer` to any of them to apply it to one consumer only
