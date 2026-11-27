@@ -175,6 +175,25 @@ def _impact_target(impact: dict[str, Any]) -> str:
     return f"{operation} — {where} `{field_path}`"
 
 
+def _broker_phrase(broker: dict[str, Any]) -> str:
+    """Name a consumer's Pact Broker origin (PFX-7.4, #6964), mirroring the server's markdown.
+
+    Args:
+        broker: The ``broker`` block of one consumer verdict.
+
+    Returns:
+        E.g. ``pacticipant billing — surface from a published pact (version 1.4.0, a1b2c3d4e5f6)``.
+    """
+    text = f"pacticipant {broker['pacticipant']}"
+    if broker.get("fromPact"):
+        text += " — surface from a published pact"
+        version = broker.get("consumerVersion")
+        if version:
+            sha = str(broker.get("pactSha") or "")[:12]
+            text += f" (version {version}, {sha})" if sha else f" (version {version})"
+    return text
+
+
 def format_consumer_impact_text(impact: dict[str, Any]) -> list[str]:
     """Render the consumer-impact block of the text report.
 
@@ -201,6 +220,9 @@ def format_consumer_impact_text(impact: dict[str, Any]) -> list[str]:
             lines.append(f"  {slug}: no declared surface")
         else:
             lines.append(f"  {slug}: {outcome}")
+        broker = verdict.get("broker")
+        if isinstance(broker, dict) and broker.get("pacticipant"):
+            lines.append(f"    Pact Broker: {_broker_phrase(broker)}")
         for row in verdict.get("impacts") or []:
             if not isinstance(row, dict):
                 continue

@@ -636,3 +636,29 @@ def test_diff_blast_radius_markdown_asks_only_the_markdown_call(httpx_mock: obje
     first, second = (json.loads(r.content.decode("utf-8")) for r in httpx_mock.get_requests())
     # The severity call skips the per-change traversals; the markdown call carries them.
     assert "blastRadius" not in first and second["blastRadius"] is True
+
+
+def test_consumer_impact_text_names_the_pact_broker_origin():
+    """PFX-7.4 (#6964): a broker-backed consumer's verdict says which pacticipant and pact."""
+    from apiome_cli.output_diff import format_consumer_impact_text
+
+    verdict = {
+        **_CONSUMER_IMPACT["consumers"][0],
+        "broker": {
+            "pacticipant": "billing-service",
+            "fromPact": True,
+            "consumerVersion": "1.4.0",
+            "pactSha": "a1b2c3d4e5f6a7b8",
+        },
+    }
+    manual = {**_CONSUMER_IMPACT["consumers"][1]}
+    lines = format_consumer_impact_text({**_CONSUMER_IMPACT, "consumers": [verdict, manual]})
+    assert (
+        "    Pact Broker: pacticipant billing-service — surface from a published pact "
+        "(version 1.4.0, a1b2c3d4e5f6)"
+    ) in lines
+    assert sum("Pact Broker:" in line for line in lines) == 1
+
+    bound_only = {**verdict, "broker": {"pacticipant": "billing-service", "fromPact": False}}
+    plain = format_consumer_impact_text({**_CONSUMER_IMPACT, "consumers": [bound_only]})
+    assert "    Pact Broker: pacticipant billing-service" in plain

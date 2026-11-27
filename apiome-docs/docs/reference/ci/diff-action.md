@@ -59,6 +59,7 @@ Full guide: [`apiome-docs/docs/reference/ci/ci-diff-gate.md`](ci-diff-gate.md).
 | `base-url` | no | `https://api.apiome.dev` | REST base URL |
 | `github-token` | no | `${{ github.token }}` | Token for sticky PR comments |
 | `comment` | no | `true` | Set `false` to skip the PR comment |
+| `consumers` | no | `true` | Add the "Consumer impact" section: which registered consumers each change breaks, naming the Pact Broker pacticipant behind each broker-backed consumer. Needs `projects:view` |
 | `blast-radius` | no | `true` | Add the blast-radius line under each breaking change; set `false` to leave it out. Needs `projects:view` |
 | `mode` | no | — | Compatibility mode: `backward`, `forward`, `full` or `none`, optionally with `_transitive`. Empty uses the project's policy |
 | `transitive` | no | — | `true` also compares against every earlier version of the baseline; `false` only against the baseline. Empty uses the project's policy |
@@ -91,6 +92,20 @@ _Graded under `FULL_TRANSITIVE` by avro-compatibility, against 2.0.0, 1.0.0._
 
 An unknown `mode` or `category` fails the step with exit `2`, as does a `transitive` other than
 `true`, `false` or empty.
+
+## Consumer impact
+
+With `consumers` on (the default) the comment ends with a **Consumer impact** section that says
+*whose* build each change breaks. Consumers fed by the Pact Broker are named by their pacticipant:
+
+```markdown
+### `billing-service` — breaking
+
+Pact Broker: pacticipant `billing-service` — surface from a published pact (version 1.4.0, a1b2c3d4e5f6)
+```
+
+Publishing a pact keeps the consumer's declared surface current, so the section reflects the
+pacts your CI already publishes. Set `consumers: false` to leave the section out.
 
 ## The PR comment
 

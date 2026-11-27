@@ -766,3 +766,61 @@ def test_markdown_for_an_empty_registry():
     md = render_consumer_impact_markdown(analyze_consumer_impact(_diff(), []))
 
     assert "No consumers are registered for this project." in md
+
+
+# -------------------------------------------------------------------------------------------
+# Broker-backed consumers (PFX-7.4, #6964)
+# -------------------------------------------------------------------------------------------
+
+
+def test_verdict_carries_the_broker_block_only_for_backed_consumers():
+    from app.consumer_impact import ConsumerBroker, describe_broker, render_consumer_impact_markdown
+
+    summaries = [_summary("billing", []), _summary("hand-made", [])]
+    broker = ConsumerBroker(
+        pacticipant="billing", from_pact=True, consumer_version="1.4.0", pact_sha="a1b2c3d4e5f6a7b8"
+    )
+    report = analyze_consumer_impact(
+        _diff(_change("/paths/~1pets")), summaries, brokers={"consumer-billing": broker}
+    )
+    assert _verdict_for(report, "billing").broker == broker
+    assert _verdict_for(report, "hand-made").broker is None
+    assert report.counts["consumers_from_broker"] == 1
+    assert describe_broker(broker) == (
+        "pacticipant `billing` — surface from a published pact (version 1.4.0, a1b2c3d4e5f6)"
+    )
+    md = render_consumer_impact_markdown(report)
+    assert "Pact Broker: pacticipant `billing`" in md
+    assert md.count("Pact Broker:") == 1
+
+
+def test_no_brokers_leaves_the_report_unchanged():
+    report = analyze_consumer_impact(_diff(_change("/paths/~1pets")), [_summary("a", [])])
+    assert report.consumers[0].broker is None
+    assert report.counts["consumers_from_broker"] == 0
+
+
+def test_broker_backing_reads_tenant_scoped_pacticipants(monkeypatch):
+    from app import consumer_impact_service as service
+
+    calls = []
+
+    class FakeDb:
+        def execute_query(self, sql, params):
+            calls.append(params)
+            return [
+                {"consumer_id": "consumer-billing", "slug": "zeta"},
+                {"consumer_id": "consumer-billing", "slug": "alpha"},
+            ]
+
+    monkeypatch.setattr(service, "db", FakeDb())
+    summary = _summary("billing", [])
+    summary.contract.source = "pact"
+    summary.contract.source_metadata = {"consumer_version": "2.0.0", "pact_sha": "abc"}
+    backing = service.broker_backing_for("tenant-1", [summary, _summary("manual", [])])
+    assert calls == [("tenant-1", ["consumer-billing", "consumer-manual"])]
+    assert set(backing) == {"consumer-billing"}
+    assert backing["consumer-billing"].pacticipant == "zeta"  # first row wins; SQL orders by slug
+    assert backing["consumer-billing"].from_pact is True
+    assert backing["consumer-billing"].consumer_version == "2.0.0"
+    assert service.broker_backing_for("tenant-1", []) == {}

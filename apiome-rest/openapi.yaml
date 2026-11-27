@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.694.0
+  version: 1.695.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -134287,6 +134287,49 @@ components:
         \ Consumers registered but with no contract yet.\n    operations: Per-operation\
         \ usage, ordered by pointer.\n    schemas: Per-component-schema usage, ordered\
         \ by pointer."
+    ConsumerBroker:
+      properties:
+        pacticipant:
+          type: string
+          title: Pacticipant
+          description: Pacticipant.
+          example: example
+        fromPact:
+          type: boolean
+          title: Frompact
+          default: false
+          description: From Pact.
+          example: false
+        consumerVersion:
+          anyOf:
+          - type: string
+            description: Consumer Broker schema.
+          - type: 'null'
+            description: Consumer Broker schema.
+          title: Consumerversion
+          description: Consumer Version.
+        pactSha:
+          anyOf:
+          - type: string
+            description: Consumer Broker schema.
+          - type: 'null'
+            description: Consumer Broker schema.
+          title: Pactsha
+          description: Pact Sha.
+      additionalProperties: false
+      type: object
+      required:
+      - pacticipant
+      title: ConsumerBroker
+      description: "Where a consumer's declared surface comes from in the Pact Broker\
+        \ (PFX-7.4, #6964).\n\nA consumer is broker-backed when a pacticipant is bound\
+        \ to it (PFX-7.1), so the verdict names\nthe application the Pact Broker knows\
+        \ it as and, when the current contract was derived from a\npublished pact, which\
+        \ pact it was.\n\nAttributes:\n    pacticipant: Handle of the bound pacticipant.\n\
+        \    from_pact: True when the current contract revision was imported from a published\
+        \ pact.\n    consumer_version: The pacticipant version that published that pact,\
+        \ when known.\n    pact_sha: Content hash of that pact (the broker's ``pact_version``),\
+        \ when known."
     ConsumerVerdict:
       properties:
         consumerId:
@@ -134400,6 +134443,12 @@ components:
           default: false
           description: Truncated.
           example: false
+        broker:
+          anyOf:
+          - $ref: '#/components/schemas/ConsumerBroker'
+          - type: 'null'
+            description: Consumer Verdict schema.
+          description: Broker.
       additionalProperties: false
       type: object
       required:
@@ -134408,25 +134457,26 @@ components:
       - consumerName
       - verdict
       title: ConsumerVerdict
-      description: "What a single change set does to a single registered consumer.\n\
-        \nAttributes:\n    consumer_id: Registry id.\n    consumer_slug: The stable\
-        \ handle CI jobs and Pact files use.\n    consumer_name: Display name.\n \
-        \   owner: Accountable team or person, so a breaking verdict names someone\
-        \ to tell.\n    contact: Where to reach them.\n    declared: Whether the consumer\
-        \ has a current contract at all.\n    verdict: ``breaking`` / ``non-breaking``\
-        \ / ``docs-only`` / ``unaffected`` / ``undeclared``.\n    contract_id: The\
-        \ contract revision the verdict was computed against.\n    contract_revision:\
-        \ Its per-consumer revision number.\n    contract_version_label: The specification\
-        \ version its pointers were resolved against.\n    contract_matches_base:\
-        \ Whether that is the same revision as the diff's base. When false\n     \
-        \   the surface was resolved against a different document and a pointer may\
-        \ have moved;\n        the verdict is still the best available answer, but\
-        \ it is not silently equated.\n    operations_declared: How many operations\
-        \ the contract declares.\n    fields_declared: How many fields it declares.\n\
-        \    operations_affected: How many declared operations the change set touches.\n\
-        \    counts: Distinct changes per severity, plus ``unclassified`` and ``total``.\n\
-        \    impacts: The attributed changes, most severe first (bounded, see ``truncated``).\n\
-        \    truncated: True when ``impacts`` was cut at :data:`MAX_IMPACTS_PER_CONSUMER`."
+      description: "What a single change set does to a single registered consumer.\n\n\
+        Attributes:\n    consumer_id: Registry id.\n    consumer_slug: The stable handle\
+        \ CI jobs and Pact files use.\n    consumer_name: Display name.\n    owner: Accountable\
+        \ team or person, so a breaking verdict names someone to tell.\n    contact: Where\
+        \ to reach them.\n    declared: Whether the consumer has a current contract at\
+        \ all.\n    verdict: ``breaking`` / ``non-breaking`` / ``docs-only`` / ``unaffected``\
+        \ / ``undeclared``.\n    contract_id: The contract revision the verdict was computed\
+        \ against.\n    contract_revision: Its per-consumer revision number.\n    contract_version_label:\
+        \ The specification version its pointers were resolved against.\n    contract_matches_base:\
+        \ Whether that is the same revision as the diff's base. When false\n        the\
+        \ surface was resolved against a different document and a pointer may have moved;\n\
+        \        the verdict is still the best available answer, but it is not silently\
+        \ equated.\n    operations_declared: How many operations the contract declares.\n\
+        \    fields_declared: How many fields it declares.\n    operations_affected: How\
+        \ many declared operations the change set touches.\n    counts: Distinct changes\
+        \ per severity, plus ``unclassified`` and ``total``.\n    impacts: The attributed\
+        \ changes, most severe first (bounded, see ``truncated``).\n    truncated: True\
+        \ when ``impacts`` was cut at :data:`MAX_IMPACTS_PER_CONSUMER`.\n    broker: The\
+        \ Pact Broker pacticipant behind this consumer, or ``None`` for a consumer that\n\
+        \        is registered by hand and has no pacticipant bound (PFX-7.4)."
     ConsumptionEdgeOut:
       properties:
         path_id:

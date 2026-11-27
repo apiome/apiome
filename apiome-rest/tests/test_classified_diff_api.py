@@ -378,6 +378,7 @@ def _classified_call(mock_db, summaries, *, body, accept="application/json"):
             "app.consumer_impact_service.list_consumer_summaries",
             return_value=summaries,
         ) as mock_list,
+        patch("app.consumer_impact_service.broker_backing_for", return_value={}),
     ):
         mock_db.get_project_by_slug.return_value = _FAKE_PROJECT
         mock_db.get_version_by_version_id.side_effect = lambda pid, ver, tid: (
