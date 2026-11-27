@@ -1,0 +1,17 @@
+---
+slug: consumers-on-browse-and-portal
+title: "Consumers on Browse and portal pages"
+description: "Public project and API product pages now show pact badges and each API's consumers."
+authors: [apiome]
+---
+
+A public project's page in Browse now shows who consumes it, and the portal page of an API product
+shows the same for every API in the product.
+See [consumers on Browse and the portal](/ship/pact-broker/badges#consumers-on-browse-and-the-portal).
+
+{/* truncate */}
+
+- The **Pact verification** strip on a project page adds a consumer count (`3 consumers · 2 verified ·
+  1 failing`) and the consumers with the state of their pact.
+- Each API in a product's **APIs** list shows its badges and consumer count.
+- The public `pact-badges` response gains `consumer_count` and `consumers` for each pacticipant.

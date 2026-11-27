@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from .pact_badge import combine_statuses, pact_status
 
-__all__ = ["find_public_project", "pacticipant_badge", "pair_badge", "project_statuses"]
+__all__ = ["MAX_PUBLIC_CONSUMERS", "consumers_of", "find_public_project", "pacticipant_badge", "pair_badge", "project_statuses"]
 
 #: A project of a tenant, by slugs, that the public browse surface serves. %s: tenant, project.
 _PUBLIC_PROJECT = """
@@ -50,7 +50,7 @@ _PAIRS = """
                       WHERE lv.id = p.consumer_version_id AND lv.deleted_at IS NULL)
         ORDER BY p.consumer_id, p.provider_id, p.created_at DESC, p.id
     )
-    SELECT c.slug AS consumer_slug, pr.slug AS provider_slug,
+    SELECT c.slug AS consumer_slug, c.name AS consumer_name, pr.slug AS provider_slug,
            (SELECT r.success FROM apiome.verification_result r
             WHERE r.pact_version_id = l.pact_version_id
               AND EXISTS (SELECT 1 FROM apiome.pacticipant_version lr
@@ -79,6 +79,7 @@ def _statuses(db: Any, tenant_id: str, pacticipant_id: str) -> List[Dict[str, An
     return [
         {
             "consumer_slug": row["consumer_slug"],
+            "consumer_name": row.get("consumer_name") or row["consumer_slug"],
             "provider_slug": row["provider_slug"],
             "status": pact_status(row["success"]),
         }
@@ -136,17 +137,47 @@ def pair_badge(db: Any, project: Dict[str, str], provider: str, consumer: str) -
     }
 
 
+#: The most consumers listed per pacticipant on the public surface; ``consumer_count`` is the total.
+MAX_PUBLIC_CONSUMERS = 20
+
+
+def consumers_of(slug: str, pairs: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """The consumers of the pacticipant ``slug``: those whose latest pact names it as the provider.
+
+    Args:
+        slug: The provider pacticipant's slug.
+        pairs: The pacticipant's pairs, as ``_statuses`` returns them.
+
+    Returns:
+        ``{"slug", "name", "status"}`` per consumer, by slug. Only names and a status word — the
+        same facts the per-pair badge URL already exposes.
+    """
+    found = [
+        {"slug": p["consumer_slug"], "name": p["consumer_name"], "status": p["status"]}
+        for p in pairs
+        if p["provider_slug"] == slug
+    ]
+    return sorted(found, key=lambda c: c["slug"])
+
+
 def project_statuses(db: Any, project: Dict[str, str]) -> List[Dict[str, Any]]:
-    """The state of every pacticipant bound to the project, by slug."""
+    """The state of every pacticipant bound to the project, by slug, with its consumers.
+
+    Each item adds ``consumer_count`` (every consumer) and ``consumers`` (at most
+    ``MAX_PUBLIC_CONSUMERS`` of them, each with the status of its pact).
+    """
     result = []
     for bound in db.execute_query(_BOUND, (project["tenant_id"], project["id"])) or []:
         pairs = _statuses(db, project["tenant_id"], bound["id"])
+        consumers = consumers_of(bound["slug"], pairs)
         result.append(
             {
                 "slug": bound["slug"],
                 "name": bound["name"],
                 "status": combine_statuses(pair["status"] for pair in pairs),
                 "pacts": len(pairs),
+                "consumer_count": len(consumers),
+                "consumers": consumers[:MAX_PUBLIC_CONSUMERS],
             }
         )
     return result

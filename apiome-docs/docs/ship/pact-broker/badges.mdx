@@ -47,6 +47,20 @@ To judge one pair of applications, use the pact's own badge:
 
 Either the provider or the consumer must be bound to the project.
 
+## Consumers on Browse and the portal
+
+The public project page in Browse shows a **Pact verification** strip: one badge for each bound
+pacticipant, a line such as `3 consumers · 2 verified · 1 failing`, and the consumers themselves
+with the state of their pact. On the portal page of an **API product**, each project in the
+product's **APIs** list shows the same badges and consumer count, without the list of consumers.
+
+A consumer is an application whose latest pact names the pacticipant as its provider. The page
+lists at most 20 consumers; the count is always the total. Only the consumer's name and a state
+word are shown. A project with no bound pacticipant, or a private project, shows nothing.
+
+The same facts are in the public `GET /v1/browse/tenants/{tenant}/projects/{project}/pact-badges`
+response: each pacticipant has `consumer_count` and `consumers` (`slug`, `name`, `status`).
+
 ## Use shields.io
 
 Every badge has a `shields.json` twin that follows the
