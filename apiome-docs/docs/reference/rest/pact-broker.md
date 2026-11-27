@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 107 operations."
+description: "REST endpoints tagged pact-broker: 108 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.696.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.697.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 107 operations
+Tag: `pact-broker` · 108 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2411,6 +2411,34 @@ Operation id: `read_pair_health_v1_tenants__tenant_slug__pact_health_providers__
 | 404 | `pacticipant-not-found`, or `pact-health-pair-not-found` when the consumer has published no pact for the provider. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-integrations` {#read-integrations-v1-tenants-tenant-slug-pact-integrations-get}
+
+**List the workspace's contract integrations**
+
+Every consumer ↔ provider pair with a pact (PFX-8.1), for the Contracts landing: its kind (`pact`, or `bidirectional` when a provider contract is compared), its verdict — `failing`, `stale`, `no-provider-contract`, `unverified` or `verified` — whether it is pending (a Pact-kind pact the provider has never passed), the environments both sides are deployed in now, and when it was last verified. Worst verdict first, then by consumer and provider name. `q` matches handles and names; `filter` is one of `all`, `failing`, `stale`, `bidirectional`, `mine` (`mine`: a team you are on owns either side). `counts` and `attention` (up to three pairs per status-strip category) cover every pair, whatever the search and filter. At most 1000 pairs are classified (`truncated`, `omitted_integrations`). Requires `pacts:view`.
+
+Operation id: `read_integrations_v1_tenants__tenant_slug__pact_integrations_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `q` | query | string or null | no | Text a handle or name contains. |
+| `filter` | query | string or null | no | `all` (default), `failing`, `stale`, … |
+| `limit` | query | integer or null | no | Page size, 1 … 100 (default 25). |
+| `offset` | query | integer or null | no | Rows to skip, 0 … 1000. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the workspace's contract integrations. | `application/json` [`PactIntegrationsPage`](#schema-pactintegrationspage) |
+| 400 | `pact-integrations-filter-invalid`, `pact-integrations-search-invalid`, `pact-integrations-page-invalid`, or `pact-integrations-mine-needs-user` for `filter=mine` with a credential that is not a user. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-migration/check` {#post-migration-check-v1-tenants-tenant-slug-pact-migration-check-post}
 
 **Check records from a Pact Broker or PactFlow (dry run)**
@@ -3518,6 +3546,26 @@ The workspace's contract health over a window.
 | `pairs` | array of `PactPairHealth` | no | Worst first, then by provider and consumer handle. |
 | `truncated` | boolean | no | True when more than 500 pairs match (the rest are left out and counted). |
 | `omitted_pairs` | integer | no | How many matching pairs were left out by the cap. |
+
+### `PactIntegrationsPage` {#schema-pactintegrationspage}
+
+What ``GET /v1/tenants/{tenant}/pact-integrations`` answers.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `integrations` | array of `PactIntegration` | no | This page, worst first. |
+| `total` | integer | no | Rows matching the search and filter. |
+| `offset` | integer | no | Offset. |
+| `limit` | integer | no | Limit. |
+| `filter` | string | no | Filter. |
+| `search` | string or null | no | Search. |
+| `counts` | `PactIntegrationCounts` | no | Counts. |
+| `attention` | `PactIntegrationAttention` | no | Attention. |
+| `pacticipants` | integer | no | Pacticipants in the workspace. |
+| `environments` | integer | no | Environments in the workspace. |
+| `truncated` | boolean | no | More than 1000 pairs: the rest are not classified. |
+| `omitted_integrations` | integer | no | How many pairs were left out when truncated. |
+| `mine_available` | boolean | no | False for a credential with no user (no `mine` filter). |
 
 ### `PactPairHealthDetail` {#schema-pactpairhealthdetail}
 

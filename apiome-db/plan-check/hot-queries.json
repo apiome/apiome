@@ -1082,6 +1082,15 @@
         "{}",
         50
       ]
+    },
+    {
+      "name": "pact.integrations_pairs",
+      "source": "apiome-rest/src/app/pact_integrations_store.py PAIRS_SQL (the Contracts landing's integrations list, PFX-8.1 #7298; capped at MAX_INTEGRATIONS pairs)",
+      "sql": "WITH pairs AS ( SELECT pr.id AS provider_id, pr.slug AS provider_slug, pr.name AS provider_name, c.id AS consumer_id, c.slug AS consumer_slug, c.name AS consumer_name, count(*) OVER () AS pair_total FROM apiome.pacticipant pr CROSS JOIN LATERAL ( WITH RECURSIVE pc AS ( (SELECT p.consumer_id FROM apiome.pact_publication p WHERE p.provider_id = pr.id ORDER BY p.consumer_id LIMIT 1) UNION ALL SELECT (SELECT p.consumer_id FROM apiome.pact_publication p WHERE p.provider_id = pr.id AND p.consumer_id > pc.consumer_id ORDER BY p.consumer_id LIMIT 1) FROM pc WHERE pc.consumer_id IS NOT NULL ) SELECT pc.consumer_id FROM pc WHERE pc.consumer_id IS NOT NULL ) pc JOIN apiome.pacticipant c ON c.id = pc.consumer_id AND c.tenant_id = pr.tenant_id AND c.deleted_at IS NULL WHERE pr.tenant_id = $1::uuid AND pr.deleted_at IS NULL ORDER BY lower(c.name), lower(pr.name), c.id, pr.id LIMIT $2 ) SELECT pairs.provider_id::text AS provider_id, pairs.provider_slug, pairs.provider_name, pairs.consumer_id::text AS consumer_id, pairs.consumer_slug, pairs.consumer_name, pairs.pair_total, newest.pact_version_id::text AS pact_version_id, newest.sha, newest.consumer_version, newest.published_at FROM pairs CROSS JOIN LATERAL ( SELECT p.pact_version_id, pv.sha, v.number AS consumer_version, p.created_at AS published_at FROM apiome.pacticipant_version v JOIN apiome.pact_publication p ON p.consumer_version_id = v.id AND p.consumer_id = v.pacticipant_id AND p.provider_id = pairs.provider_id JOIN apiome.pact_version pv ON pv.id = p.pact_version_id WHERE v.pacticipant_id = pairs.consumer_id AND v.deleted_at IS NULL ORDER BY v.seq DESC LIMIT 1 ) newest",
+      "params": [
+        "scale:tenant:0",
+        1000
+      ]
     }
   ]
 }

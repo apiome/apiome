@@ -6,27 +6,21 @@
  * The applications registered in the workspace's Pact Broker, by handle: main branch, labels,
  * repository and when each was last changed. The **Label** filter narrows the list to the
  * pacticipants carrying one label; **Load more** reads the next page. Each name opens the
- * pacticipant's page (versions, branches, tags, environments). The header opens the **Matrix** and
- * **Can I deploy?** pages (PFX-5.4, #6948), the **Webhooks** page (PFX-5.6, #6950) and the
- * **Environments** dashboard (PFX-5.7, #6951), **Contract health** (PFX-6.3, #6955), and **Verification
- * settings** (PFX-6.2, #6954).
+ * pacticipant's page (versions, branches, tags, environments). The Contracts tab row (PFX-8.1,
+ * #7298) leads to the Matrix, Can I deploy, Environments, Webhooks, Health and Settings pages.
  *
  * A workspace with no pacticipant shows the CLI command that registers them: publishing a pact
  * registers its consumer and its provider.
  */
 
 import * as React from 'react';
-import Link from 'next/link';
 import { RefreshCw } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { PUBLISH_SNIPPET, type Pacticipant } from '@lib/pact-pacticipants';
-import { CAN_I_DEPLOY_ROUTE, MATRIX_ROUTE } from '@lib/pact-matrix';
-import { WEBHOOKS_ROUTE } from '@lib/pact-webhooks';
-import { ENVIRONMENTS_ROUTE } from '@lib/pact-environments';
-import { SETTINGS_ROUTE } from '@lib/pact-remediation';
-import { HEALTH_ROUTE } from '@lib/pact-health';
 import { CliSnippet, PacticipantsTable } from './PacticipantPanels';
 import { fetchLabels, fetchPacticipants } from './pacticipantsApi';
 import { describeFailure } from './describeFailure';
@@ -96,34 +90,15 @@ export default function PacticipantsListClient() {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="pacticipants" />}
         title="Pacticipants"
-        breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Pacticipants' }]}
+        breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Contracts', href: CONTRACTS_ROUTE }, { label: 'Pacticipants' }]}
         description="The applications that take part in this workspace's pacts."
         actions={
-          <div className="ppx__actions">
-            <Button variant="outline" asChild>
-              <Link href={MATRIX_ROUTE}>Matrix</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={CAN_I_DEPLOY_ROUTE}>Can I deploy?</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={WEBHOOKS_ROUTE}>Webhooks</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={ENVIRONMENTS_ROUTE}>Environments</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={HEALTH_ROUTE}>Contract health</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={SETTINGS_ROUTE}>Verification settings</Link>
-            </Button>
-            <Button variant="outline" onClick={() => void load(label)}>
-              <RefreshCw aria-hidden />
-              Refresh
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => void load(label)}>
+            <RefreshCw aria-hidden />
+            Refresh
+          </Button>
         }
       />
       <PageBody>

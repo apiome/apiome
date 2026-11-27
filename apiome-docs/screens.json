@@ -2943,6 +2943,18 @@
       ]
     },
     {
+      "id": "pact-overview",
+      "route": "/ade/dashboard/pacts",
+      "waitFor": "[data-testid=\"ctx-integrations-table\"]",
+      "data": "fixture:hive-a11y/pact-overview.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactOverview/PactOverviewClient.tsx",
+        "apiome-ui/src/app/components/ade/pactOverview/OverviewPanels.tsx",
+        "apiome-ui/src/app/components/ade/pactOverview/ContractsTabs.tsx",
+        "apiome-ui/lib/pact-overview.ts"
+      ]
+    },
+    {
       "id": "pact-health",
       "route": "/ade/dashboard/pacts/health",
       "waitFor": "[data-testid=\"phx-pairs-table\"]",

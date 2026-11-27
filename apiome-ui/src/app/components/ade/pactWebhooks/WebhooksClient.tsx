@@ -17,8 +17,9 @@ import { useRouter } from 'next/navigation';
 import { Plus, RefreshCw } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE } from '@lib/pact-pacticipants';
 import { CREATE_WEBHOOK_SNIPPET, webhookRoute, type WebhooksOverview } from '@lib/pact-webhooks';
 import { CliSnippet } from '../pactPacticipants/PacticipantPanels';
 import { describeFailure } from '../pactPacticipants/describeFailure';
@@ -67,10 +68,11 @@ export default function WebhooksClient() {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="webhooks" />}
         title="Webhooks"
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Webhooks' },
         ]}
         description="Tell your CI when a pact needs verifying and when a verification finishes — and see every delivery."

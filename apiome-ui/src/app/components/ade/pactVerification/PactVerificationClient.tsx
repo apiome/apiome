@@ -25,6 +25,8 @@ import { useRouter } from 'next/navigation';
 import { RefreshCw, ShieldCheck } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { PACTICIPANTS_ROUTE, PUBLISH_SNIPPET, pacticipantRoute } from '@lib/pact-pacticipants';
 import {
@@ -234,9 +236,11 @@ export default function PactVerificationClient({ slug, consumer }: { slug: strin
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="pacticipants" />}
         title={`${name} verification`}
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
           { label: name, href: pacticipantRoute(slug) },
           { label: 'Verification' },

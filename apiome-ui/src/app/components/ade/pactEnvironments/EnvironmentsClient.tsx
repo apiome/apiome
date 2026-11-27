@@ -15,8 +15,9 @@ import * as React from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE } from '@lib/pact-pacticipants';
 import { CREATE_ENVIRONMENT_SNIPPET, type Topology } from '@lib/pact-environments';
 import { CliSnippet } from '../pactPacticipants/PacticipantPanels';
 import { describeFailure } from '../pactPacticipants/describeFailure';
@@ -57,10 +58,11 @@ export default function EnvironmentsClient() {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="environments" />}
         title="Environments"
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Environments' },
         ]}
         description="Which version of each pacticipant runs where — and what a deployment would change."

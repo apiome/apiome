@@ -11,14 +11,14 @@
  */
 
 import * as React from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RefreshCw } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE, formatWhen } from '@lib/pact-pacticipants';
-import { SETTINGS_ROUTE } from '@lib/pact-remediation';
+import { formatWhen } from '@lib/pact-pacticipants';
 import {
   HEALTH_STATES,
   HEALTH_WINDOWS,
@@ -130,23 +130,19 @@ export default function HealthClient({
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="health" />}
         title="Contract health"
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Contract health' },
         ]}
         description="Each consumer and provider pair, rolled up into one state from its verification results, staleness, re-publish requests and webhook deliveries."
         actions={
-          <div className="ppx__actions">
-            <Button variant="outline" asChild>
-              <Link href={SETTINGS_ROUTE}>Verification settings</Link>
-            </Button>
-            <Button variant="outline" onClick={() => void load()}>
-              <RefreshCw aria-hidden />
-              Refresh
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => void load()}>
+            <RefreshCw aria-hidden />
+            Refresh
+          </Button>
         }
       />
       <PageBody>

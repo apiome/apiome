@@ -16,8 +16,10 @@ import { Copy, RefreshCw, RotateCcw } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE, formatWhen } from '@lib/pact-pacticipants';
+import { formatWhen } from '@lib/pact-pacticipants';
 import { pactRoute, shortSha } from '@lib/pact-detail';
 import {
   WEBHOOKS_ROUTE,
@@ -98,10 +100,11 @@ export default function DeliveryDetailClient({ id }: { id: string }) {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="webhooks" />}
         title={title}
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Webhooks', href: WEBHOOKS_ROUTE },
           ...(delivery ? [{ label: delivery.name, href: webhookRoute(delivery.webhookId) }] : []),
           { label: 'Delivery' },

@@ -16,13 +16,13 @@
  */
 
 import * as React from 'react';
-import Link from 'next/link';
 import { RefreshCw, X } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import {
-  PACTICIPANTS_ROUTE,
   PUBLISH_SNIPPET,
   isPacticipantHandle,
   type Pacticipant,
@@ -31,7 +31,6 @@ import {
   CAN_I_DEPLOY_ROUTE,
   CAN_I_DEPLOY_SNIPPET,
   DEFAULT_MATRIX_LIMIT,
-  MATRIX_ROUTE,
   MAX_IGNORED,
   canIDeployCommand,
   canIDeployFormFrom,
@@ -169,18 +168,14 @@ export default function CanIDeployClient({ initialQuery }: { initialQuery: strin
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="can-i-deploy" />}
         title="Can I deploy?"
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Can I deploy?' },
         ]}
         description="Whether one version of a pacticipant is safe to deploy, and why."
-        actions={
-          <Button variant="outline" asChild>
-            <Link href={MATRIX_ROUTE}>Matrix</Link>
-          </Button>
-        }
       />
       <PageBody>
         <div className="ppx" data-testid="pact-can-i-deploy">

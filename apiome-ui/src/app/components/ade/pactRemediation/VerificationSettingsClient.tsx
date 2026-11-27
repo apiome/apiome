@@ -31,8 +31,10 @@ import {
   DialogTitle,
 } from '@/app/components/ui/Dialog';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE, formatWhen, type Pacticipant } from '@lib/pact-pacticipants';
+import { formatWhen, type Pacticipant } from '@lib/pact-pacticipants';
 import {
   CADENCES,
   CADENCE_TEXT,
@@ -635,10 +637,11 @@ export default function VerificationSettingsClient() {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="settings" />}
         title="Verification settings"
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Verification settings' },
         ]}
         description="When Apiome verifies pacts on its own, when a pact counts as stale, and how its consumer is asked to re-publish it."

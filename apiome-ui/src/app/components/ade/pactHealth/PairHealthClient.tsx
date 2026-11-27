@@ -15,8 +15,9 @@ import { useRouter } from 'next/navigation';
 import { RefreshCw } from 'lucide-react';
 import { Button, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE } from '@lib/pact-pacticipants';
 import { pactRoute } from '@lib/pact-detail';
 import { verificationRoute } from '@lib/pact-verification';
 import { requestRoute } from '@lib/pact-remediation';
@@ -94,28 +95,27 @@ export default function PairHealthClient({
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="health" />}
         title={title}
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Contract health', href: healthRoute({ window }) },
           { label: title },
         ]}
         description="This pair's contract health: each signal fused into it, and how its verification has trended."
         actions={
-          <div className="ppx__actions">
-            <Button variant="outline" asChild>
-              <Link href={pactRoute(consumer, provider)}>Pact</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={verificationRoute(provider, consumer)}>Verification</Link>
-            </Button>
-            <Button variant="outline" onClick={() => void load()}>
-              <RefreshCw aria-hidden />
-              Refresh
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => void load()}>
+            <RefreshCw aria-hidden />
+            Refresh
+          </Button>
         }
+        overflow={{
+          items: [
+            { id: 'pact', label: 'Open the pact', href: pactRoute(consumer, provider) },
+            { id: 'verification', label: 'Verification history', href: verificationRoute(provider, consumer) },
+          ],
+        }}
       />
       <PageBody>
         <div className="ppx phx" data-testid="pact-pair-health">

@@ -19,6 +19,8 @@ import * as React from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import type { ProviderOption, ProviderState, StateCheckResponse } from '@lib/pact-provider-states';
 import { ProviderStateCheck, RegisteredStates } from './ProviderStatesPanels';
@@ -90,8 +92,9 @@ export default function ProviderStatesClient() {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="pacticipants" />}
         title="Provider states"
-        breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Provider states' }]}
+        breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Contracts', href: CONTRACTS_ROUTE }, { label: 'Provider states' }]}
         description="The states each provider can set up, checked against its pacts."
         actions={
           <Button variant="outline" onClick={() => (selected ? void loadView(selected) : void loadProviders())}>

@@ -1,0 +1,33 @@
+---
+slug: contracts-landing
+title: "A landing page and tab row for Contracts"
+description: "Contracts opens on what needs attention, every integration and where to start."
+authors: [apiome]
+---
+
+**Contracts** in the rail now opens on a landing page, and every Contracts page shares one row of
+tabs. See [The Contracts workspace](/ship/pact-broker/overview#the-contracts-workspace).
+
+{/* truncate */}
+
+- **What needs you.** One status strip counts the **failing**, **stale**, **without a provider
+  contract** and **pending** integrations and opens the worst one, naming the pairs. **Show the
+  failing ones** filters the table.
+- **Every integration in one table.** Each consumer → provider pair, worst first, with its kind
+  (**Pact** or **Bi-directional**), latest verdict, the environments both sides are deployed in and
+  when it was last verified. Search it, filter it with **All**, **Failing**, **Stale**,
+  **Bi-directional** or **Mine**, page through it, or **click “Network”** to draw it. The search and
+  filter stay in the address. Each row's **⋯** menu opens the pact, its verification history, the
+  pair's health or **Can I deploy?**.
+- **Facts and stats.** A one-line count of integrations, verified integrations, pacticipants and
+  environments; **Show stats** reveals the [contract health](/ship/pact-broker/contract-health)
+  rollup.
+- **Start something.** The ways in, by consumer, provider and pipeline owner, each opening its
+  screen or the `apiome pact` command for it, and a first-run checklist until one integration is
+  verified. Only roles that can publish pacts see it and the header actions.
+- **One tab row.** **Overview**, **Pacticipants**, **Matrix**, **Can I deploy**, **Environments**,
+  **Webhooks**, **Health** and **Settings** sit under the title of every Contracts page, replacing
+  the buttons on the Pacticipants header. Breadcrumbs now start **Home › Contracts**.
+
+The landing reads the new `GET /v1/tenants/{tenant}/pact-integrations` (REST API 1.697.0), which
+needs **Pacts** → **View**.
