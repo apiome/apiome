@@ -18,16 +18,19 @@
  * The aside previews the run (`POST …/verify/preview`, refreshed as the form settles): the pacts it
  * will verify, those skipped as already verified for this exact version (*Nothing to verify* offers
  * **Run anyway**), every reason it would not start; then **The same, from anywhere**. **Run
- * verification** runs the hosted verifier; the outcome dialog says how it went — an unreachable
- * target is *Could not connect*, not a failed verification. **Save as a schedule** stores the
- * provider’s cadence and target (PFX-6.2).
+ * verification** starts a live run (PFX-8.9) and opens the run drawer: progress per consumer, the
+ * failing interaction with expected beside actual, the log, **Stop run**; closing the drawer keeps
+ * the run going and a toast says when it ends — an unreachable target is *Could not connect*, not a
+ * failed verification. **Upload results** attaches the report of a verifier that ran elsewhere
+ * (`apiome pact publish-verification-results`). **Save as a schedule** stores the provider’s cadence
+ * and target (PFX-6.2).
  *
- * A role without `pacts:create` sees the preview and the command block, and no Run.
+ * A role without `pacts:create` sees the preview and the command block, and no Run or Upload.
  */
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Play } from 'lucide-react';
+import { FileUp, Play } from 'lucide-react';
 import { Alert, Button, CommandBlock, Input, Label, Switch } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -54,18 +57,22 @@ import {
   type SelectorPreset,
   type StateStrategy,
   type VerifyForm,
-  type VerifyRunAnswer,
   type VerifyTarget,
 } from '@lib/pact-verify-run';
+import { toast } from '@/app/components/ui/toast';
+import { finishedToast, runIsOver, type LiveRun } from '@lib/pact-verify-live';
 import { ContractsTabs } from '../pactOverview/ContractsTabs';
-import { AddTargetDialog, PreviewAside, RunResultDialog, ScheduleDialog, SelectorRules, type PreviewState } from './VerifyRunPanels';
+import { AddTargetDialog, PreviewAside, ScheduleDialog, SelectorRules, type PreviewState } from './VerifyRunPanels';
+import { RunDrawer } from './RunDrawer';
+import { UploadResultsDialog } from './UploadResultsDialog';
+import { useLiveRun } from './useLiveRun';
 import {
   createTarget,
   fetchProviders,
   fetchTargets,
   previewVerification,
-  runVerification,
   saveSchedule,
+  startLiveRun,
   type ProviderChoice,
 } from './verifyRunApi';
 
@@ -119,8 +126,20 @@ export function VerifyRunClient({ initialProvider }: VerifyRunClientProps) {
   const [tried, setTried] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [problem, setProblem] = React.useState<string | null>(null);
-  const [result, setResult] = React.useState<VerifyRunAnswer | null>(null);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
   const [addingTarget, setAddingTarget] = React.useState(false);
+  // Read by the run's end: the toast is for a run that ends while its drawer is closed.
+  const drawerOpenRef = React.useRef(false);
+  React.useEffect(() => {
+    drawerOpenRef.current = drawerOpen;
+  }, [drawerOpen]);
+  const live = useLiveRun((run: LiveRun) => {
+    if (drawerOpenRef.current) return;
+    const note = finishedToast(run);
+    const raise = note.tone === 'success' ? toast.success : note.tone === 'error' ? toast.error : toast.warning;
+    raise(note.title, { description: note.description, action: { label: 'Show the run', onClick: () => setDrawerOpen(true) } });
+  });
   const [scheduling, setScheduling] = React.useState(false);
 
   const edit = (patch: Partial<VerifyForm>) => setForm((current) => ({ ...current, ...patch }));
@@ -188,11 +207,16 @@ export function VerifyRunClient({ initialProvider }: VerifyRunClientProps) {
     setProblem(null);
     if (form.mode !== 'hosted' || problems.length) return;
     setBusy(true);
-    const answer = await runVerification(form.provider.trim(), verifyBody(form, { runAnyway }));
+    const answer = await startLiveRun(form.provider.trim(), verifyBody(form, { runAnyway }));
     setBusy(false);
-    if ('error' in answer) setProblem(answer.error);
-    else setResult(answer);
+    if ('error' in answer) {
+      setProblem(answer.error);
+      return;
+    }
+    live.follow(answer);
+    setDrawerOpen(true);
   };
+  const going = live.run !== null && !runIsOver(live.run);
 
   const addTarget = async (draft: Parameters<typeof newTargetBody>[0]): Promise<string | null> => {
     const answer = await createTarget(newTargetBody(draft));
@@ -221,24 +245,45 @@ export function VerifyRunClient({ initialProvider }: VerifyRunClientProps) {
         description="Replay consumers’ pacts against a running provider and record what it really answers."
         tabs={<ContractsTabs active="verification" />}
         actions={
-          canRun && hosted ? (
-            <Button
-              variant="outline"
-              onClick={() => setScheduling(true)}
-              disabled={!form.provider.trim() || !form.target.trim()}
-              title="Scheduled runs re-verify this provider’s overdue pacts on the chosen target"
-              data-testid="pvr-save-schedule"
-            >
-              Save as a schedule
-            </Button>
+          canRun ? (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setUploading(true)}
+                disabled={!form.provider.trim()}
+                title="Attach the report of a verifier that ran elsewhere"
+                data-testid="pvu-open"
+              >
+                <FileUp aria-hidden />
+                Upload results
+              </Button>
+              {hosted ? (
+                <Button
+                  variant="outline"
+                  onClick={() => setScheduling(true)}
+                  disabled={!form.provider.trim() || !form.target.trim()}
+                  title="Scheduled runs re-verify this provider’s overdue pacts on the chosen target"
+                  data-testid="pvr-save-schedule"
+                >
+                  Save as a schedule
+                </Button>
+              ) : null}
+            </>
           ) : undefined
         }
         primaryAction={
           canRun && hosted ? (
-            <Button onClick={() => void run()} disabled={busy || blocked || nothing} data-testid="pvr-run">
-              <Play aria-hidden />
-              {busy ? 'Verifying…' : 'Run verification'}
-            </Button>
+            going && !drawerOpen ? (
+              <Button onClick={() => setDrawerOpen(true)} data-testid="pvl-show">
+                <Play aria-hidden />
+                Show the run
+              </Button>
+            ) : (
+              <Button onClick={() => void run()} disabled={busy || blocked || nothing || going} data-testid="pvr-run">
+                <Play aria-hidden />
+                {busy ? 'Starting…' : going ? 'Verifying…' : 'Run verification'}
+              </Button>
+            )
           ) : undefined
         }
       />
@@ -559,7 +604,27 @@ export function VerifyRunClient({ initialProvider }: VerifyRunClientProps) {
             onSave={schedule}
             onClose={() => setScheduling(false)}
           />
-          <RunResultDialog run={result} onClose={() => setResult(null)} />
+          <RunDrawer
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            run={live.run}
+            log={live.log}
+            problem={live.problem}
+            rerun={live.rerun}
+            stopping={live.stopping}
+            canAct={canRun}
+            projectId={provider?.projectId ?? null}
+            onStop={() => void live.stop()}
+            onRerun={(sha, caseId) => void live.rerunOne(sha, caseId)}
+          />
+          <UploadResultsDialog
+            open={uploading}
+            onClose={() => setUploading(false)}
+            provider={form.provider.trim()}
+            providerName={provider?.name ?? form.provider.trim()}
+            providerVersion={form.providerVersion.trim()}
+            branch={form.branch.trim()}
+          />
         </div>
       </PageBody>
     </Page>

@@ -85,6 +85,8 @@ def _invoke(*extra: str, report: Path, **kwargs: Any) -> Any:
     [
         ("r.json", "application/json"),
         ("r.XML", "application/xml"),
+        ("schemathesis.ndjson", "application/x-ndjson"),
+        ("r.jsonl", "application/x-ndjson"),
         ("r.txt", "application/octet-stream"),
     ],
 )
@@ -251,3 +253,12 @@ def test_an_unknown_format_is_a_usage_error_before_any_request(
     result = _invoke("--format", "tap", report=report)
     assert result.exit_code == EXIT_ERROR  # pact-broker exits 1 for usage errors too
     assert httpx_mock.get_requests() == []
+
+
+@pytest.mark.parametrize("fmt", ["schemathesis", "newman", "dredd"])
+def test_the_tool_formats_are_sent_as_asked(fmt: str) -> None:
+    """PFX-8.9 (#7306): Schemathesis, Newman and Dredd reports are named to the server."""
+    path = external_results_path(
+        "t", "p", "c", _SHA, provider_app_version="1", report_format=fmt
+    )
+    assert f"format={fmt}" in path

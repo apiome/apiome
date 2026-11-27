@@ -60,6 +60,7 @@ PATH_VALUES = {
     "status": "00000000-0000-4000-8000-000000000003",
     "state": "00000000-0000-4000-8000-000000000004",
     "project": "payments",
+    "run": "00000000-0000-4000-8000-000000000005",
 }
 
 #: The status the stubbed predicate raises for a granted permission.
@@ -242,6 +243,9 @@ def _stubs(row: Dict[str, Any]) -> Any:
     """The data a route reads before its guard, so the guard is what answers."""
     if row.get("stub") == "webhook_exists":
         return patch("app.pact_broker_webhook_routes.load_for_delivery", return_value=object())
+    if row.get("stub") == "live_run_exists":
+        # A live run (PFX-8.9) is looked up in the caller's workspace before the guard asks.
+        return patch("app.pact_verify_runs.live_runs.provider_of", return_value=PATH_VALUES["provider"])
     return nullcontext()
 
 

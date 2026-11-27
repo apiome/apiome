@@ -3,7 +3,7 @@
  */
 /**
  * The BFF of **Run a verification** — PFX-8.8 (#7305): `/api/pact/verification/preview` and
- * `/api/pact/verification/run`.
+ * `/api/pact/verification/runs` (the live run, PFX-8.9).
  *
  * * an unknown, mistyped or oversized field is a 400 naming it, and REST is not called;
  * * a run needs a target and a provider version; a preview does not;
@@ -32,7 +32,7 @@ jest.mock('@lib/rest-auth', () => ({
 }));
 
 import { POST as previewPost } from '../src/app/api/pact/verification/preview/route';
-import { POST as runPost } from '../src/app/api/pact/verification/run/route';
+import { POST as runPost } from '../src/app/api/pact/verification/runs/route';
 
 const RUN = {
   provider: 'billing-service',
@@ -48,7 +48,7 @@ const RUN = {
 };
 
 function request(body: unknown): Request {
-  return new Request('http://localhost/api/pact/verification/run', { method: 'POST', body: JSON.stringify(body) });
+  return new Request('http://localhost/api/pact/verification/runs', { method: 'POST', body: JSON.stringify(body) });
 }
 
 describe('pickVerifyRequest', () => {
@@ -96,7 +96,7 @@ describe('the routes', () => {
       NextResponse.json({ success: false, error: 'Requests that change data are never sent to a production target.' }, { status: 422 });
     const answer = await runPost(request(RUN) as never);
     expect(forwarded).toEqual([
-      { url: 'http://rest/v1/tenants/acme/pact-verifier/pacts/provider/billing-service/verify', method: 'POST', body: RUN.body },
+      { url: 'http://rest/v1/tenants/acme/pact-verifier/pacts/provider/billing-service/verify/runs', method: 'POST', body: RUN.body },
     ]);
     expect(answer.status).toBe(422);
     expect((await answer.json()).error).toContain('never sent to a production target');

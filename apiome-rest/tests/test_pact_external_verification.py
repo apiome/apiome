@@ -15,14 +15,18 @@ verification-result model. The rules under test:
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import pytest
 
 from app.pact_external_verification import (
     FORMAT_AUTO,
+    FORMAT_DREDD,
     FORMAT_JUNIT,
+    FORMAT_NEWMAN,
     FORMAT_PACT_VERIFIER_JSON,
+    FORMAT_SCHEMATHESIS,
     read_external_report,
 )
 from app.pact_publication import PactPublicationError
@@ -281,3 +285,106 @@ def test_an_unknown_format_or_a_body_of_neither_kind_is_refused() -> None:
 def test_a_byte_order_mark_is_tolerated() -> None:
     assert read_external_report(b"\xef\xbb\xbf" + _json({"result": True})).success is True
     assert read_external_report(b"\xef\xbb\xbf" + b"<testsuite><testcase name='a'/></testsuite>").success is True
+
+
+# --- Schemathesis, Newman and Dredd (PFX-8.9, #7306) ----------------------------------------------
+#
+# The reports are real ones (tests/fixtures/provider_contracts/evidence, recorded for PFX-2.4).
+
+_EVIDENCE = Path(__file__).parent / "fixtures" / "provider_contracts" / "evidence"
+
+
+def _fixture(name: str) -> bytes:
+    return (_EVIDENCE / name).read_bytes()
+
+
+@pytest.mark.parametrize(
+    "name,fmt,syntax,success",
+    [
+        ("schemathesis-pass.ndjson", FORMAT_SCHEMATHESIS, "ndjson", True),
+        ("schemathesis-fail.ndjson", FORMAT_SCHEMATHESIS, "ndjson", False),
+        ("schemathesis-pass.junit.xml", FORMAT_SCHEMATHESIS, "xml", True),
+        ("schemathesis-fail.junit.xml", FORMAT_SCHEMATHESIS, "xml", False),
+        ("newman-pass.json", FORMAT_NEWMAN, "json", True),
+        ("newman-fail.json", FORMAT_NEWMAN, "json", False),
+        ("dredd-pass.xml", FORMAT_DREDD, "xml", True),
+        ("dredd-fail.xml", FORMAT_DREDD, "xml", False),
+        # Newman's JUnit carries no mark of its tool: read as plain JUnit unless named.
+        ("newman-fail.junit.xml", FORMAT_JUNIT, "xml", False),
+    ],
+)
+def test_each_tools_report_is_detected_and_read(name: str, fmt: str, syntax: str, success: bool) -> None:
+    report = read_external_report(_fixture(name))
+    assert (report.format, report.syntax, report.success) == (fmt, syntax, success)
+    assert report.test_results, "a report that was read always has interactions"
+    assert report.implementation in {"Schemathesis", "Newman", "Dredd", "JUnit"}
+    if not success:
+        failed = [entry for entry in report.test_results if not entry["success"]]
+        assert failed and all(entry["mismatches"] for entry in failed)
+
+
+def test_a_schemathesis_stream_is_one_interaction_per_operation_with_each_failed_check() -> None:
+    report = read_external_report(_fixture("schemathesis-fail.ndjson"))
+    (entry,) = report.test_results
+    assert entry["interactionDescription"] == "GET /invoices/{id}" and entry["success"] is False
+    assert entry["mismatches"][0]["attribute"] == "response_schema_conformance"
+    assert "Response violates schema" in entry["mismatches"][0]["description"]
+    # The same failure in the coverage and fuzzing phases is one mismatch, not two.
+    assert len({m["description"] for m in entry["mismatches"]}) == len(entry["mismatches"])
+
+
+def test_an_unfinished_schemathesis_run_is_recorded_as_failed_with_a_notice() -> None:
+    lines = [line for line in _fixture("schemathesis-pass.ndjson").splitlines() if b"EngineFinished" not in line]
+    report = read_external_report(b"\n".join(lines), fmt=FORMAT_SCHEMATHESIS)
+    assert report.success is False
+    assert "/EngineFinished" in _pointers(report)
+
+
+def test_skipped_schemathesis_scenarios_are_noticed_not_counted() -> None:
+    initialize = {"Initialize": {"schemathesis_version": "4.34.2"}}
+    skip = {"ScenarioFinished": {"status": "skip", "recorder": {"label": "GET /a"}}}
+    ran = {"ScenarioFinished": {"status": "success", "recorder": {"label": "GET /b"}}}
+    finished = {"EngineFinished": {"stop_reason": "completed"}}
+    body = b"\n".join(_json(event) for event in (initialize, skip, ran, finished))
+    report = read_external_report(body)
+    assert [entry["interactionDescription"] for entry in report.test_results] == ["GET /b"]
+    assert report.success is True and "/GET /a" in _pointers(report)
+
+
+def test_ndjson_that_is_not_schemathesis_or_ran_nothing_is_refused() -> None:
+    with pytest.raises(PactPublicationError, match="not a Schemathesis report"):
+        read_external_report(b'{"a": 1}\n{"b": 2}')
+    initialize = _json({"Initialize": {"schemathesis_version": "4"}})
+    with pytest.raises(PactPublicationError, match="proves nothing"):
+        read_external_report(initialize + b"\n" + _json({"EngineFinished": {}}))
+    with pytest.raises(PactPublicationError, match="line 2"):
+        read_external_report(initialize + b"\nnot json")
+
+
+def test_a_newman_execution_names_its_request_and_failed_assertions() -> None:
+    report = read_external_report(_fixture("newman-fail.json"), content_type="application/json")
+    failed = [entry for entry in report.test_results if not entry["success"]]
+    (entry,) = failed
+    assert entry["interactionDescription"] == "Get invoice" and entry["operation"] == "GET /invoices/abc1"
+    assert entry["mismatches"] == [
+        {"attribute": "assertion", "description": "total is an integer: expected false to be true"}
+    ]
+
+
+def test_a_named_format_the_body_does_not_match_is_refused_with_the_reason() -> None:
+    with pytest.raises(PactPublicationError) as caught:
+        read_external_report(_fixture("newman-pass.json"), fmt=FORMAT_DREDD)
+    assert caught.value.pointer == "/format" and "dredd --reporter xunit" in str(caught.value)
+    with pytest.raises(PactPublicationError) as not_newman:
+        read_external_report(_json({"result": True}), fmt=FORMAT_NEWMAN)
+    assert "run.executions" in str(not_newman.value)
+
+
+def test_a_named_tool_reads_its_junit_under_its_own_name() -> None:
+    report = read_external_report(_fixture("newman-fail.junit.xml"), fmt=FORMAT_NEWMAN)
+    assert (report.format, report.implementation, report.syntax) == (FORMAT_NEWMAN, "Newman", "xml")
+
+
+def test_a_newman_report_without_executions_is_refused() -> None:
+    with pytest.raises(PactPublicationError, match="no executions"):
+        read_external_report(_json({"collection": {}, "run": {"executions": [], "stats": {}}}))

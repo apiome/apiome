@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.701.0",
+    "version": "1.702.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -44491,7 +44491,7 @@
           "pact-broker"
         ],
         "summary": "Ingest a verification report produced elsewhere",
-        "description": "Publish the result of a verification that ran **elsewhere** \u2014 the report a team's own CI already has \u2014 instead of asking Apiome's hosted verifier to replay the pact (PFX-3.5).\n\nThe body is the report itself, not a Pact Broker result:\n\n- **`pact_verifier_cli --json`** output (`Content-Type: application/json`): the verifier's `result` / `errors` / `pendingErrors`, or a `pacts[].interactions[]` listing;\n- **JUnit XML** (`application/xml`): one `<testcase>` per interaction; a `<failure>` or `<error>` fails it, a `<skipped>` case is not verified and makes the result unsuccessful.\n\nThe format is taken from `format`, else the content type, else the body. The report is mapped to the verification-result model of `POST \u2026/verification-results` and stored as an ordinary result, so the matrix, can-i-deploy, pending pacts and webhooks see it. Nothing is dropped silently: the answer is the stored result plus an `ingestion` object whose `notices` name, with a JSON Pointer or location, every field the reader could not use and every judgement it made. A report with no interactions is refused (`422 pact-verification-invalid`) rather than published as a pass. The report is the verifier's word: it is not cross-checked against the interactions of the pact version.\n\n`providerApplicationVersion` is required because neither format carries it. `branch` and `tag` record the provider version first, as a verifier's `PUT` calls would. Requires `pacts:create`.",
+        "description": "Publish the result of a verification that ran **elsewhere** \u2014 the report a team's own CI already has \u2014 instead of asking Apiome's hosted verifier to replay the pact (PFX-3.5).\n\nThe body is the report itself, not a Pact Broker result:\n\n- **`pact_verifier_cli --json`** output (`Content-Type: application/json`): the verifier's `result` / `errors` / `pendingErrors`, or a `pacts[].interactions[]` listing;\n- **JUnit XML** (`application/xml`): one `<testcase>` per interaction; a `<failure>` or `<error>` fails it, a `<skipped>` case is not verified and makes the result unsuccessful;\n- **Schemathesis** (PFX-8.9): `--report ndjson` (`application/x-ndjson`; one interaction per operation, each failed check a mismatch, skipped scenarios noticed and not counted, a run without `EngineFinished` recorded as failed) or `--report junit`;\n- **Newman**: `newman run -r json` (one interaction per execution, each failed assertion a mismatch) or `-r junit`;\n- **Dredd**: `--reporter xunit`.\n\nThe format is taken from `format`, else the content type, else the body: JUnit whose suite is named `schemathesis` or `Dredd Tests` is that tool's, JSON with `run.executions` and `collection` is Newman's, NDJSON with a Schemathesis `Initialize` event is Schemathesis'. A `format` the body does not match (a Dredd report that is not XML) is refused with the reason. `ingestion.format` names the tool read and `ingestion.syntax` how it was written (`json`, `ndjson`, `xml`). The report is mapped to the verification-result model of `POST \u2026/verification-results` and stored as an ordinary result, so the matrix, can-i-deploy, pending pacts and webhooks see it. Nothing is dropped silently: the answer is the stored result plus an `ingestion` object whose `notices` name, with a JSON Pointer or location, every field the reader could not use and every judgement it made. A report with no interactions is refused (`422 pact-verification-invalid`) rather than published as a pass. The report is the verifier's word: it is not cross-checked against the interactions of the pact version.\n\n`providerApplicationVersion` is required because neither format carries it. `branch` and `tag` record the provider version first, as a verifier's `PUT` calls would. Requires `pacts:create`.",
         "operationId": "ingest_external_result_v1_tenants__tenant_slug__pact_broker_pacts_provider__provider__consumer__consumer__pact_version__sha__external_verification_results_post",
         "parameters": [
           {
@@ -44618,11 +44618,11 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "One of auto, pact-verifier-json, junit; `auto` reads the content type, then the body.",
+              "description": "One of auto, pact-verifier-json, junit, schemathesis, newman, dredd; `auto` reads the content type, then the body.",
               "default": "auto",
               "title": "Format"
             },
-            "description": "One of auto, pact-verifier-json, junit; `auto` reads the content type, then the body."
+            "description": "One of auto, pact-verifier-json, junit, schemathesis, newman, dredd; `auto` reads the content type, then the body."
           },
           {
             "name": "verifier",
@@ -44727,7 +44727,7 @@
         ],
         "responses": {
           "201": {
-            "description": "The stored result, with an `ingestion` object (`format`, `interactions`, `notices`).",
+            "description": "The stored result, with an `ingestion` object (`format`, `syntax`, `interactions`, `notices`).",
             "content": {
               "application/hal+json": {
                 "schema": {
@@ -45493,6 +45493,440 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify/runs": {
+      "post": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Start a live hosted verification",
+        "description": "Start the run `POST \u2026/verify` would make, and answer at once (PFX-8.9) \u2014 the body is the same, field for field, and so is every refusal: a malformed provider version, `pact-verify-too-many-pacts`, an unknown or disabled target, `pact-verify-mutating-production`, all raised before anything is sent.\n\nThe run then replays in the background. Read it with `GET \u2026/pact-verifier/runs/{run_id}` \u2014 one row per pact with interactions done of the total, the newest failing interaction with expected beside actual, and the log \u2014 and stop it with `\u2026/stop`. Interactions are sent one at a time so a stop takes effect before the next one. Results are published exactly as `\u2026/verify` publishes them, as each pact finishes.\n\nA workspace runs at most 3 live runs at once (`429 pact-verify-run-limit`). A run lives in the API worker that started it and is kept for 30 minutes after it ends. Requires `pacts:create` and `verification_evidence:create`.",
+        "operationId": "start_live_run_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verify_runs_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Startalivehostedverificationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Startalivehostedverificationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Startalivehostedverification Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Startalivehostedverification Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PactVerifyRequest",
+                "description": "Request body for startalivehostedverificationrequest."
+              }
+            }
+          },
+          "description": "Request body for start a live hosted verification."
+        },
+        "responses": {
+          "202": {
+            "description": "Successful response for start a live hosted verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveRunSnapshot",
+                  "description": "Response payload for startalivehostedverificationresponse202."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-selector-invalid`, or a malformed provider version, branch or build URL."
+          },
+          "404": {
+            "description": "`pacticipant-not-found` or `target-not-found` in this workspace."
+          },
+          "422": {
+            "description": "The same refusals as `POST \u2026/verify`."
+          },
+          "429": {
+            "description": "`pact-verify-run-limit`: the workspace already has 3 runs going."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-verifier/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Read a live hosted verification",
+        "description": "A live run as it stands (PFX-8.9): `status` (`running`, `finished`, `errored`), one row per pact (`queued`, `running`, `passed`, `failed`, `incomplete`, `stopped`) with interactions done of the total, the newest interaction that did not pass with its mismatches (expected beside actual), the log lines after `log_after`, and \u2014 once finished \u2014 `result`, exactly what `POST \u2026/verify` would have answered. Poll it every second or so; read the log on with `log_after=<log_next>`. A log keeps its newest 2000 lines and counts the older ones in `log_dropped`. Requires `pacts:view`.",
+        "operationId": "read_live_run_v1_tenants__tenant_slug__pact_verifier_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id",
+              "description": "Run Id schema."
+            },
+            "description": "Path parameter identifying the run id segment."
+          },
+          {
+            "name": "log_after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Return only log lines after this `seq`.",
+              "default": 0,
+              "title": "Log After"
+            },
+            "description": "Return only log lines after this `seq`."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readalivehostedverificationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readalivehostedverificationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readalivehostedverification Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readalivehostedverification Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a live hosted verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveRunSnapshot",
+                  "description": "Response payload for readalivehostedverificationresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`pact-verify-run-not-found`: no live run with that id in this workspace."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readalivehostedverificationresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-verifier/runs/{run_id}/stop": {
+      "post": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Stop a live hosted verification",
+        "description": "Ask a live run to stop (PFX-8.9). It ends before its next interaction: the pact being replayed publishes nothing (`run-stopped`), the pacts not reached are listed under `skipped` with `pact-verify-stopped`, pacts already finished keep their published results, and the outcome is `stopped`. Stopping a finished run changes nothing. Requires `pacts:create`.",
+        "operationId": "stop_live_run_v1_tenants__tenant_slug__pact_verifier_runs__run_id__stop_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id",
+              "description": "Run Id schema."
+            },
+            "description": "Path parameter identifying the run id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Stopalivehostedverificationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Stopalivehostedverificationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Stopalivehostedverification Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Stopalivehostedverification Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for stop a live hosted verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveRunSnapshot",
+                  "description": "Response payload for stopalivehostedverificationresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`pact-verify-run-not-found`: no live run with that id in this workspace."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for stopalivehostedverificationresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-verifier/runs/{run_id}/rerun": {
+      "post": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Re-run one interaction of a live hosted verification",
+        "description": "Replay one interaction of a pact the run verified, against the run's target with the run's options (PFX-8.9) \u2014 provider states set up and torn down, the target's policy and the production rule enforced as in any run. **Nothing is published and no evidence is recorded**: one interaction does not verify a pact; start a run to record a result. The run must have finished (`409 pact-verify-run-busy` while it is going). Requires `pacts:create` and `verification_evidence:create`.",
+        "operationId": "rerun_live_interaction_v1_tenants__tenant_slug__pact_verifier_runs__run_id__rerun_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id",
+              "description": "Run Id schema."
+            },
+            "description": "Path parameter identifying the run id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Rerunoneinteractionofalivehostedverificaauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Rerunoneinteractionofalivehostedverificaauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Rerunoneinteractionofalivehostedverifica Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Rerunoneinteractionofalivehostedverifica Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RerunRequest",
+                "description": "Request body for rerunoneinteractionofalivehostedverificarequest."
+              }
+            }
+          },
+          "description": "Request body for re-run one interaction of a live hosted verification."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for re-run one interaction of a live hosted verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RerunResponse",
+                  "description": "Response payload for rerunoneinteractionofalivehostedverificaresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`pact-verify-run-not-found`, `pact-verify-run-pact-not-found`, `pact-verify-run-interaction-not-found`, or the target is gone."
+          },
+          "409": {
+            "description": "`pact-verify-run-busy`: the run is still going."
+          },
+          "422": {
+            "description": "The target can no longer be used, or would be sent a mutating request in production."
           }
         }
       }
@@ -156483,7 +156917,7 @@
               }
             ],
             "title": "Not Published Reason",
-            "description": "`run-incomplete` or `publish-disabled` when `published` is false."
+            "description": "`run-incomplete`, `publish-disabled` or `run-stopped` when `published` is false."
           },
           "result": {
             "anyOf": [
@@ -156713,7 +157147,7 @@
           "outcome": {
             "type": "string",
             "title": "Outcome",
-            "description": "`passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target \u2014 see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version) or `no-pacts` (the selectors chose nothing).",
+            "description": "`passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target \u2014 see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version), `no-pacts` (the selectors chose nothing) or `stopped` (a live run was stopped before it finished; PFX-8.9).",
             "example": "example"
           },
           "pacts": {
@@ -295219,7 +295653,7 @@
           "outcome": {
             "type": "string",
             "title": "Outcome",
-            "description": "`passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target \u2014 see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version) or `no-pacts` (the selectors chose nothing).",
+            "description": "`passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target \u2014 see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version), `no-pacts` (the selectors chose nothing) or `stopped` (a live run was stopped before it finished; PFX-8.9).",
             "example": "example"
           },
           "pacts": {
@@ -295669,7 +296103,7 @@
           "code": {
             "type": "string",
             "title": "Code",
-            "description": "`pact-verify-already-verified`, `pact-verify-in-progress` or `pact-verify-over-limit`.",
+            "description": "`pact-verify-already-verified`, `pact-verify-in-progress`, `pact-verify-over-limit` or `pact-verify-stopped` (a live run was stopped before it reached the pact).",
             "example": "example"
           },
           "reason": {
@@ -298117,6 +298551,513 @@
         ],
         "title": "VerifyPreviewResponse",
         "description": "What the run would verify."
+      },
+      "LiveRunFailure": {
+        "properties": {
+          "consumer": {
+            "type": "string",
+            "title": "Consumer",
+            "description": "The consumer's handle.",
+            "example": "example"
+          },
+          "consumer_name": {
+            "type": "string",
+            "title": "Consumer Name",
+            "description": "The consumer's display name.",
+            "example": "Example"
+          },
+          "consumer_version": {
+            "type": "string",
+            "title": "Consumer Version",
+            "description": "The consumer version of the pact.",
+            "example": "1.0.0"
+          },
+          "pact_version_sha": {
+            "type": "string",
+            "title": "Pact Version Sha",
+            "description": "The pact version.",
+            "example": "1.0.0"
+          },
+          "interaction": {
+            "$ref": "#/components/schemas/InteractionVerification",
+            "description": "The interaction, its mismatches included."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumer",
+          "consumer_name",
+          "consumer_version",
+          "pact_version_sha",
+          "interaction"
+        ],
+        "title": "LiveRunFailure",
+        "description": "The newest interaction of the run that did not pass, with expected beside actual."
+      },
+      "LiveRunFault": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable machine code.",
+            "example": "example"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "The reason.",
+            "example": "Example validation message."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "LiveRunFault",
+        "description": "Why a run broke on Apiome's side."
+      },
+      "LiveRunLogLine": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "title": "Seq",
+            "description": "Its number in the run's log (1-based); read on with `log_after`.",
+            "example": 1
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At",
+            "description": "When it happened.",
+            "example": "example"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "`run`, `pact`, `state`, `interaction` or `rerun`.",
+            "example": "example"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Live Run Log Line schema."
+              },
+              {
+                "type": "null",
+                "description": "Live Run Log Line schema."
+              }
+            ],
+            "title": "Outcome",
+            "description": "`passed`, `failed`, `skipped`, `errored` or `ok`."
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "The line as the drawer prints it.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "seq",
+          "at",
+          "kind",
+          "text"
+        ],
+        "title": "LiveRunLogLine",
+        "description": "One line of a live run's log."
+      },
+      "LiveRunPact": {
+        "properties": {
+          "consumer": {
+            "type": "string",
+            "title": "Consumer",
+            "description": "The consumer's handle.",
+            "example": "example"
+          },
+          "consumer_name": {
+            "type": "string",
+            "title": "Consumer Name",
+            "description": "The consumer's display name.",
+            "example": "Example"
+          },
+          "consumer_version": {
+            "type": "string",
+            "title": "Consumer Version",
+            "description": "The consumer version of the pact.",
+            "example": "1.0.0"
+          },
+          "pact_version_sha": {
+            "type": "string",
+            "title": "Pact Version Sha",
+            "description": "The pact version.",
+            "example": "1.0.0"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`queued`, `running`, then the pact's outcome \u2014 `passed`, `failed`, `incomplete` \u2014 or `stopped`.",
+            "example": "active"
+          },
+          "pending": {
+            "type": "boolean",
+            "title": "Pending",
+            "description": "Whether its failure cannot fail the run.",
+            "default": false,
+            "example": false
+          },
+          "interactions": {
+            "type": "integer",
+            "title": "Interactions",
+            "description": "Interactions its suite holds (0 until it is compiled).",
+            "default": 0,
+            "example": 1
+          },
+          "done": {
+            "type": "integer",
+            "title": "Done",
+            "description": "Interactions replayed or held back so far.",
+            "default": 0,
+            "example": 1
+          },
+          "passed": {
+            "type": "integer",
+            "title": "Passed",
+            "description": "Replayed and matched.",
+            "default": 0,
+            "example": 1
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "description": "Replayed and did not match.",
+            "default": 0,
+            "example": 1
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped",
+            "description": "Held back, with a reason.",
+            "default": 0,
+            "example": 1
+          },
+          "errored": {
+            "type": "integer",
+            "title": "Errored",
+            "description": "Could not be sent or answered.",
+            "default": 0,
+            "example": 1
+          },
+          "published": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Live Run Pact schema."
+              },
+              {
+                "type": "null",
+                "description": "Live Run Pact schema."
+              }
+            ],
+            "title": "Published",
+            "description": "Whether its result was published, once it ended."
+          },
+          "not_published_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Live Run Pact schema."
+              },
+              {
+                "type": "null",
+                "description": "Live Run Pact schema."
+              }
+            ],
+            "title": "Not Published Reason",
+            "description": "`run-incomplete`, `publish-disabled` or `run-stopped`."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumer",
+          "consumer_name",
+          "consumer_version",
+          "pact_version_sha",
+          "status"
+        ],
+        "title": "LiveRunPact",
+        "description": "One pact of a live run, as its row in the drawer reads."
+      },
+      "LiveRunSnapshot": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "The run's id.",
+            "example": "run_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "The provider's handle.",
+            "example": "example"
+          },
+          "provider_name": {
+            "type": "string",
+            "title": "Provider Name",
+            "description": "The provider's display name.",
+            "example": "Example"
+          },
+          "provider_version": {
+            "type": "string",
+            "title": "Provider Version",
+            "description": "The provider version being verified.",
+            "example": "1.0.0"
+          },
+          "provider_branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Live Run Snapshot schema."
+              },
+              {
+                "type": "null",
+                "description": "Live Run Snapshot schema."
+              }
+            ],
+            "title": "Provider Branch",
+            "description": "Its branch, when stated."
+          },
+          "target": {
+            "type": "string",
+            "title": "Target",
+            "description": "The verification target's handle.",
+            "example": "example"
+          },
+          "target_base_url": {
+            "type": "string",
+            "title": "Target Base Url",
+            "description": "Where the interactions are sent.",
+            "example": "https://example.com/resource"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "The target's environment class.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "`running`, `finished` or `errored`.",
+            "example": "active"
+          },
+          "stop_requested": {
+            "type": "boolean",
+            "title": "Stop Requested",
+            "description": "Whether someone asked the run to stop.",
+            "example": false
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "When the run started.",
+            "example": "2026-11-27T22:17:42Z"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Live Run Snapshot schema."
+              },
+              {
+                "type": "null",
+                "description": "Live Run Snapshot schema."
+              }
+            ],
+            "title": "Finished At",
+            "description": "When it ended."
+          },
+          "interactions": {
+            "type": "integer",
+            "title": "Interactions",
+            "description": "Interactions of every pact, as far as they are compiled.",
+            "example": 1
+          },
+          "done": {
+            "type": "integer",
+            "title": "Done",
+            "description": "Interactions replayed or held back so far.",
+            "example": 1
+          },
+          "pacts": {
+            "items": {
+              "$ref": "#/components/schemas/LiveRunPact"
+            },
+            "type": "array",
+            "title": "Pacts",
+            "description": "One row per pact, in run order.",
+            "maxItems": 1000
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/SkippedPact"
+            },
+            "type": "array",
+            "title": "Skipped",
+            "description": "Chosen but not verified, each with why.",
+            "maxItems": 1000
+          },
+          "failure": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiveRunFailure"
+              },
+              {
+                "type": "null",
+                "description": "Live Run Snapshot schema."
+              }
+            ],
+            "description": "The newest interaction that did not pass."
+          },
+          "log": {
+            "items": {
+              "$ref": "#/components/schemas/LiveRunLogLine"
+            },
+            "type": "array",
+            "title": "Log",
+            "description": "Log lines after `log_after`, oldest first.",
+            "maxItems": 1000
+          },
+          "log_next": {
+            "type": "integer",
+            "title": "Log Next",
+            "description": "The newest line's `seq`: send it as `log_after` to read on.",
+            "example": 1
+          },
+          "log_dropped": {
+            "type": "integer",
+            "title": "Log Dropped",
+            "description": "Older lines let go beyond the 2000 a run keeps.",
+            "default": 0,
+            "example": 1
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PactVerifyResponse"
+              },
+              {
+                "type": "null",
+                "description": "Live Run Snapshot schema."
+              }
+            ],
+            "description": "Once finished: exactly what `POST \u2026/verify` would have answered."
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiveRunFault"
+              },
+              {
+                "type": "null",
+                "description": "Live Run Snapshot schema."
+              }
+            ],
+            "description": "With status `errored`: why."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "run_id",
+          "provider",
+          "provider_name",
+          "provider_version",
+          "target",
+          "target_base_url",
+          "environment",
+          "status",
+          "stop_requested",
+          "started_at",
+          "interactions",
+          "done",
+          "log_next"
+        ],
+        "title": "LiveRunSnapshot",
+        "description": "A live run as it stands."
+      },
+      "RerunRequest": {
+        "properties": {
+          "pact_version_sha": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Pact Version Sha",
+            "description": "The pact version, as the run listed it.",
+            "example": "1.0.0"
+          },
+          "case_id": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Case Id",
+            "description": "The interaction's suite case (`failure.interaction.case_id`).",
+            "example": "case_01h2xcejqtf3fz5y5j0v8k9m2p"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pact_version_sha",
+          "case_id"
+        ],
+        "title": "RerunRequest",
+        "description": "Which interaction of the run to replay again."
+      },
+      "RerunResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "The run it belongs to.",
+            "example": "run_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "pact_version_sha": {
+            "type": "string",
+            "title": "Pact Version Sha",
+            "description": "The pact version.",
+            "example": "1.0.0"
+          },
+          "interaction": {
+            "$ref": "#/components/schemas/InteractionVerification",
+            "description": "What replaying it showed this time."
+          },
+          "published": {
+            "type": "boolean",
+            "title": "Published",
+            "description": "Always false: one interaction does not verify a pact.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "run_id",
+          "pact_version_sha",
+          "interaction"
+        ],
+        "title": "RerunResponse",
+        "description": "One interaction replayed again; nothing published."
       }
     },
     "securitySchemes": {

@@ -126,9 +126,25 @@
     },
     {
       "cli": "publish-verification-results",
-      "ui": null,
+      "ui": "/ade/dashboard/pacts/verification/new",
       "rest": "POST /v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/external-verification-results",
-      "reason": "No screen uploads a verification report produced elsewhere yet; the results upload dialog ships with PFX-8.9 (#7306)."
+      "fields": {
+        "report": "Upload results → Drop the report here / Browse",
+        "--provider": "The provider under test → Provider (the page's)",
+        "--consumer": "Upload results → Consumer",
+        "--pact-version": "Upload results → Pact version (each consumer's newest, or Another pact version…)",
+        "--provider-app-version": "Upload results → Provider version",
+        "--branch": "Upload results → More options → Branch",
+        "--tag": "Upload results → More options → Tags",
+        "--build-url": "Upload results → More options → Build URL",
+        "--format": "Upload results → Report format (Detect, Pact verifier JSON, JUnit XML, Schemathesis, Newman, Dredd)",
+        "--content-type": "Upload results → the report's type, detected from the file name",
+        "--verifier": "Upload results → More options → Verifier",
+        "--verifier-version": "Upload results → More options → Verifier version",
+        "--fail-on-failure": "The recorded result line in the dialog (an upload is never blocked here)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     },
     {
       "cli": "record-deployment",
@@ -309,10 +325,33 @@
     },
     {
       "method": "POST",
-      "bff": "/api/pact/verification/run",
-      "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify",
+      "bff": "/api/pact/verification/runs",
+      "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify/runs",
       "ui": "/ade/dashboard/pacts/verification/new",
       "cli": "verify"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/verification/runs/[runId]/stop",
+      "rest": "POST /v1/tenants/{tenant}/pact-verifier/runs/{run_id}/stop",
+      "ui": "/ade/dashboard/pacts/verification/new",
+      "cli": null,
+      "reason": "Stop run ends a live run started from the page; apiome pact verify runs in the pipeline, where cancelling the job stops it."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/verification/runs/[runId]/rerun",
+      "rest": "POST /v1/tenants/{tenant}/pact-verifier/runs/{run_id}/rerun",
+      "ui": "/ade/dashboard/pacts/verification/new",
+      "cli": null,
+      "reason": "Re-run this interaction is a quick check inside a finished live run and publishes nothing; apiome pact verify re-verifies whole pacts and records results."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/verification/results/upload",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/pact-version/{sha}/external-verification-results",
+      "ui": "/ade/dashboard/pacts/verification/new",
+      "cli": "publish-verification-results"
     },
     {
       "method": "POST",

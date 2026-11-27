@@ -1,6 +1,6 @@
 /**
  * The BFF side of **Run a verification** (PFX-8.8, #7305): what `/api/pact/verification/preview`
- * and `/api/pact/verification/run` accept.
+ * and `/api/pact/verification/runs` (the live run, PFX-8.9) accept.
  *
  * {@link pickVerifyRequest} reads the browser's `{ provider, body }` and refuses, naming it, any
  * field it does not know, a mistyped one or an oversized one — so nothing reaches REST that the

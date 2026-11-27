@@ -18,6 +18,7 @@ The routes of :mod:`app.pact_broker_verification_routes`, with the store faked
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any, Dict, Iterator
 from unittest.mock import MagicMock, patch
 
@@ -444,6 +445,29 @@ def test_a_junit_report_is_ingested(allowed: MagicMock) -> None:
     checked = publish.call_args.args[5]
     assert checked.success is True and checked.verified_by["implementation"] == "jest"
     assert response.json()["ingestion"]["format"] == "junit"
+
+
+def test_a_dredd_report_is_detected_and_named_in_the_ingestion(allowed: MagicMock) -> None:
+    """PFX-8.9 (#7306): the upload dialog's Detect — the tool is read from the report itself."""
+    report = (Path(__file__).parent / "fixtures" / "provider_contracts" / "evidence" / "dredd-fail.xml").read_bytes()
+    with patch(f"{_ROUTES}.publish_verification_result", return_value=_result()) as publish:
+        response = client.post(
+            f"{_INGEST}?providerApplicationVersion=4f1e2d0", content=report, headers={"content-type": "application/xml"}
+        )
+    assert response.status_code == 201, response.text
+    checked = publish.call_args.args[5]
+    assert checked.success is False and checked.verified_by["implementation"] == "Dredd"
+    ingestion = response.json()["ingestion"]
+    assert (ingestion["format"], ingestion["syntax"], ingestion["interactions"]) == ("dredd", "xml", 1)
+
+
+def test_a_report_the_named_format_does_not_match_records_nothing(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.publish_verification_result") as publish:
+        response = client.post(f"{_INGEST}?providerApplicationVersion=1&format=dredd", json=_CLI_REPORT)
+    assert response.status_code == 422
+    assert response.json()["detail"]["pointer"] == "/format"
+    assert "dredd --reporter xunit" in response.json()["detail"]["message"]
+    publish.assert_not_called()
 
 
 def test_no_branch_or_tag_records_no_version(allowed: MagicMock) -> None:

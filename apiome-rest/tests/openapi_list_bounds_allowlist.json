@@ -131,6 +131,7 @@
     "/v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verification-status": "bounded-by-parent",
     "/v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states": "bounded-by-parent",
     "/v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states/{state_id}": "single-resource",
+    "/v1/tenants/{tenant_slug}/pact-verifier/runs/{run_id}": "single-resource",
     "/v1/tenants/{tenant_slug}/products/{product_slug}": "single-resource",
     "/v1/tenants/{tenant_slug}/products/{product_slug}/members": "bounded-by-parent",
     "/v1/tenants/{tenant_slug}/products/{product_slug}/plans": "bounded-by-parent",

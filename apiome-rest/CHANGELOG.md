@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.878.0] - 2026-11-29
+
+### Added
+- **Live verification runs (PFX-8.9, #7306).** OpenAPI 1.702.0; no migration.
+  `POST /v1/tenants/{t}/pact-verifier/pacts/provider/{p}/verify/runs` takes the body of `…/verify`, refuses
+  exactly what it refuses (same codes, before anything is sent), then replays the run in the background and answers
+  `202` with the run as it starts. `GET …/pact-verifier/runs/{run_id}?log_after=` is what the run drawer polls: one
+  row per pact (`queued`, `running`, `passed`, `failed`, `incomplete`, `stopped`) with interactions done of the
+  total, the newest interaction that did not pass with its mismatches (expected beside actual), the log since the
+  cursor (the newest 2000 lines, older ones counted in `log_dropped`), and — once finished — `result`, exactly what
+  `…/verify` would have answered. `POST …/runs/{run_id}/stop` ends the run before its next interaction: the pact cut
+  short publishes nothing (`run-stopped`), pacts not reached are skipped with `pact-verify-stopped`, outcome
+  `stopped`. `POST …/runs/{run_id}/rerun` replays one interaction of a finished run against the same target with the
+  same options and **publishes nothing and records no evidence** (`409 pact-verify-run-busy` while the run is
+  going). Runs are per API worker, scoped to the tenant (another tenant's run is a `404`), kept 30 minutes after they
+  end, at most 3 going per workspace (`429 pact-verify-run-limit`). Start and re-run need `pacts:create` and
+  `verification_evidence:create`, stop `pacts:create`, read `pacts:view`; `pact:verify` / `pact:read` key scopes;
+  audit actions `pacts.verification.run` and the new `pacts.verification.stop`; permission-matrix rows.
+- **Schemathesis, Newman and Dredd reports** for `POST …/external-verification-results`: `format` gains
+  `schemathesis` (`--report ndjson`, one interaction per operation with each failed check as a mismatch, skipped
+  scenarios noticed and not counted, a stream without `EngineFinished` recorded as failed; or `--report junit`),
+  `newman` (`-r json`, one interaction per execution with each failed assertion; or `-r junit`) and `dredd`
+  (`--reporter xunit`). `auto` recognises Schemathesis and Dredd JUnit by their suite names, Newman JSON by
+  `run.executions` + `collection`, and Schemathesis NDJSON by its `Initialize` event. A `format` the body does not
+  match is a located `422` naming the expected report; nothing is recorded. `ingestion` gains `syntax` (`json`,
+  `ndjson`, `xml`).
+
+### Changed
+- `PactVerifyResponse.outcome` may be `stopped` (live runs only); `PactVerification.not_published_reason` may be
+  `run-stopped`. `…/verify` itself is unchanged.
+
 ## [1.877.0] - 2026-11-29
 
 ### Added

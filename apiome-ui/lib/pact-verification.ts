@@ -462,6 +462,7 @@ export const OUTCOME_LABELS: Record<string, string> = {
   'no-pacts': 'Nothing to verify',
   'could-not-connect': 'Could not connect — nothing published',
   'already-verified': 'Already verified',
+  stopped: 'Stopped — the pact cut short published nothing',
 };
 
 /**

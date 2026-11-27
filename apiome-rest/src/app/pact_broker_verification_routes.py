@@ -608,8 +608,19 @@ _INGEST_DESCRIPTION = (
     "- **`pact_verifier_cli --json`** output (`Content-Type: application/json`): the verifier's "
     "`result` / `errors` / `pendingErrors`, or a `pacts[].interactions[]` listing;\n"
     "- **JUnit XML** (`application/xml`): one `<testcase>` per interaction; a `<failure>` or "
-    "`<error>` fails it, a `<skipped>` case is not verified and makes the result unsuccessful.\n\n"
-    "The format is taken from `format`, else the content type, else the body. The report is mapped "
+    "`<error>` fails it, a `<skipped>` case is not verified and makes the result unsuccessful;\n"
+    "- **Schemathesis** (PFX-8.9): `--report ndjson` (`application/x-ndjson`; one interaction per "
+    "operation, each failed check a mismatch, skipped scenarios noticed and not counted, a run "
+    "without `EngineFinished` recorded as failed) or `--report junit`;\n"
+    "- **Newman**: `newman run -r json` (one interaction per execution, each failed assertion a "
+    "mismatch) or `-r junit`;\n"
+    "- **Dredd**: `--reporter xunit`.\n\n"
+    "The format is taken from `format`, else the content type, else the body: JUnit whose suite is "
+    "named `schemathesis` or `Dredd Tests` is that tool's, JSON with `run.executions` and "
+    "`collection` is Newman's, NDJSON with a Schemathesis `Initialize` event is Schemathesis'. "
+    "A `format` the body does not match (a Dredd report that is not XML) is refused with the "
+    "reason. `ingestion.format` names the tool read and `ingestion.syntax` how it was written "
+    "(`json`, `ndjson`, `xml`). The report is mapped "
     "to the verification-result model of `POST …/verification-results` and stored as an ordinary "
     "result, so the matrix, can-i-deploy, pending pacts and webhooks see it. Nothing is dropped "
     "silently: the answer is the stored result plus an `ingestion` object whose `notices` name, "
@@ -655,7 +666,9 @@ _INGEST_BODY = {
     openapi_extra={"requestBody": _INGEST_BODY},
     responses={
         **_RESULT_ERRORS,
-        201: {"description": "The stored result, with an `ingestion` object (`format`, `interactions`, `notices`)."},
+        201: {
+            "description": "The stored result, with an `ingestion` object (`format`, `syntax`, `interactions`, `notices`)."
+        },
     },
 )
 @audited_write("pacts.verification.publish", "pact/provider/{provider}/consumer/{consumer}/pact-version/{sha}")
@@ -688,7 +701,7 @@ def ingest_external_result(
     raw: bytes = Depends(_read_pact_body),
     auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
 ) -> HalJSONResponse:
-    """Ingest a ``pact_verifier_cli`` JSON or JUnit report as a verification result.
+    """Ingest a Pact verifier, JUnit, Schemathesis, Newman or Dredd report as a verification result.
 
     Args:
         tenant_slug: The tenant in the URL.
@@ -700,7 +713,7 @@ def ingest_external_result(
         build_url: The CI build, when sent.
         branch: A branch to record the provider version on.
         tag: Tags to put on the provider version.
-        report_format: ``auto``, ``pact-verifier-json`` or ``junit``.
+        report_format: One of :data:`app.pact_external_verification.FORMATS`.
         verifier: ``verifiedBy.implementation``; defaults to the format's.
         verifier_version: ``verifiedBy.version``.
         report_id: A linked CTG-4.3 report.
@@ -734,6 +747,7 @@ def ingest_external_result(
         raise _http_error(exc) from exc
     ingestion = {
         "format": report.format,
+        "syntax": report.syntax,
         "interactions": len(report.test_results),
         "success": report.success,
         "notices": notices_as_dicts(report.notices),

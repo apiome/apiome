@@ -357,7 +357,7 @@ apiome pact publish-provider-contract [OPTIONS] [CONTRACT]
 
 Publish a verification report produced elsewhere (POST …/external-verification-results).
 
-Reads pact_verifier_cli --json output or JUnit XML on the server, stores it as a verification result of the pact version and prints the verdict and every note about what could not be used. Exits 1 when the server refuses (a malformed or empty report, an unknown pact version), or with --fail-on-failure when the result is a failure.
+Reads pact_verifier_cli --json output, JUnit XML, or a Schemathesis (NDJSON or JUnit), Newman (JSON or JUnit) or Dredd (xunit) report on the server, stores it as a verification result of the pact version and prints the verdict and every note about what could not be used. Exits 1 when the server refuses (a malformed or empty report, an unknown pact version), or with --fail-on-failure when the result is a failure.
 
 ```text
 apiome pact publish-verification-results [OPTIONS] REPORT
@@ -367,7 +367,7 @@ apiome pact publish-verification-results [OPTIONS] REPORT
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
-| `REPORT` | file | yes | The report: pact_verifier_cli --json output, or JUnit XML. |
+| `REPORT` | file | yes | The report: pact_verifier_cli --json output, JUnit XML, or a Schemathesis, Newman or Dredd report. |
 
 **Options**
 
@@ -380,8 +380,8 @@ apiome pact publish-verification-results [OPTIONS] REPORT
 | `--branch` | text |  |  | The branch the provider build came from. |
 | `--tag`, `-t` | text (repeatable) |  |  | Tag the provider version (repeatable). |
 | `--build-url` | text |  |  | http(s) URL of the CI build. |
-| `--format` | text | `auto` |  | The report's format (auto, pact-verifier-json, junit); auto reads the file name, then the body. |
-| `--content-type` | text |  |  | The report's media type; inferred from .json / .xml. |
+| `--format` | text | `auto` |  | The report's format (auto, pact-verifier-json, junit, schemathesis, newman, dredd); auto reads the file name, then the body. |
+| `--content-type` | text |  |  | The report's media type; inferred from .json / .xml / .ndjson. |
 | `--verifier` | text |  |  | The tool that wrote the report. |
 | `--verifier-version` | text |  |  | That tool's version. |
 | `--fail-on-failure` | flag |  |  | Exit 1 when the published result is a failure. |

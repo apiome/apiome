@@ -13,7 +13,8 @@ a registered verification target and publishes a new result.
 
 To start a new run with your own selectors and options instead of re-running a recorded pact, use
 **Contracts** → **Verification** (**Run a verification**). See
-[Run a verification from the app](./hosted-verification.mdx#run-a-verification-from-the-app).
+[Run a verification from the app](./hosted-verification.mdx#run-a-verification-from-the-app). That run
+is followed live in the run drawer: see [Watch a run as it happens](#watch-a-run-as-it-happens).
 
 ## Before you start
 
@@ -90,6 +91,41 @@ You can also re-run from a result's own page: click **Re-run verification** in i
 provider is still going, another re-run of the same pair is refused with *a verification of … is
 already running*. Wait for it to finish and run again.
 
+## Watch a run as it happens
+
+When you select **Run verification** on **Run a verification**, the **run drawer** opens beside the
+page and follows the run as Apiome replays it. It reads the run again every second.
+
+<Screenshot id="pact-verify-live" alt="The run drawer: Verifying Billing Service 2.7.0+9f31c20 against staging, 13 of 18 interactions, with a striped progress bar; a table of pacts (Orders UI 3.4.0 Failed 5 / 6, Orders UI 3.3.2 Passed 6 / 6, Mobile App Running 1 / 4, Checkout Queued 0 / 2); the failing interaction POST /invoices, Body differs, Orders UI 3.4.0 with the state “a customer 7 exists”, Expected /currency matching ^[A-Z]{3}$ beside Provider returned /currency missing, with Show the request, Re-run this interaction and Reproduce on the mock; then the run log and Stop run."/>
+
+- **The progress bar** and the subtitle (*Against staging · started 14:02:11 · 13 of 18
+  interactions*) follow every interaction.
+- **The table** has one row per pact: **Queued**, **Running**, then **Passed**, **Failed** or
+  **Incomplete**, with the interactions that passed of the pact's total. A pact the run did not reach
+  is **Stopped**.
+- **The failing interaction** is the newest one that did not pass: its request, what differs, and
+  **Expected** beside **Provider returned**, one line per mismatch.
+  - **Show the request** prints the request against the target, with the provider states it needs.
+  - **Re-run this interaction** replays just that interaction against the same target, once the run
+    is over. **Nothing is published** and no evidence is recorded: one interaction does not verify a
+    pact. Start a new run to record a result.
+  - **Reproduce on the mock** opens the provider's project on **Versions**, where each version's
+    hosted mock can be turned on. It shows when the provider is
+    [bound to a project](./pacticipants.mdx#open-a-pacticipant); otherwise the drawer says to bind it.
+- **The run log** lists each provider state set up and each interaction with its status and how it
+  went. It keeps the newest 2,000 lines and says how many older lines it let go.
+
+**Closing the drawer keeps the run going.** The header's main button reads **Show the run** while
+it runs. When the run ends, a toast says how it went; select **Show the run** in the toast to open
+the drawer again.
+
+**Stop run** ends the run before its next interaction. Pacts that finished keep their published
+results. The pact being replayed publishes nothing, and the pacts not reached are listed as not
+verified. The run's outcome is **Stopped**.
+
+A run is kept for 30 minutes after it ends. A workspace runs at most three at once; a fourth is
+refused with *This workspace already has 3 verification runs going*.
+
 ## Verify all stale pacts
 
 1. Above the **Pacts** table, click **Verify all stale (N)**. The button is off when nothing is stale.
@@ -159,6 +195,15 @@ verifier, under `/v1/tenants/<tenant>/pact-verifier/pacts/provider/<provider>`:
 | `GET …/results/<id>` | One result with its test results and evidence run. |
 | `POST …/consumer/<consumer>/pact-version/<sha>/reverify` | Re-run one pact. |
 | `POST …/verify-stale` | Verify every stale pact (`provider_version` required). |
+| `POST …/verify/runs` | Start a live run: the body of `…/verify`, answered at once with the run's id. |
+
+A live run is then read and controlled at `/v1/tenants/<tenant>/pact-verifier/runs/<run_id>`:
+
+| Endpoint | What it does |
+| --- | --- |
+| `GET …/runs/<run_id>?log_after=<seq>` | The run as it stands: each pact's row, the failing interaction, the log after `log_after`, and `result` once finished. |
+| `POST …/runs/<run_id>/stop` | Stop the run before its next interaction. |
+| `POST …/runs/<run_id>/rerun` | Replay one interaction (`pact_version_sha`, `case_id`) of a finished run. Publishes nothing. |
 
 ```bash
 curl -X POST \
@@ -194,6 +239,9 @@ Clicking it opens the result.
 | Open the Verification page and a result | **Pacts** → **View** |
 | See a result's requests | **Verification evidence** → **View** as well |
 | **Re-run** and **Verify all stale** | **Pacts** → **Create** and **Verification evidence** → **Create** |
+| Watch a live run | **Pacts** → **View** |
+| **Stop run** | **Pacts** → **Create** |
+| **Re-run this interaction** | **Pacts** → **Create** and **Verification evidence** → **Create** |
 
 Every read and run is scoped to your current workspace.
 

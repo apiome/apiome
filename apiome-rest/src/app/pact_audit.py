@@ -57,6 +57,8 @@ AUDIT_ACTIONS = (
     "pacts.publication.create",
     "pacts.verification.publish",
     "pacts.verification.run",
+    # PFX-8.9 (#7306): stopping a live verification run.
+    "pacts.verification.stop",
     "pacts.environment.create",
     "pacts.environment.update",
     "pacts.environment.delete",

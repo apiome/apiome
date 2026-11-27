@@ -1060,6 +1060,7 @@ def run_suite(
     client: Optional[httpx.Client] = None,
     decisions: Optional[Mapping[str, CaseDecision]] = None,
     hooks: Optional[CaseHooks] = None,
+    on_result: Optional[Callable[[ContractCase, OperationResultInput], None]] = None,
 ) -> SuiteRunResult:
     """Execute every case in ``manifest`` against ``target``.
 
@@ -1076,6 +1077,10 @@ def run_suite(
             still checked against.
         hooks: Optional :class:`CaseHooks` run around each case that is sent. With hooks the
             cases run one at a time, in suite order.
+        on_result: Optional observer called on the calling thread with each compiled case and its
+            record as soon as the case is done — sent, held back by a decision or by a hook — so
+            a live run (PFX-8.9) can report progress. An exception is logged and otherwise
+            ignored: watching a run never changes it.
 
     Returns:
         Timing plus one :class:`OperationResultInput` per case, in suite order.
@@ -1156,6 +1161,13 @@ def run_suite(
             for future in as_completed(futures):
                 index, result = future.result()
                 results[index] = result
+                if on_result is not None:
+                    try:
+                        on_result(cases[index], result)
+                    except Exception:  # noqa: BLE001 - an observer never changes the run
+                        logger.exception(
+                            "contract runner: the result observer failed for case %s", cases[index].case_id
+                        )
     finally:
         if rpc_transport is not None:
             rpc_transport.close()

@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from .consumer_contract_store import actor_from_auth
 from .database import db
@@ -40,6 +40,7 @@ from .pact_verifier_service import (
     verify_provider_pacts,
 )
 from .pact_verify_preview import VerifyPreviewRequest, VerifyPreviewResponse, preview_verification
+from .pact_verify_runs import LiveRunError, LiveRunSnapshot, RerunRequest, RerunResponse, live_runs
 from .pacticipant import PacticipantValidationError
 from .permissions import Action, Resource, enforce_permission
 from .verification_target import CODE_NOT_FOUND as CODE_TARGET_NOT_FOUND
@@ -50,6 +51,32 @@ __all__ = ["router"]
 router = APIRouter(prefix="/v1/tenants", tags=["pact-broker"])
 
 _VERIFIER_STATUS = {CODE_TOO_MANY_PACTS: 422, CODE_TARGET_AUTH_UNAVAILABLE: 422, CODE_MUTATING_PRODUCTION: 422}
+
+
+def _refusal(exc: Exception) -> HTTPException:
+    """Map a run that could not start to the status ``POST …/verify`` answers with.
+
+    Args:
+        exc: A :class:`PactPublicationError`, :class:`PacticipantValidationError`,
+            :class:`TargetValidationError`, :class:`PactVerifierError` or :class:`LiveRunError`.
+
+    Returns:
+        The HTTP error, with ``{code, message}``.
+    """
+    if isinstance(exc, (PactPublicationError, PacticipantValidationError)):
+        return _http_error(exc)
+    if isinstance(exc, TargetValidationError):
+        status = 404 if exc.code == CODE_TARGET_NOT_FOUND else 422
+        return HTTPException(status_code=status, detail={"code": exc.code, "message": str(exc)})
+    if isinstance(exc, LiveRunError):
+        return HTTPException(status_code=exc.status, detail={"code": exc.code, "message": str(exc)})
+    assert isinstance(exc, PactVerifierError)
+    return HTTPException(
+        status_code=_VERIFIER_STATUS.get(exc.code, 422), detail={"code": exc.code, "message": str(exc)}
+    )
+
+
+_RUN_ERRORS = (PactPublicationError, PacticipantValidationError, TargetValidationError, PactVerifierError, LiveRunError)
 
 
 def _tenant_id(auth_data: Dict[str, Any]) -> str:
@@ -151,15 +178,8 @@ def verify_provider(
             actor=actor_from_auth(auth_data, user_id),
             broker_base=_base_url(request, tenant_slug),
         )
-    except (PactPublicationError, PacticipantValidationError) as exc:
-        raise _http_error(exc) from exc
-    except TargetValidationError as exc:
-        status = 404 if exc.code == CODE_TARGET_NOT_FOUND else 422
-        raise HTTPException(status_code=status, detail={"code": exc.code, "message": str(exc)}) from exc
-    except PactVerifierError as exc:
-        raise HTTPException(
-            status_code=_VERIFIER_STATUS.get(exc.code, 422), detail={"code": exc.code, "message": str(exc)}
-        ) from exc
+    except _RUN_ERRORS as exc:
+        raise _refusal(exc) from exc
 
 
 @router.post(
@@ -213,3 +233,225 @@ def preview_verify(
         return preview_verification(db, _tenant_id(auth_data), provider, body)
     except (PactPublicationError, PacticipantValidationError) as exc:
         raise _http_error(exc) from exc
+
+
+# =============================================================================================
+# Live runs — PFX-8.9 (#7306)
+# =============================================================================================
+
+_RUN_NOT_FOUND = {"description": "`pact-verify-run-not-found`: no live run with that id in this workspace."}
+
+
+@router.post(
+    "/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify/runs",
+    response_model=LiveRunSnapshot,
+    status_code=202,
+    summary="Start a live hosted verification",
+    description=(
+        "Start the run `POST …/verify` would make, and answer at once (PFX-8.9) — the body is "
+        "the same, field for field, and so is every refusal: a malformed provider version, "
+        "`pact-verify-too-many-pacts`, an unknown or disabled target, "
+        "`pact-verify-mutating-production`, all raised before anything is sent.\n\n"
+        "The run then replays in the background. Read it with `GET …/pact-verifier/runs/{run_id}` "
+        "— one row per pact with interactions done of the total, the newest failing interaction "
+        "with expected beside actual, and the log — and stop it with `…/stop`. Interactions are "
+        "sent one at a time so a stop takes effect before the next one. Results are published "
+        "exactly as `…/verify` publishes them, as each pact finishes.\n\n"
+        "A workspace runs at most 3 live runs at once (`429 pact-verify-run-limit`). A run lives "
+        "in the API worker that started it and is kept for 30 minutes after it ends. Requires "
+        "`pacts:create` and `verification_evidence:create`."
+    ),
+    responses={
+        400: {"description": "`pact-selector-invalid`, or a malformed provider version, branch or build URL."},
+        404: {"description": "`pacticipant-not-found` or `target-not-found` in this workspace."},
+        422: {"description": "The same refusals as `POST …/verify`."},
+        429: {"description": "`pact-verify-run-limit`: the workspace already has 3 runs going."},
+    },
+)
+@audited_write("pacts.verification.run", "pacticipant/{provider}")
+def start_live_run(
+    request: Request,
+    tenant_slug: str,
+    provider: str,
+    body: PactVerifyRequest,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> LiveRunSnapshot:
+    """Start a live run of the hosted verifier.
+
+    Args:
+        request: The request (its origin shapes the published results' links).
+        tenant_slug: The tenant in the URL (the authenticated tenant scopes every lookup).
+        provider: The provider's handle, id or name.
+        body: The body of ``POST …/verify``.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The run as it starts, every pact queued (``202``).
+
+    Raises:
+        HTTPException: 403 without ``pacts:create`` or ``verification_evidence:create``; 400, 404,
+            422 and 429 as the route documents.
+    """
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.CREATE, target=provider)
+    enforce_permission(db, auth_data, Resource.VERIFICATION_EVIDENCE, Action.CREATE)
+    try:
+        return live_runs.start(
+            db,
+            _tenant_id(auth_data),
+            provider,
+            body,
+            actor=actor_from_auth(auth_data, user_id),
+            broker_base=_base_url(request, tenant_slug),
+        )
+    except _RUN_ERRORS as exc:
+        raise _refusal(exc) from exc
+
+
+def _run_provider(auth_data: Dict[str, Any], run_id: str) -> str:
+    """The provider of a run in the caller's workspace, or a 404 (never another tenant's run)."""
+    try:
+        return live_runs.provider_of(_tenant_id(auth_data), run_id)
+    except LiveRunError as exc:
+        raise _refusal(exc) from exc
+
+
+@router.get(
+    "/{tenant_slug}/pact-verifier/runs/{run_id}",
+    response_model=LiveRunSnapshot,
+    summary="Read a live hosted verification",
+    description=(
+        "A live run as it stands (PFX-8.9): `status` (`running`, `finished`, `errored`), one row "
+        "per pact (`queued`, `running`, `passed`, `failed`, `incomplete`, `stopped`) with "
+        "interactions done of the total, the newest interaction that did not pass with its "
+        "mismatches (expected beside actual), the log lines after `log_after`, and — once "
+        "finished — `result`, exactly what `POST …/verify` would have answered. Poll it every "
+        "second or so; read the log on with `log_after=<log_next>`. A log keeps its newest 2000 "
+        "lines and counts the older ones in `log_dropped`. Requires `pacts:view`."
+    ),
+    responses={404: _RUN_NOT_FOUND},
+)
+def read_live_run(
+    tenant_slug: str,
+    run_id: str,
+    log_after: int = Query(default=0, ge=0, description="Return only log lines after this `seq`."),
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> LiveRunSnapshot:
+    """Read one live run.
+
+    Args:
+        tenant_slug: The tenant in the URL (the authenticated tenant scopes the lookup).
+        run_id: The run's id.
+        log_after: The log cursor.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The run as it stands.
+
+    Raises:
+        HTTPException: 404 for a run not in this workspace; 403 without ``pacts:view``.
+    """
+    _ = tenant_slug
+    provider = _run_provider(auth_data, run_id)
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW, target=provider)
+    try:
+        return live_runs.snapshot(_tenant_id(auth_data), run_id, log_after)
+    except LiveRunError as exc:
+        raise _refusal(exc) from exc
+
+
+@router.post(
+    "/{tenant_slug}/pact-verifier/runs/{run_id}/stop",
+    response_model=LiveRunSnapshot,
+    summary="Stop a live hosted verification",
+    description=(
+        "Ask a live run to stop (PFX-8.9). It ends before its next interaction: the pact being "
+        "replayed publishes nothing (`run-stopped`), the pacts not reached are listed under "
+        "`skipped` with `pact-verify-stopped`, pacts already finished keep their published "
+        "results, and the outcome is `stopped`. Stopping a finished run changes nothing. "
+        "Requires `pacts:create`."
+    ),
+    responses={404: _RUN_NOT_FOUND},
+)
+@audited_write("pacts.verification.stop", "pact-verification-run/{run_id}")
+def stop_live_run(
+    tenant_slug: str,
+    run_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> LiveRunSnapshot:
+    """Stop one live run.
+
+    Args:
+        tenant_slug: The tenant in the URL (the authenticated tenant scopes the lookup).
+        run_id: The run's id.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The run as it stands, ``stop_requested`` set.
+
+    Raises:
+        HTTPException: 404 for a run not in this workspace; 403 without ``pacts:create``.
+    """
+    _ = tenant_slug
+    provider = _run_provider(auth_data, run_id)
+    enforce_permission(db, auth_data, Resource.PACTS, Action.CREATE, target=provider)
+    try:
+        return live_runs.stop(_tenant_id(auth_data), run_id)
+    except LiveRunError as exc:
+        raise _refusal(exc) from exc
+
+
+@router.post(
+    "/{tenant_slug}/pact-verifier/runs/{run_id}/rerun",
+    response_model=RerunResponse,
+    summary="Re-run one interaction of a live hosted verification",
+    description=(
+        "Replay one interaction of a pact the run verified, against the run's target with the "
+        "run's options (PFX-8.9) — provider states set up and torn down, the target's policy and "
+        "the production rule enforced as in any run. **Nothing is published and no evidence is "
+        "recorded**: one interaction does not verify a pact; start a run to record a result. "
+        "The run must have finished (`409 pact-verify-run-busy` while it is going). "
+        "Requires `pacts:create` and `verification_evidence:create`."
+    ),
+    responses={
+        404: {
+            "description": (
+                "`pact-verify-run-not-found`, `pact-verify-run-pact-not-found`, "
+                "`pact-verify-run-interaction-not-found`, or the target is gone."
+            )
+        },
+        409: {"description": "`pact-verify-run-busy`: the run is still going."},
+        422: {"description": "The target can no longer be used, or would be sent a mutating request in production."},
+    },
+)
+@audited_write("pacts.verification.run", "pact-verification-run/{run_id}")
+def rerun_live_interaction(
+    tenant_slug: str,
+    run_id: str,
+    body: RerunRequest,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> RerunResponse:
+    """Re-run one interaction of a finished live run.
+
+    Args:
+        tenant_slug: The tenant in the URL (the authenticated tenant scopes the lookup).
+        run_id: The run's id.
+        body: The pact version and the interaction's case id.
+        auth_data: The authenticated principal.
+
+    Returns:
+        What replaying the interaction showed.
+
+    Raises:
+        HTTPException: 404, 409 and 422 as the route documents; 403 without ``pacts:create`` or
+            ``verification_evidence:create``.
+    """
+    _ = tenant_slug
+    provider = _run_provider(auth_data, run_id)
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.CREATE, target=provider)
+    enforce_permission(db, auth_data, Resource.VERIFICATION_EVIDENCE, Action.CREATE)
+    try:
+        return live_runs.rerun_interaction(
+            db, _tenant_id(auth_data), run_id, body, actor=actor_from_auth(auth_data, user_id)
+        )
+    except _RUN_ERRORS as exc:
+        raise _refusal(exc) from exc
