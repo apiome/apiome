@@ -17047,7 +17047,7 @@ button.tfa-reset-notice__close > svg {
   margin-inline-end: var(--space-2);
   text-align: end;
   user-select: none;
-  color: var(--fg-faint);
+  color: var(--fg);
 }
 
 /* A wash of the tone rather than its `-soft` fill: `-soft` is calibrated
@@ -22595,6 +22595,11 @@ html[data-motion='reduce'] .prm-spin {
   min-inline-size: 0;
   flex-direction: column;
   gap: var(--space-1);
+}
+
+/* The quiet sentence sits on the alert's tinted fill, where `--fg-muted` is too faint: take the alert's own ink. */
+.pd-deprecation .hive-quiet {
+  color: inherit;
 }
 
 .pd-deprecation__message {
@@ -44095,7 +44100,7 @@ tr[data-selected="true"] > td:first-child {
   align-items: center;
   gap: var(--space-2);
   font-size: var(--fs-xs);
-  color: var(--fg-subtle);
+  color: var(--fg-muted);
 }
 
 /* ---- the selected workflow ---- */
@@ -45091,6 +45096,9 @@ tr[data-selected="true"] > td:first-child {
 }
 
 .ppx__link {
+  display: inline-block;
+  min-block-size: var(--space-6);
+  line-height: var(--space-6);
   border-radius: var(--r-sm);
   color: var(--accent-fg);
   text-decoration: underline;
@@ -46220,6 +46228,8 @@ tr[data-selected="true"] > td:first-child {
 
 .pvx-health {
   display: inline-flex;
+  align-items: center;
+  min-block-size: var(--space-6);
   margin-inline-start: var(--space-2);
 }
 
