@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.870.0] - 2026-11-27
+
+### Added
+- **Quality gate for publishing (PFX-7.3, #6963).** OpenAPI 1.694.0; no migration. Publishing a
+  version can now be blocked by failing contracts, reusing the CTG-3.4 guardrail pattern.
+  - New policy `contracts.publishPolicy` in the deploy-gate policy body (`off` / `warn` / `block`,
+    default `warn`; unknown values fall back to `warn`, never `block`). It is not part of the policy
+    fingerprint, so check-suite evaluations stay current.
+  - `POST …/publish` gains a contracts gate after the maturity gate: under `block`, a revision whose
+    Pact can-i-deploy verdict (the deploy gate's `contracts` signal, `app.pact_matrix.deployment_verdict`)
+    is "not deployable" is refused with 422 `detail.contractsPublishGate`; `skipPublishChecks` with a
+    `forcePublishReason` goes past it. A missing verification result (`pending`), no bound pacticipant,
+    a fault, or a caller without `pacts:view` (`unavailable`) never blocks.
+  - `GET /v1/versions/{tenant}/{project}/{revision}/contracts-publish-gate` is the read-only preflight
+    the publish dialog calls (`versions:view`; the verdict itself needs `pacts:view`).
+  - Warned and forced publishes append `version.contracts_gate` to the workflow audit trail.
+
 ## [1.869.0] - 2026-11-26
 
 ### Added

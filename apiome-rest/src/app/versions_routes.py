@@ -23,6 +23,8 @@ from .auth import get_authenticated_user_id, validate_authentication
 from .branch_push_policy import effective_require_merge_path
 from .api_check_suite_gate import assess_check_suite_gate
 from .approval_publish_gate import assess_approval_gate
+from .contracts_publish_gate import AUDIT_ACTION as CONTRACTS_GATE_AUDIT_ACTION
+from .contracts_publish_gate import assess_contracts_publish_gate
 from .maturity_publish_gate import AUDIT_ACTION as MATURITY_GATE_AUDIT_ACTION
 from .maturity_publish_gate import assess_maturity_gate
 from .breaking_publish_guardrail import assess_breaking_publish
@@ -103,6 +105,7 @@ from .mock_scenario_settings import (
 )
 from .models import (
     BreakingPublishGuardrailOut,
+    ContractsPublishGateOut,
     MockCapturePolicySpec,
     MockCaptureSummary,
     MockChaosSpec,
@@ -2316,6 +2319,7 @@ def publish_version(
         project_id=project_id,
         existing=existing,
         request=request,
+        pacts_permitted=has_permission(db, auth_data, Resource.PACTS, Action.VIEW),
     )
 
     version = db.publish_version(
@@ -2412,6 +2416,18 @@ def publish_version(
         forced=bool(request.skip_publish_checks),
         force_reason=request.force_publish_reason,
         actor_id=user_id,
+    )
+
+    _audit_contracts_gate(
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        version_record_id=version_record_id,
+        existing=existing,
+        contracts_gate=precheck.contracts_gate,
+        forced=bool(request.skip_publish_checks),
+        force_reason=request.force_publish_reason,
+        actor_id=user_id,
+        pacts_permitted=has_permission(db, auth_data, Resource.PACTS, Action.VIEW),
     )
 
     # COA-5.5 (#7081): render the published revision's documents into the document store now, so
@@ -2676,6 +2692,72 @@ def _audit_maturity_gate(
         )
 
 
+def _audit_contracts_gate(
+    *,
+    tenant_id: str,
+    project_id: str,
+    version_record_id: str,
+    existing: Dict[str, Any],
+    contracts_gate: Optional[Dict[str, Any]],
+    forced: bool,
+    force_reason: Optional[str],
+    actor_id: Optional[str],
+    pacts_permitted: bool,
+) -> None:
+    """Record a flagged contracts publish in the workflow audit trail (PFX-7.3, #6963).
+
+    Two publishes have something to record: one the gate *warned* about and let through, and one
+    *forced* past what would have warned or blocked. The forced case has no precheck assessment
+    (``skip_publish_checks`` skips the prechecks wholesale), so it is assessed here — the case
+    where an audit trail matters most. Clean, disabled, pending and unavailable publishes record
+    nothing.
+
+    Args:
+        tenant_id: Tenant context.
+        project_id: Project of the published revision.
+        version_record_id: The published revision.
+        existing: The revision row as it was read before publish.
+        contracts_gate: The precheck's verdict payload, when the prechecks ran.
+        forced: Whether this publish set ``skipPublishChecks``.
+        force_reason: The recorded force-publish reason, when forced.
+        actor_id: The publishing user.
+        pacts_permitted: Whether the publisher holds ``pacts:view``.
+
+    Returns:
+        None. Best-effort: an assessment or audit fault never fails a successful publish.
+    """
+    try:
+        payload = contracts_gate
+        if forced:
+            payload = assess_contracts_publish_gate(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                version=existing,
+                permitted=pacts_permitted,
+            ).as_payload()
+        if not payload or not payload.get("triggered"):
+            return
+        db.insert_workflow_audit(
+            tenant_id,
+            project_id,
+            version_record_id,
+            CONTRACTS_GATE_AUDIT_ACTION,
+            "success",
+            actor_id,
+            {
+                "action": "forced" if forced else "warned",
+                "reason": force_reason if forced else None,
+                "contractsPublishGate": payload,
+            },
+        )
+    except Exception:  # noqa: BLE001 - auditing must never fail a completed publish
+        logger.warning(
+            "Contracts-gate audit failed for revision %s; the publish itself stands",
+            version_record_id,
+            exc_info=True,
+        )
+
+
 #: Workflow-audit action for every breaking publish the CTG-3.4 guardrail flagged.
 BREAKING_PUBLISH_GUARDRAIL_AUDIT_ACTION = "version.breaking_publish_guardrail"
 
@@ -2790,6 +2872,53 @@ def get_breaking_publish_guardrail(
         head_version=existing,
     )
     return BreakingPublishGuardrailOut.model_validate(assessment.as_payload())
+
+
+@router.get(
+    "/{tenant_slug}/{project_id}/{version_record_id}/contracts-publish-gate",
+    response_model=ContractsPublishGateOut,
+)
+def get_contracts_publish_gate(
+    tenant_slug: str,
+    project_id: str,
+    version_record_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ContractsPublishGateOut:
+    """
+    Preflight the contracts publish gate for a revision (PFX-7.3, #6963).
+
+    What the publish dialog calls before showing Publish: whether the Pact can-i-deploy verdict
+    for this revision says it breaks a contract, which rows say so, and whether the policy
+    (`contracts.publishPolicy` in the deploy-gate policy) warns or blocks. Read-only — nothing
+    is published or stored. A caller without `pacts:view` gets `unavailable`, never a verdict.
+
+    Args:
+        tenant_slug: The tenant slug
+        project_id: The project ID
+        version_record_id: The version record ID
+        auth_data: Authentication data (injected by dependency)
+
+    Returns:
+        The gate assessment; `status` is `unavailable` (never an error) when the verdict could
+        not be read.
+
+    Raises:
+        HTTPException: 404 when the revision does not exist in this project.
+    """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    existing = db.get_version_by_id(version_record_id, auth_data["tenant_id"])
+    if not existing or str(existing.get("project_id")) != str(project_id):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Version not found: {version_record_id}",
+        )
+    assessment = assess_contracts_publish_gate(
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        version=existing,
+        permitted=has_permission(db, auth_data, Resource.PACTS, Action.VIEW),
+    )
+    return ContractsPublishGateOut.model_validate(assessment.as_payload())
 
 
 @router.put("/{tenant_slug}/{project_id}/{version_record_id}/mock")

@@ -1,6 +1,6 @@
 ---
 title: "Versions"
-description: "REST endpoints tagged versions: 68 operations."
+description: "REST endpoints tagged versions: 69 operations."
 sidebar_position: 122
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.693.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.694.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `versions` · 68 operations
+Tag: `versions` · 69 operations
 
 ## `GET /v1/versions/{tenant_slug}/sunset-timeline` {#get-sunset-timeline-v1-versions-tenant-slug-sunset-timeline-get}
 
@@ -902,6 +902,49 @@ Operation id: `get_breaking_publish_guardrail_v1_versions__tenant_slug___project
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for get breaking publish guardrail. | `application/json` [`BreakingPublishGuardrailOut`](#schema-breakingpublishguardrailout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/contracts-publish-gate` {#get-contracts-publish-gate-v1-versions-tenant-slug-project-id-version-record-id-contracts-publish-gate-get}
+
+**Get Contracts Publish Gate**
+
+Preflight the contracts publish gate for a revision (PFX-7.3, #6963).
+
+What the publish dialog calls before showing Publish: whether the Pact can-i-deploy verdict
+for this revision says it breaks a contract, which rows say so, and whether the policy
+(`contracts.publishPolicy` in the deploy-gate policy) warns or blocks. Read-only — nothing
+is published or stored. A caller without `pacts:view` gets `unavailable`, never a verdict.
+
+Args:
+    tenant_slug: The tenant slug
+    project_id: The project ID
+    version_record_id: The version record ID
+    auth_data: Authentication data (injected by dependency)
+
+Returns:
+    The gate assessment; `status` is `unavailable` (never an error) when the verdict could
+    not be read.
+
+Raises:
+    HTTPException: 404 when the revision does not exist in this project.
+
+Operation id: `get_contracts_publish_gate_v1_versions__tenant_slug___project_id___version_record_id__contracts_publish_gate_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_id` | path | string | yes | Project identifier that scopes the request. |
+| `version_record_id` | path | string | yes | Version row identifier (``versions.id`` UUID). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get contracts publish gate. | `application/json` [`ContractsPublishGateOut`](#schema-contractspublishgateout) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/document` {#get-version-document-v1-versions-tenant-slug-project-id-version-record-id-document-get}
@@ -2576,6 +2619,31 @@ trail, so the dialog, the API error, and the audit row can never disagree.
 | `recommendedVersion` | string or null | no | Recommended Version. |
 | `detail` | string or null | no | Detail. |
 | `evaluatedUnder` | `EvaluatedUnderOut` or null | no | What the comparison was graded under: the project's compatibility mode, transitivity and Protobuf category, and the published revisions compared (XPC-4.5). |
+| `message` | string | yes | Message. |
+
+### `ContractsPublishGateOut` {#schema-contractspublishgateout}
+
+Contracts publish gate assessment for a candidate publish (PFX-7.3, #6963).
+
+Shared verbatim by the preflight endpoint, the blocked-publish 422 body and the audit trail,
+so the dialog, the API error and the audit row can never disagree.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `policy` | string | yes | Resolved level: off \| warn \| block. |
+| `status` | string | yes | disabled \| no-contracts \| ok \| warning \| blocked \| pending \| unavailable. |
+| `triggered` | boolean | yes | The gate has a warning or a block to report. |
+| `blocked` | boolean | yes | Publish is refused unless force-published. |
+| `pacticipant` | string or null | no | The pacticipant bound to the project. |
+| `version` | string or null | no | The pacticipant version asked about. |
+| `environment` | string or null | no | The destination environment; null checks the latest counterparts. |
+| `deployable` | boolean or null | no | can-i-deploy verdict; null when a verification result is missing. |
+| `reasons` | array of object | no | Per-row reasons: `{type, code, text}`, at most 50. |
+| `reasonCount` | integer | no | The true number of reasons, which may exceed `reasons`. |
+| `counts` | map of integer | no | Counts. |
+| `reason` | string or null | no | Stable reason code of the signal. |
+| `link` | string or null | no | Link. |
+| `detail` | string or null | no | Detail. |
 | `message` | string | yes | Message. |
 
 ### `FreezeSchemaRequest` {#schema-freezeschemarequest}

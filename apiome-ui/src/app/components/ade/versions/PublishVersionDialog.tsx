@@ -60,6 +60,7 @@ import {
 } from '@/app/components/ui/Select';
 import { Textarea } from '@/app/components/ui/Textarea';
 import { PublishGuideViolationsPanel } from '@/app/components/ade/dashboard/PublishGuideViolationsPanel';
+import { ContractsPublishGatePanel } from '@/app/components/ade/dashboard/ContractsPublishGatePanel';
 import { BreakingPublishGuardrailPanel } from '@/app/components/ade/dashboard/BreakingPublishGuardrailPanel';
 import VerificationPolicyDecisionPanel from '@/app/components/ade/dashboard/VerificationPolicyDecisionPanel';
 import { ReviewStatusPanel } from '@/app/components/ade/reviews/ReviewStatusPanel';
@@ -377,6 +378,12 @@ export default function PublishVersionDialog({
                     versionSlug={version.version_id}
                     enabled={open}
                     onDecisionChange={onDecisionChange}
+                  />
+                  {/* PFX-7.3: failing contracts — silent unless there is something to say. */}
+                  <ContractsPublishGatePanel
+                    projectId={version.project_id}
+                    versionId={version.id}
+                    enabled={open}
                   />
                   {/* CDG-2.5: the owner gate always says where it stands, off included. */}
                   <OwnerGatePanel projectId={version.project_id} enabled={open} />

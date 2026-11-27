@@ -8507,6 +8507,48 @@ class BreakingPublishGuardrailOut(BaseModel):
     message: str
 
 
+class ContractsPublishGateOut(BaseModel):
+    """Contracts publish gate assessment for a candidate publish (PFX-7.3, #6963).
+
+    Shared verbatim by the preflight endpoint, the blocked-publish 422 body and the audit trail,
+    so the dialog, the API error and the audit row can never disagree.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    policy: str = Field(description="Resolved level: off | warn | block.")
+    status: str = Field(
+        description=(
+            "disabled | no-contracts | ok | warning | blocked | pending | unavailable."
+        )
+    )
+    triggered: bool = Field(description="The gate has a warning or a block to report.")
+    blocked: bool = Field(description="Publish is refused unless force-published.")
+    pacticipant: Optional[str] = Field(None, description="The pacticipant bound to the project.")
+    version: Optional[str] = Field(None, description="The pacticipant version asked about.")
+    environment: Optional[str] = Field(
+        None, description="The destination environment; null checks the latest counterparts."
+    )
+    deployable: Optional[bool] = Field(
+        None, description="can-i-deploy verdict; null when a verification result is missing."
+    )
+    reasons: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Per-row reasons: `{type, code, text}`, at most 50.",
+    )
+    reason_count: int = Field(
+        0,
+        validation_alias=AliasChoices("reasonCount", "reason_count"),
+        serialization_alias="reasonCount",
+        description="The true number of reasons, which may exceed `reasons`.",
+    )
+    counts: Dict[str, int] = Field(default_factory=dict)
+    reason: Optional[str] = Field(None, description="Stable reason code of the signal.")
+    link: Optional[str] = None
+    detail: Optional[str] = None
+    message: str
+
+
 class VerificationPolicyEvaluationOut(BaseModel):
     """One persisted evaluation row (ECA-3.1, #4734)."""
 

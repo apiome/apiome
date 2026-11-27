@@ -1,0 +1,22 @@
+---
+slug: pact-publish-quality-gate
+title: "Block a publish on failing contracts"
+description: "A version publish can now be warned or blocked when its Pact contracts fail."
+authors: [apiome]
+---
+
+Publishing a version can now be stopped by your Pact contracts. See
+[block a publish on failing contracts](/ship/pact-broker/can-i-deploy#block-a-publish-on-failing-contracts).
+
+{/* truncate */}
+
+- A new `contracts.publishPolicy` in the deploy-gate policy sets what a failing contract does to a
+  publish: `off`, `warn` (the default) or `block`.
+- Under `block`, a version whose can-i-deploy verdict is "not deployable" is refused. Force publish
+  with a reason goes past it, and is recorded in the audit trail.
+- The publish dialog gains a **Contracts** card with the failing rows. A verification that is still
+  missing shows as pending and never blocks.
+- `GET …/versions/{tenant}/{project}/{revision}/contracts-publish-gate` previews the result without
+  publishing. OpenAPI 1.694.0.
+
+*Last updated: November 27, 2026*

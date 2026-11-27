@@ -406,6 +406,14 @@ export const PRIMARY_READS: readonly PrimaryRead[] = [
     failed: { file: 'breaking-publish-guardrail-panel.test.tsx', title: 'says the check failed, with a retry that runs it again' },
   },
   {
+    id: 'D23b',
+    surface: 'Publish dialog → Contracts',
+    source: 'src/app/components/ade/dashboard/ContractsPublishGatePanel.tsx',
+    needle: 'fetchContractsPublishGate(',
+    pending: { file: 'contracts-publish-gate-panel.test.tsx', title: 'says what it is checking while the read is pending' },
+    failed: { file: 'contracts-publish-gate-panel.test.tsx', title: 'says the check failed, with a retry that runs it again' },
+  },
+  {
     id: 'D26',
     surface: 'Versions → Repository (binding)',
     source: 'src/app/components/ade/bindings/VersionBindingPanel.tsx',
