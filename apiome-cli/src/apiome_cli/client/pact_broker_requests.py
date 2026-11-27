@@ -598,3 +598,57 @@ def build_verify_body(
     if context:
         body["context"] = dict(context)
     return body
+
+
+# ---------------------------------------------------------------------------------------------
+# check (PFX-8.4, #7301)
+# ---------------------------------------------------------------------------------------------
+
+#: The provider-version selector kinds ``POST …/pacts/check`` reads.
+CHECK_SELECTOR_KINDS = ("main", "deployed", "version", "draft")
+
+#: The most ``--against`` selectors one check sends (the route's limit).
+MAX_CHECK_SELECTORS = 10
+
+
+def parse_check_selectors(values: Sequence[str]) -> list[str]:
+    """Check ``--against`` before anything is sent.
+
+    Args:
+        values: ``main``, ``deployed:<environment>``, ``version:<number>`` or ``draft:<revision>``,
+            one per option.
+
+    Returns:
+        The selectors, trimmed, in the order given.
+
+    Raises:
+        ValueError: when none or more than :data:`MAX_CHECK_SELECTORS` are given, or one is not
+            one of the four forms (the message names it).
+    """
+    selectors = [value.strip() for value in values if value and value.strip()]
+    if not 1 <= len(selectors) <= MAX_CHECK_SELECTORS:
+        raise ValueError(f"give 1 to {MAX_CHECK_SELECTORS} --against selectors; got {len(selectors)}")
+    for selector in selectors:
+        kind, sep, value = selector.partition(":")
+        kind = kind.strip().lower()
+        if kind == "main" and not sep:
+            continue
+        if kind in CHECK_SELECTOR_KINDS[1:] and value.strip():
+            continue
+        raise ValueError(
+            f"{selector!r} is not a selector; use main, deployed:<environment>, version:<number> or draft:<revision>"
+        )
+    return selectors
+
+
+def build_check_body(pact: PactFile, against: Sequence[str]) -> dict[str, Any]:
+    """The body of ``POST …/pact-broker/pacts/check`` for one pact file.
+
+    Args:
+        pact: The pact, read by :func:`read_pact_file`.
+        against: The selectors, checked by :func:`parse_check_selectors`.
+
+    Returns:
+        ``{"pact": <the document>, "against": [...]}``.
+    """
+    return {"pact": json.loads(pact.content), "against": list(against)}

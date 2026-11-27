@@ -140,6 +140,7 @@ from .pact_broker_environment_routes import router as pact_broker_environment_ro
 from .pact_broker_host import PactBrokerHostAliasMiddleware
 from .pact_broker_matrix_routes import router as pact_broker_matrix_router
 from .pact_broker_routes import router as pact_broker_router
+from .pact_check_routes import router as pact_check_router
 from .pact_broker_verification_routes import router as pact_broker_verification_router
 from .pact_comparison_routes import router as pact_comparison_router
 from .pact_webhook_delivery_routes import router as pact_webhook_delivery_router
@@ -588,6 +589,7 @@ app.include_router(pact_commit_status_router)
 # ``…/pact-broker`` no real route serves gets a documented 501, never a bare 404.
 app.include_router(pact_broker_compat_router)
 app.include_router(pact_broker_router)
+app.include_router(pact_check_router)  # PFX-8.4 (#7301): check a pact before publishing
 app.include_router(pact_broker_verification_router)
 app.include_router(pact_comparison_router)  # PFX-2.5 (#6929): comparison fidelity reports
 app.include_router(pact_webhook_delivery_router)  # PFX-5.6 (#6950): webhook delivery log, redeliver

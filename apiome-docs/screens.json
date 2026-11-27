@@ -2966,6 +2966,17 @@
       ]
     },
     {
+      "id": "pact-publish-check",
+      "route": "/ade/dashboard/pacts/publish",
+      "waitFor": "[data-testid=\"ppub-check-result\"]",
+      "data": "fixture:hive-a11y/pact-publish-check.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactPublish/PublishPactClient.tsx",
+        "apiome-ui/src/app/components/ade/pactPublish/CheckPanels.tsx",
+        "apiome-ui/lib/pact-publish-check.ts"
+      ]
+    },
+    {
       "id": "pact-health",
       "route": "/ade/dashboard/pacts/health",
       "waitFor": "[data-testid=\"phx-pairs-table\"]",

@@ -12,10 +12,14 @@
  * 2. **Whose version this is** — consumer version, branch, tags, *Fill from the linked repository*,
  *    and under *More options* the build URL, *Merge* (refused with the CLI's reason) and *Also tag
  *    with the branch name*.
- * 3. The aside — **The same, from anywhere** for the form as it stands.
+ * 3. **Check it before it counts** (PFX-8.4, #7301) — *Compare with* one chip per provider version
+ *    (the provider's main branch, each environment, the latest draft, or any version typed in).
+ * 4. The aside — the result of the check per pact (one pill per provider version, match / differs /
+ *    not in spec per interaction, the difference drawer), then **The same, from anywhere**.
  *
- * **Check only** reads what each pact's version already published and marks every row new,
- * unchanged or a conflict; it writes nothing. **Publish pact** sends one request per consumer, as the
+ * **Check only** compares each pact with the chosen provider versions (`POST …/pacts/check`) and reads
+ * what each pact's version already published, marking every row new, unchanged or a conflict; it
+ * writes nothing. **Publish pact** sends one request per consumer, as the
  * CLI does; a row the page or REST refuses is marked and the others still go. The result dialog
  * says which pacts are new and pending, which were unchanged, what was refused, and whether webhooks
  * and comparisons ran.
@@ -27,7 +31,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ClipboardPaste, FileUp, FolderOpen, GitCommitHorizontal, Upload, WandSparkles } from 'lucide-react';
+import { ClipboardPaste, FileUp, FolderOpen, GitCommitHorizontal, ShieldCheck, Upload, WandSparkles } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -69,15 +73,29 @@ import {
   type PublishSource,
   type WhoseVersion,
 } from '@lib/pact-publish-page';
+import {
+  MAX_SELECTORS,
+  checkCommandAction,
+  compareChoices,
+  defaultSelectors,
+  differenceView,
+  parseSelector,
+  type CompareChoice,
+  type DifferenceView,
+} from '@lib/pact-publish-check';
 import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CheckResultCard, CompareWith, DifferenceDrawer, type CheckState } from './CheckPanels';
 import { FileTable, ReadOnlyNote, ResultDialog, type PublishFailure, type PublishResult } from './PublishPanels';
 import {
   checkRow,
+  comparePact,
+  fetchCompareEnvironments,
   fetchPacticipant,
   fetchProjectConsumers,
   fetchProjects,
   publishBatch,
   publishDerived,
+  type CompareEnvironment,
   type ConsumerChoice,
   type ProjectChoice,
 } from './publishApi';
@@ -162,6 +180,12 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
   const [projects, setProjects] = React.useState<ProjectChoice[] | null>(null);
   const [consumers, setConsumers] = React.useState<ConsumerChoice[] | null>(null);
   const [listError, setListError] = React.useState<string | null>(null);
+  const [environments, setEnvironments] = React.useState<CompareEnvironment[] | null>(null);
+  const [envProblem, setEnvProblem] = React.useState<string | null>(null);
+  const [typedChoices, setTypedChoices] = React.useState<CompareChoice[]>([]);
+  const [selectors, setSelectors] = React.useState<string[] | null>(null);
+  const [checks, setChecks] = React.useState<Record<string, CheckState>>({});
+  const [difference, setDifference] = React.useState<DifferenceView | null>(null);
   const fileInput = React.useRef<HTMLInputElement>(null);
   const folderInput = React.useRef<HTMLInputElement>(null);
   const nextId = React.useRef(0);
@@ -181,6 +205,44 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
       // Storage refused or the value was not ours: the page starts empty.
     }
   }, []);
+
+  // **Compare with**: the workspace's environments, read once; main and production start switched on.
+  React.useEffect(() => {
+    if (!canWrite || environments !== null) return;
+    void fetchCompareEnvironments().then((answer) => {
+      if (Array.isArray(answer)) setEnvironments(answer);
+      else {
+        setEnvironments([]);
+        setEnvProblem(`${answer.error} Type a provider version with + Another version.`);
+      }
+    });
+  }, [canWrite, environments]);
+
+  const chosen = selectors ?? defaultSelectors(environments ?? []);
+  const choices = [
+    ...compareChoices((environments ?? []).map((env) => env.name)),
+    ...typedChoices,
+  ].filter((choice, index, all) => all.findIndex((other) => other.selector === choice.selector) === index);
+
+  const toggleSelector = (selector: string) => {
+    if (chosen.includes(selector)) return setSelectors(chosen.filter((item) => item !== selector));
+    if (chosen.length >= MAX_SELECTORS) {
+      return setNotice(`A check compares with at most ${MAX_SELECTORS} provider versions: switch one off first.`);
+    }
+    setSelectors([...chosen, selector]);
+  };
+
+  /** **+ Another version**: add a typed selector, switched on. */
+  const addSelector = (text: string): string | null => {
+    const parsed = parseSelector(text);
+    if ('error' in parsed) return parsed.error;
+    if (!chosen.includes(parsed.selector) && chosen.length >= MAX_SELECTORS) {
+      return `A check compares with at most ${MAX_SELECTORS} provider versions: switch one off first.`;
+    }
+    if (!choices.some((choice) => choice.selector === parsed.selector)) setTypedChoices((list) => [...list, parsed]);
+    if (!chosen.includes(parsed.selector)) setSelectors([...chosen, parsed.selector]);
+    return null;
+  };
 
   // The Derive tab's choices, read when it is first opened.
   React.useEffect(() => {
@@ -266,6 +328,7 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
       const text = await navigator.clipboard.readText();
       setPasted(text);
       setVerdicts({});
+      setChecks({});
     } catch {
       setNotice('The browser did not allow reading the clipboard: paste into the box with Ctrl+V or ⌘V.');
     }
@@ -295,7 +358,21 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
     }
   };
 
-  /** **Check only**: read what each row's version already published. Writes nothing. */
+  /** Compare each publishable row with the chosen provider versions. Writes nothing. */
+  const compareRows = async (targets = sendable) => {
+    if (!chosen.length) return;
+    setChecks((current) => ({ ...current, ...Object.fromEntries(targets.map((row) => [row.id, { status: 'loading' } as CheckState])) }));
+    for (const row of targets) {
+      const answer = await comparePact(row, chosen);
+      const state: CheckState = 'error' in answer ? { status: 'error', error: answer.error } : { status: 'done', answer };
+      setChecks((current) => ({ ...current, [row.id]: state }));
+    }
+  };
+
+  /**
+   * **Check only**: compare each pact with the chosen provider versions, and read what each row's
+   * version already published. Writes nothing.
+   */
   const checkOnly = async () => {
     setProblem(null);
     setNotice(null);
@@ -303,15 +380,21 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
       setNotice('A derived pact is generated when it is published, so there is nothing to compare yet. Its findings are listed after publishing.');
       return;
     }
-    const issue = validateWhose({ ...whose, merge: false });
-    if (issue) return setProblem(issue);
     if (!sendable.length) return setProblem(rows.length ? 'No pact here can be published: each row says why.' : 'Add a pact first.');
+    const issue = validateWhose({ ...whose, merge: false });
+    if (issue && !chosen.length) return setProblem(issue);
     setBusy('check');
-    const version = whose.version.trim();
-    const answers = await Promise.all(sendable.map(async (row) => [row.id, await checkRow(row, version)] as const));
+    const compared = compareRows();
+    if (issue) {
+      setNotice(`Compared with the provider versions. ${issue} — then check again to see whether this version already published a pact.`);
+    } else {
+      const version = whose.version.trim();
+      const answers = await Promise.all(sendable.map(async (row) => [row.id, await checkRow(row, version)] as const));
+      setVerdicts(Object.fromEntries(answers));
+      setCheckedVersion(version);
+    }
+    await compared;
     setBusy(null);
-    setVerdicts(Object.fromEntries(answers));
-    setCheckedVersion(version);
   };
 
   /** **Publish pact**. */
@@ -372,6 +455,7 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
     setFiles([]);
     setPasted('');
     setVerdicts({});
+    setChecks({});
   };
 
   const action = publishCommandAction({ source, rows, whose, derive, tenant: '' });
@@ -542,6 +626,7 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
                           onChange={(event) => {
                             setPasted(event.target.value);
                             setVerdicts({});
+                            setChecks({});
                           }}
                         />
                         {pastedRow ? (
@@ -721,14 +806,58 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
                       </div>
                     </details>
                   </section>
+
+                  <section className="ppub-card" aria-labelledby="ppub-step-3" data-testid="ppub-step-check">
+                    <div className="ppub-card__head">
+                      <h2 className="ppub-card__title" id="ppub-step-3">
+                        <span className="ppub-step" aria-hidden>
+                          3
+                        </span>
+                        Check it before it counts
+                      </h2>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void checkOnly()}
+                        disabled={busy !== null || !chosen.length}
+                        data-testid="ppub-compare"
+                      >
+                        <ShieldCheck aria-hidden />
+                        {busy === 'check' ? 'Checking…' : 'Compare now'}
+                      </Button>
+                    </div>
+                    <CompareWith choices={choices} selected={chosen} onToggle={toggleSelector} onAdd={addSelector} problem={envProblem} />
+                    {source === 'derive' ? (
+                      <p className="ppub-hint">A derived pact is generated when it is published, so it is compared after publishing.</p>
+                    ) : null}
+                    <CommandBlock
+                      title="The same check, from anywhere"
+                      surfaces={pactCommandSurfaces(checkCommandAction({ selectors: chosen, tenant: '' }))}
+                      footnote="Exits 0 when every pact matches every provider version checked, 1 otherwise. Replace {tenant} in the REST path."
+                      data-testid="ppub-check-command"
+                    />
+                  </section>
                 </>
               ) : null}
             </div>
-            <aside className="ppub__aside" aria-label="The same, from anywhere">
+            <aside className="ppub__aside" aria-label="Result of the check and the same, from anywhere">
+              {sendable
+                .filter((row) => checks[row.id])
+                .map((row) => (
+                  <CheckResultCard
+                    key={row.id}
+                    pair={`${row.consumer} → ${row.provider}`}
+                    state={checks[row.id]}
+                    onRecheck={() => void compareRows([row])}
+                    onOpen={(interaction, picked, provider) => setDifference(differenceView(interaction, picked, provider))}
+                  />
+                ))}
               {commandBlock}
             </aside>
           </div>
           <ResultDialog result={result} onClose={() => setResult(null)} onAgain={reset} />
+          <DifferenceDrawer view={difference} onClose={() => setDifference(null)} />
         </div>
       </PageBody>
     </Page>

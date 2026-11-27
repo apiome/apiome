@@ -18,6 +18,12 @@ read like any other. `fail` is a failed result; `pass` and `partial` are success
 **Pact comparisons** page lists recent comparisons and opens each one's
 [fidelity report](#the-fidelity-report).
 
+The same comparison also runs **before** a pact is published: a
+[check](./publish-pacts.mdx#check-before-publishing) compares an unpublished pact with several
+provider versions — the provider's main branch, what is deployed, a named version, a draft of its
+project — and stores nothing. Its verdict for a version is the one a publish would record against
+it, by the rules on this page.
+
 ## The verdict
 
 Each interaction of the pact is compared on its own, then the pact gets the worst result of its
@@ -411,6 +417,22 @@ JSON Schema (`reason: schema-format`). The message comparison adds:
 | `metadata-not-compared` | A metadata value was not validated: the `headers` schema combines schemas there, or declares no schema at all. |
 | `interaction-not-message` | An HTTP or plugin interaction has no message to compare with an AsyncAPI document. |
 | `synchronous-message-not-compared` | A Pact 4 synchronous message (a request and its reply) is not compared yet. |
+
+## In a check before publishing
+
+A [check](./publish-pacts.mdx#check-before-publishing) reports each interaction with one of three
+outcomes, read from its failures:
+
+| Outcome | When |
+| --- | --- |
+| `not-in-spec` | A failure says the contract has no such operation or message: `request.operation.unknown`, `request.method.undeclared`, `message.channel.unknown` or `message.unknown`. |
+| `differs` | Any other [failure](#failures) or [message failure](#message-failures). |
+| `match` | No failure — a `pass` or a `partial` interaction (its fidelity notes still count). |
+
+A row that does not match carries `expected` (the pact's response, or a message's contents) and
+`declared` (the contract's response for the expected status — exact, its range such as `2XX`, or
+`default` — with local `$ref`s inlined), each cut off past 8 KB with its size. These are what the
+Publish page's difference drawer shows.
 
 ## What is not compared
 

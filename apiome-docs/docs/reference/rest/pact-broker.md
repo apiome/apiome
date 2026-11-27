@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 108 operations."
+description: "REST endpoints tagged pact-broker: 109 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.697.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.698.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 108 operations
+Tag: `pact-broker` · 109 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -958,6 +958,48 @@ Operation id: `put_version_tag_v1_tenants__tenant_slug__pact_broker_pacticipants
 | 200 | Successful response for tag a version (pact broker shape). | `application/hal+json` any |
 | 201 | The version was created with the tag. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/pacts/check` {#check-pact-v1-tenants-tenant-slug-pact-broker-pacts-check-post}
+
+**Check a pact against provider versions before publishing**
+
+Compare an unpublished pact with the provider contracts of several provider versions at once, and store nothing. `against` names them: `main` (the newest version on the provider's main branch with a contract), `deployed:<environment>` (every version deployed to or released in it), `version:<number>`, and `draft:<revision>` (a revision of the Apiome project the provider is bound to, rendered as it stands).
+
+- **The verdict a publish would record.** Each version's `verdict` and `success` are what publishing this pact would store as its bi-directional verification result, evidence policy included (`unverified` when the contract has no passing self-verification).
+- **Per interaction**, `outcome` is `match`, `differs` or `not-in-spec`, with the failures; a row that does not match carries `expected` (what the pact needs) and `declared` (what the contract declares), each at most 8 KB.
+- **Nothing dropped.** A selector that names nothing is listed in `unresolved` with the reason; versions over the limit of 20 in `skipped`. `summary.success` is true only when every compared version passes and nothing is unresolved or skipped.
+
+Requires `pacts:view`; a `draft:` selector also needs `versions:view`. Not a Pact Broker endpoint.
+
+Operation id: `check_pact_v1_tenants__tenant_slug__pact_broker_pacts_check_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for check a pact against provider versions before publishing.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `pact` | object | yes | The Pact document (v1 to v4), as a JSON object. |
+| `against` | array of string | yes | Provider-version selectors: `main`, `deployed:<environment>`, `version:<number>`, `draft:<revision>` (a label, revision id or `latest`). |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for check a pact against provider versions before publishing. | `application/json` object |
+| 413 | `pact-too-large`: the request is over the size limit. | — |
+| 422 | `pact-check-invalid` or `pact-invalid`, with `pointer`: a malformed request, an unknown field or selector, or a document that is not a pact. | — |
+| 429 | `pact-check-rate-limited`: over the workspace's check budget; see `Retry-After`. | — |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker/pacts/provider/{provider}/consumer/{consumer}/branch/{branch}/latest` {#read-latest-branch-pact-v1-tenants-tenant-slug-pact-broker-pacts-provider-provider-consumer-consumer-branch-branch-latest-get}
 

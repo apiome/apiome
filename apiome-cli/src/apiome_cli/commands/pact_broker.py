@@ -1,6 +1,7 @@
 """The ``pact-broker``-compatible commands of ``apiome pact`` — PFX-4.1 (#6938).
 
-``publish``, ``list-pacticipants``, ``describe-version``, ``can-i-deploy``, ``record-deployment``,
+``publish``, ``check`` (PFX-8.4, #7301: a pre-publish comparison with several provider versions; no
+``pact-broker`` equivalent), ``list-pacticipants``, ``describe-version``, ``can-i-deploy``, ``record-deployment``,
 ``record-release``, ``create-environment``, ``create-webhook`` and ``verify`` take the flags of
 the ``pact-broker`` CLI they replace (``-a``, ``-e``, ``-l``, ``-t``, ``-b``, ``-k``, ``-o``, …)
 and print the same sentences, so a pipeline moves over by changing the command name. ``migrate``
@@ -32,6 +33,7 @@ from apiome_cli.client.pact_broker_connection import BrokerConnection, connect, 
 from apiome_cli.client.pact_broker_requests import (
     WEBHOOK_EVENTS,
     CanIDeployQuery,
+    build_check_body,
     build_environment_body,
     build_publish_bodies,
     build_verify_body,
@@ -40,6 +42,7 @@ from apiome_cli.client.pact_broker_requests import (
     deployable,
     detect_version_properties,
     embedded_environments,
+    parse_check_selectors,
     parse_context,
     parse_selectors,
     read_pact_file,
@@ -49,6 +52,7 @@ from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
 from apiome_cli.output import emit_json, json_mode_from_context
 from apiome_cli.pact_broker_output import (
     can_i_deploy_lines,
+    check_lines,
     environment_created_lines,
     native_version_document,
     pacticipant_lines,
@@ -189,6 +193,56 @@ def publish(
     conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
     responses = [conn.client.post(conn.broker_path("/contracts/publish"), json=body).json() for body in bodies]
     _emit(fmt, responses[0] if len(responses) == 1 else responses, publish_lines(responses, fmt))
+
+
+# ---------------------------------------------------------------------------------------------
+# check (PFX-8.4, #7301)
+# ---------------------------------------------------------------------------------------------
+
+
+def check(
+    ctx: typer.Context,
+    pacts: list[Path] = typer.Argument(..., help="Pact files, or directories of *.json pact files."),
+    against: list[str] = typer.Option(
+        ...,
+        "--against",
+        help=(
+            "A provider version to compare with (repeatable, at most 10): main, deployed:<environment>, "
+            "version:<number> or draft:<revision>."
+        ),
+    ),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Check pacts against several provider versions before publishing (POST …/pacts/check). Publishes nothing.
+
+    Each pact is compared with the provider contract of every version --against names: the newest
+    on the provider's main branch (main), what is deployed to or released in an environment
+    (deployed:production), a named version (version:2.7.0), or a revision of the provider's Apiome
+    project as it stands (draft:latest). Prints one row per provider version with the verdict a
+    publish would record, then every interaction that differs or is not in the spec, and every
+    selector that named nothing. Exits 0 when every pact passes against every version and every
+    selector named one; 1 otherwise, as pact-broker does.
+    """
+    fmt = _format(ctx, output)
+    try:
+        selectors = parse_check_selectors(against)
+    except ValueError as exc:
+        raise _bad(exc, "--against") from exc
+    try:
+        files = [read_pact_file(path) for path in collect_pact_paths(pacts)]
+    except ValueError as exc:
+        raise _bad(exc, "PACTS") from exc
+
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    checks: list[dict[str, Any]] = []
+    for pact in files:
+        answer = conn.client.post(conn.broker_path("/pacts/check"), json=build_check_body(pact, selectors)).json()
+        checks.append({"file": str(pact.path), **answer})
+    success = all((check.get("summary") or {}).get("success") for check in checks)
+    _emit(fmt, {"checks": checks, "success": success}, check_lines(checks, fmt))
+    raise typer.Exit(EXIT_SUCCESS if success else EXIT_ERROR)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -786,6 +840,7 @@ def migrate(
 #: ``(command name, function)`` in the order ``pact-broker help`` lists them.
 COMMANDS: tuple[tuple[str, Any], ...] = (
     ("publish", publish),
+    ("check", check),
     ("list-pacticipants", list_pacticipants),
     ("describe-version", describe_version),
     ("can-i-deploy", can_i_deploy),

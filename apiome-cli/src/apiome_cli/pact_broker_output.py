@@ -353,3 +353,83 @@ def verify_lines(response: Mapping[str, Any], fmt: str) -> list[str]:
                     f"{prefix}not replayed: {item.get('operation_key')} ({item.get('code')}): {item.get('reason')}"
                 )
     return lines
+
+
+# ---------------------------------------------------------------------------------------------
+# check (PFX-8.4, #7301)
+# ---------------------------------------------------------------------------------------------
+
+#: How ``check`` names an interaction's outcome.
+_OUTCOME_WORDS = {"match": "match", "differs": "differs", "not-in-spec": "not in spec"}
+
+
+def _interaction_name(row: Mapping[str, Any]) -> str:
+    """``POST /invoices — 201`` or the interaction's description."""
+    if row.get("method") and row.get("path"):
+        status = f" — {row['status']}" if row.get("status") is not None else ""
+        return f"{row['method']} {row['path']}{status}"
+    return str(row.get("description") or f"interaction {row.get('index')}")
+
+
+def check_lines(checks: Sequence[Mapping[str, Any]], fmt: str) -> list[str]:
+    """What ``check`` prints: per pact, one row per provider version, then what did not match.
+
+    Args:
+        checks: One ``POST …/pacts/check`` answer per pact file, each with ``file`` added.
+        fmt: ``table`` or ``markdown``.
+
+    Returns:
+        The lines: a heading per pact, a table of provider versions (selected by, verdict, match /
+        differs / not-in-spec counts), each interaction that does not match with its first
+        failure, each selector that named nothing with the reason, each version over the limit,
+        and a closing verdict line.
+    """
+    item = "- " if fmt == "markdown" else "  "
+    lines: list[str] = []
+    passed = 0
+    for check in checks:
+        consumer = (check.get("consumer") or {}).get("name") or "?"
+        provider = (check.get("provider") or {}).get("name") or "?"
+        lines.append(f"{'### ' if fmt == 'markdown' else ''}{consumer} → {provider} ({check.get('file')})")
+        results = [result for result in check.get("results") or [] if isinstance(result, dict)]
+        if results:
+            rows = []
+            for result in results:
+                counts = result.get("counts") or {}
+                label = str(result.get("providerVersion")) + (" (draft)" if result.get("draft") else "")
+                rows.append(
+                    [
+                        label,
+                        ", ".join(result.get("selectors") or []),
+                        result.get("verdict"),
+                        counts.get("match", 0),
+                        counts.get("differs", 0),
+                        counts.get("notInSpec", 0),
+                    ]
+                )
+            lines += table(["Provider version", "Selected by", "Verdict", "Match", "Differs", "Not in spec"], rows, fmt)
+            for result in results:
+                if result.get("error"):
+                    lines.append(f"{item}{result.get('providerVersion')}: could not compare: {result['error']}")
+                for row in result.get("interactions") or []:
+                    if row.get("outcome") == "match":
+                        continue
+                    first = (row.get("failures") or [{}])[0]
+                    why = f": {first.get('code')}: {first.get('message')}" if first.get("code") else ""
+                    lines.append(
+                        f"{item}{result.get('providerVersion')}: {_interaction_name(row)} "
+                        f"{_OUTCOME_WORDS.get(row.get('outcome'), row.get('outcome'))}{why}"
+                    )
+        for entry in check.get("unresolved") or []:
+            lines.append(f"{item}not compared: {entry.get('selector')} — {entry.get('reason')}")
+        for entry in check.get("skipped") or []:
+            lines.append(f"{item}skipped: {entry.get('providerVersion')} ({entry.get('selector')}) — {entry.get('reason')}")
+        if (check.get("summary") or {}).get("success"):
+            passed += 1
+    total = len(checks)
+    if passed == total:
+        lines.append(f"Every pact matches every provider version checked ({total} pact{'s' if total != 1 else ''}).")
+    else:
+        lines.append(f"{total - passed} of {total} pacts would not pass against every provider version checked.")
+    lines.append("Nothing was published.")
+    return lines

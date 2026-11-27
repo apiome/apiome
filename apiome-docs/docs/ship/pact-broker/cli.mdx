@@ -85,7 +85,7 @@ broker (`/v1/tenants/<workspace>/pact-broker`) and the hosted verifier
 
 | Scope | Allows | Commands |
 | --- | --- | --- |
-| `pact:read` | Every read of the broker, the hosted verifier and the pacticipants, and fetching the pacts to verify | `can-i-deploy`, `describe-version`, `list-pacticipants`, a verifier fetching its pacts |
+| `pact:read` | Every read of the broker, the hosted verifier and the pacticipants, fetching the pacts to verify, and checking a pact before publishing | `can-i-deploy`, `check`, `describe-version`, `list-pacticipants`, a verifier fetching its pacts |
 | `pact:publish` | Publishing pacts and provider contracts, tagging a version or recording its branch, recording a deployment or release | `publish`, `publish-provider-contract`, `record-deployment`, `record-undeployment`, `record-release`, `record-support-ended` |
 | `pact:verify` | Publishing verification results, sending a verifier report, hosted verification, registering provider states, tagging the provider version | `verify`, `publish-verification-results`, a Pact verifier with `publishVerificationResults` |
 
@@ -114,6 +114,7 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 | Command | Does | Replaces |
 | --- | --- | --- |
 | `publish` | Publish pact files for a consumer version | `pact-broker publish` |
+| `check` | Compare pact files with several provider versions before publishing; publishes nothing | — |
 | `list-pacticipants` | List the workspace's pacticipants | `pact-broker list-pacticipants` |
 | `describe-version` | Show a version's branches, tags and build URL | `pact-broker describe-version` |
 | `can-i-deploy` | Ask whether a version can be deployed | `pact-broker can-i-deploy` |
@@ -147,6 +148,7 @@ with secrets written as variables. The first were the
 | `list-pacticipants` | **Contracts** → **Pacticipants** |
 | `publish` | **Contracts** → **Publish a pact** (also a project's **Consumers** → **Import Pact file**) |
 | `publish-consumer-contract` | **Contracts** → **Publish a pact** → **Derive from a project** |
+| `check` | **Contracts** → **Publish a pact** → **Check it before it counts** |
 | `create-environment`, `record-deployment`, `record-release` | Coming: environment dialogs (PFX-8.12) |
 | `verify` | Coming: **Run a verification** (PFX-8.8); today **Re-run** on a provider's verification page |
 | `publish-provider-contract` | Coming: **Publish a provider contract** (PFX-8.6) |
@@ -189,6 +191,19 @@ to that commit as a GitHub or GitLab status: **pending** until the provider veri
 - `--tag` (`-t`) tags the version; `--tag-with-git-branch` (`-g`) tags it with the detected branch.
 - `--merge` is refused: Apiome keeps the pact a version published, and refuses a different one for
   the same version.
+
+## Check before publishing
+
+```bash
+apiome pact check ./pacts --against main --against deployed:production
+```
+
+Compares each pact with the provider contract of every version `--against` names — `main`,
+`deployed:<environment>`, `version:<number>` or `draft:<revision>`, at most ten — and publishes
+nothing. It prints one row per provider version with the verdict a publish would record, every
+interaction that differs or is not in the spec, and every selector that named nothing. It exits `0`
+only when every pact passes against every version, `1` otherwise. A bad selector is refused before
+anything is sent. See [Check before publishing](./publish-pacts.mdx#check-before-publishing).
 
 ## Ask can-i-deploy
 

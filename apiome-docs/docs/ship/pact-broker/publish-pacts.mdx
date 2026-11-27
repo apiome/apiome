@@ -15,7 +15,8 @@ This page covers publication and retrieval. A provider's verifier fetches the pa
 with [consumer-version selectors](./selectors.mdx) and [publishes its results](./verification-results.mdx).
 Deploy jobs [record where each version runs](./environments.mdx) and
 [ask whether a version can be deployed](./can-i-deploy.mdx). To publish from the app instead of a
-build, use the [Publish page](#publish-from-the-ui).
+build, use the [Publish page](#publish-from-the-ui); to see how a pact fares against several provider
+versions first, [check it before publishing](#check-before-publishing).
 
 ## Before you start
 
@@ -165,12 +166,48 @@ still publish. Remove a row with its **×** button.
 | **More options → Also tag with the branch name** | Puts the branch on the version as a tag too. Needs a branch. | `--tag-with-git-branch` |
 | **More options → Merge with the pact already published** | Apiome stores a version's pact as published and does not merge interactions, so turning this on stops the publish with that reason — as `--merge` does in the CLI. | `--merge` |
 
-### 3. Check, then publish
+### 3. Check it before it counts
 
-- **Click “Check only”** to see what publishing would do, without writing anything. Each row says
-  *Nothing is published for 3.4.0 yet: this pact will be new*, *Unchanged since 8d2f1c0: its
-  verification results still apply*, or *3.4.0 already has a different pact. Use a new version* —
-  a different pact for a version that already has one is refused.
+Compare each pact with the provider versions it will meet, before anything is saved — see
+[Check before publishing](#check-before-publishing) for what each choice means.
+
+1. Under **Compare with**, **click a chip** to switch it on or off. **Provider’s main** and the
+   production environment start switched on; there is a chip for every environment of the workspace
+   and one for **Draft · latest**. **Click “+ Another version”** and type `2.7.0`,
+   `deployed:staging` or `draft:2.8.0-rc1` for anything else, then **click “Add”**. At most ten.
+2. **Click “Compare now”** (or **“Check only”** in the header, which also runs the check below).
+
+The aside shows one card per pact — *Orders UI → Billing Service* — with one pill per provider
+version, such as **main · 2.7.0 4/6** (four of six interactions match) and **production · 2.6.1
+6/6**. Each interaction is marked:
+
+| Mark | Means |
+| --- | --- |
+| **Match** | The provider's contract satisfies it. |
+| **Differs** | The contract contradicts it; the line under it says how, for example *Needs currency in the 201 body*. |
+| **Not in spec** | The contract declares no such operation. The provider may serve it undocumented. |
+
+What needs attention comes first; **click “Show all”** for the rest. **Click “See the difference”**
+to open what the pact needs beside what the spec declares, every finding, and — when the provider's
+contract was rendered from an Apiome project — **“Open <project> <version>”**, the project's version
+history. A provider version that could not be found is listed under the pills with the reason, and
+a provider with nothing to compare with reads *Billing Service has no contract or deployed version
+yet. Publish anyway — the verdict appears when the provider shows up.* **Click “Re-check”** to
+compare one pact again.
+
+<Screenshot id="pact-publish-check" alt="The Publish page after a check: Check it before it counts with Provider's main and Deployed to production switched on, and in the aside Orders UI to Billing Service with the pills main 2.7.0 4 of 6 and production 2.6.1 6 of 6 — POST /invoices marked Differs, GET /invoices/{id}/pdf Not in spec, and the matching interactions below."/>
+
+A difference does not stop you from publishing: the pact records what the consumer needs, and the
+difference becomes the failing verdict the provider sees. **The same check, from anywhere**, under
+the chips, is the check as `apiome pact check` and its REST request.
+
+### 4. Publish
+
+- **Click “Check only”** to see what publishing would do, without writing anything. Besides the
+  comparison above, each row says *Nothing is published for 3.4.0 yet: this pact will be new*,
+  *Unchanged since 8d2f1c0: its verification results still apply*, or *3.4.0 already has a
+  different pact. Use a new version* — a different pact for a version that already has one is
+  refused. Without a consumer version only the comparison runs.
 - **Click “Publish pact”.** The result dialog lists each pact: **new content**, pending for the
   provider until they pass it once; **unchanged**, so its verification results still apply; or
   changed. It also lists what was not sent and why, whether contract webhooks were notified (see
@@ -211,6 +248,66 @@ one — the dialog says so beside the stored revision; the import is not undone.
 
 For several files, a check first, or tag-with-branch, **click “open the Publish page”** in the
 dialog: the page opens with the version, branch, tags, build URL and the pact already filled in.
+
+## Check before publishing
+
+A pact usually fails only after it is published, and then only against the one provider version a
+verifier ran. A **check** compares an unpublished pact with several provider versions at once —
+today's production and tomorrow's main — and stores nothing.
+
+Each version is named by a **selector**:
+
+| Selector | Compares with |
+| --- | --- |
+| `main` | The newest version on the provider's main branch that published a [provider contract](./bi-directional.mdx). |
+| `deployed:<environment>` | Every version with a provider contract that is deployed to, or released in, that [environment](./environments.mdx). |
+| `version:<number>` | That provider version. |
+| `draft:<revision>` | A revision — a label, a revision id or `latest` — of the Apiome project the provider pacticipant is bound to, as it stands now. Needs **Versions** → **View** as well. |
+
+A version two selectors name is compared once. **The answer for a version is the verdict a
+publish would record** against it: the same comparison and the same
+[comparison rules](./comparison-rules.mdx), including the self-verification policy — a provider
+contract without passing evidence reads `unverified`, and so does every draft, which has no evidence
+yet. A selector that names nothing — no main branch, nothing deployed there, an unknown version, a
+provider not bound to a project — is listed with the reason, never ignored.
+
+From the CLI, with the same `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` as `apiome pact publish`:
+
+```bash
+apiome pact check pacts/ --against main --against deployed:production
+```
+
+```text
+Orders UI → Billing Service (pacts/orders-ui-billing-service.json)
+Provider version | Selected by         | Verdict | Match | Differs | Not in spec
+-----------------|---------------------|---------|-------|---------|------------
+2.7.0            | main                | fail    | 4     | 1       | 1
+2.6.1            | deployed:production | pass    | 6     | 0       | 0
+  2.7.0: POST /invoices — 201 differs: response.body.unknown-property: …
+  2.7.0: GET /invoices/{id}/pdf — 200 not in spec: request.operation.unknown: …
+1 of 1 pacts would not pass against every provider version checked.
+Nothing was published.
+```
+
+It exits `0` only when every pact passes against every version and every selector named one, and
+`1` otherwise, as `pact-broker` does — so it can gate a pull request before the pact is published.
+`--output json` prints the whole answer.
+
+Over REST, send one pact per request:
+
+```bash
+curl -X POST https://api.apiome.dev/v1/tenants/acme/pact-broker/pacts/check \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"pact": '"$(cat pacts/orders-ui-billing-service.json)"', "against": ["main", "deployed:production"]}'
+```
+
+The answer has `summary` (`versions`, `passed`, `failed`, `unresolved`, `skipped`, `success`), one
+entry per version in `results` — `providerVersion`, `selectors`, `reasons`, `verdict`, `success`,
+`counts` and `interactions`, each with `outcome` (`match`, `differs`, `not-in-spec`) and, when it does
+not match, `expected` and `declared` (at most 8 KB each) — and `unresolved` and `skipped`. A check
+needs **Pacts** → **View**, takes 1 to 10 selectors and compares at most 20 versions; past that they
+are listed in `skipped`. An unknown field or selector is `422 pact-check-invalid` with a `pointer`.
+Checks are budgeted per workspace (`APIOME_PACT_CHECK_RATE_LIMIT_PER_MINUTE`, default 60).
 
 ## Publish one pact with curl
 
@@ -289,6 +386,7 @@ its [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901).
 | --- | --- | --- | --- | --- | --- |
 | Read pacts and the index | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | Publish pacts | `pacts:create` | — | ✓ | ✓ | ✓ |
+| Check a pact before publishing | `pacts:view` (a `draft:` selector also `versions:view`) | ✓ | ✓ | ✓ | ✓ |
 
 A restricted API key (one with scopes) cannot use these routes yet; use a full-access key from a
 member with the **Editor** role.
@@ -311,6 +409,7 @@ belong to the workspace the host names.
 | --- | --- | --- |
 | `APIOME_PACT_MAX_BYTES` | `10485760` | Largest pact document accepted. A publish request may be twice this, because its pacts are base64-encoded. |
 | `APIOME_PACT_PUBLISH_RATE_LIMIT_PER_MINUTE` | `120` | Publish requests per workspace per rate-limit window. |
+| `APIOME_PACT_CHECK_RATE_LIMIT_PER_MINUTE` | `60` | [Checks before publishing](#check-before-publishing) per workspace per rate-limit window. |
 | `APIOME_PACT_ALLOW_CONTRACT_MODIFICATION` | `false` | `true` replaces a consumer version's pact instead of answering `409`. Only for teams whose version numbers are not unique per build: a provider may already have verified the pact that is replaced. |
 | `APIOME_PACT_BROKER_HOST_SUFFIX` | empty | Turns on [the broker host alias](#the-broker-host-alias). |
 | `APIOME_API_PUBLIC_URL` | empty | The public address of the API. Set it when the service runs behind a proxy, so links in answers use the public address. |

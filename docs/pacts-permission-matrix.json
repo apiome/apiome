@@ -679,6 +679,12 @@
       "path": "/v1/tenants/{tenant}/pact-migration/check",
       "permission": "pacts:view",
       "why": "The dry run of an import: reads a batch and writes nothing."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-broker/pacts/check",
+      "permission": "pacts:view",
+      "why": "The pre-publish check: compares an unpublished pact with provider contracts and writes nothing. A draft: selector also needs versions:view."
     }
   ]
 }
