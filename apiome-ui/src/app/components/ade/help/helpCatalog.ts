@@ -1477,6 +1477,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['contracts', 'migration', 'import', 'dry run', 'resume', 'state file', 'webhooks', 'secrets', 'timestamps'],
   },
   {
+    id: 'self-host',
+    title: 'Self-host the Pact Broker',
+    summary: 'Run Apiome as a standalone Pact Broker with Docker Compose, backups and upgrades.',
+    page: 'apiome-docs/docs/ship/pact-broker/self-host.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'docker compose', 'sizing', 'backup', 'upgrade', 'caddy', 'postgres'],
+  },
+  {
     id: 'scale',
     title: 'Scale and performance',
     summary: 'How fast the matrix and verification console stay as pact history grows.',

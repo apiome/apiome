@@ -1,0 +1,133 @@
+---
+title: Self-host the Pact Broker
+description: Run Apiome as a standalone Pact Broker with Docker Compose, backups and upgrades.
+sidebar_position: 6.97
+tags: [contracts, pact, operations, self-host, docker]
+---
+
+You can run Apiome as your own Pact Broker. `docker-compose.pact-broker.yml` is the smallest stack
+that answers the Pact CLI, the Pact libraries and `can-i-deploy`: **Postgres**, the **REST API**
+and **Caddy** for automatic HTTPS. It leaves out the MCP server, the mock server, MinIO and the
+sample data, none of which a broker needs.
+
+Your broker base URL is `https://<your domain>/v1/tenants/<tenant>/pact-broker`. Existing
+`pact-broker` CLI commands and Pact libraries work against it unchanged; see
+[Pact Broker compatibility](./compatibility).
+
+## What you need
+
+- A Linux host with Docker Compose **v2.24 or newer**.
+- A DNS name pointing at the host, with ports **80** and **443** open to the internet, so Caddy can
+  get a Let's Encrypt certificate.
+- A secret manager for the database password, the token secret and the backup key.
+
+## Install
+
+1. **Copy the environment template** to `.env` next to the compose file:
+   `cp docker-compose.pact-broker.env.example .env`.
+2. **Fill in every value.** There are no defaults for secrets: the stack refuses to start when one
+   is missing.
+
+   | Variable | What to put |
+   | --- | --- |
+   | `BROKER_DOMAIN` | The hostname, for example `pacts.example.com`. |
+   | `ACME_EMAIL` | Where Let's Encrypt sends expiry notices. |
+   | `POSTGRES_PASSWORD` | `openssl rand -base64 24` |
+   | `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
+   | `APIOME_BACKUP_KEY` | `openssl rand -hex 32`. Keep it in a secret manager, not on this host. |
+
+3. **Check the file:** `docker compose -f docker-compose.pact-broker.yml config`.
+4. **Apply the schema.** Nothing migrates on its own:
+   `docker compose -f docker-compose.pact-broker.yml --profile migrate run --rm migrate`.
+5. **Start the stack:** `docker compose -f docker-compose.pact-broker.yml up -d --build --wait`.
+6. **Create a workspace and a key** (shown once, so copy it now):
+
+   ```bash
+   dc="docker compose -f docker-compose.pact-broker.yml --profile migrate"
+   $dc run --rm migrate tenants create --name "Acme"
+   $dc run --rm migrate api-keys create --tenant acme --name ci --expires-days 90
+   ```
+
+7. **Point a client at it:**
+
+   ```bash
+   export PACT_BROKER_BASE_URL=https://pacts.example.com/v1/tenants/acme/pact-broker
+   export PACT_BROKER_TOKEN=sk_…
+   pact-broker list-latest-pact-versions
+   ```
+
+Only ports 80 and 443 are published. Postgres and the REST API are reachable on the internal
+network only; use `docker compose exec postgres psql` when you need the database.
+
+## Sizing
+
+Start from the table, then watch disk and memory for a week. These are starting points, not
+measurements of your data.
+
+| Workspace | Versions | Host | Postgres disk |
+| --- | --- | --- | --- |
+| Small team | up to 4,000 | 1 vCPU, 2 GB RAM | 10 GB |
+| Large organisation | up to 100,000 | 2 vCPU, 4 GB RAM | 50 GB, grows with history |
+
+- **Speed does not depend on history.** `can-i-deploy` and the matrix stay under 30 ms at 100,000
+  versions; see [Scale and performance](./scale).
+- **Disk is the thing that grows.** Every pact version and verification result is kept. Use
+  [retention runs](./retention) to purge old versions, and put the Postgres volume on storage you
+  can enlarge.
+- **Memory** is mostly Postgres. Give it room for its cache before adding CPUs.
+- **One REST container** is enough for a broker. For high availability, use a managed Postgres
+  with pgvector enabled and drop the `postgres` service; point `POSTGRES_HOST` at the managed host.
+
+## Back up
+
+The `backup` service writes **AES-256-GCM encrypted** backups to a volume and mirrors them off-site.
+It refuses to run without `APIOME_BACKUP_KEY`, so it never writes plaintext.
+
+```bash
+docker compose -f docker-compose.pact-broker.yml --profile ops run --rm backup full
+```
+
+Schedule it from the host, for example nightly with cron:
+
+```bash
+0 2 * * *  cd /opt/apiome && docker compose -f docker-compose.pact-broker.yml --profile ops run --rm backup full >> /var/log/apiome-backup.log 2>&1
+```
+
+- **Keep the key apart from the backups.** Without it a backup cannot be read.
+- **Replace the off-site volume** (`broker_backups_offsite`) with a mount on storage outside the
+  host, so losing the host does not lose the copy.
+- **Retention:** `APIOME_BACKUP_KEEP_DAYS` (default 30) and `APIOME_BACKUP_KEEP_LAST` (default 7).
+- **Practise a restore** into a sandbox before you need one. The steps, and the recovery targets,
+  are in the backup and disaster recovery runbook (`docs/runbooks/BACKUP_AND_DR.md`).
+
+Pact data lives only in Postgres, so a full backup is a complete backup of the broker.
+
+## Upgrade
+
+1. **Read the release notes** for the version you are moving to.
+2. **Take a backup:** the command above. It is your way back.
+3. **Fetch the new code** (`git pull`) and **rebuild:**
+   `docker compose -f docker-compose.pact-broker.yml build`.
+4. **Preview the schema change:**
+   `docker compose -f docker-compose.pact-broker.yml --profile migrate run --rm migrate migrate status`.
+5. **Apply it:**
+   `docker compose -f docker-compose.pact-broker.yml --profile migrate run --rm migrate`.
+6. **Restart:** `docker compose -f docker-compose.pact-broker.yml up -d --wait`.
+7. **Check:** open `https://<your domain>/readyz`; it answers `200` when the database is reachable.
+
+To **roll back**, stop the stack, restore the backup from step 2 into the database, check out the
+previous code and start it again. Schema changes are not undone by running older code.
+
+## Move in from another broker
+
+To bring history across from an existing Pact Broker or PactFlow, run
+[`apiome pact migrate`](./migration) against the new broker once it is running.
+
+## When something is wrong
+
+| You see | It means | Fix |
+| --- | --- | --- |
+| `set POSTGRES_PASSWORD in your .env` (or another variable) | A required value is empty. | Fill it in `.env`. |
+| Caddy cannot get a certificate | DNS does not point at the host, or 80/443 is blocked. | Fix DNS or the firewall; Caddy retries. |
+| `rest` stays unhealthy | The database is unreachable or not migrated. | Run the migrate step; read `docker compose logs rest`. |
+| The backup exits at once | `APIOME_BACKUP_KEY` is unset. | Set it in `.env`. |

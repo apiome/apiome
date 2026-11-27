@@ -1,0 +1,164 @@
+# Self-hosted Pact Broker (PFX-6.8, #6960): the smallest Apiome stack that answers the Pact CLI,
+# the Pact libraries and `can-i-deploy` — Postgres + the REST API behind automatic TLS.
+#
+# Standalone: it is NOT an overlay. Use it instead of docker-compose.yml, not on top of it:
+#
+#   cp docker-compose.pact-broker.env.example .env        # then fill in every value
+#   docker compose -f docker-compose.pact-broker.yml config               # validate
+#   docker compose -f docker-compose.pact-broker.yml --profile migrate run --rm migrate
+#   docker compose -f docker-compose.pact-broker.yml up -d --build --wait
+#
+# The broker base URL is  https://$BROKER_DOMAIN/v1/tenants/<tenant>/pact-broker  — see
+# apiome-docs/docs/ship/pact-broker/self-host.mdx for sizing, backups, upgrades and first-run
+# provisioning (tenant + API key).
+#
+# What this stack leaves out versus docker-compose.yml: the MCP server, the mock server, MinIO and
+# the dev seed (a Pact Broker needs none of them). Documents stay in Postgres
+# (APIOME_DOCUMENT_STORE=db). The posture matches docker-compose.prod.yml: no dev defaults, the
+# schema is migrated by a deliberate step, only 80/443 are published, services restart on failure.
+#
+# Profiles:
+#   migrate   the one-shot schema migration — never runs on a plain `up`.
+#   ops       the encrypted backup job (see the backup notes in the docs page).
+# Parallel runs on one host: set COMPOSE_PROJECT_NAME so the volumes do not collide.
+
+services:
+  postgres:
+    # pgvector release the schema requires (V001 `CREATE EXTENSION vector`); a plain postgres image
+    # fails the first migration. For a managed database, drop this service and point
+    # POSTGRES_HOST at it (pgvector enabled).
+    image: pgvector/pgvector:0.8.3-pg16-bookworm
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env (openssl rand -base64 24)}
+      POSTGRES_DB: ${POSTGRES_DB:-apiome}
+    volumes:
+      - broker_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - broker
+
+  # Gated schema migration: run it on first install and on every upgrade, after a backup.
+  #   docker compose -f docker-compose.pact-broker.yml --profile migrate run --rm migrate migrate status
+  #   docker compose -f docker-compose.pact-broker.yml --profile migrate run --rm migrate
+  migrate:
+    profiles: ["migrate"]
+    build:
+      context: ./apiome-db
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-apiome}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - broker
+
+  rest:
+    build:
+      context: .
+      dockerfile: apiome-rest/Dockerfile
+    environment:
+      # Fail-closed production checks: the insecure JWT default is refused.
+      APIOME_ENV: production
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-apiome}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in your .env (openssl rand -base64 32)}
+      APIOME_CORS_ALLOWED_ORIGINS: ${APIOME_CORS_ALLOWED_ORIGINS:-https://${BROKER_DOMAIN:?set BROKER_DOMAIN in your .env}}
+      APIOME_DOCUMENT_STORE: db
+      # Surface backup freshness on the ops dashboard (reads the backup manifests).
+      APIOME_BACKUP_DIR: /var/backups/apiome
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz', timeout=4)\""
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    volumes:
+      - broker_backups:/var/backups/apiome:ro
+    restart: unless-stopped
+    networks:
+      - broker
+
+  # TLS terminator: automatic Let's Encrypt. The only ports published on the host.
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      BROKER_DOMAIN: ${BROKER_DOMAIN:?set BROKER_DOMAIN to the broker hostname, e.g. pacts.example.com}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL for Let's Encrypt expiry notices}
+    volumes:
+      - ./deploy/Caddyfile.pact-broker:/etc/caddy/Caddyfile:ro
+      - broker_caddy_data:/data
+      - broker_caddy_config:/config
+    depends_on:
+      rest:
+        condition: service_healthy
+    networks:
+      - broker
+
+  # Encrypted backup (RC1-1.3 tooling). Run from cron or a systemd timer:
+  #   docker compose -f docker-compose.pact-broker.yml --profile ops run --rm backup full
+  # The wrapper refuses to run without APIOME_BACKUP_KEY (it never writes plaintext).
+  backup:
+    profiles: ["ops"]
+    build:
+      context: ./apiome-db
+      dockerfile: Dockerfile
+    entrypoint: ["/app/scripts/backup/scheduled-backup.sh"]
+    command: ["full"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in your .env}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-apiome}
+      APIOME_BACKUP_DIR: /var/backups/apiome
+      APIOME_BACKUP_OFFSITE_DIR: /mnt/offsite/apiome
+      APIOME_BACKUP_KEY: ${APIOME_BACKUP_KEY:-}
+      APIOME_BACKUP_KEEP_DAYS: ${APIOME_BACKUP_KEEP_DAYS:-30}
+      APIOME_BACKUP_KEEP_LAST: ${APIOME_BACKUP_KEEP_LAST:-7}
+    volumes:
+      - broker_backups:/var/backups/apiome
+      - broker_backups_offsite:/mnt/offsite/apiome
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - broker
+
+networks:
+  broker:
+    driver: bridge
+
+volumes:
+  broker_postgres_data:
+  broker_backups:
+  # Replace with a bind mount to genuine off-host storage so a host loss does not take the copy.
+  broker_backups_offsite:
+  broker_caddy_data:
+  broker_caddy_config:
