@@ -1,0 +1,32 @@
+---
+slug: pact-integration-specs-gates-registry
+title: "Pacts in your specs, gates and registry"
+description: "Pact Broker data now feeds consumer contracts, the deploy gate, publishing, diff and Browse."
+authors: [apiome]
+---
+
+The Pact Broker is now part of the registry rather than a tool beside it. What consumers publish
+and providers verify feeds the same consumer model, gates and pages your specifications already
+use. The [Pact Broker overview](/ship/pact-broker/overview#how-the-pieces-fit) shows how it fits
+under **Inside the registry**.
+
+{/* truncate */}
+
+**What the epic covers:**
+
+- **One consumer model.** Publishing a pact declares it as the consumer's next contract revision
+  in the provider's project, so breaking-change analysis sees consumers that publish pacts —
+  [One consumer model](/ship/pact-broker/publish-pacts#one-consumer-model).
+- **can-i-deploy in the deploy gate.** The project deploy gate has a `contracts` signal with the
+  same verdict as `pact-broker can-i-deploy` —
+  [In the deploy gate](/ship/pact-broker/can-i-deploy#in-the-deploy-gate).
+- **A quality gate for publishing.** `contracts.publishPolicy` (`off`, `warn` or `block`) decides
+  whether failing contracts warn or stop a version publish; the **Publish** dialog shows a
+  **Contracts** card, and a force-publish with a reason is audited —
+  [Block a publish on failing contracts](/ship/pact-broker/can-i-deploy#block-a-publish-on-failing-contracts).
+- **Broker consumers in diff and CI.** `apiome diff --consumers` and the `diff-action` name the
+  pacticipant and pact behind each consumer verdict —
+  [Broker consumers in the diff and in CI](/ship/contract-testing-and-ci-gates#broker-consumers-in-the-diff-and-in-ci).
+- **Contracts on public pages.** A public project's Browse page and the portal show its pact badges
+  and the consumers that depend on it —
+  [Consumers on Browse and the portal](/ship/pact-broker/badges#consumers-on-browse-and-the-portal).
