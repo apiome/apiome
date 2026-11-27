@@ -211,6 +211,7 @@ describe('platform-nav model — active-state resolution', () => {
     ['/ade/dashboard/pacts/pacticipants', 'contracts'],
     ['/ade/dashboard/pacts/pacticipants/billing-service', 'contracts'],
     ['/ade/dashboard/pacts/provider-states', 'contracts'],
+    ['/ade/dashboard/pacts/publish', 'contracts'],
     ['/ade/dashboard/export/studio', 'export-studio'],
     ['/ade/dashboard/style-guides', 'style-guides'],
     ['/ade/dashboard/lint-workspace', 'lint-workspace'],

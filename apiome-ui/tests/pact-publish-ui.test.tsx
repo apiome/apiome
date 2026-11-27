@@ -57,4 +57,17 @@ describe('dialog', () => {
     expect(await screen.findByText(/not published to the Pact Broker: Conflict/)).toBeTruthy();
     expect(screen.getByText(/Revision 3 stored/)).toBeTruthy();
   });
+
+  it('opens the Publish page pre-filled, handing the pact over (PFX-8.3)', () => {
+    const onImport = jest.fn(async () => ({ outcome }));
+    setup(onImport);
+    fireEvent.click(screen.getByLabelText('Also publish to the Pact Broker'));
+    fireEvent.change(screen.getByLabelText('Consumer version'), { target: { value: '9f3c2a1' } });
+    fireEvent.change(screen.getByLabelText('Tags (optional)'), { target: { value: 'dev, rc' } });
+    const link = screen.getByTestId('pact-publish-page-link');
+    expect(link).toHaveAttribute('href', '/ade/dashboard/pacts/publish?source=paste&version=9f3c2a1&tag=dev&tag=rc');
+    link.addEventListener('click', (event) => event.preventDefault());
+    fireEvent.click(link);
+    expect(JSON.parse(window.sessionStorage.getItem('apiome.pactPublish.handoff') ?? '{}')).toEqual({ pact: PACT });
+  });
 });

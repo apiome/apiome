@@ -1,5 +1,6 @@
 /**
- * Publish pacts from the Pact import dialog — PFX-5.8 (#6952).
+ * Publish pacts from the Pact import dialog — PFX-5.8 (#6952) — and from the Publish page (PFX-8.3,
+ * #7300), which sends several pacts of one consumer version in one request (`pacts`).
  *
  * The Import-a-Pact-file dialog on a project's **Consumers** screen stores the pact as a consumer
  * contract in the registry. This model lets the same dialog also publish it to the Pact Broker, so
@@ -25,8 +26,17 @@ export const MAX_FIELD_CHARS = 255;
 /** Longest build URL accepted. */
 export const MAX_URL_CHARS = 2048;
 
-/** The fields a publish request carries. */
-export const PUBLISH_FIELDS = ['consumerName', 'providerName', 'version', 'branch', 'tags', 'buildUrl', 'pact'] as const;
+/** Most pacts one publish request may carry (REST's `MAX_CONTRACTS_PER_REQUEST`). */
+export const MAX_PACTS_PER_REQUEST = 100;
+
+/**
+ * The fields a publish request carries. One pact is `providerName` + `pact` (the import dialog);
+ * several are `pacts`, a list of `{ providerName, pact }` (the Publish page, PFX-8.3).
+ */
+export const PUBLISH_FIELDS = ['consumerName', 'providerName', 'version', 'branch', 'tags', 'buildUrl', 'pact', 'pacts'] as const;
+
+/** The fields of one entry of `pacts`. */
+const PACT_ENTRY_FIELDS = ['providerName', 'pact'] as const;
 
 /** What the dialog's broker section holds. */
 export interface PublishDraft {
@@ -69,7 +79,7 @@ export function pactConsumerName(pact: string): string {
 }
 
 /** Whether `text` is an http(s) URL. */
-function isHttpUrl(text: string): boolean {
+export function isHttpUrl(text: string): boolean {
   try {
     return ['http:', 'https:'].includes(new URL(text).protocol);
   } catch {
@@ -135,10 +145,46 @@ function textField(body: Record<string, unknown>, key: string): string | undefin
 }
 
 /**
+ * The pacts of a request: `pacts`, or the single `providerName` + `pact`.
+ *
+ * @param body - The request body.
+ * @returns The `{ providerName, pact }` entries, or a sentence naming the problem.
+ */
+function pickPactEntries(body: Record<string, unknown>): Array<{ providerName: string; pact: string }> | string {
+  if (body.pacts === undefined) {
+    for (const key of ['providerName', 'pact']) {
+      const value = body[key];
+      if (value !== undefined && typeof value !== 'string') return `${key} must be a string.`;
+      if (typeof value !== 'string' || !value.trim()) return `${key} is required.`;
+    }
+    return [{ providerName: body.providerName as string, pact: body.pact as string }];
+  }
+  if (body.providerName !== undefined || body.pact !== undefined) {
+    return 'Send either pacts or providerName and pact, not both.';
+  }
+  if (!Array.isArray(body.pacts) || body.pacts.length === 0) return 'pacts must be a non-empty list.';
+  if (body.pacts.length > MAX_PACTS_PER_REQUEST) return `pacts takes at most ${MAX_PACTS_PER_REQUEST}.`;
+  const entries: Array<{ providerName: string; pact: string }> = [];
+  for (const [index, entry] of body.pacts.entries()) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return `pacts[${index}] must be an object.`;
+    for (const key of Object.keys(entry)) {
+      if (!(PACT_ENTRY_FIELDS as readonly string[]).includes(key)) {
+        return `Unsupported field pacts[${index}].${key}: an entry takes ${PACT_ENTRY_FIELDS.join(', ')}.`;
+      }
+    }
+    const { providerName, pact } = entry as Record<string, unknown>;
+    if (typeof providerName !== 'string' || !providerName.trim()) return `pacts[${index}].providerName is required.`;
+    if (typeof pact !== 'string' || !pact.trim()) return `pacts[${index}].pact is required.`;
+    entries.push({ providerName, pact });
+  }
+  return entries;
+}
+
+/**
  * Check what the browser sent the proxy and build REST's publish body.
  *
- * Unknown, missing, mistyped or oversized fields are a refusal naming the field; the Pact document
- * is base64-encoded as REST's bulk publish expects.
+ * Unknown, missing, mistyped or oversized fields are a refusal naming the field; each Pact
+ * document is base64-encoded as REST's bulk publish expects.
  *
  * @param raw - The parsed request body.
  * @returns The REST body, or a sentence naming the problem (a 400).
@@ -154,30 +200,28 @@ export function pickPublishBody(raw: unknown): PickedPublish {
     }
   }
   const text: Record<string, string | undefined> = {};
-  for (const key of ['consumerName', 'providerName', 'version', 'branch', 'buildUrl', 'pact']) {
+  for (const key of ['consumerName', 'version', 'branch', 'buildUrl']) {
     const value = textField(body, key);
     if (value instanceof Error) return { ok: false, error: value.message };
     text[key] = value;
   }
-  for (const key of ['consumerName', 'providerName', 'version', 'pact']) {
+  for (const key of ['consumerName', 'version']) {
     if (!text[key]?.trim()) return { ok: false, error: `${key} is required.` };
   }
-  if ((text.pact as string).length > MAX_PACT_CHARS) return { ok: false, error: 'pact is too large to publish.' };
-  for (const key of ['consumerName', 'providerName', 'version', 'branch']) {
+  const entries = pickPactEntries(body);
+  if (typeof entries === 'string') return { ok: false, error: entries };
+  if (entries.some((entry) => entry.pact.length > MAX_PACT_CHARS)) return { ok: false, error: 'pact is too large to publish.' };
+  for (const key of ['consumerName', 'version', 'branch']) {
     if ((text[key] ?? '').length > MAX_FIELD_CHARS) return { ok: false, error: `${key} is longer than ${MAX_FIELD_CHARS} characters.` };
+  }
+  if (entries.some((entry) => entry.providerName.length > MAX_FIELD_CHARS)) {
+    return { ok: false, error: `providerName is longer than ${MAX_FIELD_CHARS} characters.` };
   }
   if (text.buildUrl && (text.buildUrl.length > MAX_URL_CHARS || !isHttpUrl(text.buildUrl))) {
     return { ok: false, error: 'buildUrl must be an http(s) URL.' };
   }
-  let tags: string[] = [];
-  if (body.tags !== undefined) {
-    if (!Array.isArray(body.tags) || body.tags.some((tag) => typeof tag !== 'string' || !tag.trim())) {
-      return { ok: false, error: 'tags must be a list of non-empty strings.' };
-    }
-    tags = body.tags as string[];
-    if (tags.length > MAX_TAGS) return { ok: false, error: `tags takes at most ${MAX_TAGS}.` };
-    if (tags.some((tag) => tag.length > MAX_FIELD_CHARS)) return { ok: false, error: `A tag is longer than ${MAX_FIELD_CHARS} characters.` };
-  }
+  const tags = pickTags(body.tags);
+  if (typeof tags === 'string') return { ok: false, error: tags };
   return {
     ok: true,
     body: {
@@ -186,17 +230,32 @@ export function pickPublishBody(raw: unknown): PickedPublish {
       ...(text.branch?.trim() ? { branch: text.branch.trim() } : {}),
       ...(tags.length ? { tags } : {}),
       ...(text.buildUrl ? { buildUrl: text.buildUrl } : {}),
-      contracts: [
-        {
-          consumerName: text.consumerName!.trim(),
-          providerName: text.providerName!.trim(),
-          specification: 'pact',
-          contentType: 'application/json',
-          content: Buffer.from(text.pact as string, 'utf8').toString('base64'),
-        },
-      ],
+      contracts: entries.map((entry) => ({
+        consumerName: text.consumerName!.trim(),
+        providerName: entry.providerName.trim(),
+        specification: 'pact',
+        contentType: 'application/json',
+        content: Buffer.from(entry.pact, 'utf8').toString('base64'),
+      })),
     },
   };
+}
+
+/**
+ * Check a request's `tags`.
+ *
+ * @param value - The `tags` field (absent is no tags).
+ * @returns The tags, or a sentence naming the problem.
+ */
+export function pickTags(value: unknown): string[] | string {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.some((tag) => typeof tag !== 'string' || !tag.trim())) {
+    return 'tags must be a list of non-empty strings.';
+  }
+  const tags = value as string[];
+  if (tags.length > MAX_TAGS) return `tags takes at most ${MAX_TAGS}.`;
+  if (tags.some((tag) => tag.length > MAX_FIELD_CHARS)) return `A tag is longer than ${MAX_FIELD_CHARS} characters.`;
+  return tags;
 }
 
 /** What the dialog shows after a publish. */

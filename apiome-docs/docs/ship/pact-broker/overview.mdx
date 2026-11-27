@@ -110,13 +110,15 @@ checklist open. If the integrations cannot be read, one banner says why, with **
 | [**Verification settings**](./stale-pacts.mdx) | **Settings** | Stale thresholds, verification schedules and per-pair overrides |
 | [**Pact comparisons**](./bi-directional.mdx#in-the-app) | **Pacticipants** (`/ade/dashboard/pacts/comparisons`) | The fidelity report of each bi-directional comparison |
 | [**Provider states**](./provider-states.mdx#see-provider-states-in-the-app) | **Pacticipants** (`/ade/dashboard/pacts/provider-states`) | A provider's registered states, and a check of its pacts against them before a run |
+| [**Publish a consumer pact**](./publish-pacts.mdx#publish-from-the-ui) | **Overview** (`/ade/dashboard/pacts/publish`, **“Publish a pact”**) | Upload, paste or derive pacts, check them against what is published, and publish them for a consumer version |
 
 The landing reads `GET /v1/tenants/{t}/pact-integrations`
 ([REST reference](../../reference/rest/pact-broker.md#read-integrations-v1-tenants-tenant-slug-pact-integrations-get)).
 
 A project's **Consumers** screen can also
-[publish a pact to the broker](./publish-pacts.mdx#publish-from-the-import-dialog) while you import
-it: **click “Import Pact file”** and **tick “Also publish to the Pact Broker”**.
+[publish a pact to the broker](./publish-pacts.mdx#from-the-import-dialog) while you import
+it: **click “Import Pact file”** and **tick “Also publish to the Pact Broker”**; its **open the
+Publish page** link carries the pact over to the full page.
 
 ## At a glance
 

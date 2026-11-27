@@ -57,6 +57,11 @@ export interface CommandRow {
   ui: string | null;
   rest: string;
   reason?: string;
+  /**
+   * Every argument and flag of the command, and the field on `ui` that sets it (PFX-8.3, #7300).
+   * Optional; when present it must name exactly the command's arguments and options.
+   */
+  fields?: Record<string, string>;
 }
 
 /** A ledger row for one write route. */
@@ -194,6 +199,28 @@ function repeated(names: string[]): string[] {
 }
 
 /**
+ * Check a row's flag → field map against the command.
+ *
+ * @param row - The ledger row (with `fields`).
+ * @param command - The CLI's command, when it has one.
+ * @returns One sentence per flag missing from the map, per entry the command does not have, and
+ *   per entry with no field.
+ */
+function fieldProblems(row: CommandRow, command: CliCommand | undefined): string[] {
+  if (!command || !row.fields) return [];
+  const flags = [...command.arguments, ...command.options];
+  const problems: string[] = [];
+  for (const flag of flags) {
+    if (!(flag in row.fields)) problems.push(`\`apiome pact ${row.cli} ${flag}\` has no field in the ledger row's fields: name the control that sets it.`);
+  }
+  for (const [flag, field] of Object.entries(row.fields)) {
+    if (!flags.includes(flag)) problems.push(`The ledger maps \`${flag}\` for \`apiome pact ${row.cli}\`, which the command does not take: remove it.`);
+    else if (typeof field !== 'string' || !field.trim()) problems.push(`\`apiome pact ${row.cli} ${flag}\` maps to an empty field.`);
+  }
+  return problems;
+}
+
+/**
  * Compare the ledger with the CLI, the pages and the write routes.
  *
  * @param inputs - The ledger and what it describes.
@@ -227,6 +254,7 @@ export function checkParity({ ledger, commands, pages, writeHandlers }: ParityIn
       if (!pageSet.has(row.ui)) problems.push(`The ledger says \`apiome pact ${row.cli}\` is done on ${row.ui}, which is not a page.`);
       if (row.reason !== undefined) problems.push(`\`apiome pact ${row.cli}\` has a screen, so its reason is stale: remove it.`);
     }
+    if (row.fields !== undefined) problems.push(...fieldProblems(row, commands.find((command) => command.name === row.cli)));
   }
 
   // --- every write route has a row, and every row a write route -----------------------------------

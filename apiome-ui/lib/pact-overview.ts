@@ -18,6 +18,7 @@ import { ENVIRONMENTS_ROUTE } from '@lib/pact-environments';
 import { WEBHOOKS_ROUTE } from '@lib/pact-webhooks';
 import { HEALTH_ROUTE } from '@lib/pact-health';
 import { SETTINGS_ROUTE } from '@lib/pact-remediation';
+import { PUBLISH_ROUTE } from '@lib/pact-publish-page';
 
 // --- types ------------------------------------------------------------------------------------------
 
@@ -514,13 +515,6 @@ export interface WayInGroup {
   ways: WayIn[];
 }
 
-/** The publish command a consumer's build runs. */
-export const PUBLISH_COMMAND = [
-  'apiome pact publish ./pacts \\',
-  '  --consumer-app-version "$GIT_COMMIT" \\',
-  '  --branch "$GIT_BRANCH"',
-].join('\n');
-
 /** The command that publishes a provider contract. */
 export const PROVIDER_CONTRACT_COMMAND = [
   'apiome pact publish-provider-contract ./openapi.yaml \\',
@@ -542,8 +536,8 @@ export const WAYS_IN: readonly WayInGroup[] = [
       {
         id: 'publish-pact',
         title: 'Publish a pact',
-        description: 'Send the pacts your tests wrote, from your build.',
-        command: PUBLISH_COMMAND,
+        description: 'Send the pacts your tests wrote: upload, paste or derive them.',
+        route: PUBLISH_ROUTE,
       },
       {
         id: 'export-consumer-contract',

@@ -3,7 +3,8 @@
     "The CLI <-> UI parity ledger for Pact (PFX-8.2, #7299). Every `apiome pact` command has a screen, and every Contracts write route has a command.",
     "commands: one row per command in apiome-cli/pact-commands.json (regenerate it with `cd apiome-cli && uv run python scripts/export_pact_commands.py`). `ui` is the page (an App Router route under apiome-ui/src/app) where the same action is done; when there is none yet, `ui` is null and `reason` says why and which ticket adds it.",
     "writeRoutes: one row per POST / PUT / PATCH / DELETE handler under apiome-ui/src/app/api/pact. `ui` is the page that sends it; `cli` is the `apiome pact` command that does the same, or null with a `reason`.",
-    "apiome-ui/tests/pact-parity-ledger.test.ts enforces both directions. See apiome-docs/docs/admin/contribute-to-the-docs.mdx (The CLI <-> UI parity ledger)."
+    "apiome-ui/tests/pact-parity-ledger.test.ts enforces both directions. See apiome-docs/docs/admin/contribute-to-the-docs.mdx (The CLI <-> UI parity ledger).",
+    "A command row may carry `fields`: every argument and flag of the command, and the control on `ui` that sets it (PFX-8.3, #7300). When present, the gate holds it to the command's arguments and options exactly."
   ],
   "commands": [
     {
@@ -52,14 +53,40 @@
     },
     {
       "cli": "publish",
-      "ui": "/ade/dashboard/projects/[projectId]/consumers",
-      "rest": "POST /v1/tenants/{tenant}/pact-broker/contracts/publish"
+      "ui": "/ade/dashboard/pacts/publish",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/contracts/publish",
+      "fields": {
+        "pacts": "Upload (files or a folder) and Paste",
+        "--consumer-app-version": "Consumer version",
+        "--branch": "Branch",
+        "--auto-detect-version-properties": "Fill from the linked repository",
+        "--tag": "Tags",
+        "--tag-with-git-branch": "Also tag with the branch name",
+        "--build-url": "Build URL",
+        "--merge": "Merge with the pact already published for this version (refused, with the reason)",
+        "--output": "The result dialog (the CLI’s text or JSON output)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     },
     {
       "cli": "publish-consumer-contract",
-      "ui": null,
+      "ui": "/ade/dashboard/pacts/publish",
       "rest": "POST /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/pact/publish",
-      "reason": "No screen publishes a project's consumer surface straight to the broker yet; Derive from a project on the Publish page ships with PFX-8.3 (#7300) and PFX-8.18 (#7315)."
+      "fields": {
+        "--project": "Derive from a project → Project",
+        "--consumer": "Derive from a project → Consumer",
+        "--consumer-app-version": "Consumer version",
+        "--branch": "Branch",
+        "--tag": "Tags",
+        "--build-url": "Build URL",
+        "--revision": "Derive from a project → Revision",
+        "--provider": "Derive from a project → Provider",
+        "--output": "Download the published pact, in the result dialog",
+        "--fail-on-findings": "The findings, listed in the result dialog",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     },
     {
       "cli": "publish-provider-contract",
@@ -113,8 +140,15 @@
       "method": "POST",
       "bff": "/api/pact/publish",
       "rest": "POST /v1/tenants/{tenant}/pact-broker/contracts/publish",
-      "ui": "/ade/dashboard/projects/[projectId]/consumers",
+      "ui": "/ade/dashboard/pacts/publish",
       "cli": "publish"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/publish/consumer-contract",
+      "rest": "POST /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/pact/publish",
+      "ui": "/ade/dashboard/pacts/publish",
+      "cli": "publish-consumer-contract"
     },
     {
       "method": "POST",

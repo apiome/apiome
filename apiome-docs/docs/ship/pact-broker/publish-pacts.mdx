@@ -5,6 +5,8 @@ sidebar_position: 2
 tags: [contracts, pact, ci, rest]
 ---
 
+import Screenshot from '@site/src/components/Screenshot';
+
 Apiome speaks the Pact Broker's API for publishing and reading pacts. The `pact-broker` CLI, the
 `pact` CLI and the Pact libraries publish to it without changes: give them your workspace's
 **broker base URL** and an API key as the **token**.
@@ -12,7 +14,8 @@ Apiome speaks the Pact Broker's API for publishing and reading pacts. The `pact-
 This page covers publication and retrieval. A provider's verifier fetches the pacts it must verify
 with [consumer-version selectors](./selectors.mdx) and [publishes its results](./verification-results.mdx).
 Deploy jobs [record where each version runs](./environments.mdx) and
-[ask whether a version can be deployed](./can-i-deploy.mdx). There is no screen for pacts yet.
+[ask whether a version can be deployed](./can-i-deploy.mdx). To publish from the app instead of a
+build, use the [Publish page](#publish-from-the-ui).
 
 ## Before you start
 
@@ -129,11 +132,67 @@ specification version it declares. Key order does not matter; the order of inter
 The `metadata` block is **not** part of it. Pact libraries write their own name and version there,
 so upgrading the library does not turn an unchanged pact into a new one.
 
-## Publish from the Import dialog
+## Publish from the UI
 
-You can also publish a pact you already have without a CI job. On a project's **Consumers** screen,
-**click “Import Pact file”**, choose or paste the pact, and **tick “Also publish to the Pact
-Broker”**. Fill in:
+The **Publish a consumer pact** page does what `apiome pact publish` does, from the browser. Open
+**Contracts** and **click “Publish a pact”** (or go to `/ade/dashboard/pacts/publish`).
+
+<Screenshot id="pact-publish" alt="The Publish a consumer pact page: The pact with Upload selected and a table of three files — Orders UI to Billing Service (Pact v3, 6 interactions), Orders UI to Orders API (Pact v4, 11 interactions) and ledger.json marked Not a pact: missing consumer — then Whose version this is with the consumer version, branch and tags, and The same, from anywhere beside them."/>
+
+### 1. Bring the pact in
+
+Choose one of the tabs under **The pact**:
+
+| Tab | What it does |
+| --- | --- |
+| **Upload** | **Drop** pact files or a whole `pacts/` folder on the box, or **click “Browse files”** or **“Browse a folder”**. Each file gets a row: its consumer → provider, its Pact specification, its kinds of interaction (HTTP, Message, GraphQL, gRPC) and how many interactions it carries. Several providers and several consumers at once are fine. |
+| **Paste** | Paste a Pact document into **Pact JSON**, or **click “Paste from clipboard”**. The detected specification is shown beside the button. |
+| **Derive from a project** | Publish a consumer's declared surface as its pact, as `apiome pact publish-consumer-contract` does. Pick the **Project** and the **Consumer**; optionally a **Revision** (the current one otherwise) and the **Provider** pacticipant. Only a consumer declared with the picker can be derived — one imported from a Pact file says so in the list. |
+
+A file that is not a pact is marked in red with the reason — for example *Not a pact: missing
+consumer*, *Not a .json file*, or a second file for the same consumer and provider. The other rows
+still publish. Remove a row with its **×** button.
+
+### 2. Say whose version it is
+
+| Field | What to enter | `apiome pact publish` flag |
+| --- | --- | --- |
+| **Consumer** | Shown, not typed: each pact names its consumer. Several consumers are published one request each. | — |
+| **Consumer version** | A version that changes with every build, such as a commit SHA. Required. | `--consumer-app-version` |
+| **Branch** | The branch the build came from. **Click “Fill from the linked repository”** to use the consumer pacticipant's main branch. | `--branch`, `--auto-detect-version-properties` |
+| **Tags** | Optional. Separate them with commas or spaces. | `--tag` |
+| **More options → Build URL** | The CI build's `http` or `https` address. | `--build-url` |
+| **More options → Also tag with the branch name** | Puts the branch on the version as a tag too. Needs a branch. | `--tag-with-git-branch` |
+| **More options → Merge with the pact already published** | Apiome stores a version's pact as published and does not merge interactions, so turning this on stops the publish with that reason — as `--merge` does in the CLI. | `--merge` |
+
+### 3. Check, then publish
+
+- **Click “Check only”** to see what publishing would do, without writing anything. Each row says
+  *Nothing is published for 3.4.0 yet: this pact will be new*, *Unchanged since 8d2f1c0: its
+  verification results still apply*, or *3.4.0 already has a different pact. Use a new version* —
+  a different pact for a version that already has one is refused.
+- **Click “Publish pact”.** The result dialog lists each pact: **new content**, pending for the
+  provider until they pass it once; **unchanged**, so its verification results still apply; or
+  changed. It also lists what was not sent and why, whether contract webhooks were notified (see
+  [Webhooks](./webhooks-console.mdx)), and how many bi-directional comparisons ran. A derived pact
+  also lists its findings — values invented or left out — and **“Download the published pact”**.
+  **Click “Can I deploy?”** to go on, or **“Publish another”** to start over.
+
+If REST refuses one pact of a request, that row is marked with REST's reason and the rest are sent
+again; nothing is dropped silently.
+
+**The same, from anywhere**, beside the form, is the command for what the form holds — `apiome pact
+publish pacts/` (or `publish-consumer-contract` for a derive), the Pact CLI, the GitHub Action step
+and the REST request — and lists anything the command cannot carry. See [the CLI](./cli.mdx).
+
+Publishing needs **Pacts** → **Create**. A role without it sees why and the command block only, so
+the pact can still be published from a build with an API key.
+
+### From the Import dialog
+
+You can also publish a pact as you import it. On a project's **Consumers** screen, **click
+“Import Pact file”**, choose or paste the pact, and **tick “Also publish to the Pact Broker”**. Fill
+in:
 
 | Field | What to enter |
 | --- | --- |
@@ -149,6 +208,9 @@ dialog stays open and shows both results: the revision stored, and the broker's 
 broker refuses the pact — for instance, a different pact for a consumer version that already has
 one — the dialog says so beside the stored revision; the import is not undone. Publishing needs
 **Pacts** → **Create**. Leave the box unticked to import to the registry only.
+
+For several files, a check first, or tag-with-branch, **click “open the Publish page”** in the
+dialog: the page opens with the version, branch, tags, build URL and the pact already filled in.
 
 ## Publish one pact with curl
 

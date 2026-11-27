@@ -133,6 +133,25 @@ describe('each failure path', () => {
     expect(checkParity(inputs)).toEqual([expect.stringContaining('its reason is stale')]);
   });
 
+  it('passes a fields map that names every argument and flag', () => {
+    const inputs = world();
+    inputs.commands[0].arguments = ['pacts'];
+    inputs.commands[0].options = ['--branch'];
+    inputs.ledger.commands[0].fields = { pacts: 'Upload', '--branch': 'Branch' };
+    expect(checkParity(inputs)).toEqual([]);
+  });
+
+  it('fails a fields map that misses a flag, names one the command lacks, or leaves one empty', () => {
+    const inputs = world();
+    inputs.commands[0].options = ['--branch', '--merge'];
+    inputs.ledger.commands[0].fields = { '--branch': ' ', '--colour': 'Colour' };
+    expect(checkParity(inputs)).toEqual([
+      expect.stringContaining('`apiome pact publish --merge` has no field'),
+      expect.stringContaining('`apiome pact publish --branch` maps to an empty field'),
+      expect.stringContaining('maps `--colour` for `apiome pact publish`, which the command does not take'),
+    ]);
+  });
+
   it('fails a command listed twice', () => {
     const inputs = world();
     inputs.ledger.commands.push({ ...inputs.ledger.commands[0] });

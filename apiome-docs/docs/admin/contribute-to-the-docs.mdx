@@ -117,8 +117,12 @@ under `apiome-ui/src/app/api/pact`:
 4. Give the screen its **The same, from anywhere** block (`CommandBlock`, built with
    `lib/pact-commands.ts`), and update the table on the CLI page.
 
+5. When a screen does everything a command does (the Publish page and `publish`), list the
+   command's arguments and flags under `fields`, each with the control that sets it.
+
 `apiome-ui/tests/pact-parity-ledger.test.ts` fails on a command or write route with no row, a row
-for something that no longer exists, a page that is not a route, and a missing or stale reason.
+for something that no longer exists, a page that is not a route, a missing or stale reason, and a
+`fields` map that misses a flag, names one the command does not take, or leaves one empty.
 
 ## Add a screenshot
 
