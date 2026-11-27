@@ -136,7 +136,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 | ✅ PFX-EPIC-4 | CLI, CI and client compatibility | 4.1–4.3 | 7 |
 | ✅ PFX-EPIC-5 | Contracts workspace UI | 5.1–5.4, 5.6 | 8 |
 | PFX-EPIC-6 | Operations, governance and migration | 6.1, 6.7 | 8 |
-| PFX-EPIC-7 | Integration with specs, gates and registry | 7.1–7.3 | 5 |
+| ✅ PFX-EPIC-7 | Integration with specs, gates and registry | 7.1–7.3 | 5 |
 
 ### ✅ PFX-EPIC-1 · [#6907](https://github.com/apiome/apiome/issues/6907) — Pact Broker core · umbrella of the hub
 
@@ -357,7 +357,11 @@ Design references: `mockups/pact/*` and `mockups/contracts/{matrix,verification,
 
 **PFX-6.7** — `apiome pact migrate --from https://… --token …` reads the source via its REST API (pacticipants, versions, tags, branches, pacts, verification results, environments, deployments, webhooks and labels), re-creates them idempotently with a dry-run report listing anything not portable (PactFlow secrets are not exported; they are listed for re-entry); resumable; preserves timestamps. **PFX-6.2/6.3** absorb private-suite 10.2/10.4. Remaining items are short-form as above. **Docs:** migration guide with a before/after checklist; performance page.
 
-### PFX-EPIC-7 · [#6913](https://github.com/apiome/apiome/issues/6913) — Integration with specs, gates and the registry
+### ✅ PFX-EPIC-7 · [#6913](https://github.com/apiome/apiome/issues/6913) — Integration with specs, gates and the registry
+
+✅ **Done** (2026-11-26).
+
+**Status.** All five issues of this epic are complete (PFX-7.5 #6965 was the last). #6913 added an **Inside the registry** paragraph to **How the pieces fit** in `apiome-docs/docs/ship/pact-broker/overview.mdx` (consumer model, deploy-gate signal, publish gate, diff/CI, Browse and portal), extended **Gate a deployment on pacts** in `ship/contract-testing-and-ci-gates.mdx` with the `contracts` deploy-gate signal and `contracts.publishPolicy`, and added the release-notes post `2026-11-29-pact-integration-specs-gates-registry.mdx` and a What's new line. The per-feature sections were reviewed and are already complete from #6961–#6965. No screenshot changes.
 
 **✅ PFX-7.1 · #6961 One consumer model — Complete** — publishing a pact (`PUT …/pact-broker/pacts/provider/{p}/consumer/{c}/version/{v}` and `POST …/contracts/publish`) now runs `app.pact_consumer_sync.refresh_consumer_contracts` after the publish commits. Each *new* pact is resolved by `pact_contract_import.import_pact` against the latest version of the provider pacticipant's bound project and stored as the consumer's next contract revision (CTG-4.1 rule 2, source `pact`, digest `sha256:<pact sha>`); the consumer is registered under the pacticipant's handle on first publish and the pacticipant is bound to it. Unresolved interactions stay on the revision with reason codes. The bulk response gains `consumerContracts` (`refreshed` / `unchanged` / `skipped` with `provider-not-bound-to-project` or `project-specification-unavailable` / `error` with `refresh-failed`) and matching `notices`; same pact + same specification revision is `unchanged`; a fault never fails the publish. Not covered: the PFX-6.7 migration import writes pacts directly and does not refresh consumers. OpenAPI 1.692.0 (no DB migration). **Docs:** `ship/pact-broker/publish-pacts.mdx` (One consumer model), `ship/contract-testing-and-ci-gates.mdx`; REST reference; release-notes post, What's new line.
 

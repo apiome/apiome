@@ -141,6 +141,23 @@ as a verification result, so steps 4 and 6 work the same way. A consumer without
 Apiome. A provider that sends messages publishes its AsyncAPI document instead, and its consumers'
 [message pacts](./message-pacts.mdx) are compared with it the same way.
 
+**Inside the registry.** The broker is not a separate tool beside your specifications; its data
+flows into them:
+
+- **One consumer model.** A published pact becomes the consumer's next
+  [contract revision](./publish-pacts.mdx#one-consumer-model) in the provider's project, so
+  breaking-change analysis sees consumers that publish pacts.
+- **The deploy gate.** The project [deploy gate](./can-i-deploy.mdx#in-the-deploy-gate) has a
+  `contracts` signal that gives the same verdict as can-i-deploy.
+- **The publish gate.** A version publish can warn or be
+  [blocked on failing contracts](./can-i-deploy.mdx#block-a-publish-on-failing-contracts).
+- **Diff and CI.** `apiome diff --consumers` and the `diff-action`
+  [name the pacticipant](../contract-testing-and-ci-gates.mdx#broker-consumers-in-the-diff-and-in-ci)
+  behind each consumer verdict.
+- **Browse and the portal.** Public project pages show
+  [pact badges and the consumers](./badges.mdx#consumers-on-browse-and-the-portal) that depend on
+  the project.
+
 Along the way, [badges](./badges.mdx) show the state of a public project's pacts, and
 [retention](./retention.mdx) keeps the registry small: it deletes old versions but keeps anything
 deployed or released, and always starts as a dry run.

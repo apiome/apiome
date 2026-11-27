@@ -289,6 +289,15 @@ retries, and prints the reason for each. Apiome answers from the pacts consumers
 results providers published, and the deployments your deploy jobs recorded. See
 [Can I deploy?](./pact-broker/can-i-deploy.mdx).
 
+The same verdict is a signal of the project's [deploy gate](../reference/rest/deploy-gate.md): its
+**`contracts`** signal judges the pacticipant bound to the project and fails the gate when the
+version is not deployable (see
+[In the deploy gate](./pact-broker/can-i-deploy.mdx#in-the-deploy-gate)). It can also stop a
+version from being published at all: set **`contracts.publishPolicy`** in the gate policy to
+`warn` (the default) or `block`, and the **Publish** dialog shows a **Contracts** card listing the
+failing integrations (see
+[Block a publish on failing contracts](./pact-broker/can-i-deploy.mdx#block-a-publish-on-failing-contracts)).
+
 So that a consumer's new expectation does not fail the provider's build the moment it is
 published, turn on **pending pacts** (`enablePending: true`) in the provider's verifier, and
 **work-in-progress pacts** (`includeWipPactsSince`) to verify feature-branch pacts early. See
