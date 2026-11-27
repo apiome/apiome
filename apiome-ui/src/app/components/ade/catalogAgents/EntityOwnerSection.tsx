@@ -1,12 +1,13 @@
 'use client';
 
 /**
- * The **Owner** section of an agent, model, gateway config or component page — CDG-5.2 (#5980),
- * CDG-5.3 (#5981), CDG-5.5 (#5983).
+ * The **Owner** section of an agent, model, gateway config, component or pacticipant page — CDG-5.2
+ * (#5980), CDG-5.3 (#5981), CDG-5.5 (#5983), PFX-6.4 (#6956).
  *
  * Shows the owner team (confirmed, else suggested, with **Confirm** on a suggestion) and lets the
  * reader assign a team. Assigning makes the team the confirmed owner (`PUT /v1/tenants/{t}/owners/
- * {kind}/{id}`); apiome-rest checks `consumer_contracts:edit`.
+ * {kind}/{id}`); apiome-rest checks the kind's `edit` permission (`consumer_contracts`, `imports` or
+ * `pacts`).
  */
 
 import * as React from 'react';
@@ -16,14 +17,16 @@ import type { EntityOwner, OwnerEntityKind } from '@lib/owners';
 
 /** Props for {@link EntityOwnerSection}. */
 export interface EntityOwnerSectionProps {
-  /** `agent`, `model`, `gateway_config` (CDG-5.3) or `component` (CDG-5.5). */
-  kind: Extract<OwnerEntityKind, 'agent' | 'model' | 'gateway_config' | 'component'>;
+  /** `agent`, `model`, `gateway_config` (CDG-5.3), `component` (CDG-5.5) or `pacticipant` (PFX-6.4). */
+  kind: Extract<OwnerEntityKind, 'agent' | 'model' | 'gateway_config' | 'component' | 'pacticipant'>;
   /** The entity id. */
   entityId: string;
   /** The current owner, or `null`. */
   owner: EntityOwner | null;
   /** Called after the owner changed, to re-read the page. */
   onChanged: () => void;
+  /** An optional sentence under the heading: what the owner receives. */
+  description?: string;
 }
 
 /**
@@ -32,7 +35,7 @@ export interface EntityOwnerSectionProps {
  * @param props - See {@link EntityOwnerSectionProps}.
  * @returns The section.
  */
-export function EntityOwnerSection({ kind, entityId, owner, onChanged }: EntityOwnerSectionProps) {
+export function EntityOwnerSection({ kind, entityId, owner, onChanged, description }: EntityOwnerSectionProps) {
   const { teams } = useTeams();
   const [team, setTeam] = React.useState('');
   const [busy, setBusy] = React.useState(false);
@@ -59,6 +62,11 @@ export function EntityOwnerSection({ kind, entityId, owner, onChanged }: EntityO
       <h2 id={`${selectId}-title`} className="agt-section__title">
         Owner
       </h2>
+      {description ? (
+        <p className="agt-muted" data-testid="entity-owner-description">
+          {description}
+        </p>
+      ) : null}
       <div className="agt-owner">
         <OwnerCell owner={owner} kind={kind} entityId={entityId} onChange={() => onChanged()} testId="entity-owner-cell" />
         <Label htmlFor={selectId} className="sr-only">

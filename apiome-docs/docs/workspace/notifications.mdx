@@ -124,7 +124,7 @@ When something goes wrong on a project, catalog item, MCP endpoint or connector 
 | --- | --- | --- |
 | **Lint findings** | a lint gate finds new error-level findings | *3 new error-level lint findings* |
 | **Breaking changes** | a refresh introduces a breaking change | *A refresh of acme/payments introduced 2 breaking changes* |
-| **Verification drift** | a verification schedule finds drift | *Nightly prod check found drift (2 operations)* |
+| **Verification drift** | a verification schedule finds drift, a [Pact verification fails](../ship/pact-broker/verification-console.mdx#who-is-told-about-a-failure), or a [re-publish request](../ship/pact-broker/stale-pacts.mdx#who-is-told) opens or expires | *Nightly prod check found drift (2 operations)* |
 | **Blocked deploy gates** | the deploy gate fails | *Deploy gate failed for orders-service 1.9.0: …* |
 | **MCP trust drift** | an MCP endpoint drifts from its trust baseline | *Tools drifted from its trust baseline (…)* |
 | **Shadow APIs** | a connector finds APIs the catalog does not describe | *2 new shadow APIs on Prod Kong* |

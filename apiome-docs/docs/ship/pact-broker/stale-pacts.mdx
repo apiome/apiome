@@ -122,16 +122,21 @@ pact is re-published or verified first.
 
 ### Who is told
 
-A pacticipant has no owners of its own yet. The request goes to the owner team of what the consumer
-pacticipant is linked to: its consumer-registry entry, or else its project (see
-[Teams → Ownership](/workspace/teams#ownership)). Team members get an inbox notification, and the team's chat channel gets a
-message.
+The request goes to the consumer pacticipant's
+[owner team](./pacticipants.mdx#give-a-pacticipant-an-owner). Team members get an inbox notification,
+and the team's chat channel gets a message. The owner is the first of these that has a confirmed
+owner team (see [Teams → Ownership](/workspace/teams#ownership)):
 
-- With no confirmed owner, the request is recorded in the **Unowned findings** report, or sent to the
-  workspace's catch-all team.
-- A pacticipant linked to neither a consumer nor a project reaches nobody, and the request says so.
-  The request and its webhooks still stand.
+1. the pacticipant itself;
+2. its consumer-registry entry, when it is bound to one;
+3. its project, when it is bound to one.
+
+- With no owner team anywhere, the request is recorded in the **Unowned findings** report under the
+  pacticipant, or sent to the workspace's catch-all team. **Who was told** says which. The request
+  and its webhooks still stand.
 - When a request expires, the consumer's owners and the provider's owners are both notified.
+- Requests opened before pacticipants had owners may say **Nobody to notify**: the pacticipant was
+  linked to no consumer or project with owners.
 
 ### Webhooks
 

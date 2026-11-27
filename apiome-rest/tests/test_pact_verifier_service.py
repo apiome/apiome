@@ -279,6 +279,23 @@ def test_a_drifted_provider_publishes_a_failure_that_names_what_drifted() -> Non
     assert next(item for item in broker.published if item["consumer"] == "billing-service")["request"].success is True
 
 
+def test_every_published_result_is_handed_to_the_owner_notifier() -> None:
+    # PFX-6.4: the hosted verifier tells owners of a failure through the same hook as the broker.
+    drifted = LedgerApi(
+        {
+            "GET /summary": lambda _request: httpx.Response(
+                200, json={"year": "2026"}, headers={"Content-Type": "application/json"}
+            )
+        }
+    )
+    broker = _Broker([PACT_JS, PACT_GO])
+    with patch(f"{_SERVICE}.notify_failed_verification", return_value={}) as notify:
+        _verify(broker, drifted)
+    assert notify.call_count == len(broker.published) == 2
+    handed = [call.args[2] for call in notify.call_args_list]
+    assert {result.success for result in handed} == {False, True}
+
+
 def test_a_pending_pact_that_fails_is_published_as_failed_but_does_not_fail_the_run() -> None:
     drifted = LedgerApi({"GET /invoices/9999": lambda _request: httpx.Response(200, json={})})
     broker = _Broker([PACT_JS])

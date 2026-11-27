@@ -2884,6 +2884,8 @@
       "sources": [
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantDetailClient.tsx",
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantPanels.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantOwnerPanel.tsx",
+        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
         "apiome-ui/src/app/components/ade/pactDetail/PactPanels.tsx",
         "apiome-ui/lib/pact-pacticipants.ts"
       ]

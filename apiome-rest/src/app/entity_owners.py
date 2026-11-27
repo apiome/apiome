@@ -11,8 +11,8 @@ list read joins to embed ``owner`` in its envelope. :mod:`app.entity_owner_store
 
 **Who may change an owner** is the permission that already guards editing that kind of entity
 (:data:`KINDS`): ``projects:edit`` for projects, catalog items and MCP endpoints,
-``consumer_contracts:edit`` for consumers and ``imports:edit`` for connectors. Reading owners needs the
-matching ``view``.
+``consumer_contracts:edit`` for consumers, ``imports:edit`` for connectors and ``pacts:edit`` for
+pacticipants (PFX-6.4). Reading owners needs the matching ``view``.
 """
 
 from __future__ import annotations
@@ -132,11 +132,16 @@ KINDS: Dict[str, KindSpec] = {
     "component": KindSpec(
         "component", "apiome.catalog_components", "e.deleted_at IS NULL", Resource.IMPORTS
     ),
+    # PFX-6.4 (V451): an application in the workspace's Pact Broker. Its owner team receives the
+    # Pact findings about it (stale pacts, re-publish requests, failed verifications).
+    "pacticipant": KindSpec(
+        "pacticipant", "apiome.pacticipant", "e.deleted_at IS NULL", Resource.PACTS
+    ),
 }
 
 EntityKind = Literal[
     "project", "catalog_item", "mcp_endpoint", "consumer", "connector", "agent", "model", "gateway_config",
-    "component",
+    "component", "pacticipant",
 ]
 
 

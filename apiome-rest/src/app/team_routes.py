@@ -78,7 +78,12 @@ class OwnedEntity(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    kind: str = Field(description="`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.")
+    kind: str = Field(
+        description=(
+            "The owner kind: `project`, `catalog_item`, `mcp_endpoint`, `consumer`, `connector`, `agent`, `model`, "
+            "`gateway_config`, `component` or `pacticipant`."
+        )
+    )
     id: str
     name: str
     source: str = Field(description="How the ownership was set: `manual`, `gateway_tag`, …")

@@ -481,6 +481,12 @@ def _no_contract_webhook_events_by_default(request, monkeypatch):
     monkeypatch.setattr(
         "app.pact_broker_verification_routes.fire_verification_events", lambda *_args, **_kwargs: []
     )
+    # PFX-6.4: a failed result also notifies the pacticipants' owner teams (owner routing reads the
+    # owner and notification tables); tests of the hook patch it themselves.
+    monkeypatch.setattr(
+        "app.pact_broker_verification_routes.notify_failed_verification", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr("app.pact_verifier_service.notify_failed_verification", lambda *_args, **_kwargs: {})
 
 
 @pytest.fixture(autouse=True)

@@ -201,8 +201,9 @@ its digest. Applying needs `pacts:delete`, so use an API key of an **Admin** or 
 
 The retention sweep runs every 5 minutes. It removes for good every pacticipant and version
 deleted more than 30 days ago, with its pacts, verification results and deployment records. A
-[contract webhook](./webhooks.mdx) limited to a purged pacticipant is removed with it. After that,
-nothing can bring them back.
+[contract webhook](./webhooks.mdx) limited to a purged pacticipant is removed with it, and so are its
+owner team and its entries in the **Unowned findings** report. After that, nothing can bring them
+back. A deleted pacticipant keeps its owner until then, so restoring it brings the owner back.
 
 ## Who can do what
 

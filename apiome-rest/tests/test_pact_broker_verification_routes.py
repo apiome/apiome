@@ -229,6 +229,25 @@ def test_a_result_is_published_in_the_brokers_shape(allowed: MagicMock) -> None:
     }
 
 
+def test_a_published_result_notifies_the_owners_after_it_is_stored(allowed: MagicMock) -> None:
+    # PFX-6.4: the hook decides (a passing result tells nobody); the route always hands it the result.
+    stored = _result()
+    with patch(f"{_ROUTES}.publish_verification_result", return_value=stored), patch(
+        f"{_ROUTES}.notify_failed_verification", return_value={"provider": "routed"}
+    ) as notify:
+        response = client.post(_RESULTS, json=_BODY)
+    assert response.status_code == 201, response.text
+    notify.assert_called_once()
+    assert notify.call_args.args[1:] == (_TENANT, stored)
+
+
+def test_a_notification_problem_never_changes_the_answer(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.publish_verification_result", return_value=_result()), patch(
+        f"{_ROUTES}.notify_failed_verification", return_value={}
+    ):
+        assert client.post(_RESULTS, json=_BODY).status_code == 201
+
+
 def test_the_metadata_form_records_the_pending_and_wip_flags(allowed: MagicMock) -> None:
     pending = encode_metadata({"s": [{"b": "main", "l": True, "cv": "v1"}], "p": True})
     wip = encode_metadata({"w": True})

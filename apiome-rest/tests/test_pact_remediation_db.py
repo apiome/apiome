@@ -5,7 +5,7 @@ What only the real schema proves (apiome-db V448):
 * settings read the defaults until saved, and the database keeps their ranges and cadences;
 * an override is one per provider and one per pair, replaced in place, removed by id, and never
   visible to (or removable by) another workspace; a cross-workspace reference is refused;
-* a stale pact opens exactly one re-publish request (``unlinked`` when its consumer names no owner),
+* a stale pact opens exactly one re-publish request (``unowned`` when nobody owns its consumer),
   which is acknowledged, expired (and not reopened), cleared by a verification, or republished;
 * only one request per pair is open at a time; another workspace never reads it;
 * the status read shows the pact as overdue with its open request;
@@ -206,7 +206,14 @@ def test_a_stale_pact_opens_one_request_which_is_acknowledged_then_expires(remed
     assert (counts.became_stale, counts.requests_opened) == (1, 1)
     (request,) = list_requests(db, ids["tenant"], state="open").requests
     assert (request.state, request.pact_version_sha, request.consumer_version) == ("requested", sha, "1.0.0")
-    assert request.notification_status == "unlinked"
+    # PFX-6.4: nobody owns Billing Service (nor anything it is bound to), so the request is recorded
+    # in Unowned findings under the pacticipant itself.
+    assert request.notification_status == "unowned"
+    remediation["cursor"].execute(
+        "SELECT entity_kind FROM apiome.unowned_findings WHERE tenant_id = %s::uuid AND entity_id = %s::uuid",
+        (ids["tenant"], ids["consumer"]),
+    )
+    assert [row["entity_kind"] for row in remediation["cursor"].fetchall()] == ["pacticipant"]
     assert staleness_for_provider(db, ids["tenant"], ids["provider"])[ids["consumer"]]["stale"] is True
 
     # The next pass neither duplicates it nor fires the stale event again.
@@ -226,7 +233,7 @@ def test_a_stale_pact_opens_one_request_which_is_acknowledged_then_expires(remed
     expired = _sweep(remediation, days=11)
     assert expired.requests_closed == {"expired": 1} and expired.requests_opened == 0
     closed = get_request(db, ids["tenant"], request.id)
-    assert closed.state == "expired" and closed.resolved_at and closed.escalation_status == "unlinked"
+    assert closed.state == "expired" and closed.resolved_at and closed.escalation_status == "unowned"
     with pytest.raises(RemediationError) as refused:
         acknowledge_request(db, ids["tenant"], request.id, None, actor=ACTOR)
     assert refused.value.code == CODE_REQUEST_CLOSED

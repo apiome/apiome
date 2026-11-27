@@ -185,8 +185,9 @@ export function isOpen(state: string): boolean {
 export const NOTIFICATION_TEXT: Record<string, string> = {
   routed: "Sent to the owner team's inbox.",
   throttled: 'Not sent again: the owner team was notified of this within the hour.',
-  unowned: 'No confirmed owner: recorded in the Unowned findings report.',
+  unowned: 'No owner team on the pacticipant or what it is bound to: recorded in the Unowned findings report.',
   catch_all: "No confirmed owner: sent to the workspace's catch-all team.",
+  // Written before PFX-6.4 gave pacticipants owners; an ownerless pacticipant is now `unowned`.
   unlinked: 'Nobody to notify: the pacticipant is linked to no consumer or project with owners. Webhooks still fired.',
   failed: 'The notification could not be written; see the server log.',
 };

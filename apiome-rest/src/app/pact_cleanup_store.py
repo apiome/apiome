@@ -959,14 +959,36 @@ def _purge_pacticipants_tx(cursor: Any, cutoff: datetime, batch: int) -> Dict[st
                      ORDER BY deleted_at
                      LIMIT %s
                      FOR UPDATE SKIP LOCKED)
-        RETURNING tenant_id::text AS tenant_id, slug
+        RETURNING id::text AS id, tenant_id::text AS tenant_id, slug
         """,
         (cutoff, batch),
     )
+    rows = cursor.fetchall() or []
     per_tenant: Dict[str, List[str]] = {}
-    for row in cursor.fetchall() or []:
+    for row in rows:
         per_tenant.setdefault(row["tenant_id"], []).append(row["slug"])
+    _purge_owner_rows_tx(cursor, [row["id"] for row in rows if row.get("id")])
     return per_tenant
+
+
+def _purge_owner_rows_tx(cursor: Any, pacticipant_ids: List[str]) -> None:
+    """Remove the owner rows and unowned findings of pacticipants purged for good (PFX-6.4).
+
+    ``entity_owners`` and ``unowned_findings`` name their entity by kind and id, with no foreign
+    key, so the purge removes them in the same transaction. A soft-deleted pacticipant keeps its
+    owner, so a restore brings it back.
+
+    Args:
+        cursor: The open transaction's cursor.
+        pacticipant_ids: The purged pacticipants; nothing happens for an empty list.
+    """
+    if not pacticipant_ids:
+        return
+    for table in ("entity_owners", "unowned_findings"):
+        cursor.execute(
+            f"DELETE FROM apiome.{table} WHERE entity_kind = 'pacticipant' AND entity_id = ANY(%s::uuid[])",
+            (pacticipant_ids,),
+        )
 
 
 def purge_deleted(

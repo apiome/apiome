@@ -1092,6 +1092,11 @@ every existing webhook, no rewrite) and the `secret` kind for verification targe
 CHECK swapped on `verification_target`; every existing row satisfies it). Secrets are sealed with
 `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`, the key webhook secrets already use; nothing new to set.
 
+`V451` (PFX-6.4) lets a Pact Broker pacticipant have an owner team: it adds `pacticipant` to the
+owner kinds of `entity_owners` and `unowned_findings` (two check-constraint swaps on small tables). It
+changes no column or index. Re-publish requests opened afterwards record `unowned` rather than
+`unlinked` when nobody owns the consumer.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's

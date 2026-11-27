@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.688.0
+  version: 1.689.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -44194,14 +44194,15 @@ paths:
       tags:
       - owners
       summary: Read an entity's owner
-      description: 'The confirmed owner team, if any, and every suggested owner with
-        its `source` (`gateway_tag`, `codeowners`, `spec_extension`, …) and `source_ref`.
+      description: 'The confirmed owner team, if any, and every suggested owner with its
+        `source` (`gateway_tag`, `codeowners`, `spec_extension`, …) and `source_ref`.
 
 
-        `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`;
-        reading needs the kind''s `view` and changing needs its `edit` (`projects`
-        for projects, catalog items and MCP endpoints, `consumer_contracts` for consumers,
-        `imports` for connectors).'
+        `kind` is `project`, `catalog_item`, `mcp_endpoint`, `consumer`, `connector`, `agent`,
+        `model`, `gateway_config`, `component` or `pacticipant`; reading needs the kind''s
+        `view` and changing needs its `edit` (`projects` for projects, catalog items and
+        MCP endpoints, `consumer_contracts` for consumers, agents and models, `imports`
+        for connectors, gateway configs and components, `pacts` for pacticipants).'
       operationId: get_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_id__get
       parameters:
       - name: tenant_slug
@@ -44277,9 +44278,10 @@ paths:
 
 
         Audited as `owner.assign`. `kind` is `project`, `catalog_item`, `mcp_endpoint`,
-        `consumer` or `connector`; reading needs the kind''s `view` and changing needs
-        its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts`
-        for consumers, `imports` for connectors).'
+        `consumer`, `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`;
+        reading needs the kind''s `view` and changing needs its `edit` (`projects` for projects,
+        catalog items and MCP endpoints, `consumer_contracts` for consumers, agents and
+        models, `imports` for connectors, gateway configs and components, `pacts` for pacticipants).'
       operationId: put_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_id__put
       parameters:
       - name: tenant_slug
@@ -44358,14 +44360,15 @@ paths:
       tags:
       - owners
       summary: Remove an entity's owner
-      description: 'Remove the confirmed owner. Suggestions are kept; an owner that
-        came from a suggestion becomes a suggestion again.
+      description: 'Remove the confirmed owner. Suggestions are kept; an owner that came
+        from a suggestion becomes a suggestion again.
 
 
         Audited as `owner.remove`. `kind` is `project`, `catalog_item`, `mcp_endpoint`,
-        `consumer` or `connector`; reading needs the kind''s `view` and changing needs
-        its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts`
-        for consumers, `imports` for connectors).'
+        `consumer`, `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`;
+        reading needs the kind''s `view` and changing needs its `edit` (`projects` for projects,
+        catalog items and MCP endpoints, `consumer_contracts` for consumers, agents and
+        models, `imports` for connectors, gateway configs and components, `pacts` for pacticipants).'
       operationId: delete_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_id__delete
       parameters:
       - name: tenant_slug
@@ -44437,15 +44440,16 @@ paths:
       tags:
       - owners
       summary: Confirm a suggested owner
-      description: 'Make a suggested owner the confirmed owner. Name it with `team`;
-        it may be omitted when only one team is suggested. The owner keeps its `source`
-        and records who confirmed it (`confirmed_by`, `confirmed_at`).
+      description: 'Make a suggested owner the confirmed owner. Name it with `team`; it
+        may be omitted when only one team is suggested. The owner keeps its `source` and
+        records who confirmed it (`confirmed_by`, `confirmed_at`).
 
 
         Audited as `owner.confirm`. `kind` is `project`, `catalog_item`, `mcp_endpoint`,
-        `consumer` or `connector`; reading needs the kind''s `view` and changing needs
-        its `edit` (`projects` for projects, catalog items and MCP endpoints, `consumer_contracts`
-        for consumers, `imports` for connectors).'
+        `consumer`, `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`;
+        reading needs the kind''s `view` and changing needs its `edit` (`projects` for projects,
+        catalog items and MCP endpoints, `consumer_contracts` for consumers, agents and
+        models, `imports` for connectors, gateway configs and components, `pacts` for pacticipants).'
       operationId: confirm_entity_owner_v1_tenants__tenant_slug__owners__kind___entity_id__confirm_post
       parameters:
       - name: tenant_slug
@@ -140194,6 +140198,7 @@ components:
           - model
           - gateway_config
           - component
+          - pacticipant
           title: Kind
           description: Kind.
           example: project
@@ -172178,7 +172183,8 @@ components:
         kind:
           type: string
           title: Kind
-          description: '`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.'
+          description: 'The owner kind: `project`, `catalog_item`, `mcp_endpoint`, `consumer`,
+            `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`.'
           example: example
         id:
           type: string
@@ -207529,7 +207535,8 @@ components:
         entity_kind:
           type: string
           title: Entity Kind
-          description: '`project`, `catalog_item`, `mcp_endpoint`, `consumer` or `connector`.'
+          description: 'The owner kind: `project`, `catalog_item`, `mcp_endpoint`, `consumer`,
+            `connector`, `agent`, `model`, `gateway_config`, `component` or `pacticipant`.'
           example: example
         entity_id:
           type: string

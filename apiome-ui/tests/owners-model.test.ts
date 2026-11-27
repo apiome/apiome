@@ -77,6 +77,8 @@ describe('team page helpers', () => {
       null,
     ]);
     expect(ownedEntityHref({ kind: 'mcp_endpoint', id: 'm 1' })).toBe('/ade/dashboard/mcp/m%201');
+    // PFX-6.4: a pacticipant's id address resolves to its handle's page.
+    expect(ownedEntityHref({ kind: 'pacticipant', id: 'p-1' })).toBe('/ade/dashboard/pacts/pacticipants/p-1');
   });
 
   test('lists the links a team has, in a fixed order', () => {
