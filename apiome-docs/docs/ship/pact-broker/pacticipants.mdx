@@ -1,6 +1,6 @@
 ---
 title: Pacticipants
-description: Browse the applications in your pacts, with their versions and environments.
+description: Browse, create, rename and delete the applications in your pacts.
 sidebar_position: 1.5
 tags: [contracts, pact, ui]
 ---
@@ -10,9 +10,8 @@ The **Pacticipants** page lists every pacticipant in your workspace. Open one to
 branches, tags, labels, and what each environment runs. For the terms, see
 [Pacticipants and versions](./concepts.mdx).
 
-The pages only read. To register, change or delete a pacticipant, use the
-[Pacticipants API](../../reference/rest/pacticipants.md), the [`apiome pact` commands](./cli.mdx)
-or your Pact tooling.
+You can also set one up before its first pact, edit its name, display name, main branch, repository,
+owner, linked project and labels, and delete it. See [Manage a pacticipant](#manage-a-pacticipant).
 
 ## Before you start
 
@@ -37,12 +36,15 @@ Each row shows:
 
 <Screenshot id="pact-pacticipants" alt="The Pacticipants page: Billing Service, Ledger API and Mobile App, each with its handle, main branch, labels, repository and last update, under a Label filter."/>
 
-The header also opens the [**Matrix**](./matrix.mdx),
+Click **New pacticipant** to set one up before it publishes. See
+[Create a pacticipant](#create-a-pacticipant). The Contracts tabs open the [**Matrix**](./matrix.mdx),
 [**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console),
 [**Webhooks**](./webhooks-console.mdx), [**Environments**](./environments-dashboard.mdx),
 [**Contract health**](./contract-health.mdx) and [**Verification settings**](./stale-pacts.mdx) pages.
 
-To see only some pacticipants, choose a label from the **Label** list. Choose **All labels** to see
+To see only some pacticipants, choose a label from the **Label** list. Choose **Deleted (can be
+restored)** from the **Show** list to see the deleted ones. See
+[Restore a deleted pacticipant](#restore-a-deleted-pacticipant). Choose **All labels** to see
 every pacticipant again. The list shows 50 pacticipants at a time. Click **Load more** to see the
 next 50.
 
@@ -56,7 +58,8 @@ apiome pact publish ./pacts \
 
 ## Open a pacticipant
 
-Click a pacticipant's name. Its page has six sections:
+Click a pacticipant's name. Its page has two tabs: **Overview** and **Settings**. See
+[Manage a pacticipant](#manage-a-pacticipant) for **Settings**. **Overview** has six sections:
 
 - **Overview** shows the handle, the main branch, the repository, the labels, what the pacticipant is
   **Bound to** (a project, a consumer, or nothing), and when it was registered.
@@ -130,15 +133,126 @@ If the workspace has no environment yet, **Environments** shows the commands tha
 record a deployment. See [Environments and deployments](./environments.mdx). If no pact names the
 pacticipant yet, **Pacts** shows the `apiome pact publish` command.
 
+## Manage a pacticipant
+
+### Create a pacticipant
+
+Publishing a pact creates its consumer and its provider for you. Create one yourself when you want to
+set it up first, for example to give it an owner or a main branch before its first build.
+
+1. On the **Pacticipants** page, click **New pacticipant**.
+2. In **Name**, type the name pacts will use, for example `Billing Service`. The dialog shows the
+   handle it gets, for example `billing-service`. URLs and CI name it by the handle.
+3. Optional: change **Main branch** (it starts as `main`), choose an **Owner** team, and type the
+   **Repository** URL.
+4. Optional: choose a project from **Start from a project**. The project is linked to the
+   pacticipant, so its published versions can become provider contracts. An empty **Name** takes the
+   project's name.
+5. Click **Create pacticipant**. Its page opens.
+
+If another pacticipant already has the name, the dialog says so under **Name**. If the owner cannot
+be set, the pacticipant is still created and the list says why. Set the owner on its **Settings**
+tab.
+
+### Change the settings
+
+1. Open the pacticipant and click the **Settings** tab.
+2. Under **General**, change any of these:
+
+   | Field | What it does |
+   | --- | --- |
+   | **Name** | The name pacts use. See [Rename a pacticipant](#rename-a-pacticipant). |
+   | **Display name** | What people read when it differs from the name, for example `Billing (EU)`. Pacts never use it. Leave it empty to clear it. |
+   | **Main branch** | The branch that "latest on main" selectors read. |
+   | **Repository** | An `http` or `https` URL of the source repository. |
+   | **Linked project** | The project that describes this pacticipant as a provider. Its published versions can become provider contracts. Choose **None** to unlink it. |
+   | **Labels** | Type a label in **Add a label** and press Enter, or click a label's **×** to remove it. |
+
+3. Click **Save changes**. Only the fields you changed are sent. Click **Discard** to put the stored
+   values back.
+
+The page says **Saved.** If a label could not be added or removed, it says which one and why. The
+other changes are kept.
+
+<Screenshot id="pact-pacticipant-settings" alt="The Settings tab of Billing Service: General with Name, Display name, Main branch, Repository, Linked project and Labels, the Owner section, the Danger zone, and an aside with the handle, previous names and the same settings as an apiome pact command."/>
+
+The **Owner** section is the same as on **Overview**. See
+[Give a pacticipant an owner](#give-a-pacticipant-an-owner). The aside shows the handle, when the
+pacticipant was registered, its **Previous names**, and **The same, from anywhere**: your changes as
+an `apiome pact create-or-update-pacticipant` command, a Pact CLI command and a REST request.
+
+Without **Pacts** → **Edit**, the tab shows the values without inputs.
+
+### Rename a pacticipant
+
+Change **Name** on the **Settings** tab and click **Save changes**.
+
+- The handle does not change, so URLs, CI jobs and links keep working.
+- The history stays: versions, branches, pacts and verification results.
+- The old name keeps working. A pact published under the old name, or a URL or command that names
+  it, still finds this pacticipant. The old name is listed under **Previous names**.
+
+If another pacticipant has the name, or had it before a rename, the tab says
+**A pacticipant named … already exists.** under **Name**, and nothing is saved.
+
+### Delete a pacticipant
+
+Deleting a pacticipant hides it with all its versions, pacts, verification results, deployments,
+branches and tags. You can restore it until it is purged, after 30 days by default.
+
+1. Open the pacticipant and click the **Settings** tab.
+2. Under **Danger zone**, click **Delete *name*…**.
+3. Read what goes with it: the number of versions, pacts and verification results, and the providers
+   and consumers that lose it. A provider that loses a consumer gets a different can-i-deploy answer.
+4. Type the pacticipant's handle to confirm, for example `billing-service`.
+5. Optional: type a **Reason**. It is stored with the delete and in the
+   [audit trail](../../govern/access-audit.mdx).
+6. Click **Delete *name***.
+
+The dialog then offers **Restore *name*** to undo the delete, and **All pacticipants**.
+
+A pacticipant with a version that is deployed or released now cannot be deleted. The dialog names the
+versions and says **Record the undeployment first.** See
+[Environments and deployments](./environments.mdx).
+
+### Restore a deleted pacticipant
+
+1. On the **Pacticipants** page, choose **Deleted (can be restored)** from the **Show** list. Each
+   row shows when it was deleted, by whom and why, and when it is purged.
+2. Click **Restore** on the row.
+
+The pacticipant comes back with the versions that were deleted with it. If another pacticipant has
+taken its handle since, restoring is refused. Delete or rename that one first.
+
+### From the command line
+
+```bash
+# Create a pacticipant, or update the one with this name
+apiome pact create-or-update-pacticipant --name "Billing Service" \
+  --main-branch main --repository-url https://github.com/acme/billing
+
+# Delete one (refused while a version is deployed or released)
+apiome pact delete-pacticipant --name "Billing Service" --reason "retired"
+```
+
+`create-or-update-pacticipant` takes `pact-broker create-or-update-pacticipant`'s flags. It never
+renames: rename on the **Settings** tab, or with `PATCH /v1/tenants/{tenant}/pacticipants/{handle}`.
+See [`apiome pact` commands](./cli.mdx) and the
+[Pacticipants API](../../reference/rest/pacticipants.md).
+
 ## Who can do what
 
 | Action | Permission |
 | --- | --- |
 | Open the Pacticipants page and a pacticipant's page | **Pacts** → **View** |
-| See a pacticipant's owner | **Pacts** → **View** |
+| See a pacticipant's owner and its settings | **Pacts** → **View** |
+| Create a pacticipant | **Pacts** → **Create** |
+| Change its settings, rename it, add or remove labels | **Pacts** → **Edit** |
 | Assign, change, confirm or remove a pacticipant's owner | **Pacts** → **Edit** |
+| Delete a pacticipant, or restore a deleted one | **Pacts** → **Delete** (Owner and Admin) |
 
-Every read is scoped to your current workspace.
+Every read and write is scoped to your current workspace. Creating, changing, deleting and restoring
+a pacticipant is recorded in the audit trail.
 
 ## Related
 

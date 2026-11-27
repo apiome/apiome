@@ -30,7 +30,7 @@ from app.consumer_contract_store import ConsumerActor
 from app.main import app
 from app.pact_cleanup_store import purge_deleted
 from app.pacticipant import PacticipantInput, PacticipantVersionInput
-from app.pacticipant_store import create_pacticipant, get_pacticipant, record_version
+from app.pacticipant_store import create_pacticipant, ensure_pacticipant_tx, get_pacticipant, record_version
 from tests import test_usage_index_db as index_db
 
 tx = index_db.tx
@@ -478,3 +478,85 @@ def test_builtin_roles_get_the_pacts_grants(stack: Dict[str, Any]) -> None:
         "editor": ["create", "edit", "view"],
         "viewer": ["view"],
     }
+
+
+# ---------------------------------------------------------------------------------------------
+# PFX-8.10 (#7307): rename, aliases, display name and deletion impact
+# ---------------------------------------------------------------------------------------------
+
+
+def _aliases_applied(cursor: Any) -> None:
+    cursor.execute("SELECT to_regclass('apiome.pacticipant_alias') AS t")
+    if not cursor.fetchone()["t"]:
+        pytest.skip("V454 not applied")
+
+
+def test_a_rename_keeps_the_history_and_every_old_name_keeps_resolving(stack: Dict[str, Any]) -> None:
+    _aliases_applied(stack["cursor"])
+    client, base, db = stack["client"], stack["base"], stack["db"]
+    created = _register(stack, name="Orders UI")
+    assert _record(stack, "1.0.0", slug="orders-ui", branch="main").status_code == 201
+
+    renamed = client.patch(f"{base}/orders-ui", json={"name": "Orders Web", "display_name": "Orders (web)"})
+    assert renamed.status_code == 200, renamed.text
+    body = renamed.json()
+    assert (body["slug"], body["name"], body["display_name"], body["aliases"]) == (
+        "orders-ui", "Orders Web", "Orders (web)", ["Orders UI"]
+    )
+    again = client.patch(f"{base}/orders-web", json={"name": "Storefront"})
+    assert again.status_code == 200 and again.json()["aliases"] == ["Orders UI", "Orders Web"]
+
+    # Every name it has had resolves to it, with its versions.
+    for ref in ("orders-ui", "Orders UI", "Orders Web", "orders-web", "Storefront"):
+        assert client.get(f"{base}/{ref}").json()["id"] == created["id"], ref
+    assert [v["number"] for v in client.get(f"{base}/Orders Web/versions").json()["versions"]] == ["1.0.0"]
+
+    # A pact published under an old name lands on it: nothing new is registered.
+    def work(cursor: Any) -> Any:
+        return ensure_pacticipant_tx(cursor, stack["seed"]["tenant"], "Orders Web", actor=ACTOR)
+
+    assert db._guarded_tx(work).id == created["id"]
+    assert [row["slug"] for row in client.get(base).json()["pacticipants"]] == ["orders-ui"]
+
+
+def test_a_name_another_pacticipant_has_or_had_is_refused(stack: Dict[str, Any]) -> None:
+    _aliases_applied(stack["cursor"])
+    client, base = stack["client"], stack["base"]
+    _register(stack, name="Orders UI")
+    _register(stack, name="Billing Service")
+    taken = client.patch(f"{base}/orders-ui", json={"name": "billing service"})
+    assert taken.status_code == 409 and taken.json()["detail"]["code"] == "pacticipant-slug-taken"
+    assert taken.json()["detail"]["message"] == "A pacticipant named Billing Service already exists."
+
+    assert client.patch(f"{base}/orders-ui", json={"name": "Orders Web"}).status_code == 200
+    # "Orders UI" is an old name of orders-ui now: neither a rename nor a new pacticipant may take it.
+    assert client.patch(f"{base}/billing-service", json={"name": "Orders Web"}).status_code == 409
+    fresh = client.post(base, json={"name": "Orders Web 2", "slug": "orders-web"})
+    assert fresh.status_code == 409
+
+
+def test_aliases_do_not_cross_a_tenant(stack: Dict[str, Any]) -> None:
+    _aliases_applied(stack["cursor"])
+    client, base, db = stack["client"], stack["base"], stack["db"]
+    _register(stack, name="Orders UI")
+    assert client.patch(f"{base}/orders-ui", json={"name": "Orders Web"}).status_code == 200
+    other = stack["other"]["tenant"]
+    # The other workspace neither resolves the alias nor is kept from using the name.
+    with pytest.raises(Exception):
+        get_pacticipant(db, other, "Orders Web")
+    theirs = create_pacticipant(db, other, PacticipantInput(name="Orders Web"), actor=ACTOR)
+    assert theirs.slug == "orders-web" and theirs.tenant_id == other
+
+
+def test_the_deletion_impact_names_what_goes_and_what_blocks(stack: Dict[str, Any]) -> None:
+    _aliases_applied(stack["cursor"])
+    client, base = stack["client"], stack["base"]
+    _register(stack, name="Orders UI")
+    assert _record(stack, "1.0.0", slug="orders-ui").status_code == 201
+    assert _record(stack, "1.1.0", slug="orders-ui").status_code == 201
+    impact = client.get(f"{base}/Orders UI/deletion-impact")
+    assert impact.status_code == 200, impact.text
+    body = impact.json()
+    assert (body["versions"], body["pacts"], body["blocked"], body["in_use"]) == (2, 0, False, [])
+    assert body["grace_days"] >= 1
+    assert client.get(f"{base}/nobody/deletion-impact").status_code == 404

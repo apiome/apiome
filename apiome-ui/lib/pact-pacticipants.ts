@@ -15,7 +15,12 @@
 export interface Pacticipant {
   id: string;
   slug: string;
+  /** The name pacts use. */
   name: string;
+  /** What people read, when it differs from `name` (PFX-8.10). */
+  display_name?: string | null;
+  /** Names it had before it was renamed, oldest first; each still resolves to it (PFX-8.10). */
+  aliases?: string[];
   repository_url?: string | null;
   main_branch?: string | null;
   project_id?: string | null;
@@ -23,6 +28,14 @@ export interface Pacticipant {
   labels: string[];
   created_at?: string | null;
   updated_at?: string | null;
+  /** When it was deleted; set only in the `state=deleted` list (PFX-1.11). */
+  deleted_at?: string | null;
+  /** Who deleted it. */
+  deleted_by_label?: string | null;
+  /** Why, as the deleter said. */
+  delete_reason?: string | null;
+  /** When a deleted pacticipant is purged unless it is restored first. */
+  purge_after?: string | null;
 }
 
 /** One page of pacticipants. */
@@ -187,7 +200,7 @@ export function withQuery(path: string, query: URLSearchParams, limit: number): 
 }
 
 /** The filters the pacticipant list accepts. */
-export const LIST_FILTERS = ['label'] as const;
+export const LIST_FILTERS = ['label', 'state'] as const;
 
 /** The filters the version list accepts. */
 export const VERSION_FILTERS = ['branch', 'tag'] as const;

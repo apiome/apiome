@@ -1,10 +1,15 @@
 /**
  * Browser calls for the **Pacticipants** pages (PFX-5.1, #6945), through `/api/pact/*`.
  *
- * Every call throws REST's message on a failure, so the page can show it (a 403 reads "Permission
+ * Every read throws REST's message on a failure, so the page can show it (a 403 reads "Permission
  * denied", not "something went wrong"). List bodies are normalised: their arrays are always arrays.
+ *
+ * The writes of PFX-8.10 (#7307) — save settings, add or remove a label, register, delete and
+ * restore — answer the result or a {@link WriteFailure} with REST's status, so the screen can put a
+ * taken name (409) under the Name field and say anything else where it happened.
  */
 
+import type { DeletionImpact, PacticipantCreateBody, PacticipantPatchBody } from '@lib/pact-pacticipant-settings';
 import type {
   LabelPage,
   Pacticipant,
@@ -54,10 +59,13 @@ function pacticipantBase(slug: string): string {
 /**
  * One page of the workspace's pacticipants.
  *
- * @param options - `label` narrows the list; `cursor` is the previous page's `next_cursor`.
+ * @param options - `label` narrows the list; `state: 'deleted'` lists the deleted ones that can still
+ *   be restored; `cursor` is the previous page's `next_cursor`.
  * @returns The page.
  */
-export async function fetchPacticipants(options: { label?: string | null; cursor?: string | null } = {}) {
+export async function fetchPacticipants(
+  options: { label?: string | null; cursor?: string | null; state?: 'deleted' | null } = {},
+) {
   const body = await readJson<PacticipantPage>(
     await fetch(`${BASE}/pacticipants${queryString(options)}`, { cache: 'no-store' }),
     'Could not load the pacticipants',
@@ -137,4 +145,126 @@ export async function fetchEnvironments(slug: string): Promise<PacticipantEnviro
     'Could not load the environments',
   );
   return { environments: Array.isArray(body.environments) ? body.environments : [] };
+}
+
+/** A refused or failed write: REST's message and status (503 when it could not be reached). */
+export interface WriteFailure {
+  error: string;
+  status: number;
+}
+
+/**
+ * Send one write through a proxy and read its answer.
+ *
+ * @param url - The proxy URL.
+ * @param method - The method.
+ * @param fallback - What to say when the failure carried no message.
+ * @param body - The JSON body, if any.
+ * @returns The parsed body, or the failure.
+ */
+async function write<T>(url: string, method: string, fallback: string, body?: unknown): Promise<T | WriteFailure> {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: 'no-store',
+    });
+  } catch {
+    return { error: 'The Pact Broker could not be reached. Try again shortly.', status: 503 };
+  }
+  const parsed = (await response.json().catch(() => ({}))) as unknown;
+  if (!response.ok) {
+    const error = parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>).error : undefined;
+    return { error: typeof error === 'string' && error ? error : fallback, status: response.status };
+  }
+  return parsed as T;
+}
+
+/** `labels` always an array, `aliases` too. */
+function normalised(pacticipant: Pacticipant): Pacticipant {
+  return {
+    ...pacticipant,
+    labels: Array.isArray(pacticipant.labels) ? pacticipant.labels : [],
+    aliases: Array.isArray(pacticipant.aliases) ? pacticipant.aliases : [],
+  };
+}
+
+/**
+ * Save the fields of the Settings tab that changed (PATCH).
+ *
+ * @param slug - The pacticipant's handle.
+ * @param patch - Only the changed fields; `null` clears one.
+ * @returns The pacticipant as stored now, or the failure (409: the name is taken).
+ */
+export async function savePacticipant(slug: string, patch: PacticipantPatchBody): Promise<Pacticipant | WriteFailure> {
+  const answer = await write<Pacticipant>(pacticipantBase(slug), 'PATCH', 'Could not save the settings', patch);
+  return 'error' in answer ? answer : normalised(answer);
+}
+
+/**
+ * Add a label (adding it again changes nothing) or remove one.
+ *
+ * @param slug - The pacticipant's handle.
+ * @param label - The label.
+ * @param action - `add` or `remove`.
+ * @returns `{}` on success, or the failure.
+ */
+export async function changeLabel(
+  slug: string,
+  label: string,
+  action: 'add' | 'remove',
+): Promise<Record<string, never> | WriteFailure> {
+  const answer = await write<unknown>(
+    `${pacticipantBase(slug)}/labels/${encodeURIComponent(label)}`,
+    action === 'add' ? 'PUT' : 'DELETE',
+    action === 'add' ? `Could not add the label ${label}` : `Could not remove the label ${label}`,
+  );
+  return answer && typeof answer === 'object' && 'error' in answer ? (answer as WriteFailure) : {};
+}
+
+/**
+ * Register a pacticipant (the New pacticipant dialog).
+ *
+ * @param body - Its name and optional fields.
+ * @returns The stored pacticipant, or the failure (409: the name is taken).
+ */
+export async function createPacticipant(body: PacticipantCreateBody): Promise<Pacticipant | WriteFailure> {
+  const answer = await write<Pacticipant>(`${BASE}/pacticipants`, 'POST', 'Could not create the pacticipant', body);
+  return 'error' in answer ? answer : normalised(answer);
+}
+
+/**
+ * What deleting a pacticipant takes with it.
+ *
+ * @param slug - Its handle.
+ * @returns The impact, or the failure.
+ */
+export async function fetchDeletionImpact(slug: string): Promise<DeletionImpact | WriteFailure> {
+  return write<DeletionImpact>(`${pacticipantBase(slug)}/deletion-impact`, 'GET', 'Could not read what the delete removes');
+}
+
+/**
+ * Delete a pacticipant with its history (soft: it can be restored for the grace period).
+ *
+ * @param slug - Its handle.
+ * @param reason - Why, stored and audited; empty for none.
+ * @returns `{}` on success, or the failure (409: a version is deployed or released).
+ */
+export async function deletePacticipant(slug: string, reason: string): Promise<Record<string, never> | WriteFailure> {
+  const query = reason.trim() ? `?reason=${encodeURIComponent(reason.trim())}` : '';
+  const answer = await write<unknown>(`${pacticipantBase(slug)}${query}`, 'DELETE', 'Could not delete the pacticipant');
+  return answer && typeof answer === 'object' && 'error' in answer ? (answer as WriteFailure) : {};
+}
+
+/**
+ * Undo a pacticipant's delete.
+ *
+ * @param ref - The deleted pacticipant's handle or id (an id chooses among several of one handle).
+ * @returns The live pacticipant, or the failure (409: a live pacticipant took the handle since).
+ */
+export async function restorePacticipant(ref: string): Promise<Pacticipant | WriteFailure> {
+  const answer = await write<Pacticipant>(`${pacticipantBase(ref)}/restore`, 'POST', 'Could not restore the pacticipant');
+  return 'error' in answer ? answer : normalised(answer);
 }

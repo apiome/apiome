@@ -1,6 +1,6 @@
 ---
 title: "Pacticipants"
-description: "REST endpoints tagged pacticipants: 23 operations."
+description: "REST endpoints tagged pacticipants: 24 operations."
 sidebar_position: 71
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.702.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.703.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pacticipants` · 23 operations
+Tag: `pacticipants` · 24 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-commit-statuses` {#get-pact-commit-statuses-v1-tenants-tenant-slug-pact-commit-statuses-get}
 
@@ -240,7 +240,9 @@ Operation id: `read_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipa
 
 **Update a pacticipant**
 
-Change the display name, repository URL, main branch or bindings. A field that is left out is not changed; `null` clears `repository_url` and `main_branch` and unbinds `project` and `consumer_id`. The handle cannot be changed.
+Rename it, or change the display name, repository URL, main branch or bindings. A field that is left out is not changed; `null` clears `display_name`, `repository_url` and `main_branch` and unbinds `project` and `consumer_id`.
+
+A new `name` renames the pacticipant: the handle and the whole history stay, and the old name and the new one both keep resolving to it (as `{pacticipant_ref}` and in a published pact), listed in `aliases`. `409 pacticipant-slug-taken` when another pacticipant has, or had, that name. The handle cannot be changed.
 
 Requires `pacts:edit`.
 
@@ -266,6 +268,7 @@ Request body for update a pacticipant.
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for update a pacticipant. | `application/json` [`PacticipantRecord`](#schema-pacticipantrecord) |
+| 409 | `pacticipant-slug-taken`: another pacticipant answers to that name. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `DELETE /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}` {#remove-pacticipant-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-delete}
@@ -397,6 +400,32 @@ Request body for set a provider's standing contract sources.
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for set a provider's standing contract sources. | `application/json` [`ContractSourcesRecord`](#schema-contractsourcesrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/deletion-impact` {#read-pacticipant-deletion-impact-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-deletion-impact-get}
+
+**What deleting a pacticipant takes with it**
+
+Read, before deleting, what `DELETE …/pacticipants/{ref}` would take with it: its live versions, the pacts that name it as consumer or provider and their verification results, the providers that lose it as a consumer (their can-i-deploy answers change) and the consumers that lose it as a provider (at most 20 names each, with totals), and how many days the delete can be undone. `blocked` is true while a version is deployed or released (`in_use` names them): the delete is refused until the undeployment is recorded.
+
+Requires `pacts:view`.
+
+Operation id: `read_pacticipant_deletion_impact_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__deletion_impact_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for what deleting a pacticipant takes with it. | `application/json` [`DeletionImpact`](#schema-deletionimpact) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/labels` {#list-labels-of-pacticipant-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-labels-get}
@@ -804,6 +833,39 @@ Attributes:
 | `warnings` | array of string | no | Warnings. |
 | `updatedAt` | string or null | no | Updated At. |
 
+### `DeletionImpact` {#schema-deletionimpact}
+
+What deleting one pacticipant would take with it, and whether it may be deleted now.
+
+Attributes:
+    slug: The pacticipant's handle.
+    name: Its name.
+    versions: Live versions that would be deleted.
+    pacts: Distinct pacts naming it, as consumer or provider.
+    verification_results: Verification results of those pacts.
+    providers: Providers that would lose it as a consumer (at most :data:`MAX_NAMES`).
+    providers_total: How many providers in all.
+    consumers: Consumers that would lose it as a provider (at most :data:`MAX_NAMES`).
+    consumers_total: How many consumers in all.
+    in_use: Versions currently deployed or released (at most :data:`MAX_NAMES`).
+    blocked: Whether the delete is refused now (a version is in use).
+    grace_days: Days the delete can be undone before it is purged.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `slug` | string | yes | URL-safe identifier. |
+| `name` | string | yes | Human-readable name. |
+| `versions` | integer | yes | Live versions that would be deleted. |
+| `pacts` | integer | yes | Distinct pacts naming it, as consumer or provider. |
+| `verification_results` | integer | yes | Verification results of those pacts. |
+| `providers` | array of string | no | Providers that lose it as a consumer. |
+| `providers_total` | integer | no | Providers Total. |
+| `consumers` | array of string | no | Consumers that lose it as a provider. |
+| `consumers_total` | integer | no | Consumers Total. |
+| `in_use` | array of string | no | Versions deployed or released now; while any is, the delete is refused. |
+| `blocked` | boolean | yes | Whether the delete is refused now: record the undeployment first. |
+| `grace_days` | integer | yes | Days the delete can be undone (`POST …/restore`) before it is purged. |
+
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 
 Validation error response emitted when request data fails schema checks.
@@ -839,8 +901,9 @@ One page of a pacticipant's branches.
 A new pacticipant.
 
 Attributes:
-    name: Display name, as a Pact file or a person writes it.
+    name: The name pacts use, as a Pact file or a person writes it.
     slug: The handle; derived from ``name`` when omitted, and never editable.
+    display_name: What people read, when it differs from ``name``.
     repository_url: http(s) URL of the application's source repository.
     main_branch: The branch read by default when a query names none.
     project: Slug or id of the Apiome project that describes this provider.
@@ -848,8 +911,9 @@ Attributes:
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `name` | string | yes | Display name, as a Pact file or a person writes it. |
+| `name` | string | yes | The name pacts use, as a Pact file or a person writes it. |
 | `slug` | string or null | no | The handle URLs and CI name. Derived from `name` when omitted; not editable afterwards. |
+| `display_name` | string or null | no | What people read, when it differs from `name`. |
 | `repository_url` | string or null | no | http(s) URL of the application's source repository. |
 | `main_branch` | string or null | no | The branch read by default when a query names none. |
 | `project` | string or null | no | Slug or id of the project that describes this application as a provider. |
@@ -901,7 +965,9 @@ One page of the tenant's pacticipants.
 A partial update of a pacticipant. An omitted field is left alone; ``null`` clears it.
 
 Attributes:
-    name: New display name (cannot be cleared).
+    name: New name pacts use (cannot be cleared). Renaming keeps the handle and the history;
+        the old name and the new one both resolve to this pacticipant afterwards.
+    display_name: New display name, or ``null`` to clear it.
     repository_url: New repository URL, or ``null`` to clear it.
     main_branch: New main branch, or ``null`` to clear it.
     project: Slug or id of the project to bind, or ``null`` to unbind.
@@ -909,7 +975,8 @@ Attributes:
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `name` | string or null | no | New display name. |
+| `name` | string or null | no | Rename: the new name pacts use. The handle and the history stay; the old name keeps resolving. `409 pacticipant-slug-taken` when another pacticipant has that name. |
+| `display_name` | string or null | no | New display name; `null` clears it. |
 | `repository_url` | string or null | no | New repository URL; `null` clears it. |
 | `main_branch` | string or null | no | New main branch; `null` clears it. |
 | `project` | string or null | no | Project slug or id to bind; `null` unbinds. |
@@ -923,7 +990,9 @@ Attributes:
     id: Row id.
     tenant_id: Owning tenant.
     slug: Stable handle.
-    name: Display name.
+    name: The name pacts use.
+    display_name: What people read; ``None`` reads as ``name``.
+    aliases: The other names it has had, oldest first; each still resolves to it.
     repository_url: Source repository URL.
     main_branch: The branch read by default.
     project_id: Bound project, when this is a provider described in Apiome.
@@ -942,6 +1011,8 @@ Attributes:
 | `tenant_id` | string | yes | Tenant that owns the resource. |
 | `slug` | string | yes | URL-safe identifier. |
 | `name` | string | yes | Human-readable name. |
+| `display_name` | string or null | no | What people read; null reads as `name`. |
+| `aliases` | array of string | no | Other names it has had (PFX-8.10), oldest first. Each still resolves to this pacticipant. |
 | `repository_url` | string or null | no | Repository URL. |
 | `main_branch` | string or null | no | Main Branch. |
 | `project_id` | string or null | no | Project identifier the resource belongs to. |

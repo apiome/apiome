@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.879.0] - 2026-11-29
+
+### Added
+- **Rename a pacticipant, display names, and what a delete removes (PFX-8.10, #7307).** OpenAPI 1.703.0;
+  apiome-db V454 (`pacticipant.display_name`, `pacticipant_alias`).
+  `PATCH /v1/tenants/{t}/pacticipants/{ref}` with a new `name` **renames** the pacticipant: the handle and the whole
+  history stay, and the old and the new name are kept as aliases, so both keep resolving — as `{ref}` on every
+  route and when a pact is published under either name (nothing new is registered). `409 pacticipant-slug-taken`
+  ("A pacticipant named … already exists.") when another live pacticipant has, or had, that name; registering a new
+  pacticipant under a name a renamed one still answers to is refused the same way. `display_name` (optional, never
+  what pacts use) is accepted by `POST` and `PATCH` (`null` clears it) and returned with `aliases` (the other names
+  it has had, oldest first) on every pacticipant record; the Pact Broker document's `displayName` reads it, falling
+  back to `name`. `GET …/pacticipants/{ref}/deletion-impact` (`pacts:view`) says what `DELETE` would take with it:
+  live versions, pacts naming it on either side and their verification results, the providers that lose it as a
+  consumer and the consumers that lose it as a provider (at most 20 names each, with totals), the versions deployed
+  or released now (`blocked`), and the grace period in days. A rename is audited as `pacts.pacticipant.update`.
+
 ## [1.878.0] - 2026-11-29
 
 ### Added

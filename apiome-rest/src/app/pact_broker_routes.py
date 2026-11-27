@@ -405,7 +405,7 @@ def _pacticipant_document(base: str, pacticipant: PacticipantRecord) -> Dict[str
     url = _pacticipant_url(base, pacticipant.slug)
     return {
         "name": pacticipant.name,
-        "displayName": pacticipant.name,
+        "displayName": pacticipant.display_name or pacticipant.name,
         "repositoryUrl": pacticipant.repository_url,
         "mainBranch": pacticipant.main_branch,
         "createdAt": pacticipant.created_at,

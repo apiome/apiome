@@ -10,7 +10,7 @@
  * diagram (PFX-5.3, #6947); and its **Versions**, latest
  * recorded first, with their branches and tags. Its **Owner** team (PFX-6.4, #6956) receives the
  * Pact findings about it. Choosing a branch or a tag anywhere on the page narrows the versions to
- * it; **Clear** widens them again.
+ * it; **Clear** widens them again. Its **Settings** tab (PFX-8.10, #7307) edits, renames and deletes it.
  *
  * ### What this page owns
  *
@@ -39,6 +39,7 @@ import {
 import { BranchesTable, CliSnippet, EnvironmentsTable, PacticipantFacts, VersionsTable } from './PacticipantPanels';
 import { fetchBranches, fetchEnvironments, fetchPacticipant, fetchVersions } from './pacticipantsApi';
 import PacticipantOwnerPanel from './PacticipantOwnerPanel';
+import { PacticipantSubTabs } from './PacticipantSubTabs';
 import { describeFailure } from './describeFailure';
 import { PacticipantPactsTable } from '../pactDetail/PactPanels';
 import { fetchPacticipantPacts } from '../pactDetail/pactDetailApi';
@@ -263,6 +264,7 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
       />
       <PageBody>
         <div className="ppx" data-testid="pact-pacticipant">
+          <PacticipantSubTabs slug={slug} active="overview" />
           {pacticipant.error ? (
             <EmptyState
               variant="compact"

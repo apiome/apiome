@@ -85,6 +85,8 @@ const ok = (body: unknown): Route => () => ({ status: 200, body });
 describe('PacticipantsListClient', () => {
   beforeEach(() => {
     routes = {
+      // PFX-8.10 (#7307): an editor sees New pacticipant in the header.
+      '/api/access/permissions/me': ok({ success: true, data: { is_admin: false, permissions: ['pacts:view', 'pacts:create'] } }),
       '/api/pact/pacticipants': ok({ pacticipants: PACTICIPANTS, count: 3, has_more: false, next_cursor: null }),
       '/api/pact/labels': ok({ labels: fixture.labels.map((name) => ({ name })), count: 3, has_more: false }),
       '/api/pact/pacticipants?label=tier-1': ok({
@@ -112,6 +114,7 @@ describe('PacticipantsListClient', () => {
     );
     expect(screen.getByTestId('ppx-row-mobile-app')).toHaveTextContent('develop');
     expect(screen.getByTestId('ppx-count')).toHaveTextContent('3 pacticipants');
+    expect(await screen.findByTestId('ppx-new-open')).toHaveTextContent('New pacticipant');
     // PFX-8.1 (#7298): the Contracts tab row opens the area's other pages (it replaced the header's
     // Matrix, Can I deploy?, Webhooks and Environments buttons).
     const tabs = within(screen.getByTestId('contracts-tabs'));

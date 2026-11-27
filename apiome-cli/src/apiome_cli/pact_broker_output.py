@@ -134,6 +134,32 @@ def pacticipant_lines(records: Sequence[Mapping[str, Any]], fmt: str) -> list[st
     )
 
 
+def pacticipant_saved_lines(record: Mapping[str, Any], *, created: bool, changed: bool, fmt: str) -> list[str]:
+    """``create-or-update-pacticipant``: the sentence ``pact-broker`` prints, then the pacticipant.
+
+    Args:
+        record: The pacticipant as stored.
+        created: Whether this run registered it.
+        changed: Whether this run sent any change to an existing one.
+        fmt: ``table`` or ``markdown``.
+
+    Returns:
+        The lines.
+    """
+    name = record.get("name")
+    verb = "created" if created else ("updated" if changed else "unchanged")
+    return [("- " if fmt == "markdown" else "") + f'Pacticipant "{name}" {verb}', *pacticipant_lines([record], fmt)]
+
+
+def pacticipant_deleted_lines(name: str, fmt: str) -> list[str]:
+    """``delete-pacticipant``: what was deleted and how to undo it."""
+    return [
+        ("- " if fmt == "markdown" else "")
+        + f'Pacticipant "{name}" deleted with its versions, pacts and results. '
+        "Restore it from the Pacticipants page before it is purged."
+    ]
+
+
 def _names(items: Any) -> str:
     """``[{"name": …}, …]`` as a comma-separated list."""
     return ", ".join(str(item.get("name")) for item in items or [] if isinstance(item, dict) and item.get("name"))

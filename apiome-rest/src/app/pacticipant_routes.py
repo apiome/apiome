@@ -5,8 +5,8 @@ them by. This is the model the rest of the Pact Broker surface (publication, ver
 the matrix, can-i-deploy) is built on. Every route is scoped to the authenticated tenant and
 guarded by the ``pacts`` resource:
 
-* ``GET …/pacticipants``, ``GET …/pacticipants/{ref}``, ``GET …/versions``,
-  ``GET …/versions/{number}``, ``GET …/branches`` — ``pacts:view``;
+* ``GET …/pacticipants``, ``GET …/pacticipants/{ref}``, ``GET …/deletion-impact`` (PFX-8.10),
+  ``GET …/versions``, ``GET …/versions/{number}``, ``GET …/branches`` — ``pacts:view``;
 * ``POST …/pacticipants``, ``PUT …/versions/{number}``, ``PUT …/versions/{number}/tags/{tag}`` —
   ``pacts:create``. Recording a version or a tag only ever adds; nothing stored is changed;
 * ``PATCH …/pacticipants/{ref}``, ``PUT``/``DELETE …/labels/{label}`` — ``pacts:edit``;
@@ -17,7 +17,8 @@ A delete is soft (PFX-1.11, #6924): the pacticipant or version disappears from e
 can be restored for ``APIOME_PACT_DELETION_GRACE_DAYS`` (default 30) days, and is then purged.
 ``?state=deleted`` on the two lists shows what is waiting to be purged.
 
-``{ref}`` is the pacticipant's handle, its id, or its display name.
+``{ref}`` is the pacticipant's handle, its id, or its name — including a name it had before it was
+renamed (PFX-8.10, #7307): a rename keeps the handle and the history, and old names keep resolving.
 """
 
 from __future__ import annotations
@@ -66,6 +67,7 @@ from .pacticipant import (
     PacticipantVersionRecord,
     RecordedPacticipantVersion,
 )
+from .pacticipant_deletion_impact import DeletionImpact, read_deletion_impact
 from .pacticipant_store import (
     BRANCHES_ORDER,
     PACTICIPANTS_ORDER,
@@ -361,11 +363,16 @@ def read_pacticipant(
     response_model=PacticipantRecord,
     summary="Update a pacticipant",
     description=(
-        "Change the display name, repository URL, main branch or bindings. A field that is left "
-        "out is not changed; `null` clears `repository_url` and `main_branch` and unbinds "
-        "`project` and `consumer_id`. The handle cannot be changed.\n\n"
+        "Rename it, or change the display name, repository URL, main branch or bindings. A field "
+        "that is left out is not changed; `null` clears `display_name`, `repository_url` and "
+        "`main_branch` and unbinds `project` and `consumer_id`.\n\n"
+        "A new `name` renames the pacticipant: the handle and the whole history stay, and the old "
+        "name and the new one both keep resolving to it (as `{pacticipant_ref}` and in a "
+        "published pact), listed in `aliases`. `409 pacticipant-slug-taken` when another "
+        "pacticipant has, or had, that name. The handle cannot be changed.\n\n"
         "Requires `pacts:edit`."
     ),
+    responses={409: {"description": "`pacticipant-slug-taken`: another pacticipant answers to that name."}},
 )
 @audited_write("pacts.pacticipant.update", "pacticipant/{pacticipant_ref}")
 def patch_pacticipant(
@@ -397,6 +404,47 @@ def patch_pacticipant(
         )
     except PacticipantValidationError as exc:
         raise _http_error(exc) from exc
+
+
+@router.get(
+    "/{tenant_slug}/pacticipants/{pacticipant_ref}/deletion-impact",
+    response_model=DeletionImpact,
+    summary="What deleting a pacticipant takes with it",
+    description=(
+        "Read, before deleting, what `DELETE …/pacticipants/{ref}` would take with it: its live "
+        "versions, the pacts that name it as consumer or provider and their verification results, "
+        "the providers that lose it as a consumer (their can-i-deploy answers change) and the "
+        "consumers that lose it as a provider (at most 20 names each, with totals), and how many "
+        "days the delete can be undone. `blocked` is true while a version is deployed or released "
+        "(`in_use` names them): the delete is refused until the undeployment is recorded.\n\n"
+        "Requires `pacts:view`."
+    ),
+)
+def read_pacticipant_deletion_impact(
+    tenant_slug: str,
+    pacticipant_ref: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> DeletionImpact:
+    """Read what deleting one pacticipant would take with it.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        pacticipant_ref: Handle, id or name.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The counts, the partners that lose it, the versions in use, and the grace period.
+
+    Raises:
+        HTTPException: 404 for an unknown pacticipant, 403 without ``pacts:view``.
+    """
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    _ = tenant_slug
+    try:
+        pacticipant = get_pacticipant(db, _tenant_id(auth_data), pacticipant_ref)
+    except PacticipantValidationError as exc:
+        raise _http_error(exc) from exc
+    return read_deletion_impact(db, pacticipant)
 
 
 @router.delete(
