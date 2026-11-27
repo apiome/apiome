@@ -70,6 +70,8 @@ export interface PortalMember {
   environment: string | null;
   /** The Browse path the member opens, or null when it has no public page. */
   href: string | null;
+  /** The member's project slug (Project members only, else null) — the pact badges read it. */
+  projectSlug: string | null;
 }
 
 /** A product as its portal page shows it. */
@@ -337,6 +339,7 @@ export function toPortalMember(
     versionSelector: row.kind === 'project_version' ? row.version_selector : null,
     environment: row.environment,
     href,
+    projectSlug: (row.kind === 'project_latest' || row.kind === 'project_version') && href ? row.project_slug : null,
   };
 }
 

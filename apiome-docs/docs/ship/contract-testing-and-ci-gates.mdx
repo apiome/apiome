@@ -325,6 +325,12 @@ A consumer registered by hand has no such line. In the JSON report each verdict 
 object (`pacticipant`, `fromPact`, `consumerVersion`, `pactSha`) and the counts gain
 `consumers_from_broker`. The gate threshold is unchanged: it still grades the whole specification.
 
+### Consumers on public pages
+
+A public project's page in Browse, and the portal page of an API product that lists it, show the
+project's [pact badges](./pact-broker/badges.mdx#consumers-on-browse-and-the-portal) and how many
+consumers depend on it.
+
 ## How the pieces fit
 
 - **One classifier.** The CLI, the GitHub Action, the changelog, the webhook, the guardrail and the

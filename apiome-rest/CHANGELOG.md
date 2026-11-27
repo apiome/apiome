@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.872.0] - 2026-11-29
+
+### Added
+- **Contracts on browse and portal pages (PFX-7.5, #6965).** OpenAPI 1.696.0; no migration. The public
+  `GET /v1/browse/tenants/{t}/projects/{p}/pact-badges` gains, per pacticipant, `consumer_count` (every
+  consumer whose latest pact names it as provider) and `consumers` (at most 20: `slug`, `name`,
+  `status`). Only names and a state word are exposed; private projects and unbound pacticipants stay
+  the uniform 404. Browse (0.68.0) draws them on the project page and on the portal product page.
+
 ## [1.871.0] - 2026-11-28
 
 ### Added

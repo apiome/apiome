@@ -189,12 +189,14 @@ describe('toPortalMember', () => {
     expect(member.versionLabel).toBe('2.4.0');
     expect(member.versionSelector).toBe('2.x');
     expect(member.href).toBe('/tenant/acme/payments/2.4.0');
+    expect(member.projectSlug).toBe('payments');
   });
 
   it('lists a project member with no public version without a link', () => {
     const member = toPortalMember('acme', memberRow(), [], false);
     expect(member.versionLabel).toBeNull();
     expect(member.href).toBeNull();
+    expect(member.projectSlug).toBeNull();
   });
 
   it('links a public MCP server to its catalog page, and not a private one', () => {

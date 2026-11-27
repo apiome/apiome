@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.695.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.696.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `browse` · 17 operations
 
@@ -170,7 +170,7 @@ Operation id: `get_public_browse_project_changelog_markdown_v1_browse_tenants__t
 
 **Pact status of a public project**
 
-The state of every pacticipant bound to a public project, with badge URLs.
+The state of every pacticipant bound to a public project, with badge URLs and its consumers.
 
 Operation id: `project_pact_status_v1_browse_tenants__tenant_slug__projects__project_slug__pact_badges_get`
 

@@ -4,8 +4,9 @@ Anonymous, read-only status endpoints for a **public** project (one with a publi
 version). They let a README or the browse project page show whether the pacts of an application
 are verified:
 
-* ``GET …/pact-badges`` — the state of every pacticipant bound to the project, with the badge URLs.
-  The browse project page embeds from this; it is an empty list when nothing is bound.
+* ``GET …/pact-badges`` — the state of every pacticipant bound to the project, with the badge URLs
+  and its consumers (``consumer_count``, ``consumers`` — slug, name, status; PFX-7.5, #6965).
+  The browse project and product pages embed from this; it is an empty list when nothing is bound.
 * ``GET …/pact-badges/pacticipants/{slug}/badge.svg`` and ``…/shields.json`` — one pacticipant:
   ``failing`` when any of its pacts is failing, ``verified`` when all are, else ``unknown``.
 * ``GET …/pact-badges/pacts/provider/{provider}/consumer/{consumer}/badge.svg`` and
@@ -72,7 +73,7 @@ def _urls(request: Request, tenant_slug: str, project_slug: str, slug: str) -> D
 
 @router.get(_PATH, summary="Pact status of a public project", responses=_NOT_FOUND)
 def project_pact_status(request: Request, tenant_slug: str, project_slug: str) -> Dict[str, Any]:
-    """The state of every pacticipant bound to a public project, with badge URLs."""
+    """The state of every pacticipant bound to a public project, with badge URLs and its consumers."""
     project = _project(tenant_slug, project_slug)
     items = project_statuses(db, project)
     return {

@@ -750,6 +750,11 @@ a.table-row:hover {
   border-top: 1px solid var(--border-subtle);
 }
 
+/* The pact badges of a project member sit under its name, in the name's columns (PFX-7.5). */
+.product-member-pacts {
+  grid-column: 2 / -1;
+}
+
 .product-member-kind {
   color: var(--text-secondary);
   font-size: 0.6875rem;
@@ -938,6 +943,10 @@ a.table-row:hover {
   .product-member {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.25rem;
+  }
+
+  .product-member-pacts {
+    grid-column: auto;
   }
 }
 

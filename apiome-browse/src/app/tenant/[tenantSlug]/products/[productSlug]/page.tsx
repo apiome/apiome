@@ -29,6 +29,7 @@ import { AppShell } from '../../../../components/AppShell';
 import { Breadcrumb } from '../../../../components/Breadcrumb';
 import { EntityHeader } from '../../../../components/EntityHeader';
 import { ReaderStatus } from '../../../../components/ReaderStatus';
+import { PactBadges } from '../../[projectSlug]/PactBadges';
 import { RequestAccess } from '../../../../components/RequestAccess';
 import { getReaderSession } from '../../../../portal/readerSession';
 
@@ -103,7 +104,7 @@ export default async function ProductPage({ params }: ProductPageParams) {
           ) : (
             <ul className="product-members" data-testid="product-members">
               {product.members.map((member, index) => (
-                <MemberRow key={`${member.kind}:${member.name}:${index}`} member={member} />
+                <MemberRow key={`${member.kind}:${member.name}:${index}`} member={member} tenantSlug={tenantSlug} />
               ))}
             </ul>
           )}
@@ -135,8 +136,11 @@ export default async function ProductPage({ params }: ProductPageParams) {
   );
 }
 
-/** One member: its kind, its name (linked when a reader can open it) and the version it resolves to. */
-function MemberRow({ member }: { member: PortalMember }) {
+/**
+ * One member: its kind, its name (linked when a reader can open it) and the version it resolves to;
+ * a project member also shows its public pact badges and consumer count (PFX-7.5, #6965).
+ */
+function MemberRow({ member, tenantSlug }: { member: PortalMember; tenantSlug: string }) {
   const version = member.versionLabel
     ? `v${member.versionLabel}`
     : member.kind === 'project_latest' || member.kind === 'project_version'
@@ -157,6 +161,11 @@ function MemberRow({ member }: { member: PortalMember }) {
           .filter(Boolean)
           .join(' · ')}
       </span>
+      {member.projectSlug ? (
+        <div className="product-member-pacts">
+          <PactBadges tenantSlug={tenantSlug} projectSlug={member.projectSlug} compact />
+        </div>
+      ) : null}
     </li>
   );
 }

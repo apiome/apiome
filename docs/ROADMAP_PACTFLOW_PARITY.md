@@ -367,9 +367,10 @@ Design references: `mockups/pact/*` and `mockups/contracts/{matrix,verification,
 
 **✅ PFX-7.4 · #6964 Broker-backed consumer impact in diff and CI — Complete** — the consumer analysis behind `apiome diff --consumers` and `POST /v1/diff/{tenant}/classified` names the Pact Broker behind each consumer: every verdict gains `broker` (`pacticipant`, `fromPact`, `consumerVersion`, `pactSha`; null when no pacticipant is bound), counts gain `consumers_from_broker`, and the markdown/text report adds a `Pact Broker:` line. Pacticipants are read in one tenant-scoped query. `diff-action` gains a `consumers` input (default `true`, passes `--consumers`). OpenAPI 1.695.0 (no DB migration). **Docs:** `ship/contract-testing-and-ci-gates.mdx`, `ship/pact-broker/publish-pacts.mdx`, CI reference page; REST reference; release-notes post.
 
+**✅ PFX-7.5 · #6965 Contracts on browse and portal pages — Complete** — the public `GET …/browse/tenants/{t}/projects/{p}/pact-badges` gains `consumer_count` and `consumers` (≤ 20: slug, name, status) per pacticipant, from the same pair read as the badge. Browse's project **Pact verification** strip shows the consumer summary and list; the portal product page shows the badges and count per project member (`PortalMember.projectSlug`). Private projects and unbound pacticipants stay the uniform 404. OpenAPI 1.696.0 (no DB migration). **Docs:** `ship/pact-broker/badges.mdx`, `ship/contract-testing-and-ci-gates.mdx`; REST reference; release-notes post.
+
 | Issue | Title | Summary | Labels | Par | MVP | Cx | Modules |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PFX-7.5 · [#6965](https://github.com/apiome/apiome/issues/6965) | Contracts on browse and portal pages | Consumers/verification badges for public APIs | `contracts`,`browser` | Y | N | S | apiome-browse |
 
 **PFX-7.1** — a pact publish refreshes the consumer's declared surface (revision N+1 per CTG-4.1 rule 2) via `pact_contract_import`; unresolved interactions stay recorded with reason codes. **PFX-7.2** — `/gate` gains a `contracts` signal with the same five statuses (`not_configured` / `unknown` excluded and counted); fails soft; no new endpoint. **PFX-7.3** — reuses the CTG-3.4 guardrail pattern (preflight endpoint, force-publish with reason, audited) and the Testing 6.8 quality-gate mockup. Both carry the OpenAPI bump and the docs updates.
 
