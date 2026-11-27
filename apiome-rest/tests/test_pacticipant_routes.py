@@ -47,6 +47,7 @@ from app.pacticipant import (
     PacticipantVersionRecord,
     RecordedPacticipantVersion,
 )
+from app.pacticipant_deletion_impact import DeletionImpact
 from app.pacticipant_store import BRANCHES_ORDER, PACTICIPANTS_ORDER, VERSIONS_ORDER
 
 client = TestClient(app)
@@ -142,6 +143,11 @@ def store() -> Iterator[Dict[str, MagicMock]]:
         "get_label": _label(),
         "add_label": (_label(), True),
         "remove_label": _label(),
+        # PFX-8.10 (#7307): what a delete takes with it.
+        "read_deletion_impact": DeletionImpact(
+            slug="billing-service", name="Billing Service", versions=3, pacts=2, verification_results=5,
+            providers=["Ledger"], providers_total=1, blocked=False, grace_days=30,
+        ),
     }
     patches = {name: patch(f"{_ROUTES}.{name}", return_value=answer) for name, answer in answers.items()}
     mocks = {name: patcher.start() for name, patcher in patches.items()}
@@ -169,6 +175,7 @@ _CALLS = [
     ("get", "/billing-service/labels/team-billing", None, "view", "get_label"),
     ("put", "/billing-service/labels/team-billing", None, "edit", "add_label"),
     ("delete", "/billing-service/labels/team-billing", None, "edit", "remove_label"),
+    ("get", "/billing-service/deletion-impact", None, "view", "read_deletion_impact"),
 ]
 
 
@@ -452,3 +459,46 @@ def test_a_new_label_is_201_and_a_repeat_200(store: Dict[str, MagicMock]) -> Non
     # A label may contain a slash.
     client.put(f"{_BASE}/billing-service/labels/team/billing")
     assert store["add_label"].call_args.args[3] == "team/billing"
+
+
+# ===========================================================================
+# PFX-8.10 (#7307): rename, display name, deletion impact
+# ===========================================================================
+
+
+def test_a_rename_collision_is_a_409_with_its_code(store: Dict[str, MagicMock]) -> None:
+    store["update_pacticipant"].side_effect = PacticipantValidationError(
+        CODE_SLUG_TAKEN, "A pacticipant named Ledger already exists."
+    )
+    response = client.patch(f"{_BASE}/billing-service", json={"name": "Ledger"})
+    assert response.status_code == 409
+    assert response.json()["detail"] == {
+        "code": CODE_SLUG_TAKEN,
+        "message": "A pacticipant named Ledger already exists.",
+    }
+
+
+def test_a_patch_carries_the_display_name_and_a_record_its_aliases(store: Dict[str, MagicMock]) -> None:
+    store["update_pacticipant"].return_value = _pacticipant(
+        name="Billing", display_name="Billing (EU)", aliases=["Billing Service"]
+    )
+    response = client.patch(f"{_BASE}/billing-service", json={"display_name": "Billing (EU)"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["display_name"] == "Billing (EU)" and body["aliases"] == ["Billing Service"]
+    patch_sent = store["update_pacticipant"].call_args.args[3]
+    assert patch_sent.model_fields_set == {"display_name"}
+
+
+def test_the_deletion_impact_is_read_for_the_resolved_pacticipant(store: Dict[str, MagicMock]) -> None:
+    response = client.get(f"{_BASE}/Billing Service/deletion-impact")
+    assert response.status_code == 200
+    assert response.json()["versions"] == 3 and response.json()["providers"] == ["Ledger"]
+    assert store["get_pacticipant"].call_args.args[1:] == (_TENANT, "Billing Service")
+    assert store["read_deletion_impact"].call_args.args[1] == store["get_pacticipant"].return_value
+
+
+def test_the_deletion_impact_of_an_unknown_pacticipant_is_a_404(store: Dict[str, MagicMock]) -> None:
+    store["get_pacticipant"].side_effect = PacticipantValidationError(CODE_NOT_FOUND, "no pacticipant 'x'")
+    assert client.get(f"{_BASE}/x/deletion-impact").status_code == 404
+    assert store["read_deletion_impact"].call_count == 0

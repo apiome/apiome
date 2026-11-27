@@ -171,18 +171,18 @@ export async function forwardPactRun(path: string, body: unknown): Promise<NextR
 }
 
 /**
- * Forward one webhook write (PFX-5.6, #6950) as the signed-in user: create, replace, delete, test
- * or redeliver, with an already checked body. REST's refusal keeps its status and message (a 422
+ * Forward one webhook write (PFX-5.6, #6950) — and a pacticipant write (PFX-8.10, #7307) — as the
+ * signed-in user: create, replace, patch, delete, test or redeliver, with an already checked body. REST's refusal keeps its status and message (a 422
  * names the field, a 409 says why a delivery cannot be sent again, a 429 asks to wait).
  *
  * @param path - The REST path below `/v1/tenants/{slug}`.
- * @param method - `POST`, `PUT` or `DELETE`.
+ * @param method - `POST`, `PUT`, `PATCH` or `DELETE`.
  * @param body - The checked body, or `undefined` for none.
  * @returns REST's answer, or its refusal as `{ success: false, error }`.
  */
 export async function forwardPactWrite(
   path: string,
-  method: 'POST' | 'PUT' | 'DELETE',
+  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   body?: unknown,
 ): Promise<NextResponse> {
   const resolved = await resolveConnectorTenant();

@@ -54,6 +54,20 @@
       ]
     },
     {
+      "name": "create-or-update-pacticipant",
+      "summary": "Create a pacticipant, or update the one with this name, as `pact-broker create-or-update-pacticipant`.",
+      "arguments": [],
+      "options": [
+        "--name",
+        "--display-name",
+        "--main-branch",
+        "--repository-url",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
       "name": "create-webhook",
       "summary": "Create a webhook (POST …/webhooks), with `pact-broker create-webhook`'s options.",
       "arguments": [
@@ -74,6 +88,18 @@
         "--provider-verification-succeeded",
         "--provider-verification-failed",
         "--consumer-version-branch-created",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
+      "name": "delete-pacticipant",
+      "summary": "Delete a pacticipant with its versions, pacts and results (DELETE /v1/tenants/{t}/pacticipants/{name}).",
+      "arguments": [],
+      "options": [
+        "--name",
+        "--reason",
         "--output",
         "--broker-base-url",
         "--broker-token"

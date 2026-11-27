@@ -31,9 +31,35 @@
       "reason": "No screen creates an environment yet; the Create environment dialog ships with PFX-8.12 (#7309)."
     },
     {
+      "cli": "create-or-update-pacticipant",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/settings",
+      "rest": "PATCH /v1/tenants/{tenant}/pacticipants/{pacticipant}",
+      "fields": {
+        "--name": "Settings → General → Name (as stored; a rename is the REST PATCH) and New pacticipant → Name",
+        "--display-name": "Settings → General → Display name",
+        "--main-branch": "Settings → General → Main branch and New pacticipant → Main branch",
+        "--repository-url": "Settings → General → Repository and New pacticipant → Repository",
+        "--output": "The saved settings on the page (the CLI’s text or JSON output)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
       "cli": "create-webhook",
       "ui": "/ade/dashboard/pacts/webhooks",
       "rest": "POST /v1/tenants/{tenant}/pact-broker/webhooks"
+    },
+    {
+      "cli": "delete-pacticipant",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/settings",
+      "rest": "DELETE /v1/tenants/{tenant}/pacticipants/{pacticipant}",
+      "fields": {
+        "--name": "Settings → Danger zone → Delete … (type the handle to confirm)",
+        "--reason": "Delete dialog → Reason",
+        "--output": "The Deleted step of the dialog (the CLI’s text or JSON output)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     },
     {
       "cli": "describe-version",
@@ -360,6 +386,51 @@
       "ui": "/ade/dashboard/pacts/verification/new",
       "cli": null,
       "reason": "The preview is a read: it lists what a run would verify and sends nothing. apiome pact verify --no-publish-verification-results is the pipeline's dry run, and it replays."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/pacticipants",
+      "rest": "POST /v1/tenants/{tenant}/pacticipants",
+      "ui": "/ade/dashboard/pacts/pacticipants",
+      "cli": "create-or-update-pacticipant"
+    },
+    {
+      "method": "PATCH",
+      "bff": "/api/pact/pacticipants/[pacticipant]",
+      "rest": "PATCH /v1/tenants/{tenant}/pacticipants/{pacticipant}",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/settings",
+      "cli": "create-or-update-pacticipant"
+    },
+    {
+      "method": "DELETE",
+      "bff": "/api/pact/pacticipants/[pacticipant]",
+      "rest": "DELETE /v1/tenants/{tenant}/pacticipants/{pacticipant}",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/settings",
+      "cli": "delete-pacticipant"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/pacticipants/[pacticipant]/restore",
+      "rest": "POST /v1/tenants/{tenant}/pacticipants/{pacticipant}/restore",
+      "ui": "/ade/dashboard/pacts/pacticipants",
+      "cli": null,
+      "reason": "Restoring is an undo from the Delete dialog or the Deleted view; pact-broker has no such command, and a pipeline that deleted by mistake restores with the REST request."
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/pacticipants/[pacticipant]/labels/[label]",
+      "rest": "PUT /v1/tenants/{tenant}/pacticipants/{pacticipant}/labels/{label}",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/settings",
+      "cli": null,
+      "reason": "No apiome pact command labels a pacticipant (pact-broker has none); a pipeline adds a label with the REST request."
+    },
+    {
+      "method": "DELETE",
+      "bff": "/api/pact/pacticipants/[pacticipant]/labels/[label]",
+      "rest": "DELETE /v1/tenants/{tenant}/pacticipants/{pacticipant}/labels/{label}",
+      "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/settings",
+      "cli": null,
+      "reason": "No apiome pact command removes a pacticipant label (pact-broker has none); a pipeline removes one with the REST request."
     }
   ]
 }

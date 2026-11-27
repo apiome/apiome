@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.702.0",
+    "version": "1.703.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -40175,7 +40175,7 @@
           "pacticipants"
         ],
         "summary": "Update a pacticipant",
-        "description": "Change the display name, repository URL, main branch or bindings. A field that is left out is not changed; `null` clears `repository_url` and `main_branch` and unbinds `project` and `consumer_id`. The handle cannot be changed.\n\nRequires `pacts:edit`.",
+        "description": "Rename it, or change the display name, repository URL, main branch or bindings. A field that is left out is not changed; `null` clears `display_name`, `repository_url` and `main_branch` and unbinds `project` and `consumer_id`.\n\nA new `name` renames the pacticipant: the handle and the whole history stay, and the old name and the new one both keep resolving to it (as `{pacticipant_ref}` and in a published pact), listed in `aliases`. `409 pacticipant-slug-taken` when another pacticipant has, or had, that name. The handle cannot be changed.\n\nRequires `pacts:edit`.",
         "operationId": "patch_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__patch",
         "parameters": [
           {
@@ -40264,6 +40264,9 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "`pacticipant-slug-taken`: another pacticipant answers to that name."
           },
           "422": {
             "description": "Validation Error",
@@ -40602,6 +40605,104 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for setaprovidersstandingcontractsourcesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/deletion-impact": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "What deleting a pacticipant takes with it",
+        "description": "Read, before deleting, what `DELETE \u2026/pacticipants/{ref}` would take with it: its live versions, the pacts that name it as consumer or provider and their verification results, the providers that lose it as a consumer (their can-i-deploy answers change) and the consumers that lose it as a provider (at most 20 names each, with totals), and how many days the delete can be undone. `blocked` is true while a version is deployed or released (`in_use` names them): the delete is refused until the undeployment is recorded.\n\nRequires `pacts:view`.",
+        "operationId": "read_pacticipant_deletion_impact_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__deletion_impact_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Whatdeletingapacticipanttakeswithitauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Whatdeletingapacticipanttakeswithitauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Whatdeletingapacticipanttakeswithit Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Whatdeletingapacticipanttakeswithit Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for what deleting a pacticipant takes with it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionImpact",
+                  "description": "Response payload for whatdeletingapacticipanttakeswithitresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for whatdeletingapacticipanttakeswithitresponse422."
                 }
               }
             }
@@ -234069,7 +234170,7 @@
           "name": {
             "type": "string",
             "title": "Name",
-            "description": "Display name, as a Pact file or a person writes it.",
+            "description": "The name pacts use, as a Pact file or a person writes it.",
             "examples": [
               "Billing Service"
             ]
@@ -234089,6 +234190,23 @@
             "description": "The handle URLs and CI name. Derived from `name` when omitted; not editable afterwards.",
             "examples": [
               "billing-service"
+            ]
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Input schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Input schema."
+              }
+            ],
+            "title": "Display Name",
+            "description": "What people read, when it differs from `name`.",
+            "examples": [
+              "Billing (EU)"
             ]
           },
           "repository_url": {
@@ -234166,7 +234284,7 @@
           "name"
         ],
         "title": "PacticipantInput",
-        "description": "A new pacticipant.\n\nAttributes:\n    name: Display name, as a Pact file or a person writes it.\n    slug: The handle; derived from ``name`` when omitted, and never editable.\n    repository_url: http(s) URL of the application's source repository.\n    main_branch: The branch read by default when a query names none.\n    project: Slug or id of the Apiome project that describes this provider.\n    consumer_id: Id of this application's row in the consumer registry."
+        "description": "A new pacticipant.\n\nAttributes:\n    name: The name pacts use, as a Pact file or a person writes it.\n    slug: The handle; derived from ``name`` when omitted, and never editable.\n    display_name: What people read, when it differs from ``name``.\n    repository_url: http(s) URL of the application's source repository.\n    main_branch: The branch read by default when a query names none.\n    project: Slug or id of the Apiome project that describes this provider.\n    consumer_id: Id of this application's row in the consumer registry."
       },
       "PacticipantListResponse": {
         "properties": {
@@ -234229,7 +234347,21 @@
               }
             ],
             "title": "Name",
-            "description": "New display name."
+            "description": "Rename: the new name pacts use. The handle and the history stay; the old name keeps resolving. `409 pacticipant-slug-taken` when another pacticipant has that name."
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant Patch schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant Patch schema."
+              }
+            ],
+            "title": "Display Name",
+            "description": "New display name; `null` clears it."
           },
           "repository_url": {
             "anyOf": [
@@ -234291,7 +234423,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "PacticipantPatch",
-        "description": "A partial update of a pacticipant. An omitted field is left alone; ``null`` clears it.\n\nAttributes:\n    name: New display name (cannot be cleared).\n    repository_url: New repository URL, or ``null`` to clear it.\n    main_branch: New main branch, or ``null`` to clear it.\n    project: Slug or id of the project to bind, or ``null`` to unbind.\n    consumer_id: Id of the consumer to bind, or ``null`` to unbind."
+        "description": "A partial update of a pacticipant. An omitted field is left alone; ``null`` clears it.\n\nAttributes:\n    name: New name pacts use (cannot be cleared). Renaming keeps the handle and the history;\n        the old name and the new one both resolve to this pacticipant afterwards.\n    display_name: New display name, or ``null`` to clear it.\n    repository_url: New repository URL, or ``null`` to clear it.\n    main_branch: New main branch, or ``null`` to clear it.\n    project: Slug or id of the project to bind, or ``null`` to unbind.\n    consumer_id: Id of the consumer to bind, or ``null`` to unbind."
       },
       "PacticipantRecord": {
         "properties": {
@@ -234318,6 +234450,29 @@
             "title": "Name",
             "description": "Human-readable name.",
             "example": "Pet"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pacticipant schema."
+              },
+              {
+                "type": "null",
+                "description": "Pacticipant schema."
+              }
+            ],
+            "title": "Display Name",
+            "description": "What people read; null reads as `name`."
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Aliases",
+            "description": "Other names it has had (PFX-8.10), oldest first. Each still resolves to this pacticipant.",
+            "maxItems": 1000
           },
           "repository_url": {
             "anyOf": [
@@ -234478,7 +234633,7 @@
           "name"
         ],
         "title": "PacticipantRecord",
-        "description": "A stored pacticipant.\n\nAttributes:\n    id: Row id.\n    tenant_id: Owning tenant.\n    slug: Stable handle.\n    name: Display name.\n    repository_url: Source repository URL.\n    main_branch: The branch read by default.\n    project_id: Bound project, when this is a provider described in Apiome.\n    consumer_id: Bound consumer-registry row, when this is a registered consumer.\n    labels: Its labels, by name.\n    created_at: When it was registered.\n    updated_at: When it was last changed.\n    deleted_at: When it was deleted; ``None`` while it is live.\n    deleted_by_label: Who deleted it, as text.\n    delete_reason: Why, as the caller said.\n    purge_after: When the deleted pacticipant is removed for good, unless restored first."
+        "description": "A stored pacticipant.\n\nAttributes:\n    id: Row id.\n    tenant_id: Owning tenant.\n    slug: Stable handle.\n    name: The name pacts use.\n    display_name: What people read; ``None`` reads as ``name``.\n    aliases: The other names it has had, oldest first; each still resolves to it.\n    repository_url: Source repository URL.\n    main_branch: The branch read by default.\n    project_id: Bound project, when this is a provider described in Apiome.\n    consumer_id: Bound consumer-registry row, when this is a registered consumer.\n    labels: Its labels, by name.\n    created_at: When it was registered.\n    updated_at: When it was last changed.\n    deleted_at: When it was deleted; ``None`` while it is live.\n    deleted_by_label: Who deleted it, as text.\n    delete_reason: Why, as the caller said.\n    purge_after: When the deleted pacticipant is removed for good, unless restored first."
       },
       "PacticipantVersionInput": {
         "properties": {
@@ -299058,6 +299213,106 @@
         ],
         "title": "RerunResponse",
         "description": "One interaction replayed again; nothing published."
+      },
+      "DeletionImpact": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "versions": {
+            "type": "integer",
+            "title": "Versions",
+            "description": "Live versions that would be deleted.",
+            "example": 1
+          },
+          "pacts": {
+            "type": "integer",
+            "title": "Pacts",
+            "description": "Distinct pacts naming it, as consumer or provider.",
+            "example": 1
+          },
+          "verification_results": {
+            "type": "integer",
+            "title": "Verification Results",
+            "description": "Verification results of those pacts.",
+            "example": 1
+          },
+          "providers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Providers",
+            "description": "Providers that lose it as a consumer.",
+            "maxItems": 1000
+          },
+          "providers_total": {
+            "type": "integer",
+            "title": "Providers Total",
+            "default": 0,
+            "description": "Providers Total.",
+            "example": 1
+          },
+          "consumers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Consumers",
+            "description": "Consumers that lose it as a provider.",
+            "maxItems": 1000
+          },
+          "consumers_total": {
+            "type": "integer",
+            "title": "Consumers Total",
+            "default": 0,
+            "description": "Consumers Total.",
+            "example": 1
+          },
+          "in_use": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "In Use",
+            "description": "Versions deployed or released now; while any is, the delete is refused.",
+            "maxItems": 1000
+          },
+          "blocked": {
+            "type": "boolean",
+            "title": "Blocked",
+            "description": "Whether the delete is refused now: record the undeployment first.",
+            "example": false
+          },
+          "grace_days": {
+            "type": "integer",
+            "title": "Grace Days",
+            "description": "Days the delete can be undone (`POST \u2026/restore`) before it is purged.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "versions",
+          "pacts",
+          "verification_results",
+          "blocked",
+          "grace_days"
+        ],
+        "title": "DeletionImpact",
+        "description": "What deleting one pacticipant would take with it, and whether it may be deleted now.\n\nAttributes:\n    slug: The pacticipant's handle.\n    name: Its name.\n    versions: Live versions that would be deleted.\n    pacts: Distinct pacts naming it, as consumer or provider.\n    verification_results: Verification results of those pacts.\n    providers: Providers that would lose it as a consumer (at most :data:`MAX_NAMES`).\n    providers_total: How many providers in all.\n    consumers: Consumers that would lose it as a provider (at most :data:`MAX_NAMES`).\n    consumers_total: How many consumers in all.\n    in_use: Versions currently deployed or released (at most :data:`MAX_NAMES`).\n    blocked: Whether the delete is refused now (a version is in use).\n    grace_days: Days the delete can be undone before it is purged."
       }
     },
     "securitySchemes": {

@@ -18,7 +18,7 @@ Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-webhook`](#pact-create-webhook), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`verify`](#pact-verify).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`verify`](#pact-verify).
 
 ## apiome pact can-i-deploy {#pact-can-i-deploy}
 
@@ -99,6 +99,28 @@ apiome pact create-environment [OPTIONS]
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 
+## apiome pact create-or-update-pacticipant {#pact-create-or-update-pacticipant}
+
+Create a pacticipant, or update the one with this name, as `pact-broker create-or-update-pacticipant`.
+
+Reads GET /v1/tenants/{t}/pacticipants/{name} (a name it had before a rename finds it too). When there is none it registers one (POST …/pacticipants); otherwise it sends only the flags given (PATCH …/pacticipants/{handle}) and never renames: rename from the pacticipant's Settings tab. Exits 1 on any refusal, with the server's reason.
+
+```text
+apiome pact create-or-update-pacticipant [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  | yes | The pacticipant's name, as pacts use it. |
+| `--display-name` | text |  |  | What people read, when it differs. |
+| `--main-branch` | text |  |  | The branch 'latest on main' reads. |
+| `--repository-url` | text |  |  | http(s) URL of its repository. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
 ## apiome pact create-webhook {#pact-create-webhook}
 
 Create a webhook (POST …/webhooks), with `pact-broker create-webhook`'s options.
@@ -133,6 +155,26 @@ apiome pact create-webhook [OPTIONS] URL
 | `--provider-verification-succeeded` | flag |  |  |  |
 | `--provider-verification-failed` | flag |  |  |  |
 | `--consumer-version-branch-created` | flag |  |  |  |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact delete-pacticipant {#pact-delete-pacticipant}
+
+Delete a pacticipant with its versions, pacts and results (DELETE /v1/tenants/{t}/pacticipants/{name}).
+
+The delete is soft: it can be undone from the Pacticipants page (or POST …/pacticipants/{name}/restore) until it is purged. Refused while one of its versions is deployed or released: record the undeployment first. Needs pacts:delete. Exits 1 on any refusal.
+
+```text
+apiome pact delete-pacticipant [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  | yes | The pacticipant's name or handle. |
+| `--reason` | text |  |  | Why; stored with the delete and audited. |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |

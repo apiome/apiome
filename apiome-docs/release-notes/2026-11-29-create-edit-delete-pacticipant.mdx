@@ -1,0 +1,33 @@
+---
+slug: create-edit-delete-a-pacticipant
+title: "Create, edit and delete a pacticipant"
+description: "Set up, rename, label and delete a pacticipant from the app or the CLI."
+authors: [apiome]
+---
+
+A pacticipant used to exist only because a pact named it, and it could not be renamed, labelled or
+deleted in the app. A pacticipant's page now has a **Settings** tab, the Pacticipants page has
+**New pacticipant**, and a delete spells out what it removes. See
+[Manage a pacticipant](/ship/pact-broker/pacticipants#manage-a-pacticipant).
+
+{/* truncate */}
+
+- **Settings.** Change the name, display name, main branch, repository, linked project and labels,
+  and save them together. Only what changed is sent. A read-only role sees the values without
+  inputs. The owner section is there too.
+- **Rename without breaking anything.** The handle stays, so URLs and CI jobs keep working, and the
+  history stays. The old name keeps working: a pact published under it still lands on the same
+  pacticipant. **Previous names** lists them. A name another pacticipant has is refused under
+  **Name**.
+- **New pacticipant.** Set one up before its first pact, with its main branch, owner, repository,
+  and optionally a linked project that names it.
+- **Delete with the consequence spelled out.** The dialog counts the versions, pacts and
+  verification results that go, names the providers that lose a consumer, and asks you to type the
+  handle. The delete is audited and can be undone for 30 days, from the dialog or from
+  **Show → Deleted** on the Pacticipants page. A pacticipant with a version deployed or released
+  cannot be deleted.
+- **CLI:** `apiome pact create-or-update-pacticipant` (with `pact-broker`'s flags) and
+  `apiome pact delete-pacticipant`.
+- **REST:** `PATCH /v1/tenants/{tenant}/pacticipants/{pacticipant}` renames with `name` and takes
+  `display_name`; records carry `display_name` and `aliases`. New:
+  `GET …/pacticipants/{pacticipant}/deletion-impact`.

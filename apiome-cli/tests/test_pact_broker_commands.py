@@ -728,3 +728,90 @@ def test_check_refusal_exits_1_with_the_server_message(tmp_path: Path, broker_en
     result = _invoke("check", str(tmp_path / "a.json"), "--against", "main")
     assert result.exit_code == EXIT_ERROR
     assert "pacts:view" in result.output
+
+
+# --- create-or-update-pacticipant / delete-pacticipant (PFX-8.10, #7307) ----------------------
+
+_RECORD = {"slug": "orders-ui", "name": "Orders UI", "main_branch": "main", "repository_url": None, "labels": []}
+
+
+def test_create_or_update_registers_a_new_pacticipant(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="GET", url=f"{_NATIVE}/pacticipants/Orders%20UI", status_code=404, json={})
+    httpx_mock.add_response(method="POST", url=f"{_NATIVE}/pacticipants", status_code=201, json=_RECORD)
+    result = _invoke(
+        "create-or-update-pacticipant", "--name", "Orders UI", "--main-branch", "main",
+        "--repository-url", "https://github.com/acme/orders-ui", "--display-name", "Orders (web)",
+    )
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    body = json.loads(httpx_mock.get_requests()[1].content)
+    assert body == {
+        "name": "Orders UI", "display_name": "Orders (web)", "main_branch": "main",
+        "repository_url": "https://github.com/acme/orders-ui",
+    }
+    assert 'Pacticipant "Orders UI" created' in result.output
+
+
+def test_create_or_update_sends_only_the_flags_given_and_never_renames(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="GET", url=f"{_NATIVE}/pacticipants/Orders%20Web", json=_RECORD)
+    httpx_mock.add_response(
+        method="PATCH", url=f"{_NATIVE}/pacticipants/orders-ui", json={**_RECORD, "main_branch": "trunk"}
+    )
+    result = _invoke("create-or-update-pacticipant", "--name", "Orders Web", "--main-branch", "trunk", "-o", "json")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    patch = httpx_mock.get_requests()[1]
+    assert json.loads(patch.content) == {"main_branch": "trunk"}  # no "name": an old name finds it, never renames
+    assert json.loads(result.output)["main_branch"] == "trunk"
+
+
+def test_create_or_update_without_changes_sends_nothing_more(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="GET", url=f"{_NATIVE}/pacticipants/orders-ui", json=_RECORD)
+    result = _invoke("create-or-update-pacticipant", "--name", "orders-ui")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert len(httpx_mock.get_requests()) == 1
+    assert 'Pacticipant "Orders UI" unchanged' in result.output
+
+
+def test_create_or_update_reports_a_refusal_and_exits_1(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="GET", url=f"{_NATIVE}/pacticipants/orders-ui", json=_RECORD)
+    httpx_mock.add_response(
+        method="PATCH", url=f"{_NATIVE}/pacticipants/orders-ui", status_code=400,
+        json={"detail": {"code": "pacticipant-invalid-url", "message": "repository URL must be http(s)"}},
+    )
+    result = _invoke("create-or-update-pacticipant", "--name", "orders-ui", "--repository-url", "git@x:y.git")
+    assert result.exit_code == EXIT_ERROR
+    assert "http(s)" in result.output
+
+
+def test_create_or_update_needs_a_name() -> None:
+    assert _invoke("create-or-update-pacticipant").exit_code == EXIT_ERROR
+
+
+def test_delete_pacticipant_sends_the_reason(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="DELETE", status_code=204)
+    result = _invoke("delete-pacticipant", "--name", "Orders UI", "--reason", "retired")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    request = httpx_mock.get_requests()[0]
+    assert str(request.url).startswith(f"{_NATIVE}/pacticipants/Orders%20UI")
+    assert _query(request) == [("reason", "retired")]
+    assert 'Pacticipant "Orders UI" deleted' in result.output and "Restore" in result.output
+
+
+def test_delete_pacticipant_in_use_is_refused_without_offering_force(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(
+        method="DELETE", status_code=409,
+        json={"detail": {
+            "code": "pacticipant-version-in-use",
+            "message": "cannot delete pacticipant 'orders-ui': version(s) 3.3.2 are currently deployed or released. "
+            "Record the undeployment first, or pass force=true to delete anyway.",
+        }},
+    )
+    result = _invoke("delete-pacticipant", "--name", "orders-ui")
+    assert result.exit_code == EXIT_ERROR
+    assert "3.3.2 are currently deployed or released. Record the undeployment first." in result.output
+    assert "force" not in result.output
+
+
+def test_delete_pacticipant_unknown_or_forbidden_exits_1(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="DELETE", status_code=403, json={"detail": "Permission denied: pacts:delete"})
+    result = _invoke("delete-pacticipant", "--name", "orders-ui")
+    assert result.exit_code == EXIT_ERROR and "pacts:delete" in result.output

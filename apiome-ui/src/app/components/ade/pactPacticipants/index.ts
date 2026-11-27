@@ -1,5 +1,10 @@
-/** The Pacticipants list and detail pages — PFX-5.1 (#6945). */
+/** The Pacticipants list and detail pages — PFX-5.1 (#6945); Settings, New and Delete — PFX-8.10 (#7307). */
 export { default as PacticipantsListClient } from './PacticipantsListClient';
+export { default as PacticipantSettingsClient } from './PacticipantSettingsClient';
+export { NewPacticipantDialog } from './NewPacticipantDialog';
+export { DeletePacticipantDialog } from './DeletePacticipantDialog';
+export { PacticipantFields, PacticipantValues } from './PacticipantFields';
+export { PacticipantSubTabs } from './PacticipantSubTabs';
 export { default as PacticipantDetailClient } from './PacticipantDetailClient';
 export { default as PacticipantRouteClient, isPacticipantId } from './PacticipantRouteClient';
 export { default as PacticipantOwnerPanel, OWNER_DESCRIPTION } from './PacticipantOwnerPanel';

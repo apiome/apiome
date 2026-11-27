@@ -2,7 +2,8 @@
 
 ``publish``, ``check`` (PFX-8.4, #7301: a pre-publish comparison with several provider versions; no
 ``pact-broker`` equivalent), ``list-pacticipants``, ``describe-version``, ``can-i-deploy``, ``record-deployment``,
-``record-release``, ``create-environment``, ``create-webhook`` and ``verify`` take the flags of
+``record-release``, ``create-environment``, ``create-webhook``, ``verify``, and
+``create-or-update-pacticipant`` / ``delete-pacticipant`` (PFX-8.10, #7307) take the flags of
 the ``pact-broker`` CLI they replace (``-a``, ``-e``, ``-l``, ``-t``, ``-b``, ``-k``, ``-o``, …)
 and print the same sentences, so a pipeline moves over by changing the command name. ``migrate``
 (PFX-6.7, #6959) imports a whole Pact Broker or PactFlow workspace: the source is read by
@@ -28,7 +29,7 @@ from urllib.parse import urlencode
 import typer
 
 from apiome_cli.cli_context import insecure_from_context
-from apiome_cli.client.errors import CliError
+from apiome_cli.client.errors import CliError, exit_on_api_error
 from apiome_cli.client.pact_broker_connection import BrokerConnection, connect, segment
 from apiome_cli.client.pact_broker_requests import (
     WEBHOOK_EVENTS,
@@ -55,7 +56,9 @@ from apiome_cli.pact_broker_output import (
     check_lines,
     environment_created_lines,
     native_version_document,
+    pacticipant_deleted_lines,
     pacticipant_lines,
+    pacticipant_saved_lines,
     publish_lines,
     recorded_lines,
     validate_output,
@@ -313,6 +316,97 @@ def describe_version(
             raise CliError(f"{pacticipant} has no version{which}", exit_code=EXIT_ERROR)
         document = native_version_document(versions[0])
     _emit(fmt, document, version_lines(document, pacticipant, fmt))
+
+
+# ---------------------------------------------------------------------------------------------
+# create-or-update-pacticipant / delete-pacticipant (PFX-8.10, #7307)
+# ---------------------------------------------------------------------------------------------
+
+#: The refusal code of a delete while a version is deployed or released.
+_VERSION_IN_USE = "pacticipant-version-in-use"
+
+
+def _refusal(response: Any) -> tuple[str, str]:
+    """``(code, message)`` of a REST refusal; empty strings when the body carries neither."""
+    try:
+        detail = response.json().get("detail")
+    except ValueError:
+        return "", ""
+    if isinstance(detail, dict):
+        return str(detail.get("code") or ""), str(detail.get("message") or "")
+    return "", str(detail or "")
+
+
+def create_or_update_pacticipant(
+    ctx: typer.Context,
+    name: str = typer.Option(..., "--name", help="The pacticipant's name, as pacts use it."),
+    display_name: Optional[str] = typer.Option(None, "--display-name", help="What people read, when it differs."),
+    main_branch: Optional[str] = typer.Option(None, "--main-branch", help="The branch 'latest on main' reads."),
+    repository_url: Optional[str] = typer.Option(None, "--repository-url", help="http(s) URL of its repository."),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Create a pacticipant, or update the one with this name, as `pact-broker create-or-update-pacticipant`.
+
+    Reads GET /v1/tenants/{t}/pacticipants/{name} (a name it had before a rename finds it too). When
+    there is none it registers one (POST …/pacticipants); otherwise it sends only the flags given
+    (PATCH …/pacticipants/{handle}) and never renames: rename from the pacticipant's Settings tab.
+    Exits 1 on any refusal, with the server's reason.
+    """
+    fmt = _format(ctx, output)
+    changes = {
+        key: value
+        for key, value in (
+            ("display_name", display_name),
+            ("main_branch", main_branch),
+            ("repository_url", repository_url),
+        )
+        if value is not None
+    }
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    command = "create-or-update-pacticipant"
+    existing = conn.client.get_raw(conn.api_path(f"/pacticipants/{segment(name)}", command=command))
+    if existing.status_code == 404:
+        created = conn.client.post(conn.api_path("/pacticipants", command=command), json={"name": name, **changes})
+        record, was_created = created.json(), True
+    else:
+        exit_on_api_error(existing)
+        record, was_created = existing.json(), False
+        if changes:
+            path = conn.api_path(f"/pacticipants/{segment(str(record.get('slug') or name))}", command=command)
+            updated = conn.client.patch_raw(path, json=changes)
+            exit_on_api_error(updated)
+            record = updated.json()
+    _emit(fmt, record, pacticipant_saved_lines(record, created=was_created, changed=bool(changes), fmt=fmt))
+
+
+def delete_pacticipant(
+    ctx: typer.Context,
+    name: str = typer.Option(..., "--name", help="The pacticipant's name or handle."),
+    reason: Optional[str] = typer.Option(None, "--reason", help="Why; stored with the delete and audited."),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Delete a pacticipant with its versions, pacts and results (DELETE /v1/tenants/{t}/pacticipants/{name}).
+
+    The delete is soft: it can be undone from the Pacticipants page (or POST …/pacticipants/{name}/restore)
+    until it is purged. Refused while one of its versions is deployed or released: record the
+    undeployment first. Needs pacts:delete. Exits 1 on any refusal.
+    """
+    fmt = _format(ctx, output)
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    path = conn.api_path(f"/pacticipants/{segment(name)}", command="delete-pacticipant")
+    response = conn.client.delete_raw(path, params={"reason": reason} if reason else None)
+    if response.status_code == 409:
+        code, message = _refusal(response)
+        if code == _VERSION_IN_USE:
+            # The REST message also names `force=true`, which this command deliberately does not offer.
+            first = message.split(". Record")[0].rstrip(".")
+            raise CliError(f"{first}. Record the undeployment first.", exit_code=EXIT_ERROR)
+    exit_on_api_error(response)
+    _emit(fmt, {"name": name, "deleted": True}, pacticipant_deleted_lines(name, fmt))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -856,6 +950,8 @@ COMMANDS: tuple[tuple[str, Any], ...] = (
     ("publish", publish),
     ("check", check),
     ("list-pacticipants", list_pacticipants),
+    ("create-or-update-pacticipant", create_or_update_pacticipant),
+    ("delete-pacticipant", delete_pacticipant),
     ("describe-version", describe_version),
     ("can-i-deploy", can_i_deploy),
     ("record-deployment", record_deployment),

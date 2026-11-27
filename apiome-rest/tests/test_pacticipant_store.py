@@ -127,7 +127,11 @@ def test_create_derives_the_handle_and_stores_the_actor() -> None:
     db = _db()
     create_pacticipant(db, TENANT, PacticipantInput(name=" Billing Service "), actor=ACTOR)
     _, params = _statement(db)
-    assert params == (TENANT, "billing-service", "Billing Service", None, None, None, None, USER, USER)
+    assert params == (
+        TENANT, "billing-service", "Billing Service", None, None, None, None, None, USER, USER,
+        # The alias guard: no renamed pacticipant may still answer to the handle (PFX-8.10).
+        TENANT, TENANT, "billing-service",
+    )
 
 
 def test_create_resolves_both_bindings_in_the_tenant() -> None:
@@ -137,7 +141,7 @@ def test_create_resolves_both_bindings_in_the_tenant() -> None:
     )
     db.get_project_by_slug.assert_called_once_with("billing-api", TENANT)
     db.get_consumer_by_id.assert_called_once_with(CONSUMER, TENANT)
-    assert _statement(db)[1][5:7] == (PROJECT, CONSUMER)
+    assert _statement(db)[1][6:8] == (PROJECT, CONSUMER)
 
     create_pacticipant(db, TENANT, PacticipantInput(name="Other", project=PROJECT), actor=ACTOR)
     db.get_project_core.assert_called_once_with(PROJECT, TENANT)
@@ -186,7 +190,7 @@ def test_a_handle_collision_is_a_stable_refusal() -> None:
 def test_an_unattributable_actor_is_stored_as_null() -> None:
     db = _db()
     create_pacticipant(db, TENANT, PacticipantInput(name="A"), actor=ConsumerActor(user_id="legacy-key"))
-    assert _statement(db)[1][-2:] == (None, None)
+    assert _statement(db)[1][8:10] == (None, None)
 
 
 # ---------------------------------------------------------------------------------------------

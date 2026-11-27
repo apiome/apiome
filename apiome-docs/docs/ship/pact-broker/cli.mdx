@@ -56,7 +56,8 @@ Prefer the variables to `-k`: a secret on the command line is visible to other p
 
 If your operator set up a [broker host](./publish-pacts.mdx#the-broker-host-alias), the short form
 `https://acme.<broker host>` works for the commands that call Pact Broker routes. `list-pacticipants`,
-`describe-version --latest` and `verify` call Apiome's own API, which the short form does not
+`create-or-update-pacticipant`, `delete-pacticipant`, `describe-version --latest` and `verify` call
+Apiome's own API, which the short form does not
 serve; they stop and ask for the long form.
 
 A pipeline set up for basic auth works too: when no token or key is set, `PACT_BROKER_PASSWORD` is
@@ -100,7 +101,8 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 :::note Security
 - A Pact scope is checked **before** the key's role: the member who created the key still needs
   **Pacts** → **View** (reads) or **Create** (writes), and a key works only in its own workspace.
-- Deleting anything, webhooks, environments and cleanup need a **Full access** key — run
+- Deleting anything, creating or changing a pacticipant, webhooks, environments and cleanup need a
+  **Full access** key — run
   `create-environment` and `create-webhook` with one, once, outside the pipeline. So do
   `export-consumer-contract` and `publish-consumer-contract`, which call a project's consumer
   contracts rather than the broker.
@@ -116,6 +118,8 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 | `publish` | Publish pact files for a consumer version | `pact-broker publish` |
 | `check` | Compare pact files with several provider versions before publishing; publishes nothing | — |
 | `list-pacticipants` | List the workspace's pacticipants | `pact-broker list-pacticipants` |
+| `create-or-update-pacticipant` | Create a pacticipant, or update the one with this name; never renames | `pact-broker create-or-update-pacticipant` |
+| `delete-pacticipant` | Delete a pacticipant with its history; restorable until purged | — |
 | `describe-version` | Show a version's branches, tags and build URL | `pact-broker describe-version` |
 | `can-i-deploy` | Ask whether a version can be deployed | `pact-broker can-i-deploy` |
 | `record-deployment` | Record a deployment to an environment | `pact-broker record-deployment` |
@@ -146,6 +150,8 @@ with secrets written as variables. The first were the
 | `create-webhook` | **Contracts** → **Webhooks** → **New webhook** |
 | `describe-version` | **Contracts** → **Pacticipants** → a pacticipant |
 | `list-pacticipants` | **Contracts** → **Pacticipants** |
+| `create-or-update-pacticipant` | **Contracts** → **Pacticipants** → **New pacticipant**, or a pacticipant's **Settings** |
+| `delete-pacticipant` | A pacticipant's **Settings** → **Danger zone** |
 | `publish` | **Contracts** → **Publish a pact** (also a project's **Consumers** → **Import Pact file**) |
 | `publish-consumer-contract` | **Contracts** → **Publish a pact** → **Derive from a project** |
 | `check` | **Contracts** → **Publish a pact** → **Check it before it counts** |
@@ -158,8 +164,9 @@ with secrets written as variables. The first were the
 
 A few things in the app have no command yet, and say so in their **The same, from anywhere** block:
 editing, deleting and testing a webhook, redelivering a delivery, re-running one verification,
-answering a re-publish request, the verification settings, and **Compare only** on the Publish a
-provider contract page. Each has a REST route.
+answering a re-publish request, the verification settings, **Compare only** on the Publish a
+provider contract page, and a pacticipant's rename, linked project, labels and restore. Each has a
+REST route.
 
 On the Publish page every flag of `publish` and `publish-consumer-contract` has a field, and on the
 Publish a provider contract page every flag of `publish-provider-contract`; the ledger row lists

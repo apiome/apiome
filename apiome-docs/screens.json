@@ -2877,6 +2877,20 @@
       ]
     },
     {
+      "id": "pact-pacticipant-settings",
+      "route": "/ade/dashboard/pacts/pacticipants/billing-service/settings",
+      "waitFor": "[data-testid=\"ppx-general\"]",
+      "data": "fixture:hive-a11y/pact-pacticipant-settings.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantSettingsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantFields.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantSubTabs.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantOwnerPanel.tsx",
+        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
+        "apiome-ui/lib/pact-pacticipant-settings.ts"
+      ]
+    },
+    {
       "id": "pact-pacticipant-detail",
       "route": "/ade/dashboard/pacts/pacticipants/billing-service",
       "waitFor": "[data-testid=\"ppx-versions-table\"]",
@@ -2884,6 +2898,7 @@
       "sources": [
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantDetailClient.tsx",
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantPanels.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantSubTabs.tsx",
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantOwnerPanel.tsx",
         "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
         "apiome-ui/src/app/components/ade/pactDetail/PactPanels.tsx",

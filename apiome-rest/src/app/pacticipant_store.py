@@ -17,6 +17,12 @@ an UPDATE anyway. Recording the same version again is how a build adds a branch 
 the recorded version's ``seq`` is higher than the current head's. Recording an older version on a
 branch adds it to the branch and leaves the head where it was.
 
+**A renamed pacticipant keeps answering to its old names** (PFX-8.10, #7307). The handle never
+changes; each name a pacticipant has had is kept in ``pacticipant_alias`` (V454) as the handle it
+reduces to. :func:`get_pacticipant` and :func:`ensure_pacticipant_tx` try the handle first and an
+alias second, so a pact published under an old name lands on the same pacticipant and nothing new
+is registered. :func:`update_pacticipant` refuses a name another live pacticipant answers to.
+
 **Tags and branch membership are idempotent.** Both are ``ON CONFLICT DO NOTHING`` on their natural
 keys.
 
@@ -56,6 +62,7 @@ from .pacticipant import (
     pacticipant_record_from_row,
     slugify_pacticipant_name,
     validate_branch,
+    validate_display_name,
     validate_name,
     validate_slug,
     validate_tag,
@@ -89,11 +96,14 @@ __all__ = [
 #: The columns every pacticipant read returns: the row plus its labels, by name. Unqualified, so
 #: it also serves ``RETURNING``; the label subquery names the table to reach the outer row.
 _PACTICIPANT_COLUMNS = """
-    id::text AS id, tenant_id::text AS tenant_id, slug, name, repository_url, main_branch,
+    id::text AS id, tenant_id::text AS tenant_id, slug, name, display_name, repository_url, main_branch,
     project_id::text AS project_id, consumer_id::text AS consumer_id, created_at, updated_at,
     COALESCE((SELECT array_agg(pl.name ORDER BY pl.name)
               FROM apiome.pacticipant_label pl
               WHERE pl.pacticipant_id = pacticipant.id), '{}') AS labels,
+    COALESCE((SELECT array_agg(pa.name ORDER BY pa.created_at, pa.slug)
+              FROM apiome.pacticipant_alias pa
+              WHERE pa.pacticipant_id = pacticipant.id), '{}') AS aliases,
     deleted_at, deleted_by_label, delete_reason
 """
 
@@ -110,6 +120,11 @@ _VERSION_COLUMNS = """
               FROM apiome.pacticipant_version_tag t
               WHERE t.version_id = v.id AND t.pacticipant_id = v.pacticipant_id), '{}') AS tags
 """
+
+#: "This pacticipant answers to this old name": a condition on ``pacticipant`` taking the tenant
+#: and the alias handle as parameters (V454's ``idx_pacticipant_alias_tenant_slug``).
+_ALIAS_MATCH = """id IN (SELECT pa.pacticipant_id FROM apiome.pacticipant_alias pa
+                    WHERE pa.tenant_id = %s::uuid AND pa.slug = %s)"""
 
 #: The same column lists, for :mod:`app.pact_cleanup_store`, which reads deleted rows too.
 PACTICIPANT_COLUMNS = _PACTICIPANT_COLUMNS
@@ -198,6 +213,7 @@ def get_pacticipant(db: Any, tenant_id: str, pacticipant_ref: str) -> Pacticipan
 
     A reference that is not an id is reduced to the handle it would be given as a name, so a CI
     job that sends the name its Pact file carries (``Billing Service``) finds ``billing-service``.
+    When no handle matches, the names it had before a rename are tried (PFX-8.10).
 
     Args:
         db: The database.
@@ -222,6 +238,18 @@ def get_pacticipant(db: Any, tenant_id: str, pacticipant_ref: str) -> Pacticipan
             """,
             (tenant_id, *([ref] if by_id else []), slugify_pacticipant_name(ref)),
         )
+        if not rows:
+            # Not a handle: a name the pacticipant had before it was renamed (PFX-8.10).
+            rows = db.execute_query(
+                f"""
+                SELECT {_PACTICIPANT_COLUMNS}
+                FROM apiome.pacticipant
+                WHERE tenant_id = %s::uuid AND {_ALIAS_MATCH} AND deleted_at IS NULL
+                ORDER BY created_at
+                LIMIT 1
+                """,
+                (tenant_id, tenant_id, slugify_pacticipant_name(ref)),
+            )
         if rows:
             return pacticipant_record_from_row(dict(rows[0]))
     raise PacticipantValidationError(CODE_NOT_FOUND, f"no pacticipant '{ref}' in this tenant")
@@ -289,10 +317,12 @@ def create_pacticipant(
         PacticipantValidationError: ``pacticipant-invalid-name``, ``pacticipant-invalid-slug``,
             ``pacticipant-invalid-url``, ``pacticipant-invalid-branch``,
             ``pacticipant-project-not-found``, ``pacticipant-consumer-not-found``, or
-            ``pacticipant-slug-taken`` when the tenant already has that handle.
+            ``pacticipant-slug-taken`` when the tenant already has that handle, or a renamed
+            pacticipant still answers to it.
     """
     name = validate_name(definition.name)
     slug = validate_slug(definition.slug or slugify_pacticipant_name(name))
+    display_name = validate_display_name(definition.display_name)
     repository_url = validate_url(definition.repository_url, what="repository URL")
     main_branch = validate_branch(definition.main_branch) if definition.main_branch else None
     project_id = _resolve_project_id(db, tenant_id, definition.project) if definition.project else None
@@ -304,19 +334,94 @@ def create_pacticipant(
         rows = db.execute_query(
             f"""
             INSERT INTO apiome.pacticipant (
-                tenant_id, slug, name, repository_url, main_branch, project_id, consumer_id,
+                tenant_id, slug, name, display_name, repository_url, main_branch, project_id, consumer_id,
                 created_by, updated_by
             )
-            VALUES (%s::uuid, %s, %s, %s, %s, %s::uuid, %s::uuid, %s::uuid, %s::uuid)
+            -- A renamed pacticipant still answers to its old names; a new one may not take them.
+            SELECT %s::uuid, %s, %s, %s, %s, %s, %s::uuid, %s::uuid, %s::uuid, %s::uuid
+            WHERE NOT EXISTS (SELECT 1 FROM apiome.pacticipant
+                              WHERE tenant_id = %s::uuid AND {_ALIAS_MATCH} AND deleted_at IS NULL)
             RETURNING {_PACTICIPANT_COLUMNS}
             """,
-            (tenant_id, slug, name, repository_url, main_branch, project_id, consumer_id, user_id, user_id),
+            (
+                tenant_id,
+                slug,
+                name,
+                display_name,
+                repository_url,
+                main_branch,
+                project_id,
+                consumer_id,
+                user_id,
+                user_id,
+                tenant_id,
+                tenant_id,
+                slug,
+            ),
         )
     except psycopg2.errors.UniqueViolation as exc:
         raise PacticipantValidationError(
             CODE_SLUG_TAKEN, f"a pacticipant '{slug}' already exists in this tenant"
         ) from exc
+    if not rows:
+        raise PacticipantValidationError(
+            CODE_SLUG_TAKEN, f"a renamed pacticipant still answers to '{slug}' in this tenant"
+        )
     return pacticipant_record_from_row(dict(rows[0]))
+
+
+def _rename_tx(
+    cursor: Any, tenant_id: str, existing: PacticipantRecord, new_name: str, *, user_id: Optional[str]
+) -> None:
+    """Check a new name is free and keep the old and the new one as aliases (PFX-8.10).
+
+    The handle does not change. The new name and the old one are both kept as aliases (by the
+    handle each reduces to), so both resolve to this pacticipant and the old one is listed.
+
+    Args:
+        cursor: The open transaction's cursor.
+        tenant_id: The caller's tenant.
+        existing: The pacticipant being renamed, as read before the transaction.
+        new_name: The validated new name.
+        user_id: Who is renaming it, when storable.
+
+    Raises:
+        PacticipantValidationError: ``pacticipant-invalid-slug`` when the name has no letter or
+            digit; ``pacticipant-slug-taken`` when another live pacticipant answers to it.
+    """
+    new_handle = validate_slug(slugify_pacticipant_name(new_name))
+    cursor.execute(
+        f"""
+        SELECT name FROM apiome.pacticipant
+        WHERE tenant_id = %s::uuid AND deleted_at IS NULL AND id <> %s::uuid
+          AND (slug = %s OR {_ALIAS_MATCH})
+        LIMIT 1
+        """,
+        (tenant_id, existing.id, new_handle, tenant_id, new_handle),
+    )
+    taken = cursor.fetchone()
+    if taken:
+        raise PacticipantValidationError(
+            CODE_SLUG_TAKEN, f"A pacticipant named {taken['name']} already exists."
+        )
+    keep = [(new_handle, new_name)]
+    old_handle = slugify_pacticipant_name(existing.name)
+    if old_handle:
+        keep.append((old_handle, existing.name))
+    for handle, name in keep:
+        # An old name another pacticipant now answers to is not taken back.
+        cursor.execute(
+            f"""
+            INSERT INTO apiome.pacticipant_alias (pacticipant_id, tenant_id, slug, name, created_by)
+            SELECT %s::uuid, %s::uuid, %s, %s, %s::uuid
+            WHERE NOT EXISTS (
+                SELECT 1 FROM apiome.pacticipant
+                WHERE tenant_id = %s::uuid AND deleted_at IS NULL AND id <> %s::uuid
+                  AND (slug = %s OR {_ALIAS_MATCH}))
+            ON CONFLICT (pacticipant_id, tenant_id, slug) DO NOTHING
+            """,
+            (existing.id, tenant_id, handle, name, user_id, tenant_id, existing.id, handle, tenant_id, handle),
+        )
 
 
 def update_pacticipant(
@@ -329,7 +434,10 @@ def update_pacticipant(
 ) -> PacticipantRecord:
     """Apply a partial update. An omitted field is left alone; an explicit ``None`` clears it.
 
-    The handle is not updatable: renaming it would orphan every pact and CI job that names it.
+    The handle is not updatable: renaming it would orphan every pact and CI job that names it. The
+    *name* is (PFX-8.10): a rename keeps the handle and the history, and the old and the new name
+    are kept as aliases so both keep resolving here. It runs in one transaction with the check
+    that no other live pacticipant answers to the new name.
 
     Args:
         db: The database.
@@ -342,14 +450,20 @@ def update_pacticipant(
         The updated record — unchanged when the patch carried no field.
 
     Raises:
-        PacticipantValidationError: ``pacticipant-not-found``, or the same validation codes as
-            :func:`create_pacticipant`.
+        PacticipantValidationError: ``pacticipant-not-found``, ``pacticipant-slug-taken`` for a name
+            another pacticipant has, or the same validation codes as :func:`create_pacticipant`.
     """
     existing = get_pacticipant(db, tenant_id, pacticipant_ref)
     sent = patch.model_fields_set
     values: Dict[str, Any] = {}
+    rename: Optional[str] = None
     if "name" in sent:
         values["name"] = validate_name(patch.name or "")
+        if values["name"] != existing.name:
+            rename = values["name"]
+            validate_slug(slugify_pacticipant_name(rename))
+    if "display_name" in sent:
+        values["display_name"] = validate_display_name(patch.display_name)
     if "repository_url" in sent:
         values["repository_url"] = validate_url(patch.repository_url, what="repository URL")
     if "main_branch" in sent:
@@ -366,15 +480,25 @@ def update_pacticipant(
     # Column names come from the literal keys above, never from the request.
     casts = {"project_id": "::uuid", "consumer_id": "::uuid"}
     assignments = ", ".join(f"{column} = %s{casts.get(column, '')}" for column in values)
-    rows = db.execute_query(
-        f"""
+    statement = f"""
         UPDATE apiome.pacticipant
         SET {assignments}, updated_at = CURRENT_TIMESTAMP, updated_by = %s::uuid
         WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
         RETURNING {_PACTICIPANT_COLUMNS}
-        """,
-        (*values.values(), _user_id(actor), existing.id, tenant_id),
-    )
+        """
+    params = (*values.values(), _user_id(actor), existing.id, tenant_id)
+    if rename is None:
+        rows = db.execute_query(statement, params)
+    else:
+        new_name = rename
+
+        def work(cursor: Any) -> Optional[List[Dict[str, Any]]]:
+            _rename_tx(cursor, tenant_id, existing, new_name, user_id=_user_id(actor))
+            cursor.execute(statement, params)
+            row = cursor.fetchone()
+            return [dict(row)] if row else None
+
+        rows = db._guarded_tx(work)
     if not rows:
         raise PacticipantValidationError(CODE_NOT_FOUND, f"no pacticipant '{pacticipant_ref}' in this tenant")
     return pacticipant_record_from_row(dict(rows[0]))
@@ -633,7 +757,8 @@ def ensure_pacticipant_tx(
 
     A Pact publication names its consumer and provider; the first one to name an application
     registers it, as a Pact Broker does. The handle is derived from the name, so ``Billing
-    Service`` and ``billing-service`` are the same pacticipant.
+    Service`` and ``billing-service`` are the same pacticipant — and a name a pacticipant had before
+    it was renamed still finds it (PFX-8.10).
 
     Args:
         cursor: The open transaction's cursor.
@@ -651,21 +776,27 @@ def ensure_pacticipant_tx(
     display_name = validate_name(name)
     slug = validate_slug(slugify_pacticipant_name(display_name))
     user_id = _user_id(actor)
+    # Registered only when no live pacticipant answers to the name through an alias (PFX-8.10).
     cursor.execute(
-        """
+        f"""
         INSERT INTO apiome.pacticipant (tenant_id, slug, name, created_by, updated_by)
-        VALUES (%s::uuid, %s, %s, %s::uuid, %s::uuid)
+        SELECT %s::uuid, %s, %s, %s::uuid, %s::uuid
+        WHERE NOT EXISTS (SELECT 1 FROM apiome.pacticipant
+                          WHERE tenant_id = %s::uuid AND {_ALIAS_MATCH} AND deleted_at IS NULL)
         ON CONFLICT (tenant_id, slug) WHERE deleted_at IS NULL DO NOTHING
         """,
-        (tenant_id, slug, display_name, user_id, user_id),
+        (tenant_id, slug, display_name, user_id, user_id, tenant_id, tenant_id, slug),
     )
+    # The handle wins over an alias, so a pacticipant that has the handle is always the answer.
     cursor.execute(
         f"""
         SELECT {_PACTICIPANT_COLUMNS}
         FROM apiome.pacticipant
-        WHERE tenant_id = %s::uuid AND slug = %s AND deleted_at IS NULL
+        WHERE tenant_id = %s::uuid AND (slug = %s OR {_ALIAS_MATCH}) AND deleted_at IS NULL
+        ORDER BY (slug = %s) DESC, created_at
+        LIMIT 1
         """,
-        (tenant_id, slug),
+        (tenant_id, slug, tenant_id, slug, slug),
     )
     return pacticipant_record_from_row(dict(cursor.fetchone()))
 

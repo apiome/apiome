@@ -12,6 +12,11 @@ anyway — with a stable ``code`` a client can branch on instead of a driver err
 display name when omitted (``"Billing Service"`` → ``billing-service``, the same derivation a Pact
 import uses for a consumer) and cannot be changed afterwards.
 
+**A name can change; old names keep resolving** (PFX-8.10, #7307). ``name`` is the name pacts use.
+Renaming a pacticipant keeps its handle and records the handle each name reduces to as an
+*alias*, so a pact published under any name it has had still lands on it. ``display_name`` is
+what people read, optional, and never what pacts use.
+
 **A version is identified by its number, exactly as the build reported it.** It is never parsed,
 re-cased or ordered by its text: order is the order of recording.
 """
@@ -62,6 +67,7 @@ __all__ = [
     "slugify_pacticipant_name",
     "label_record_from_row",
     "validate_branch",
+    "validate_display_name",
     "validate_label",
     "validate_name",
     "validate_reason",
@@ -182,6 +188,28 @@ def validate_name(name: str) -> str:
     if not candidate or len(candidate) > MAX_LABEL_LENGTH:
         raise PacticipantValidationError(
             CODE_INVALID_NAME, f"a pacticipant name is 1-{MAX_LABEL_LENGTH} characters"
+        )
+    return candidate
+
+
+def validate_display_name(display_name: Optional[str]) -> Optional[str]:
+    """Return a trimmed display name, ``None`` for a blank one (clears it), or refuse.
+
+    Args:
+        display_name: The candidate display name.
+
+    Returns:
+        The trimmed text, or ``None``.
+
+    Raises:
+        PacticipantValidationError: ``pacticipant-invalid-name`` when it is too long.
+    """
+    candidate = (display_name or "").strip()
+    if not candidate:
+        return None
+    if len(candidate) > MAX_LABEL_LENGTH:
+        raise PacticipantValidationError(
+            CODE_INVALID_NAME, f"a pacticipant display name is at most {MAX_LABEL_LENGTH} characters"
         )
     return candidate
 
@@ -362,8 +390,9 @@ class PacticipantInput(BaseModel):
     """A new pacticipant.
 
     Attributes:
-        name: Display name, as a Pact file or a person writes it.
+        name: The name pacts use, as a Pact file or a person writes it.
         slug: The handle; derived from ``name`` when omitted, and never editable.
+        display_name: What people read, when it differs from ``name``.
         repository_url: http(s) URL of the application's source repository.
         main_branch: The branch read by default when a query names none.
         project: Slug or id of the Apiome project that describes this provider.
@@ -372,11 +401,16 @@ class PacticipantInput(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    name: str = Field(description="Display name, as a Pact file or a person writes it.", examples=["Billing Service"])
+    name: str = Field(
+        description="The name pacts use, as a Pact file or a person writes it.", examples=["Billing Service"]
+    )
     slug: Optional[str] = Field(
         default=None,
         description="The handle URLs and CI name. Derived from `name` when omitted; not editable afterwards.",
         examples=["billing-service"],
+    )
+    display_name: Optional[str] = Field(
+        default=None, description="What people read, when it differs from `name`.", examples=["Billing (EU)"]
     )
     repository_url: Optional[str] = Field(
         default=None,
@@ -402,7 +436,9 @@ class PacticipantPatch(BaseModel):
     """A partial update of a pacticipant. An omitted field is left alone; ``null`` clears it.
 
     Attributes:
-        name: New display name (cannot be cleared).
+        name: New name pacts use (cannot be cleared). Renaming keeps the handle and the history;
+            the old name and the new one both resolve to this pacticipant afterwards.
+        display_name: New display name, or ``null`` to clear it.
         repository_url: New repository URL, or ``null`` to clear it.
         main_branch: New main branch, or ``null`` to clear it.
         project: Slug or id of the project to bind, or ``null`` to unbind.
@@ -411,7 +447,14 @@ class PacticipantPatch(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    name: Optional[str] = Field(default=None, description="New display name.")
+    name: Optional[str] = Field(
+        default=None,
+        description=(
+            "Rename: the new name pacts use. The handle and the history stay; the old name keeps "
+            "resolving. `409 pacticipant-slug-taken` when another pacticipant has that name."
+        ),
+    )
+    display_name: Optional[str] = Field(default=None, description="New display name; `null` clears it.")
     repository_url: Optional[str] = Field(default=None, description="New repository URL; `null` clears it.")
     main_branch: Optional[str] = Field(default=None, description="New main branch; `null` clears it.")
     project: Optional[str] = Field(default=None, description="Project slug or id to bind; `null` unbinds.")
@@ -454,7 +497,9 @@ class PacticipantRecord(BaseModel):
         id: Row id.
         tenant_id: Owning tenant.
         slug: Stable handle.
-        name: Display name.
+        name: The name pacts use.
+        display_name: What people read; ``None`` reads as ``name``.
+        aliases: The other names it has had, oldest first; each still resolves to it.
         repository_url: Source repository URL.
         main_branch: The branch read by default.
         project_id: Bound project, when this is a provider described in Apiome.
@@ -474,6 +519,11 @@ class PacticipantRecord(BaseModel):
     tenant_id: str
     slug: str
     name: str
+    display_name: Optional[str] = Field(default=None, description="What people read; null reads as `name`.")
+    aliases: List[str] = Field(
+        default_factory=list,
+        description="Other names it has had (PFX-8.10), oldest first. Each still resolves to this pacticipant.",
+    )
     repository_url: Optional[str] = None
     main_branch: Optional[str] = None
     project_id: Optional[str] = None
@@ -615,6 +665,27 @@ def _optional_id(value: Any) -> Optional[str]:
     return str(value) if value else None
 
 
+def _other_names(aliases: Any, name: str) -> List[str]:
+    """The names a pacticipant had, without the one it has now, each once, oldest first.
+
+    Args:
+        aliases: The ``aliases`` column (alias names, oldest first), or ``None``.
+        name: Its current name.
+
+    Returns:
+        The other names.
+    """
+    current = slugify_pacticipant_name(name)
+    seen = {current}
+    names: List[str] = []
+    for alias in aliases or []:
+        handle = slugify_pacticipant_name(str(alias))
+        if handle not in seen:
+            seen.add(handle)
+            names.append(str(alias))
+    return names
+
+
 def pacticipant_record_from_row(row: Dict[str, Any]) -> PacticipantRecord:
     """Adapt a ``pacticipant`` row into its record.
 
@@ -629,6 +700,8 @@ def pacticipant_record_from_row(row: Dict[str, Any]) -> PacticipantRecord:
         tenant_id=str(row.get("tenant_id")),
         slug=str(row.get("slug") or ""),
         name=str(row.get("name") or ""),
+        display_name=row.get("display_name"),
+        aliases=_other_names(row.get("aliases"), str(row.get("name") or "")),
         repository_url=row.get("repository_url"),
         main_branch=row.get("main_branch"),
         project_id=_optional_id(row.get("project_id")),

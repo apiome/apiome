@@ -68,7 +68,13 @@ export const PACT_VERBS: Readonly<Record<string, PactVerbSurfaces>> = {
     action: false,
     rest: 'POST /v1/tenants/{tenant}/pact-broker/environments',
   },
+  'create-or-update-pacticipant': {
+    pactCli: 'pact-broker create-or-update-pacticipant',
+    action: false,
+    rest: 'PATCH /v1/tenants/{tenant}/pacticipants/{pacticipant}',
+  },
   'create-webhook': { pactCli: 'pact-broker create-webhook', action: false, rest: 'POST /v1/tenants/{tenant}/pact-broker/webhooks' },
+  'delete-pacticipant': { pactCli: null, action: false, rest: 'DELETE /v1/tenants/{tenant}/pacticipants/{pacticipant}' },
   'describe-version': {
     pactCli: 'pact-broker describe-version',
     action: false,
