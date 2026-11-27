@@ -31,6 +31,7 @@ pass one bound to a rolled-back transaction.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Sequence
 
 import psycopg2
@@ -482,7 +483,14 @@ def list_versions(
     return [version_record_from_row(dict(row)) for row in rows]
 
 
-def _insert_tags(cursor: Any, pacticipant_id: str, version_id: str, tags: Sequence[str]) -> None:
+def _insert_tags(
+    cursor: Any,
+    pacticipant_id: str,
+    version_id: str,
+    tags: Sequence[str],
+    *,
+    created_at: Optional[datetime] = None,
+) -> None:
     """Put tags on a version; a tag it already carries is left as it is.
 
     Args:
@@ -490,16 +498,18 @@ def _insert_tags(cursor: Any, pacticipant_id: str, version_id: str, tags: Sequen
         pacticipant_id: The owning pacticipant.
         version_id: The version.
         tags: The tags, already validated.
+        created_at: When the tags were put on, for an import (PFX-6.7); now when ``None``.
     """
     if not tags:
         return
     cursor.execute(
         """
-        INSERT INTO apiome.pacticipant_version_tag (version_id, pacticipant_id, name)
-        SELECT %s::uuid, %s::uuid, tag FROM unnest(%s::text[]) AS tag
+        INSERT INTO apiome.pacticipant_version_tag (version_id, pacticipant_id, name, created_at)
+        SELECT %s::uuid, %s::uuid, tag, COALESCE(%s::timestamptz, CURRENT_TIMESTAMP)
+        FROM unnest(%s::text[]) AS tag
         ON CONFLICT (version_id, pacticipant_id, name) DO NOTHING
         """,
-        (version_id, pacticipant_id, list(tags)),
+        (version_id, pacticipant_id, created_at, list(tags)),
     )
 
 
@@ -512,6 +522,7 @@ def record_version_tx(
     branch: Optional[str],
     tags: Sequence[str],
     actor: ConsumerActor,
+    created_at: Optional[datetime] = None,
 ) -> RecordedPacticipantVersion:
     """Record a version inside the caller's transaction — the statements of :func:`record_version`.
 
@@ -526,6 +537,9 @@ def record_version_tx(
         branch: The branch, already validated, or ``None``.
         tags: The tags, already validated and distinct.
         actor: Who is recording it.
+        created_at: When the source recorded the version, for an import from another broker
+            (PFX-6.7, #6959); it also dates a new branch, branch membership and tags. ``None`` is now.
+            Only a row this call inserts takes it: an existing version keeps its time.
 
     Returns:
         The version as stored, whether this call created it, whether the branch head moved and
@@ -536,12 +550,13 @@ def record_version_tx(
     """
     cursor.execute(
         """
-        INSERT INTO apiome.pacticipant_version (pacticipant_id, number, build_url, created_by, actor_label)
-        VALUES (%s::uuid, %s, %s, %s::uuid, %s)
+        INSERT INTO apiome.pacticipant_version
+            (pacticipant_id, number, build_url, created_by, actor_label, created_at)
+        VALUES (%s::uuid, %s, %s, %s::uuid, %s, COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
         ON CONFLICT (pacticipant_id, number) WHERE deleted_at IS NULL DO NOTHING
         RETURNING id::text AS id, seq
         """,
-        (pacticipant.id, version_number, build_url, _user_id(actor), actor.label),
+        (pacticipant.id, version_number, build_url, _user_id(actor), actor.label, created_at),
     )
     inserted = cursor.fetchone()
     created = inserted is not None
@@ -564,15 +579,17 @@ def record_version_tx(
         # head, which a branch keeps only when none of its versions is live any more (PFX-1.11).
         cursor.execute(
             """
-            INSERT INTO apiome.pacticipant_branch AS b (pacticipant_id, name, head_version_id)
-            VALUES (%s::uuid, %s, %s::uuid)
+            INSERT INTO apiome.pacticipant_branch AS b
+                (pacticipant_id, name, head_version_id, created_at, updated_at)
+            VALUES (%s::uuid, %s, %s::uuid, COALESCE(%s::timestamptz, CURRENT_TIMESTAMP),
+                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
             ON CONFLICT (pacticipant_id, name) DO UPDATE
-                SET head_version_id = EXCLUDED.head_version_id, updated_at = CURRENT_TIMESTAMP
+                SET head_version_id = EXCLUDED.head_version_id, updated_at = EXCLUDED.updated_at
                 WHERE EXISTS (SELECT 1 FROM apiome.pacticipant_version h
                               WHERE h.id = b.head_version_id AND (h.seq < %s OR h.deleted_at IS NOT NULL))
             RETURNING b.id::text AS id, (b.xmax = 0) AS inserted
             """,
-            (pacticipant.id, branch, version_id, seq),
+            (pacticipant.id, branch, version_id, created_at, created_at, seq),
         )
         moved = cursor.fetchone()
         head_moved = moved is not None
@@ -580,13 +597,13 @@ def record_version_tx(
         branch_created = bool(moved and moved.get("inserted"))
         cursor.execute(
             """
-            INSERT INTO apiome.pacticipant_branch_version (branch_id, pacticipant_id, version_id)
-            SELECT b.id, b.pacticipant_id, %s::uuid
+            INSERT INTO apiome.pacticipant_branch_version (branch_id, pacticipant_id, version_id, created_at)
+            SELECT b.id, b.pacticipant_id, %s::uuid, COALESCE(%s::timestamptz, CURRENT_TIMESTAMP)
             FROM apiome.pacticipant_branch b
             WHERE b.pacticipant_id = %s::uuid AND b.name = %s
             ON CONFLICT (branch_id, pacticipant_id, version_id) DO NOTHING
             """,
-            (version_id, pacticipant.id, branch),
+            (version_id, created_at, pacticipant.id, branch),
         )
         if branch in MAIN_BRANCH_CANDIDATES:
             # As the Pact Broker does: the first candidate branch a version is recorded on becomes
@@ -598,7 +615,7 @@ def record_version_tx(
                 """,
                 (branch, pacticipant.id),
             )
-    _insert_tags(cursor, pacticipant.id, version_id, tags)
+    _insert_tags(cursor, pacticipant.id, version_id, tags, created_at=created_at)
 
     row = _read_version(cursor, pacticipant.id, version_number)
     return RecordedPacticipantVersion(

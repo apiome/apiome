@@ -152,6 +152,12 @@ of these is true:
 
 A run always starts as a dry run, so you see the plan before anything is deleted.
 
+:::note Imported history keeps its dates
+A version [imported from another Pact Broker](./migration.mdx) keeps the date the source recorded,
+so `keep.created_within_days` counts it from that date, not from the import. Read the dry run's plan
+before you apply a first retention run after a migration.
+:::
+
 1. **Ask for the plan.** `dry_run` defaults to `true`, so this deletes nothing:
 
    ```bash

@@ -63,6 +63,23 @@ Every Pact list is bounded:
 - The **Verification** page's status lists at most 500 consumers and says `truncated` when there
   are more.
 
+## Importing history
+
+[`apiome pact migrate`](./migration.mdx) sends a source broker's records in batches of up to 100,
+each written in its own transaction. Measured on a laptop database against the import route:
+
+| Records | Rate |
+| --- | --- |
+| Versions (each on a branch, with a tag) | about 880 a second |
+| Pacts | about 970 a second |
+| Verification results | about 200 a second |
+| A second import of the same records (nothing changes) | about 840 a second |
+
+Reading the source usually takes longer than writing: the command reads each pact and each
+verification result from its own link, one at a time, so a long history takes as long as the source
+takes to answer that many requests. A run that stops part-way resumes from its state file without
+reading again what it already imported, so a long migration can be run in several sittings.
+
 ## Run the benchmark yourself
 
 On a self-hosted Apiome, run it against a **scratch** database that has the migrations applied and

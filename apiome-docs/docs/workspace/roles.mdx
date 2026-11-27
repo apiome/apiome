@@ -67,7 +67,9 @@ environments, deployments, webhooks and provider states built on them, a pactici
 [verification settings and re-publish requests](../ship/pact-broker/stale-pacts.mdx#permissions),
 [contract health](../ship/pact-broker/contract-health.mdx#who-can-do-what) and the
 [workspace secrets](../ship/pact-broker/secrets.mdx#who-can-do-what) webhooks and verification
-targets refer to (**Viewer** sees their names, never their values). The built-in **Owner** and
+targets refer to (**Viewer** sees their names, never their values), and
+[importing from another Pact Broker](../ship/pact-broker/migration.mdx#who-can-do-what), which needs
+both create and edit. The built-in **Owner** and
 **Admin** roles hold all of it; **Editor** can view, create and edit but not delete, because
 deleting a pacticipant removes its whole version history; **Viewer** can only view. Custom roles do
 not get it automatically. Every change it allows is recorded in the

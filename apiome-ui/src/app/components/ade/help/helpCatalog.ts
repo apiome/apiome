@@ -1469,6 +1469,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['create-webhook', 'repository_dispatch', 'GitHub Actions', 'pactbroker.pactUrl', 'signing secret', 'HMAC', 'dead-letter', 'retry', 'triggered'],
   },
   {
+    id: 'migration',
+    title: 'Migrate from Pact Broker or PactFlow',
+    summary: 'Import a Pact Broker or PactFlow workspace into Apiome with one command.',
+    page: 'apiome-docs/docs/ship/pact-broker/migration.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'migration', 'import', 'dry run', 'resume', 'state file', 'webhooks', 'secrets', 'timestamps'],
+  },
+  {
     id: 'scale',
     title: 'Scale and performance',
     summary: 'How fast the matrix and verification console stay as pact history grows.',

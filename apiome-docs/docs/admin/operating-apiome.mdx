@@ -1106,6 +1106,13 @@ large `pact_publication`, build them concurrently first as above
 apiome.pact_publication (consumer_id, created_at DESC, id)`, and the same for the provider one); the
 migration then skips them.
 
+[Importing from another Pact Broker](../ship/pact-broker/migration.mdx) (PFX-6.7) adds no migration.
+An import request (`POST …/pact-migration/import`) is read up to twice `APIOME_PACT_MAX_BYTES`, like
+a bulk publish, and holds at most 100 records; a single pact over `APIOME_PACT_MAX_BYTES` is refused
+as a publish would refuse it. Imported webhook URLs are checked against the same outbound-host
+policy as webhooks created by hand. Only members with **Pacts** create and edit can import, and each
+request writes one `pacts.migration.import` row to the access audit.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's

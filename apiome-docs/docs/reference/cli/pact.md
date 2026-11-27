@@ -206,9 +206,11 @@ apiome pact list-pacticipants [OPTIONS]
 
 ## apiome pact migrate {#pact-migrate}
 
-Migrate a Pact Broker or PactFlow workspace into Apiome — not available yet.
+Migrate a Pact Broker or PactFlow workspace into Apiome (POST …/pact-migration/import).
 
-The one-command import of pacticipants, versions, pacts, results, environments, deployments and webhooks arrives with PFX-6.7. Until then this command exits 1 and says so, so a pipeline never mistakes it for a migration that ran.
+Reads the source through its REST API — pacticipants and labels, versions with branches and tags, pacts, verification results, environments, current deployments and releases, webhooks — and re-creates them in the workspace -b/-k (or PACT_BROKER_BASE_URL/TOKEN) names, keeping the source's timestamps. Importing again changes nothing, so a run can be repeated; progress is kept in --state, so a second run skips what the first imported. --dry-run checks every record and writes nothing.
+
+The report lists everything not portable (PactFlow secrets, which are never exported, are listed for re-entry; webhooks with redacted credentials are imported disabled) and every refused record with its reason. Exits 0 when every record was imported (or, with --dry-run, would be); 1 otherwise.
 
 ```text
 apiome pact migrate [OPTIONS]
@@ -218,8 +220,18 @@ apiome pact migrate [OPTIONS]
 
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
-| `--from` | text |  |  | The source Pact Broker or PactFlow base URL. |
-| `--token` | text |  |  | A read token for the source broker. |
+| `--from` | text |  |  | The source Pact Broker or PactFlow base URL, e.g. https://acme.pactflow.io. |
+| `--token` | text |  |  | A read token for the source (or PACT_SOURCE_BROKER_TOKEN; prefer the variable: argv is visible). Env: `PACT_SOURCE_BROKER_TOKEN`. |
+| `--username` | text |  |  | Basic-auth user of an open-source source broker. Env: `PACT_SOURCE_BROKER_USERNAME`. |
+| `--password` | text |  |  | Basic-auth password (prefer the variable). Env: `PACT_SOURCE_BROKER_PASSWORD`. |
+| `--dry-run` | flag |  |  | Read the source and check every record against Apiome; write nothing. |
+| `--state` | path | `apiome-pact-migrate.state.json` |  | Where progress is kept, so a second run resumes. |
+| `--restart` | flag |  |  | Ignore the progress kept in --state and send everything. |
+| `--matrix-limit` | integer range | `1000` |  | Matrix rows read per integration (pacts and results). |
+| `--batch-bytes` | integer range | `4194304` |  | About how many bytes of records one request carries. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 
 ## apiome pact publish {#pact-publish}
 

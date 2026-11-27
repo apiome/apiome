@@ -1,10 +1,12 @@
 """The ``pact-broker``-compatible commands of ``apiome pact`` — PFX-4.1 (#6938).
 
 ``publish``, ``list-pacticipants``, ``describe-version``, ``can-i-deploy``, ``record-deployment``,
-``record-release``, ``create-environment``, ``create-webhook``, ``verify`` and ``migrate`` take the
-flags of the ``pact-broker`` CLI they replace (``-a``, ``-e``, ``-l``, ``-t``, ``-b``, ``-k``,
-``-o``, …) and print the same sentences, so a pipeline moves over by changing the command name.
-They are registered on the ``pact`` group in :mod:`apiome_cli.commands.pact`, which also gives the
+``record-release``, ``create-environment``, ``create-webhook`` and ``verify`` take the flags of
+the ``pact-broker`` CLI they replace (``-a``, ``-e``, ``-l``, ``-t``, ``-b``, ``-k``, ``-o``, …)
+and print the same sentences, so a pipeline moves over by changing the command name. ``migrate``
+(PFX-6.7, #6959) imports a whole Pact Broker or PactFlow workspace: the source is read by
+:mod:`apiome_cli.client.pact_migration_source` and turned into import records by
+:mod:`apiome_cli.pact_migration_plan`. They are registered on the ``pact`` group in :mod:`apiome_cli.commands.pact`, which also gives the
 whole group ``pact-broker``'s exit codes: ``0`` success, ``1`` any failure.
 
 Each command is a thin shell: request building lives in
@@ -24,6 +26,7 @@ from urllib.parse import urlencode
 
 import typer
 
+from apiome_cli.cli_context import insecure_from_context
 from apiome_cli.client.errors import CliError
 from apiome_cli.client.pact_broker_connection import BrokerConnection, connect, segment
 from apiome_cli.client.pact_broker_requests import (
@@ -41,6 +44,7 @@ from apiome_cli.client.pact_broker_requests import (
     parse_selectors,
     read_pact_file,
 )
+from apiome_cli.client.pact_migration_source import DEFAULT_MATRIX_LIMIT, SourceBroker, fetch_document, read_source
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
 from apiome_cli.output import emit_json, json_mode_from_context
 from apiome_cli.pact_broker_output import (
@@ -55,6 +59,8 @@ from apiome_cli.pact_broker_output import (
     version_lines,
     webhook_created_lines,
 )
+from apiome_cli.pact_migration_output import MigrationSummary, migration_document, migration_lines
+from apiome_cli.pact_migration_plan import DEFAULT_BATCH_BYTES, DONE_OUTCOMES, KINDS, MigrationState, Plan, batches
 
 # ---------------------------------------------------------------------------------------------
 # Options shared by every command
@@ -602,22 +608,179 @@ def verify(
 # ---------------------------------------------------------------------------------------------
 
 
-def migrate(
-    source: Optional[str] = typer.Option(None, "--from", help="The source Pact Broker or PactFlow base URL."),
-    token: Optional[str] = typer.Option(None, "--token", help="A read token for the source broker."),
-) -> None:
-    """Migrate a Pact Broker or PactFlow workspace into Apiome — not available yet.
+#: Where ``migrate`` keeps its progress unless ``--state`` says otherwise.
+DEFAULT_STATE_FILE = "apiome-pact-migrate.state.json"
 
-    The one-command import of pacticipants, versions, pacts, results, environments, deployments
-    and webhooks arrives with PFX-6.7. Until then this command exits 1 and says so, so a pipeline
-    never mistakes it for a migration that ran.
+
+def _ready(
+    broker: SourceBroker,
+    pending: list[tuple[str, dict[str, Any]]],
+    to_fetch: dict[str, str],
+    summary: MigrationSummary,
+    plan: Plan,
+) -> Any:
+    """Yield the pending records of one kind, each pact or result document read just before it is sent.
+
+    A document the source no longer returns is counted as refused, with the reason, and not sent.
     """
-    del source, token
-    raise CliError(
-        "apiome pact migrate is not available yet: the Pact Broker / PactFlow import ships with PFX-6.7 "
-        "(https://github.com/apiome/apiome/issues/6959). Nothing was read or written.",
-        exit_code=EXIT_ERROR,
+    for key, record in pending:
+        if record["kind"] in ("pact", "verification") and key in to_fetch:
+            problem = fetch_document(broker, record, to_fetch[key], plan)
+            if problem:
+                summary.refuse(record["kind"], key, "source-unreadable", problem)
+                continue
+        yield key, record
+
+
+def migrate(
+    ctx: typer.Context,
+    source: Optional[str] = typer.Option(
+        None,
+        "--from",
+        help="The source Pact Broker or PactFlow base URL, e.g. https://acme.pactflow.io.",
+    ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        envvar="PACT_SOURCE_BROKER_TOKEN",
+        help="A read token for the source (or PACT_SOURCE_BROKER_TOKEN; prefer the variable: argv is visible).",
+    ),
+    username: Optional[str] = typer.Option(
+        None,
+        "--username",
+        envvar="PACT_SOURCE_BROKER_USERNAME",
+        help="Basic-auth user of an open-source source broker.",
+    ),
+    password: Optional[str] = typer.Option(
+        None,
+        "--password",
+        envvar="PACT_SOURCE_BROKER_PASSWORD",
+        help="Basic-auth password (prefer the variable).",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Read the source and check every record against Apiome; write nothing.",
+    ),
+    state: Path = typer.Option(
+        Path(DEFAULT_STATE_FILE),
+        "--state",
+        help="Where progress is kept, so a second run resumes.",
+    ),
+    restart: bool = typer.Option(
+        False,
+        "--restart",
+        help="Ignore the progress kept in --state and send everything.",
+    ),
+    matrix_limit: int = typer.Option(
+        DEFAULT_MATRIX_LIMIT,
+        "--matrix-limit",
+        min=1,
+        help="Matrix rows read per integration (pacts and results).",
+    ),
+    batch_bytes: int = typer.Option(
+        DEFAULT_BATCH_BYTES,
+        "--batch-bytes",
+        min=1024,
+        help="About how many bytes of records one request carries.",
+    ),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Migrate a Pact Broker or PactFlow workspace into Apiome (POST …/pact-migration/import).
+
+    Reads the source through its REST API — pacticipants and labels, versions with branches and tags,
+    pacts, verification results, environments, current deployments and releases, webhooks — and
+    re-creates them in the workspace -b/-k (or PACT_BROKER_BASE_URL/TOKEN) names, keeping the source's
+    timestamps. Importing again changes nothing, so a run can be repeated; progress is kept in --state,
+    so a second run skips what the first imported. --dry-run checks every record and writes nothing.
+
+    The report lists everything not portable (PactFlow secrets, which are never exported, are listed
+    for re-entry; webhooks with redacted credentials are imported disabled) and every refused record
+    with its reason. Exits 0 when every record was imported (or, with --dry-run, would be); 1 otherwise.
+    """
+    fmt = _format(ctx, output)
+    if not source:
+        raise typer.BadParameter(
+            "give the source broker's base URL", param_hint="--from"
+        )
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    tenant = conn.tenant(command="migrate")
+    plan = Plan()
+    summary = MigrationSummary(dry_run=dry_run)
+    route = conn.api_path(
+        "/pact-migration/" + ("check" if dry_run else "import"), command="migrate"
     )
+
+    with SourceBroker(
+        source,
+        token=token,
+        username=username,
+        password=password,
+        verify=not insecure_from_context(ctx),
+    ) as broker:
+        try:
+            progress = MigrationState.load(
+                state, source=broker.base_url, target=tenant, restart=restart
+            )
+        except ValueError as exc:
+            raise typer.BadParameter(str(exc), param_hint="--state") from exc
+        to_fetch = read_source(
+            broker,
+            plan,
+            matrix_limit=matrix_limit,
+            progress=lambda line: typer.echo(line + " …", err=True),
+        )
+        for kind in KINDS:
+            queued = plan.records[kind]
+            pending = [
+                (key, record) for key, record in queued if key not in progress.done
+            ]
+            summary.skipped[kind] = len(queued) - len(pending)
+            if pending:
+                typer.echo(
+                    f"{'Checking' if dry_run else 'Importing'} {len(pending)} {kind} record(s) …",
+                    err=True,
+                )
+            for batch in batches(
+                _ready(broker, pending, to_fetch, summary, plan), max_bytes=batch_bytes
+            ):
+                body = {
+                    "source": broker.base_url,
+                    "records": [record for _, record in batch],
+                }
+                answer = conn.client.post(route, json=body).json()
+                results = answer.get("results") if isinstance(answer, dict) else None
+                if not isinstance(results, list) or len(results) != len(batch):
+                    raise CliError(
+                        "Apiome's answer to an import batch did not list every record",
+                        exit_code=EXIT_ERROR,
+                    )
+                for (key, record), result in zip(batch, results):
+                    summary.add(kind, key, result)
+                    if not dry_run and result.get("outcome") in DONE_OUTCOMES:
+                        progress.done.add(key)
+                    if kind in ("pact", "verification"):
+                        record["content" if kind == "pact" else "result"] = (
+                            None  # free the document
+                        )
+                if not dry_run:
+                    progress.save()
+
+    report = dict(
+        source=broker.base_url,
+        tenant=tenant,
+        read_counts=plan.read_counts,
+        findings=plan.findings,
+        state_file=None if dry_run else str(state),
+    )
+    _emit(
+        fmt,
+        migration_document(summary, **report),
+        migration_lines(summary, fmt=fmt, **report),
+    )
+    raise typer.Exit(EXIT_ERROR if summary.refused else EXIT_SUCCESS)
 
 
 #: ``(command name, function)`` in the order ``pact-broker help`` lists them.

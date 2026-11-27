@@ -604,10 +604,9 @@ def test_verify_bad_selector_exits_1_without_a_request(broker_env: None, httpx_m
     assert httpx_mock.get_requests() == []
 
 
-def test_migrate_says_it_is_not_available_yet() -> None:
-    result = _invoke("migrate", "--from", "https://broker.example.com")
-    assert result.exit_code == EXIT_ERROR
-    assert "PFX-6.7" in result.output and "Nothing was read or written" in result.output
+def test_migrate_without_from_exits_1() -> None:
+    """The migration itself is tested in ``test_pact_migrate`` (PFX-6.7, #6959)."""
+    assert _invoke("migrate").exit_code == EXIT_ERROR
 
 
 def test_an_unknown_subcommand_exits_1() -> None:

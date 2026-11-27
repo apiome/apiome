@@ -27,6 +27,7 @@ pass one bound to a rolled-back transaction.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, List, Optional, Sequence, Tuple
 
 import psycopg2
@@ -35,6 +36,7 @@ from psycopg2.extras import Json
 from .consumer_contract_store import ConsumerActor
 from .pact_environment import (
     CODE_DEPLOYED_VERSION_NOT_FOUND,
+    CODE_DEPLOYMENT_CONFLICT,
     CODE_ENVIRONMENT_NAME_TAKEN,
     CODE_ENVIRONMENT_NOT_FOUND,
     CODE_RELEASED_VERSION_NOT_FOUND,
@@ -188,7 +190,12 @@ def get_environment(db: Any, tenant_id: str, environment_id: str) -> Environment
 
 
 def create_environment(
-    db: Any, tenant_id: str, environment: EnvironmentInput, *, actor: ConsumerActor
+    db: Any,
+    tenant_id: str,
+    environment: EnvironmentInput,
+    *,
+    actor: ConsumerActor,
+    created_at: Optional[datetime] = None,
 ) -> EnvironmentRecord:
     """Create an environment.
 
@@ -197,6 +204,7 @@ def create_environment(
         tenant_id: The caller's tenant.
         environment: The checked body.
         actor: Who is creating it.
+        created_at: When the source broker created it, for an import (PFX-6.7, #6959); ``None`` is now.
 
     Returns:
         The stored environment.
@@ -211,8 +219,10 @@ def create_environment(
             cursor,
             f"""
             INSERT INTO apiome.pact_environment
-                (tenant_id, name, display_name, production, contract_required, contacts, created_by, updated_by)
-            VALUES (%s::uuid, %s, %s, %s, %s, %s, %s::uuid, %s::uuid)
+                (tenant_id, name, display_name, production, contract_required, contacts, created_by, updated_by,
+                 created_at, updated_at)
+            VALUES (%s::uuid, %s, %s, %s, %s, %s, %s::uuid, %s::uuid,
+                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP), COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
             RETURNING {_ENVIRONMENT_COLUMNS}
             """,
             (
@@ -224,6 +234,8 @@ def create_environment(
                 Json(environment.contacts),
                 user_id,
                 user_id,
+                created_at,
+                created_at,
             ),
         )
         assert row is not None
@@ -359,6 +371,8 @@ def record_deployment(
     application_instance: Optional[str],
     *,
     actor: ConsumerActor,
+    created_at: Optional[datetime] = None,
+    replace_current: bool = True,
 ) -> Tuple[DeployedVersionRecord, bool]:
     """Record that a version is now deployed to an environment (``pact-broker record-deployment``).
 
@@ -373,6 +387,9 @@ def record_deployment(
         environment_id: The environment's id.
         application_instance: The instance deployed to; ``None`` for the unnamed one.
         actor: Who is recording it.
+        created_at: When the source broker recorded it, for an import (PFX-6.7, #6959); ``None`` is now.
+        replace_current: Whether a different version currently deployed there is marked undeployed.
+            An import passes ``False``: Apiome's own newer record is kept and the import refused.
 
     Returns:
         The deployment, and whether this call created it (``False``: that version was already the
@@ -380,7 +397,8 @@ def record_deployment(
 
     Raises:
         PacticipantValidationError: ``pacticipant-not-found``, ``pacticipant-version-not-found``.
-        PactPublicationError: ``pact-environment-not-found``.
+        PactPublicationError: ``pact-environment-not-found``; ``pact-deployment-conflict`` when
+            ``replace_current`` is false and another version is deployed there.
     """
     pacticipant = get_pacticipant(db, tenant_id, pacticipant_ref)
     version = get_version(db, pacticipant, version_number)
@@ -401,6 +419,12 @@ def record_deployment(
             record = _read_deployed(cursor, tenant_id, current["id"])
             assert record is not None
             return record, False
+        if current is not None and not replace_current:
+            raise PactPublicationError(
+                CODE_DEPLOYMENT_CONFLICT,
+                f"another version of {pacticipant.name} is already recorded as deployed to "
+                f"{environment.name}{' (' + application_instance + ')' if application_instance else ''}",
+            )
         if current is not None:
             cursor.execute(
                 "UPDATE apiome.deployed_version SET currently_deployed = FALSE, undeployed_at = CURRENT_TIMESTAMP"
@@ -411,8 +435,10 @@ def record_deployment(
             cursor,
             """
             INSERT INTO apiome.deployed_version
-                (tenant_id, pacticipant_id, version_id, environment_id, application_instance, created_by, actor_label)
-            VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s)
+                (tenant_id, pacticipant_id, version_id, environment_id, application_instance, created_by, actor_label,
+                 created_at)
+            VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s,
+                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
             RETURNING id::text AS id
             """,
             (
@@ -423,6 +449,7 @@ def record_deployment(
                 application_instance,
                 _user_id(actor),
                 actor.label,
+                created_at,
             ),
         )
         assert inserted is not None
@@ -573,6 +600,7 @@ def record_release(
     environment_id: str,
     *,
     actor: ConsumerActor,
+    created_at: Optional[datetime] = None,
 ) -> Tuple[ReleasedVersionRecord, bool]:
     """Record that a version is released to an environment (``pact-broker record-release``).
 
@@ -586,6 +614,8 @@ def record_release(
         version_number: The released version, which must have been recorded.
         environment_id: The environment's id.
         actor: Who is recording it.
+        created_at: When the source broker recorded it, for an import (PFX-6.7, #6959); ``None`` is
+            now. Only a new release takes it.
 
     Returns:
         The release, and whether this call created it.
@@ -603,15 +633,26 @@ def record_release(
             cursor,
             """
             INSERT INTO apiome.released_version
-                (tenant_id, pacticipant_id, version_id, environment_id, created_by, actor_label)
-            VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s)
+                (tenant_id, pacticipant_id, version_id, environment_id, created_by, actor_label,
+                 created_at, updated_at)
+            VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s,
+                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP), COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
             ON CONFLICT (version_id, environment_id) DO UPDATE
                 SET currently_supported = TRUE, support_ended_at = NULL,
                     updated_at = CASE WHEN released_version.currently_supported
                                       THEN released_version.updated_at ELSE CURRENT_TIMESTAMP END
             RETURNING id::text AS id, (xmax = 0) AS created
             """,
-            (tenant_id, pacticipant.id, version.id, environment.id, _user_id(actor), actor.label),
+            (
+                tenant_id,
+                pacticipant.id,
+                version.id,
+                environment.id,
+                _user_id(actor),
+                actor.label,
+                created_at,
+                created_at,
+            ),
         )
         assert row is not None
         record = _read_released(cursor, tenant_id, row["id"])
