@@ -1,29 +1,31 @@
 'use client';
 
 /**
- * The tabs of one pacticipant — **Overview** and **Settings** (PFX-8.10, #7307).
+ * The tabs of one pacticipant — **Overview**, **Versions** (PFX-8.11, #7308) and **Settings**
+ * (PFX-8.10, #7307).
  *
  * Authority: `docs/mockups/contracts/pacticipant.html` (the tab row under the header). Each tab is
  * a route, so the strip is `<nav>` + `<Link>` wearing the shared tab classes with
- * `aria-current="page"` on the page's own tab, like `ContractsTabs`. The mockup's **Versions** tab
- * arrives with version management (PFX-8.11); until then the versions are on **Overview**.
+ * `aria-current="page"` on the page's own tab, like `ContractsTabs`. **Overview** keeps its
+ * read-only versions panel; **Versions** manages them (tag, delete, restore).
  */
 
 import * as React from 'react';
 import Link from 'next/link';
-import { LayoutDashboard, Settings2 } from 'lucide-react';
+import { GitCommitHorizontal, LayoutDashboard, Settings2 } from 'lucide-react';
 import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { pacticipantRoute } from '@lib/pact-pacticipants';
 import { SETTINGS_SEGMENT } from '@lib/pact-pacticipant-settings';
+import { VERSIONS_SEGMENT } from '@lib/pact-pacticipant-versions';
 
 /** One pacticipant tab. */
-export type PacticipantTabId = 'overview' | 'settings';
+export type PacticipantTabId = 'overview' | 'versions' | 'settings';
 
 /**
  * The tab row.
  *
  * @param props - The pacticipant's handle and the page's tab.
- * @returns A navigation landmark with the two links.
+ * @returns A navigation landmark with the three links.
  */
 export function PacticipantSubTabs({ slug, active }: { slug: string; active: PacticipantTabId }) {
   const tabs = [
@@ -32,6 +34,12 @@ export function PacticipantSubTabs({ slug, active }: { slug: string; active: Pac
       label: 'Overview',
       href: pacticipantRoute(slug),
       Icon: LayoutDashboard,
+    },
+    {
+      id: 'versions' as const,
+      label: 'Versions',
+      href: `${pacticipantRoute(slug)}/${VERSIONS_SEGMENT}`,
+      Icon: GitCommitHorizontal,
     },
     {
       id: 'settings' as const,

@@ -56,8 +56,8 @@ Prefer the variables to `-k`: a secret on the command line is visible to other p
 
 If your operator set up a [broker host](./publish-pacts.mdx#the-broker-host-alias), the short form
 `https://acme.<broker host>` works for the commands that call Pact Broker routes. `list-pacticipants`,
-`create-or-update-pacticipant`, `delete-pacticipant`, `describe-version --latest` and `verify` call
-Apiome's own API, which the short form does not
+`create-or-update-pacticipant`, `delete-pacticipant`, `describe-version --latest`, `create-version-tag`,
+`delete-version`, `restore-version` and `verify` call Apiome's own API, which the short form does not
 serve; they stop and ask for the long form.
 
 A pipeline set up for basic auth works too: when no token or key is set, `PACT_BROKER_PASSWORD` is
@@ -121,6 +121,9 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 | `create-or-update-pacticipant` | Create a pacticipant, or update the one with this name; never renames | `pact-broker create-or-update-pacticipant` |
 | `delete-pacticipant` | Delete a pacticipant with its history; restorable until purged | — |
 | `describe-version` | Show a version's branches, tags and build URL | `pact-broker describe-version` |
+| `create-version-tag` | Tag a version (one request per tag) | `pact-broker create-version-tag` |
+| `delete-version` | Delete a version with its pacts and results; refused while it is deployed | — |
+| `restore-version` | Restore a deleted version with its pacts, results and deployments | — |
 | `can-i-deploy` | Ask whether a version can be deployed | `pact-broker can-i-deploy` |
 | `record-deployment` | Record a deployment to an environment | `pact-broker record-deployment` |
 | `record-release` | Record a release to an environment | `pact-broker record-release` |
@@ -152,6 +155,8 @@ with secrets written as variables. The first were the
 | `list-pacticipants` | **Contracts** → **Pacticipants** |
 | `create-or-update-pacticipant` | **Contracts** → **Pacticipants** → **New pacticipant**, or a pacticipant's **Settings** |
 | `delete-pacticipant` | A pacticipant's **Settings** → **Danger zone** |
+| `create-version-tag` | A pacticipant's **Versions** → **+ tag**, or **Add a tag** for the selection |
+| `delete-version`, `restore-version` | A pacticipant's **Versions** → **Delete version**, or **Deleted** → **Restore** |
 | `publish` | **Contracts** → **Publish a pact** (also a project's **Consumers** → **Import Pact file**) |
 | `publish-consumer-contract` | **Contracts** → **Publish a pact** → **Derive from a project** |
 | `check` | **Contracts** → **Publish a pact** → **Check it before it counts** |
@@ -166,7 +171,8 @@ A few things in the app have no command yet, and say so in their **The same, fro
 editing, deleting and testing a webhook, redelivering a delivery, re-running one verification,
 answering a re-publish request, the verification settings, **Compare only** on the Publish a
 provider contract page, and a pacticipant's rename, linked project, labels and restore. Each has a
-REST route.
+REST route. A pacticipant's README badge (its **Settings** → **Badges**) is a public URL, not a
+command.
 
 On the Publish page every flag of `publish` and `publish-consumer-contract` has a field, and on the
 Publish a provider contract page every flag of `publish-provider-contract`; the ledger row lists

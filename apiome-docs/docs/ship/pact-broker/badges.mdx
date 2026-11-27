@@ -26,14 +26,28 @@ An unverified pact never shows as verified.
 ## Before you start
 
 - The project is public: it has a published version that anyone can see in Browse.
-- The application is a [pacticipant](./concepts.mdx) **bound to that project**. Bind it by setting
-  `project` to the project's slug when you create or update the pacticipant. A pacticipant that is
-  not bound to a public project has no badge.
+- The application is a [pacticipant](./concepts.mdx) **bound to that project**. Bind it by choosing
+  the project as its **Linked project** on its **Settings** tab, or by setting `project` to the
+  project's slug when you create or update the pacticipant. A pacticipant that is not bound to a
+  public project has no badge.
 
 ## Add a badge to a README
 
-Replace `acme`, `ledger` and `ledger-api` with the workspace slug, the project slug and the
-pacticipant slug.
+The quickest way is the pacticipant's **Settings** tab:
+
+1. Open the pacticipant and click the **Settings** tab.
+2. Under **Badges**, choose what the badge is **For**: the pacticipant (all its pacts), or one of its
+   pacts.
+3. Check the preview. It is the SVG this page describes, read now as anyone would read it.
+4. Click **Markdown**, **shields.io** or **Image URL**, then the copy button, and paste it into the
+   README.
+
+The section needs the pacticipant's **Linked project** to be public. Without a linked project it
+says to link one; with a private one it says that the project serves no badge. See
+[Add a badge](./pacticipants.mdx#add-a-badge).
+
+To write the URL yourself, replace `acme`, `ledger` and `ledger-api` with the workspace slug, the
+project slug and the pacticipant slug.
 
 ```markdown
 ![pact](https://api.example.com/v1/browse/tenants/acme/projects/ledger/pact-badges/pacticipants/ledger-api/badge.svg)

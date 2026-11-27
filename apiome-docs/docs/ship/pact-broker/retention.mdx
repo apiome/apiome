@@ -74,6 +74,11 @@ The answer is `204`. Straight away:
 
 `DELETE …/pact-broker/pacticipants/{p}/versions/{v}` does the same through the Pact Broker API.
 
+In the console, open the pacticipant's **Versions** tab and choose **Delete version** from the
+row's **⋯** menu, or select several rows and click **Delete**. See
+[Manage versions](./pacticipants.mdx#manage-versions). From a pipeline, run
+`apiome pact delete-version -a "Billing Service" -e 3f2a9c1 --reason "broken build"`.
+
 ### A deployed version is protected
 
 A version that is currently deployed to an environment, or released and still supported, is
@@ -83,6 +88,9 @@ refused with `409 pacticipant-version-in-use`. The message names the version. Do
   for a release), then delete.
 - **Add `force=true`** to delete it anyway. Its deployment disappears with it, so can-i-deploy will
   no longer count it as running there.
+
+The **Versions** tab and `apiome pact delete-version` never send `force`. They say, for example,
+**3f2a9c1 is running in Production. Record its undeployment first.**
 
 ## Delete a pacticipant
 
@@ -125,6 +133,12 @@ Everything you delete stays restorable for **30 days**: the grace period.
    curl -X POST https://api.apiome.dev/v1/tenants/acme/pacticipants/2f9c…/restore \
      -H "X-API-Key: sk_live_…"
    ```
+
+In the console, a deleted version is restored from the pacticipant's **Versions** tab: click
+**Deleted**, then **Restore** on its row. See
+[Restore a deleted version](./pacticipants.mdx#restore-a-deleted-version). A deleted pacticipant is
+restored from the **Pacticipants** page. From a pipeline, run
+`apiome pact restore-version -a "Billing Service" -e 3f2a9c1`.
 
 What comes back:
 

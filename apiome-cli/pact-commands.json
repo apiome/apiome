@@ -68,6 +68,21 @@
       ]
     },
     {
+      "name": "create-version-tag",
+      "summary": "Tag a pacticipant version (PUT /v1/tenants/{t}/pacticipants/{p}/versions/{v}/tags/{tag}), as `pact-broker create-version-tag`.",
+      "arguments": [],
+      "options": [
+        "--pacticipant",
+        "--version",
+        "--tag",
+        "--auto-create-version",
+        "--tag-with-git-branch",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
       "name": "create-webhook",
       "summary": "Create a webhook (POST …/webhooks), with `pact-broker create-webhook`'s options.",
       "arguments": [
@@ -99,6 +114,19 @@
       "arguments": [],
       "options": [
         "--name",
+        "--reason",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
+      "name": "delete-version",
+      "summary": "Delete a pacticipant version with its pacts and results (DELETE …/pacticipants/{p}/versions/{v}).",
+      "arguments": [],
+      "options": [
+        "--pacticipant",
+        "--version",
         "--reason",
         "--output",
         "--broker-base-url",
@@ -292,6 +320,18 @@
         "--pacticipant",
         "--version",
         "--environment",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
+      "name": "restore-version",
+      "summary": "Restore a deleted version with its pacts, results and deployments (POST …/versions/{v}/restore).",
+      "arguments": [],
+      "options": [
+        "--pacticipant",
+        "--version",
         "--output",
         "--broker-base-url",
         "--broker-token"

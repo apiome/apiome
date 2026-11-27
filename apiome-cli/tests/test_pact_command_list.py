@@ -38,7 +38,7 @@ def test_every_registered_pact_command_is_listed() -> None:
         command.name for command in pact.app.registered_commands if command.name
     }
     assert names == registered
-    assert len(names) == 18
+    assert len(names) == 21
 
 
 def test_an_entry_names_its_arguments_and_long_flags_but_not_help() -> None:

@@ -2,7 +2,8 @@
  * A pacticipant's versions, latest recorded first — PFX-5.1 (#6945).
  *
  * Proxies `GET /v1/tenants/{slug}/pacticipants/{pacticipant}/versions` with a page size of 50,
- * forwarding `branch`, `tag` and `cursor`; any other parameter is a 400 naming it, a malformed
+ * forwarding `branch`, `tag`, `state` (`live` / `deleted`, PFX-8.11) and `cursor`; any other
+ * parameter is a 400 naming it, a malformed
  * handle a 404. Permissions (`pacts:view`) and tenant scoping are REST's.
  */
 

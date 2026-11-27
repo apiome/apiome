@@ -160,6 +160,40 @@ def pacticipant_deleted_lines(name: str, fmt: str) -> list[str]:
     ]
 
 
+def version_tagged_lines(pacticipant: str, version: str, tags: list[str], fmt: str) -> list[str]:
+    """``create-version-tag``: which tags the version now carries."""
+    return [("- " if fmt == "markdown" else "") + f"Tagged {pacticipant} version {version} with {', '.join(tags)}"]
+
+
+def version_deleted_lines(pacticipant: str, version: str, fmt: str) -> list[str]:
+    """``delete-version``: what was deleted and how to undo it."""
+    return [
+        ("- " if fmt == "markdown" else "")
+        + f"{pacticipant} version {version} deleted with its pacts and results. "
+        f"Undo it before it is purged: apiome pact restore-version -a {pacticipant!r} -e {version!r}"
+    ]
+
+
+def version_restored_lines(pacticipant: str, record: Mapping[str, Any], fmt: str) -> list[str]:
+    """``restore-version``: the version is back, with its branches and tags."""
+    lines = [
+        ("- " if fmt == "markdown" else "")
+        + f"{pacticipant} version {record.get('number')} restored with its pacts, results and deployments"
+    ]
+    return lines + table(
+        ("VERSION", "BRANCHES", "TAGS", "CREATED"),
+        [
+            (
+                record.get("number"),
+                ", ".join(str(b) for b in record.get("branches") or []),
+                ", ".join(str(t) for t in record.get("tags") or []),
+                record.get("created_at"),
+            )
+        ],
+        fmt,
+    )
+
+
 def _names(items: Any) -> str:
     """``[{"name": …}, …]`` as a comma-separated list."""
     return ", ".join(str(item.get("name")) for item in items or [] if isinstance(item, dict) and item.get("name"))

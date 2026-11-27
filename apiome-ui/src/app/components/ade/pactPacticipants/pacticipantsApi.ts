@@ -6,7 +6,8 @@
  *
  * The writes of PFX-8.10 (#7307) — save settings, add or remove a label, register, delete and
  * restore — answer the result or a {@link WriteFailure} with REST's status, so the screen can put a
- * taken name (409) under the Name field and say anything else where it happened.
+ * taken name (409) under the Name field and say anything else where it happened. PFX-8.11 (#7308)
+ * adds a version's tag, delete and restore, the deleted versions, and the badge preview.
  */
 
 import type { DeletionImpact, PacticipantCreateBody, PacticipantPatchBody } from '@lib/pact-pacticipant-settings';
@@ -16,8 +17,11 @@ import type {
   PacticipantBranchPage,
   PacticipantEnvironmentsResponse,
   PacticipantPage,
+  PacticipantVersion,
   PacticipantVersionPage,
 } from '@lib/pact-pacticipants';
+import { tagPathSegment, type DeletedVersion } from '@lib/pact-pacticipant-versions';
+import type { BadgeAnswer, BadgeTarget } from '@lib/pact-badges';
 
 /** Where the proxies live. */
 const BASE = '/api/pact';
@@ -267,4 +271,99 @@ export async function deletePacticipant(slug: string, reason: string): Promise<R
 export async function restorePacticipant(ref: string): Promise<Pacticipant | WriteFailure> {
   const answer = await write<Pacticipant>(`${pacticipantBase(ref)}/restore`, 'POST', 'Could not restore the pacticipant');
   return 'error' in answer ? answer : normalised(answer);
+}
+
+// --- Version management and badges (PFX-8.11, #7308) ------------------------------------------
+
+/** A version's path below `/api/pact`. */
+function versionBase(slug: string, number: string): string {
+  return `${pacticipantBase(slug)}/versions/${encodeURIComponent(number)}`;
+}
+
+/**
+ * One page of a pacticipant's deleted versions, still restorable, latest recorded first.
+ *
+ * @param slug - Its handle.
+ * @param cursor - The previous page's `next_cursor`.
+ * @returns The page; each version carries `deleted_at`, `delete_cause` and `purge_after`.
+ */
+export async function fetchDeletedVersions(slug: string, cursor?: string | null) {
+  const body = await readJson<{ versions: DeletedVersion[]; has_more: boolean; next_cursor?: string | null }>(
+    await fetch(`${pacticipantBase(slug)}/versions${queryString({ state: 'deleted', cursor })}`, { cache: 'no-store' }),
+    'Could not load the deleted versions',
+  );
+  return { ...body, versions: Array.isArray(body.versions) ? body.versions : [] };
+}
+
+/**
+ * One version, by number.
+ *
+ * @param slug - The pacticipant's handle.
+ * @param number - The version number, exactly as recorded.
+ * @returns The version, or the failure (404: no such live version).
+ */
+export async function fetchVersion(slug: string, number: string): Promise<PacticipantVersion | WriteFailure> {
+  return write<PacticipantVersion>(versionBase(slug, number), 'GET', `Could not read version ${number}`);
+}
+
+/**
+ * Put a tag on a version (tagging it again changes nothing).
+ *
+ * @param slug - The pacticipant's handle.
+ * @param number - The version number.
+ * @param tag - The tag; may contain `/`.
+ * @returns The version with its tags, or the failure.
+ */
+export async function tagVersion(slug: string, number: string, tag: string): Promise<PacticipantVersion | WriteFailure> {
+  return write<PacticipantVersion>(
+    `${versionBase(slug, number)}/tags/${tagPathSegment(tag)}`,
+    'PUT',
+    `Could not tag ${number} with ${tag}`,
+  );
+}
+
+/**
+ * Delete a version with its pacts and results (soft: it can be restored until it is purged).
+ * Never forced: a deployed version is refused (409).
+ *
+ * @param slug - The pacticipant's handle.
+ * @param number - The version number.
+ * @param reason - Why, stored and audited; empty for none.
+ * @returns `{}` on success, or the failure.
+ */
+export async function deleteVersion(
+  slug: string,
+  number: string,
+  reason = '',
+): Promise<Record<string, never> | WriteFailure> {
+  const why = reason.trim();
+  const query = why ? `?reason=${encodeURIComponent(why)}` : '';
+  const answer = await write<unknown>(`${versionBase(slug, number)}${query}`, 'DELETE', `Could not delete ${number}`);
+  return answer && typeof answer === 'object' && 'error' in answer ? (answer as WriteFailure) : {};
+}
+
+/**
+ * Undo a version's delete: its pacts, results and deployments come back.
+ *
+ * @param slug - The pacticipant's handle.
+ * @param number - The version number.
+ * @returns The live version, or the failure (409: a live version took the number since).
+ */
+export async function restoreVersion(slug: string, number: string): Promise<PacticipantVersion | WriteFailure> {
+  return write<PacticipantVersion>(`${versionBase(slug, number)}/restore`, 'POST', `Could not restore ${number}`);
+}
+
+/**
+ * The public badge REST serves, read anonymously by the proxy, for the preview.
+ *
+ * @param project - The linked public project's slug.
+ * @param target - What the badge is for.
+ * @returns The SVG, its state and the workspace handle, or the failure (404: none is served).
+ */
+export async function fetchBadge(project: string, target: BadgeTarget): Promise<BadgeAnswer | WriteFailure> {
+  const params =
+    target.kind === 'pacticipant'
+      ? { project, pacticipant: target.slug }
+      : { project, provider: target.provider, consumer: target.consumer };
+  return write<BadgeAnswer>(`${BASE}/badges${queryString(params)}`, 'GET', 'Could not read the badge');
 }

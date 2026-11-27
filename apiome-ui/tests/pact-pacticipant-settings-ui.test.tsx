@@ -118,6 +118,22 @@ function baseRoutes(permissions = EDITOR): Record<string, Answer> {
     }),
     '/api/teams': ok({ teams: [{ id: 't-1', slug: 'billing-team', name: 'Billing team' }] }),
     [`${base}/deletion-impact`]: ok(IMPACT),
+    // The Badges panel (PFX-8.11): the pacts it can badge, and the badge REST serves.
+    [`${base}/pacts`]: ok({
+      matrix: [
+        {
+          consumer: { name: 'Billing Service', version: { number: '1' }, _links: { self: { href: '/pacticipants/billing-service' } } },
+          provider: { name: 'Ledger API', version: null, _links: { self: { href: '/pacticipants/ledger-api' } } },
+          pact: { createdAt: '2026-11-27T10:00:00Z' },
+          verificationResult: null,
+        },
+      ],
+    }),
+    '/api/pact/badges?project=billing-api&pacticipant=billing-service': ok({
+      tenant: 'acme',
+      status: 'verified',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="20" role="img" aria-label="pact: billing-service: verified"><title>pact: billing-service: verified</title><rect width="104" height="20" fill="#555"/><rect x="104" width="46" height="20" fill="#2e7d32"/></svg>',
+    }),
   };
 }
 
@@ -158,6 +174,7 @@ describe('PacticipantSettingsClient', () => {
       'apiome pact create-or-update-pacticipant',
     );
     await screen.findByTestId('entity-owner-description');
+    expect(await screen.findByTestId('ppx-badges-image')).toHaveAttribute('alt', 'Pact badge: verified');
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipant-settings', liveMarkup(container));
   });
