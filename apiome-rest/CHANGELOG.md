@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plus `counts` and `attention` (up to three named pairs per status-strip category) over every pair, and
   the workspace's pacticipant and environment counts. Requires `pacts:view`; tenant-scoped. At most 1,000
   pairs are classified (`truncated`, `omitted_integrations`); the pairs query uses loose index scans
-  (about 2 ms at 100k versions) and has the plan-check entry `pact.integrations_pairs`. A bad filter,
+  (about 10 ms at 100k versions, down from 1.1 s) and has the plan-check entry `pact.integrations_pairs`. A bad filter,
   search text or page is a `400` with a `pact-integrations-*` code; `filter=mine` with a credential that
   is not a user is `pact-integrations-mine-needs-user`.
 
