@@ -14,9 +14,9 @@ It also has the commands only Apiome has: publishing an OpenAPI
 [provider contract](./bi-directional.mdx), [hosted verification](./hosted-verification.mdx),
 [sending a verifier report](./verification-results.mdx#send-a-report-from-your-own-ci),
 [exporting a consumer surface as a pact](./publish-pacts.mdx) and
-[exporting a pact as a Postman collection](#export-a-pact-as-a-postman-collection). There is no
-screen for these commands; they run in a terminal or a CI job, and an AI agent can
-[ask the same questions over MCP](#ask-from-an-ai-agent-mcp).
+[exporting a pact as a Postman collection](#export-a-pact-as-a-postman-collection). Most of these
+have no screen yet ([which do](#the-same-command-in-the-app)); they run in a terminal or a CI job,
+and an AI agent can [ask the same questions over MCP](#ask-from-an-ai-agent-mcp).
 
 ## Before you start
 
@@ -129,6 +129,37 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 | `migrate` | Import a Pact Broker or PactFlow workspace | — |
 
 Every option of every command is in the [CLI reference](../../reference/cli/pact.md).
+
+## The same command, in the app
+
+Every `apiome pact` command has a screen in **Contracts**, or a ticket that adds one. Every Contracts
+screen that changes something shows **The same, from anywhere** — its action as an `apiome pact`
+command, a Pact CLI command, a GitHub Action step and a REST request, built from what you filled in,
+with secrets written as variables. The first is the
+[webhook editor](./webhooks-console.mdx#the-same-from-anywhere).
+
+| Command | Where in the app |
+| --- | --- |
+| `can-i-deploy` | **Contracts** → **Can I deploy** |
+| `create-webhook` | **Contracts** → **Webhooks** → **New webhook** |
+| `describe-version` | **Contracts** → **Pacticipants** → a pacticipant |
+| `list-pacticipants` | **Contracts** → **Pacticipants** |
+| `publish` | A project's **Consumers** → **Import Pact file** |
+| `create-environment`, `record-deployment`, `record-release` | Coming: environment dialogs (PFX-8.12) |
+| `verify` | Coming: **Run a verification** (PFX-8.8); today **Re-run** on a provider's verification page |
+| `publish-provider-contract` | Coming: **Publish a provider contract** (PFX-8.6) |
+| `publish-verification-results` | Coming: the results upload dialog (PFX-8.9) |
+| `export-consumer-contract`, `export-postman`, `publish-consumer-contract` | Coming: the **Export** and **Publish** pages (PFX-8.18, PFX-8.3) |
+| `migrate` | Coming: the migration wizard (PFX-8.16) |
+
+A few things in the app have no command yet, and say so in their **The same, from anywhere** block:
+editing, deleting and testing a webhook, redelivering a delivery, re-running one verification,
+answering a re-publish request, and the verification settings. Each has a REST route.
+
+The table is kept honest by a check in CI: adding a command without its row in
+`docs/pact-parity-ledger.json`, or a Contracts screen that writes without a command or a written
+reason, fails the build. See
+[The CLI ↔ UI parity ledger](../../admin/contribute-to-the-docs.mdx#the-cli--ui-parity-ledger).
 
 ## Publish pacts
 

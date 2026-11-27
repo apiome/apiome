@@ -99,6 +99,27 @@ their source. When a pull request changes one of them, rerun its generator and c
 
 CI reruns each generator with `--check` and fails when a committed page no longer matches.
 
+### The CLI ↔ UI parity ledger
+
+Every `apiome pact` command has a screen, and every **Contracts** screen that changes something has
+a command. `docs/pact-parity-ledger.json` records both directions, and
+[The same command, in the app](/ship/pact-broker/cli#the-same-command-in-the-app) is its table for
+readers. When you add or rename a `pact` command, or a `POST` / `PUT` / `PATCH` / `DELETE` route
+under `apiome-ui/src/app/api/pact`:
+
+1. Regenerate the command list: `cd apiome-cli && uv run python scripts/export_pact_commands.py`.
+   The CLI suite fails while `apiome-cli/pact-commands.json` is stale.
+2. Add the row to the ledger. A command row names its page (`ui`, an App Router route such as
+   `/ade/dashboard/pacts/webhooks`) and its REST route. A write-route row names the page that sends
+   it and its `apiome pact` command (`cli`).
+3. If one side does not exist yet, set it to `null` and write a `reason`: why, and the ticket that
+   adds it. Remove the reason in the pull request that ships the missing side.
+4. Give the screen its **The same, from anywhere** block (`CommandBlock`, built with
+   `lib/pact-commands.ts`), and update the table on the CLI page.
+
+`apiome-ui/tests/pact-parity-ledger.test.ts` fails on a command or write route with no row, a row
+for something that no longer exists, a page that is not a route, and a missing or stale reason.
+
 ## Add a screenshot
 
 Screenshots are never pasted by hand: each one is an entry in `apiome-docs/screens.json`, captured

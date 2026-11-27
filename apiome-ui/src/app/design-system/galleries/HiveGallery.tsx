@@ -67,6 +67,7 @@ import {
   FreshnessPill,
   GRADE_LETTERS,
   GatedState,
+  ColdRenderNote,
   GradeGlyph,
   HTTP_METHODS,
   HealthPill,
@@ -122,6 +123,7 @@ import { FormatPill } from '@/app/components/ui/catalog/FormatPill';
 import { GradeChip } from '@/app/components/ui/catalog/GradeChip';
 import { setPreferenceAxis } from '../PreferenceAxes';
 import { Demo, Section } from './GallerySection';
+import { CommandBlockShowcase } from './CommandBlockShowcase';
 import { ComingNextShowcase } from './ComingNextShowcase';
 import { ControlSizesShowcase } from './ControlSizesShowcase';
 import { FormFrameShowcase } from './FormFrameShowcase';
@@ -970,6 +972,12 @@ export function HiveGallery() {
                   minHeightClassName="min-h-40"
                   className="rounded-md bg-surface"
                 />
+                <LoadingState
+                  message="Comparing with the merge base…"
+                  detail={<ColdRenderNote delayMs={0} />}
+                  minHeightClassName="min-h-40"
+                  className="rounded-md bg-surface"
+                />
               </div>
             </div>
           </Demo>
@@ -1082,6 +1090,14 @@ export function HiveGallery() {
           description="What is not shipped yet, named once as text — never as a disabled card, row or button. The only control is a link to What's new."
         >
           <ComingNextShowcase />
+        </Section>
+
+        <Section
+          id="command-block"
+          title="The same, from anywhere"
+          description="A screen's action as a command on every surface a pipeline uses, built from the form as it is now. Secrets are only ever variables; what no command carries is listed with its reason."
+        >
+          <CommandBlockShowcase />
         </Section>
       </div>
     </TooltipProvider>

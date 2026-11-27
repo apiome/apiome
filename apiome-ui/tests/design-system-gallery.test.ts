@@ -54,6 +54,7 @@ const GALLERY_EXEMPT: Readonly<Record<string, string>> = {
   DialogPortal: 'Part of DialogContent.',
   DialogOverlay: 'Part of DialogContent.',
   DialogClose: 'Part of DialogContent (its close button).',
+  DialogBody: 'Part of DialogContent: the scrolling body between header and footer of a stepped dialog.',
   DrawerPortal: 'Part of DrawerContent.',
   DrawerOverlay: 'Part of DrawerContent.',
   SelectScrollUpButton: 'Part of SelectContent; appears only when the list overflows.',

@@ -1,0 +1,29 @@
+---
+slug: same-from-anywhere
+title: "The same, from anywhere — and a CLI ↔ UI parity check"
+description: "Contracts screens show their action as a command; CI keeps CLI and UI in step."
+authors: [apiome]
+---
+
+What you do on a **Contracts** screen can now be copied as a command for your pipeline, and the
+`apiome pact` commands and the Contracts screens can no longer drift apart unnoticed. See
+[The same command, in the app](/ship/pact-broker/cli#the-same-command-in-the-app).
+
+{/* truncate */}
+
+- **The same, from anywhere.** The webhook editor shows the webhook you are building as
+  `apiome pact create-webhook`, `pact-broker create-webhook`, a GitHub Action step and the REST
+  request. Pick a pill, click **Copy**. It changes as you type. See
+  [The same, from anywhere](/ship/pact-broker/webhooks-console#the-same-from-anywhere).
+- **Secrets stay secret.** Passwords, `Authorization` and other credential headers, GitHub tokens and
+  signing secrets are written as `$WEBHOOK_…` variables on every pill, never as their values.
+- **Nothing dropped quietly.** What a command cannot carry — the stale and re-publish events, a
+  webhook turned off, a signing secret — is listed under the block with the reason. Actions with no
+  command (editing a saved webhook, a GitHub Actions target) say so and show the REST request.
+- **Every command has a screen, or a reason.** A ledger in the repository maps each of the fifteen
+  `apiome pact` commands to its screen and each Contracts write to its command. CI fails when a new
+  command or write screen is missing from it. Five commands have a screen today; the other ten are
+  each named with the ticket that adds theirs.
+
+Contributors: the rule and how to add a row are in
+[The CLI ↔ UI parity ledger](/admin/contribute-to-the-docs#the-cli--ui-parity-ledger).

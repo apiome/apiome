@@ -14,7 +14,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { RefreshCw, Send } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
-import { Button, EmptyState, LoadingState } from '@/app/components/ui';
+import { Button, CommandBlock, EmptyState, LoadingState } from '@/app/components/ui';
 import {
   Dialog,
   DialogBody,
@@ -35,6 +35,8 @@ import {
   AlertDialogTitle,
 } from '@/app/components/ui/AlertDialog';
 import { formatWhen, shortVersion } from '@lib/pact-pacticipants';
+import { pactCommandSurfaces, unsupportedLines } from '@lib/pact-commands';
+import { webhookCommandAction } from '@lib/pact-webhook-command';
 import {
   DELIVERY_STATUSES,
   EVENT_OPTIONS,
@@ -446,6 +448,28 @@ function SecretField({
 }
 
 /**
+ * **The same, from anywhere** under the editor (PFX-8.2, #7299): what the form holds as
+ * `apiome pact create-webhook`, Pact CLI, a pipeline step and REST — redrawn on every keystroke,
+ * with every secret as a `$WEBHOOK_…` variable. Editing a saved webhook has no command, so the
+ * block then shows the REST `PUT` and says why.
+ *
+ * @param props - The editor's form, and the saved webhook's id when editing one.
+ * @returns The block.
+ */
+export function WebhookCommandBlock({ form, webhookId }: { form: WebhookForm; webhookId: string | null }) {
+  const action = webhookCommandAction(form, { tenant: '', webhookId });
+  return (
+    <CommandBlock
+      className="pwx-command-block"
+      surfaces={pactCommandSurfaces(action)}
+      unsupported={unsupportedLines(action)}
+      footnote="Replace {tenant} with your workspace’s handle in the REST path."
+      data-testid="pwx-command-block"
+    />
+  );
+}
+
+/**
  * The editor: a new webhook (`webhook` null) or an existing one. **Save** creates or replaces it.
  * With `onTest`, **Test** sends what the form holds once without saving it — offered for a new
  * webhook only: an unsaved request cannot use a stored secret, so an existing webhook is tested
@@ -748,6 +772,7 @@ export function WebhookEditor({
               </p>
             ) : null}
             {tested ? <TestOutcome result={tested} /> : null}
+            <WebhookCommandBlock form={form} webhookId={webhook?.uuid ?? null} />
           </DialogBody>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={disabled}>
