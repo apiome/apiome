@@ -31,8 +31,8 @@ export const PUBLISH_HANDOFF_KEY = 'apiome.pactPublish.handoff';
 /** Most files one page holds (one request per consumer carries at most 100 anyway). */
 export const MAX_FILES = 200;
 
-/** The page's three ways to bring a pact in. */
-export const PUBLISH_SOURCES = ['upload', 'paste', 'derive'] as const;
+/** The page's ways to bring a pact in (`write` is the interaction editor, PFX-8.5). */
+export const PUBLISH_SOURCES = ['upload', 'paste', 'derive', 'write'] as const;
 
 /** One way in. */
 export type PublishSource = (typeof PUBLISH_SOURCES)[number];
@@ -118,7 +118,12 @@ export function specLabel(version: string | null): string {
 function interactionKind(entry: Record<string, unknown>, key: string, plugins: string[]): string {
   if (key === 'messages') return 'Message';
   const type = typeof entry.type === 'string' ? entry.type.toLowerCase() : '';
-  if (type.includes('message')) return plugins.includes('protobuf') || plugins.includes('grpc') ? 'gRPC' : 'Message';
+  if (type.includes('message')) {
+    // `transport: grpc` names a gRPC call outright (the editor writes it, PFX-8.5); older protobuf
+    // plugins only list themselves in the metadata.
+    if (typeof entry.transport === 'string' && entry.transport.toLowerCase() === 'grpc') return 'gRPC';
+    return plugins.includes('protobuf') || plugins.includes('grpc') ? 'gRPC' : 'Message';
+  }
   const request = isObject(entry.request) ? entry.request : {};
   const path = typeof request.path === 'string' ? request.path : '';
   // A v4 body is `{ content, contentType }`; earlier specifications carry the body itself.
@@ -727,7 +732,7 @@ export function readPublishPrefill(query: Record<string, string | string[] | und
   let source: PublishSource = 'upload';
   if (sourceText) {
     if ((PUBLISH_SOURCES as readonly string[]).includes(sourceText)) source = sourceText as PublishSource;
-    else problems.push(`?source=${sourceText} is not a way in (upload, paste or derive).`);
+    else problems.push(`?source=${sourceText} is not a way in (upload, paste, derive or write).`);
   }
   const clip = (key: string, max = MAX_FIELD_CHARS): string => {
     const value = one(key).trim();
@@ -771,7 +776,7 @@ export function publishRoute(fields: Partial<Record<'version' | 'branch' | 'buil
  */
 export const PUBLISH_FLAG_FIELDS: Readonly<Record<'publish' | 'publish-consumer-contract', Readonly<Record<string, string>>>> = {
   publish: {
-    pacts: 'Upload (files or a folder) and Paste',
+    pacts: 'Upload (files or a folder), Paste and Write interactions',
     '--consumer-app-version': 'Consumer version',
     '--branch': 'Branch',
     '--auto-detect-version-properties': 'Fill from the linked repository',

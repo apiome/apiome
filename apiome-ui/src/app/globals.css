@@ -47315,3 +47315,233 @@ tr[data-selected="true"] > td:first-child {
   color: var(--fg);
   font-size: var(--fs-sm);
 }
+
+/* Write interactions — the interaction editor on the Publish page (PFX-8.5, #7302). */
+.ppub-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ppub-editor__spec {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ppub-editor__notes,
+.ppub-editor__problems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-inline-start: var(--space-4);
+  font-size: var(--fs-xs);
+}
+
+.ppub-editor__notes {
+  color: var(--fg-muted);
+}
+
+.ppub-editor__problems {
+  color: var(--danger-fg);
+}
+
+.ppub-editor__split {
+  display: grid;
+  grid-template-columns: minmax(17rem, 18rem) minmax(0, 1fr);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .ppub-editor__split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ppub-editor__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-inline-end: 1px solid var(--border);
+  background: var(--bg-inset);
+}
+
+.ppub-editor__list-head,
+.ppub-editor__section-head,
+.ppub-editor__form-head,
+.ppub-editor__body-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ppub-editor__kinds {
+  align-self: flex-start;
+}
+
+.ppub-editor__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppub-editor__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--r-md);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.ppub-editor__item:hover {
+  background: var(--bg-surface);
+}
+
+.ppub-editor__item.is-active {
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+.ppub-editor__item:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.ppub-editor__item-title {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ppub-editor__empty {
+  padding-block: var(--space-2);
+}
+
+.ppub-editor__detail {
+  min-inline-size: 0;
+  padding: var(--space-4);
+  background: var(--bg-surface);
+}
+
+.ppub-editor__form,
+.ppub-editor__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ppub-editor__section {
+  margin: 0;
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+.ppub-editor__form-head {
+  justify-content: flex-start;
+}
+
+.ppub-editor__remove {
+  margin-inline-start: auto;
+}
+
+.ppub-editor__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ppub-editor__method {
+  flex: none;
+  inline-size: 7rem;
+}
+
+.ppub-editor__status {
+  inline-size: 6rem;
+}
+
+.ppub-editor__ctype {
+  inline-size: 14rem;
+}
+
+.ppub-editor__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.ppub-editor__flag {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ppub-editor__warn {
+  color: var(--warn-fg);
+}
+
+.ppub-editor__add {
+  align-self: flex-start;
+}
+
+.ppub-kv,
+.ppub-kv__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ppub-kv__row,
+.ppub-matchers__row,
+.ppub-matchers__add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ppub-matchers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppub-matchers__row {
+  grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) auto;
+}
+
+.ppub-matchers__add {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto auto auto;
+}
+
+.ppub-matcher {
+  min-block-size: 1.75rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 640px) {
+  .ppub-kv__row,
+  .ppub-matchers__row,
+  .ppub-matchers__add {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -6,9 +6,10 @@
  * Built to `docs/mockups/contracts/publish-pact.html`:
  *
  * 1. **The pact** — *Upload* (several files or a whole `pacts/` folder; each row shows its pair,
- *    specification, interaction count and kinds, or why it will not be published), *Paste*, or
+ *    specification, interaction count and kinds, or why it will not be published), *Paste*,
  *    *Derive from a project* (`apiome pact publish-consumer-contract`: the consumer's declared
- *    surface becomes the pact).
+ *    surface becomes the pact), or *Write interactions* (PFX-8.5, #7302: the interaction editor
+ *    writes a Pact v4 document, which then publishes as any other).
  * 2. **Whose version this is** — consumer version, branch, tags, *Fill from the linked repository*,
  *    and under *More options* the build URL, *Merge* (refused with the CLI's reason) and *Also tag
  *    with the branch name*.
@@ -31,7 +32,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ClipboardPaste, FileUp, FolderOpen, GitCommitHorizontal, ShieldCheck, Upload, WandSparkles } from 'lucide-react';
+import { ClipboardPaste, Download, FileUp, FolderOpen, GitCommitHorizontal, PencilRuler, ShieldCheck, Upload, WandSparkles } from 'lucide-react';
 import {
   Alert,
   Badge,
@@ -83,7 +84,9 @@ import {
   type CompareChoice,
   type DifferenceView,
 } from '@lib/pact-publish-check';
+import { EMPTY_EDITOR, buildPact, draftProblems, readPactIntoEditor, type EditorDraft } from '@lib/pact-interaction-editor';
 import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { InteractionEditor, type SpecState } from './InteractionEditor';
 import { CheckResultCard, CompareWith, DifferenceDrawer, type CheckState } from './CheckPanels';
 import { FileTable, ReadOnlyNote, ResultDialog, type PublishFailure, type PublishResult } from './PublishPanels';
 import {
@@ -93,6 +96,7 @@ import {
   fetchPacticipant,
   fetchProjectConsumers,
   fetchProjects,
+  fetchProviderSpec,
   publishBatch,
   publishDerived,
   type CompareEnvironment,
@@ -105,6 +109,9 @@ const WRITE_PERMISSION = 'pacts:create';
 
 /** The pasted pact's row id. */
 const PASTE_ID = 'pasted';
+
+/** The written pact's row id. */
+const WRITTEN_ID = 'written';
 
 /** A file the browser handed over, with the path it had inside a dropped or picked folder. */
 interface PickedFile {
@@ -186,6 +193,10 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
   const [selectors, setSelectors] = React.useState<string[] | null>(null);
   const [checks, setChecks] = React.useState<Record<string, CheckState>>({});
   const [difference, setDifference] = React.useState<DifferenceView | null>(null);
+  const [editor, setEditor] = React.useState<EditorDraft>(EMPTY_EDITOR);
+  const [specState, setSpecState] = React.useState<SpecState>({ status: 'idle' });
+  const [importNotes, setImportNotes] = React.useState<string[]>([]);
+  const nextInteraction = React.useRef(0);
   const fileInput = React.useRef<HTMLInputElement>(null);
   const folderInput = React.useRef<HTMLInputElement>(null);
   const nextId = React.useRef(0);
@@ -275,10 +286,69 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
   }, [source, canWrite, project]);
 
   const pastedRow = React.useMemo(() => (pasted.trim() ? readPactFile(PASTE_ID, 'Pasted pact', pasted) : null), [pasted]);
+  const editorProblems = React.useMemo(() => draftProblems(editor), [editor]);
+  /** The written pact as a row: read by the same reader as a file, or what stops it. */
+  const writtenRow = React.useMemo(() => {
+    if (!editor.interactions.length) return null;
+    const built = buildPact(editor);
+    const name = 'Written in the editor';
+    if ('pact' in built) return readPactFile(WRITTEN_ID, name, JSON.stringify(built.pact, null, 2));
+    const count = built.problems.pair.length + Object.values(built.problems.interactions).flat().length;
+    return {
+      ...readPactFile(WRITTEN_ID, name, ''),
+      specVersion: '4.0',
+      consumer: editor.consumer.trim() || null,
+      provider: editor.provider.trim() || null,
+      problem: `Not ready to publish: ${count === 1 ? 'one thing needs' : `${count} things need`} fixing in the editor — each interaction lists its own.`,
+    };
+  }, [editor]);
   const rows = React.useMemo(
-    () => (source === 'upload' ? annotateRows(files) : source === 'paste' && pastedRow ? [pastedRow] : []),
-    [source, files, pastedRow],
+    () =>
+      source === 'upload'
+        ? annotateRows(files)
+        : source === 'paste' && pastedRow
+          ? [pastedRow]
+          : source === 'write' && writtenRow
+            ? [writtenRow]
+            : [],
+    [source, files, pastedRow, writtenRow],
   );
+
+  /** The editor changed: earlier verdicts and comparisons no longer apply. */
+  const editWritten = (next: EditorDraft) => {
+    setEditor(next);
+    setVerdicts({});
+    setChecks({});
+  };
+
+  /** Read the provider's spec, catalogue states and mock scenarios for the editor. */
+  const loadSpec = async (provider: string) => {
+    setSpecState({ status: 'loading', provider });
+    const answer = await fetchProviderSpec(provider);
+    setSpecState('error' in answer ? { status: 'error', provider, error: answer.error } : { status: 'ready', spec: answer });
+  };
+
+  /** **Start from the pasted pact**: read it into the editor; what it cannot hold is listed. */
+  const startFromPasted = () => {
+    const read = readPactIntoEditor(pasted, () => `ix${nextInteraction.current++}`);
+    if ('error' in read) return setNotice(read.error);
+    editWritten(read.draft);
+    setImportNotes(read.unsupported);
+    setSource('write');
+    if (read.draft.provider.trim()) void loadSpec(read.draft.provider.trim());
+  };
+
+  /** **Download the pact**: the written document as a file, for `apiome pact publish pacts/`. */
+  const downloadWritten = () => {
+    if (!writtenRow || writtenRow.problem) return;
+    const name = `${pacticipantKey(writtenRow.consumer ?? 'consumer')}-${pacticipantKey(writtenRow.provider ?? 'provider')}.json`;
+    const url = URL.createObjectURL(new Blob([writtenRow.text], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
   const sendable = publishableRows(rows);
   const rowConsumers = [...new Set(sendable.map((row) => row.consumer as string))];
 
@@ -456,6 +526,8 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
     setPasted('');
     setVerdicts({});
     setChecks({});
+    setEditor(EMPTY_EDITOR);
+    setImportNotes([]);
   };
 
   const action = publishCommandAction({ source, rows, whose, derive, tenant: '' });
@@ -533,6 +605,10 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
                         <TabsTrigger value="derive">
                           <WandSparkles aria-hidden className="ppub-tab__glyph" />
                           Derive from a project
+                        </TabsTrigger>
+                        <TabsTrigger value="write">
+                          <PencilRuler aria-hidden className="ppub-tab__glyph" />
+                          Write interactions
                         </TabsTrigger>
                       </TabsList>
                       <TabsContent value="upload" className="ppub-panel">
@@ -631,6 +707,41 @@ export default function PublishPactClient({ prefill }: PublishPactClientProps) {
                         />
                         {pastedRow ? (
                           <FileTable rows={[pastedRow]} verdicts={verdicts} checkedVersion={checkedVersion} onRemove={() => setPasted('')} />
+                        ) : null}
+                        {pastedRow && !pastedRow.problem ? (
+                          <div className="ppub-row-actions">
+                            <Button type="button" variant="outline" size="sm" onClick={startFromPasted} data-testid="ppub-edit-pasted">
+                              <PencilRuler aria-hidden />
+                              Edit in Write interactions
+                            </Button>
+                          </div>
+                        ) : null}
+                      </TabsContent>
+                      <TabsContent value="write" className="ppub-panel">
+                        <p className="ppub-card__lead">
+                          No Pact tests yet? Write what the consumer sends and the answer it needs. The editor writes a Pact v4
+                          document, which is checked and published like any other.
+                        </p>
+                        <InteractionEditor
+                          draft={editor}
+                          onChange={editWritten}
+                          problems={editorProblems}
+                          spec={specState}
+                          onLoadSpec={(provider) => void loadSpec(provider)}
+                          nextId={() => `ix${nextInteraction.current++}`}
+                          importNotes={importNotes}
+                        />
+                        {writtenRow ? (
+                          <>
+                            <FileTable rows={[writtenRow]} verdicts={verdicts} checkedVersion={checkedVersion} />
+                            <div className="ppub-row-actions">
+                              <Button type="button" variant="outline" size="sm" onClick={downloadWritten} disabled={Boolean(writtenRow.problem)} data-testid="ppub-download-written">
+                                <Download aria-hidden />
+                                Download the pact
+                              </Button>
+                              <span className="ppub-hint">Commit it under pacts/ to publish it from CI with the command beside.</span>
+                            </div>
+                          </>
                         ) : null}
                       </TabsContent>
                       <TabsContent value="derive" className="ppub-panel">

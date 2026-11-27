@@ -1303,6 +1303,12 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
       'derive from a project',
       'tag with branch',
       'merge',
+      'write interactions',
+      'interaction editor',
+      'matcher',
+      'provider state',
+      'fill from the spec',
+      'by hand',
     ],
   },
   {

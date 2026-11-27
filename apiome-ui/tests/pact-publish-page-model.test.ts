@@ -296,7 +296,7 @@ describe('arriving pre-filled', () => {
     expect(prefill.whose).toMatchObject({ version: '9f3c2a1', tags: 'dev, rc', branch: 'main' });
     expect(prefill.source).toBe('paste');
     expect(prefill.problems).toEqual(['?bogus= is not something this page reads.', '?branch= was given more than once; the first is used.']);
-    expect(readPublishPrefill({ source: 'record' }).problems).toEqual(['?source=record is not a way in (upload, paste or derive).']);
+    expect(readPublishPrefill({ source: 'record' }).problems).toEqual(['?source=record is not a way in (upload, paste, derive or write).']);
     expect(readPublishPrefill({ version: 'v'.repeat(300) }).problems[0]).toMatch(/longer than 255/);
   });
 
