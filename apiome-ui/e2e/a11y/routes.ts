@@ -317,6 +317,17 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
+    // PFX-8.1 (#7298): the Contracts landing (strip, facts, integrations, ways in) and an empty
+    // workspace with the first-run checklist, dumped by `tests/pact-overview-ui.test.tsx`.
+    id: 'pact-overview',
+    mockup: 'contracts/overview.html',
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-overview.html', 'pact-overview-empty.html'],
+    },
+  },
+  {
     // PFX-6.3 (#6955): Contract health (every pair worst first) and one pair's health with its
     // signals and trends, dumped by `tests/pact-health-ui.test.tsx`.
     id: 'pact-health',

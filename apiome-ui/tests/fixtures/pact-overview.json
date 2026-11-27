@@ -1,0 +1,173 @@
+{
+  "page": {
+    "integrations": [
+      {
+        "consumer": "orders-ui",
+        "consumer_name": "Orders UI",
+        "provider": "billing-service",
+        "provider_name": "Billing Service",
+        "consumer_version": "3.4.0",
+        "provider_version": "2.7.0",
+        "pact_version_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "published_at": "2026-11-26T08:30:00+00:00",
+        "kind": "bidirectional",
+        "verdict": "failing",
+        "pending": false,
+        "environments": ["staging"],
+        "verified_at": "2026-11-26T09:48:00+00:00",
+        "mine": true
+      },
+      {
+        "consumer": "mobile-app",
+        "consumer_name": "Mobile App",
+        "provider": "payments-api",
+        "provider_name": "Payments API",
+        "consumer_version": "1.9.2",
+        "provider_version": "4.0.0",
+        "pact_version_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "published_at": "2026-11-05T10:00:00+00:00",
+        "kind": "pact",
+        "verdict": "stale",
+        "pending": false,
+        "environments": ["production"],
+        "verified_at": "2026-11-07T10:12:00+00:00",
+        "mine": false
+      },
+      {
+        "consumer": "checkout",
+        "consumer_name": "Checkout",
+        "provider": "payments-api",
+        "provider_name": "Payments API",
+        "consumer_version": "0.8.0",
+        "provider_version": null,
+        "pact_version_sha": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "published_at": "2026-11-25T16:20:00+00:00",
+        "kind": "pact",
+        "verdict": "no-provider-contract",
+        "pending": true,
+        "environments": [],
+        "verified_at": null,
+        "mine": false
+      },
+      {
+        "consumer": "billing-service",
+        "consumer_name": "Billing Service",
+        "provider": "ledger-events",
+        "provider_name": "Ledger Events",
+        "consumer_version": "2.7.0",
+        "provider_version": "1.2.0",
+        "pact_version_sha": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "published_at": "2026-11-24T12:00:00+00:00",
+        "kind": "bidirectional",
+        "verdict": "verified",
+        "pending": false,
+        "environments": ["production", "staging"],
+        "verified_at": "2026-11-25T11:05:00+00:00",
+        "mine": false
+      },
+      {
+        "consumer": "orders-ui",
+        "consumer_name": "Orders UI",
+        "provider": "orders-api",
+        "provider_name": "Orders API",
+        "consumer_version": "3.4.0",
+        "provider_version": "5.1.0",
+        "pact_version_sha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "published_at": "2026-11-26T08:30:00+00:00",
+        "kind": "pact",
+        "verdict": "verified",
+        "pending": false,
+        "environments": ["production", "staging"],
+        "verified_at": "2026-11-26T08:02:00+00:00",
+        "mine": true
+      },
+      {
+        "consumer": "web-shop",
+        "consumer_name": "Web Shop",
+        "provider": "orders-api",
+        "provider_name": "Orders API",
+        "consumer_version": "12.0.3",
+        "provider_version": "5.1.0",
+        "pact_version_sha": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "published_at": "2026-11-23T09:00:00+00:00",
+        "kind": "pact",
+        "verdict": "verified",
+        "pending": false,
+        "environments": ["production"],
+        "verified_at": "2026-11-23T09:31:00+00:00",
+        "mine": false
+      }
+    ],
+    "total": 6,
+    "offset": 0,
+    "limit": 25,
+    "filter": "all",
+    "search": null,
+    "counts": {
+      "integrations": 6,
+      "verified": 3,
+      "failing": 1,
+      "stale": 1,
+      "no_provider_contract": 1,
+      "unverified": 0,
+      "pending": 1,
+      "bidirectional": 2,
+      "mine": 2
+    },
+    "attention": {
+      "failing": [
+        {
+          "consumer": "orders-ui",
+          "consumer_name": "Orders UI",
+          "provider": "billing-service",
+          "provider_name": "Billing Service",
+          "consumer_version": "3.4.0",
+          "provider_version": "2.7.0",
+          "verified_at": "2026-11-26T09:48:00+00:00",
+          "published_at": "2026-11-26T08:30:00+00:00"
+        }
+      ],
+      "stale": [
+        {
+          "consumer": "mobile-app",
+          "consumer_name": "Mobile App",
+          "provider": "payments-api",
+          "provider_name": "Payments API",
+          "consumer_version": "1.9.2",
+          "provider_version": "4.0.0",
+          "verified_at": "2026-11-07T10:12:00+00:00",
+          "published_at": "2026-11-05T10:00:00+00:00"
+        }
+      ],
+      "no_provider_contract": [
+        {
+          "consumer": "checkout",
+          "consumer_name": "Checkout",
+          "provider": "payments-api",
+          "provider_name": "Payments API",
+          "consumer_version": "0.8.0",
+          "provider_version": null,
+          "verified_at": null,
+          "published_at": "2026-11-25T16:20:00+00:00"
+        }
+      ],
+      "pending": [
+        {
+          "consumer": "checkout",
+          "consumer_name": "Checkout",
+          "provider": "payments-api",
+          "provider_name": "Payments API",
+          "consumer_version": "0.8.0",
+          "provider_version": null,
+          "verified_at": null,
+          "published_at": "2026-11-25T16:20:00+00:00"
+        }
+      ]
+    },
+    "pacticipants": 9,
+    "environments": 3,
+    "truncated": false,
+    "omitted_integrations": 0,
+    "mine_available": true
+  }
+}

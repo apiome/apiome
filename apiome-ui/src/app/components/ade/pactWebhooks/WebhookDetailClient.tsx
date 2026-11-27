@@ -15,8 +15,10 @@ import { Pencil, Power, RefreshCw, Send, Trash2 } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE, formatWhen } from '@lib/pact-pacticipants';
+import { formatWhen } from '@lib/pact-pacticipants';
 import {
   GITHUB_TARGET,
   WEBHOOKS_ROUTE,
@@ -118,10 +120,11 @@ export default function WebhookDetailClient({ id }: { id: string }) {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="webhooks" />}
         title={webhook?.description ?? 'Webhook'}
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Webhooks', href: WEBHOOKS_ROUTE },
           { label: webhook?.description ?? 'Webhook' },
         ]}
@@ -137,21 +140,31 @@ export default function WebhookDetailClient({ id }: { id: string }) {
                 <Pencil aria-hidden />
                 Edit
               </Button>
-              <Button variant="outline" onClick={() => void toggle()} disabled={busy !== null} data-testid="pwx-toggle">
-                <Power aria-hidden />
-                {webhook.enabled ? 'Disable' : 'Enable'}
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => setDeleting(webhook)}
-                disabled={busy !== null}
-                data-testid="pwx-delete"
-              >
-                <Trash2 aria-hidden />
-                Delete
-              </Button>
             </div>
           ) : null
+        }
+        overflow={
+          webhook
+            ? {
+                items: [
+                  {
+                    id: 'toggle',
+                    label: webhook.enabled ? 'Disable' : 'Enable',
+                    icon: Power,
+                    onSelect: () => void toggle(),
+                    disabledReason: busy !== null ? 'Wait for the current action to finish' : undefined,
+                  },
+                  {
+                    id: 'delete',
+                    label: 'Delete',
+                    icon: Trash2,
+                    onSelect: () => setDeleting(webhook),
+                    disabledReason: busy !== null ? 'Wait for the current action to finish' : undefined,
+                    separatorBefore: true,
+                  },
+                ],
+              }
+            : undefined
         }
       />
       <PageBody>

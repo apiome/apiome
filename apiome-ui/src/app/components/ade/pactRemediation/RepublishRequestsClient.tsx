@@ -17,12 +17,13 @@ import { RefreshCw } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE, formatWhen, shortVersion } from '@lib/pact-pacticipants';
+import { formatWhen, shortVersion } from '@lib/pact-pacticipants';
 import { pactRoute, shortSha } from '@lib/pact-detail';
 import {
   REQUEST_STATES,
-  SETTINGS_ROUTE,
   requestRoute,
   requestsRoute,
   stateText,
@@ -168,23 +169,19 @@ export default function RepublishRequestsClient({ state }: { state: string }) {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="health" />}
         title="Re-publish requests"
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Re-publish requests' },
         ]}
         description="When a pact goes unverified past its stale threshold, its consumer is asked to re-publish it. Each request is tracked until it is answered or expires."
         actions={
-          <div className="ppx__actions">
-            <Button variant="outline" asChild>
-              <Link href={SETTINGS_ROUTE}>Verification settings</Link>
-            </Button>
-            <Button variant="outline" onClick={() => void load()}>
-              <RefreshCw aria-hidden />
-              Refresh
-            </Button>
-          </div>
+          <Button variant="outline" onClick={() => void load()}>
+            <RefreshCw aria-hidden />
+            Refresh
+          </Button>
         }
       />
       <PageBody>

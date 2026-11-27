@@ -279,12 +279,17 @@ describe('Webhook page', () => {
   it('disables the webhook with every stored secret kept', async () => {
     answers[`PUT ${BASE}/${HTTP.uuid}`] = () => ({ status: 200, body: { ...HTTP, enabled: false } });
     render(<WebhookDetailClient id={HTTP.uuid} />);
-    const pwx_toggle = await screen.findByTestId('pwx-toggle');
+    // PFX-8.1 (#7298): Enable / Disable and Delete live in the header's ⋯ menu (action cap).
+    await screen.findByTestId('pwx-test');
+    fireEvent.keyDown(screen.getByRole('button', { name: 'More actions' }), { key: 'Enter' });
+    const pwx_toggle = await screen.findByTestId('page-header-overflow-toggle');
+    expect(pwx_toggle).toHaveTextContent('Disable');
     await act(async () => {
       fireEvent.click(pwx_toggle);
     });
     expect(await screen.findByTestId('pwx-state')).toHaveTextContent('Disabled');
-    expect(screen.getByTestId('pwx-toggle')).toHaveTextContent('Enable');
+    fireEvent.keyDown(screen.getByRole('button', { name: 'More actions' }), { key: 'Enter' });
+    expect(await screen.findByTestId('page-header-overflow-toggle')).toHaveTextContent('Enable');
     const put = calls.find((call) => call.method === 'PUT');
     expect(put?.body).toMatchObject({
       enabled: false,
@@ -327,7 +332,9 @@ describe('Webhook page', () => {
   it('asks before deleting, then returns to the list', async () => {
     answers[`DELETE ${BASE}/${HTTP.uuid}`] = () => ({ status: 200, body: {} });
     render(<WebhookDetailClient id={HTTP.uuid} />);
-    fireEvent.click(await screen.findByTestId('pwx-delete'));
+    await screen.findByTestId('pwx-test');
+    fireEvent.keyDown(screen.getByRole('button', { name: 'More actions' }), { key: 'Enter' });
+    fireEvent.click(await screen.findByTestId('page-header-overflow-delete'));
     const confirm = await screen.findByTestId('pwx-delete-confirm');
     expect(confirm).toHaveTextContent('Its queued deliveries, its delivery log and their execution logs are deleted');
     expect(calls.some((call) => call.method === 'DELETE')).toBe(false);

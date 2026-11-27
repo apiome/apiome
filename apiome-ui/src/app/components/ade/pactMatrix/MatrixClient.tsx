@@ -15,14 +15,14 @@
  */
 
 import * as React from 'react';
-import Link from 'next/link';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE, PUBLISH_SNIPPET, type Pacticipant } from '@lib/pact-pacticipants';
+import { PUBLISH_SNIPPET, type Pacticipant } from '@lib/pact-pacticipants';
 import {
-  CAN_I_DEPLOY_ROUTE,
   LATEST_BY_OPTIONS,
   MATRIX_LIMITS,
   MATRIX_ROUTE,
@@ -248,18 +248,14 @@ export default function MatrixClient({ initialQuery }: { initialQuery: string })
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="matrix" />}
         title="Matrix"
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Matrix' },
         ]}
         description="Which consumer versions were verified against which provider versions, and whether they work together."
-        actions={
-          <Button variant="outline" asChild>
-            <Link href={CAN_I_DEPLOY_ROUTE}>Can I deploy?</Link>
-          </Button>
-        }
       />
       <PageBody>
         <div className="ppx" data-testid="pact-matrix">

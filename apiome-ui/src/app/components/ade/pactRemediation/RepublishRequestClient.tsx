@@ -15,8 +15,10 @@ import Link from 'next/link';
 import { CheckCircle2, RefreshCw } from 'lucide-react';
 import { Button, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
-import { PACTICIPANTS_ROUTE, formatWhen } from '@lib/pact-pacticipants';
+import { formatWhen } from '@lib/pact-pacticipants';
 import { pactRoute } from '@lib/pact-detail';
 import { verificationRoute } from '@lib/pact-verification';
 import {
@@ -131,10 +133,11 @@ export default function RepublishRequestClient({ id }: { id: string }) {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="health" />}
         title={title}
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
-          { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Re-publish requests', href: REQUESTS_ROUTE },
           { label: 'Request' },
         ]}

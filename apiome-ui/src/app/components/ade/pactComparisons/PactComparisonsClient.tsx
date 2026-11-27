@@ -20,6 +20,8 @@ import { RefreshCw } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import {
   STRENGTH_TONES,
@@ -101,8 +103,9 @@ export default function PactComparisonsClient() {
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="pacticipants" />}
         title="Pact comparisons"
-        breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Pact comparisons' }]}
+        breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Contracts', href: CONTRACTS_ROUTE }, { label: 'Pact comparisons' }]}
         description="What each bi-directional comparison compared, and what it could not."
         actions={
           <Button variant="outline" onClick={() => void loadList()}>

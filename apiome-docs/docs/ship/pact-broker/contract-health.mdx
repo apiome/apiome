@@ -23,7 +23,7 @@ Health is worked out each time you open the page. Nothing is stored, and nothing
 ## Open Contract health
 
 1. In the rail, under **Ship**, click **Contracts**.
-2. On **Pacticipants**, click **Contract health**.
+2. Click the **Health** tab.
 
 <Screenshot id="pact-health" alt="The Contract health page: a strip of counts (3 pairs, 1 healthy, 1 degraded, 1 failing, 87% pass rate, 17% flakiness), then the pairs worst first: Orders UI → Ledger API failing on its latest verdict, pass rate and flakiness, Billing Service → Ledger API degraded because it is overdue with an open re-publish request, and Orders UI → Inventory API healthy."/>
 
@@ -105,8 +105,8 @@ Click a pair. Its page shows:
 Results published by a verifier outside Apiome often carry no duration. They count towards the pass
 rate and flakiness, but not the mean duration, and the page says how many were left out.
 
-Change the **Window** list to see another window. **Pact** opens the pact, and **Verification** opens
-the provider's [Verification page](./verification-console.mdx) narrowed to this consumer.
+Change the **Window** list to see another window. In the header's **⋯** menu, **Open the pact** opens
+the pact, and **Verification history** opens the provider's [Verification page](./verification-console.mdx) narrowed to this consumer.
 
 ## On the Verification page
 

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.696.0",
+    "version": "1.697.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -46806,6 +46806,182 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for readonepairscontracthealthandtrendsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-integrations": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "List the workspace's contract integrations",
+        "description": "Every consumer \u2194 provider pair with a pact (PFX-8.1), for the Contracts landing: its kind (`pact`, or `bidirectional` when a provider contract is compared), its verdict \u2014 `failing`, `stale`, `no-provider-contract`, `unverified` or `verified` \u2014 whether it is pending (a Pact-kind pact the provider has never passed), the environments both sides are deployed in now, and when it was last verified. Worst verdict first, then by consumer and provider name. `q` matches handles and names; `filter` is one of `all`, `failing`, `stale`, `bidirectional`, `mine` (`mine`: a team you are on owns either side). `counts` and `attention` (up to three pairs per status-strip category) cover every pair, whatever the search and filter. At most 1000 pairs are classified (`truncated`, `omitted_integrations`). Requires `pacts:view`.",
+        "operationId": "read_integrations_v1_tenants__tenant_slug__pact_integrations_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100,
+                  "description": "Listtheworkspacescontractintegrationsq schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacescontractintegrationsq schema."
+                }
+              ],
+              "description": "Text a handle or name contains.",
+              "title": "Q"
+            },
+            "description": "Text a handle or name contains."
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 16,
+                  "description": "Listtheworkspacescontractintegrationsfilter schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacescontractintegrationsfilter schema."
+                }
+              ],
+              "description": "`all` (default), `failing`, `stale`, \u2026",
+              "title": "Filter"
+            },
+            "description": "`all` (default), `failing`, `stale`, \u2026"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 100,
+                  "minimum": 1,
+                  "description": "Listtheworkspacescontractintegrationslimit schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacescontractintegrationslimit schema."
+                }
+              ],
+              "description": "Page size, 1 \u2026 100 (default 25).",
+              "title": "Limit"
+            },
+            "description": "Page size, 1 \u2026 100 (default 25)."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 1000,
+                  "minimum": 0,
+                  "description": "Listtheworkspacescontractintegrationsoffset schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacescontractintegrationsoffset schema."
+                }
+              ],
+              "description": "Rows to skip, 0 \u2026 1000.",
+              "title": "Offset"
+            },
+            "description": "Rows to skip, 0 \u2026 1000."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtheworkspacescontractintegrationsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacescontractintegrationsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtheworkspacescontractintegrations Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacescontractintegrations Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list the workspace's contract integrations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactIntegrationsPage",
+                  "description": "Response payload for listtheworkspacescontractintegrationsresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-integrations-filter-invalid`, `pact-integrations-search-invalid`, `pact-integrations-page-invalid`, or `pact-integrations-mine-needs-user` for `filter=mine` with a credential that is not a user."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listtheworkspacescontractintegrationsresponse422."
                 }
               }
             }
@@ -296010,6 +296186,452 @@
         ],
         "title": "SecretUser",
         "description": "Something that refers to a secret.\n\nAttributes:\n    kind: ``webhook`` or ``verification_target``.\n    id: Its id (a webhook's ``uuid``, a target's id).\n    name: How it is shown: the webhook's description or request, the target's slug."
+      },
+      "PactIntegration": {
+        "properties": {
+          "consumer": {
+            "type": "string",
+            "title": "Consumer",
+            "description": "The consumer's handle.",
+            "example": "example"
+          },
+          "consumer_name": {
+            "type": "string",
+            "title": "Consumer Name",
+            "description": "The consumer's display name.",
+            "example": "Example"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "The provider's handle.",
+            "example": "example"
+          },
+          "provider_name": {
+            "type": "string",
+            "title": "Provider Name",
+            "description": "The provider's display name.",
+            "example": "Example"
+          },
+          "consumer_version": {
+            "type": "string",
+            "title": "Consumer Version",
+            "description": "The consumer version of the newest pact.",
+            "example": "1.0.0"
+          },
+          "provider_version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Integration schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Integration schema."
+              }
+            ],
+            "title": "Provider Version",
+            "description": "The provider version the newest result verified."
+          },
+          "pact_version_sha": {
+            "type": "string",
+            "title": "Pact Version Sha",
+            "description": "The newest pact's content sha.",
+            "example": "1.0.0"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Integration schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Integration schema."
+              }
+            ],
+            "title": "Published At",
+            "description": "When the newest pact was published."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pact",
+              "bidirectional"
+            ],
+            "title": "Kind",
+            "description": "`pact`, or `bidirectional` when a provider contract is compared.",
+            "example": "pact"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "failing",
+              "stale",
+              "no-provider-contract",
+              "unverified",
+              "verified"
+            ],
+            "title": "Verdict",
+            "description": "`failing`, `stale`, `no-provider-contract`, `unverified` or `verified`.",
+            "example": "failing"
+          },
+          "pending": {
+            "type": "boolean",
+            "title": "Pending",
+            "description": "A Pact-kind pact the provider has never passed (PFX-1.7).",
+            "example": false
+          },
+          "environments": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Environments",
+            "description": "The environments both sides are deployed in now, by name.",
+            "maxItems": 1000
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Integration schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Integration schema."
+              }
+            ],
+            "title": "Verified At",
+            "description": "When the newest result was recorded; null if never."
+          },
+          "mine": {
+            "type": "boolean",
+            "title": "Mine",
+            "description": "Whether a team the caller is on owns the consumer or the provider.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumer",
+          "consumer_name",
+          "provider",
+          "provider_name",
+          "consumer_version",
+          "pact_version_sha",
+          "kind",
+          "verdict",
+          "pending"
+        ],
+        "title": "PactIntegration",
+        "description": "One row of the integrations table."
+      },
+      "PactIntegrationAttention": {
+        "properties": {
+          "failing": {
+            "items": {
+              "$ref": "#/components/schemas/PactIntegrationRef"
+            },
+            "type": "array",
+            "title": "Failing",
+            "description": "Failing.",
+            "maxItems": 1000
+          },
+          "stale": {
+            "items": {
+              "$ref": "#/components/schemas/PactIntegrationRef"
+            },
+            "type": "array",
+            "title": "Stale",
+            "description": "Stale.",
+            "maxItems": 1000
+          },
+          "no_provider_contract": {
+            "items": {
+              "$ref": "#/components/schemas/PactIntegrationRef"
+            },
+            "type": "array",
+            "title": "No Provider Contract",
+            "description": "No Provider Contract.",
+            "maxItems": 1000
+          },
+          "pending": {
+            "items": {
+              "$ref": "#/components/schemas/PactIntegrationRef"
+            },
+            "type": "array",
+            "title": "Pending",
+            "description": "Pending.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PactIntegrationAttention",
+        "description": "Up to :data:`ATTENTION_EXAMPLES` pairs per status-strip category, worst first."
+      },
+      "PactIntegrationCounts": {
+        "properties": {
+          "integrations": {
+            "type": "integer",
+            "title": "Integrations",
+            "default": 0,
+            "description": "Integrations.",
+            "example": 1
+          },
+          "verified": {
+            "type": "integer",
+            "title": "Verified",
+            "default": 0,
+            "description": "Verified.",
+            "example": 1
+          },
+          "failing": {
+            "type": "integer",
+            "title": "Failing",
+            "default": 0,
+            "description": "Failing.",
+            "example": 1
+          },
+          "stale": {
+            "type": "integer",
+            "title": "Stale",
+            "default": 0,
+            "description": "Stale.",
+            "example": 1
+          },
+          "no_provider_contract": {
+            "type": "integer",
+            "title": "No Provider Contract",
+            "default": 0,
+            "description": "No Provider Contract.",
+            "example": 1
+          },
+          "unverified": {
+            "type": "integer",
+            "title": "Unverified",
+            "default": 0,
+            "description": "Unverified.",
+            "example": 1
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending",
+            "default": 0,
+            "description": "Pending.",
+            "example": 1
+          },
+          "bidirectional": {
+            "type": "integer",
+            "title": "Bidirectional",
+            "default": 0,
+            "description": "Bidirectional.",
+            "example": 1
+          },
+          "mine": {
+            "type": "integer",
+            "title": "Mine",
+            "default": 0,
+            "description": "Mine.",
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PactIntegrationCounts",
+        "description": "Counts over every classified pair (the search and filter do not narrow them)."
+      },
+      "PactIntegrationRef": {
+        "properties": {
+          "consumer": {
+            "type": "string",
+            "title": "Consumer",
+            "description": "Consumer.",
+            "example": "example"
+          },
+          "consumer_name": {
+            "type": "string",
+            "title": "Consumer Name",
+            "description": "Consumer Name.",
+            "example": "Example"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "Provider.",
+            "example": "example"
+          },
+          "provider_name": {
+            "type": "string",
+            "title": "Provider Name",
+            "description": "Provider Name.",
+            "example": "Example"
+          },
+          "consumer_version": {
+            "type": "string",
+            "title": "Consumer Version",
+            "description": "Consumer Version.",
+            "example": "1.0.0"
+          },
+          "provider_version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Integration Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Integration Ref schema."
+              }
+            ],
+            "title": "Provider Version",
+            "description": "Provider Version."
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Integration Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Integration Ref schema."
+              }
+            ],
+            "title": "Verified At",
+            "description": "Verified At timestamp (ISO 8601)."
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Integration Ref schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Integration Ref schema."
+              }
+            ],
+            "title": "Published At",
+            "description": "Published At timestamp (ISO 8601)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumer",
+          "consumer_name",
+          "provider",
+          "provider_name",
+          "consumer_version"
+        ],
+        "title": "PactIntegrationRef",
+        "description": "A pair the status strip names."
+      },
+      "PactIntegrationsPage": {
+        "properties": {
+          "integrations": {
+            "items": {
+              "$ref": "#/components/schemas/PactIntegration"
+            },
+            "type": "array",
+            "title": "Integrations",
+            "description": "This page, worst first.",
+            "maxItems": 1000
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Rows matching the search and filter.",
+            "default": 0,
+            "example": 1
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset",
+            "default": 0,
+            "description": "Offset.",
+            "example": 0
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit",
+            "default": 25,
+            "description": "Limit.",
+            "example": 50
+          },
+          "filter": {
+            "type": "string",
+            "title": "Filter",
+            "default": "all",
+            "description": "Filter.",
+            "example": "example"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Integrations Page schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Integrations Page schema."
+              }
+            ],
+            "title": "Search",
+            "description": "Search."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/PactIntegrationCounts",
+            "description": "Counts."
+          },
+          "attention": {
+            "$ref": "#/components/schemas/PactIntegrationAttention",
+            "description": "Attention."
+          },
+          "pacticipants": {
+            "type": "integer",
+            "title": "Pacticipants",
+            "description": "Pacticipants in the workspace.",
+            "default": 0,
+            "example": 1
+          },
+          "environments": {
+            "type": "integer",
+            "title": "Environments",
+            "description": "Environments in the workspace.",
+            "default": 0,
+            "example": 1
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "More than 1000 pairs: the rest are not classified.",
+            "default": false,
+            "example": false
+          },
+          "omitted_integrations": {
+            "type": "integer",
+            "title": "Omitted Integrations",
+            "description": "How many pairs were left out when truncated.",
+            "default": 0,
+            "example": 1
+          },
+          "mine_available": {
+            "type": "boolean",
+            "title": "Mine Available",
+            "description": "False for a credential with no user (no `mine` filter).",
+            "default": true,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PactIntegrationsPage",
+        "description": "What ``GET /v1/tenants/{tenant}/pact-integrations`` answers."
       }
     },
     "securitySchemes": {

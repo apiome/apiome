@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.873.0] - 2026-11-29
+
+### Added
+- **Contracts landing integrations list (PFX-8.1, #7298).** OpenAPI 1.697.0; no migration. New
+  `GET /v1/tenants/{t}/pact-integrations` (`q`, `filter` = `all` | `failing` | `stale` | `bidirectional` |
+  `mine`, `limit` ≤ 100, `offset`): every consumer ↔ provider pair with a pact, worst verdict first, with
+  its kind (`pact` or `bidirectional`), verdict (`failing`, `stale`, `no-provider-contract`, `unverified`,
+  `verified`), pending flag, the environments both sides are deployed in, and when it was last verified;
+  plus `counts` and `attention` (up to three named pairs per status-strip category) over every pair, and
+  the workspace's pacticipant and environment counts. Requires `pacts:view`; tenant-scoped. At most 1,000
+  pairs are classified (`truncated`, `omitted_integrations`); the pairs query uses loose index scans
+  (about 10 ms at 100k versions, down from 1.1 s) and has the plan-check entry `pact.integrations_pairs`. A bad filter,
+  search text or page is a `400` with a `pact-integrations-*` code; `filter=mine` with a credential that
+  is not a user is `pact-integrations-mine-needs-user`.
+
 ## [1.872.0] - 2026-11-29
 
 ### Added

@@ -346,7 +346,7 @@ export const PLATFORM_NAV_GROUPS: readonly PlatformNavGroup[] = [
       },
       {
         // PFX-EPIC-5: the Contracts area — the Pact Broker's pacticipants (PFX-5.1) and, below
-        // `/pacts`, its other screens. `/ade/dashboard/pacts` opens on the Pacticipants list.
+        // `/pacts`, its other screens. `/ade/dashboard/pacts` is the area's landing (PFX-8.1, #7298).
         id: 'contracts',
         label: 'Contracts',
         href: `${DASHBOARD_HREF}/pacts`,

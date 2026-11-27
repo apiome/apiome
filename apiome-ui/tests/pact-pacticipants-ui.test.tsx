@@ -112,16 +112,14 @@ describe('PacticipantsListClient', () => {
     );
     expect(screen.getByTestId('ppx-row-mobile-app')).toHaveTextContent('develop');
     expect(screen.getByTestId('ppx-count')).toHaveTextContent('3 pacticipants');
-    // PFX-5.4 (#6948): the header opens the Matrix and Can I deploy pages.
-    expect(screen.getByRole('link', { name: 'Matrix' })).toHaveAttribute('href', '/ade/dashboard/pacts/matrix');
-    expect(screen.getByRole('link', { name: 'Can I deploy?' })).toHaveAttribute(
-      'href',
-      '/ade/dashboard/pacts/can-i-deploy',
-    );
-    // PFX-5.6 (#6950): and the Webhooks page.
-    expect(screen.getByRole('link', { name: 'Webhooks' })).toHaveAttribute('href', '/ade/dashboard/pacts/webhooks');
-    // PFX-5.7 (#6951): and the Environments dashboard.
-    expect(screen.getByRole('link', { name: 'Environments' })).toHaveAttribute('href', '/ade/dashboard/pacts/environments');
+    // PFX-8.1 (#7298): the Contracts tab row opens the area's other pages (it replaced the header's
+    // Matrix, Can I deploy?, Webhooks and Environments buttons).
+    const tabs = within(screen.getByTestId('contracts-tabs'));
+    expect(tabs.getByRole('link', { name: /Pacticipants/ })).toHaveAttribute('aria-current', 'page');
+    expect(tabs.getByRole('link', { name: /Matrix/ })).toHaveAttribute('href', '/ade/dashboard/pacts/matrix');
+    expect(tabs.getByRole('link', { name: /Can I deploy/ })).toHaveAttribute('href', '/ade/dashboard/pacts/can-i-deploy');
+    expect(tabs.getByRole('link', { name: /Webhooks/ })).toHaveAttribute('href', '/ade/dashboard/pacts/webhooks');
+    expect(tabs.getByRole('link', { name: /Environments/ })).toHaveAttribute('href', '/ade/dashboard/pacts/environments');
     await screen.findByRole('option', { name: 'tier-1' });
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
     writeA11yFixture('pact-pacticipants', container.innerHTML);

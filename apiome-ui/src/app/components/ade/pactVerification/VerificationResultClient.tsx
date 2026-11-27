@@ -25,6 +25,8 @@ import { Copy, Download, Play, RefreshCw } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
+import { ContractsTabs } from '../pactOverview/ContractsTabs';
+import { CONTRACTS_ROUTE } from '@lib/pact-overview';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { PACTICIPANTS_ROUTE, formatWhen, pacticipantRoute, safeHttpUrl } from '@lib/pact-pacticipants';
 import { pactRoute, shortSha } from '@lib/pact-detail';
@@ -127,9 +129,11 @@ export default function VerificationResultClient({ slug, resultId }: { slug: str
   return (
     <Page>
       <PageHeader
+        tabs={<ContractsTabs active="pacticipants" />}
         title={title}
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
+          { label: 'Contracts', href: CONTRACTS_ROUTE },
           { label: 'Pacticipants', href: PACTICIPANTS_ROUTE },
           { label: providerName, href: pacticipantRoute(slug) },
           { label: 'Verification', href: verificationRoute(slug) },

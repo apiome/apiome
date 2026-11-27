@@ -5,6 +5,8 @@ sidebar_position: 0.5
 tags: [contracts, pact, ci, overview]
 ---
 
+import Screenshot from '@site/src/components/Screenshot';
+
 Apiome is a Pact Broker. The `pact-broker` CLI, the `pact` CLI, pact-js and pact-jvm work against
 it unchanged: give them your workspace's **broker base URL**
 (`https://api.apiome.dev/v1/tenants/<workspace>/pact-broker`) and an API key as the **token**.
@@ -41,22 +43,76 @@ All of it is served through the API and the Pact tools, and you can read and act
 
 ## The Contracts workspace
 
-**Click Contracts** in the rail (under **Ship**). It opens on **Pacticipants**, whose header links
-to **Matrix**, **Can I deploy?**, **Webhooks** and **Environments**. Every screen is open to
-anyone who can view pacts, and each empty screen shows the CLI command that fills it.
+**Click Contracts** in the rail (under **Ship**). It opens on the **Contracts** landing: what needs
+your attention, every integration, and where to start. A row of tabs under the title —
+**Overview**, **Pacticipants**, **Matrix**, **Can I deploy**, **Environments**, **Webhooks**,
+**Health** and **Settings** — is on every Contracts page, with the page you are on highlighted.
+Every screen is open to anyone who can view pacts, and each empty screen shows the CLI command that
+fills it.
 
-| Screen | How you get there | What it shows |
+<Screenshot id="pact-overview" alt="The Contracts landing: the tab row with Overview selected, a status strip reading 1 failing, 1 stale, 1 without a provider contract and 1 pending with the failing detail open, a facts line (6 integrations, 3 verified, 9 pacticipants, 3 environments), the integrations table worst first, and Start something grouped by consumer, provider and pipeline."/>
+
+### What the landing shows
+
+- **The status strip.** One chip each for **failing**, **stale**, **without a provider contract**
+  and **pending** integrations, shown only when there is one. The worst chip is open; **click a
+  chip** to read its detail instead. **Show the failing ones** and **Show the stale ones** filter
+  the table.
+- **The facts line.** How many integrations, how many are verified, and how many pacticipants and
+  environments the workspace has. **Click “Show stats”** for the
+  [contract health](./contract-health.mdx) rollup: pairs per state, pass rate, flakiness and mean
+  duration.
+- **The integrations table.** One row per consumer → provider pair, worst first:
+
+  | Column | What it says |
+  | --- | --- |
+  | **Integration** | The consumer and the provider, each linked to its page, with the consumer version of the newest pact and the provider version that last verified it |
+  | **Kind** | **Pact** (a provider verifier replays the pact) or **Bi-directional** (a [provider contract](./bi-directional.mdx) is compared with it) |
+  | **Latest verdict** | **Failing**, **Stale**, **No provider contract** (nothing to compare it with yet), **Not verified yet** or **Verified**, and **Pending** while the provider has never passed it ([pending pacts](./pending-and-wip.mdx)) |
+  | **Deployed together in** | The environments where both sides are deployed now |
+  | **Verified** | When the newest result was recorded, or **never** |
+
+  **Type in the search box** and **press Enter** to match consumer and provider names. The chips —
+  **All**, **Failing**, **Stale**, **Bi-directional** and **Mine** (a team you are on owns either
+  side) — filter the rows, and **Previous** / **Next** page through them. The search, the chip and
+  the page are kept in the address, so you can share the link. Anything in the address the page
+  cannot use (an unknown filter, a page that does not exist) is listed under the toolbar, and the
+  default is used instead. Each row's **⋯** menu opens the pact, its verification history, the
+  pair's health, or **Can I deploy?** for its consumer version. **Click “Network”** to draw the
+  integrations on the page as a [network](./network.mdx).
+- **Start something.** The ways in, by who you are: **I consume an API**, **I provide an API** and
+  **I run the pipeline**. An entry with its own screen opens it; an entry whose screen has not
+  shipped yet opens the `apiome pact` command that does it. Until one integration is verified, a
+  **Your first contract, in four steps** checklist is shown above them.
+
+The header's **Publish a pact** and **Publish provider contract**, and its **⋯** menu (**Run a
+verification**, **Derive a pact from a project**, **Can I deploy?**, **Migrate from a broker**),
+open the same commands. Only a role that can publish pacts (**Pacts** → **Create**) sees the header
+actions and **Start something**; anyone who can view pacts sees the strip and the table.
+
+A workspace with no pacts shows **No contracts yet** instead of the strip and the table, with the
+checklist open. If the integrations cannot be read, one banner says why, with **Try again**.
+
+### Every screen
+
+| Screen | Tab | What it shows |
 | --- | --- | --- |
-| [**Pacticipants**](./pacticipants.mdx) | **Contracts** in the rail | Every application in your pacts; each one's versions, branches, tags, environments and pacts |
-| [**Pact detail**](./pact-detail.mdx) | A pact on a pacticipant's **Pacts** section | One pact's interactions, its verification status and what changed since the previous pact |
-| [**Network**](./network.mdx) | **Network diagram** on a pacticipant's **Pacts** section | The pacticipants connected through pacts, each integration coloured by its verdict |
-| [**Verification**](./verification-console.mdx) | **Verification** on a provider's **Pacts** section | A provider's results with their logs and mismatches; re-run one pact or verify the stale ones |
-| [**Matrix**](./matrix.mdx) | **Matrix** on the **Pacticipants** header | Which consumer versions were verified against which provider versions, with the verdict explained |
-| [**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console) | **Can I deploy?** on the **Pacticipants** header | Whether one version is safe to deploy to an environment, and the CLI command that asks the same |
-| [**Webhooks**](./webhooks-console.mdx) | **Webhooks** on the **Pacticipants** header | Contract webhooks and every delivery; create, test and redeliver |
-| [**Environments**](./environments-dashboard.mdx) | **Environments** on the **Pacticipants** header | Which version runs where, each environment's deployment history, and the deploy simulator |
-| [**Pact comparisons**](./bi-directional.mdx#in-the-app) | `/ade/dashboard/pacts/comparisons` | The fidelity report of each bi-directional comparison |
-| [**Provider states**](./provider-states.mdx#see-provider-states-in-the-app) | `/ade/dashboard/pacts/provider-states` | A provider's registered states, and a check of its pacts against them before a run |
+| **Contracts** (this landing) | **Overview** | What needs attention, every integration, and where to start |
+| [**Pacticipants**](./pacticipants.mdx) | **Pacticipants** | Every application in your pacts; each one's versions, branches, tags, environments and pacts |
+| [**Pact detail**](./pact-detail.mdx) | **Pacticipants** | One pact's interactions, its verification status and what changed since the previous pact |
+| [**Network**](./network.mdx) | **Pacticipants** | The pacticipants connected through pacts, each integration coloured by its verdict |
+| [**Verification**](./verification-console.mdx) | **Pacticipants** | A provider's results with their logs and mismatches; re-run one pact or verify the stale ones |
+| [**Matrix**](./matrix.mdx) | **Matrix** | Which consumer versions were verified against which provider versions, with the verdict explained |
+| [**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console) | **Can I deploy** | Whether one version is safe to deploy to an environment, and the CLI command that asks the same |
+| [**Environments**](./environments-dashboard.mdx) | **Environments** | Which version runs where, each environment's deployment history, and the deploy simulator |
+| [**Webhooks**](./webhooks-console.mdx) | **Webhooks** | Contract webhooks and every delivery; create, test and redeliver |
+| [**Contract health**](./contract-health.mdx) | **Health** | Each pair rolled up into one state, with pass-rate and flakiness trends; re-publish requests |
+| [**Verification settings**](./stale-pacts.mdx) | **Settings** | Stale thresholds, verification schedules and per-pair overrides |
+| [**Pact comparisons**](./bi-directional.mdx#in-the-app) | **Pacticipants** (`/ade/dashboard/pacts/comparisons`) | The fidelity report of each bi-directional comparison |
+| [**Provider states**](./provider-states.mdx#see-provider-states-in-the-app) | **Pacticipants** (`/ade/dashboard/pacts/provider-states`) | A provider's registered states, and a check of its pacts against them before a run |
+
+The landing reads `GET /v1/tenants/{t}/pact-integrations`
+([REST reference](../../reference/rest/pact-broker.md#read-integrations-v1-tenants-tenant-slug-pact-integrations-get)).
 
 A project's **Consumers** screen can also
 [publish a pact to the broker](./publish-pacts.mdx#publish-from-the-import-dialog) while you import
