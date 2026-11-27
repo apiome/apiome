@@ -139,6 +139,7 @@ from .provider_contract import (
     CODE_REQUEST_INVALID,
     CODE_SOURCE_NOT_FOUND,
     CODE_UNSUPPORTED,
+    CODE_URL_UNREADABLE,
 )
 from .provider_contract_evidence import (
     CODE_EVIDENCE_INVALID,
@@ -193,6 +194,7 @@ _STATUS_BY_CODE = {
     CODE_CONTRACT_TOO_LARGE: 413,
     CODE_CONTRACT_CONFLICT: 409,
     CODE_CONTRACT_NOT_FOUND: 404,
+    CODE_URL_UNREADABLE: 422,  # PFX-8.6 (#7303): the pre-publish check's contentUrl
     # PFX-2.4 (#6928): self-verification evidence.
     CODE_EVIDENCE_INVALID: 422,
     CODE_EVIDENCE_UNSUPPORTED: 422,

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.698.0",
+    "version": "1.699.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -54994,6 +54994,172 @@
               }
             }
           }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/contracts/provider/{provider}/version/{provider_version}/check": {
+      "post": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Check a provider contract before publishing it",
+        "description": "Say what publishing this provider contract would record, and store nothing. Send the body of the publish (`PUT \u2026/contracts/provider/{provider}/version/{providerVersion}`) \u2014 or `contentUrl` instead of `content` to read the document from a URL once (public addresses only; the bytes come back in `fetched` so the same document can be published).\n\n- **The pacts a publish would compare with**: each consumer's main-branch pact, the pacts deployed or released, the latest pact of each consumer on `branch`, and the pacts compared before with a contract of that branch \u2014 compared with the same engine and evidence policy, so `results[].verdict` and `success` are what the publish would store (`unverified` when the evidence does not pass). Each result names the consumer version's `environments` and its first failures.\n- **`coverage`**: the contract's operations, and in `unused` the ones no compared pact touches (OpenAPI only; `coverageReason` says why it is `null`).\n- **`existing`**: the contract this version already published \u2014 `sameContent: false` means the publish would be refused with `409`; `summary.publishable` says so.\n- **`selfVerification`**: the evidence as a publish would read it.\n\nAn unknown provider is not an error: it has no pacts yet (`provider.exists: false`). Requires `pacts:view`, `versions:view` with `apiomeVersion`, `verification_evidence:view` with `providerVerificationReportId`. Not a Pact Broker endpoint.",
+        "operationId": "check_provider_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__check_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider",
+              "description": "Provider schema."
+            },
+            "description": "Path parameter identifying the provider segment."
+          },
+          {
+            "name": "provider_version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider Version",
+              "description": "Provider Version schema."
+            },
+            "description": "Path parameter identifying the provider version segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Checkaprovidercontractbeforepublishingitauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Checkaprovidercontractbeforepublishingitauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Checkaprovidercontractbeforepublishingit Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Checkaprovidercontractbeforepublishingit Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for check a provider contract before publishing it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Check Provider Contract V1 Tenants  Tenant Slug  Pact Broker Contracts Provider  Provider  Version  Provider Version  Check Post",
+                  "description": "Response Check Provider Contract V1 Tenants  Tenant Slug  Pact Broker Contracts Provider  Provider  Version  Provider Version  Check Post schema."
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`provider-contract-too-large`: the document or the request is over the size limit."
+          },
+          "422": {
+            "description": "As for the publish (`provider-contract-invalid` with the pointer into the document, `provider-contract-request-invalid`, the evidence refusals), and `provider-contract-url-unreadable` for a `contentUrl` that is refused or cannot be read."
+          },
+          "429": {
+            "description": "`pact-check-rate-limited`: over the workspace's check budget; see `Retry-After`."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "The body of `PUT \u2026/contracts/provider/{provider}/version/{providerVersion}` \u2014 `content`, `contractType`, `contentType`, `apiomeVersion`, `branch`, `verificationResults` \u2014 or `contentUrl` in place of `content`. `tags` and `buildUrl` are accepted and listed in `ignored`.",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "The document, base64-encoded.",
+                    "example": "example"
+                  },
+                  "contentUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Read the document from this http(s) URL, once, instead of `content`. The bytes come back in `fetched.content` to publish inline.",
+                    "example": "example"
+                  },
+                  "contractType": {
+                    "type": "string",
+                    "enum": [
+                      "oas",
+                      "asyncapi"
+                    ],
+                    "description": "Contract Type.",
+                    "example": "oas"
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "description": "Content Type.",
+                    "example": "example"
+                  },
+                  "apiomeVersion": {
+                    "type": "string",
+                    "description": "`<project>@<version>`.",
+                    "example": "1.0.0"
+                  },
+                  "branch": {
+                    "type": "string",
+                    "description": "Selects the branch's pacts, as a publish does.",
+                    "example": "example"
+                  },
+                  "verificationResults": {
+                    "type": "object",
+                    "description": "As for the publish: read into `selfVerification`, never stored."
+                  }
+                }
+              },
+              "example": {
+                "apiomeVersion": "billing-api@2.7.0",
+                "branch": "main"
+              }
+            }
+          },
+          "description": "Request body for check a provider contract before publishing it."
         }
       }
     },

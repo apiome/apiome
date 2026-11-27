@@ -19,6 +19,7 @@ import { WEBHOOKS_ROUTE } from '@lib/pact-webhooks';
 import { HEALTH_ROUTE } from '@lib/pact-health';
 import { SETTINGS_ROUTE } from '@lib/pact-remediation';
 import { PUBLISH_ROUTE } from '@lib/pact-publish-page';
+import { PROVIDER_CONTRACT_ROUTE } from '@lib/pact-provider-contract';
 
 // --- types ------------------------------------------------------------------------------------------
 
@@ -515,14 +516,6 @@ export interface WayInGroup {
   ways: WayIn[];
 }
 
-/** The command that publishes a provider contract. */
-export const PROVIDER_CONTRACT_COMMAND = [
-  'apiome pact publish-provider-contract ./openapi.yaml \\',
-  '  --provider "Billing Service" \\',
-  '  --provider-app-version "$GIT_COMMIT" \\',
-  '  --branch "$GIT_BRANCH"',
-].join('\n');
-
 /**
  * The entry points, grouped by who is asking. Recording a pact from a hosted mock and serving pacts
  * as a mock join the consumer and provider groups with PFX-9; every other action the CLI has is
@@ -555,7 +548,7 @@ export const WAYS_IN: readonly WayInGroup[] = [
         id: 'publish-provider-contract',
         title: 'Publish a provider contract',
         description: 'Your OpenAPI or AsyncAPI, compared with every consumer’s pact.',
-        command: PROVIDER_CONTRACT_COMMAND,
+        route: PROVIDER_CONTRACT_ROUTE,
       },
       {
         id: 'verify',

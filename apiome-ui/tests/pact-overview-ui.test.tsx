@@ -248,6 +248,8 @@ describe('Contracts landing', () => {
     open();
     expect(await screen.findByTestId('ctx-publish')).toHaveAttribute('href', '/ade/dashboard/pacts/publish');
     expect(screen.getByTestId('ctx-way-publish-pact')).toHaveAttribute('href', '/ade/dashboard/pacts/publish');
+    // PFX-8.6 (#7303): the provider contract has its page now.
+    expect(screen.getByTestId('ctx-way-publish-provider-contract')).toHaveAttribute('href', '/ade/dashboard/pacts/provider-contracts/new');
 
     fireEvent.click(screen.getByTestId('ctx-way-migrate'));
     expect(await screen.findByTestId('ctx-command-dialog')).toHaveTextContent('apiome pact migrate');

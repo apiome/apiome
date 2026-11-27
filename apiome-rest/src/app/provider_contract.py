@@ -90,6 +90,8 @@ CODE_CONTRACT_NOT_FOUND = "provider-contract-not-found"
 CODE_REQUEST_INVALID = "provider-contract-request-invalid"
 CODE_UNSUPPORTED = "provider-contract-unsupported"
 CODE_SOURCE_NOT_FOUND = "provider-contract-source-not-found"
+#: PFX-8.6 (#7303): a ``contentUrl`` the pre-publish check could not read (refused, unreachable, too large).
+CODE_URL_UNREADABLE = "provider-contract-url-unreadable"
 
 #: Where a stored document came from.
 SOURCE_INLINE = "inline"

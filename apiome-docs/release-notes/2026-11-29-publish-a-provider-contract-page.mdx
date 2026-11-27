@@ -1,0 +1,29 @@
+---
+slug: publish-a-provider-contract-page
+title: "Publish a provider contract page with graded evidence"
+description: "Publish a provider contract from the browser and see each consumer's verdict first."
+authors: [apiome]
+---
+
+Bi-directional contract testing could only be started from the CLI. **Contracts** → **Publish a
+provider contract** now does what `apiome pact publish-provider-contract` does, from the browser —
+and shows what publishing would mean for each consumer before anything is saved. See
+[Publish from the UI](/ship/pact-broker/bi-directional#publish-from-the-ui).
+
+{/* truncate */}
+
+- **Three sources.** A project version (rendered from the canonical model), an uploaded OpenAPI or
+  AsyncAPI document with its format pill, or a URL read once and published as those bytes. An
+  unreadable document says where — *Could not read this file: line 42, …* — and cannot be published.
+- **Evidence as five choices, each labelled by strength.** Run Apiome's hosted verifier now, attach
+  a verifier's report, reuse a recorded contract-test run, the pipeline's exit code, or none yet. A
+  failed run publishes nothing and lists the failing operations. An unverified contract is marked
+  and never unblocks a deploy.
+- **If you publish now.** The verdict per consumer pact — **Fine**, **Unverified** or **Breaks**, with
+  the first difference and where that consumer is deployed — and **Nobody uses**, the operations no
+  pact touches. **Compare only** runs it and publishes nothing.
+- **The result dialog** lists the verdicts recorded and links to can-i-deploy for the new version.
+- **Every flag has a field**, and **The same, from anywhere** shows the page as a command, a GitHub
+  Actions step and the REST request.
+- **REST:** `POST …/pact-broker/contracts/provider/{provider}/version/{version}/check` reports what a
+  publish would record and stores nothing.

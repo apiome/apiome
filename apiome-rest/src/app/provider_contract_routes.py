@@ -27,7 +27,7 @@ request body.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Request
@@ -55,6 +55,7 @@ from .provider_contract import (
     CONTRACT_TYPE_ASYNCAPI,
     ProviderContractError,
     ProviderContractRecord,
+    ProviderContractToStore,
     PublishProviderContractRequest,
     SelfVerificationResults,
     check_request,
@@ -80,7 +81,7 @@ from .provider_contract_source import ResolvedSource, render_apiome_contract, re
 from .provider_contract_store import get_provider_contract, publish_provider_contract
 from .provider_verification_store import ProviderVerificationStoreError, get_report
 
-__all__ = ["router"]
+__all__ = ["parse_publish_body", "prepare_request_contract", "router", "self_verification_document"]
 
 router = APIRouter(prefix="/v1/tenants", tags=["pact-broker"])
 
@@ -354,6 +355,11 @@ def _parse_body(raw: bytes) -> PublishProviderContractRequest:
     return body
 
 
+#: The request parser and the ``selfVerification`` renderer, shared with the pre-publish check (PFX-8.6).
+parse_publish_body = _parse_body
+self_verification_document = _self_verification
+
+
 def _read_evidence(
     results: Optional[SelfVerificationResults],
     *,
@@ -404,6 +410,60 @@ def _read_evidence(
             max_bytes=settings.pact_evidence_max_bytes,
         )
     return unsent_evidence(bool(results.success), verifier=results.verifier, verifier_version=results.verifier_version)
+
+
+def prepare_request_contract(
+    body: PublishProviderContractRequest,
+    *,
+    provider: str,
+    auth_data: Dict[str, Any],
+    tenant_id: str,
+) -> Tuple[ProviderContractToStore, Evidence]:
+    """Turn a parsed publish request into the contract it would store, and its evidence.
+
+    The publish route and the pre-publish check (PFX-8.6, :mod:`app.provider_contract_check_routes`)
+    both call this, so a check reads the document and the evidence exactly as a publish would.
+    Nothing is written.
+
+    Args:
+        body: The parsed request (:func:`_parse_body`).
+        provider: The provider's name or handle (a bare ``apiomeVersion`` uses its binding).
+        auth_data: The authenticated principal (``versions:view`` for ``apiomeVersion``,
+            ``verification_evidence:view`` for a cited report).
+        tenant_id: The caller's tenant.
+
+    Returns:
+        The validated contract, with its stored self-verification results, and the evidence read.
+
+    Raises:
+        ProviderContractError: an unreadable document or report, or an unknown source or report.
+        HTTPException: 403 without the permission a source or a cited report needs.
+    """
+    source: Optional[ResolvedSource] = None
+    if body.apiome_version is not None:
+        enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW, target=body.apiome_version)
+        source = resolve_apiome_source(db, tenant_id, provider, parse_apiome_reference(body.apiome_version))
+    # PFX-2.4: read the evidence before anything is stored, so a bad report stores nothing.
+    evidence = _read_evidence(body.verification_results, auth_data=auth_data, tenant_id=tenant_id, source=source)
+    results = (
+        stored_verification_results(body.verification_results, evidence.to_dict())
+        if body.verification_results is not None
+        else None
+    )
+    if source is not None:
+        return render_apiome_contract(db, tenant_id, source, verification_results=results), evidence
+    document, content_type = parse_openapi(
+        decode_base64(body.content or "", "/content", "the contract content"),
+        content_type=body.content_type,
+        max_bytes=settings.pact_max_bytes,
+    )
+    contract = prepare_contract(
+        document,
+        content_type=content_type,
+        contract_type=body.contract_type,
+        verification_results=results,
+    )
+    return contract, evidence
 
 
 @router.put(
@@ -480,31 +540,9 @@ def publish_contract(
     actor = actor_from_auth(auth_data, user_id)
     try:
         body = _parse_body(raw)
-        source: Optional[ResolvedSource] = None
-        if body.apiome_version is not None:
-            enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW, target=body.apiome_version)
-            source = resolve_apiome_source(db, tenant_id, provider, parse_apiome_reference(body.apiome_version))
-        # PFX-2.4: read the evidence before anything is stored, so a bad report stores nothing.
-        evidence = _read_evidence(body.verification_results, auth_data=auth_data, tenant_id=tenant_id, source=source)
-        results = (
-            stored_verification_results(body.verification_results, evidence.to_dict())
-            if body.verification_results is not None
-            else None
+        contract, _evidence = prepare_request_contract(
+            body, provider=provider, auth_data=auth_data, tenant_id=tenant_id
         )
-        if source is not None:
-            contract = render_apiome_contract(db, tenant_id, source, verification_results=results)
-        else:
-            document, content_type = parse_openapi(
-                decode_base64(body.content or "", "/content", "the contract content"),
-                content_type=body.content_type,
-                max_bytes=settings.pact_max_bytes,
-            )
-            contract = prepare_contract(
-                document,
-                content_type=content_type,
-                contract_type=body.contract_type,
-                verification_results=results,
-            )
         outcome = publish_provider_contract(
             db,
             tenant_id,

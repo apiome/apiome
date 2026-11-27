@@ -23,6 +23,7 @@ import { findPreviousDistinct } from '@lib/pact-detail';
 import { collectPactNetwork } from '@lib/pact-network';
 import { retryAfterSeconds } from '@lib/pact-matrix';
 import { collectWebhooks } from '@lib/pact-webhooks';
+import type { RestCall } from '@lib/pact-provider-contract-proxy';
 
 /** What the browser is told when apiome-rest cannot be reached. */
 export const PACT_UNAVAILABLE = 'The Pact Broker is unavailable (apiome-rest not reachable). Try again shortly.';
@@ -236,4 +237,33 @@ async function answerWithReader<T>(run: (read: RestReader) => Promise<T>): Promi
     if (caught instanceof RollupError) return pactError(caught.status >= 400 ? caught.status : 502, caught.message);
     return pactError(503, PACT_UNAVAILABLE);
   }
+}
+
+/**
+ * Run a Publish-a-provider-contract handler (PFX-8.6, #7303) with REST calls made as the
+ * signed-in user in their workspace, and answer with what it returns.
+ *
+ * @param handler - Gets a {@link RestCall} below `/v1/tenants/{slug}/`; returns the status and body.
+ * @returns The answer, or the session's refusal (401 / 403) before any call.
+ */
+export async function answerWithRestCall(
+  handler: (call: RestCall) => Promise<{ status: number; body: Record<string, unknown> }>,
+): Promise<NextResponse> {
+  const resolved = await resolveConnectorTenant();
+  if ('error' in resolved) return resolved.error;
+  const call: RestCall = async (method, path, body) => {
+    try {
+      const rest = await fetch(tenantUrl(resolved.slug, path), {
+        method,
+        headers: { ...createRestAuthHeaders(resolved.user), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        cache: 'no-store',
+      });
+      return { status: rest.status, body: (await rest.json().catch(() => ({}))) as unknown };
+    } catch {
+      return null;
+    }
+  };
+  const answer = await handler(call);
+  return NextResponse.json(answer.body, { status: answer.status });
 }
