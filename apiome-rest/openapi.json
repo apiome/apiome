@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.689.0",
+    "version": "1.690.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -491,7 +491,7 @@
           "pacticipants"
         ],
         "summary": "List a pacticipant's labels",
-        "description": "The labels on this pacticipant, by name.\n\nRequires `pacts:view`.",
+        "description": "The labels on this pacticipant, by name.\n\nPass the previous page's `next_cursor` as `cursor` until `has_more` is false.\n\nRequires `pacts:view`.",
         "operationId": "list_labels_of_pacticipant_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__labels_get",
         "parameters": [
           {
@@ -515,6 +515,41 @@
               "description": "Pacticipant Ref schema."
             },
             "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Page size. At most 200.",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Page size. At most 200."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2048,
+                  "description": "Listapacticipantslabelscursor schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listapacticipantslabelscursor schema."
+                }
+              ],
+              "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page.",
+              "title": "Cursor"
+            },
+            "description": "Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page."
           },
           {
             "name": "authorization",
@@ -155293,6 +155328,27 @@
             "title": "Count",
             "description": "How many labels were returned.",
             "example": 1
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "Whether another page exists.",
+            "default": false,
+            "example": true
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for pacticipant label list."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for pacticipant label list."
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Pass as `cursor` to read the next page; null on the last page."
           }
         },
         "additionalProperties": false,
@@ -155301,7 +155357,7 @@
           "count"
         ],
         "title": "PacticipantLabelListResponse",
-        "description": "The labels of one pacticipant."
+        "description": "One page of a pacticipant's labels."
       },
       "PacticipantLabelRecord": {
         "properties": {

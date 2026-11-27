@@ -1,0 +1,26 @@
+---
+slug: pact-scale
+title: "The Pact matrix at 100,000 versions"
+description: "can-i-deploy, the matrix and the Verification page stay fast as history grows."
+authors: [apiome]
+---
+
+A workspace with 100,000 pacticipant versions, 250,000 pacts and 500,000 verification results now
+answers every matrix and `can-i-deploy` request in under 30 ms (p95), and the **Verification** page
+in about 11 ms instead of over half a second. See [Scale and performance](/ship/pact-broker/scale).
+
+{/* truncate */}
+
+- **Time follows applications, not history.** The matrix finds the integrations a query involves
+  by walking an index one partner at a time, reads a pacticipant's newest pacts in order from two
+  new indexes, and reads environments from their deployment records.
+- **A faster Verification page.** Each consumer's newest pact and each pact's newest result are
+  found directly, not from every publication of the provider. The stale-pact sweep and
+  **Verify all stale** use the same read.
+- **Every Pact list is paged.** A pacticipant's labels, `GET …/pacticipants/{pacticipant}/labels`,
+  now come a page at a time (`limit`, `cursor`, `has_more`, `next_cursor`), like every other list.
+- **Measure it yourself.** `apiome-rest/scripts/bench_pact_matrix.py --versions 10000` seeds the
+  large workspace on a scratch database and prints the percentiles.
+
+Upgrading runs `V452`, which adds two indexes on `pact_publication`; build them concurrently
+first on a large table. REST API 1.690.0.

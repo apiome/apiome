@@ -368,6 +368,34 @@ def test_the_workspace_labels_list_is_gated_and_paged(guard: MagicMock, store: D
     assert client.get("/v1/tenants/acme/pacticipant-labels", params={"cursor": "bad"}).status_code == 400
 
 
+def test_a_pacticipants_labels_are_paged(store: Dict[str, MagicMock]) -> None:
+    """PFX-6.6 (#6958): the labels of one pacticipant come a page at a time, like every list."""
+    store["list_pacticipant_labels"].return_value = [_label(name="team-a"), _label(name="team-b"), _label(name="x")]
+    first = client.get(f"{_BASE}/billing-service/labels", params={"limit": 2})
+    assert first.status_code == 200, first.text
+    body = first.json()
+    assert [label["name"] for label in body["labels"]] == ["team-a", "team-b"]
+    assert body["count"] == 2 and body["has_more"] is True and body["next_cursor"]
+    # The store is asked for one more than the page, from the start, for the caller's pacticipant.
+    kwargs = store["list_pacticipant_labels"].call_args.kwargs
+    assert kwargs == {"limit": 3, "cursor": None}
+    store["list_pacticipant_labels"].return_value = [_label(name="x")]
+    second = client.get(f"{_BASE}/billing-service/labels", params={"limit": 2, "cursor": body["next_cursor"]})
+    assert second.json()["labels"][0]["name"] == "x" and second.json()["has_more"] is False
+    assert second.json()["next_cursor"] is None
+    assert store["list_pacticipant_labels"].call_args.kwargs["cursor"] == ["team-b"]
+
+
+def test_a_bad_label_cursor_or_limit_is_refused_before_the_store(store: Dict[str, MagicMock]) -> None:
+    assert client.get(f"{_BASE}/billing-service/labels", params={"cursor": "bad"}).status_code == 400
+    assert client.get(f"{_BASE}/billing-service/labels", params={"limit": 0}).status_code == 422
+    # A cursor of the workspace label list does not continue a pacticipant's.
+    store["list_labels"].return_value = [{"name": "a"}, {"name": "b"}]
+    workspace = client.get("/v1/tenants/acme/pacticipant-labels", params={"limit": 1}).json()["next_cursor"]
+    assert client.get(f"{_BASE}/billing-service/labels", params={"cursor": workspace}).status_code == 400
+    assert store["list_pacticipant_labels"].call_count == 0
+
+
 def test_delete_passes_the_reason_and_force_and_the_actor(guard: MagicMock, store: Dict[str, MagicMock]) -> None:
     response = client.delete(f"{_BASE}/billing-service", params={"reason": "retired service", "force": "true"})
     assert response.status_code == 204

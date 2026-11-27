@@ -1469,6 +1469,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['create-webhook', 'repository_dispatch', 'GitHub Actions', 'pactbroker.pactUrl', 'signing secret', 'HMAC', 'dead-letter', 'retry', 'triggered'],
   },
   {
+    id: 'scale',
+    title: 'Scale and performance',
+    summary: 'How fast the matrix and verification console stay as pact history grows.',
+    page: 'apiome-docs/docs/ship/pact-broker/scale.mdx',
+    section: 'reference',
+    keywords: ['contracts', 'pact', 'matrix', 'benchmark', 'p95', 'latency', 'indexes', 'pagination', 'can-i-deploy', '100k'],
+  },
+  {
     id: 'secrets',
     title: 'Secrets for webhooks and targets',
     summary: 'Keep a token once and refer to it from webhooks and verification targets.',

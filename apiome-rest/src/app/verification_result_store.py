@@ -490,22 +490,34 @@ def latest_results_by_pact(
     """
     if not pacts:
         return {}
-    keys = sorted({f"{consumer_id}:{_normalise_sha(sha)}" for consumer_id, sha in pacts})
+    keys = sorted({(str(consumer_id), _normalise_sha(sha)) for consumer_id, sha in pacts})
+    # Start from the (consumer, sha) keys: each finds its pact version through its unique key and
+    # that version's results through their index (PFX-6.6). Matching on
+    # `consumer_id::text || ':' || sha` instead scanned every result of the provider.
     rows = (
         db.execute_query(
             _RESULT_SELECT
             + """
         WHERE r.id IN (
             SELECT DISTINCT ON (r2.pact_version_id) r2.id
-            FROM apiome.verification_result r2
-            JOIN apiome.pact_version pv2 ON pv2.id = r2.pact_version_id
+            FROM unnest(%s::uuid[], %s::text[]) k(consumer_id, sha)
+            JOIN apiome.pact_version pv2
+              ON pv2.consumer_id = k.consumer_id AND pv2.provider_id = %s::uuid AND pv2.sha = k.sha
+             AND pv2.tenant_id = %s::uuid
+            JOIN apiome.verification_result r2
+              ON r2.pact_version_id = pv2.id AND r2.tenant_id = %s::uuid AND r2.provider_id = %s::uuid
             JOIN apiome.pacticipant_version v2 ON v2.id = r2.provider_version_id AND v2.deleted_at IS NULL
-            WHERE r2.tenant_id = %s::uuid AND r2.provider_id = %s::uuid
-              AND (pv2.consumer_id::text || ':' || pv2.sha) = ANY(%s)
             ORDER BY r2.pact_version_id, r2.seq DESC
         )
         """,
-            (tenant_id, provider.id, keys),
+            (
+                [consumer_id for consumer_id, _ in keys],
+                [sha for _, sha in keys],
+                provider.id,
+                tenant_id,
+                tenant_id,
+                provider.id,
+            ),
         )
         or []
     )

@@ -1,0 +1,96 @@
+---
+title: Scale and performance
+description: How fast the matrix and verification console stay as pact history grows.
+sidebar_position: 6.9
+tags: [contracts, pact, performance, operations]
+---
+
+A Pact Broker gains a version every time a consumer or a provider builds. After a year of CI, an
+application can have tens of thousands of versions. The questions asked most often — **can I
+deploy?**, the matrix, and the **Verification** page — are answered in time that depends on how
+many applications a workspace has, not on how long their history is.
+
+## What is measured
+
+`apiome-rest/scripts/bench_pact_matrix.py` seeds a scratch database and times the requests a Pact
+client really sends, end to end after authentication. The budget is a p95 under **200 ms**.
+
+| Workspace | Applications | Versions | Pact versions | Verification results |
+| --- | --- | --- | --- | --- |
+| Small | 5 consumers, 5 providers | 4,000 | 10,000 | 20,000 |
+| Large | 5 consumers, 5 providers | 100,000 | 250,000 | 500,000 |
+
+## Results
+
+p95 in milliseconds, on the large workspace, before and after the November 2026 scale pass:
+
+| Request | Before | After |
+| --- | --- | --- |
+| `can-i-deploy` a consumer to an environment | 12.2 | 5.0 |
+| `can-i-deploy` a provider to an environment | 35.5 | 5.2 |
+| `can-i-deploy` to the latest versions | 3.7 | 4.7 |
+| `GET /can-i-deploy` (`--to-environment`) | 10.0 | 6.2 |
+| The matrix between two versions | 2.5 | 3.0 |
+| A consumer and provider's history (limit 100) | 24.8 | 17.5 |
+| Every row of one pacticipant (limit 100) | 44.9 | 26.4 |
+| The **Verification** page's status | 564.9 | 11.2 |
+
+On the small workspace every request stays under 25 ms.
+
+What changed:
+
+- **Integrations** — the pacticipants a query involves are found by walking an index one partner
+  at a time, rather than by reading every publication of the pacticipant.
+- **Rows** — a pacticipant's newest publications are read in order from two indexes (`V452`), so a
+  query stops at its `limit` instead of sorting the whole history.
+- **Environments** — the versions deployed or released to an environment are read from the
+  deployment records, not tested on every version.
+- **Verification status** — each consumer's newest pact, and each pact's newest result, are found
+  directly instead of from every publication and every result of the provider.
+
+The matrix's statements are prepared once per database connection (named statements), so a query
+does not pay to plan them again.
+
+## Pagination
+
+Every Pact list is bounded:
+
+- Apiome's lists of pacticipants, versions, branches and labels under
+  `/v1/tenants/{tenant}/pacticipants` — including one pacticipant's labels,
+  `GET …/pacticipants/{pacticipant}/labels` — come a page at a time. Pass `limit` (up to 200), and
+  while `has_more` is `true`, pass `next_cursor` back as `cursor`.
+- The matrix takes `limit` (default 100, up to 1,000), as the Pact Broker does.
+- The **Verification** page's status lists at most 500 consumers and says `truncated` when there
+  are more.
+
+## Run the benchmark yourself
+
+On a self-hosted Apiome, run it against a **scratch** database that has the migrations applied and
+nothing you care about:
+
+```bash
+createdb pfx_bench
+node apiome-db/dist/cli.js migrate --database-url postgresql:///pfx_bench
+cd apiome-rest
+DATABASE_URL=postgresql:///pfx_bench PYTHONPATH=src python scripts/bench_pact_matrix.py
+DATABASE_URL=postgresql:///pfx_bench PYTHONPATH=src python scripts/bench_pact_matrix.py --versions 10000
+```
+
+The second run seeds the large workspace (about 30 seconds). The script removes what it seeded,
+prints p50, p95 and max for each request, and exits `1` when a p95 is over budget.
+
+## For operators
+
+- **Upgrade.** `V452` adds two indexes on `pact_publication`. On a large table, build them
+  concurrently before upgrading — see the V452 note in
+  [Operating Apiome](../../admin/operating-apiome.mdx).
+- **Not yet measured at this scale.** A provider's `for-verification` request still reads every
+  publication for the provider before applying the consumer-version selectors. It is correct, but
+  it grows with history.
+
+## Related
+
+- [Matrix](./matrix.mdx) — query which versions were verified against which.
+- [Can I deploy?](./can-i-deploy.mdx) — the deployment check.
+- [Verification results and re-runs](./verification-console.mdx) — the **Verification** page.
+- [Labels, deletes and retention](./retention.mdx) — keep history small by deleting old versions.

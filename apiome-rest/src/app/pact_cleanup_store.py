@@ -101,6 +101,9 @@ PURGE_MAX_BATCHES = 20
 #: The order of :func:`list_labels`: by name.
 LABELS_ORDER = ListOrder("pacticipant-labels", (SortColumn("name", "text", ("name",)),))
 
+#: The labels of one pacticipant, by name (PFX-6.6): a page of them, so no list is unbounded.
+PACTICIPANT_LABELS_ORDER = ListOrder("pacticipant-label", (SortColumn("l.name", "text", ("name",)),))
+
 
 # ---------------------------------------------------------------------------------------------
 # Shared pieces
@@ -723,19 +726,29 @@ def list_labels(
     return [{"name": str(row["name"])} for row in rows]
 
 
-def list_pacticipant_labels(db: Any, pacticipant: PacticipantRecord) -> List[PacticipantLabelRecord]:
+def list_pacticipant_labels(
+    db: Any,
+    pacticipant: PacticipantRecord,
+    *,
+    limit: Optional[int] = None,
+    cursor: Optional[Sequence[Any]] = None,
+) -> List[PacticipantLabelRecord]:
     """The labels of one pacticipant, by name.
 
     Args:
         db: The database.
         pacticipant: The live pacticipant, already resolved in the caller's tenant.
+        limit: Labels to read; ``None`` reads every one (the purge and the HAL documents).
+        cursor: :data:`PACTICIPANT_LABELS_ORDER` values of the last label already seen.
 
     Returns:
         The labels.
     """
+    after_sql, after_params, limit_sql, limit_params = PACTICIPANT_LABELS_ORDER.window(limit, cursor)
     rows = db.execute_query(
-        _LABEL_SELECT + " WHERE l.pacticipant_id = %s::uuid ORDER BY l.name",
-        (pacticipant.id,),
+        _LABEL_SELECT
+        + f" WHERE l.pacticipant_id = %s::uuid{after_sql} ORDER BY {PACTICIPANT_LABELS_ORDER.order_by}{limit_sql}",
+        (pacticipant.id, *after_params, *limit_params),
     ) or []
     return [label_record_from_row(dict(row)) for row in rows]
 

@@ -20,8 +20,8 @@ of PFX-1.1 to 1.5 (apiome-db V432 to V435). Nothing here writes.
 5. Collapse (``latestby``); to an environment, give every version there its own row
    (:func:`app.pact_matrix.expand_unverified`); filter, set ignored rows aside, and sort.
 
-**Named statements.** The two statements every query runs — the rows and the version details —
-are prepared once per connection (``PREPARE`` / ``EXECUTE``), so a matrix query does not pay to
+**Named statements.** The statements every query runs — the integrations, the rows and the
+version details — are prepared once per connection (``PREPARE`` / ``EXECUTE``), so a matrix query does not pay to
 plan them again; on a small catalogue planning costs more than running them. See
 :func:`_execute_named`.
 
@@ -155,6 +155,8 @@ _ROW_NAMES = """
 _PUBLICATION_COLUMNS = (
     "p.id, p.consumer_id, p.provider_id, p.consumer_version_id, p.pact_version_id, p.revision, p.created_at"
 )
+#: The names :data:`_PUBLICATION_COLUMNS` gives its columns.
+_PUBLICATION_NAMES = _PUBLICATION_COLUMNS.replace("p.", "")
 
 
 def _row_from(source: str, join: str, matching: str, latest_flag: str) -> str:
@@ -201,20 +203,54 @@ _LIVE_RESULT = (
 #: A result is of a provider version the query asked about ($2 name-only ids, $3 version ids).
 _ASKED_ABOUT = "(r.provider_id = ANY($2::uuid[]) OR r.provider_version_id = ANY($3::uuid[]))"
 
+def _recent_publications(named: str, versions: str, condition: str, limit: str) -> str:
+    """The newest publications of the named consumers and of the named consumer versions.
+
+    The same rows as ``(consumer_id = ANY(named) OR consumer_version_id = ANY(versions)) AND
+    condition ORDER BY created_at DESC, id LIMIT limit``, written so neither side sorts every
+    publication (PFX-6.6): each named consumer is a ``LATERAL`` branch that reads its newest
+    publications in order from ``idx_pact_publication_consumer_recent`` and stops at the limit (an
+    ``= ANY`` cannot keep the index order on PostgreSQL 16), and the named versions — a handful of
+    publications each — are read through their unique key, without the consumers already read.
+
+    Args:
+        named: The placeholder of the consumer ids named without a version.
+        versions: The placeholder of the version ids named.
+        condition: More conditions on ``p`` (trusted SQL), or ``TRUE``.
+        limit: The placeholder of the row limit.
+
+    Returns:
+        A ``SELECT`` of :data:`_PUBLICATION_NAMES`.
+    """
+    return f"""
+        SELECT {_PUBLICATION_NAMES} FROM (
+            SELECT recent.* FROM unnest({named}::uuid[]) named(id)
+            CROSS JOIN LATERAL (SELECT {_PUBLICATION_COLUMNS}
+                                FROM apiome.pact_publication p
+                                WHERE p.consumer_id = named.id AND {condition} AND {_LIVE_PUBLICATION}
+                                ORDER BY p.created_at DESC, p.id
+                                LIMIT {limit}::bigint) recent
+            UNION ALL
+            SELECT {_PUBLICATION_COLUMNS}
+            FROM apiome.pact_publication p
+            WHERE p.consumer_version_id = ANY({versions}::uuid[]) AND NOT p.consumer_id = ANY({named}::uuid[])
+              AND {condition} AND {_LIVE_PUBLICATION}
+        ) publications
+        ORDER BY created_at DESC, id
+        LIMIT {limit}::bigint
+    """
+
+
+#: A publication between the selectors' pacticipants that touches one the caller named.
+_BETWEEN_NAMED = (
+    "p.provider_id = ANY($4::uuid[]) AND (p.consumer_id = ANY($5::uuid[]) OR p.provider_id = ANY($5::uuid[]))"
+)
+
 #: Rows between several selectors. $1 tenant, $2 ids of name-only selectors, $3 selected version
 #: ids, $4 every selector's pacticipant id, $5 the pacticipants the caller named, $6 limit,
 #: $7 latest result only.
 _ROWS_BETWEEN = f"""
-    WITH pubs AS (
-        SELECT {_PUBLICATION_COLUMNS}
-        FROM apiome.pact_publication p
-        WHERE (p.consumer_id = ANY($2::uuid[]) OR p.consumer_version_id = ANY($3::uuid[]))
-          AND p.provider_id = ANY($4::uuid[])
-          AND (p.consumer_id = ANY($5::uuid[]) OR p.provider_id = ANY($5::uuid[]))
-          AND {_LIVE_PUBLICATION}
-        ORDER BY p.created_at DESC, p.id
-        LIMIT $6::bigint
-    )
+    WITH pubs AS ({_recent_publications("$2", "$3", _BETWEEN_NAMED, "$6")})
     SELECT {_ROW_COLUMNS}
     {_row_from("pubs", "LEFT JOIN", _ASKED_ABOUT, "$7")}
     ORDER BY last_action_at DESC, p.created_at DESC, r.seq DESC NULLS LAST
@@ -223,26 +259,23 @@ _ROWS_BETWEEN = f"""
 
 #: Rows of one selector, as a consumer (every result of its pacts) and as a provider (the pacts it
 #: verified). $1 tenant, $2 its pacticipant id when name-only, $3 its version ids, $4 its
-#: pacticipant id, $5 limit, $6 latest result only.
+#: pacticipant id, $5 limit, $6 latest result only. The provider side reads the newest
+#: publications for it in order from ``idx_pact_publication_provider_recent`` (PFX-6.6).
 _ROWS_SINGLE = f"""
-    WITH as_consumer AS (
-        SELECT {_PUBLICATION_COLUMNS}
-        FROM apiome.pact_publication p
-        WHERE (p.consumer_id = ANY($2::uuid[]) OR p.consumer_version_id = ANY($3::uuid[]))
-          AND {_LIVE_PUBLICATION}
-        ORDER BY p.created_at DESC, p.id
-        LIMIT $5::bigint
+    WITH as_consumer AS ({_recent_publications("$2", "$3", "TRUE", "$5")}
     ), as_provider AS (
-        SELECT {_PUBLICATION_COLUMNS}
-        FROM apiome.pact_publication p
-        WHERE p.provider_id = ANY($4::uuid[])
-          AND {_LIVE_PUBLICATION}
-          AND EXISTS (SELECT 1 FROM apiome.verification_result r
-                      WHERE r.pact_version_id = p.pact_version_id
-                        AND (r.provider_id = ANY($2::uuid[]) OR r.provider_version_id = ANY($3::uuid[]))
-                        AND {_LIVE_RESULT})
-        ORDER BY p.created_at DESC, p.id
-        LIMIT $5::bigint
+        SELECT recent.* FROM unnest($4::uuid[]) named(id)
+        CROSS JOIN LATERAL (
+            SELECT {_PUBLICATION_COLUMNS}
+            FROM apiome.pact_publication p
+            WHERE p.provider_id = named.id
+              AND {_LIVE_PUBLICATION}
+              AND EXISTS (SELECT 1 FROM apiome.verification_result r
+                          WHERE r.pact_version_id = p.pact_version_id
+                            AND (r.provider_id = ANY($2::uuid[]) OR r.provider_version_id = ANY($3::uuid[]))
+                            AND {_LIVE_RESULT})
+            ORDER BY p.created_at DESC, p.id
+            LIMIT $5::bigint) recent
     )
     SELECT {_ROW_NAMES}
     FROM (
@@ -309,11 +342,21 @@ def _pacticipant_or_none(db: Any, tenant_id: str, name: Optional[str]) -> Option
     return {"id": record.id, "slug": record.slug, "name": record.name, "main_branch": record.main_branch}
 
 
+#: The versions of a pacticipant deployed to, or released and supported in, an environment.
+#: Read from the deployment and release rows (a handful) rather than tested on every version: as
+#: ``EXISTS (deployed) OR EXISTS (released)`` the filter ran once per version, newest first, and a
+#: pacticipant with 10,000 versions and one in production read all of them (PFX-6.6). Parameters:
+#: pacticipant id, tenant, environment name — twice.
 _IN_ENVIRONMENT = """
-    EXISTS (SELECT 1 FROM apiome.{table} s
-            JOIN apiome.pact_environment e ON e.id = s.environment_id AND e.tenant_id = s.tenant_id
-            WHERE s.version_id = v.id AND s.pacticipant_id = v.pacticipant_id AND s.{flag}
-              AND e.tenant_id = %s::uuid AND e.name = %s)
+    v.id IN (SELECT d.version_id FROM apiome.deployed_version d
+             JOIN apiome.pact_environment e ON e.id = d.environment_id AND e.tenant_id = d.tenant_id
+             WHERE d.pacticipant_id = %s::uuid AND d.currently_deployed
+               AND e.tenant_id = %s::uuid AND e.name = %s
+             UNION
+             SELECT s.version_id FROM apiome.released_version s
+             JOIN apiome.pact_environment e ON e.id = s.environment_id AND e.tenant_id = s.tenant_id
+             WHERE s.pacticipant_id = %s::uuid AND s.currently_supported
+               AND e.tenant_id = %s::uuid AND e.name = %s)
 """
 
 
@@ -341,10 +384,9 @@ def _find_versions(
         where.append("v.number = %s")
         params.append(selector.version_number)
     if selector.environment_name:
-        deployed = _IN_ENVIRONMENT.format(table="deployed_version", flag="currently_deployed")
-        released = _IN_ENVIRONMENT.format(table="released_version", flag="currently_supported")
-        where.append(f"({deployed} OR {released})")
-        params += [tenant_id, selector.environment_name, tenant_id, selector.environment_name]
+        where.append(_IN_ENVIRONMENT)
+        environment = [pacticipant["id"], tenant_id, selector.environment_name]
+        params += environment + environment
     if selector.tag:
         where.append(
             "EXISTS (SELECT 1 FROM apiome.pacticipant_version_tag t"
@@ -413,32 +455,81 @@ def _resolve(
 # Integrations
 # ---------------------------------------------------------------------------------------------
 
-_INTEGRATION_NAMES = """
+#: The integrations a query involves (PFX-6.6: one named statement). $1 tenant, $2 the
+#: pacticipants named without a version, $3 the version ids named, $4 every selector's pacticipant,
+#: $5 every integration of them (``True``) or only those between them (``False``).
+#:
+#: The partners of a named pacticipant are found by a **loose index scan**: a recursive walk that
+#: jumps from one distinct partner to the next through an index — the providers of a consumer
+#: through ``pact_version_content_key (consumer_id, provider_id, …)``, the consumers of a provider
+#: through ``idx_pact_publication_pair (provider_id, consumer_id)``. Each step reads one index
+#: entry — each step is a row comparison, ``(a, b) > (x, y) ORDER BY a, b LIMIT 1``, which only the
+#: two-column index can answer, so the planner cannot pick the other index and filter (it would
+#: read all of it for a pacticipant with no partners) — so the cost follows the number of
+#: partners, not the length of their history: at
+#: 100,000 versions the ``DISTINCT`` over every publication this replaces took ~45 ms. (A
+#: per-pair ``EXISTS`` does not work: the planner flattens it into a hash semi-join over the whole
+#: table.) Each pair found is then kept only when one of its publications is of a live consumer
+#: version (PFX-1.11), found the same way.
+_INTEGRATIONS = """
+    WITH RECURSIVE providers_of AS (
+        SELECT named.id AS consumer_id, step.provider_id
+        FROM unnest($2::uuid[]) named(id)
+        CROSS JOIN LATERAL (SELECT pv.consumer_id, pv.provider_id FROM apiome.pact_version pv
+                            WHERE pv.consumer_id >= named.id
+                            ORDER BY pv.consumer_id, pv.provider_id LIMIT 1) step
+        WHERE step.consumer_id = named.id
+        UNION ALL
+        SELECT w.consumer_id, step.provider_id
+        FROM providers_of w
+        CROSS JOIN LATERAL (SELECT pv.consumer_id, pv.provider_id FROM apiome.pact_version pv
+                            WHERE (pv.consumer_id, pv.provider_id) > (w.consumer_id, w.provider_id)
+                            ORDER BY pv.consumer_id, pv.provider_id LIMIT 1) step
+        WHERE step.consumer_id = w.consumer_id
+    ), consumers_of AS (
+        SELECT named.id AS provider_id, step.consumer_id
+        FROM unnest($4::uuid[]) named(id)
+        CROSS JOIN LATERAL (SELECT p.provider_id, p.consumer_id FROM apiome.pact_publication p
+                            WHERE p.provider_id >= named.id
+                            ORDER BY p.provider_id, p.consumer_id LIMIT 1) step
+        WHERE $5::boolean AND step.provider_id = named.id
+        UNION ALL
+        SELECT w.provider_id, step.consumer_id
+        FROM consumers_of w
+        CROSS JOIN LATERAL (SELECT p.provider_id, p.consumer_id FROM apiome.pact_publication p
+                            WHERE (p.provider_id, p.consumer_id) > (w.provider_id, w.consumer_id)
+                            ORDER BY p.provider_id, p.consumer_id LIMIT 1) step
+        WHERE step.provider_id = w.provider_id
+    ), by_version AS (
+        SELECT DISTINCT p.consumer_id, p.provider_id
+        FROM apiome.pact_publication p
+        JOIN apiome.pacticipant_version lv ON lv.id = p.consumer_version_id AND lv.deleted_at IS NULL
+        WHERE p.consumer_version_id = ANY($3::uuid[])
+    ), pairs AS (
+        SELECT consumer_id, provider_id, TRUE AS required, FALSE AS live FROM providers_of
+        UNION ALL
+        SELECT consumer_id, provider_id, FALSE, FALSE FROM consumers_of
+        UNION ALL
+        SELECT consumer_id, provider_id, TRUE, TRUE FROM by_version
+    )
     SELECT i.required, c.id::text AS consumer_id, c.slug AS consumer_slug, c.name AS consumer_name,
            c.main_branch AS consumer_main_branch,
            p.id::text AS provider_id, p.slug AS provider_slug, p.name AS provider_name,
            p.main_branch AS provider_main_branch
-    FROM ({pairs}) i
-    JOIN apiome.pacticipant c ON c.id = i.consumer_id AND c.tenant_id = %s::uuid AND c.deleted_at IS NULL
-    JOIN apiome.pacticipant p ON p.id = i.provider_id AND p.tenant_id = %s::uuid AND p.deleted_at IS NULL
+    FROM pairs i
+    JOIN apiome.pacticipant c ON c.id = i.consumer_id AND c.tenant_id = $1::uuid AND c.deleted_at IS NULL
+    JOIN apiome.pacticipant p ON p.id = i.provider_id AND p.tenant_id = $1::uuid AND p.deleted_at IS NULL
+    -- The pair's first publication of a live consumer version, walked in index order (the same
+    -- row comparison): it is this pair's only when the pair has one.
+    LEFT JOIN LATERAL (SELECT lp.provider_id, lp.consumer_id
+                       FROM apiome.pact_publication lp
+                       JOIN apiome.pacticipant_version lv
+                         ON lv.id = lp.consumer_version_id AND lv.deleted_at IS NULL
+                       WHERE (lp.provider_id, lp.consumer_id) >= (i.provider_id, i.consumer_id)
+                       ORDER BY lp.provider_id, lp.consumer_id LIMIT 1) alive ON NOT i.live
+    WHERE (NOT i.required OR $5::boolean OR i.provider_id = ANY($4::uuid[]))
+      AND (i.live OR (alive.provider_id = i.provider_id AND alive.consumer_id = i.consumer_id))
     ORDER BY c.name, p.name
-"""
-
-_AS_CONSUMER = """
-    SELECT DISTINCT p.consumer_id, p.provider_id, TRUE AS required
-    FROM apiome.pact_publication p
-    WHERE (p.consumer_id = ANY(%s::uuid[]) OR p.consumer_version_id = ANY(%s::uuid[]))
-      AND EXISTS (SELECT 1 FROM apiome.pacticipant_version lv
-                  WHERE lv.id = p.consumer_version_id AND lv.deleted_at IS NULL)
-"""
-
-_AS_PROVIDER = """
-    SELECT DISTINCT pv.consumer_id, pv.provider_id, FALSE AS required
-    FROM apiome.pact_version pv
-    WHERE pv.provider_id = ANY(%s::uuid[]) AND pv.tenant_id = %s::uuid
-      AND EXISTS (SELECT 1 FROM apiome.pact_publication lp
-                  JOIN apiome.pacticipant_version lv ON lv.id = lp.consumer_version_id AND lv.deleted_at IS NULL
-                  WHERE lp.pact_version_id = pv.id)
 """
 
 
@@ -464,13 +555,9 @@ def _find_integrations(
     name_only = _array([s.pacticipant_id for s in specified if s.version_id is None and not s.version_missing])
     version_ids = _array([s.version_id for s in specified])
     all_ids = _array([s.pacticipant_id for s in specified])
-    if involving:
-        pairs = f"{_AS_CONSUMER} UNION ALL {_AS_PROVIDER}"
-        params: Tuple[Any, ...] = (name_only, version_ids, all_ids, tenant_id)
-    else:
-        pairs = f"{_AS_CONSUMER} AND p.provider_id = ANY(%s::uuid[])"
-        params = (name_only, version_ids, all_ids)
-    rows = db.execute_query(_INTEGRATION_NAMES.format(pairs=pairs), params + (tenant_id, tenant_id)) or []
+    rows = _execute_named(
+        db, "pfx_matrix_integrations", _INTEGRATIONS, (tenant_id, name_only, version_ids, all_ids, involving)
+    )
     integrations: Dict[Tuple[str, str], Integration] = {}
     pacticipants: Dict[str, _Pacticipant] = {}
     for row in rows:
