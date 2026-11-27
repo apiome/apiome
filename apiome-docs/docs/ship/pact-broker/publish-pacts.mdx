@@ -90,6 +90,32 @@ One publish request carries one consumer version and its pacts, one per provider
 - **Publishing again is safe.** The same pact for the same consumer version changes nothing.
 - **A different pact for the same consumer version is refused** with `409 pact-content-conflict`.
   Publish it under a new version number.
+- **The consumer's declared surface is refreshed.** A pact you publish also updates the
+  [consumer contract](../contract-testing-and-ci-gates.mdx#one-consumer-model) in the provider's
+  project — see below.
+
+### One consumer model
+
+A consumer pacticipant and a **consumer** of a project are one thing. When a **new** pact is
+published for a provider that is bound to a project, Apiome resolves its interactions against that
+project's latest version and stores the result as the consumer's **next contract revision**
+(revision N + 1). The consumer is registered in the project under the pacticipant's handle the first
+time, so a CI job publishing for a new service works on its first run.
+
+- **Nothing is dropped.** An interaction that names a retired endpoint, a status the specification
+  does not declare or a removed field stays on the revision as **unresolved**, with a reason code.
+- **Unbound providers are reported.** If the provider is not bound to a project there is nothing to
+  resolve against, so the publish succeeds and the response says
+  `provider-not-bound-to-project`. Bind it by setting the pacticipant's **project**
+  (`PATCH …/pacticipants/<provider>`), then publish again.
+- **Re-runs are quiet.** The same pact against the same project version stores no new revision.
+- **A publish never fails because of it.** If the refresh cannot run, the pact is still published
+  and the response reports `error`; publish again to retry.
+
+The bulk publish response adds `consumerContracts` — one entry per pact with `status`
+(`refreshed`, `unchanged`, `skipped` or `error`), `revision`, `resolvedCount`, `unresolvedCount`
+and, when not refreshed, `reasonCode` and `reason` — and the same lines in `notices`, which the
+`pact-broker` CLI prints.
 
 ### What makes two pacts the same
 

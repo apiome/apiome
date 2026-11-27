@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.691.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.692.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 107 operations
 
@@ -169,6 +169,7 @@ Publish every pact one build of a consumer produced, in one request — what `pa
 - **Content is stored once.** A pact identical to one an earlier consumer version published reuses that pact version (`pactVersionSha`), so the provider has one thing to verify.
 - **All or nothing.** If any contract is refused, nothing of the request is stored.
 - **Safe to repeat.** Publishing the same pacts for the same version again changes nothing. Publishing a *different* pact for a version that already has one is `409`.
+- **One consumer model.** Each new pact refreshes the consumer's declared surface in the provider's project (its next contract revision) when the provider pacticipant is bound to a project; interactions that cannot be placed stay on the revision with reason codes. The response lists the outcome in `consumerContracts` and as notices; a pact that cannot be placed is reported with a reason, never dropped.
 - **Bi-directional comparison.** When a provider has published a provider contract, each pact is compared with the contracts of its latest provider version, the head of each provider branch and every provider version deployed or released. Each comparison is stored as a verification result with `kind: bidirectional`; the response lists them in `comparisons` and as notices.
 
 Pact specification 1.x to 4.x is accepted and stored as published. `merge` conflict handling and non-Pact specifications are refused with `422 pact-publish-unsupported`.

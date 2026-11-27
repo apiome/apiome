@@ -53,6 +53,7 @@ from .bidirectional_store import compare_published_pacts
 from .bidirectional_verification import ComparisonRun, run_notices
 from .config import settings
 from .consumer_contract_store import actor_from_auth
+from .pact_consumer_sync import ConsumerRefreshRun, refresh_consumer_contracts, refresh_notices
 from .database import db
 from .pact_audit import audited_write
 from .pact_broker_auth import validate_broker_authentication
@@ -772,13 +773,19 @@ def _publish_notices(base: str, outcome: PublishOutcome) -> List[Dict[str, str]]
     return notices
 
 
-def _publish_result(base: str, outcome: PublishOutcome, comparisons: Optional[ComparisonRun] = None) -> Dict[str, Any]:
+def _publish_result(
+    base: str,
+    outcome: PublishOutcome,
+    comparisons: Optional[ComparisonRun] = None,
+    consumer_contracts: Optional[ConsumerRefreshRun] = None,
+) -> Dict[str, Any]:
     """Render a bulk publish result the way a Pact Broker returns one.
 
     Args:
         base: The broker base URL.
         outcome: What the request stored.
         comparisons: The bi-directional comparisons the publish ran (PFX-2.3), if any.
+        consumer_contracts: How the publish refreshed the consumer's declared surface (PFX-7.1).
 
     Returns:
         The response body: ``notices`` (and the same lines as ``logs``), the embedded pacticipant
@@ -790,6 +797,8 @@ def _publish_result(base: str, outcome: PublishOutcome, comparisons: Optional[Co
     notices = _publish_notices(base, outcome)
     if comparisons is not None:
         notices += run_notices(comparisons)
+    if consumer_contracts is not None:
+        notices += refresh_notices(consumer_contracts)
     body: Dict[str, Any] = {
         "notices": notices,
         # The older spelling of the same lines, which some Pact clients still read.
@@ -833,6 +842,8 @@ def _publish_result(base: str, outcome: PublishOutcome, comparisons: Optional[Co
     }
     if comparisons is not None and comparisons.entries:
         body["comparisons"] = comparisons.to_dict()
+    if consumer_contracts is not None and consumer_contracts.entries:
+        body["consumerContracts"] = consumer_contracts.to_dict()
     return body
 
 
@@ -1045,6 +1056,11 @@ router.add_api_route(
         "- **All or nothing.** If any contract is refused, nothing of the request is stored.\n"
         "- **Safe to repeat.** Publishing the same pacts for the same version again changes "
         "nothing. Publishing a *different* pact for a version that already has one is `409`.\n"
+        "- **One consumer model.** Each new pact refreshes the consumer's declared surface in the "
+        "provider's project (its next contract revision) when the provider pacticipant is bound to "
+        "a project; interactions that cannot be placed stay on the revision with reason codes. The "
+        "response lists the outcome in `consumerContracts` and as notices; a pact that cannot be "
+        "placed is reported with a reason, never dropped.\n"
         "- **Bi-directional comparison.** When a provider has published a provider contract, each pact "
         "is compared with the contracts of its latest provider version, the head of each provider "
         "branch and every provider version deployed or released. Each comparison is stored as a "
@@ -1122,7 +1138,10 @@ def publish_contracts(
     fire_publish_events(db, tenant_id, base, outcome)
     post_publish_statuses(db, tenant_id, base, outcome)
     comparisons = compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id))
-    return HalJSONResponse(_publish_result(base, outcome, comparisons))
+    consumer_contracts = refresh_consumer_contracts(
+        db, tenant_id, tenant_slug, outcome, actor=actor_from_auth(auth_data, user_id)
+    )
+    return HalJSONResponse(_publish_result(base, outcome, comparisons, consumer_contracts))
 
 
 @router.put(
@@ -1201,6 +1220,7 @@ def publish_pact(
     post_publish_statuses(db, tenant_id, base, outcome)
     # The comparisons are read in the matrix; this response stays the pact, as on a Pact Broker.
     compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id))
+    refresh_consumer_contracts(db, tenant_id, tenant_slug, outcome, actor=actor_from_auth(auth_data, user_id))
     return HalJSONResponse(
         _pact_document(base, published.pact),
         status_code=201 if published.created else 200,

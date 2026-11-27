@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.868.0] - 2026-11-26
+
+### Added
+- **One consumer model (PFX-7.1, #6961).** OpenAPI 1.692.0; no migration. Publishing a pact now
+  refreshes the consumer's declared surface (`app.pact_consumer_sync`): `PUT …/pact-broker/pacts/provider/{p}/consumer/{c}/version/{v}` and
+  `POST …/pact-broker/contracts/publish` resolve each *new* pact against the provider's project (the
+  pacticipant's `project`) and store the consumer's next contract revision (CTG-4.1 rule 2) through
+  `app.pact_contract_import`; interactions that cannot be placed stay on the revision with their
+  reason codes. The consumer is registered in the project under the pacticipant's handle on first
+  publish and the pacticipant is bound to it (`consumer_id`).
+  - The bulk response gains `consumerContracts` (per pact: `refreshed` / `unchanged` / `skipped` /
+    `error`, `revision`, `resolvedCount`, `unresolvedCount`, `reasonCode`, `reason`) and matching
+    `notices`. A provider not bound to a project, or a project without a renderable version, is
+    `skipped` with `provider-not-bound-to-project` / `project-specification-unavailable` — never
+    silently dropped. The same pact and specification revision is `unchanged` (no new revision).
+  - The refresh runs after the publish commits and never fails it: a fault is `error`
+    (`refresh-failed`) and the next publish retries. Tenant isolation: provider and consumer are
+    resolved in the caller's tenant; `pacts:create` governs the publish.
+
 ## [1.867.0] - 2026-11-26
 
 ### Added

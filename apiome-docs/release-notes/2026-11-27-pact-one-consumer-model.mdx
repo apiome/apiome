@@ -1,0 +1,17 @@
+---
+slug: pact-one-consumer-model
+title: "Publishing a pact updates the consumer's contract"
+description: "A published pact refreshes the consumer's declared surface as its next contract revision."
+authors: [apiome]
+---
+
+Publishing a pact to Apiome now also declares what that consumer uses. See
+[One consumer model](/ship/pact-broker/publish-pacts#one-consumer-model).
+
+{/* truncate */}
+
+- Each new pact becomes the consumer's next contract revision in the provider's project, so
+  consumer-aware breaking analysis includes consumers that publish pacts.
+- Interactions that cannot be placed are kept with reason codes; a provider that is not bound to a
+  project is reported in the publish response (`consumerContracts`) and its notices.
+- Publishing the same pact again adds no revision. OpenAPI 1.692.0.

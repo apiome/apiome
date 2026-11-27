@@ -29,6 +29,7 @@ from app.config import settings
 from app.main import app
 from app.pact_broker_auth import validate_broker_authentication
 from app.pact_broker_routes import _publish_limiter
+from app.pact_consumer_sync import ConsumerRefresh, ConsumerRefreshRun
 from app.pact_environment import EnvironmentRecord
 from app.pact_publication import (
     CODE_PACT_CONFLICT,
@@ -152,11 +153,13 @@ def _auth() -> Iterator[None]:
 def allowed() -> Iterator[MagicMock]:
     """Every permission granted; yields the ``enforce_permission`` mock.
 
-    The bi-directional comparison a publish runs (PFX-2.3) is stood in with an empty run.
+    The bi-directional comparison a publish runs (PFX-2.3) and the consumer-model refresh
+    (PFX-7.1) are stood in with empty runs.
     """
     with (
         patch(f"{_ROUTES}.enforce_permission", return_value="test-user-id") as enforce,
         patch(f"{_ROUTES}.compare_published_pacts", return_value=ComparisonRun()),
+        patch(f"{_ROUTES}.refresh_consumer_contracts", return_value=ConsumerRefreshRun([])),
     ):
         yield enforce
 
@@ -580,6 +583,54 @@ def test_a_single_pact_publish_also_runs_the_comparisons(allowed: MagicMock) -> 
     assert response.status_code == 201, response.text
     assert compare.call_args.args[1:] == (_TENANT, publish.return_value)
     assert "comparisons" not in response.json()
+
+
+def test_bulk_publish_reports_the_consumer_contract_refresh(allowed: MagicMock) -> None:
+    run = ConsumerRefreshRun(
+        [
+            ConsumerRefresh("billing-service", "ledger-api", "refreshed", revision=2, resolved_count=3),
+            ConsumerRefresh(
+                "billing-service", "tax-api", "skipped", reason_code="provider-not-bound-to-project", reason="unbound"
+            ),
+        ]
+    )
+    with (
+        patch(f"{_ROUTES}.publish_pacts", return_value=_outcome()) as publish,
+        patch(f"{_ROUTES}.refresh_consumer_contracts", return_value=run) as refresh,
+    ):
+        body = client.post(f"{_BASE}/contracts/publish", json=_bulk()).json()
+    args, kwargs = refresh.call_args
+    assert args[1] == _TENANT and args[3] is publish.return_value
+    assert kwargs["actor"].user_id == "test-user-id"
+    assert [c["status"] for c in body["consumerContracts"]] == ["refreshed", "skipped"]
+    assert body["consumerContracts"][1]["reasonCode"] == "provider-not-bound-to-project"
+    assert [n["type"] for n in body["notices"][-2:]] == ["success", "warning"]
+
+
+def test_bulk_publish_without_a_refresh_adds_no_field(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.publish_pacts", return_value=_outcome()):
+        body = client.post(f"{_BASE}/contracts/publish", json=_bulk()).json()
+    assert "consumerContracts" not in body
+
+
+def test_a_single_pact_publish_also_refreshes_the_consumer(allowed: MagicMock) -> None:
+    with (
+        patch(f"{_ROUTES}.publish_pacts", return_value=_outcome()),
+        patch(f"{_ROUTES}.refresh_consumer_contracts", return_value=ConsumerRefreshRun([])) as refresh,
+    ):
+        response = client.put(f"{_PAIR}/version/1.0.0", json=_DOCUMENT)
+    assert response.status_code == 201, response.text
+    refresh.assert_called_once()
+
+
+def test_a_refused_publish_refreshes_nothing() -> None:
+    denial = HTTPException(status_code=403, detail="Permission denied")
+    with (
+        patch(f"{_ROUTES}.enforce_permission", side_effect=denial),
+        patch(f"{_ROUTES}.refresh_consumer_contracts") as refresh,
+    ):
+        assert client.post(f"{_BASE}/contracts/publish", json=_bulk()).status_code == 403
+    refresh.assert_not_called()
 
 
 def test_a_refused_publish_compares_nothing() -> None:

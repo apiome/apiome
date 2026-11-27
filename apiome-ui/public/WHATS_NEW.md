@@ -6,6 +6,7 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- **Publishing a pact updates the consumer's contract** — a new pact published to the Pact Broker API is now declared as the consumer's next contract revision in the provider's project, so breaking-change analysis sees consumers that publish pacts; interactions that cannot be placed are kept with a reason, and a provider not yet bound to a project is reported in the publish response
 - **Self-host Apiome as your Pact Broker** — `docker-compose.pact-broker.yml` runs a standalone broker (Postgres, the REST API and automatic HTTPS) answering the Pact CLI, the Pact libraries and `can-i-deploy`, with sizing guidance, encrypted scheduled backups and a step-by-step upgrade with rollback
 - **Move from Pact Broker or PactFlow** — `apiome pact migrate --from <your broker>` imports a Pact Broker or PactFlow workspace: pacticipants and labels, versions with branches and tags, pacts, verification results, environments, current deployments and releases, and webhooks, each with its original date. Run it with `--dry-run` first to see what would be imported and what cannot be carried over (PactFlow secrets are listed for re-entry); running it again changes nothing and resumes where it stopped
 - **A faster Pact Verification page and matrix** — with 100,000 versions in a workspace the **Verification** page now loads its status in about 11 ms instead of over half a second, and every matrix and `can-i-deploy` answer stays under 30 ms
