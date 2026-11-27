@@ -65,6 +65,7 @@ def _scopes(method: str, path: str) -> Set[str]:
         ("GET", f"{PB}/webhooks", {READ}),
         ("POST", f"{PB}/pacts/provider/Ledger/for-verification", {READ}),
         ("POST", f"{PB}/pacts/check", {READ}),
+        ("POST", f"{PB}/contracts/provider/Ledger/version/1.0.0/check", {READ}),
         ("GET", f"{PV}/providers/Ledger/provider-states", {READ}),
         ("POST", f"{PV}/providers/Ledger/provider-states/check", {READ}),
         # Consumer and deploy pipeline.

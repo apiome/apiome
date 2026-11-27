@@ -102,9 +102,27 @@
     },
     {
       "cli": "publish-provider-contract",
-      "ui": null,
+      "ui": "/ade/dashboard/pacts/provider-contracts/new",
       "rest": "PUT /v1/tenants/{tenant}/pact-broker/contracts/provider/{provider}/version/{version}",
-      "reason": "No screen publishes a provider contract yet; the Publish a provider contract page ships with PFX-8.6 (#7303)."
+      "fields": {
+        "contract": "The contract → Upload (or URL, fetched once and published inline)",
+        "--provider": "Whose version this is → Provider",
+        "--provider-app-version": "Whose version this is → Provider version",
+        "--apiome-version": "The contract → A project version (Project and Version)",
+        "--content-type": "The format pill (detected from the file)",
+        "--branch": "Whose version this is → Branch",
+        "--tag": "Whose version this is → Tags",
+        "--build-url": "More options → Build URL",
+        "--evidence": "Evidence → Attach a verifier’s report",
+        "--evidence-content-type": "Evidence → Attach a verifier’s report (the report’s type, detected from the file)",
+        "--evidence-report": "Evidence → Reuse an Apiome contract-test run",
+        "--verification-exit-code": "Evidence → My pipeline vouches for it → Exit code (also with an attached report)",
+        "--verifier": "Evidence → Verifier (pipeline or attached report)",
+        "--verifier-version": "Evidence → Verifier version (pipeline or attached report)",
+        "--fail-on-unverified": "The Unverified mark in the result dialog (a publish is never blocked here)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     },
     {
       "cli": "publish-verification-results",
@@ -147,6 +165,21 @@
       "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/verification",
       "cli": null,
       "reason": "Verify all stale is a console shortcut over recorded results; in a pipeline `apiome pact verify` with the default selectors re-verifies the same pacts."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/provider-contracts",
+      "rest": "PUT /v1/tenants/{tenant}/pact-broker/contracts/provider/{provider}/version/{version}",
+      "ui": "/ade/dashboard/pacts/provider-contracts/new",
+      "cli": "publish-provider-contract"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/provider-contracts/check",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/contracts/provider/{provider}/version/{version}/check",
+      "ui": "/ade/dashboard/pacts/provider-contracts/new",
+      "cli": null,
+      "reason": "Compare only is a read: it reports what a publish would record and stores nothing. No apiome pact command runs it yet; a pipeline publishes and reads can-i-deploy instead."
     },
     {
       "method": "POST",

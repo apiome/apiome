@@ -14,9 +14,9 @@ Apiome compares every pact that needs it with the contract, by the rules in
 [Comparison rules](./comparison-rules.mdx), as soon as either side publishes. Each comparison is
 stored as a verification result, and the matrix and [can-i-deploy](./can-i-deploy.mdx) read it
 like one a Pact verifier published. A contract counts only when the provider's
-[self-verification evidence](#self-verification-evidence) says the provider matches it. There is
-no screen for provider contracts; the **Pact comparisons** page shows each comparison's
-[fidelity report](#read-the-fidelity-report).
+[self-verification evidence](#self-verification-evidence) says the provider matches it. Publish
+from a pipeline with the CLI or the REST API, or [from the UI](#publish-from-the-ui); the **Pact
+comparisons** page shows each comparison's [fidelity report](#read-the-fidelity-report).
 
 ## Before you start
 
@@ -34,6 +34,82 @@ You need:
 
 You do **not** need to register the provider first. The first contract that names it registers
 it as a [pacticipant](./concepts.mdx).
+
+## Publish from the UI
+
+The **Publish a provider contract** page does what `apiome pact publish-provider-contract` does,
+from the browser — and shows the verdict for each consumer before anything is saved. Open
+**Contracts**, find **I provide an API** and **click “Publish a provider contract”** (or go to
+`/ade/dashboard/pacts/provider-contracts/new`).
+
+<Screenshot id="pact-provider-contract" alt="The Publish a provider contract page: The contract from the project Billing API version 2.7.0 with an OpenAPI 3.1 pill, Whose version this is with provider Billing Service, version 2.7.0+9f31c20 and branch main, and the five evidence choices with their strength. Beside them, If you publish now: 2 of 3 consumers stay compatible, Orders UI breaks because POST /invoices no longer returns currency and Orders UI 3.3.2 is in production; then Nobody uses: 5 of 12 operations appear in no pact."/>
+
+### 1. The contract
+
+Choose one of the tabs under **The contract**:
+
+| Tab | What it does |
+| --- | --- |
+| **A project version** | Pick the **Project** and the **Version**. Apiome renders the version as OpenAPI 3.1 from the canonical model — the same as `--apiome-version billing-api@2.7.0`. |
+| **Upload** | **Drop** an OpenAPI or AsyncAPI document (`.yaml`, `.yml` or `.json`) on the box, or **click “Browse files”**. The pill beside the title says what was read, for example **OpenAPI 3.1**. |
+| **URL** | Type the **Specification URL**. Apiome reads it **once** when you **click “Compare only”** (public addresses only) and publishes those exact bytes. To follow a file as it changes, publish from the pipeline instead. |
+
+A document that cannot be published says why under the box — for example *Could not read this
+file: line 42, mapping values are not allowed here*, or *This is Swagger 2.0* — and **Publish
+contract** stays disabled.
+
+### 2. Whose version this is
+
+Type the **Provider** (the pacticipant consumers name in their pacts — it is registered on the first
+publish), the **Provider version** (a commit SHA is ideal, for example `2.7.0+9f31c20`), the
+**Branch** and any **Tags**. The **Build URL** is under **More options**.
+
+### 3. Evidence
+
+A spec is a claim. Choose how the claim is backed — each choice is labelled with its strength:
+
+| Choice | Strength | What you give | The same as |
+| --- | --- | --- | --- |
+| **Run it now against a provider** | Strong | A **Target** (a [verification target](../contract-testing-and-ci-gates.mdx#check-a-live-deployment-v2)). Apiome's hosted verifier calls it and checks every operation, read-only by default. Needs **A project version**. | Running provider verification, then `--evidence-report <id>` |
+| **Attach a verifier's report** | Strong | A JUnit XML, Newman JSON or Schemathesis NDJSON report; optionally the verifier, its version and its exit code. | `--evidence report.xml` |
+| **Reuse an Apiome contract-test run** | Strong | A **Run** already recorded for this version. | `--evidence-report <id>` |
+| **My pipeline vouches for it** | Weak | The **Verifier**, its **Version** and the **Exit code** (`0` is success). | `--verifier … --verification-exit-code 0` |
+| **None yet** | None | Nothing. The contract is **unverified**: its verdicts read *unverified* and never unblock a deploy. | No evidence flag |
+
+**Run it now** publishes **only when the run passes**. When it fails, nothing is published: the
+page lists the failing operations and the report the run was recorded as, so you can fix the
+provider and run again.
+
+### If you publish now
+
+The aside compares the contract with every pact a publish would compare it with — each
+consumer's main-branch pact, the latest on this branch and everything deployed or released — and
+**stores nothing**. It refreshes as you fill the form (**click “Compare only”** for a URL, or to run
+it on demand):
+
+- **The ring** — how many consumers stay compatible, for example **2 of 3 consumers stay compatible**.
+- **One row per consumer pact** — **Fine**, **Unverified** or **Breaks**, with the first difference
+  (*POST /invoices: no longer returns currency*) and where that consumer version is deployed.
+- **Nobody uses** — the operations no pact touches: what the provider can change freely, as far as
+  contracts know.
+
+With no consumers yet the aside reads *No pacts to compare with. The verdicts appear the moment a
+consumer publishes.* A version that already has a different contract says so — *2.7.0+9f31c20
+already has a different contract — use the new commit's version* — and nothing is sent.
+
+You can publish even when a consumer breaks: publishing records the truth, and
+[can-i-deploy](./can-i-deploy.mdx) is what stops the version reaching an environment.
+
+### Publish
+
+**Click “Publish contract”.** The result dialog says how many verdicts were recorded as compatible,
+incompatible or unverified, and **Can I deploy 2.7.0+9f31c20?** opens can-i-deploy for the new
+version. Bi-directional verdicts send no webhooks or commit statuses yet; consumers see them in the
+matrix and can-i-deploy.
+
+**The same, from anywhere** beside the form shows the page as an `apiome pact
+publish-provider-contract` command, a GitHub Actions step and the REST request, and lists what the
+command cannot carry (a URL, **Run it now**) with the reason.
 
 ## Publish an OpenAPI document
 
@@ -429,6 +505,35 @@ Deleting the Apiome project or version a contract was rendered from does not del
 Its `projectId` or `versionId` becomes `null`, and `project` and `version` still say where it came
 from. Deleting the provider version or the provider deletes its contract.
 
+## Check a contract before publishing
+
+`POST` the publish body to the same URL with `/check` on the end — or, in place of `content`, a
+`contentUrl` for Apiome to read the document from once — and Apiome answers with what the publish
+would record, **storing nothing**. It is what the page's **If you publish now** aside and **Compare
+only** call:
+
+```bash
+curl -sS -X POST "$PACT_BROKER_BASE_URL/contracts/provider/Billing%20Service/version/2.7.0%2B9f31c20/check" \
+  -H "Authorization: Bearer $PACT_BROKER_TOKEN" -H "Content-Type: application/json" \
+  -d '{"apiomeVersion": "billing-api@2.7.0", "branch": "main"}'
+```
+
+| Field | What it is |
+| --- | --- |
+| `results` | One entry per consumer pact a publish would compare with: `consumer`, `consumerVersion`, `sha`, the `environments` that consumer version is in, `verdict` and `success` (what the publish would store, evidence policy included), and its first `failures` (`interaction`, `operation`, `message`; `moreFailures` counts the rest). A pact that was not compared has `success: null` and a `reason`. |
+| `summary` | `compared`, `compatible`, `incompatible`, `notCompared`, `consumers`, `unverified`, and `publishable` — `false` when this version already published a different contract (the publish would be `409`). |
+| `coverage` | The contract's `operations`, how many a compared pact `used`, and the `unused` ones (at most 50; `unusedMore` counts the rest). `null` for an AsyncAPI contract, with `coverageReason`. |
+| `existing` | The contract this version already published (`contentSha`, `sameContent`), or `null`. |
+| `selfVerification` | The evidence as the publish would read it. |
+| `fetched` | With `contentUrl`: the `url`, the `bytes` read and the `content` (base64) to publish inline. |
+| `ignored` | `tags` and `buildUrl` are accepted and not used by a check; each is named here. |
+
+An unknown provider is not an error: it has no pacts yet (`provider.exists: false`). A
+`contentUrl` that is refused (private and loopback addresses are), cannot be reached or is too
+large is `422 provider-contract-url-unreadable`. Checks share the workspace's pre-publish check
+budget (`429 pact-check-rate-limited`). The check needs `pacts:view`; an API key needs the
+`pact:read` scope.
+
 ## When a contract is refused
 
 Every refusal carries a stable `code` in `detail`. When the problem is in one place, `pointer` is
@@ -579,6 +684,8 @@ Publishing can also answer the [publish refusals](./publish-pacts.mdx), such as
 | Publish an uploaded document | `pacts:create` | — | ✓ | ✓ | ✓ |
 | Publish from an Apiome version | `pacts:create` and `versions:view` | — | ✓ | ✓ | ✓ |
 | Cite an Apiome provider-verification report | `pacts:create` and `verification_evidence:view` | — | ✓ | ✓ | ✓ |
+| Check a contract before publishing (**Compare only**) | `pacts:view` (and `versions:view` for a project version) | ✓ | ✓ | ✓ | ✓ |
+| **Run it now** before publishing | `pacts:create`, `versions:view` and `verification_evidence:create` | — | ✓ | ✓ | ✓ |
 | List comparisons and read a fidelity report | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | Export a declared consumer surface as a pact | `consumer_contracts:view` and `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | Publish a declared consumer surface | `consumer_contracts:view` and `pacts:create` | — | ✓ | ✓ | ✓ |

@@ -909,6 +909,19 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
             "and stores nothing (PFX-8.4, #7301)."
         ),
     ),
+    _e(
+        _G_APIOME,
+        "/contracts/provider/{provider}/version/{providerVersion}/check",
+        "Check a provider contract before publishing it",
+        "POST",
+        "POST",
+        used_by="The Publish a provider contract page",
+        note=(
+            "Not a Pact Broker endpoint. Takes the publish body (or `contentUrl`) and reports what the "
+            "publish would record against each consumer's pact, the operations no pact uses, and a "
+            "conflicting earlier contract; stores nothing (PFX-8.6, #7303)."
+        ),
+    ),
 )
 
 

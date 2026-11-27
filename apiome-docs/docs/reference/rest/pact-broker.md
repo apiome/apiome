@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 109 operations."
+description: "REST endpoints tagged pact-broker: 110 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.698.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.699.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 109 operations
+Tag: `pact-broker` · 110 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -157,6 +157,56 @@ Request body for publish a provider contract.
 | 413 | `provider-contract-too-large`: the document or the request is over the size limit. `provider-contract-evidence-too-large`: the self-verification report is over `APIOME_PACT_EVIDENCE_MAX_BYTES`. | — |
 | 422 | `provider-contract-invalid`: the document is not OpenAPI 3.0, 3.1 or 3.2 (or, as `contractType: asyncapi`, not AsyncAPI 2.x / 3.x) — `detail.pointer` is the JSON Pointer of the problem in the document (`/swagger` for Swagger 2.0, `/openapi`, `/asyncapi`, the first meta-schema error, or the first structural problem of an AsyncAPI document). `provider-contract-request-invalid` / `provider-contract-unsupported`: a field of the request (`detail.pointer` locates it). `provider-contract-source-not-found`: `apiomeVersion` names no project or version of this workspace. `provider-contract-evidence-unsupported`: the report's `contentType` is not one a report is read as. `provider-contract-evidence-invalid`: the report is not what its type says (XML that does not parse or is not JUnit, a DTD, JSON that is not JSON, text that is not UTF-8). `provider-contract-evidence-report-not-found`: `providerVerificationReportId` names no report of this workspace. | — |
 | 429 | `pact-publish-rate-limited`: over the workspace's publish budget; see `Retry-After`. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-broker/contracts/provider/{provider}/version/{provider_version}/check` {#check-provider-contract-v1-tenants-tenant-slug-pact-broker-contracts-provider-provider-version-provider-version-check-post}
+
+**Check a provider contract before publishing it**
+
+Say what publishing this provider contract would record, and store nothing. Send the body of the publish (`PUT …/contracts/provider/{provider}/version/{providerVersion}`) — or `contentUrl` instead of `content` to read the document from a URL once (public addresses only; the bytes come back in `fetched` so the same document can be published).
+
+- **The pacts a publish would compare with**: each consumer's main-branch pact, the pacts deployed or released, the latest pact of each consumer on `branch`, and the pacts compared before with a contract of that branch — compared with the same engine and evidence policy, so `results[].verdict` and `success` are what the publish would store (`unverified` when the evidence does not pass). Each result names the consumer version's `environments` and its first failures.
+- **`coverage`**: the contract's operations, and in `unused` the ones no compared pact touches (OpenAPI only; `coverageReason` says why it is `null`).
+- **`existing`**: the contract this version already published — `sameContent: false` means the publish would be refused with `409`; `summary.publishable` says so.
+- **`selfVerification`**: the evidence as a publish would read it.
+
+An unknown provider is not an error: it has no pacts yet (`provider.exists: false`). Requires `pacts:view`, `versions:view` with `apiomeVersion`, `verification_evidence:view` with `providerVerificationReportId`. Not a Pact Broker endpoint.
+
+Operation id: `check_provider_contract_v1_tenants__tenant_slug__pact_broker_contracts_provider__provider__version__provider_version__check_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `provider_version` | path | string | yes | Path parameter identifying the provider version segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for check a provider contract before publishing it.
+
+- `application/json` — object
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `content` | string | no | The document, base64-encoded. |
+| `contentUrl` | string (uri) | no | Read the document from this http(s) URL, once, instead of `content`. The bytes come back in `fetched.content` to publish inline. |
+| `contractType` | enum `"oas"`, `"asyncapi"` | no | Contract Type. |
+| `contentType` | string | no | Content Type. |
+| `apiomeVersion` | string | no | `<project>@<version>`. |
+| `branch` | string | no | Selects the branch's pacts, as a publish does. |
+| `verificationResults` | object | no | As for the publish: read into `selfVerification`, never stored. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for check a provider contract before publishing it. | `application/json` object |
+| 413 | `provider-contract-too-large`: the document or the request is over the size limit. | — |
+| 422 | As for the publish (`provider-contract-invalid` with the pointer into the document, `provider-contract-request-invalid`, the evidence refusals), and `provider-contract-url-unreadable` for a `contentUrl` that is refused or cannot be read. | — |
+| 429 | `pact-check-rate-limited`: over the workspace's check budget; see `Retry-After`. | — |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-broker/contracts/publish` {#publish-contracts-v1-tenants-tenant-slug-pact-broker-contracts-publish-post}
 

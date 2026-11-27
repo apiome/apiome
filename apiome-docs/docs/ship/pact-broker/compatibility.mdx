@@ -76,7 +76,7 @@ that pact, version or pacticipant does not exist.
 
 {/* pact-broker-compat:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_pact_broker_compat_doc.py */}
 
-Checked against Pact Broker **2.124.0**: 104 endpoints — **40** supported, **6** partial, **0** planned, **58** not planned.
+Checked against Pact Broker **2.124.0**: 105 endpoints — **41** supported, **6** partial, **0** planned, **58** not planned.
 
 ### Index
 
@@ -251,6 +251,7 @@ Checked against Pact Broker **2.124.0**: 104 endpoints — **40** supported, **6
 | Endpoint | Apiome serves | Not served | Status | Notes |
 | --- | --- | --- | --- | --- |
 | `/pacts/check` — Check a pact against provider versions before publishing | `POST` | — | ✅ Supported | Used by `apiome pact check`, the Publish page. Not a Pact Broker endpoint. Compares an unpublished pact with the provider contracts of the versions `against` names (`main`, `deployed:<env>`, `version:<n>`, `draft:<revision>`) and stores nothing (PFX-8.4, #7301). |
+| `/contracts/provider/{provider}/version/{providerVersion}/check` — Check a provider contract before publishing it | `POST` | — | ✅ Supported | Used by The Publish a provider contract page. Not a Pact Broker endpoint. Takes the publish body (or `contentUrl`) and reports what the publish would record against each consumer's pact, the operations no pact uses, and a conflicting earlier contract; stores nothing (PFX-8.6, #7303). |
 
 {/* pact-broker-compat:end */}
 

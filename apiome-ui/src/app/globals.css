@@ -47545,3 +47545,210 @@ tr[data-selected="true"] > td:first-child {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Publish a provider contract — PFX-8.6 (#7303). Shares the Publish page's cards, fields and
+ * aside (`.ppub*`); these are the evidence option cards, the consumer ring and the coverage bar.
+ * ------------------------------------------------------------------------------------------- */
+
+.ppc-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ppc-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ppc-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  cursor: pointer;
+}
+
+.ppc-option:hover {
+  border-color: var(--border-strong);
+}
+
+.ppc-option:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ppc-option.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ppc-option__radio {
+  margin-block-start: 0.1875rem;
+  accent-color: var(--accent);
+}
+
+.ppc-option__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 0;
+}
+
+.ppc-option__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ppc-option__title {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ppc-option__desc {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.ppc-option-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+}
+
+.ppc-option-panel:empty {
+  display: none;
+}
+
+.ppc-drop--small {
+  padding-block: var(--space-3);
+}
+
+.ppc-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ppc-span {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.ppc-callout {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--honey-soft);
+  color: var(--honey-ink);
+  font-size: var(--fs-sm);
+}
+
+.ppc-callout a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.ppc-aside__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ppc-headline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ppc-headline__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ppc-ring {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border: 4px solid var(--border);
+  border-radius: 999px;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ppc-ring--ok {
+  border-color: var(--ok);
+}
+
+.ppc-ring--warn {
+  border-color: var(--warn);
+}
+
+.ppc-ring--danger {
+  border-color: var(--danger);
+}
+
+.ppc-bar {
+  inline-size: 100%;
+  block-size: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  accent-color: var(--accent);
+  appearance: none;
+}
+
+.ppc-bar::-webkit-progress-bar {
+  border-radius: 999px;
+  background: var(--bg-subtle);
+}
+
+.ppc-bar::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.ppc-bar::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.ppc-failed {
+  border-color: var(--danger);
+}
+
+.ppc-result__line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+
+.ppc-result__line--neutral {
+  color: var(--fg-muted);
+}
+
+@media (max-width: 640px) {
+  .ppc-grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

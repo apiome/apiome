@@ -198,6 +198,12 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
     ("POST", re.compile(_PACT_BROKER_PATH + r"/pacts/provider/[^/]+/for-verification/?$"), API_KEY_SCOPE_PACT_READ),
     # PFX-8.4 (#7301): the pre-publish check compares and stores nothing, so it is a read.
     ("POST", re.compile(_PACT_BROKER_PATH + r"/pacts/check/?$"), API_KEY_SCOPE_PACT_READ),
+    # PFX-8.6 (#7303): so is the provider-contract check.
+    (
+        "POST",
+        re.compile(_PACT_BROKER_PATH + r"/contracts/provider/[^/]+/version/[^/]+/check/?$"),
+        API_KEY_SCOPE_PACT_READ,
+    ),
     ("GET", re.compile(_PACT_VERIFIER_PATH + r"(/.*)?$"), API_KEY_SCOPE_PACT_READ),
     # The pacticipant registry's reads (PFX-1.1), which `apiome pact list-pacticipants` and
     # `describe-version --latest` call. Its writes stay full-access.

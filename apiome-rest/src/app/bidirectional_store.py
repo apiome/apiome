@@ -442,6 +442,76 @@ def _pacts_for_contract(
     return [_Pact(c.consumer_id, c.consumer_name, c.version_number, c.sha) for c in ordered]
 
 
+#: The provider version id used for a contract that is not published yet: no real version has it,
+#: so the branch history query excludes nothing.
+UNPUBLISHED_VERSION_ID = "00000000-0000-0000-0000-000000000000"
+
+
+@dataclass(frozen=True)
+class PreviewEntry:
+    """One pact an unpublished provider contract would be compared with, and what the comparison says.
+
+    Attributes:
+        consumer: The consumer's name.
+        consumer_version: The consumer version that published the pact.
+        sha: The pact's content address.
+        environments: Where that consumer version is deployed or released, by name.
+        comparison: What a publish would store for the pair; ``None`` when the pact is over the limit.
+        reason: Why the pair was not compared (``comparison`` is ``None``).
+    """
+
+    consumer: str
+    consumer_version: Optional[str]
+    sha: str
+    environments: Tuple[str, ...]
+    comparison: Optional[StoredComparison]
+    reason: Optional[str] = None
+
+
+def preview_provider_contract(
+    db: Any, tenant_id: str, provider: PacticipantRecord, target: ContractTarget, contract: Any
+) -> List[PreviewEntry]:
+    """Compare a provider contract that is not stored with the pacts a publish would compare it with.
+
+    The pre-publish check (PFX-8.6, :mod:`app.provider_contract_check`) calls this: the same pact
+    selection and the same comparison (:func:`compare_with_target`, evidence policy included) as
+    :func:`compare_provider_contract`, and nothing is written.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        provider: The provider.
+        target: The provider version as it would be published (its branches and evidence;
+            ``version_id`` :data:`UNPUBLISHED_VERSION_ID` when it does not exist yet).
+        contract: The OpenAPI or AsyncAPI document.
+
+    Returns:
+        One entry per pact version, in a stable order; those over the limit carry a ``reason``.
+    """
+    _, candidates = list_pact_candidates(db, tenant_id, provider.id)
+    by_pair = {(c.consumer_id, c.sha): c for c in candidates}
+    documents = _Documents(db)
+    entries: List[PreviewEntry] = []
+    for position, pact in enumerate(_pacts_for_contract(db, tenant_id, provider, target, candidates)):
+        candidate = by_pair.get((pact.consumer_id, pact.sha))
+        environments = tuple(
+            sorted({*(candidate.deployed_to if candidate else ()), *(candidate.released_in if candidate else ())})
+        )
+
+        def entry(comparison: Optional[StoredComparison], reason: Optional[str] = None) -> PreviewEntry:
+            return PreviewEntry(pact.consumer_name, pact.consumer_version, pact.sha, environments, comparison, reason)
+
+        if position >= MAX_PACTS_PER_CONTRACT:
+            entries.append(entry(None, f"over the limit of {MAX_PACTS_PER_CONTRACT} pacts compared per publish"))
+            continue
+        found = db.execute_query(_PACT_VERSION_SELECT, (pact.consumer_id, provider.id, pact.sha)) or []
+        if not found:
+            entries.append(entry(None, "the pact version no longer exists"))
+            continue
+        entries.append(entry(compare_with_target(documents.pact(found[0]["id"]), contract, target)))
+    return entries
+
+
 def compare_provider_contract(
     db: Any, tenant_id: str, provider_ref: str, version_number: str, *, actor: ConsumerActor
 ) -> ComparisonRun:

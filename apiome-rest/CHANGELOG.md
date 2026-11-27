@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.875.0] - 2026-11-29
+
+### Added
+- **Check a provider contract before publishing it (PFX-8.6, #7303).** OpenAPI 1.699.0; no migration. New
+  `POST /v1/tenants/{t}/pact-broker/contracts/provider/{provider}/version/{providerVersion}/check` takes the
+  publish body (`content`, `contractType`, `contentType`, `apiomeVersion`, `branch`, `verificationResults`) —
+  or `contentUrl` in place of `content`, read once through the SSRF-guarded client (public addresses only, at
+  most `APIOME_PACT_MAX_BYTES`; the bytes come back in `fetched.content` to publish inline) — and reports what
+  the publish would record, **storing nothing**: one `results` entry per pact the publish would compare with
+  (the same selection and `compare_with_target`, evidence policy included) with `verdict`, `success`, the
+  consumer version's `environments` and its first 10 `failures`; `coverage` (the contract's operations and the
+  ones no compared pact uses, OpenAPI only); `existing` (a different earlier contract makes
+  `summary.publishable` false — the publish would be `409`); and `selfVerification` as the publish reads it.
+  `tags` / `buildUrl` are accepted and named in `ignored`. An unknown provider has no pacts
+  (`provider.exists: false`). A `contentUrl` that cannot be read is `422 provider-contract-url-unreadable`.
+  Requires `pacts:view` (`versions:view` with `apiomeVersion`, `verification_evidence:view` with a cited report);
+  tenant-scoped; a restricted API key needs `pact:read`; shares the pre-publish check budget
+  (`429 pact-check-rate-limited`). Catalogued under **Apiome additions**. The publish route's parse-and-read
+  step is now `provider_contract_routes.prepare_request_contract`, shared with the check;
+  `bidirectional_store.preview_provider_contract` compares an unstored contract.
+
 ## [1.874.0] - 2026-11-29
 
 ### Added
