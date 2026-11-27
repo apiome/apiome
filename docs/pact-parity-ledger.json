@@ -182,6 +182,14 @@
       "reason": "Compare only is a read: it reports what a publish would record and stores nothing. No apiome pact command runs it yet; a pipeline publishes and reads can-i-deploy instead."
     },
     {
+      "method": "PUT",
+      "bff": "/api/pact/provider-contracts/sources",
+      "rest": "PUT /v1/tenants/{tenant}/pacticipants/{pacticipant}/contract-sources",
+      "ui": "/ade/dashboard/pacts/provider-contracts/new",
+      "cli": null,
+      "reason": "A standing source is set once, not per build: apiome pact publish-provider-contract publishes one version, and a pipeline that publishes every version needs no standing source."
+    },
+    {
       "method": "POST",
       "bff": "/api/pact/publish",
       "rest": "POST /v1/tenants/{tenant}/pact-broker/contracts/publish",

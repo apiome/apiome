@@ -21,12 +21,19 @@
  * failing operations are listed and nothing is stored). The result dialog lists the verdicts
  * recorded, says what was notified, and links to can-i-deploy.
  *
+ * **Standing sources** (PFX-8.7, #7304): **Do this on every publish** on the project tab makes each
+ * published version of the project the provider's contract (saved with the publish; a provider
+ * bound to no project is bound to it), and the *Repository* tab follows a file of a registered
+ * repository — **Follow this file** saves it, and every push publishes it with the commit as the
+ * version. Under the provider, **Published automatically** says where its contract already comes
+ * from, with REST's warnings and a way to stop each source (new publishes only).
+ *
  * A role without `pacts:create` sees the explanation and the command block only.
  */
 
 import * as React from 'react';
 import Link from 'next/link';
-import { FileCheck2, FileUp, FolderKanban, Link2, Upload } from 'lucide-react';
+import { FileCheck2, FileUp, FolderKanban, GitBranch, Link2, Upload } from 'lucide-react';
 import { Alert, Badge, Button, CommandBlock, Input, Label, Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -50,15 +57,20 @@ import {
   type ProviderContractForm,
   type PublishAnswer,
 } from '@lib/pact-provider-contract';
+import { REPOSITORY_NO_PREVIEW, followedNotice, type ContractSources, type RepositoryChoice, type SourcesPatch } from '@lib/pact-contract-sources';
 import { ContractsTabs } from '../pactOverview/ContractsTabs';
 import { fetchProjects, type ProjectChoice } from '../pactPublish/publishApi';
 import { ContractResultDialog, EvidenceOptions, FailedRunCard, PublishNowAside, type AsideState } from './ProviderContractPanels';
+import { FollowProjectToggle, RepositoryFields, StandingSourcesNote } from './StandingSources';
 import {
   checkProviderContract,
   fetchReports,
+  fetchRepositories,
+  fetchSources,
   fetchTargets,
   fetchVersions,
   publishProviderContract,
+  saveSources,
   reportLabel,
   type ReportChoice,
   type TargetChoice,
@@ -191,6 +203,11 @@ export function ProviderContractClient() {
   const [showProblems, setShowProblems] = React.useState(false);
   const [failedRun, setFailedRun] = React.useState<Extract<PublishAnswer, { published: false }> | null>(null);
   const [result, setResult] = React.useState<Extract<PublishAnswer, { published: true }> | null>(null);
+  const [repositories, setRepositories] = React.useState<Loaded<RepositoryChoice>>(null);
+  const [sources, setSources] = React.useState<ContractSources | null>(null);
+  const [savingSources, setSavingSources] = React.useState(false);
+  const [followLine, setFollowLine] = React.useState<{ tone: 'ok' | 'warn'; text: string } | null>(null);
+  const following = form.source === 'repository';
 
   const edit = (patch: Partial<ProviderContractForm>) => {
     setForm((current) => ({ ...current, ...patch }));
@@ -242,9 +259,53 @@ export function ProviderContractClient() {
     };
   }, [canWrite, form.evidence, form.source, form.project, form.version]);
 
+  // The registered repositories, when the Repository tab is chosen.
+  React.useEffect(() => {
+    if (!canWrite || !following || repositories !== null) return;
+    let live = true;
+    void fetchRepositories().then((answer) => live && setRepositories('error' in answer ? { error: answer.error } : answer));
+    return () => {
+      live = false;
+    };
+  }, [canWrite, following, repositories]);
+
+  // Where the named provider's contract already comes from, once its name has settled.
+  const providerName = form.provider.trim();
+  React.useEffect(() => {
+    setSources(null);
+    if (!canWrite || !providerName) return;
+    let live = true;
+    const timer = setTimeout(() => {
+      void fetchSources(providerName).then((answer) => live && setSources(answer && !('error' in answer) ? answer : null));
+    }, CHECK_DELAY_MS);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [canWrite, providerName]);
+
+  /** Change the provider's standing sources; answers REST's stored sources, or why not. */
+  const changeSources = async (patch: SourcesPatch): Promise<ContractSources | { error: string }> => {
+    setSavingSources(true);
+    const answer = await saveSources(providerName, patch);
+    setSavingSources(false);
+    if ('error' in answer) return { error: answer.error };
+    setSources(answer);
+    return answer;
+  };
+
+  const stopSource = async (patch: SourcesPatch, what: string) => {
+    setNotice(null);
+    const answer = await changeSources(patch);
+    if ('error' in answer) return setProblem(answer.error);
+    setProblem(null);
+    setNotice(`${what} New publishes stop; contracts already published stay.`);
+  };
+
   const problems = formProblems(form);
   // The check does not depend on the evidence inputs that Run it now adds later, or on tags / build URL.
-  const checkBody = problems.length === 0 ? checkRequest(form) : null;
+  // A repository source publishes nothing now, so there is nothing to check yet.
+  const checkBody = problems.length === 0 && !following ? checkRequest(form) : null;
   const checkKey = checkBody ? JSON.stringify(checkBody) : '';
 
   const runCheck = React.useCallback(async (body: ContractRequestBody, key: string): Promise<CheckAnswer | null> => {
@@ -279,10 +340,26 @@ export function ProviderContractClient() {
     setNotice('Compared and nothing was published. The verdicts are beside the form.');
   };
 
+  const follow = async () => {
+    setShowProblems(true);
+    setNotice(null);
+    if (problems.length) return setProblem(problems[0].message);
+    setBusy('publish');
+    const answer = await changeSources({
+      repository: { repositoryId: form.repositoryId, path: form.repositoryPath.trim(), branch: form.repositoryBranch.trim() },
+    });
+    setBusy(null);
+    if ('error' in answer) return setProblem(answer.error);
+    setProblem(null);
+    setNotice(followedNotice(answer));
+  };
+
   const publish = async () => {
+    if (following) return follow();
     setShowProblems(true);
     setNotice(null);
     setFailedRun(null);
+    setFollowLine(null);
     if (problems.length) return setProblem(problems[0].message);
     setBusy('publish');
     let answer = checked?.key === checkKey ? checked.answer : null;
@@ -305,6 +382,15 @@ export function ProviderContractClient() {
       setFailedRun(published);
       return setProblem(published.message);
     }
+    // Do this on every publish: saved once the provider exists (the publish registered it).
+    if (form.source === 'project' && form.followProject) {
+      const followed = await changeSources({ onProjectPublish: true, bindProject: form.project.trim() });
+      setFollowLine(
+        'error' in followed
+          ? { tone: 'warn', text: `Not published on every publish: ${followed.error}` }
+          : { tone: 'ok', text: `Each published version of ${project?.name ?? form.project} now becomes ${published.provider}’s contract.` },
+      );
+    }
     setResult(published);
   };
 
@@ -316,6 +402,7 @@ export function ProviderContractClient() {
     setShowProblems(false);
     setProblem(null);
     setNotice(null);
+    setFollowLine(null);
   };
 
   const detected = form.source === 'upload' && form.file ? detectContract(form.file.text, form.file.name) : null;
@@ -346,7 +433,13 @@ export function ProviderContractClient() {
               <Button variant="outline" asChild>
                 <Link href={CONTRACTS_ROUTE}>Cancel</Link>
               </Button>
-              <Button variant="outline" onClick={() => void compareOnly()} disabled={busy !== null} title="Compares and publishes nothing" data-testid="ppc-compare">
+              <Button
+                variant="outline"
+                onClick={() => void compareOnly()}
+                disabled={busy !== null || following}
+                title={following ? REPOSITORY_NO_PREVIEW : 'Compares and publishes nothing'}
+                data-testid="ppc-compare"
+              >
                 {busy === 'check' ? 'Comparing…' : 'Compare only'}
               </Button>
             </>
@@ -355,8 +448,16 @@ export function ProviderContractClient() {
         primaryAction={
           canWrite ? (
             <Button onClick={() => void publish()} disabled={busy !== null || Boolean(detected?.problem)} data-testid="ppc-publish">
-              <FileCheck2 aria-hidden />
-              {busy === 'publish' ? (form.evidence === 'run' ? 'Verifying, then publishing…' : 'Publishing…') : 'Publish contract'}
+              {following ? <GitBranch aria-hidden /> : <FileCheck2 aria-hidden />}
+              {following
+                ? busy === 'publish'
+                  ? 'Saving…'
+                  : 'Follow this file'
+                : busy === 'publish'
+                  ? form.evidence === 'run'
+                    ? 'Verifying, then publishing…'
+                    : 'Publishing…'
+                  : 'Publish contract'}
             </Button>
           ) : undefined
         }
@@ -412,6 +513,10 @@ export function ProviderContractClient() {
                           <Link2 aria-hidden className="ppub-tab__glyph" />
                           URL
                         </TabsTrigger>
+                        <TabsTrigger value="repository">
+                          <GitBranch aria-hidden className="ppub-tab__glyph" />
+                          Repository
+                        </TabsTrigger>
                       </TabsList>
                       <TabsContent value="project" className="ppub-panel">
                         {projects && 'error' in projects ? <p className="ppub-hint ppub-hint--danger">{projects.error}</p> : null}
@@ -454,6 +559,12 @@ export function ProviderContractClient() {
                           </div>
                         </div>
                         <p className="ppub-hint">Rendered from the canonical model as OpenAPI 3.1, the same document the version’s schema download serves.</p>
+                        <FollowProjectToggle
+                          checked={form.followProject}
+                          projectName={project?.name ?? null}
+                          providerName={form.provider}
+                          onChange={(followProject) => edit({ followProject })}
+                        />
                       </TabsContent>
                       <TabsContent value="upload" className="ppub-panel">
                         <DropFile
@@ -488,6 +599,9 @@ export function ProviderContractClient() {
                           {hint('url')}
                         </div>
                       </TabsContent>
+                      <TabsContent value="repository" className="ppub-panel">
+                        <RepositoryFields form={form} edit={edit} repositories={repositories} hint={hint} />
+                      </TabsContent>
                     </Tabs>
                   </section>
 
@@ -516,6 +630,12 @@ export function ProviderContractClient() {
                         </p>
                         {hint('provider')}
                       </div>
+                      {following ? (
+                        <p className="ppub-hint ppc-span" data-testid="ppc-push-version">
+                          Each push is a provider version: its commit, on the pushed branch.
+                        </p>
+                      ) : (
+                        <>
                       <div className="ppub-field">
                         <Label htmlFor="ppc-provider-version">Provider version</Label>
                         <Input
@@ -538,7 +658,16 @@ export function ProviderContractClient() {
                         <Input id="ppc-tags" value={form.tags} placeholder="comma separated" onChange={(event) => edit({ tags: event.target.value })} />
                         {hint('tags')}
                       </div>
+                        </>
+                      )}
                     </div>
+                    <StandingSourcesNote
+                      sources={sources}
+                      busy={savingSources}
+                      onStopProject={() => void stopSource({ onProjectPublish: false }, 'Project versions are no longer published as the contract.')}
+                      onStopRepository={() => void stopSource({ repository: null }, 'The file is no longer followed.')}
+                    />
+                    {following ? null : (
                     <details className="ppub-more">
                       <summary>More options</summary>
                       <div className="ppub-more__body">
@@ -555,8 +684,10 @@ export function ProviderContractClient() {
                         </div>
                       </div>
                     </details>
+                    )}
                   </section>
 
+                  {following ? null : (
                   <section className="ppub-card" aria-labelledby="ppc-step-3">
                     <div className="ppub-card__head">
                       <h2 className="ppub-card__title" id="ppc-step-3">
@@ -704,13 +835,15 @@ export function ProviderContractClient() {
                       ) : null}
                     </EvidenceOptions>
                   </section>
+                  )}
                 </>
               ) : null}
             </div>
             <aside className="ppub__aside" aria-label="If you publish now, and the same from anywhere">
               {canWrite ? (
                 <PublishNowAside
-                  state={aside}
+                  state={following ? { kind: 'idle' } : aside}
+                  idleNote={following ? REPOSITORY_NO_PREVIEW : null}
                   version={form.providerVersion.trim()}
                   evidenceNote={form.evidence === 'run' ? 'read from the hosted run when you publish — until then the verdicts read unverified.' : null}
                 />
@@ -724,7 +857,7 @@ export function ProviderContractClient() {
               />
             </aside>
           </div>
-          <ContractResultDialog answer={result} onClose={() => setResult(null)} onAgain={reset} />
+          <ContractResultDialog answer={result} followLine={followLine} onClose={() => setResult(null)} onAgain={reset} />
         </div>
       </PageBody>
     </Page>

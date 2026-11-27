@@ -1,0 +1,26 @@
+---
+slug: provider-contract-preview-and-standing-sources
+title: "Provider contract preview and standing sources"
+description: "Publish a provider contract on every project publish or repository push."
+authors: [apiome]
+---
+
+A provider had to remember to publish its contract for every version. On **Contracts** →
+**Publish a provider contract** you can now say once where it comes from, and Apiome publishes it
+each time that source moves — with the same verdicts the **If you publish now** preview shows. See
+[Publish automatically](/ship/pact-broker/bi-directional#publish-automatically).
+
+{/* truncate */}
+
+- **Do this on every publish.** On **A project version**, tick it and publish: each later published
+  version of the project becomes the provider's contract, as provider version `<version label>`.
+  Drafts are never published.
+- **Follow a repository file.** The new **Repository** tab follows an OpenAPI or AsyncAPI file of a
+  registered GitHub repository: every push to its branch publishes it, with the commit as the
+  provider version. A repository without a push webhook is saved with a warning.
+- **Published automatically** under the provider says where its contract already comes from, with
+  any warning, and stops a source — new publishes only; contracts already published stay.
+- **Once per version, always audited.** A provider version's contract is write-once, so a repeated
+  trigger records nothing new; every attempt is in the access audit as
+  `pacts.contract.auto_publish` with its outcome and, unless it published, the reason.
+- **REST:** `GET` / `PUT /v1/tenants/{tenant}/pacticipants/{provider}/contract-sources`.

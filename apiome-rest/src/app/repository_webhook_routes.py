@@ -32,6 +32,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from .database import db
 from .models import RepositoryWebhookReceiptResponse
+from .provider_contract_auto_publish import run_on_push as run_contract_auto_publish_on_push
 from .repository_webhook_dispatch import WebhookRejectedError, ingest_webhook_delivery
 from .repository_webhook_ingest import SUPPORTED_PROVIDERS, normalize_provider
 from .repository_webhook_ip_allowlist import guard_webhook_delivery
@@ -125,6 +126,17 @@ async def ingest_repository_webhook(
             status_code=400,
             detail={"code": "malformed_payload", "message": str(exc)},
         ) from exc
+
+    # PFX-8.7 (#7304): providers that follow a file of this repository publish it, the pushed commit
+    # being the provider version — after the reply, since it reads the file from the provider.
+    if result.pushed_commit and result.repository_id and result.tenant_id and result.branch:
+        background_tasks.add_task(
+            run_contract_auto_publish_on_push,
+            tenant_id=result.tenant_id,
+            repository_id=result.repository_id,
+            branch=result.branch,
+            commit_sha=result.pushed_commit,
+        )
 
     # RAR-6.3: refresh the tracked files the push changed right away — after the reply, since a
     # branch rescan can outlast the provider's delivery timeout. The repository is already due,

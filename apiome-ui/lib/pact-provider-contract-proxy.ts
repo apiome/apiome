@@ -164,7 +164,7 @@ export function contractPath(provider: string, version: string, suffix = ''): st
 }
 
 /** One REST call as the signed-in user: the status and the parsed body, or `null` when unreachable. */
-export type RestCall = (method: 'POST' | 'PUT', path: string, body: unknown) => Promise<{ status: number; body: unknown } | null>;
+export type RestCall = (method: 'GET' | 'POST' | 'PUT' | 'PATCH', path: string, body?: unknown) => Promise<{ status: number; body: unknown } | null>;
 
 /** What the BFF answers: the status and the JSON body. */
 export interface ProxyAnswer {

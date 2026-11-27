@@ -1,5 +1,5 @@
 /**
- * The **Publish a provider contract** page's calls (PFX-8.6, #7303). Each goes through an `/api/*`
+ * The **Publish a provider contract** page's calls (PFX-8.6, #7303; standing sources PFX-8.7, #7304). Each goes through an `/api/*`
  * proxy as the signed-in user; tenancy and permissions are REST's. None throws: every answer is shown
  * beside what it is about.
  */
@@ -11,6 +11,13 @@ import {
   type ContractRequestBody,
   type PublishAnswer,
 } from '@lib/pact-provider-contract';
+import {
+  readContractSources,
+  readRepositories,
+  type ContractSources,
+  type RepositoryChoice,
+  type SourcesPatch,
+} from '@lib/pact-contract-sources';
 
 /** A refusal: the message, REST's code when it sent one, and the status. */
 export interface CallFailure {
@@ -167,4 +174,48 @@ export async function fetchReports(project: string, version: string): Promise<Re
 export function reportLabel(report: ReportChoice): string {
   const when = report.createdAt ? report.createdAt.replace('T', ' ').slice(0, 16) : 'Unknown time';
   return `${when} · ${report.target || 'a target'} · ${report.cases} checks · ${report.failed} failed · ${report.outcome}`;
+}
+
+/**
+ * A provider's standing sources (PFX-8.7).
+ *
+ * @param provider - The provider's name.
+ * @returns The sources; `null` when the provider is not registered yet; or the failure.
+ */
+export async function fetchSources(provider: string): Promise<ContractSources | null | CallFailure> {
+  const answer = await send(`/api/pact/provider-contracts/sources?provider=${encodeURIComponent(provider)}`);
+  if (!answer) return { error: UNREACHABLE, status: 503 };
+  if (answer.status === 404) return null;
+  if (answer.status >= 400) return failure(answer, 'Could not read where the contract is published from');
+  return readContractSources(answer.body) ?? { error: 'The answer could not be read.', status: 502 };
+}
+
+/**
+ * Change a provider's standing sources; what the patch leaves out is kept.
+ *
+ * @param provider - The provider's name.
+ * @param patch - What to change.
+ * @returns The sources as stored, or the refusal (REST's reason).
+ */
+export async function saveSources(provider: string, patch: SourcesPatch): Promise<ContractSources | CallFailure> {
+  const answer = await send('/api/pact/provider-contracts/sources', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider, ...patch }),
+  });
+  if (!answer) return { error: UNREACHABLE, status: 503 };
+  if (answer.status >= 400) return failure(answer, 'The standing source was refused');
+  return readContractSources(answer.body) ?? { error: 'The answer could not be read.', status: 502 };
+}
+
+/**
+ * The workspace's registered repositories, for the Repository tab.
+ *
+ * @returns The repositories (GitHub ones first), or the failure.
+ */
+export async function fetchRepositories(): Promise<RepositoryChoice[] | CallFailure> {
+  const answer = await send('/api/repositories');
+  if (!answer) return { error: 'The repositories could not be read. Try again shortly.', status: 503 };
+  if (answer.status >= 400) return failure(answer, 'Could not read the repositories');
+  return readRepositories(answer.body);
 }

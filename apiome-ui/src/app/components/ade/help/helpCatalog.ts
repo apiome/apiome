@@ -1474,7 +1474,8 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'bi-directional',
     title: 'Publish a provider contract',
-    summary: "Publish a provider version's OpenAPI document from the page or a pipeline, with graded evidence, and see each consumer's verdict first.",
+    summary:
+      "Publish a provider version's OpenAPI document from the page or a pipeline, with graded evidence, see each consumer's verdict first, or publish it automatically on every project publish or push.",
     page: 'apiome-docs/docs/ship/pact-broker/bi-directional.mdx',
     section: 'reference',
     keywords: [
@@ -1496,6 +1497,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
       'if you publish now',
       'nobody uses',
       'unverified',
+      'preview',
+      'publish automatically',
+      'do this on every publish',
+      'standing source',
+      'contract-sources',
+      'follow this file',
+      'on every push',
+      'repository',
     ],
   },
   {

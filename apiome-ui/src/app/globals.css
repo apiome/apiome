@@ -47747,6 +47747,64 @@ tr[data-selected="true"] > td:first-child {
   color: var(--fg-muted);
 }
 
+/* Standing sources — PFX-8.7 (#7304): Do this on every publish, and where a contract already comes from. */
+.ppc-follow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-block-start: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.ppc-follow.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ppc-follow__box {
+  margin-block-start: 0.1875rem;
+}
+
+.ppc-follow__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-inline-size: 0;
+}
+
+.ppc-standing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+}
+
+.ppc-standing__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ppc-standing__line {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.ppc-standing__line--warn {
+  font-weight: 600;
+}
+
 @media (max-width: 640px) {
   .ppc-grid-3 {
     grid-template-columns: minmax(0, 1fr);

@@ -135,6 +135,8 @@ from the Pact CLI, a Pact library, the console or an MCP tool. Source `api_key` 
 | `pacts.verification_override.save`, `.delete` | A verification override is saved or removed. |
 | `pacts.republish_request.acknowledge` | A consumer acknowledges a re-publish request. |
 | `pacts.secret.create`, `.update`, `.delete` | A [workspace secret](../ship/pact-broker/secrets.mdx) is created, rotated or changed, or deleted. The entry never holds the value. |
+| `pacts.contract_source.update` | A provider's [standing contract sources](../ship/pact-broker/bi-directional.mdx#publish-automatically) are changed (**Do this on every publish**, **Follow this file**, or a source stopped). |
+| `pacts.contract.auto_publish` | A standing source published (or tried to publish) a provider contract. The detail holds the `trigger` (`project-publish` or `push`), the `outcome` (`published`, `unchanged`, `failed` or `skipped`), the source and, unless it published, the `reason`. Its source is `system`. |
 | `pacts.migration.import` | A batch of records [imported from another Pact Broker](../ship/pact-broker/migration.mdx) (one entry per request of `apiome pact migrate`). The entry never holds the records. |
 | `pacts.pacticipant.delete`, `.restore`, `pacts.version.delete`, `.restore` | A pacticipant or version is deleted or restored; the detail holds the `reason`. |
 | `pacts.label.add`, `pacts.label.remove` | A label is added or removed. |

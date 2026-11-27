@@ -105,12 +105,25 @@ export type AsideState =
  *   (**Run it now**: the evidence is read from the run when the contract is published).
  * @returns The cards.
  */
-export function PublishNowAside({ state, version, evidenceNote }: { state: AsideState; version: string; evidenceNote?: string | null }) {
+export function PublishNowAside({
+  state,
+  version,
+  evidenceNote,
+  idleNote,
+}: {
+  state: AsideState;
+  version: string;
+  evidenceNote?: string | null;
+  /** What the idle aside says instead of the default (the Repository tab has no preview, PFX-8.7). */
+  idleNote?: string | null;
+}) {
   if (state.kind === 'idle') {
     return (
       <section className="ppub-card" data-testid="ppc-aside">
         <p className="ppub-caps">If you publish now</p>
-        <p className="ppub-hint">Fill in the contract, the provider and its version: the verdict per consumer appears here before anything is saved.</p>
+        <p className="ppub-hint">
+          {idleNote ?? 'Fill in the contract, the provider and its version: the verdict per consumer appears here before anything is saved.'}
+        </p>
       </section>
     );
   }
@@ -260,10 +273,13 @@ export function ContractResultDialog({
   answer,
   onClose,
   onAgain,
+  followLine,
 }: {
   answer: Extract<PublishAnswer, { published: true }> | null;
   onClose: () => void;
   onAgain: () => void;
+  /** **Do this on every publish** (PFX-8.7): whether the project is now followed, or why not. */
+  followLine?: { tone: 'ok' | 'warn'; text: string } | null;
 }) {
   return (
     <Dialog open={answer !== null} onOpenChange={(open) => !open && onClose()}>
@@ -293,6 +309,16 @@ export function ContractResultDialog({
                 <Webhook aria-hidden className="ppub-ix__glyph" />
                 <span>{NOTIFICATIONS_LINE}</span>
               </li>
+              {followLine ? (
+                <li className={`ppc-result__line ppc-result__line--${followLine.tone}`} data-testid="ppc-result-follow">
+                  {followLine.tone === 'ok' ? (
+                    <CircleCheck aria-hidden className="ppub-ix__glyph ppub-ix__glyph--ok" />
+                  ) : (
+                    <CircleAlert aria-hidden className="ppub-ix__glyph ppub-ix__glyph--warn" />
+                  )}
+                  <span>{followLine.text}</span>
+                </li>
+              ) : null}
             </ul>
             {!answer.evidence.verified ? (
               <p className="ppc-callout" data-testid="ppc-result-unverified">
