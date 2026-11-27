@@ -308,6 +308,23 @@ declared surface in the provider's project is refreshed as the next contract rev
 without a second upload. Interactions that cannot be placed are kept with reason codes, and a
 provider that is not bound to a project is reported, never ignored.
 
+### Broker consumers in the diff and in CI
+
+`apiome diff --consumers` and the [`diff-action`](../reference/ci/diff-action.md) (its `consumers`
+input, on by default) end the changelog with a **Consumer impact** section. A consumer that a Pact
+Broker pacticipant is bound to is labelled with it, so a reviewer sees which pact the verdict rests
+on:
+
+```markdown
+### `billing-service` — breaking
+
+Pact Broker: pacticipant `billing-service` — surface from a published pact (version 1.4.0, a1b2c3d4e5f6)
+```
+
+A consumer registered by hand has no such line. In the JSON report each verdict gains a `broker`
+object (`pacticipant`, `fromPact`, `consumerVersion`, `pactSha`) and the counts gain
+`consumers_from_broker`. The gate threshold is unchanged: it still grades the whole specification.
+
 ## How the pieces fit
 
 - **One classifier.** The CLI, the GitHub Action, the changelog, the webhook, the guardrail and the

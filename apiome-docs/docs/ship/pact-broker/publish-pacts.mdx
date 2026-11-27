@@ -117,6 +117,10 @@ The bulk publish response adds `consumerContracts` — one entry per pact with `
 and, when not refreshed, `reasonCode` and `reason` — and the same lines in `notices`, which the
 `pact-broker` CLI prints.
 
+Because the consumer is the same, [`apiome diff --consumers`](../contract-testing-and-ci-gates.mdx#broker-consumers-in-the-diff-and-in-ci)
+and the `diff-action` name the pacticipant and the pact (consumer version and pact hash) behind each
+broker-backed consumer in their **Consumer impact** section.
+
 ### What makes two pacts the same
 
 The pact version is computed from the document's `interactions`, its `messages` and the Pact

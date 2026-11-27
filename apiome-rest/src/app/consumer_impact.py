@@ -56,7 +56,7 @@ that consumer. Declaring fields — which the Pact importer and the UI picker bo
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -68,6 +68,8 @@ from .consumer_contract import (
 )
 
 __all__ = [
+    "ConsumerBroker",
+    "describe_broker",
     "CONSUMER_IMPACT_SCHEMA_VERSION",
     "DOCUMENT_WIDE_PREFIXES",
     "MAX_IMPACTS_PER_CONSUMER",
@@ -253,6 +255,28 @@ class ConsumerChangeImpact(BaseModel):
     field_status: Optional[str] = Field(default=None, serialization_alias="fieldStatus")
 
 
+class ConsumerBroker(BaseModel):
+    """Where a consumer's declared surface comes from in the Pact Broker (PFX-7.4, #6964).
+
+    A consumer is broker-backed when a pacticipant is bound to it (PFX-7.1), so the verdict names
+    the application the Pact Broker knows it as and, when the current contract was derived from a
+    published pact, which pact it was.
+
+    Attributes:
+        pacticipant: Handle of the bound pacticipant.
+        from_pact: True when the current contract revision was imported from a published pact.
+        consumer_version: The pacticipant version that published that pact, when known.
+        pact_sha: Content hash of that pact (the broker's ``pact_version``), when known.
+    """
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    pacticipant: str
+    from_pact: bool = Field(default=False, serialization_alias="fromPact")
+    consumer_version: Optional[str] = Field(default=None, serialization_alias="consumerVersion")
+    pact_sha: Optional[str] = Field(default=None, serialization_alias="pactSha")
+
+
 class ConsumerVerdict(BaseModel):
     """What a single change set does to a single registered consumer.
 
@@ -276,6 +300,8 @@ class ConsumerVerdict(BaseModel):
         counts: Distinct changes per severity, plus ``unclassified`` and ``total``.
         impacts: The attributed changes, most severe first (bounded, see ``truncated``).
         truncated: True when ``impacts`` was cut at :data:`MAX_IMPACTS_PER_CONSUMER`.
+        broker: The Pact Broker pacticipant behind this consumer, or ``None`` for a consumer that
+            is registered by hand and has no pacticipant bound (PFX-7.4).
     """
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
@@ -303,6 +329,7 @@ class ConsumerVerdict(BaseModel):
     counts: Dict[str, int] = Field(default_factory=dict)
     impacts: List[ConsumerChangeImpact] = Field(default_factory=list)
     truncated: bool = False
+    broker: Optional[ConsumerBroker] = None
 
 
 class ChangeAttribution(BaseModel):
@@ -640,6 +667,7 @@ def analyze_consumer_impact(
     *,
     base_version_id: Optional[str] = None,
     max_impacts_per_consumer: int = MAX_IMPACTS_PER_CONSUMER,
+    brokers: Optional[Mapping[str, ConsumerBroker]] = None,
 ) -> ConsumerImpactReport:
     """Intersect a classified diff with every registered consumer's declared surface.
 
@@ -652,9 +680,11 @@ def analyze_consumer_impact(
             consumer whether its surface was resolved against that same revision.
         max_impacts_per_consumer: Cap on enumerated impacts per consumer. Counts and
             ``attribution`` stay exact; only the per-consumer enumeration is bounded.
+        brokers: Pact Broker backing per consumer id (PFX-7.4); a consumer absent from it is
+            reported without a ``broker`` block.
 
     Returns:
-        A :class:`ConsumerImpactReport`. ``counts`` carries ``consumers_total``,
+        A :class:`ConsumerImpactReport`. ``counts`` carries ``consumers_total``, ``consumers_from_broker``,
         ``consumers_declared``, ``consumers_undeclared``, ``consumers_affected``,
         ``consumers_breaking``, ``changes_total``, ``changes_attributed`` and
         ``changes_unattributed``.
@@ -754,6 +784,7 @@ def analyze_consumer_impact(
                 counts=_tally(matched_changes),
                 impacts=impacts[:max_impacts_per_consumer],
                 truncated=truncated,
+                broker=(brokers or {}).get(consumer.id),
             )
         )
 
@@ -794,6 +825,7 @@ def analyze_consumer_impact(
         max_severity=max_severity,
         counts={
             "consumers_total": len(verdicts),
+            "consumers_from_broker": sum(1 for v in verdicts if v.broker is not None),
             "consumers_declared": consumers_declared,
             "consumers_undeclared": consumers_undeclared,
             "consumers_affected": sum(
@@ -836,6 +868,24 @@ def _impact_target(impact: ConsumerChangeImpact) -> str:
     return f"{operation} — {where} `{impact.field_path}`"
 
 
+def describe_broker(broker: ConsumerBroker) -> str:
+    """One phrase naming a consumer's Pact Broker origin, shared by markdown and the CLI.
+
+    Args:
+        broker: The consumer's broker block.
+
+    Returns:
+        E.g. ``pacticipant `billing` — pact from version 1.4.0 (a1b2c3d4e5f6)``.
+    """
+    text = f"pacticipant `{broker.pacticipant}`"
+    if broker.from_pact:
+        text += " — surface from a published pact"
+        if broker.consumer_version:
+            text += f" (version {broker.consumer_version}"
+            text += f", {broker.pact_sha[:12]})" if broker.pact_sha else ")"
+    return text
+
+
 def render_consumer_impact_markdown(report: ConsumerImpactReport) -> str:
     """Render a consumer impact report as stable markdown.
 
@@ -864,6 +914,9 @@ def render_consumer_impact_markdown(report: ConsumerImpactReport) -> str:
         lines.append("")
         if verdict.owner:
             lines.append(f"Owner: {verdict.owner}")
+            lines.append("")
+        if verdict.broker is not None:
+            lines.append(f"Pact Broker: {describe_broker(verdict.broker)}")
             lines.append("")
         if not verdict.declared:
             lines.append(

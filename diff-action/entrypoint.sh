@@ -37,6 +37,7 @@ TENANT="${INPUT_TENANT:-}"
 BASE_URL="${INPUT_BASE_URL:-https://api.apiome.dev}"
 COMMENT="${INPUT_COMMENT:-true}"
 BLAST_RADIUS="${INPUT_BLAST_RADIUS:-true}"
+CONSUMERS="${INPUT_CONSUMERS:-true}"
 # XPC-4.5 (#5749): empty means "the project's style-guide policy decides".
 MODE="${INPUT_MODE:-}"
 TRANSITIVE="${INPUT_TRANSITIVE:-}"
@@ -113,6 +114,14 @@ case "${BLAST_RADIUS}" in
     ;;
 esac
 
+case "${CONSUMERS}" in
+  true|false) ;;
+  *)
+    echo "::error::Input 'consumers' must be 'true' or 'false' (got: ${CONSUMERS})"
+    exit 2
+    ;;
+esac
+
 case "${FIX_SUGGESTIONS}" in
   true|false) ;;
   *)
@@ -146,6 +155,10 @@ export APIOME_LOAD_DOTENV="${APIOME_LOAD_DOTENV:-0}"
 DIFF_FLAGS=()
 if [[ "${BLAST_RADIUS}" == "true" ]]; then
   DIFF_FLAGS+=(--blast-radius)
+fi
+# PFX-7.4 (#6964): the per-consumer "Consumer impact" section, with broker-backed consumers named.
+if [[ "${CONSUMERS}" == "true" ]]; then
+  DIFF_FLAGS+=(--consumers)
 fi
 # XPC-4.5 (#5749): the compatibility mode, passed only when set so the policy applies otherwise.
 # The CLI validates the values (exit 2 on an unknown one).

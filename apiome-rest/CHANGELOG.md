@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.871.0] - 2026-11-28
+
+### Added
+- **Broker-backed consumer impact (PFX-7.4, #6964).** OpenAPI 1.695.0; no migration. The consumer
+  analysis behind `POST /v1/diff/{tenant}/classified` (`consumers: true`) names the Pact Broker
+  behind each consumer: every `ConsumerVerdict` gains `broker` (`pacticipant`, `fromPact`,
+  `consumerVersion`, `pactSha`; `null` for a consumer with no bound pacticipant), the counts gain
+  `consumers_from_broker`, and the markdown **Consumer impact** section adds a `Pact Broker:` line.
+  The pacticipants are read in one tenant-scoped query. The `apiome diff --consumers` text report and
+  the `diff-action` (new `consumers` input, default `true`) show it.
+
 ## [1.870.0] - 2026-11-27
 
 ### Added

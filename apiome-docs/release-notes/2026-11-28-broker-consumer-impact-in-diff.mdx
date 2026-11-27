@@ -1,0 +1,17 @@
+---
+slug: broker-consumer-impact-in-diff
+title: "Broker consumers in diff and CI"
+description: "Consumer impact in apiome diff and the diff action now names each Pact Broker consumer."
+authors: [apiome]
+---
+
+`apiome diff --consumers` and the diff action now show which Pact Broker consumers a change breaks.
+See [broker consumers in the diff and in CI](/ship/contract-testing-and-ci-gates#broker-consumers-in-the-diff-and-in-ci).
+
+{/* truncate */}
+
+- A consumer bound to a Pact Broker pacticipant is labelled with it, plus the consumer version and
+  pact hash its surface came from.
+- The diff action has a new `consumers` input, on by default, that adds the **Consumer impact**
+  section to the pull-request comment. Set it to `false` to leave it out.
+- The JSON report gains a `broker` object per consumer; the gate threshold is unchanged.

@@ -44,6 +44,14 @@ inputs:
       "affects N consumers across M teams (…); K verification runs invalidated". Needs projects:view.
     required: false
     default: "true"
+  consumers:
+    description: >
+      When true (default), the changelog gains a "Consumer impact" section: which registered
+      consumers of the baseline project each change breaks, including the consumers the Pact
+      Broker feeds (a pacticipant bound to a consumer, with its published pact). Needs
+      projects:view.
+    required: false
+    default: "true"
   mode:
     description: >
       Compatibility mode the changes are graded under: backward, forward, full or none
@@ -98,6 +106,7 @@ runs:
     INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
     INPUT_COMMENT: ${{ inputs.comment }}
     INPUT_BLAST_RADIUS: ${{ inputs.blast-radius }}
+    INPUT_CONSUMERS: ${{ inputs.consumers }}
     INPUT_MODE: ${{ inputs.mode }}
     INPUT_TRANSITIVE: ${{ inputs.transitive }}
     INPUT_CATEGORY: ${{ inputs.category }}
