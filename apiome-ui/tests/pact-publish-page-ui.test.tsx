@@ -191,7 +191,11 @@ describe('Publish a consumer pact', () => {
     const verdicts = await screen.findAllByTestId('ppub-row-verdict');
     expect(verdicts[0]).toHaveTextContent('Nothing is published for 3.4.0 yet: this pact will be new.');
     expect(verdicts[1]).toHaveTextContent('Unchanged since 8d2f1c0: its verification results still apply.');
-    expect(calls.filter((call) => call.method !== 'GET')).toEqual([]);
+    // The only POSTs are the provider comparisons (PFX-8.4), which store nothing.
+    expect(calls.filter((call) => call.method !== 'GET').map((call) => call.url)).toEqual([
+      '/api/pact/publish/compare',
+      '/api/pact/publish/compare',
+    ]);
     expect(calls.map((call) => call.url)).toContain('/api/pact/publish/check?consumer=Orders+UI&provider=Billing+Service&version=3.4.0');
   });
 
@@ -285,7 +289,9 @@ describe('Publish a consumer pact', () => {
     fireEvent.click(screen.getByTestId('ppub-publish'));
     expect(await screen.findByTestId('ppub-status')).toHaveTextContent('Give the consumer version');
     fireEvent.click(screen.getByTestId('ppub-check'));
-    expect(calls.filter((call) => call.url.startsWith('/api/pact/publish'))).toEqual([]);
+    // Without a version only the provider comparison runs (PFX-8.4): it needs no consumer version.
+    expect(await screen.findByTestId('ppub-status')).toHaveTextContent('Compared with the provider versions. Give the consumer version');
+    expect(calls.filter((call) => call.url.startsWith('/api/pact/publish')).map((call) => call.url)).toEqual(['/api/pact/publish/compare']);
   });
 
   it('fills the branch from the consumer’s linked repository', async () => {

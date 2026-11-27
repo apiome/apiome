@@ -62,6 +62,7 @@ export interface PactVerbSurfaces {
  */
 export const PACT_VERBS: Readonly<Record<string, PactVerbSurfaces>> = {
   'can-i-deploy': { pactCli: 'pact-broker can-i-deploy', action: true, rest: 'GET /v1/tenants/{tenant}/pact-broker/matrix' },
+  check: { pactCli: null, action: false, rest: 'POST /v1/tenants/{tenant}/pact-broker/pacts/check' },
   'create-environment': {
     pactCli: 'pact-broker create-environment',
     action: false,

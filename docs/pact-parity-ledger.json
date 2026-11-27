@@ -13,6 +13,18 @@
       "rest": "GET /v1/tenants/{tenant}/pact-broker/matrix"
     },
     {
+      "cli": "check",
+      "ui": "/ade/dashboard/pacts/publish",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/pacts/check",
+      "fields": {
+        "pacts": "Upload (files or a folder) and Paste",
+        "--against": "Check it before it counts → Compare with",
+        "--output": "The check result in the aside (the CLI’s text or JSON output)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
       "cli": "create-environment",
       "ui": null,
       "rest": "POST /v1/tenants/{tenant}/pact-broker/environments",
@@ -149,6 +161,13 @@
       "rest": "POST /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/pact/publish",
       "ui": "/ade/dashboard/pacts/publish",
       "cli": "publish-consumer-contract"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/publish/compare",
+      "rest": "POST /v1/tenants/{tenant}/pact-broker/pacts/check",
+      "ui": "/ade/dashboard/pacts/publish",
+      "cli": "check"
     },
     {
       "method": "POST",

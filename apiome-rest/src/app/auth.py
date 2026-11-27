@@ -61,8 +61,9 @@ API_KEY_SCOPE_REGISTRY_WRITE = "registry:write"
 #: hosted verifier at ``/v1/tenants/{tenant}/pact-verifier``.
 #:
 #: * ``pact:read`` admits every GET of both mounts and their read-only POSTs (``for-verification``,
-#:   the provider-state check) — what ``can-i-deploy`` and a verifier fetching its pacts need — and
-#:   the reads of the pacticipant registry at ``/v1/tenants/{tenant}/pacticipants``.
+#:   the pre-publish ``pacts/check``, the provider-state check) — what ``can-i-deploy`` and a
+#:   verifier fetching its pacts need — and the reads of the pacticipant registry at
+#:   ``/v1/tenants/{tenant}/pacticipants``.
 #: * ``pact:publish`` admits the consumer and deploy pipeline's writes: publishing pacts and provider
 #:   contracts, tagging a version or recording it on a branch, recording a deployment or release.
 #: * ``pact:verify`` admits the provider pipeline's writes: verification results, the hosted verifier
@@ -195,6 +196,8 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
     # PFX-4.2 (#6939): the Pact Broker and the hosted verifier. Reads take ``pact:read``.
     ("GET", re.compile(_PACT_BROKER_PATH + r"(/.*)?$"), API_KEY_SCOPE_PACT_READ),
     ("POST", re.compile(_PACT_BROKER_PATH + r"/pacts/provider/[^/]+/for-verification/?$"), API_KEY_SCOPE_PACT_READ),
+    # PFX-8.4 (#7301): the pre-publish check compares and stores nothing, so it is a read.
+    ("POST", re.compile(_PACT_BROKER_PATH + r"/pacts/check/?$"), API_KEY_SCOPE_PACT_READ),
     ("GET", re.compile(_PACT_VERIFIER_PATH + r"(/.*)?$"), API_KEY_SCOPE_PACT_READ),
     # The pacticipant registry's reads (PFX-1.1), which `apiome pact list-pacticipants` and
     # `describe-version --latest` call. Its writes stay full-access.

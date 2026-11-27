@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.874.0] - 2026-11-29
+
+### Added
+- **Check a pact against several provider versions before publishing (PFX-8.4, #7301).** OpenAPI 1.698.0;
+  no migration. New `POST /v1/tenants/{t}/pact-broker/pacts/check` with `{"pact": {…}, "against": […]}`:
+  compares an unpublished pact with the provider contract of every version the selectors name — `main`
+  (the newest version on the provider's main branch with a contract), `deployed:<environment>` (every
+  version deployed to or released in it), `version:<number>`, `draft:<revision>` (a revision of the
+  provider's bound Apiome project, rendered as it stands) — and **stores nothing**. Each version's
+  `verdict` and `success` are what a publish would record (the same `compare_with_target` and evidence
+  policy); each interaction is `match`, `differs` or `not-in-spec`, and a row that does not match carries
+  `expected` (the pact's response) and `declared` (the contract's response, local `$ref`s inlined), each at
+  most 8 KB. A version two selectors name is compared once. Selectors that name nothing are listed in
+  `unresolved` with the reason; versions past 20 in `skipped`; `summary.success` is true only when every
+  compared version passes and nothing is unresolved or skipped. 1 to 10 selectors; an unknown field or
+  selector kind is `422 pact-check-invalid` with `pointer`; a document that is not a pact is `422
+  pact-invalid` under `/pact`. Requires `pacts:view` (a `draft:` selector also `versions:view`);
+  tenant-scoped; a restricted API key needs `pact:read`; budgeted by `APIOME_PACT_CHECK_RATE_LIMIT_PER_MINUTE` (default 60, `429
+  pact-check-rate-limited`). Catalogued under **Apiome additions** on the Pact Broker compatibility page —
+  not a Pact Broker endpoint. `app.bidirectional_store._compare` is now the public `compare_with_target`.
+
 ## [1.873.0] - 2026-11-29
 
 ### Added

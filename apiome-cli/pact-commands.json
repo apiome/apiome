@@ -25,6 +25,19 @@
       ]
     },
     {
+      "name": "check",
+      "summary": "Check pacts against several provider versions before publishing (POST …/pacts/check).",
+      "arguments": [
+        "pacts"
+      ],
+      "options": [
+        "--against",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
       "name": "create-environment",
       "summary": "Create an environment (POST …/environments) and print its UUID.",
       "arguments": [],

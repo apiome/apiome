@@ -957,6 +957,16 @@ class Settings(BaseSettings):
             "pact_publish_rate_limit_per_minute",
         ),
     )
+    # ``pact_check_rate_limit_per_minute``: pre-publish checks (``POST …/pacts/check``, PFX-8.4) one
+    # workspace may run per ``rate_limit_window_seconds``. Each check compares one pact with up to
+    # 20 provider contracts, so it is budgeted apart from publishing.
+    pact_check_rate_limit_per_minute: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_PACT_CHECK_RATE_LIMIT_PER_MINUTE",
+            "pact_check_rate_limit_per_minute",
+        ),
+    )
     # The largest Pact document accepted, in bytes. A bulk publish request may be this large per
     # contract (base64 included).
     pact_max_bytes: int = Field(

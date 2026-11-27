@@ -70,6 +70,7 @@ from .revision_deprecation import is_uuid_string
 
 __all__ = [
     "compare_provider_contract",
+    "compare_with_target",
     "compare_published_pacts",
     "list_contract_targets",
 ]
@@ -239,11 +240,21 @@ class _Documents:
         )
 
 
-def _compare(pact: Any, contract: Any, target: ContractTarget) -> StoredComparison:
+def compare_with_target(pact: Any, contract: Any, target: ContractTarget) -> StoredComparison:
     """Compare, turning an input the engine refuses into a stored failure with its reason.
 
     The result is weighed by the contract's self-verification evidence under the configured
-    policy (PFX-2.4, ``APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT``).
+    policy (PFX-2.4, ``APIOME_PACT_UNVERIFIED_PROVIDER_CONTRACT``). A publish stores what this
+    returns; the pre-publish check (PFX-8.4, :mod:`app.pact_check_store`) shows it, so both say the
+    same thing about the same pair.
+
+    Args:
+        pact: The Pact document.
+        contract: The OpenAPI or AsyncAPI provider contract.
+        target: The provider version (its contract address and evidence).
+
+    Returns:
+        The comparison as it is stored.
     """
     try:
         # PFX-3.6: an AsyncAPI provider contract is compared with the pact's messages.
@@ -304,7 +315,7 @@ def _compare_pair(
                 number=int(row["number"]),
                 success=row.get("success"),
             )
-        stored = _compare(documents.pact(pact_version_id), documents.contract(target.contract_id), target)
+        stored = compare_with_target(documents.pact(pact_version_id), documents.contract(target.contract_id), target)
 
         def work(cursor: Any) -> Optional[int]:
             # The row lock serialises numbering with native results published at the same time.

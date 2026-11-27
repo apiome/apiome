@@ -1,0 +1,32 @@
+---
+slug: check-a-pact-before-publishing
+title: "Check a pact against several provider versions before publishing"
+description: "Compare one pact with main, deployed and draft provider versions at once."
+authors: [apiome]
+---
+
+A pact used to fail only after it was published, and then only against the one provider version a
+verifier ran. Now you can see first how it fares against several: the provider's main branch, what
+runs in production, any other environment, a named version, or a draft of the provider's project —
+all at once, and nothing is saved. See
+[Check before publishing](/ship/pact-broker/publish-pacts#check-before-publishing).
+
+{/* truncate */}
+
+- **On the Publish page.** **Check it before it counts** offers a chip per provider version —
+  **Provider’s main** and production start on — and **+ Another version** for anything else. **Click
+  “Compare now”** or **“Check only”**.
+- **One pill per provider version.** The aside shows, per pact, *main · 2.7.0 4/6*,
+  *production · 2.6.1 6/6*, and each interaction as **Match**, **Differs** or **Not in spec**, what
+  needs attention first.
+- **The difference, side by side.** **See the difference** opens what the pact needs beside what the
+  spec declares, every finding, and a link to the provider project's versions when its contract came
+  from Apiome.
+- **The same verdict as publishing.** The answer for a version is the verdict a publish would record
+  against it — same comparison rules, same self-verification policy.
+- **Nothing ignored.** A provider version that could not be found — no main branch, nothing deployed
+  there, a provider not bound to a project — is listed with the reason.
+- **From CI.** `apiome pact check pacts/ --against main --against deployed:production` prints the
+  same, exits `1` when anything would fail, and works with a **Pact: read-only** key — so a pull
+  request can be gated before its pact is published. Over REST it is
+  `POST …/pact-broker/pacts/check`.

@@ -611,3 +611,120 @@ def test_migrate_without_from_exits_1() -> None:
 
 def test_an_unknown_subcommand_exits_1() -> None:
     assert _invoke("create-or-update-pacticipant").exit_code == EXIT_ERROR
+
+
+# --- check (PFX-8.4, #7301) --------------------------------------------------------------------
+
+
+def _check_answer(success: bool = True, **extra: Any) -> dict[str, Any]:
+    """A ``POST …/pacts/check`` answer with one provider version."""
+    interactions = [{"index": 0, "method": "GET", "path": "/invoices/42", "status": 200, "outcome": "match"}]
+    if not success:
+        interactions.append(
+            {
+                "index": 1,
+                "method": "POST",
+                "path": "/invoices",
+                "status": 201,
+                "outcome": "differs",
+                "failures": [{"code": "response.body.unknown-property", "message": "currency is not declared"}],
+            }
+        )
+    answer: dict[str, Any] = {
+        "consumer": {"name": "Billing"},
+        "provider": {"name": "Ledger API", "slug": "ledger-api", "registered": True},
+        "summary": {"success": success},
+        "results": [
+            {
+                "providerVersion": "2.7.0",
+                "selectors": ["main"],
+                "verdict": "pass" if success else "fail",
+                "counts": {"match": 1, "differs": 0 if success else 1, "notInSpec": 0},
+                "interactions": interactions,
+            }
+        ],
+        "unresolved": [],
+        "skipped": [],
+    }
+    answer.update(extra)
+    return answer
+
+
+def test_check_sends_each_pact_with_the_selectors_and_exits_0(tmp_path: Path, broker_env: None, httpx_mock: Any) -> None:
+    _pact(tmp_path / "a.json")
+    httpx_mock.add_response(method="POST", url=f"{_BROKER}/pacts/check", json=_check_answer())
+    result = _invoke("check", str(tmp_path / "a.json"), "--against", "main", "--against", "deployed:production")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    [request] = httpx_mock.get_requests()
+    assert request.headers["X-API-Key"] == "broker-token"
+    body = json.loads(request.content)
+    assert body["against"] == ["main", "deployed:production"]
+    assert body["pact"]["provider"]["name"] == "Ledger API"
+    assert "Billing → Ledger API" in result.output
+    assert "2.7.0" in result.output and "Every pact matches" in result.output
+    assert "Nothing was published." in result.output
+
+
+def test_check_exits_1_and_names_what_differs(tmp_path: Path, broker_env: None, httpx_mock: Any) -> None:
+    _pact(tmp_path / "a.json")
+    httpx_mock.add_response(method="POST", json=_check_answer(success=False))
+    result = _invoke("check", str(tmp_path / "a.json"), "--against", "main")
+    assert result.exit_code == EXIT_ERROR
+    assert "2.7.0: POST /invoices — 201 differs: response.body.unknown-property: currency is not declared" in result.output
+    assert "1 of 1 pacts would not pass" in result.output
+
+
+def test_check_reports_selectors_that_name_nothing_and_exits_1(tmp_path: Path, broker_env: None, httpx_mock: Any) -> None:
+    _pact(tmp_path / "a.json")
+    answer = _check_answer(
+        summary={"success": False},
+        unresolved=[{"selector": "deployed:staging", "reason": "no version is deployed to 'staging'"}],
+    )
+    httpx_mock.add_response(method="POST", json=answer)
+    result = _invoke("check", str(tmp_path / "a.json"), "--against", "main", "--against", "deployed:staging")
+    assert result.exit_code == EXIT_ERROR
+    assert "not compared: deployed:staging — no version is deployed to 'staging'" in result.output
+
+
+def test_check_sends_one_request_per_pact_and_prints_json(tmp_path: Path, broker_env: None, httpx_mock: Any) -> None:
+    _pact(tmp_path / "a.json")
+    _pact(tmp_path / "b.json", provider="Web API")
+    httpx_mock.add_response(method="POST", json=_check_answer())
+    httpx_mock.add_response(method="POST", json=_check_answer(success=False))
+    result = runner.invoke(app, ["--json", "pact", "check", str(tmp_path), "--against", "version:2.7.0"])
+    assert result.exit_code == EXIT_ERROR
+    document = json.loads(result.output)
+    assert document["success"] is False
+    assert [Path(check["file"]).name for check in document["checks"]] == ["a.json", "b.json"]
+    assert len(httpx_mock.get_requests()) == 2
+
+
+@pytest.mark.parametrize("against", ["tag:prod", "deployed:", "main:x", ""])
+def test_check_refuses_a_bad_selector_before_sending(tmp_path: Path, broker_env: None, against: str) -> None:
+    _pact(tmp_path / "a.json")
+    result = _invoke("check", str(tmp_path / "a.json"), "--against", against)
+    assert result.exit_code != EXIT_SUCCESS
+    assert "--against" in result.output
+
+
+def test_check_refuses_more_than_ten_selectors(tmp_path: Path, broker_env: None) -> None:
+    _pact(tmp_path / "a.json")
+    args = [item for i in range(11) for item in ("--against", f"version:{i}")]
+    result = _invoke("check", str(tmp_path / "a.json"), *args)
+    assert result.exit_code != EXIT_SUCCESS
+    assert "1 to 10" in result.output
+
+
+def test_check_refuses_a_non_pact_before_sending(tmp_path: Path, broker_env: None) -> None:
+    (tmp_path / "a.json").write_text("[]")
+    result = _invoke("check", str(tmp_path / "a.json"), "--against", "main")
+    assert result.exit_code != EXIT_SUCCESS
+    assert "not a pact" in result.output
+
+
+def test_check_refusal_exits_1_with_the_server_message(tmp_path: Path, broker_env: None, httpx_mock: Any) -> None:
+    _pact(tmp_path / "a.json")
+    httpx_mock.add_response(method="POST", status_code=403, json={"detail": "Missing permission pacts:view"})
+    result = _invoke("check", str(tmp_path / "a.json"), "--against", "main")
+    assert result.exit_code == EXIT_ERROR
+    assert "pacts:view" in result.output

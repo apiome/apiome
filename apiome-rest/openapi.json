@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.697.0",
+    "version": "1.698.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -43408,6 +43408,167 @@
               }
             }
           }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-broker/pacts/check": {
+      "post": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Check a pact against provider versions before publishing",
+        "description": "Compare an unpublished pact with the provider contracts of several provider versions at once, and store nothing. `against` names them: `main` (the newest version on the provider's main branch with a contract), `deployed:<environment>` (every version deployed to or released in it), `version:<number>`, and `draft:<revision>` (a revision of the Apiome project the provider is bound to, rendered as it stands).\n\n- **The verdict a publish would record.** Each version's `verdict` and `success` are what publishing this pact would store as its bi-directional verification result, evidence policy included (`unverified` when the contract has no passing self-verification).\n- **Per interaction**, `outcome` is `match`, `differs` or `not-in-spec`, with the failures; a row that does not match carries `expected` (what the pact needs) and `declared` (what the contract declares), each at most 8 KB.\n- **Nothing dropped.** A selector that names nothing is listed in `unresolved` with the reason; versions over the limit of 20 in `skipped`. `summary.success` is true only when every compared version passes and nothing is unresolved or skipped.\n\nRequires `pacts:view`; a `draft:` selector also needs `versions:view`. Not a Pact Broker endpoint.",
+        "operationId": "check_pact_v1_tenants__tenant_slug__pact_broker_pacts_check_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Checkapactagainstproviderversionsbeforepauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Checkapactagainstproviderversionsbeforepauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Checkapactagainstproviderversionsbeforep Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Checkapactagainstproviderversionsbeforep Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for check a pact against provider versions before publishing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Check Pact V1 Tenants  Tenant Slug  Pact Broker Pacts Check Post",
+                  "description": "Response Check Pact V1 Tenants  Tenant Slug  Pact Broker Pacts Check Post schema."
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`pact-too-large`: the request is over the size limit."
+          },
+          "422": {
+            "description": "`pact-check-invalid` or `pact-invalid`, with `pointer`: a malformed request, an unknown field or selector, or a document that is not a pact."
+          },
+          "429": {
+            "description": "`pact-check-rate-limited`: over the workspace's check budget; see `Retry-After`."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pact",
+                  "against"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "pact": {
+                    "type": "object",
+                    "description": "The Pact document (v1 to v4), as a JSON object."
+                  },
+                  "against": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Provider-version selectors: `main`, `deployed:<environment>`, `version:<number>`, `draft:<revision>` (a label, revision id or `latest`)."
+                  }
+                },
+                "description": "Request body for checkapactagainstproviderversionsbeforeprequest."
+              },
+              "example": {
+                "pact": {
+                  "consumer": {
+                    "name": "Orders UI"
+                  },
+                  "provider": {
+                    "name": "Billing Service"
+                  },
+                  "interactions": [
+                    {
+                      "description": "a request for an invoice",
+                      "providerStates": [
+                        {
+                          "name": "an invoice exists"
+                        }
+                      ],
+                      "request": {
+                        "method": "GET",
+                        "path": "/invoices/42"
+                      },
+                      "response": {
+                        "status": 200,
+                        "body": {
+                          "id": 42,
+                          "amount": 1200,
+                          "currency": "EUR"
+                        }
+                      }
+                    }
+                  ],
+                  "metadata": {
+                    "pactSpecification": {
+                      "version": "3.0.0"
+                    }
+                  }
+                },
+                "against": [
+                  "main",
+                  "deployed:production",
+                  "draft:latest"
+                ]
+              }
+            }
+          },
+          "description": "Request body for check a pact against provider versions before publishing."
         }
       }
     },

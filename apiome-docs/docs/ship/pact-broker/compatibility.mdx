@@ -76,7 +76,7 @@ that pact, version or pacticipant does not exist.
 
 {/* pact-broker-compat:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_pact_broker_compat_doc.py */}
 
-Checked against Pact Broker **2.124.0**: 103 endpoints — **39** supported, **6** partial, **0** planned, **58** not planned.
+Checked against Pact Broker **2.124.0**: 104 endpoints — **40** supported, **6** partial, **0** planned, **58** not planned.
 
 ### Index
 
@@ -245,6 +245,12 @@ Checked against Pact Broker **2.124.0**: 103 endpoints — **39** supported, **6
 | Endpoint | Apiome serves | Not served | Status | Notes |
 | --- | --- | --- | --- | --- |
 | `/contracts/provider/{provider}/version/{providerVersion}` — The OpenAPI provider contract of a provider version | `GET` `PUT` | — | ✅ Supported | Used by PactFlow's provider-contract publishing API. Also takes `apiomeVersion` to render the contract from an Apiome version (PFX-2.1, #6925). Publishing compares the contract with the pacts that need it and stores bi-directional verification results; the answer lists them in `comparisons` (PFX-2.3, #6927). `verificationResults` is read — JUnit, Newman JSON, Schemathesis NDJSON, or an Apiome report via `providerVerificationReportId` — into `selfVerification`; a contract without passing evidence is unverified (PFX-2.4, #6928). |
+
+### Apiome additions
+
+| Endpoint | Apiome serves | Not served | Status | Notes |
+| --- | --- | --- | --- | --- |
+| `/pacts/check` — Check a pact against provider versions before publishing | `POST` | — | ✅ Supported | Used by `apiome pact check`, the Publish page. Not a Pact Broker endpoint. Compares an unpublished pact with the provider contracts of the versions `against` names (`main`, `deployed:<env>`, `version:<n>`, `draft:<revision>`) and stores nothing (PFX-8.4, #7301). |
 
 {/* pact-broker-compat:end */}
 

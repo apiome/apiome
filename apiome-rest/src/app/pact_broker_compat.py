@@ -90,6 +90,7 @@ GROUPS = (
     "Labels",
     "Other",
     "Provider contracts (PactFlow)",
+    "Apiome additions",
 )
 
 _ISSUES = "https://github.com/apiome/apiome/issues/"
@@ -239,6 +240,7 @@ _BRANCH = "/pacticipants/{pacticipant}/branches/{branch}"
 _G_INDEX, _G_PACTS, _G_HISTORY, _G_RESULTS, _G_PARTICIPANTS, _G_BRANCHES = GROUPS[:6]
 _G_ENVIRONMENTS, _G_MATRIX, _G_WEBHOOKS, _G_BADGES, _G_LABELS, _G_OTHER = GROUPS[6:12]
 _G_PROVIDER_CONTRACTS = GROUPS[12]
+_G_APIOME = GROUPS[13]
 
 #: The catalog — every resource of the Pact Broker API, in the order of the page.
 ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
@@ -890,6 +892,21 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
             "`verificationResults` is read — JUnit, Newman JSON, Schemathesis NDJSON, or an Apiome "
             "report via `providerVerificationReportId` — into `selfVerification`; a contract without "
             "passing evidence is unverified (PFX-2.4, #6928)."
+        ),
+    ),
+    # Apiome additions: not Pact Broker or PactFlow endpoints, served under the broker base URL so
+    # `apiome pact` commands reach them with the same base URL and token -----------------------
+    _e(
+        _G_APIOME,
+        "/pacts/check",
+        "Check a pact against provider versions before publishing",
+        "POST",
+        "POST",
+        used_by="`apiome pact check`, the Publish page",
+        note=(
+            "Not a Pact Broker endpoint. Compares an unpublished pact with the provider contracts of "
+            "the versions `against` names (`main`, `deployed:<env>`, `version:<n>`, `draft:<revision>`) "
+            "and stores nothing (PFX-8.4, #7301)."
         ),
     ),
 )

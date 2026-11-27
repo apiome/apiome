@@ -18,7 +18,7 @@ Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`create-environment`](#pact-create-environment), [`create-webhook`](#pact-create-webhook), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`verify`](#pact-verify).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-webhook`](#pact-create-webhook), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`verify`](#pact-verify).
 
 ## apiome pact can-i-deploy {#pact-can-i-deploy}
 
@@ -46,6 +46,31 @@ apiome pact can-i-deploy [OPTIONS]
 | `--retry-while-unknown` | integer range | `0` |  | Retry this many times while a verification result is missing. |
 | `--retry-interval` | float range | `10` |  | Seconds between retries. |
 | `--dry-run` | flag |  |  | Print the verdict but always exit 0. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact check {#pact-check}
+
+Check pacts against several provider versions before publishing (POST …/pacts/check). Publishes nothing.
+
+Each pact is compared with the provider contract of every version --against names: the newest on the provider's main branch (main), what is deployed to or released in an environment (deployed:production), a named version (version:2.7.0), or a revision of the provider's Apiome project as it stands (draft:latest). Prints one row per provider version with the verdict a publish would record, then every interaction that differs or is not in the spec, and every selector that named nothing. Exits 0 when every pact passes against every version and every selector named one; 1 otherwise, as pact-broker does.
+
+```text
+apiome pact check [OPTIONS] PACTS...
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PACTS...` | path | yes | Pact files, or directories of *.json pact files. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--against` | text (repeatable) |  | yes | A provider version to compare with (repeatable, at most 10): main, deployed:&lt;environment&gt;, version:&lt;number&gt; or draft:&lt;revision&gt;. |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |

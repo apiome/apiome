@@ -16,6 +16,7 @@ import {
   type PublishOutcome,
 } from '@lib/pact-publish-page';
 import type { Pacticipant } from '@lib/pact-pacticipants';
+import { readCompareAnswer, type CompareAnswer } from '@lib/pact-publish-check';
 
 /** A refusal: REST's message and status. */
 export interface CallFailure {
@@ -173,4 +174,50 @@ export async function fetchProjectConsumers(project: string): Promise<ConsumerCh
         : 'was imported from a Pact file: publish that file instead';
     return [{ slug, name, unavailable }];
   });
+}
+
+/** One environment **Compare with** offers. */
+export interface CompareEnvironment {
+  name: string;
+  production: boolean;
+}
+
+/**
+ * The workspace's environments, for the **Deployed to …** chips (PFX-8.4, #7301).
+ *
+ * @returns The environments by name, or the failure.
+ */
+export async function fetchCompareEnvironments(): Promise<CompareEnvironment[] | CallFailure> {
+  const answer = await send('/api/pact/environments');
+  if (!answer) return { error: 'The environments could not be read. Try again shortly.', status: 503 };
+  if (answer.status >= 400) return { error: errorOf(answer.body, answer.status, 'Could not read the environments'), status: answer.status };
+  const body = answer.body as { _embedded?: { environments?: unknown }; environments?: unknown } | null;
+  const raw = Array.isArray(body?._embedded?.environments) ? body._embedded.environments : Array.isArray(body?.environments) ? body.environments : [];
+  return (raw as Array<Record<string, unknown>>)
+    .flatMap((env) => (typeof env?.name === 'string' && env.name ? [{ name: env.name, production: env.production === true }] : []))
+    .sort((a, b) => Number(b.production) - Number(a.production) || a.name.localeCompare(b.name));
+}
+
+/**
+ * Compare one pact with several provider versions (PFX-8.4, #7301). Writes nothing.
+ *
+ * @param row - A publishable row.
+ * @param against - The selectors.
+ * @returns The answer, or the failure.
+ */
+export async function comparePact(row: PactFileRow, against: string[]): Promise<CompareAnswer | CallFailure> {
+  let pact: unknown;
+  try {
+    pact = JSON.parse(row.text);
+  } catch {
+    return { error: 'This pact is not JSON, so it cannot be compared.', status: 400 };
+  }
+  const answer = await send('/api/pact/publish/compare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pact, against }),
+  });
+  if (!answer) return { error: UNREACHABLE, status: 503 };
+  if (answer.status >= 400) return { error: errorOf(answer.body, answer.status, 'The check was refused'), status: answer.status };
+  return readCompareAnswer(answer.body) ?? { error: 'The check returned an answer this page cannot read.', status: 502 };
 }
