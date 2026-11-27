@@ -161,6 +161,7 @@ from .pact_broker_cleanup_routes import router as pact_broker_cleanup_router
 from .pact_retention_routes import router as pact_retention_router
 from .pact_commit_status_routes import router as pact_commit_status_router
 from .pacticipant_routes import router as pacticipant_router
+from .pacticipant_contract_source_routes import router as pacticipant_contract_source_router
 from .provider_contract_routes import router as provider_contract_router
 from .provider_contract_check_routes import router as provider_contract_check_router
 from .paths_routes import router as paths_router
@@ -580,6 +581,7 @@ app.include_router(consumer_contract_router)
 app.include_router(consumer_pact_export_router)
 # Pact Broker registry (PFX-1.1, #6914): pacticipants, versions, branches and tags.
 app.include_router(pacticipant_router)
+app.include_router(pacticipant_contract_source_router)  # PFX-8.7 (#7304): standing contract sources
 # PFX-1.11 (#6924): selector-based cleanup of pacticipant versions (dry run first).
 app.include_router(pact_retention_router)
 # PFX-4.4 (#6941): pact verdicts posted to GitHub / GitLab commits — list and retry.

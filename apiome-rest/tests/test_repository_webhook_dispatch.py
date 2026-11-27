@@ -801,3 +801,45 @@ def test_a_third_secret_never_verifies_during_a_rotation(_rotated_secrets) -> No
 
     with pytest.raises(WebhookRejectedError):
         ingest_webhook_delivery(db, provider="github", raw_body=body, headers=headers)
+
+
+# ---------------------------------------------------------------------------------------------
+# PFX-8.7 (#7304): the pushed commit, for providers that publish a file of the repository
+# ---------------------------------------------------------------------------------------------
+
+
+def test_a_push_hands_on_its_commit_even_on_an_untracked_branch() -> None:
+    """A provider following a file needs every push, whether or not anything imports the branch."""
+    db = FakeDb(tracked_branches=["main"])
+    body, headers = _signed(_push(branch="release", sha="c" * 40))
+
+    result = ingest_webhook_delivery(db, provider="github", raw_body=body, headers=headers)
+
+    assert result.outcome == OUTCOME_IGNORED
+    assert (result.pushed_commit, result.branch, result.repository_id, result.tenant_id) == (
+        "c" * 40,
+        "release",
+        _REPO_ID,
+        _TENANT,
+    )
+
+
+def test_a_redelivered_push_hands_on_no_commit() -> None:
+    """The ledger's delivery id drops a redelivery, so a push publishes a contract once."""
+    db = FakeDb(duplicate_delivery_ids=["d-1"])
+    body, headers = _signed(_push(), delivery_id="d-1")
+
+    result = ingest_webhook_delivery(db, provider="github", raw_body=body, headers=headers)
+
+    assert result.outcome == OUTCOME_DUPLICATE
+    assert result.pushed_commit is None
+
+
+def test_a_pull_request_hands_on_no_commit() -> None:
+    db = FakeDb()
+    body, headers = _signed(_pull_request(), delivery_id="d-pr")
+    headers["X-GitHub-Event"] = "pull_request"
+
+    result = ingest_webhook_delivery(db, provider="github", raw_body=body, headers=headers)
+
+    assert result.pushed_commit is None

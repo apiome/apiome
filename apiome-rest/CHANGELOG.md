@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.876.0] - 2026-11-29
+
+### Added
+- **Standing sources of a provider contract (PFX-8.7, #7304).** OpenAPI 1.700.0; migration apiome-db V453
+  (`provider_contract_source`). New `GET` / `PUT /v1/tenants/{t}/pacticipants/{p}/contract-sources` says where a
+  provider's contract is published from automatically: `onProjectPublish` (each published version of the project
+  the pacticipant is bound to becomes the contract of provider version `<version label>` on the pacticipant's
+  main branch, rendered as `apiomeVersion` renders it) and `repository` (`repositoryId`, `path`, `branch`: on
+  every push to that branch the file at the pushed commit is published, the commit being the provider version).
+  The version publish route (`POST /v1/versions/{t}/{project}/{version}/publish`) and the push webhook
+  (`POST /v1/repositories/webhook/{provider}`) run the publish as a background task after answering
+  (`app.provider_contract_auto_publish`); each publish is compared with the pacts that need it, exactly as
+  `PUT …/contracts/provider/…` is, so the verdicts recorded are the ones the PFX-8.6 check previews. **A draft is
+  never published** (the revision is re-read). Idempotent per version (the same contract again is `unchanged`, a
+  different one fails with the conflict); a redelivered webhook publishes nothing. Every attempt appends a
+  `pacts.contract.auto_publish` `access_audit` row (`source: system`) with the trigger, the outcome
+  (`published` / `unchanged` / `failed` / `skipped`) and its reason; nothing fails the publish or the push that
+  triggered it. Turning a source off stops new publishes only. Refused with a reason, never ignored:
+  `409 contract-source-no-project`, `404 contract-source-repository-not-found` (another workspace's repository),
+  `422 contract-source-repository-unsupported` (only GitHub repositories can be read on a push),
+  `400 contract-source-invalid-path` (not a repository-relative `.yaml` / `.yml` / `.json` file); a repository
+  without a push webhook is kept with a `warnings` entry. `GET` needs `pacts:view`; `PUT` needs `pacts:edit`
+  (and `imports:view` with a repository) and is audited as `pacts.contract_source.update` (permission matrix row
+  `pacticipant.contract_sources`). `WebhookIngestResult.pushed_commit` carries a first-seen push's head commit.
+
 ## [1.875.0] - 2026-11-29
 
 ### Added

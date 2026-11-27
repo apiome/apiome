@@ -15,8 +15,10 @@ Apiome compares every pact that needs it with the contract, by the rules in
 stored as a verification result, and the matrix and [can-i-deploy](./can-i-deploy.mdx) read it
 like one a Pact verifier published. A contract counts only when the provider's
 [self-verification evidence](#self-verification-evidence) says the provider matches it. Publish
-from a pipeline with the CLI or the REST API, or [from the UI](#publish-from-the-ui); the **Pact
-comparisons** page shows each comparison's [fidelity report](#read-the-fidelity-report).
+from a pipeline with the CLI or the REST API, or [from the UI](#publish-from-the-ui) — or set it up
+once and let Apiome [publish it automatically](#publish-automatically) on every project publish or
+repository push. The **Pact comparisons** page shows each comparison's
+[fidelity report](#read-the-fidelity-report).
 
 ## Before you start
 
@@ -50,9 +52,10 @@ Choose one of the tabs under **The contract**:
 
 | Tab | What it does |
 | --- | --- |
-| **A project version** | Pick the **Project** and the **Version**. Apiome renders the version as OpenAPI 3.1 from the canonical model — the same as `--apiome-version billing-api@2.7.0`. |
+| **A project version** | Pick the **Project** and the **Version**. Apiome renders the version as OpenAPI 3.1 from the canonical model — the same as `--apiome-version billing-api@2.7.0`. Tick **Do this on every publish** to have every later published version of the project published too ([Publish automatically](#publish-automatically)). |
 | **Upload** | **Drop** an OpenAPI or AsyncAPI document (`.yaml`, `.yml` or `.json`) on the box, or **click “Browse files”**. The pill beside the title says what was read, for example **OpenAPI 3.1**. |
-| **URL** | Type the **Specification URL**. Apiome reads it **once** when you **click “Compare only”** (public addresses only) and publishes those exact bytes. To follow a file as it changes, publish from the pipeline instead. |
+| **URL** | Type the **Specification URL**. Apiome reads it **once** when you **click “Compare only”** (public addresses only) and publishes those exact bytes. To follow a file as it changes, use **Repository**. |
+| **Repository** | Follow a file of a registered repository: every push to its branch publishes it, with the commit as the provider version. Nothing is published now ([Publish automatically](#publish-automatically)). |
 
 A document that cannot be published says why under the box — for example *Could not read this
 file: line 42, mapping values are not allowed here*, or *This is Swagger 2.0* — and **Publish
@@ -82,7 +85,9 @@ provider and run again.
 
 ### If you publish now
 
-The aside compares the contract with every pact a publish would compare it with — each
+<Screenshot id="pact-provider-contract-preview" alt="The If you publish now preview beside the form, for Billing Service, which already publishes each version of Billing API: the ring reads 2 of 3 consumers stay compatible, Orders UI breaks because POST /invoices no longer returns currency and Orders UI 3.3.2 is in production, Mobile App and Checkout read Unverified, and Nobody uses lists 5 of 12 operations. Under the provider, Published automatically says each published version of Billing API becomes its contract, with a Stop publishing each version button; Do this on every publish is ticked."/>
+
+The aside is the **preview**: it compares the contract with every pact a publish would compare it with — each
 consumer's main-branch pact, the latest on this branch and everything deployed or released — and
 **stores nothing**. It refreshes as you fill the form (**click “Compare only”** for a URL, or to run
 it on demand):
@@ -109,7 +114,95 @@ matrix and can-i-deploy.
 
 **The same, from anywhere** beside the form shows the page as an `apiome pact
 publish-provider-contract` command, a GitHub Actions step and the REST request, and lists what the
-command cannot carry (a URL, **Run it now**) with the reason.
+command cannot carry (a URL, **Run it now**, a standing source) with the reason.
+
+## Publish automatically
+
+A provider does not have to remember to publish its contract for every version. Say once where it
+comes from, and Apiome publishes it each time that source moves — then compares it with every
+consumer's pact, exactly as a publish from the page does, so the verdicts recorded are the ones the
+[preview](#if-you-publish-now) showed.
+
+| Standing source | Set it on the page | What is published, and when |
+| --- | --- | --- |
+| **On every project publish** | **A project version** → tick **Do this on every publish** → **click “Publish contract”** | Each time a version of the project is **published**, it is rendered as OpenAPI 3.1 and published as the contract of provider version `<version label>` (for example `2.7.0`), on the provider's main branch. **Drafts are never published.** |
+| **On every push** | **Repository** → choose the **Repository**, type the **Path** and the **Branch** → **click “Follow this file”** | Each push to that branch publishes the file at the pushed commit, as the contract of provider version `<commit sha>` on that branch. |
+
+### On every project publish
+
+1. Open **Publish a provider contract** and choose **A project version**.
+2. Pick the **Project** and a **Version**, and fill in **Whose version this is**.
+3. **Tick “Do this on every publish”** and **click “Publish contract”**.
+
+The contract is published now, and the setting is saved with it — the provider has to exist first,
+and the publish registers it. A provider bound to no project is bound to the one you chose; a
+provider already bound to **another** project is refused with the reason (*Billing Service is bound
+to Payments API…*) — change its project on its pacticipant page first. The result dialog says which
+happened: *Each published version of Billing API now becomes Billing Service's contract.*
+
+### On every push
+
+1. Open **Publish a provider contract** and choose **Repository**.
+2. Choose a **Repository** registered in the workspace, type the **Path** of the OpenAPI or AsyncAPI
+   document (for example `openapi/billing.yaml`) and the **Branch** (it defaults to the repository's
+   default branch).
+3. Type the **Provider** and **click “Follow this file”**.
+
+Nothing is published or compared now: **Compare only** is off and the aside says *The verdicts
+appear after the next push*. Each push is then a provider version — its commit, on the pushed
+branch. Two things to know:
+
+- **The repository needs a push webhook**, or no push reaches Apiome. Without one the source is
+  saved with a warning; register the webhook on the repository's page.
+- **Only GitHub repositories** can be followed: Apiome reads the file through GitHub's contents API.
+  Other repositories are listed but cannot be chosen; publish from their pipeline with
+  `apiome pact publish-provider-contract` instead.
+
+A push publishes the file **without self-verification evidence**, so its verdicts read
+*unverified* until evidence is published for that commit from your pipeline
+([An unverified contract](#an-unverified-contract)).
+
+### See and stop a standing source
+
+Once a provider is typed, **Published automatically** under **Whose version this is** says where its
+contract already comes from — *Each published version of Billing API becomes its contract. Drafts
+never do.* — with any warning (no project bound, no push webhook, the repository was deleted).
+**Click “Stop publishing each version”** or **“Stop following openapi.yaml”** to turn a source off.
+Turning a source off stops **new** publishes only; contracts already published stay.
+
+### What is recorded
+
+- **Once per version.** A provider version's contract is write-once: the same document again changes
+  nothing (`unchanged`), and a different one is refused — the attempt fails with the conflict as its
+  reason. A redelivered webhook publishes nothing.
+- **Every attempt is audited** as `pacts.contract.auto_publish` in the
+  [access audit](../../govern/access-audit.mdx#pact-broker-events), with the trigger, the outcome
+  (`published`, `unchanged`, `failed` or `skipped`) and why it did not publish — a draft, a file that
+  could not be read or is larger than `APIOME_PACT_MAX_BYTES`, a document that is not OpenAPI 3.x or
+  AsyncAPI. Nothing is dropped silently, and nothing fails the project publish or the push.
+- Changing a source is audited as `pacts.contract_source.update`.
+
+### With the API
+
+`PUT /v1/tenants/{tenant}/pacticipants/{provider}/contract-sources` replaces the whole setting; both
+off removes it. `GET` on the same path reads it, with `warnings`.
+
+```bash
+curl -fsS -X PUT "$APIOME_URL/v1/tenants/acme/pacticipants/billing-service/contract-sources" \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"onProjectPublish": true,
+       "repository": {"repositoryId": "<repository id>", "path": "openapi/billing.yaml", "branch": "main"}}'
+```
+
+| Refusal | Why |
+| --- | --- |
+| `409 contract-source-no-project` | `onProjectPublish` for a provider bound to no project — bind it first (`PATCH …/pacticipants/{p}` with `project`). |
+| `404 contract-source-repository-not-found` | The repository is not registered in this workspace. |
+| `422 contract-source-repository-unsupported` | The repository's files cannot be read on a push (only GitHub's can). |
+| `400 contract-source-invalid-path` | The path is not a repository-relative `.yaml`, `.yml` or `.json` file. |
+
+There is no `apiome pact` command for a standing source: the CLI publishes one version at a time, and
+a pipeline that already publishes every build needs none.
 
 ## Publish an OpenAPI document
 
@@ -686,6 +779,8 @@ Publishing can also answer the [publish refusals](./publish-pacts.mdx), such as
 | Cite an Apiome provider-verification report | `pacts:create` and `verification_evidence:view` | — | ✓ | ✓ | ✓ |
 | Check a contract before publishing (**Compare only**) | `pacts:view` (and `versions:view` for a project version) | ✓ | ✓ | ✓ | ✓ |
 | **Run it now** before publishing | `pacts:create`, `versions:view` and `verification_evidence:create` | — | ✓ | ✓ | ✓ |
+| Read a provider's standing sources | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Set or stop a standing source | `pacts:edit` (and `imports:view` to follow a repository file) | — | ✓ | ✓ | ✓ |
 | List comparisons and read a fidelity report | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | Export a declared consumer surface as a pact | `consumer_contracts:view` and `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | Publish a declared consumer surface | `consumer_contracts:view` and `pacts:create` | — | ✓ | ✓ | ✓ |

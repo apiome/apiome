@@ -256,7 +256,7 @@ export async function answerWithRestCall(
       const rest = await fetch(tenantUrl(resolved.slug, path), {
         method,
         headers: { ...createRestAuthHeaders(resolved.user), 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: body === undefined ? undefined : JSON.stringify(body),
         cache: 'no-store',
       });
       return { status: rest.status, body: (await rest.json().catch(() => ({}))) as unknown };

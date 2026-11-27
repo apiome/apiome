@@ -2995,7 +2995,22 @@
       "sources": [
         "apiome-ui/src/app/components/ade/pactProviderContract/ProviderContractClient.tsx",
         "apiome-ui/src/app/components/ade/pactProviderContract/ProviderContractPanels.tsx",
+        "apiome-ui/src/app/components/ade/pactProviderContract/StandingSources.tsx",
         "apiome-ui/lib/pact-provider-contract.ts"
+      ]
+    },
+    {
+      "id": "pact-provider-contract-preview",
+      "route": "/ade/dashboard/pacts/provider-contracts/new",
+      "waitFor": "[data-testid=\"ppc-headline\"]",
+      "data": "fixture:hive-a11y/pact-provider-contract-preview.html",
+      "scrollTo": "[data-testid=\"ppc-headline\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactProviderContract/ProviderContractClient.tsx",
+        "apiome-ui/src/app/components/ade/pactProviderContract/ProviderContractPanels.tsx",
+        "apiome-ui/src/app/components/ade/pactProviderContract/StandingSources.tsx",
+        "apiome-ui/lib/pact-provider-contract.ts",
+        "apiome-ui/lib/pact-contract-sources.ts"
       ]
     },
     {

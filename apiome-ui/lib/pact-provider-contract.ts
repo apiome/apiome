@@ -2,8 +2,9 @@
  * **Publish a provider contract** — the page's model (PFX-8.6, #7303).
  *
  * The page (`/ade/dashboard/pacts/provider-contracts/new`) is the screen for
- * `apiome pact publish-provider-contract`: a contract from a project version, an uploaded file or a
- * URL; whose version it is; and the evidence that the provider behaves as the contract says, as five
+ * `apiome pact publish-provider-contract`: a contract from a project version, an uploaded file, a
+ * URL or — as a standing source (PFX-8.7, #7304) — a file of a repository published on every push;
+ * whose version it is; and the evidence that the provider behaves as the contract says, as five
  * explicit choices labelled by strength. Every sentence the page shows is decided here, and so is
  * every request body, so the page, the BFF and the command block agree.
  *
@@ -22,6 +23,7 @@
 import { parse as parseYaml } from 'yaml';
 import { isHttpUrl, MAX_FIELD_CHARS, MAX_TAGS, MAX_URL_CHARS, parseTags } from './pact-publish';
 import { tenantPath, type PactAction, type PactOption, type PactUnsupported } from './pact-commands';
+import { pathProblem, SOURCES_HAVE_NO_FLAG } from './pact-contract-sources';
 
 /** The page. */
 export const PROVIDER_CONTRACT_ROUTE = '/ade/dashboard/pacts/provider-contracts/new';
@@ -32,8 +34,8 @@ export const MAX_CONTRACT_CHARS = 8 * 1024 * 1024;
 /** The largest evidence report the page reads (REST's `APIOME_PACT_EVIDENCE_MAX_BYTES` default). */
 export const MAX_REPORT_CHARS = 5 * 1024 * 1024;
 
-/** Where the contract comes from. */
-export type ContractSource = 'project' | 'upload' | 'url';
+/** Where the contract comes from. `repository` is a standing source: nothing is published now. */
+export type ContractSource = 'project' | 'upload' | 'url' | 'repository';
 
 /** The five kinds of evidence, strongest first. */
 export type EvidenceKind = 'run' | 'report' | 'reuse' | 'exit' | 'none';
@@ -98,10 +100,16 @@ export interface ProviderContractForm {
   /** A project version: the project's handle and the version label. */
   project: string;
   version: string;
+  /** **Do this on every publish**: each published version of the project becomes the contract (PFX-8.7). */
+  followProject: boolean;
   /** Upload: the file. */
   file: PickedText | null;
   /** URL: the document's address. */
   url: string;
+  /** Repository (a standing source): the registered repository, the file's path and the branch whose pushes publish it. */
+  repositoryId: string;
+  repositoryPath: string;
+  repositoryBranch: string;
   /** Whose version this is. */
   provider: string;
   providerVersion: string;
@@ -128,8 +136,12 @@ export const EMPTY_FORM: ProviderContractForm = {
   source: 'project',
   project: '',
   version: '',
+  followProject: false,
   file: null,
   url: '',
+  repositoryId: '',
+  repositoryPath: '',
+  repositoryBranch: '',
   provider: '',
   providerVersion: '',
   branch: '',
@@ -283,13 +295,22 @@ export function formProblems(form: ProviderContractForm): FormProblem[] {
       const detected = detectContract(form.file.text, form.file.name);
       if (detected.problem) add('file', detected.problem);
     }
-  } else {
+  } else if (form.source === 'url') {
     const url = form.url.trim();
     if (!url) add('url', 'Give the URL of the specification.');
     else if (url.length > MAX_URL_CHARS || !isHttpUrl(url)) add('url', 'The specification URL must be an http(s) URL.');
+  } else {
+    if (!form.repositoryId) add('repositoryId', 'Choose the repository the file is in.');
+    const path = pathProblem(form.repositoryPath);
+    if (path) add('repositoryPath', path);
+    const branch = form.repositoryBranch.trim();
+    if (!branch) add('repositoryBranch', 'Give the branch whose pushes publish the file.');
+    else if (branch.length > MAX_FIELD_CHARS) add('repositoryBranch', `Branch is longer than ${MAX_FIELD_CHARS} characters.`);
   }
   if (!form.provider.trim()) add('provider', 'Give the provider’s name.');
   else if (form.provider.trim().length > MAX_FIELD_CHARS) add('provider', `The provider’s name is longer than ${MAX_FIELD_CHARS} characters.`);
+  // A repository source publishes nothing now: each push is a version (its commit), with no evidence.
+  if (form.source === 'repository') return problems;
   const version = form.providerVersion.trim();
   if (!version) add('providerVersion', 'Give the provider version (a commit SHA is ideal).');
   else if (version.length > MAX_FIELD_CHARS) add('providerVersion', `The provider version is longer than ${MAX_FIELD_CHARS} characters.`);
@@ -462,9 +483,18 @@ export function providerContractCommandAction(form: ProviderContractForm, tenant
       ? [{ value: form.file.name }]
       : form.source === 'url'
         ? [{ value: 'openapi.yaml' }]
-        : [];
+        : form.source === 'repository'
+          ? [{ value: form.repositoryPath.trim() || 'openapi.yaml' }]
+          : [];
+  // A repository source is what a pipeline would run on every push: the commit is the version.
+  const pushed = form.source === 'repository';
   if (form.source === 'url' && form.url.trim()) {
     unsupported.push({ what: `The URL ${form.url.trim()}`, reason: URL_HAS_NO_FLAG, inRest: false });
+  }
+  if (form.source === 'repository') {
+    unsupported.push({ what: 'Publishing a repository file on every push', reason: SOURCES_HAVE_NO_FLAG, inRest: false });
+  } else if (form.source === 'project' && form.followProject) {
+    unsupported.push({ what: 'Do this on every publish', reason: SOURCES_HAVE_NO_FLAG, inRest: false });
   }
   const exitCode = parsedExitCode(form.exitCode);
   const tool: PactOption[] = [
@@ -472,7 +502,9 @@ export function providerContractCommandAction(form: ProviderContractForm, tenant
     { flag: '--verifier-version', value: form.verifierVersion.trim() },
   ];
   const evidence: PactOption[] = [];
-  if (form.evidence === 'report') {
+  if (pushed) {
+    // A push publishes without evidence (PUSH_EVIDENCE_NOTE).
+  } else if (form.evidence === 'report') {
     evidence.push({ flag: '--evidence', value: form.report?.name ?? '<report>' });
     if (exitCode !== null && !Number.isNaN(exitCode)) evidence.push({ flag: '--verification-exit-code', value: String(exitCode) });
     evidence.push(...tool);
@@ -486,18 +518,22 @@ export function providerContractCommandAction(form: ProviderContractForm, tenant
   }
   const options: PactOption[] = [
     { flag: '--provider', value: form.provider.trim() || '<provider>' },
-    { flag: '--provider-app-version', value: form.providerVersion.trim() || '<version>' },
+    { flag: '--provider-app-version', value: pushed ? '<commit sha>' : form.providerVersion.trim() || '<version>' },
     ...(form.source === 'project' ? [{ flag: '--apiome-version', value: form.project.trim() ? apiomeVersion(form) : '<project>@<version>' }] : []),
-    { flag: '--branch', value: form.branch.trim() },
-    { flag: '--tag', value: parseTags(form.tags) },
-    { flag: '--build-url', value: form.buildUrl.trim() },
+    { flag: '--branch', value: pushed ? form.repositoryBranch.trim() : form.branch.trim() },
+    { flag: '--tag', value: pushed ? [] : parseTags(form.tags) },
+    { flag: '--build-url', value: pushed ? '' : form.buildUrl.trim() },
     ...evidence,
   ];
   const body = restBody(form, 'publish', form.source === 'url' ? '<base64 of the downloaded file>' : null);
-  if (form.source === 'upload' && form.file) body.content = '<base64 of the file>';
+  if ((form.source === 'upload' && form.file) || pushed) body.content = '<base64 of the file>';
+  if (pushed) {
+    delete body.verificationResults;
+    if (form.repositoryBranch.trim()) body.branch = form.repositoryBranch.trim();
+  }
   const results = body.verificationResults as Record<string, unknown> | undefined;
   if (results && typeof results.content === 'string') results.content = '<base64 of the report>';
-  if (form.evidence === 'run') body.verificationResults = { providerVerificationReportId: '<report id>' };
+  if (form.evidence === 'run' && !pushed) body.verificationResults = { providerVerificationReportId: '<report id>' };
   const path = `/pact-broker/contracts/provider/${encodeURIComponent(form.provider.trim() || '{provider}')}/version/${encodeURIComponent(form.providerVersion.trim() || '{version}')}`;
   return {
     verb: 'publish-provider-contract',

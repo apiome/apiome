@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.699.0",
+    "version": "1.700.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -40396,6 +40396,212 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for deleteapacticipantresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/contract-sources": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Read a provider's standing contract sources",
+        "description": "Where this provider's contract is published from automatically.\n\n- `onProjectPublish` \u2014 each time a version of the project the pacticipant is bound to is published, it is rendered (OpenAPI 3.1, as `apiomeVersion` renders it) and published as the contract of provider version `<version label>` on the pacticipant's main branch. Drafts are never published.\n- `repository` \u2014 on every push to `branch` of a registered repository (`repositoryId`), the file at `path` is published with the pushed commit as the provider version. The repository needs a push webhook.\n\nEach automatic publish is compared with the pacts that need it, as a publish is, and audited as `pacts.contract.auto_publish` with its outcome and reason. A provider version's contract is write-once, so a repeated trigger records nothing new. Turning a source off stops new publishes only.\n\n`warnings` names each source that will not fire right now. Requires `pacts:view`.",
+        "operationId": "read_contract_sources_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__contract_sources_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaprovidersstandingcontractsourcesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaprovidersstandingcontractsourcesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readaprovidersstandingcontractsources Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readaprovidersstandingcontractsources Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a provider's standing contract sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractSourcesRecord",
+                  "description": "Response payload for readaprovidersstandingcontractsourcesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readaprovidersstandingcontractsourcesresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Set a provider's standing contract sources",
+        "description": "Replace where this provider's contract is published from automatically; both off removes the setting.\n\n- `onProjectPublish` \u2014 each time a version of the project the pacticipant is bound to is published, it is rendered (OpenAPI 3.1, as `apiomeVersion` renders it) and published as the contract of provider version `<version label>` on the pacticipant's main branch. Drafts are never published.\n- `repository` \u2014 on every push to `branch` of a registered repository (`repositoryId`), the file at `path` is published with the pushed commit as the provider version. The repository needs a push webhook.\n\nEach automatic publish is compared with the pacts that need it, as a publish is, and audited as `pacts.contract.auto_publish` with its outcome and reason. A provider version's contract is write-once, so a repeated trigger records nothing new. Turning a source off stops new publishes only.\n\nRefused with a reason, never ignored: `409 contract-source-no-project` for `onProjectPublish` on a pacticipant bound to no project, `404 contract-source-repository-not-found` for a repository of another workspace, `422 contract-source-repository-unsupported` for a repository whose files cannot be read on a push (only GitHub's can), `400 contract-source-invalid-path` for a path that is not a repository-relative `.yaml` / `.yml` / `.json` file.\n\nRequires `pacts:edit`, and `imports:view` with `repository`.",
+        "operationId": "put_contract_sources_route_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__contract_sources_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "pacticipant_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pacticipant Ref",
+              "description": "Pacticipant Ref schema."
+            },
+            "description": "Path parameter identifying the pacticipant ref segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Setaprovidersstandingcontractsourcesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Setaprovidersstandingcontractsourcesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Setaprovidersstandingcontractsources Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Setaprovidersstandingcontractsources Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractSourcesInput",
+                "description": "Request body for setaprovidersstandingcontractsourcesrequest."
+              }
+            }
+          },
+          "description": "Request body for set a provider's standing contract sources."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for set a provider's standing contract sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractSourcesRecord",
+                  "description": "Response payload for setaprovidersstandingcontractsourcesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for setaprovidersstandingcontractsourcesresponse422."
                 }
               }
             }
@@ -296959,6 +297165,250 @@
         "type": "object",
         "title": "PactIntegrationsPage",
         "description": "What ``GET /v1/tenants/{tenant}/pact-integrations`` answers."
+      },
+      "ContractSourcesInput": {
+        "properties": {
+          "onProjectPublish": {
+            "type": "boolean",
+            "title": "Onprojectpublish",
+            "description": "Publish each published version of the bound project as the provider contract.",
+            "default": false,
+            "example": false
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RepositorySourceInput"
+              },
+              {
+                "type": "null",
+                "description": "Contract Sources Input schema."
+              }
+            ],
+            "description": "Publish a repository file on every push; `null` for none."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ContractSourcesInput",
+        "description": "The standing sources of a provider contract, replaced as a whole.\n\nAttributes:\n    on_project_publish: Publish each published version of the bound project.\n    repository: Publish a repository file on every push, or ``None`` for no repository source."
+      },
+      "ContractSourcesRecord": {
+        "properties": {
+          "pacticipant": {
+            "type": "string",
+            "title": "Pacticipant",
+            "description": "Pacticipant.",
+            "example": "example"
+          },
+          "onProjectPublish": {
+            "type": "boolean",
+            "title": "Onprojectpublish",
+            "default": false,
+            "description": "On Project Publish.",
+            "example": false
+          },
+          "project": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProjectSourceRecord"
+              },
+              {
+                "type": "null",
+                "description": "Contract Sources schema."
+              }
+            ],
+            "description": "Project."
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RepositorySourceRecord"
+              },
+              {
+                "type": "null",
+                "description": "Contract Sources schema."
+              }
+            ],
+            "description": "Repository."
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Warnings.",
+            "maxItems": 1000
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Contract Sources schema."
+              },
+              {
+                "type": "null",
+                "description": "Contract Sources schema."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "pacticipant"
+        ],
+        "title": "ContractSourcesRecord",
+        "description": "A provider pacticipant's standing contract sources, as stored.\n\nAttributes:\n    pacticipant: The pacticipant's handle.\n    on_project_publish: Whether each published version of the bound project is published.\n    project: The bound project (``None`` when the pacticipant is bound to none).\n    repository: The repository source, or ``None``.\n    warnings: Why a stored source will not fire right now (no project, repository deleted,\n        no push webhook).\n    updated_at: When the setting last changed; ``None`` when it was never set."
+      },
+      "ProjectSourceRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Project Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Project Source schema."
+              }
+            ],
+            "title": "Slug",
+            "description": "URL-safe identifier."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Project Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Project Source schema."
+              }
+            ],
+            "title": "Name",
+            "description": "Human-readable name."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "ProjectSourceRecord",
+        "description": "The project whose published versions become the provider contract."
+      },
+      "RepositorySourceInput": {
+        "properties": {
+          "repositoryId": {
+            "type": "string",
+            "title": "Repositoryid",
+            "description": "A repository registered in this workspace.",
+            "example": "example"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "The OpenAPI or AsyncAPI document, relative to the repository root.",
+            "example": "/resources/{id}"
+          },
+          "branch": {
+            "type": "string",
+            "title": "Branch",
+            "description": "The branch whose pushes publish the file; the pushed commit is the provider version.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repositoryId",
+          "path",
+          "branch"
+        ],
+        "title": "RepositorySourceInput",
+        "description": "Publish a repository file on every push to a branch.\n\nAttributes:\n    repository_id: A repository registered in the workspace (``GET /v1/tenants/{t}/repositories``).\n    path: The OpenAPI or AsyncAPI document, relative to the repository root.\n    branch: The branch whose pushes publish the file; the pushed commit is the provider version."
+      },
+      "RepositorySourceRecord": {
+        "properties": {
+          "repositoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Repository Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Repository Source schema."
+              }
+            ],
+            "title": "Repositoryid",
+            "description": "Repository ID."
+          },
+          "fullName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Repository Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Repository Source schema."
+              }
+            ],
+            "title": "Fullname",
+            "description": "Full Name."
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Repository Source schema."
+              },
+              {
+                "type": "null",
+                "description": "Repository Source schema."
+              }
+            ],
+            "title": "Provider",
+            "description": "Provider."
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Path.",
+            "example": "/resources/{id}"
+          },
+          "branch": {
+            "type": "string",
+            "title": "Branch",
+            "description": "Branch.",
+            "example": "example"
+          },
+          "webhook": {
+            "type": "boolean",
+            "title": "Webhook",
+            "description": "Whether the repository has a push webhook; without one no push arrives.",
+            "default": false,
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "branch"
+        ],
+        "title": "RepositorySourceRecord",
+        "description": "The repository file published on every push."
       }
     },
     "securitySchemes": {

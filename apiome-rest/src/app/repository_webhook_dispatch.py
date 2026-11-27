@@ -174,6 +174,10 @@ class WebhookIngestResult:
         instant_refresh_paths: Tracked files the push changed, to refresh right away (RAR-6.3);
             empty when the push changed none, its file list is unknown, or the repository is
             not pollable — the cadence sweep then covers it.
+        pushed_commit: For a verified, first-seen push that names its head commit, the commit
+            (PFX-8.7): providers following a file of this repository publish it as their contract
+            (:mod:`app.provider_contract_auto_publish`). ``None`` otherwise — a redelivery
+            included, so a push publishes once.
     """
 
     outcome: str
@@ -186,6 +190,7 @@ class WebhookIngestResult:
     binding_candidates: int = 0
     checks_seeded: int = 0
     instant_refresh_paths: Tuple[str, ...] = ()
+    pushed_commit: Optional[str] = None
 
 
 def _first_header(headers: Mapping[str, Any], names: Tuple[str, ...]) -> Optional[str]:
@@ -867,4 +872,14 @@ def ingest_webhook_delivery(
             },
         )
 
+    if event.kind == EVENT_KIND_PUSH and event.head_sha:
+        # PFX-8.7: a push is a provider version for providers that follow a file of this
+        # repository, whether or not anything here imports from the branch.
+        result = replace(
+            result,
+            pushed_commit=event.head_sha,
+            tenant_id=str(subscription.get("tenant_id") or "") or None,
+            repository_id=str(subscription["repository_id"]),
+            branch=event.branch,
+        )
     return result

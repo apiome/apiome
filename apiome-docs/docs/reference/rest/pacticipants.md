@@ -1,6 +1,6 @@
 ---
 title: "Pacticipants"
-description: "REST endpoints tagged pacticipants: 21 operations."
+description: "REST endpoints tagged pacticipants: 23 operations."
 sidebar_position: 71
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.699.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.700.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pacticipants` · 21 operations
+Tag: `pacticipants` · 23 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-commit-statuses` {#get-pact-commit-statuses-v1-tenants-tenant-slug-pact-commit-statuses-get}
 
@@ -327,6 +327,76 @@ Operation id: `list_pacticipant_branches_v1_tenants__tenant_slug__pacticipants__
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list a pacticipant's branches. | `application/json` [`PacticipantBranchListResponse`](#schema-pacticipantbranchlistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/contract-sources` {#read-contract-sources-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-contract-sources-get}
+
+**Read a provider's standing contract sources**
+
+Where this provider's contract is published from automatically.
+
+- `onProjectPublish` — each time a version of the project the pacticipant is bound to is published, it is rendered (OpenAPI 3.1, as `apiomeVersion` renders it) and published as the contract of provider version `<version label>` on the pacticipant's main branch. Drafts are never published.
+- `repository` — on every push to `branch` of a registered repository (`repositoryId`), the file at `path` is published with the pushed commit as the provider version. The repository needs a push webhook.
+
+Each automatic publish is compared with the pacts that need it, as a publish is, and audited as `pacts.contract.auto_publish` with its outcome and reason. A provider version's contract is write-once, so a repeated trigger records nothing new. Turning a source off stops new publishes only.
+
+`warnings` names each source that will not fire right now. Requires `pacts:view`.
+
+Operation id: `read_contract_sources_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__contract_sources_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a provider's standing contract sources. | `application/json` [`ContractSourcesRecord`](#schema-contractsourcesrecord) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/contract-sources` {#put-contract-sources-route-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-contract-sources-put}
+
+**Set a provider's standing contract sources**
+
+Replace where this provider's contract is published from automatically; both off removes the setting.
+
+- `onProjectPublish` — each time a version of the project the pacticipant is bound to is published, it is rendered (OpenAPI 3.1, as `apiomeVersion` renders it) and published as the contract of provider version `<version label>` on the pacticipant's main branch. Drafts are never published.
+- `repository` — on every push to `branch` of a registered repository (`repositoryId`), the file at `path` is published with the pushed commit as the provider version. The repository needs a push webhook.
+
+Each automatic publish is compared with the pacts that need it, as a publish is, and audited as `pacts.contract.auto_publish` with its outcome and reason. A provider version's contract is write-once, so a repeated trigger records nothing new. Turning a source off stops new publishes only.
+
+Refused with a reason, never ignored: `409 contract-source-no-project` for `onProjectPublish` on a pacticipant bound to no project, `404 contract-source-repository-not-found` for a repository of another workspace, `422 contract-source-repository-unsupported` for a repository whose files cannot be read on a push (only GitHub's can), `400 contract-source-invalid-path` for a path that is not a repository-relative `.yaml` / `.yml` / `.json` file.
+
+Requires `pacts:edit`, and `imports:view` with `repository`.
+
+Operation id: `put_contract_sources_route_v1_tenants__tenant_slug__pacticipants__pacticipant_ref__contract_sources_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `pacticipant_ref` | path | string | yes | Path parameter identifying the pacticipant ref segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for set a provider's standing contract sources.
+
+- `application/json` — [`ContractSourcesInput`](#schema-contractsourcesinput)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for set a provider's standing contract sources. | `application/json` [`ContractSourcesRecord`](#schema-contractsourcesrecord) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pacticipants/{pacticipant_ref}/labels` {#list-labels-of-pacticipant-v1-tenants-tenant-slug-pacticipants-pacticipant-ref-labels-get}
@@ -698,6 +768,41 @@ Never carries a token: the credential is resolved at send time and stored nowher
 | `attempts` | integer | no | How many times the status was sent. |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
+
+### `ContractSourcesInput` {#schema-contractsourcesinput}
+
+The standing sources of a provider contract, replaced as a whole.
+
+Attributes:
+    on_project_publish: Publish each published version of the bound project.
+    repository: Publish a repository file on every push, or ``None`` for no repository source.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `onProjectPublish` | boolean | no | Publish each published version of the bound project as the provider contract. |
+| `repository` | `RepositorySourceInput` or null | no | Publish a repository file on every push; `null` for none. |
+
+### `ContractSourcesRecord` {#schema-contractsourcesrecord}
+
+A provider pacticipant's standing contract sources, as stored.
+
+Attributes:
+    pacticipant: The pacticipant's handle.
+    on_project_publish: Whether each published version of the bound project is published.
+    project: The bound project (``None`` when the pacticipant is bound to none).
+    repository: The repository source, or ``None``.
+    warnings: Why a stored source will not fire right now (no project, repository deleted,
+        no push webhook).
+    updated_at: When the setting last changed; ``None`` when it was never set.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `pacticipant` | string | yes | Pacticipant. |
+| `onProjectPublish` | boolean | no | On Project Publish. |
+| `project` | `ProjectSourceRecord` or null | no | Project. |
+| `repository` | `RepositorySourceRecord` or null | no | Repository. |
+| `warnings` | array of string | no | Warnings. |
+| `updatedAt` | string or null | no | Updated At. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 

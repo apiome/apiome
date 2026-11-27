@@ -199,6 +199,7 @@ from .version_notes import (
     enforce_max_commit_payload,
     validate_version_notes,
 )
+from .provider_contract_auto_publish import run_on_project_version as run_contract_auto_publish_on_version
 from .version_publish_prechecks import enforce_publish_prechecks
 from .version_pull_delta import SCHEMA_PULL_DELTA_GUARANTEE, build_schema_pull_delta
 from .version_pull_payload import filter_version_pull_dump, resolve_pull_sections
@@ -2488,6 +2489,16 @@ def publish_version(
     background_tasks.add_task(
         enqueue_auto_export_on_publish,
         db=db,
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        version_record_id=version_record_id,
+        actor_id=user_id,
+    )
+    # PFX-8.7 (#7304): providers that publish each version of this project as their provider
+    # contract get it now. Re-reads the version (drafts never publish) and audits every attempt;
+    # never fails the publish.
+    background_tasks.add_task(
+        run_contract_auto_publish_on_version,
         tenant_id=auth_data["tenant_id"],
         project_id=project_id,
         version_record_id=version_record_id,

@@ -62,6 +62,16 @@
       "body": {}
     },
     {
+      "id": "pacticipant.contract_sources",
+      "label": "Set a provider's standing contract sources",
+      "permission": "pacts:edit",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pacticipants/{pacticipant}/contract-sources",
+      "audit": "pacts.contract_source.update",
+      "auditedBy": "route",
+      "body": {}
+    },
+    {
       "id": "pacticipant.delete",
       "label": "Delete a pacticipant",
       "permission": "pacts:delete",
