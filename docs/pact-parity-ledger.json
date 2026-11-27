@@ -144,9 +144,27 @@
     },
     {
       "cli": "verify",
-      "ui": null,
+      "ui": "/ade/dashboard/pacts/verification/new",
       "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify",
-      "reason": "The Verification page re-runs recorded verifications only; starting one with a target and selectors ships with the Run a verification page, PFX-8.8 (#7305)."
+      "fields": {
+        "--provider": "The provider under test → Provider",
+        "--provider-app-version": "The provider under test → Version being verified",
+        "--target": "Apiome runs it → Target (Add a target… for a new one)",
+        "--branch": "The provider under test → Branch",
+        "--build-url": "More options → Build URL",
+        "--consumer-version-selector": "Which pacts to verify → the rules (Recommended / Everything / Custom; Add a rule), one selector per sentence",
+        "--enable-pending": "Pending pacts cannot fail this run",
+        "--include-wip-pacts-since": "Include work-in-progress pacts → Work in progress since",
+        "--allow-mutating": "Allow requests that change data (refused for a production target)",
+        "--replay-without-state-setup": "Getting the provider into the right state → No setup",
+        "--provider-states-setup-url": "Getting the provider into the right state → The provider’s own setup endpoint → Setup endpoint",
+        "--skip-already-verified": "More options → Skip pacts already verified for this version (Run anyway turns it off)",
+        "--publish-verification-results": "More options → Publish the results",
+        "--context": "More options → CI context",
+        "--output": "The outcome dialog (each pact’s outcome and every pact not run)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     }
   ],
   "writeRoutes": [
@@ -288,6 +306,21 @@
       "rest": "POST /v1/tenants/{tenant}/pact-broker/webhooks",
       "ui": "/ade/dashboard/pacts/webhooks",
       "cli": "create-webhook"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/verification/run",
+      "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify",
+      "ui": "/ade/dashboard/pacts/verification/new",
+      "cli": "verify"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/verification/preview",
+      "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify/preview",
+      "ui": "/ade/dashboard/pacts/verification/new",
+      "cli": null,
+      "reason": "The preview is a read: it lists what a run would verify and sends nothing. apiome pact verify --no-publish-verification-results is the pipeline's dry run, and it replays."
     }
   ]
 }

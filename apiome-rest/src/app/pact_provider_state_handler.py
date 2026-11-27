@@ -39,6 +39,7 @@ import httpx
 
 from .contract_suite import PactProviderState
 from .pact_provider_state import (
+    CODE_SETUP_BLOCKED,
     SETUP_STATE_CHANGE,
     FixtureRequest,
     ProviderStateRecord,
@@ -54,7 +55,7 @@ from .verification_target import NETWORK_CLASS_PRIVATE, ResolvedTarget
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["RegistryStateHandler"]
+__all__ = ["RegistryStateHandler", "SetupUrlStateHandler"]
 
 _SAFE_METHODS = ("GET", "HEAD")
 _BODY_EXCERPT = 200
@@ -291,3 +292,83 @@ class RegistryStateHandler:
         if 200 <= response.status_code < 300:
             return None
         return f"{label} answered {response.status_code}{_excerpt(response)}"
+
+
+class SetupUrlStateHandler(RegistryStateHandler):
+    """Sets every state up through the provider's own setup endpoint (PFX-8.8, #7305).
+
+    The choice a Pact verifier calls ``--provider-states-setup-url``: no registry, one URL. Before
+    an interaction that names states, each state is ``POST``-ed to the URL as
+    ``{"state", "params", "action": "setup"}``, in the recorded order, and after the interaction as
+    ``"action": "teardown"``, in reverse — exactly a registered ``state_change`` setup, so the same
+    rules apply: a path is joined onto the target and carries its credential, an absolute URL goes
+    through the SSRF guard with none, and a failed setup holds the interaction back with the call
+    named.
+
+    **A path on the target is a ``POST`` to it.** When the target's policy forbids mutating
+    methods, every interaction that names a state is held back with ``provider-state-setup-blocked``
+    before anything is sent, as the registry does for its own ``state_change`` setups.
+    """
+
+    def __init__(
+        self,
+        url: str,
+        target: ResolvedTarget,
+        auth_headers: Mapping[str, str],
+        *,
+        target_client: Optional[httpx.Client] = None,
+        external_client: Optional[httpx.Client] = None,
+    ) -> None:
+        """Build the handler.
+
+        Args:
+            url: The setup endpoint — a path on the target or an absolute http(s) URL (already
+                checked by :class:`app.pact_verifier.PactVerificationOptions`).
+            target: The resolved verification target.
+            auth_headers: The target's credential headers (sent only to the target).
+            target_client: A client for the target (tests).
+            external_client: A client for a URL off the target (tests).
+        """
+        super().__init__(
+            {}, target, auth_headers, target_client=target_client, external_client=external_client
+        )
+        self.url = url
+        self.state_setup = StateSetup(kind=SETUP_STATE_CHANGE, url=url, teardown=True)
+
+    def issue(self, states: Sequence[PactProviderState]) -> Optional[Tuple[str, str]]:
+        """Why ``states`` cannot be set up through the URL, before anything is sent.
+
+        Args:
+            states: An interaction's provider states.
+
+        Returns:
+            ``(provider-state-setup-blocked, message)`` when the URL is a path on a target whose
+            policy forbids mutating methods; otherwise ``None`` — every state is the endpoint's to
+            set up.
+        """
+        if states and self.state_setup.sends_mutating() and not self.target.policy.allow_mutating_methods:
+            return (
+                CODE_SETUP_BLOCKED,
+                f"the setup endpoint {self.url} is a POST to the target, and the target's policy has "
+                "allow_mutating_methods=false",
+            )
+        return None
+
+    def setup(self, states: Sequence[PactProviderState]) -> Optional[str]:
+        """POST every state to the URL, in order; undo the ones done if one fails.
+
+        Args:
+            states: The interaction's provider states.
+
+        Returns:
+            ``None`` when the provider is ready, else why not.
+        """
+        self._active = []
+        for state in states:
+            params = dict(state.params or {})
+            problem = self._run(state.name, self.state_setup, params, action="setup")
+            if problem is not None:
+                self._undo()
+                return f"'{state.name}': {problem}"
+            self._active.append(_Active(name=state.name, setup=self.state_setup, params=params))
+        return None

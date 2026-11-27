@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 110 operations."
+description: "REST endpoints tagged pact-broker: 111 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.700.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.701.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 110 operations
+Tag: `pact-broker` · 111 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -3170,9 +3170,13 @@ Run provider verification from Apiome (PFX-3.2): select the pacts the provider m
 
 **Matching.** The status, the recorded headers and the body are compared under the pact's matching rules. Each mismatch names the interaction, the field (a JSON Pointer into the response body, or the header), the rule that failed, and the expected and actual values. A rule the verifier cannot apply fails the interaction; it never passes silently.
 
-**Mutating interactions** (`POST`, `PUT`, `PATCH`, `DELETE`) are sent only when the target's policy allows mutating methods **and** `verification.allow_mutating` is true. A run cannot widen the target's policy.
+**Mutating interactions** (`POST`, `PUT`, `PATCH`, `DELETE`) are sent only when the target's policy allows mutating methods **and** `verification.allow_mutating` is true. A run cannot widen the target's policy, and a run with `allow_mutating` against a target whose environment is `production` is refused (`pact-verify-mutating-production`) before anything is sent.
 
-**Provider states.** An interaction that names a provider state is skipped with `provider-state-not-set-up` unless `verification.replay_without_state_setup` is true (the target already holds the data).
+**Provider states.** Registered states (PFX-3.3) are set up around each interaction. With `verification.provider_states_setup_url` every state is POSTed to the provider's own setup endpoint instead. Otherwise an interaction that names a provider state is skipped with `provider-state-not-set-up` unless `verification.replay_without_state_setup` is true (the target already holds the data).
+
+**Already verified.** With `skip_already_verified`, a pact that already has a result for this `provider_version` is listed under `skipped` and not replayed; when that is every pact the outcome is `already-verified`.
+
+**An unreachable target** — every request ended in a transport error or a timeout — ends the run as `could-not-connect` with `connection_error`, not as a failed verification: nothing is published.
 
 **Publishing.** A pact is `passed` when every interaction was replayed and matched, `failed` when one did not match, and `incomplete` when nothing failed but something was skipped, unreachable or cannot be replayed. `passed` and `failed` are published as verification results against `provider_version` (and `provider_branch`), and show in the matrix and can-i-deploy; `incomplete` publishes nothing. `publish: false` is a dry run.
 
@@ -3202,7 +3206,7 @@ Request body for verify a provider against its pacts (hosted verifier).
 | 200 | Successful response for verify a provider against its pacts (hosted verifier). | `application/json` [`PactVerifyResponse`](#schema-pactverifyresponse) |
 | 400 | `pact-selector-invalid`, or a malformed provider version, branch or build URL. | — |
 | 404 | `pacticipant-not-found` or `target-not-found` in this workspace. | — |
-| 422 | `pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`, or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`, a URL refusal). | — |
+| 422 | `pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`, `pact-verify-mutating-production`, or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`, a URL refusal). | — |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify-stale` {#verify-stale-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-verify-stale-post}
 
@@ -3236,6 +3240,40 @@ Request body for verify every stale pact of a provider.
 | 404 | `pacticipant-not-found`, `pact-not-found` or `target-not-found` in this workspace. | — |
 | 409 | `pact-verify-in-progress`: a console run of this pair is already running. | — |
 | 422 | `pact-verify-provider-version-required`, `pact-verify-target-auth-unavailable`, or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`, a URL refusal). | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify/preview` {#preview-verify-v1-tenants-tenant-slug-pact-verifier-pacts-provider-provider-verify-preview-post}
+
+**Preview a hosted verification**
+
+Say what `POST …/verify` would do with this body (PFX-8.8), **sending nothing to any target and storing nothing**: how many pacts each consumer-version selector chooses on its own (`rules`), every pact the whole selection chooses with its interactions, how many change data, its newest result and whether it already has a result for `provider_version` (`already_verified`; skipped with `skip_already_verified`), the provider states those interactions name and how many the chosen strategy sets up (the registry, `verification.provider_states_setup_url`, or none), and the target's environment class.
+
+Every reason the run would not start is a `refusals` entry with the run's own code — `pact-verify-mutating-production`, `pact-verify-too-many-pacts`, `target-not-found`, a malformed provider version — so the page can say it before anything is sent. `target_ref` and `provider_version` are optional (a self-run has no target). Requires `pacts:view`.
+
+Operation id: `preview_verify_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verify_preview_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for preview a hosted verification.
+
+- `application/json` — [`VerifyPreviewRequest`](#schema-verifypreviewrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for preview a hosted verification. | `application/json` [`VerifyPreviewResponse`](#schema-verifypreviewresponse) |
+| 400 | `pact-selector-invalid`. | — |
+| 404 | `pacticipant-not-found` in this workspace. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-verifier/providers/{provider}/provider-states` {#list-states-route-v1-tenants-tenant-slug-pact-verifier-providers-provider-provider-states-get}
 
@@ -3560,11 +3598,12 @@ A console run: the hosted verifier's answer, its trigger, and what it did not ru
 | `provider_version` | string | yes | The provider version verified. |
 | `provider_branch` | string or null | no | Its branch, when stated. |
 | `target` | `VerifiedTarget` | yes | The verification target replayed against. |
-| `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed`. |
-| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed) or `no-pacts` (the selectors chose nothing). |
+| `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed` — or, for `already-verified`, when every skipped pact's newest result for this provider version passed. |
+| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target — see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version) or `no-pacts` (the selectors chose nothing). |
 | `pacts` | array of `PactVerification` | no | One entry per pact verified. |
-| `trigger` | string | yes | `manual` (re-run), `stale-recheck` (verify all stale) or `scheduled`. |
 | `skipped` | array of `SkippedPact` | no | Chosen but not verified, each with why. |
+| `connection_error` | string or null | no | With outcome `could-not-connect`: the target never answered (`Could not connect to billing.staging.example (timeout)`). Not a failed verification — nothing was published. |
+| `trigger` | string | yes | `manual` (re-run), `stale-recheck` (verify all stale) or `scheduled`. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 
@@ -3721,6 +3760,7 @@ Which pacts to verify, against which target, as which provider build.
 | `selection` | object | no | Which pacts to verify — the body of `POST …/pact-broker/pacts/provider/{provider}/for-verification`, unchanged: `consumerVersionSelectors`, `providerVersionBranch`, `providerVersionTags`, `includePendingStatus`, `includeWipPactsSince`. Empty selects what a Pact verifier gets by default. |
 | `verification` | `PactVerificationOptions` | no | What this run may send: the mutating-method opt-in, fixtures and the provider-state choice. |
 | `publish` | boolean | no | Publish a verification result for every pact whose run is conclusive (`passed` or `failed`). `false` is a dry run: everything is replayed and reported, nothing is published. |
+| `skip_already_verified` | boolean | no | Skip every selected pact that already has a verification result for this exact `provider_version` (PFX-8.8): it is listed under `skipped` with `pact-verify-already-verified` and its newest result, and not replayed. When every pact is skipped the run's outcome is `already-verified`. Off by default: a Pact verifier re-verifies whatever its selectors choose. |
 | `context` | object | no | Non-secret CI context (commit, workflow URL) stored with the evidence. Never credentials. |
 
 ### `PactVerifyResponse` {#schema-pactverifyresponse}
@@ -3733,9 +3773,11 @@ The outcome of one hosted verification.
 | `provider_version` | string | yes | The provider version verified. |
 | `provider_branch` | string or null | no | Its branch, when stated. |
 | `target` | `VerifiedTarget` | yes | The verification target replayed against. |
-| `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed`. |
-| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed) or `no-pacts` (the selectors chose nothing). |
+| `success` | boolean | yes | What a CI job should exit on: true when at least one pact was verified and every pact that is not pending `passed` — or, for `already-verified`, when every skipped pact's newest result for this provider version passed. |
+| `outcome` | string | yes | `passed`, `failed` (a non-pending pact failed), `incomplete` (none failed, but one could not be fully replayed), `could-not-connect` (no request reached the target — see `connection_error`), `already-verified` (with `skip_already_verified`, every selected pact already has a result for this provider version) or `no-pacts` (the selectors chose nothing). |
 | `pacts` | array of `PactVerification` | no | One entry per pact verified. |
+| `skipped` | array of `SkippedPact` | no | Chosen but not verified, each with why. |
+| `connection_error` | string or null | no | With outcome `could-not-connect`: the target never answered (`Could not connect to billing.staging.example (timeout)`). Not a failed verification — nothing was published. |
 
 ### `ProviderStateInput` {#schema-providerstateinput}
 
@@ -3927,3 +3969,37 @@ Where a provider's verification stands.
 | `pacts` | array of `VerificationStatusEntry` | no | One per consumer, by handle. |
 | `truncated` | boolean | no | True when the provider has more than 500 consumers (the rest are left out). |
 | `settings` | `EffectiveSettings` or null | no | The cadence, stale threshold and target that apply to the provider (PFX-6.2). |
+
+### `VerifyPreviewRequest` {#schema-verifypreviewrequest}
+
+The body of ``…/verify``, with the target and the provider version optional.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `target_ref` | string or null | no | Slug or id of the verification target the run would use. Omit for a self-run. |
+| `provider_version` | string or null | no | The provider version the run would verify; needed to say which pacts it already verified. |
+| `provider_branch` | string or null | no | Its branch — the `providerVersionBranch` of pending pacts and `matchingBranch` selectors. |
+| `selection` | object | no | The run's `selection` (the body of `…/for-verification`), unchanged. |
+| `verification` | `PactVerificationOptions` | no | The run's options: the mutating opt-in and the provider-state choice. |
+| `skip_already_verified` | boolean | no | Whether the run would skip pacts already verified for `provider_version`. |
+
+### `VerifyPreviewResponse` {#schema-verifypreviewresponse}
+
+What the run would verify.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `provider` | string | yes | The provider's handle. |
+| `provider_name` | string | yes | Its display name. |
+| `provider_version` | string or null | no | The provider version, as checked. |
+| `target` | `PreviewTarget` or null | no | The target, when one was named and found. |
+| `rules` | array of `PreviewRule` | no | One entry per consumer-version selector. |
+| `selected` | integer | yes | How many pacts the whole selection chooses. |
+| `will_run` | integer | yes | How many of them the run would verify. |
+| `skipped` | integer | yes | How many it would skip as already verified for this provider version. |
+| `interactions` | integer | yes | How many interactions the pacts it would verify hold. |
+| `pacts` | array of `PreviewPact` | no | The chosen pacts, the first 100, in the run's order. |
+| `truncated` | boolean | no | Whether more pacts were chosen than `pacts` lists. |
+| `states` | `PreviewStates` | yes | Provider-state coverage. |
+| `max_pacts_per_run` | integer | no | The most pacts one run verifies. |
+| `refusals` | array of `PreviewRefusal` | no | Why the run would not start; empty when it would. |

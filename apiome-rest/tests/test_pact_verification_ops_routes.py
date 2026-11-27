@@ -247,5 +247,5 @@ def test_the_routes_stay_off_the_catalogued_broker_surface() -> None:
         for route in app.routes
         if "pact-verifier/pacts/provider/{provider}/" in getattr(route, "path", "")
     ]
-    assert len(paths) == 6  # verify (PFX-3.2) and the five PFX-5.5 routes
+    assert len(paths) == 7  # verify (PFX-3.2), the five PFX-5.5 routes and verify/preview (PFX-8.8)
     assert not any(BROKER_PREFIX in path for path in paths)

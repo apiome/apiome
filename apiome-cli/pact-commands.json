@@ -286,6 +286,8 @@
         "--include-wip-pacts-since",
         "--allow-mutating",
         "--replay-without-state-setup",
+        "--provider-states-setup-url",
+        "--skip-already-verified",
         "--publish-verification-results",
         "--context",
         "--output",

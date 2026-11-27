@@ -18,6 +18,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import {
   Activity,
+  BadgeCheck,
   LayoutDashboard,
   Rocket,
   ServerCog,
@@ -37,6 +38,7 @@ const TAB_ICON: Readonly<
   pacticipants: Users,
   matrix: Table2,
   'can-i-deploy': Rocket,
+  verification: BadgeCheck,
   environments: ServerCog,
   webhooks: Webhook,
   health: Activity,

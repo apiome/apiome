@@ -26,12 +26,14 @@ from app.pact_broker_compat import BROKER_PREFIX
 from app.pact_publication import PactPublicationError
 from app.pact_selectors import CODE_SELECTOR_INVALID
 from app.pact_verifier_service import (
+    CODE_MUTATING_PRODUCTION,
     CODE_TARGET_AUTH_UNAVAILABLE,
     CODE_TOO_MANY_PACTS,
     PactVerifierError,
     PactVerifyResponse,
     VerifiedTarget,
 )
+from app.pact_verify_preview import PreviewStates, VerifyPreviewResponse
 from app.pacticipant import CODE_NOT_FOUND, PacticipantValidationError
 from app.permissions import Action, Resource
 from app.verification_target import CODE_NOT_FOUND as TARGET_NOT_FOUND
@@ -156,7 +158,7 @@ def test_the_target_protocol_defaults_to_http() -> None:
     assert _response().target.protocol == "http"
 
 
-@pytest.mark.parametrize("outcome", ["failed", "incomplete", "no-pacts"])
+@pytest.mark.parametrize("outcome", ["failed", "incomplete", "no-pacts", "could-not-connect", "already-verified"])
 def test_a_run_that_happened_is_a_200_whatever_it_found(allowed: MagicMock, outcome: str) -> None:
     with patch(f"{_ROUTES}.verify_provider_pacts", return_value=_response(outcome)):
         answer = client.post(_URL, json=_BODY)
@@ -178,6 +180,7 @@ def test_a_run_that_happened_is_a_200_whatever_it_found(allowed: MagicMock, outc
         (TargetValidationError("target-disabled", "the target is disabled"), 422, "target-disabled"),
         (PactVerifierError(CODE_TOO_MANY_PACTS, "too many"), 422, CODE_TOO_MANY_PACTS),
         (PactVerifierError(CODE_TARGET_AUTH_UNAVAILABLE, "variable unset"), 422, CODE_TARGET_AUTH_UNAVAILABLE),
+        (PactVerifierError(CODE_MUTATING_PRODUCTION, "never to production"), 422, CODE_MUTATING_PRODUCTION),
     ],
 )
 def test_a_run_that_cannot_start_maps_to_its_status_and_code(
@@ -206,6 +209,9 @@ def test_a_selector_refusal_keeps_its_pointer(allowed: MagicMock) -> None:
         {**_BODY, "unknown": True},
         {**_BODY, "verification": {"allow_mutating": "perhaps"}},
         {**_BODY, "verification": {"widen_policy": True}},
+        {**_BODY, "verification": {"provider_states_setup_url": "//elsewhere.example/states"}},
+        {**_BODY, "verification": {"provider_states_setup_url": "ftp://elsewhere.example/states"}},
+        {**_BODY, "skip_already_verified": "maybe"},
         {
             **_BODY,
             "verification": {"fixtures": [{"operation_key": "POST /x", "headers": {"Authorization": "Bearer t"}}]},
@@ -230,3 +236,64 @@ def test_the_route_is_documented_and_stays_off_the_broker_surface() -> None:
     assert operation["tags"] == ["pact-broker"]
     assert {"200", "400", "404", "422"} <= set(operation["responses"])
     assert not path.startswith(BROKER_PREFIX)
+
+
+# ---------------------------------------------------------------------------
+# The preview (PFX-8.8, #7305)
+# ---------------------------------------------------------------------------
+
+_PREVIEW_URL = f"{_URL}/preview"
+
+
+def _preview() -> VerifyPreviewResponse:
+    return VerifyPreviewResponse(
+        provider="ledger-api",
+        provider_name="Ledger API",
+        selected=0,
+        will_run=0,
+        skipped=0,
+        interactions=0,
+        states=PreviewStates(strategy="registry", used=0, handled=0, registered=0),
+    )
+
+
+def test_the_preview_needs_only_pacts_view_and_is_scoped_to_the_credentials_tenant(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.preview_verification", return_value=_preview()) as preview:
+        answer = client.post(
+            "/v1/tenants/other-tenant/pact-verifier/pacts/provider/ledger-api/verify/preview",
+            json={"selection": {"consumerVersionSelectors": [{"mainBranch": True}]}},
+        )
+    assert answer.status_code == 200
+    assert answer.json()["provider"] == "ledger-api"
+    assert preview.call_args.args[1:3] == (_TENANT, "ledger-api")
+    assert [(call.args[2], call.args[3], call.kwargs.get("target")) for call in allowed.call_args_list] == [
+        (Resource.PACTS, Action.VIEW, "ledger-api")
+    ]
+
+
+def test_the_preview_is_a_403_without_pacts_view() -> None:
+    with (
+        patch(f"{_ROUTES}.enforce_permission", side_effect=HTTPException(status_code=403, detail="denied")),
+        patch(f"{_ROUTES}.preview_verification") as preview,
+    ):
+        assert client.post(_PREVIEW_URL, json={}).status_code == 403
+    preview.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error, status",
+    [
+        (PacticipantValidationError(CODE_NOT_FOUND, "no pacticipant"), 404),
+        (PactPublicationError(CODE_SELECTOR_INVALID, "bad selector"), 400),
+    ],
+)
+def test_a_preview_that_cannot_read_the_selection_says_why(allowed: MagicMock, error: Exception, status: int) -> None:
+    with patch(f"{_ROUTES}.preview_verification", side_effect=error):
+        answer = client.post(_PREVIEW_URL, json={})
+    assert answer.status_code == status
+
+
+def test_the_preview_refuses_unknown_fields(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.preview_verification") as preview:
+        assert client.post(_PREVIEW_URL, json={"publish": True}).status_code == 422
+    preview.assert_not_called()

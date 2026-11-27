@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.700.0
+  version: 1.701.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -33691,12 +33691,26 @@ paths:
 
         **Mutating interactions** (`POST`, `PUT`, `PATCH`, `DELETE`) are sent only when
         the target''s policy allows mutating methods **and** `verification.allow_mutating`
-        is true. A run cannot widen the target''s policy.
+        is true. A run cannot widen the target''s policy, and a run with `allow_mutating`
+        against a target whose environment is `production` is refused (`pact-verify-mutating-production`)
+        before anything is sent.
 
 
-        **Provider states.** An interaction that names a provider state is skipped with
-        `provider-state-not-set-up` unless `verification.replay_without_state_setup`
+        **Provider states.** Registered states (PFX-3.3) are set up around each interaction.
+        With `verification.provider_states_setup_url` every state is POSTed to the provider''s
+        own setup endpoint instead. Otherwise an interaction that names a provider state
+        is skipped with `provider-state-not-set-up` unless `verification.replay_without_state_setup`
         is true (the target already holds the data).
+
+
+        **Already verified.** With `skip_already_verified`, a pact that already has
+        a result for this `provider_version` is listed under `skipped` and not replayed;
+        when that is every pact the outcome is `already-verified`.
+
+
+        **An unreachable target** — every request ended in a transport error or a timeout
+        — ends the run as `could-not-connect` with `connection_error`, not as a failed
+        verification: nothing is published.
 
 
         **Publishing.** A pact is `passed` when every interaction was replayed and matched,
@@ -33776,8 +33790,98 @@ paths:
           description: '`pacticipant-not-found` or `target-not-found` in this workspace.'
         '422':
           description: '`pact-verify-too-many-pacts`, `pact-verify-target-auth-unavailable`,
-            or a target that cannot be used (`target-disabled`, `target-protocol-mismatch`,
-            a URL refusal).'
+            `pact-verify-mutating-production`, or a target that cannot be used (`target-disabled`,
+            `target-protocol-mismatch`, a URL refusal).'
+  /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verify/preview:
+    post:
+      tags:
+      - pact-broker
+      summary: Preview a hosted verification
+      description: 'Say what `POST …/verify` would do with this body (PFX-8.8), **sending
+        nothing to any target and storing nothing**: how many pacts each consumer-version
+        selector chooses on its own (`rules`), every pact the whole selection chooses
+        with its interactions, how many change data, its newest result and whether it
+        already has a result for `provider_version` (`already_verified`; skipped with
+        `skip_already_verified`), the provider states those interactions name and how
+        many the chosen strategy sets up (the registry, `verification.provider_states_setup_url`,
+        or none), and the target''s environment class.
+
+
+        Every reason the run would not start is a `refusals` entry with the run''s own
+        code — `pact-verify-mutating-production`, `pact-verify-too-many-pacts`, `target-not-found`,
+        a malformed provider version — so the page can say it before anything is sent.
+        `target_ref` and `provider_version` are optional (a self-run has no target).
+        Requires `pacts:view`.'
+      operationId: preview_verify_v1_tenants__tenant_slug__pact_verifier_pacts_provider__provider__verify_preview_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Provider
+          description: Provider schema.
+        description: Path parameter identifying the provider segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Previewahostedverificationauthorization schema.
+          - type: 'null'
+            description: Previewahostedverificationauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Previewahostedverification Xapikey schema.
+          - type: 'null'
+            description: Previewahostedverification Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyPreviewRequest'
+              description: Request body for previewahostedverificationrequest.
+        description: Request body for preview a hosted verification.
+      responses:
+        '200':
+          description: Successful response for preview a hosted verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyPreviewResponse'
+                description: Response payload for previewahostedverificationresponse200.
+        '400':
+          description: '`pact-selector-invalid`.'
+        '404':
+          description: '`pacticipant-not-found` in this workspace.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for previewahostedverificationresponse422.
   /v1/tenants/{tenant_slug}/pact-verifier/pacts/provider/{provider}/verification-status:
     get:
       tags:
@@ -175330,6 +175434,23 @@ components:
             the registry''s reason.'
           default: false
           example: false
+        provider_states_setup_url:
+          anyOf:
+          - type: string
+            maxLength: 2048
+            description: Pact Verification Options schema.
+          - type: 'null'
+            description: Pact Verification Options schema.
+          title: Provider States Setup Url
+          description: 'Set provider states up through the provider''s own setup endpoint
+            instead of the registry (PFX-8.8; `--provider-states-setup-url` of a Pact
+            verifier): before each interaction that names states, every state is sent
+            as `POST {url}` with `{"state", "params", "action": "setup"}`, and again with
+            `"action": "teardown"` afterwards. A path (`/_pact/provider-states`) is joined
+            onto the verification target and carries its credential — and, being a `POST`,
+            needs the target''s policy to allow mutating methods; an absolute http(s)
+            URL goes through the SSRF guard with no credential. Omit to use the registered
+            states.'
       additionalProperties: false
       type: object
       title: PactVerificationOptions
@@ -175393,6 +175514,16 @@ components:
             nothing is published.'
           default: true
           example: false
+        skip_already_verified:
+          type: boolean
+          title: Skip Already Verified
+          description: 'Skip every selected pact that already has a verification result
+            for this exact `provider_version` (PFX-8.8): it is listed under `skipped`
+            with `pact-verify-already-verified` and its newest result, and not replayed.
+            When every pact is skipped the run''s outcome is `already-verified`. Off by
+            default: a Pact verifier re-verifies whatever its selectors choose.'
+          default: false
+          example: false
         context:
           additionalProperties: true
           type: object
@@ -175433,14 +175564,17 @@ components:
           type: boolean
           title: Success
           description: 'What a CI job should exit on: true when at least one pact was
-            verified and every pact that is not pending `passed`.'
+            verified and every pact that is not pending `passed` — or, for `already-verified`,
+            when every skipped pact''s newest result for this provider version passed.'
           example: false
         outcome:
           type: string
           title: Outcome
           description: '`passed`, `failed` (a non-pending pact failed), `incomplete` (none
-            failed, but one could not be fully replayed) or `no-pacts` (the selectors
-            chose nothing).'
+            failed, but one could not be fully replayed), `could-not-connect` (no request
+            reached the target — see `connection_error`), `already-verified` (with `skip_already_verified`,
+            every selected pact already has a result for this provider version) or `no-pacts`
+            (the selectors chose nothing).'
           example: example
         pacts:
           items:
@@ -175449,6 +175583,23 @@ components:
           title: Pacts
           description: One entry per pact verified.
           maxItems: 1000
+        skipped:
+          items:
+            $ref: '#/components/schemas/SkippedPact'
+          type: array
+          title: Skipped
+          description: Chosen but not verified, each with why.
+          maxItems: 1000
+        connection_error:
+          anyOf:
+          - type: string
+            description: Response payload for pact verify.
+          - type: 'null'
+            description: Response payload for pact verify.
+          title: Connection Error
+          description: 'With outcome `could-not-connect`: the target never answered (`Could
+            not connect to billing.staging.example (timeout)`). Not a failed verification
+            — nothing was published.'
       additionalProperties: false
       type: object
       required:
@@ -222601,14 +222752,17 @@ components:
           type: boolean
           title: Success
           description: 'What a CI job should exit on: true when at least one pact was
-            verified and every pact that is not pending `passed`.'
+            verified and every pact that is not pending `passed` — or, for `already-verified`,
+            when every skipped pact''s newest result for this provider version passed.'
           example: false
         outcome:
           type: string
           title: Outcome
           description: '`passed`, `failed` (a non-pending pact failed), `incomplete` (none
-            failed, but one could not be fully replayed) or `no-pacts` (the selectors
-            chose nothing).'
+            failed, but one could not be fully replayed), `could-not-connect` (no request
+            reached the target — see `connection_error`), `already-verified` (with `skip_already_verified`,
+            every selected pact already has a result for this provider version) or `no-pacts`
+            (the selectors chose nothing).'
           example: example
         pacts:
           items:
@@ -222617,11 +222771,6 @@ components:
           title: Pacts
           description: One entry per pact verified.
           maxItems: 1000
-        trigger:
-          type: string
-          title: Trigger
-          description: '`manual` (re-run), `stale-recheck` (verify all stale) or `scheduled`.'
-          example: example
         skipped:
           items:
             $ref: '#/components/schemas/SkippedPact'
@@ -222629,6 +222778,21 @@ components:
           title: Skipped
           description: Chosen but not verified, each with why.
           maxItems: 1000
+        connection_error:
+          anyOf:
+          - type: string
+            description: Response payload for console run.
+          - type: 'null'
+            description: Response payload for console run.
+          title: Connection Error
+          description: 'With outcome `could-not-connect`: the target never answered (`Could
+            not connect to billing.staging.example (timeout)`). Not a failed verification
+            — nothing was published.'
+        trigger:
+          type: string
+          title: Trigger
+          description: '`manual` (re-run), `stale-recheck` (verify all stale) or `scheduled`.'
+          example: example
       additionalProperties: false
       type: object
       required:
@@ -222926,7 +223090,7 @@ components:
         code:
           type: string
           title: Code
-          description: '`pact-verify-in-progress` or `pact-verify-over-limit`.'
+          description: '`pact-verify-already-verified`, `pact-verify-in-progress` or `pact-verify-over-limit`.'
           example: example
         reason:
           type: string
@@ -224336,6 +224500,426 @@ components:
       - branch
       title: RepositorySourceRecord
       description: The repository file published on every push.
+    PreviewPact:
+      properties:
+        consumer:
+          type: string
+          title: Consumer
+          description: The consumer's handle.
+          example: example
+        consumer_name:
+          type: string
+          title: Consumer Name
+          description: The consumer's display name.
+          example: Example
+        consumer_version:
+          type: string
+          title: Consumer Version
+          description: The latest consumer version that published this pact.
+          example: 1.0.0
+        pact_version_sha:
+          type: string
+          title: Pact Version Sha
+          description: The pact version.
+          example: 1.0.0
+        short_description:
+          type: string
+          title: Short Description
+          description: Why it was chosen (`latest from branch main`).
+          example: Example description for documentation and mocks.
+        branches:
+          items:
+            type: string
+          type: array
+          title: Branches
+          description: The consumer version's branches.
+          maxItems: 1000
+        deployed_to:
+          items:
+            type: string
+          type: array
+          title: Deployed To
+          description: Environments the version is deployed to.
+          maxItems: 1000
+        released_in:
+          items:
+            type: string
+          type: array
+          title: Released In
+          description: Environments the version is released in.
+          maxItems: 1000
+        pending:
+          type: boolean
+          title: Pending
+          description: Whether the pact is pending for this provider build.
+          example: false
+        wip:
+          type: boolean
+          title: Wip
+          description: Whether it is included as a work-in-progress pact.
+          example: false
+        interactions:
+          type: integer
+          title: Interactions
+          description: How many interactions it holds.
+          example: 1
+        mutating_interactions:
+          type: integer
+          title: Mutating Interactions
+          description: How many of them send POST, PUT, PATCH or DELETE.
+          example: 1
+        state_interactions:
+          type: integer
+          title: State Interactions
+          description: How many of them name a provider state.
+          example: 1
+        held_back:
+          type: integer
+          title: Held Back
+          description: How many interactions the run would not send for their provider
+            states — or, when the run does not opt in, for changing data.
+          example: 1
+        last_result:
+          anyOf:
+          - $ref: '#/components/schemas/PreviewResult'
+          - type: 'null'
+            description: Preview Pact schema.
+          description: Its newest result, if any.
+        already_verified:
+          type: boolean
+          title: Already Verified
+          description: Whether it has a result for this exact provider version.
+          example: false
+        will_run:
+          type: boolean
+          title: Will Run
+          description: False when `skip_already_verified` would skip it.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - consumer
+      - consumer_name
+      - consumer_version
+      - pact_version_sha
+      - short_description
+      - pending
+      - wip
+      - interactions
+      - mutating_interactions
+      - state_interactions
+      - held_back
+      - already_verified
+      - will_run
+      title: PreviewPact
+      description: One pact the run would choose.
+    PreviewRefusal:
+      properties:
+        code:
+          type: string
+          title: Code
+          description: The code the run would refuse with.
+          example: example
+        message:
+          type: string
+          title: Message
+          description: Why, and what to do.
+          example: Example validation message.
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      title: PreviewRefusal
+      description: A reason the run would not start.
+    PreviewResult:
+      properties:
+        number:
+          type: integer
+          title: Number
+          description: Its number among the pact version's results.
+          example: 1
+        success:
+          type: boolean
+          title: Success
+          description: Whether it passed.
+          example: false
+        provider_version:
+          type: string
+          title: Provider Version
+          description: The provider version it verified.
+          example: 1.0.0
+        verified_at:
+          anyOf:
+          - type: string
+            description: Preview schema.
+          - type: 'null'
+            description: Preview schema.
+          title: Verified At
+          description: When it was published (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - number
+      - success
+      - provider_version
+      title: PreviewResult
+      description: A pact's newest verification result.
+    PreviewRule:
+      properties:
+        index:
+          type: integer
+          title: Index
+          description: Its position in `selection.consumerVersionSelectors`.
+          example: 1
+        selector:
+          additionalProperties: true
+          type: object
+          title: Selector
+          description: The selector, as sent.
+        pacts:
+          type: integer
+          title: Pacts
+          description: How many pacts it chooses on its own.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - index
+      - selector
+      - pacts
+      title: PreviewRule
+      description: One consumer-version selector and how many pacts it chooses on its
+        own.
+    PreviewStates:
+      properties:
+        strategy:
+          type: string
+          title: Strategy
+          description: '`registry`, `setup-url` or `none`.'
+          example: example
+        used:
+          type: integer
+          title: Used
+          description: How many distinct states the chosen interactions name.
+          example: 1
+        handled:
+          type: integer
+          title: Handled
+          description: How many of them the strategy can set up.
+          example: 1
+        missing:
+          items:
+            type: string
+          type: array
+          title: Missing
+          description: The states it cannot, by name.
+          maxItems: 1000
+        registered:
+          type: integer
+          title: Registered
+          description: How many states the provider has registered.
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - strategy
+      - used
+      - handled
+      - registered
+      title: PreviewStates
+      description: The provider states the chosen pacts name, and how many the strategy
+        sets up.
+    PreviewTarget:
+      properties:
+        slug:
+          type: string
+          title: Slug
+          description: Its handle.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Its display name.
+          example: Pet
+        environment:
+          type: string
+          title: Environment
+          description: Its environment class.
+          example: example
+        production:
+          type: boolean
+          title: Production
+          description: 'Whether it is marked production: mutating requests are never sent
+            to it.'
+          example: false
+        allow_mutating_methods:
+          type: boolean
+          title: Allow Mutating Methods
+          description: Whether its policy allows mutating methods at all.
+          example: false
+        enabled:
+          type: boolean
+          title: Enabled
+          description: Whether it can be used.
+          example: true
+      additionalProperties: false
+      type: object
+      required:
+      - slug
+      - name
+      - environment
+      - production
+      - allow_mutating_methods
+      - enabled
+      title: PreviewTarget
+      description: The verification target, as far as the run's rules need it.
+    VerifyPreviewRequest:
+      properties:
+        target_ref:
+          anyOf:
+          - type: string
+            maxLength: 200
+            description: Request body for verify preview.
+          - type: 'null'
+            description: Request body for verify preview.
+          title: Target Ref
+          description: Slug or id of the verification target the run would use. Omit for
+            a self-run.
+        provider_version:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Request body for verify preview.
+          - type: 'null'
+            description: Request body for verify preview.
+          title: Provider Version
+          description: The provider version the run would verify; needed to say which
+            pacts it already verified.
+        provider_branch:
+          anyOf:
+          - type: string
+            maxLength: 255
+            description: Request body for verify preview.
+          - type: 'null'
+            description: Request body for verify preview.
+          title: Provider Branch
+          description: Its branch — the `providerVersionBranch` of pending pacts and `matchingBranch`
+            selectors.
+        selection:
+          additionalProperties: true
+          type: object
+          title: Selection
+          description: The run's `selection` (the body of `…/for-verification`), unchanged.
+        verification:
+          $ref: '#/components/schemas/PactVerificationOptions'
+          description: 'The run''s options: the mutating opt-in and the provider-state
+            choice.'
+        skip_already_verified:
+          type: boolean
+          title: Skip Already Verified
+          description: Whether the run would skip pacts already verified for `provider_version`.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      title: VerifyPreviewRequest
+      description: The body of ``…/verify``, with the target and the provider version
+        optional.
+    VerifyPreviewResponse:
+      properties:
+        provider:
+          type: string
+          title: Provider
+          description: The provider's handle.
+          example: example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: Its display name.
+          example: Example
+        provider_version:
+          anyOf:
+          - type: string
+            description: Response payload for verify preview.
+          - type: 'null'
+            description: Response payload for verify preview.
+          title: Provider Version
+          description: The provider version, as checked.
+        target:
+          anyOf:
+          - $ref: '#/components/schemas/PreviewTarget'
+          - type: 'null'
+            description: Response payload for verify preview.
+          description: The target, when one was named and found.
+        rules:
+          items:
+            $ref: '#/components/schemas/PreviewRule'
+          type: array
+          title: Rules
+          description: One entry per consumer-version selector.
+          maxItems: 1000
+        selected:
+          type: integer
+          title: Selected
+          description: How many pacts the whole selection chooses.
+          example: 1
+        will_run:
+          type: integer
+          title: Will Run
+          description: How many of them the run would verify.
+          example: 1
+        skipped:
+          type: integer
+          title: Skipped
+          description: How many it would skip as already verified for this provider version.
+          example: 1
+        interactions:
+          type: integer
+          title: Interactions
+          description: How many interactions the pacts it would verify hold.
+          example: 1
+        pacts:
+          items:
+            $ref: '#/components/schemas/PreviewPact'
+          type: array
+          title: Pacts
+          description: The chosen pacts, the first 100, in the run's order.
+          maxItems: 1000
+        truncated:
+          type: boolean
+          title: Truncated
+          description: Whether more pacts were chosen than `pacts` lists.
+          default: false
+          example: false
+        states:
+          $ref: '#/components/schemas/PreviewStates'
+          description: Provider-state coverage.
+        max_pacts_per_run:
+          type: integer
+          title: Max Pacts Per Run
+          description: The most pacts one run verifies.
+          default: 25
+          example: 1
+        refusals:
+          items:
+            $ref: '#/components/schemas/PreviewRefusal'
+          type: array
+          title: Refusals
+          description: Why the run would not start; empty when it would.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - provider
+      - provider_name
+      - selected
+      - will_run
+      - skipped
+      - interactions
+      - states
+      title: VerifyPreviewResponse
+      description: What the run would verify.
   securitySchemes:
     Bearer:
       type: http

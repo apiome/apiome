@@ -28,7 +28,50 @@ report](./verification-results.mdx#send-a-report-from-your-own-ci) instead.
 - Your API key belongs to a member who holds **Pacts** → **Create** and
   **Verification evidence** → **Create**. Create one on [API keys](../../workspace/api-keys.mdx).
 
-## Run a verification
+## Run a verification from the app
+
+**Contracts** → **Verification** opens **Run a verification**. Open it for one provider from
+`/ade/dashboard/pacts/verification/new?provider=<handle>`. The same form gives you a hosted run, or
+the command for a pipeline that Apiome cannot reach.
+
+<Screenshot id="pact-verify-run" alt="The Run a verification page for Billing Service 2.7.0+9f31c20 on branch feature/credit-notes, run by Apiome against the staging target, signing in with the secret billing-staging-token. Which pacts to verify shows the Recommended rules as sentences with a pact count each: each consumer's latest pact on its main branch, 4 pacts; pacts of every consumer version deployed or released anywhere, 5 pacts; pacts on a consumer branch named like this one, 1 pact. Pending pacts cannot fail this run is on. Getting the provider into the right state says 9 of the 11 states these pacts use have a handler and 2 are missing. Beside the form, the preview reads This run will verify 8 pacts and 61 interactions, lists Orders UI, Mobile App and Checkout (pending), and says 2 already verified for this exact version are skipped; under it, The same, from anywhere shows the apiome pact verify command."/>
+
+1. **The provider under test.** Choose the **Provider**, type the **Version being verified**
+   (results are recorded against it) and the **Branch**. Then choose who runs it:
+   - **Apiome runs it.** Choose the **Target**, the running copy of the provider that Apiome
+     calls. **Sign in with** shows the credential the target names. With no target yet, choose
+     **Add a target…** and give a name, the base URL, a workspace secret to sign in with, and
+     **This is production** if it is one. A production target is created read-only. Adding a
+     target needs **Verification targets** → **Create**.
+   - **Your pipeline runs it.** For a provider only your pipeline can reach. Set everything below,
+     then copy the **Pact verifier** command from the right. It fetches the same pacts from Apiome
+     and publishes its results back.
+2. **Which pacts to verify.** Each rule is a [consumer-version selector](./selectors.mdx) written as
+   a sentence, with the number of pacts it chooses. **Recommended** is each consumer's main branch,
+   everything deployed or released, and the consumer branch named like the provider's. **Everything**
+   adds each consumer's latest pact. **Custom** lets you remove rules and **Add a rule** by branch,
+   tag, environment, consumer or latest. A pact two rules choose is verified once. Turn on
+   **Pending pacts cannot fail this run** and **Include work-in-progress pacts** as you need (see
+   [Pending and WIP pacts](./pending-and-wip.mdx)).
+3. **Getting the provider into the right state.** Choose **Apiome's state handlers** (the
+   [registry](./provider-states.mdx); the line says how many states have a handler and names the
+   missing ones), **The provider's own setup endpoint**, or **No setup**. Turn on **Allow requests
+   that change data** only for a target that can take them. See
+   [Mutating interactions](#mutating-interactions).
+
+The preview on the right is the run's own selection, read before anything is sent: the pacts it
+will verify, their interactions, and those **skipped** because they already have a result for this
+exact version. When every pact is skipped, the page says so and offers **Run anyway**. Every reason
+the run would not start is listed there too.
+
+**More options** holds the **Build URL**, the **CI context**, **Publish the results** (off is a dry
+run) and **Skip pacts already verified for this version**.
+
+Select **Run verification**. The dialog says how the run went and links to the provider's
+[Verification page](./verification-console.mdx). **Save as a schedule** stores the provider's cadence
+and target, so [scheduled runs](./stale-pacts.mdx) keep its pacts verified.
+
+## Run a verification with the REST API
 
 Send a `POST` with the target and the provider version you are verifying:
 
@@ -58,6 +101,7 @@ curl -X POST \
 | `selection` | No | Which pacts to verify. It is the body of [`for-verification`](./selectors.mdx), unchanged. Leave it out to get what a Pact verifier gets by default. |
 | `verification` | No | What the run may send. See [Mutating interactions](#mutating-interactions) and [Provider states](#provider-states). |
 | `publish` | No | `true` by default. `false` is a dry run: everything is replayed and reported, and nothing is published. |
+| `skip_already_verified` | No | `false` by default. `true` skips every pact that already has a result for `provider_version`. Each one is listed under `skipped` with `pact-verify-already-verified`. |
 | `context` | No | Non-secret CI details (commit, workflow URL) stored with the evidence. |
 
 One run verifies at most 25 pacts. If your selectors choose more, the request is refused with
@@ -112,6 +156,8 @@ The answer is `200` for any run that happened, whatever it found. Read `success`
 | `passed` | Every pact that is not pending passed. `success` is `true`. |
 | `failed` | A pact that is not pending failed. |
 | `incomplete` | Nothing failed, but at least one pact could not be fully replayed. |
+| `could-not-connect` | No request reached the target: every one ended in a transport error or a timeout. `connection_error` says so, for example `Could not connect to billing.staging.example (timeout)`. This is not a failed verification, and nothing is published. |
+| `already-verified` | With `skip_already_verified`, every selected pact already has a result for this version. `success` is `true` when those results passed. |
 | `no-pacts` | The selectors chose no pact. |
 
 Exit your CI job on `success`. A [pending or work-in-progress pact](./pending-and-wip.mdx) that
@@ -285,6 +331,12 @@ By default a run sends only `GET`, `HEAD` and `OPTIONS`. An interaction with `PO
 A run cannot widen the target's policy. If the target forbids mutating methods, the interaction
 is skipped with `mutating-method-blocked` whatever the request says, and the pact is `incomplete`.
 
+**Requests that change data are never sent to a production target.** A run that sets
+`allow_mutating` against a target whose environment is `production` is refused with
+`pact-verify-mutating-production` before anything is sent, whatever the target's policy says. The
+rule holds for every run: the app, `apiome pact verify`, a re-run, **Verify all stale** and
+scheduled runs. Run read-only against production, or verify against a staging or test target.
+
 To send something safer than the consumer recorded, add a fixture. It replaces the query, the
 headers or the body of the request, and never changes what is expected:
 
@@ -312,6 +364,13 @@ is not registered, a required parameter the interaction leaves out, or a setup t
 forbids. Check a provider's pacts for these with `POST …/provider-states/check` before you run
 (see [Check before a run](./provider-states.mdx#check-before-a-run)). A provider that has
 registered no state at all skips every interaction with a state, with `provider-state-not-set-up`.
+
+If the provider has its own state endpoint, as a Pact verifier's `--provider-states-setup-url`
+uses, set `"verification": { "provider_states_setup_url": "/_pact/provider-states" }`. Before each
+interaction, every state is sent to it as `POST` with `{"state", "params", "action": "setup"}`, and
+again with `"action": "teardown"` afterwards. The registry is not used. A path is joined onto the
+target and sent with the target's credential. Because it is a `POST`, the target's policy must allow
+mutating methods. An absolute `http(s)` URL is checked by the SSRF guard and gets no credential.
 
 If your target already holds the data the pacts assume, set
 `"verification": { "replay_without_state_setup": true }`. The interactions that could not be set
@@ -355,14 +414,34 @@ against a message handler is not available yet.
 | `422` | `target-disabled`, `target-protocol-mismatch` | The target is disabled, or it is not an `http`, `grpc` or `connect` target (a `graphql` target, for example). |
 | `422` | `pact-verify-target-auth-unavailable` | The target's credential could not be read. |
 | `422` | `pact-verify-too-many-pacts` | The selectors chose more than 25 pacts. |
+| `422` | `pact-verify-mutating-production` | `allow_mutating` against a target whose environment is `production`. |
 
 Nothing is sent to the target when a run is stopped.
+
+## Preview a run
+
+`POST …/pact-verifier/pacts/provider/{provider}/verify/preview` takes the same body. `target_ref`
+and `provider_version` are optional. It says what the run would do, and **sends nothing to any
+target and stores nothing**:
+
+- `rules`: how many pacts each selector chooses on its own.
+- `pacts`: every pact the selection chooses. Each one lists its interactions, how many change
+  data, how many would be held back, its newest result, and whether it is `already_verified` for
+  this version.
+- `states`: the provider states those interactions name, and how many the chosen way of setting
+  them up can handle (`missing` names the rest).
+- `target`: its environment class, and whether it is `production`.
+- `refusals`: every reason the run would not start, with the run's own code, such as
+  `pact-verify-mutating-production`.
+
+It needs **Pacts** → **View**, and a `pact:read` key is enough.
 
 ## Who can do what
 
 | Action | Needs | Viewer | Editor | Admin | Owner |
 | --- | --- | --- | --- | --- | --- |
 | Verify a provider from Apiome | `pacts:create` and `verification_evidence:create` | — | ✓ | ✓ | ✓ |
+| Preview a run | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 
 ## Related
 

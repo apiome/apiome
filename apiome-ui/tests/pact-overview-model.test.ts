@@ -66,6 +66,7 @@ describe('the tab row', () => {
       'Pacticipants',
       'Matrix',
       'Can I deploy',
+      'Verification',
       'Environments',
       'Webhooks',
       'Health',

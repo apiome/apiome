@@ -65,10 +65,11 @@ header) and the rule that failed, with what was expected and what came back.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Collection, Dict, List, Optional, Protocol, Sequence, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .contract_protocols import PROTOCOL_CONNECT, PROTOCOL_GRPC, PROTOCOL_HTTP
 from .contract_runner import (
@@ -101,6 +102,9 @@ __all__ = [
     "ATTRIBUTE_HEADER",
     "ATTRIBUTE_STATUS",
     "MAX_PACTS_PER_RUN",
+    "MAX_SETUP_URL_CHARS",
+    "OUTCOME_ALREADY_VERIFIED",
+    "OUTCOME_COULD_NOT_CONNECT",
     "OUTCOME_FAILED",
     "OUTCOME_INCOMPLETE",
     "OUTCOME_NO_PACTS",
@@ -159,6 +163,15 @@ OUTCOME_FAILED = "failed"
 OUTCOME_INCOMPLETE = "incomplete"
 #: The selectors chose no pact at all (a run's outcome only).
 OUTCOME_NO_PACTS = "no-pacts"
+#: The target never answered: every request the run sent ended in a transport error or a timeout
+#: (a run's outcome only, PFX-8.8). Nothing is published — the provider was not seen to fail.
+OUTCOME_COULD_NOT_CONNECT = "could-not-connect"
+#: Every selected pact already has a result for this provider version, and the run was asked to
+#: skip those (a run's outcome only, PFX-8.8). Nothing is replayed or published.
+OUTCOME_ALREADY_VERIFIED = "already-verified"
+
+#: The longest provider-state setup URL a run accepts (the registry's own limit).
+MAX_SETUP_URL_CHARS = 2048
 
 ATTRIBUTE_STATUS = "status"
 ATTRIBUTE_HEADER = "header"
@@ -204,6 +217,45 @@ class PactVerificationOptions(BaseModel):
             "skipped with `provider-state-not-set-up` or the registry's reason."
         ),
     )
+    provider_states_setup_url: Optional[str] = Field(
+        default=None,
+        description=(
+            "Set provider states up through the provider's own setup endpoint instead of the "
+            "registry (PFX-8.8; `--provider-states-setup-url` of a Pact verifier): before each "
+            "interaction that names states, every state is sent as `POST {url}` with "
+            '`{"state", "params", "action": "setup"}`, and again with `"action": "teardown"` '
+            "afterwards. A path (`/_pact/provider-states`) is joined onto the verification target "
+            "and carries its credential — and, being a `POST`, needs the target's policy to allow "
+            "mutating methods; an absolute http(s) URL goes through the SSRF guard with no "
+            "credential. Omit to use the registered states."
+        ),
+        max_length=MAX_SETUP_URL_CHARS,
+    )
+
+    @field_validator("provider_states_setup_url")
+    @classmethod
+    def _setup_url_shape(cls, value: Optional[str]) -> Optional[str]:
+        """Accept a path on the target or an absolute http(s) URL; blank means none.
+
+        Args:
+            value: The URL as sent.
+
+        Returns:
+            The trimmed URL, or ``None``.
+
+        Raises:
+            ValueError: For anything else (``//host`` included — it would leave the target).
+        """
+        if value is None or not value.strip():
+            return None
+        url = value.strip()
+        if url.startswith("/") and not url.startswith("//"):
+            return url
+        if re.match(r"^https?://[^/\s]+", url, re.IGNORECASE):
+            return url
+        raise ValueError(
+            "provider_states_setup_url must be a path on the target (/_pact/provider-states) or an absolute http(s) URL"
+        )
 
 
 class ProviderStateHandler(Protocol):

@@ -20,6 +20,7 @@ import { HEALTH_ROUTE } from '@lib/pact-health';
 import { SETTINGS_ROUTE } from '@lib/pact-remediation';
 import { PUBLISH_ROUTE } from '@lib/pact-publish-page';
 import { PROVIDER_CONTRACT_ROUTE } from '@lib/pact-provider-contract';
+import { VERIFY_RUN_ROUTE } from '@lib/pact-verify-run';
 
 // --- types ------------------------------------------------------------------------------------------
 
@@ -116,6 +117,7 @@ export type ContractsTabId =
   | 'pacticipants'
   | 'matrix'
   | 'can-i-deploy'
+  | 'verification'
   | 'environments'
   | 'webhooks'
   | 'health'
@@ -131,9 +133,9 @@ export interface ContractsTab {
 }
 
 /**
- * The area's tabs, in the mockup's order. Only shipped screens are tabs: **Verification** joins
- * between Can I deploy and Environments with its page (PFX-8.8, `/ade/dashboard/pacts/verification`),
- * so no tab leads nowhere (DESIGN.md §10).
+ * The area's tabs, in the mockup's order. Only shipped screens are tabs (DESIGN.md §10):
+ * **Verification** leads to **Run a verification** (PFX-8.8, #7305); a provider's own Verification
+ * page stays under Pacticipants.
  */
 export const CONTRACTS_TABS: readonly ContractsTab[] = [
   {
@@ -154,6 +156,12 @@ export const CONTRACTS_TABS: readonly ContractsTab[] = [
     label: 'Can I deploy',
     href: CAN_I_DEPLOY_ROUTE,
     description: 'Whether a version is safe to deploy',
+  },
+  {
+    id: 'verification',
+    label: 'Verification',
+    href: VERIFY_RUN_ROUTE,
+    description: 'Run a verification against a provider',
   },
   {
     id: 'environments',
@@ -554,10 +562,7 @@ export const WAYS_IN: readonly WayInGroup[] = [
         id: 'verify',
         title: 'Run a verification',
         description: 'Replay consumers’ pacts against a running provider.',
-        command: [
-          'apiome pact verify --provider "Billing Service" \\',
-          '  --provider-app-version "$GIT_COMMIT" --target staging',
-        ].join('\n'),
+        route: VERIFY_RUN_ROUTE,
       },
     ],
   },

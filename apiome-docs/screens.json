@@ -3014,6 +3014,17 @@
       ]
     },
     {
+      "id": "pact-verify-run",
+      "route": "/ade/dashboard/pacts/verification/new",
+      "waitFor": "[data-testid=\"pvr-headline\"]",
+      "data": "fixture:hive-a11y/pact-verify-run.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactVerifyRun/VerifyRunClient.tsx",
+        "apiome-ui/src/app/components/ade/pactVerifyRun/VerifyRunPanels.tsx",
+        "apiome-ui/lib/pact-verify-run.ts"
+      ]
+    },
+    {
       "id": "pact-health",
       "route": "/ade/dashboard/pacts/health",
       "waitFor": "[data-testid=\"phx-pairs-table\"]",

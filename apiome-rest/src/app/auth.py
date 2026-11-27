@@ -213,6 +213,8 @@ _API_KEY_SCOPE_ALLOWLIST: Sequence[tuple[str, re.Pattern[str], str]] = (
         re.compile(_PACT_VERIFIER_PATH + r"/providers/[^/]+/provider-states/check/?$"),
         API_KEY_SCOPE_PACT_READ,
     ),
+    # PFX-8.8 (#7305): previewing a hosted verification stores nothing and sends nothing.
+    ("POST", re.compile(_PACT_VERIFIER_PATH + r"/pacts/provider/[^/]+/verify/preview/?$"), API_KEY_SCOPE_PACT_READ),
     # The consumer / deploy pipeline's writes take ``pact:publish``.
     ("POST", re.compile(_PACT_BROKER_PATH + r"/contracts/publish/?$"), API_KEY_SCOPE_PACT_PUBLISH),
     (

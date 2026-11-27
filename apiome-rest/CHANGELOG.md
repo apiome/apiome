@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.877.0] - 2026-11-29
+
+### Added
+- **Run a verification: preview and the run's new options (PFX-8.8, #7305).** OpenAPI 1.701.0; no migration.
+  New `POST /v1/tenants/{t}/pact-verifier/pacts/provider/{p}/verify/preview` takes the body of `…/verify`
+  (`target_ref` and `provider_version` optional) and says what the run would do, **sending nothing to any target
+  and storing nothing**: each consumer-version selector's own pact count (`rules`), every pact the selection
+  chooses (pending and work-in-progress included, the run's own selection) with its interactions, how many change
+  data, how many would be held back, its newest result and whether it already has a result for this provider
+  version, the provider states named and how many the chosen strategy sets up, and the target's environment
+  class. Every reason the run would not start is a `refusals` entry with the run's own code. `pacts:view`;
+  `pact:read` key scope; permission-matrix `reads` row.
+- `…/verify` (and the Verification console's re-run and verify-all-stale, which share its session):
+  `verification.provider_states_setup_url` POSTs every provider state to the provider's own setup endpoint
+  (`{"state", "params", "action": "setup" | "teardown"}`; a path on the target carries its credential and needs
+  its mutating policy, an absolute http(s) URL is SSRF-guarded with none; `//host` and other schemes are a 422);
+  `skip_already_verified` lists pacts that already have a result for `provider_version` under `skipped`
+  (`pact-verify-already-verified`) instead of replaying them — outcome `already-verified` when that is all of
+  them, `success` then being whether those results passed. `skipped` moved from the console response to every
+  verify response.
+
+### Changed
+- **Mutating requests are never sent to a production target.** A run with `verification.allow_mutating` against a
+  target whose environment is `production` is refused with `422 pact-verify-mutating-production` before anything
+  is sent — on every path that opens a verification session (`…/verify`, re-run, verify-all-stale, scheduled runs),
+  whatever the target's own policy allows.
+- **An unreachable target is not a failed verification.** When every request a run sent ended in a transport error
+  or a timeout, the run's outcome is `could-not-connect` with `connection_error` (`Could not connect to
+  billing.staging.example (timeout)`); nothing is published, as before.
+
 ## [1.876.0] - 2026-11-29
 
 ### Added

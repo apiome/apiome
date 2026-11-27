@@ -616,6 +616,16 @@ def verify(
     replay_without_state_setup: bool = typer.Option(
         False, "--replay-without-state-setup", help="Replay interactions whose provider state nothing sets up."
     ),
+    provider_states_setup_url: Optional[str] = typer.Option(
+        None,
+        "--provider-states-setup-url",
+        help="POST each provider state to this endpoint (a path on the target or an http(s) URL) instead of the registry.",
+    ),
+    skip_already_verified: bool = typer.Option(
+        False,
+        "--skip-already-verified",
+        help="Skip pacts that already have a result for this provider version.",
+    ),
     publish_results: bool = typer.Option(
         True, "--publish-verification-results/--no-publish-verification-results", help="Publish the results."
     ),
@@ -630,8 +640,10 @@ def verify(
 
     Selects the pacts the provider must honour, replays each interaction against the registered
     target and publishes a result per conclusive pact. Prints one row per pact and every interaction
-    that could not be replayed, with its reason. Exits 0 when the run succeeded, 1 otherwise
-    (a failed pact, an incomplete run, or no pacts selected).
+    that could not be replayed, with its reason, every pact skipped as already verified, and why the
+    target could not be reached. Exits 0 when the run succeeded, 1 otherwise (a failed pact, an
+    incomplete run, a target that could not be reached, or no pacts selected). A production target
+    never receives mutating requests: --allow-mutating against one is refused.
     """
     fmt = _format(ctx, output)
     try:
@@ -647,9 +659,11 @@ def verify(
             replay_without_state_setup=replay_without_state_setup,
             publish=publish_results,
             context=parse_context(context or []),
+            provider_states_setup_url=provider_states_setup_url,
+            skip_already_verified=skip_already_verified,
         )
     except ValueError as exc:
-        raise _bad(exc, "--consumer-version-selector / --context") from exc
+        raise _bad(exc, "--consumer-version-selector / --context / --provider-states-setup-url") from exc
     conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
     path = conn.api_path(f"/pact-verifier/pacts/provider/{segment(provider)}/verify", command="verify")
     response = conn.client.post(path, json=body).json()
