@@ -1,0 +1,17 @@
+---
+slug: pact-self-host
+title: "Self-host Apiome as your Pact Broker"
+description: "A Docker Compose stack, sizing, backup and upgrade guide for a standalone broker."
+authors: [apiome]
+---
+
+`docker-compose.pact-broker.yml` runs Apiome as a standalone Pact Broker: Postgres, the REST API and
+automatic HTTPS, with the schema migrated by a deliberate step and encrypted backups on a profile.
+See [Self-host the Pact Broker](/ship/pact-broker/self-host).
+
+{/* truncate */}
+
+- One file, five variables to fill in, and only ports 80 and 443 published.
+- Sizing guidance for 4,000 to 100,000 versions, backup scheduling, and a step-by-step upgrade
+  with a rollback.
+- No REST API change.
