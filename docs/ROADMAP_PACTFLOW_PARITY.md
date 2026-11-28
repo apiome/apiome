@@ -156,7 +156,7 @@ the design references for Epic 5 (copy to `docs/mockups/pact/` in apiome when th
 | ✅ PFX-EPIC-5 | Contracts workspace UI | 5.1–5.4, 5.6 | 8 |
 | PFX-EPIC-6 | Operations, governance and migration | 6.1, 6.7 | 8 |
 | ✅ PFX-EPIC-7 | Integration with specs, gates and registry | 7.1–7.3 | 5 |
-| PFX-EPIC-8 ([#7297](https://github.com/apiome/apiome/issues/7297)) | Contracts workspace: complete UI and CLI parity | 8.1–8.4, 8.6, 8.8–8.10, 8.12, 8.16, 8.18, 8.20 | 20 |
+| ✅ PFX-EPIC-8 ([#7297](https://github.com/apiome/apiome/issues/7297)) | Contracts workspace: complete UI and CLI parity | 8.1–8.4, 8.6, 8.8–8.10, 8.12, 8.16, 8.18, 8.20 | 20 |
 | PFX-EPIC-9 ([#7318](https://github.com/apiome/apiome/issues/7318)) | Pacts from mocks | 9.1–9.4 | 8 |
 
 ### ✅ PFX-EPIC-1 · [#6907](https://github.com/apiome/apiome/issues/6907) — Pact Broker core · umbrella of the hub
@@ -402,6 +402,10 @@ Design references: `mockups/pact/*` and `mockups/contracts/{matrix,verification,
 ---
 
 ### PFX-EPIC-8 · [#7297](https://github.com/apiome/apiome/issues/7297) — Contracts workspace: complete UI and CLI parity
+
+✅ **Done** (2026-11-27).
+
+**Status.** All twenty issues of this epic are complete (PFX-8.20 #7317 was the last); all 28 `apiome pact` commands have a screen in `docs/pact-parity-ledger.json`. #7297 brought `apiome-docs/docs/ship/pact-broker/overview.mdx` up to date: the intro and **Where you work from** say every command has a screen, the tab row gains **Verification**, **Start something** and the header describe screens only, **Every screen** gains Run a verification, Publish a provider contract, pacticipant Versions / Settings, the environment write flows, the Secrets / CI and commit statuses / Agents settings tabs (and the **Verification schedule** label), Migrate from a broker and Export, and a new **One model, every surface** section explains the parity rule and its CI gate; `cli.mdx` drops "or a ticket that adds one". It also fixed the landing: the header's **Publish provider contract**, the strip's *without a provider contract* action and **⋯** → **Run a verification** opened an empty command dialog once their screens shipped, and **Derive a pact from a project** still opened a command — all four now link to their pages (`lib/pact-overview.ts`, `PactOverviewClient.tsx`). Release-notes post `2026-11-30-contracts-ui-cli-parity.mdx` and a What's new line. No screenshot changes (the links render as the same buttons).
 
 Every `apiome pact` command gets a screen and every screen gets a command: landing and tab row, publish flows, verification runs, pacticipant and environment management, settings, migration wizard, export, guided set-up.
 

@@ -44,6 +44,9 @@ import { CAN_I_DEPLOY_ROUTE } from '@lib/pact-matrix';
 import { MIGRATE_ROUTE } from '@lib/pact-migration';
 import { SETUP_ROUTE } from '@lib/pact-setup';
 import { PUBLISH_ROUTE } from '@lib/pact-publish-page';
+import { PROVIDER_CONTRACT_ROUTE } from '@lib/pact-provider-contract';
+import { VERIFY_RUN_ROUTE } from '@lib/pact-verify-run';
+import { EXPORT_ROUTE } from '@lib/pact-export';
 import type { HealthOverview } from '@lib/pact-health';
 import {
   CONTRACTS_CRUMBS,
@@ -51,7 +54,6 @@ import {
   INTEGRATION_FILTERS,
   INTEGRATIONS_PAGE_SIZE,
   MAX_SEARCH_LENGTH,
-  WAYS_IN,
   firstRunSteps,
   integrationsNetwork,
   overviewRoute,
@@ -79,23 +81,6 @@ const WRITE_PERMISSION = 'pacts:create';
 
 /** The integrations read. */
 type IntegrationsRead = { data: PactIntegrationsPage | null; error: string | null };
-
-/** Every command the header and the ⋯ menu open, by id. */
-const WAY_COMMANDS = new Map(
-  WAYS_IN.flatMap((group) => group.ways)
-    .filter((way) => way.command)
-    .map((way) => [way.id, { title: way.title, description: way.description, command: way.command ?? '' }]),
-);
-
-/**
- * A command request by its "Start something" id.
- *
- * @param id - The entry point's id.
- * @returns The request.
- */
-function commandFor(id: string): CommandRequest {
-  return WAY_COMMANDS.get(id) ?? { title: id, description: '', command: '' };
-}
 
 /**
  * The Contracts landing.
@@ -168,8 +153,8 @@ export default function PactOverviewClient({ query }: { query: OverviewQuery }) 
         {status.action.label}
       </Button>
     ) : status.id === 'no-provider-contract' && canWrite ? (
-      <Button size="sm" variant="outline" onClick={() => setCommand(commandFor('publish-provider-contract'))}>
-        Publish provider contract
+      <Button size="sm" variant="outline" asChild>
+        <Link href={PROVIDER_CONTRACT_ROUTE}>Publish provider contract</Link>
       </Button>
     ) : undefined,
   }));
@@ -183,9 +168,11 @@ export default function PactOverviewClient({ query }: { query: OverviewQuery }) 
         tabs={<ContractsTabs active="overview" />}
         actions={
           canWrite ? (
-            <Button variant="outline" onClick={() => setCommand(commandFor('publish-provider-contract'))}>
-              <FileCheck2 aria-hidden />
-              Publish provider contract
+            <Button variant="outline" asChild data-testid="ctx-publish-provider-contract">
+              <Link href={PROVIDER_CONTRACT_ROUTE}>
+                <FileCheck2 aria-hidden />
+                Publish provider contract
+              </Link>
             </Button>
           ) : undefined
         }
@@ -193,13 +180,8 @@ export default function PactOverviewClient({ query }: { query: OverviewQuery }) 
           canWrite
             ? {
                 items: [
-                  { id: 'verify', label: 'Run a verification', icon: ShieldCheck, onSelect: () => setCommand(commandFor('verify')) },
-                  {
-                    id: 'export',
-                    label: 'Derive a pact from a project',
-                    icon: WandSparkles,
-                    onSelect: () => setCommand(commandFor('export-consumer-contract')),
-                  },
+                  { id: 'verify', label: 'Run a verification', icon: ShieldCheck, href: VERIFY_RUN_ROUTE },
+                  { id: 'export', label: 'Derive a pact from a project', icon: WandSparkles, href: EXPORT_ROUTE },
                   { id: 'can-i-deploy', label: 'Can I deploy?', icon: Rocket, href: CAN_I_DEPLOY_ROUTE, separatorBefore: true },
                   { id: 'setup', label: 'Set up contracts', icon: ListChecks, href: SETUP_ROUTE },
                   { id: 'migrate', label: 'Migrate from a broker', icon: Import, href: MIGRATE_ROUTE },

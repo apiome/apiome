@@ -274,8 +274,12 @@ describe('"Start something"', () => {
     const used = WAYS_IN.flatMap((group) => group.ways)
       .filter((way) => way.command)
       .map((way) => /^apiome pact ([a-z-]+)/.exec(way.command ?? '')?.[1]);
-    expect(used.length).toBeGreaterThan(0);
+    expect(verbs.size).toBeGreaterThan(0);
     for (const verb of used) expect(verbs).toContain(verb);
+  });
+
+  it('opens a screen for every entry point now that PFX-8 is complete (#7297)', () => {
+    expect(WAYS_IN.flatMap((group) => group.ways).filter((way) => !way.route).map((way) => way.id)).toEqual([]);
   });
 
   it('gives every entry point a screen or a command, never neither', () => {

@@ -13,8 +13,10 @@ it unchanged: give them your workspace's **broker base URL**
 Consumers publish their pacts, providers verify them and report back, deploy jobs record what runs
 where, and `can-i-deploy` stops a release that would break something.
 
-All of it is served through the API and the Pact tools, and you can read and act on it in the
-[**Contracts** workspace](#the-contracts-workspace) of the app.
+All of it is served through the API and the Pact tools, and all of it can be done in the
+[**Contracts** workspace](#the-contracts-workspace) of the app: every `apiome pact` command has a
+screen there, and every screen that changes something shows the command that does the same
+([one model, every surface](#one-model-every-surface)).
 
 ## When to use it
 
@@ -137,7 +139,7 @@ key's value is never stored or recorded.
 
 | Where | Best for | Details |
 | --- | --- | --- |
-| The **Contracts** workspace in the app | Reading pacts, verdicts and deployments; re-running verifications; managing webhooks | [The Contracts workspace](#the-contracts-workspace) |
+| The **Contracts** workspace in the app | Everything a command does — publishing pacts and provider contracts, running verifications, managing pacticipants, versions and environments, settings, migrating and exporting — plus reading verdicts and history | [The Contracts workspace](#the-contracts-workspace) |
 | The **Pact CLI** (`pact-broker`, `pact broker`) | Publishing, recording deployments and can-i-deploy from CI | [Publish and fetch pacts](./publish-pacts.mdx) |
 | The **Apiome CLI** (`apiome pact …`) | The same commands with the same flags and exit codes, plus provider contracts and hosted verification | [The apiome pact commands](./cli.mdx), [Run Pact in CI](./ci-pact.mdx) |
 | A **CI pipeline** (GitHub Actions, GitLab CI, Bitbucket, Jenkins, Azure Pipelines) | Publish, can-i-deploy and record-deployment as ready-made steps, with the verdict on the pull request | [Run Pact in CI](./ci-pact.mdx), [Commit statuses](./commit-statuses.mdx) |
@@ -150,8 +152,8 @@ key's value is never stored or recorded.
 
 **Click Contracts** in the rail (under **Ship**). It opens on the **Contracts** landing: what needs
 your attention, every integration, and where to start. A row of tabs under the title —
-**Overview**, **Pacticipants**, **Matrix**, **Can I deploy**, **Environments**, **Webhooks**,
-**Health** and **Settings** — is on every Contracts page, with the page you are on highlighted.
+**Overview**, **Pacticipants**, **Matrix**, **Can I deploy**, **Verification**, **Environments**,
+**Webhooks**, **Health** and **Settings** — is on every Contracts page, with the page you are on highlighted.
 Every screen is open to anyone who can view pacts, and each empty screen shows the CLI command that
 fills it.
 
@@ -186,15 +188,15 @@ fills it.
   pair's health, or **Can I deploy?** for its consumer version. **Click “Network”** to draw the
   integrations on the page as a [network](./network.mdx).
 - **Start something.** The ways in, by who you are: **I consume an API**, **I provide an API** and
-  **I run the pipeline**. An entry with its own screen opens it; an entry whose screen has not
-  shipped yet opens the `apiome pact` command that does it. Until one integration is verified, a
+  **I run the pipeline**. Each entry opens its screen. Until one integration is verified, a
   **Your first contract, in four steps** checklist is shown above them.
 
 The header's **Publish a pact** and **Publish provider contract**, and its **⋯** menu (**Run a
-verification**, **Derive a pact from a project**, **Can I deploy?**, **Migrate from a broker**),
-open the same screens and commands; **Migrate from a broker** opens the
-[Migration wizard](./migration.mdx#migrate-from-the-ui). Only a role that can publish pacts (**Pacts** → **Create**) sees the header
-actions and **Start something**; anyone who can view pacts sees the strip and the table.
+verification**, **Derive a pact from a project**, **Can I deploy?**, **Set up contracts**,
+**Migrate from a broker**), open the same screens. **Publish provider contract** is also the action
+of the strip's **without a provider contract** chip. Only a role that can publish pacts
+(**Pacts** → **Create**) sees the header actions and **Start something**; anyone who can view pacts
+sees the strip and the table.
 
 A workspace with no pacts shows **No contracts yet** instead of the strip and the table, with the
 checklist open. If the integrations cannot be read, one banner says why, with **Try again**.
@@ -204,21 +206,43 @@ checklist open. If the integrations cannot be read, one banner says why, with **
 | Screen | Tab | What it shows |
 | --- | --- | --- |
 | **Contracts** (this landing) | **Overview** | What needs attention, every integration, and where to start |
-| [**Pacticipants**](./pacticipants.mdx) | **Pacticipants** | Every application in your pacts; each one's versions, branches, tags, environments and pacts |
+| [**Pacticipants**](./pacticipants.mdx) | **Pacticipants** | Every application in your pacts; create one with **New pacticipant**. Each one's page has **Overview** (branches, environments and pacts), [**Versions**](./pacticipants.mdx#manage-versions) (tag, delete and restore versions) and [**Settings**](./pacticipants.mdx#manage-a-pacticipant) (name, main branch, labels, badges, delete) |
 | [**Pact detail**](./pact-detail.mdx) | **Pacticipants** | One pact's interactions, its verification status and what changed since the previous pact |
 | [**Network**](./network.mdx) | **Pacticipants** | The pacticipants connected through pacts, each integration coloured by its verdict |
 | [**Verification**](./verification-console.mdx) | **Pacticipants** | A provider's results with their logs and mismatches; re-run one pact or verify the stale ones |
 | [**Matrix**](./matrix.mdx) | **Matrix** | Which consumer versions were verified against which provider versions, with the verdict explained |
 | [**Can I deploy?**](./can-i-deploy.mdx#check-in-the-console) | **Can I deploy** | Whether one version is safe to deploy to an environment, and the CLI command that asks the same |
-| [**Environments**](./environments-dashboard.mdx) | **Environments** | Which version runs where, each environment's deployment history, and the deploy simulator |
+| [**Run a verification**](./hosted-verification.mdx#run-a-verification-from-the-app) | **Verification** (`/ade/dashboard/pacts/verification/new`) | Choose a provider version and its pacts, preview the run, watch it live, or upload a verifier's results |
+| [**Environments**](./environments-dashboard.mdx) | **Environments** | Which version runs where and its history; **New environment**, [**Record a deployment**](./environments-dashboard.mdx#record-a-deployment), **Record a release**, undeployments and end of support; the deploy simulator |
 | [**Webhooks**](./webhooks-console.mdx) | **Webhooks** | Contract webhooks and every delivery; create, test and redeliver |
 | [**Contract health**](./contract-health.mdx) | **Health** | Each pair rolled up into one state, with pass-rate and flakiness trends; re-publish requests |
 | [**Clean-up**](./retention.mdx#set-the-clean-up-rules) | **Settings** → **Clean-up** | What is kept, what the nightly clean-up would remove now, and Recently deleted with Restore |
-| [**Verification settings**](./stale-pacts.mdx) | **Settings** → **Verification** | Stale thresholds, verification schedules and per-pair overrides |
+| [**Secrets**](./secrets.mdx#manage-secrets-in-the-console) | **Settings** → **Secrets** | The workspace secrets, where each is used, and those waiting for a value |
+| [**CI and commit statuses**](./commit-statuses.mdx#choose-which-statuses-are-written) | **Settings** → **CI and commit statuses** | Which commit statuses are written, and a pipeline recipe for each CI system |
+| [**Verification settings**](./stale-pacts.mdx) | **Settings** → **Verification schedule** | Stale thresholds, verification schedules and per-pair overrides |
+| [**Agents**](./cli.mdx#choose-what-agents-may-do) | **Settings** → **Agents** | What an AI agent may do with contracts through the `pact` MCP tools |
 | [**Pact comparisons**](./bi-directional.mdx#in-the-app) | **Pacticipants** (`/ade/dashboard/pacts/comparisons`) | The fidelity report of each bi-directional comparison |
 | [**Provider states**](./provider-states.mdx#see-provider-states-in-the-app) | **Pacticipants** (`/ade/dashboard/pacts/provider-states`) | A provider's registered states, and a check of its pacts against them before a run |
 | [**Set up contracts**](#set-up-in-ten-minutes) | **Overview** (`/ade/dashboard/pacts/setup`, **“⋯”** → **“Set up contracts”**) | Six resumable sections from an empty workspace to a yes or no before every deploy |
-| [**Publish a consumer pact**](./publish-pacts.mdx#publish-from-the-ui) | **Overview** (`/ade/dashboard/pacts/publish`, **“Publish a pact”**) | Upload, paste or derive pacts, check them against what is published, and publish them for a consumer version |
+| [**Publish a consumer pact**](./publish-pacts.mdx#publish-from-the-ui) | **Overview** (`/ade/dashboard/pacts/publish`, **“Publish a pact”**) | Upload, paste, write or derive pacts, check them against what is published, and publish them for a consumer version |
+| [**Publish a provider contract**](./bi-directional.mdx#publish-from-the-ui) | **Overview** (`/ade/dashboard/pacts/provider-contracts/new`, **“Publish provider contract”**) | A project version or an uploaded OpenAPI or AsyncAPI document with graded evidence, a preview of every consumer's verdict, and standing sources |
+| [**Migrate from a broker**](./migration.mdx#migrate-from-the-ui) | **Overview** (`/ade/dashboard/pacts/migrate`, **“⋯”** → **“Migrate from a broker”**) | Copy a Pact Broker or PactFlow workspace, check that both brokers agree, and keep copying until everyone has moved |
+| [**Export**](./export-contracts.mdx) | **Overview** (`/ade/dashboard/pacts/export`, **“⋯”** → **“Derive a pact from a project”**) | A pact from a project, a Postman collection, a stored pact file, or provider test scaffolding |
+
+### One model, every surface
+
+The app, `apiome pact`, the Pact CLI and libraries, the GitHub Action and the `pact` MCP tools all
+read and write the same Pact Broker API, so whatever one of them records the others see at once.
+
+- **Every command has a screen.** Each of the 28 `apiome pact` commands is done from a Contracts
+  screen; [The same command, in the app](./cli.mdx#the-same-command-in-the-app) lists where.
+- **Every screen shows its command.** A screen that changes something has a **The same, from
+  anywhere** block: what you filled in as an `apiome pact` command, a Pact CLI command, a GitHub
+  Action step and a REST request, with secrets written as variables. An action no command does yet
+  (editing a webhook, a workspace secret, stopping a live run) says why and shows the REST request.
+- **CI keeps it that way.** A new command without a screen, or a new Contracts write without a
+  command or a written reason, fails the build
+  ([The CLI ↔ UI parity ledger](../../admin/contribute-to-the-docs.mdx#the-cli--ui-parity-ledger)).
 
 The landing reads `GET /v1/tenants/{t}/pact-integrations`
 ([REST reference](../../reference/rest/pact-broker.md#read-integrations-v1-tenants-tenant-slug-pact-integrations-get)).

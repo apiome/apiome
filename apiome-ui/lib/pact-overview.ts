@@ -21,6 +21,7 @@ import { SETTINGS_ROUTE } from '@lib/pact-remediation';
 import { PUBLISH_ROUTE } from '@lib/pact-publish-page';
 import { PROVIDER_CONTRACT_ROUTE } from '@lib/pact-provider-contract';
 import { VERIFY_RUN_ROUTE } from '@lib/pact-verify-run';
+import { EXPORT_ROUTE } from '@lib/pact-export';
 import { MIGRATE_ROUTE } from '@lib/pact-migration';
 
 // --- types ------------------------------------------------------------------------------------------
@@ -507,14 +508,18 @@ export function overviewStatuses(page: PactIntegrationsPage): OverviewStatus[] {
 
 // --- "Start something" ----------------------------------------------------------------------------------------
 
-/** One entry point. A shipped screen has a `route`; an action with no screen yet has its `command`. */
+/**
+ * One entry point. A shipped screen has a `route`; an action with no screen yet has its `command`.
+ * Since PFX-EPIC-8 (#7297) every entry has a screen; `command` stays for PFX-9 entries that land
+ * before their page.
+ */
 export interface WayIn {
   id: string;
   title: string;
   description: string;
   /** The screen it opens. */
   route?: string;
-  /** The `apiome pact` command, for an action whose screen ships later in PFX-8. */
+  /** The `apiome pact` command, for an action whose screen has not shipped yet. */
   command?: string;
 }
 
@@ -528,7 +533,7 @@ export interface WayInGroup {
 /**
  * The entry points, grouped by who is asking. Recording a pact from a hosted mock and serving pacts
  * as a mock join the consumer and provider groups with PFX-9; every other action the CLI has is
- * here, with its screen when it has one.
+ * here, each with its screen.
  */
 export const WAYS_IN: readonly WayInGroup[] = [
   {
@@ -545,7 +550,7 @@ export const WAYS_IN: readonly WayInGroup[] = [
         id: 'export-consumer-contract',
         title: 'Derive a pact from a project',
         description: 'Start from the operations you call.',
-        command: 'apiome pact export-consumer-contract --project <project> --consumer "Orders UI" --output ./pacts',
+        route: EXPORT_ROUTE,
       },
     ],
   },

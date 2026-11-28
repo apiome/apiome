@@ -244,7 +244,7 @@ describe('Contracts landing', () => {
     expect(replace).toHaveBeenLastCalledWith('/ade/dashboard/pacts');
   });
 
-  it('links Publish a pact to its page and opens the command of an action with no screen yet', async () => {
+  it('links every header action and entry point to its screen', async () => {
     open();
     expect(await screen.findByTestId('ctx-publish')).toHaveAttribute('href', '/ade/dashboard/pacts/publish');
     expect(screen.getByTestId('ctx-way-publish-pact')).toHaveAttribute('href', '/ade/dashboard/pacts/publish');
@@ -254,8 +254,14 @@ describe('Contracts landing', () => {
     // PFX-8.16 (#7313): migrating has its wizard now.
     expect(screen.getByTestId('ctx-way-migrate')).toHaveAttribute('href', '/ade/dashboard/pacts/migrate');
 
-    fireEvent.click(screen.getByTestId('ctx-way-export-consumer-contract'));
-    expect(await screen.findByTestId('ctx-command-dialog')).toHaveTextContent('apiome pact export-consumer-contract');
+    // PFX-EPIC-8 (#7297): every entry has a screen, so none opens a command dialog.
+    expect(screen.getByTestId('ctx-way-export-consumer-contract')).toHaveAttribute('href', '/ade/dashboard/pacts/export');
+    expect(screen.getByTestId('ctx-way-verify')).toHaveAttribute('href', '/ade/dashboard/pacts/verification/new');
+    expect(screen.getByTestId('ctx-publish-provider-contract')).toHaveAttribute(
+      'href',
+      '/ade/dashboard/pacts/provider-contracts/new',
+    );
+    expect(screen.queryAllByTestId(/^ctx-way-/).filter((el) => el.tagName !== 'A')).toEqual([]);
   });
 
   it('draws the page of integrations as a network', async () => {

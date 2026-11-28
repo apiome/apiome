@@ -50,7 +50,7 @@ bi-directional testing wired to Apiome's spec model.
 | ✅ PFX-EPIC-5 ([#6911](https://github.com/apiome/apiome/issues/6911), done 2026-11-25) | UI: pacticipants, pact viewer, matrix and can-i-deploy console, webhooks, environments | 8 | 5.1, 5.2, 5.4, 5.6 |
 | PFX-EPIC-6 | RBAC and audit, scheduling, health analytics, ownership, scale, **migration from Pact Broker/PactFlow**, self-host | 8 | 6.1, 6.7 |
 | ✅ PFX-EPIC-7 ([#6913](https://github.com/apiome/apiome/issues/6913), done 2026-11-26) | Integration: one consumer model, can-i-deploy as a deploy-gate signal, publish quality gate | 5 | 7.1–7.3 |
-| PFX-EPIC-8 ([#7297](https://github.com/apiome/apiome/issues/7297), added 2026-11-26) | Contracts workspace: every `apiome pact` command gets a screen and every screen a command — landing, publish flows, verification runs, pacticipant and environment management, settings, migration wizard, export, guided set-up | 20 | 8.1–8.4, 8.6, 8.8–8.10, 8.12, 8.16, 8.18, 8.20 |
+| ✅ PFX-EPIC-8 ([#7297](https://github.com/apiome/apiome/issues/7297), added 2026-11-26, done 2026-11-27) | Contracts workspace: every `apiome pact` command gets a screen and every screen a command — landing, publish flows, verification runs, pacticipant and environment management, settings, migration wizard, export, guided set-up | 20 | 8.1–8.4, 8.6, 8.8–8.10, 8.12, 8.16, 8.18, 8.20 |
 | PFX-EPIC-9 ([#7318](https://github.com/apiome/apiome/issues/7318), added 2026-11-26) | Pacts from mocks: capture, generation engine, record page, `apiome pact record`, more sources, standing CI recording, pacts served as a stub | 8 | 9.1–9.4 |
 
 ### 2.2 Ranking (why this order)
