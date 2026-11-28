@@ -14,6 +14,13 @@ answer in one pull-request comment; for GitLab CI and Bitbucket Pipelines there 
 [theirs](#jenkins-and-azure-pipelines). Every step is also one shell command, so the same lines
 work in any other runner.
 
+**Copy a pipeline from the app.** In **Contracts**, click **Settings**, then **CI and commit
+statuses**. **Pipeline recipes** shows the GitHub Actions, GitLab CI, Jenkins and Azure Pipelines
+pipelines of this page — exactly the files below — and **Broker address** shows your workspace's
+`PACT_BROKER_BASE_URL`, with **Create a key with Pact scopes** for the token. See
+[Choose which statuses are written](./commit-statuses.mdx#choose-which-statuses-are-written) for the
+switches on the same tab.
+
 ## Before you start
 
 1. **Two CI secrets.** `PACT_BROKER_BASE_URL` — your workspace's broker base URL, such as

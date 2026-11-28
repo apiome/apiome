@@ -48,7 +48,7 @@ List every registered export target for an artifact version (MFX-40.1): each tar
 
 ## `pact.can_i_deploy` {#pact-can-i-deploy}
 
-Can this pacticipant version be deployed? (PFX-4.5; pact-broker can-i-deploy). pacticipant and version name what is deployed; give exactly one of to_environment (checked against everything currently deployed to or released in it) or to_tag (the latest version of each other pacticipant with that tag). ignore leaves pacticipants out of the verdict. Same answer as pact.matrix: read summary.deployable (true / false / null while a result is missing - retry after retryAfterSeconds), summary.reason and notices; at most max_rows rows. Requires pacts:view.
+Can this pacticipant version be deployed? (PFX-4.5; pact-broker can-i-deploy). pacticipant and version name what is deployed; give exactly one of to_environment (checked against everything currently deployed to or released in it) or to_tag (the latest version of each other pacticipant with that tag). ignore leaves pacticipants out of the verdict. Same answer as pact.matrix: read summary.deployable (true / false / null while a result is missing - retry after retryAfterSeconds), summary.reason and notices; at most max_rows rows. Requires pacts:view. Refused (mcp-pact-agent-action-off) when the workspace has switched agent reads off (Contracts → Settings → Agents).
 
 **Hints:** Read-only: yes, Idempotent: yes, Open world: no.
 
@@ -67,7 +67,7 @@ Can this pacticipant version be deployed? (PFX-4.5; pact-broker can-i-deploy). p
 
 ## `pact.list` {#pact-list}
 
-List the latest pact of every consumer -&gt; provider integration in the key's workspace (PFX-4.5): consumer, provider, consumerVersion, sha, specificationVersion, interactionCount, publishedAt and the pact's latestVerification (success, verifiedAt, providerVersion, kind) or null. No pact content. Optional provider / consumer filters (handle, id or name). limit 1-100 (default 50); pass nextCursor as cursor for the next page. Requires an MCP API key without a project limit, whose owner has pacts:view.
+List the latest pact of every consumer -&gt; provider integration in the key's workspace (PFX-4.5): consumer, provider, consumerVersion, sha, specificationVersion, interactionCount, publishedAt and the pact's latestVerification (success, verifiedAt, providerVersion, kind) or null. No pact content. Optional provider / consumer filters (handle, id or name). limit 1-100 (default 50); pass nextCursor as cursor for the next page. Requires an MCP API key without a project limit, whose owner has pacts:view. Refused (mcp-pact-agent-action-off) when the workspace has switched agent reads off (Contracts → Settings → Agents).
 
 **Hints:** Read-only: yes, Idempotent: yes, Open world: no.
 
@@ -84,7 +84,7 @@ List the latest pact of every consumer -&gt; provider integration in the key's w
 
 ## `pact.matrix` {#pact-matrix}
 
-Pact Broker matrix query (PFX-4.5; what pact-broker can-i-deploy asks). selectors: [{pacticipant, version?, latest?, tag?, branch?, environment?, main_branch?}] - one selector with a destination asks 'can I deploy this?', two or more ask 'do these work together?'. Destination: to_environment, to_tag (with latest=true), latest, or main_branch. latestby: cvp | cvpv | cp. ignore: ['Name' or {pacticipant, version?}]. Answers summary.deployable (true / false / null = a verification result is missing; retryAfterSeconds says when to ask again), summary.reason, notices [{type, code, text}] and at most max_rows (1-100, default 50) compact rows with rowsTotal / rowsTruncated; the verdict always reads every row. Unknown selector keys are refused. Requires pacts:view.
+Pact Broker matrix query (PFX-4.5; what pact-broker can-i-deploy asks). selectors: [{pacticipant, version?, latest?, tag?, branch?, environment?, main_branch?}] - one selector with a destination asks 'can I deploy this?', two or more ask 'do these work together?'. Destination: to_environment, to_tag (with latest=true), latest, or main_branch. latestby: cvp | cvpv | cp. ignore: ['Name' or {pacticipant, version?}]. Answers summary.deployable (true / false / null = a verification result is missing; retryAfterSeconds says when to ask again), summary.reason, notices [{type, code, text}] and at most max_rows (1-100, default 50) compact rows with rowsTotal / rowsTruncated; the verdict always reads every row. Unknown selector keys are refused. Requires pacts:view. Refused (mcp-pact-agent-action-off) when the workspace has switched agent reads off (Contracts → Settings → Agents).
 
 **Hints:** Read-only: yes, Idempotent: yes, Open world: no.
 
@@ -106,7 +106,7 @@ Pact Broker matrix query (PFX-4.5; what pact-broker can-i-deploy asks). selector
 
 ## `pact.record_deployment` {#pact-record-deployment}
 
-WRITE: record that a pacticipant version is now deployed to an environment (PFX-4.5; pact-broker record-deployment). environment is the environment's name; application_instance names the instance (region, customer) when the environment has several. The pacticipant's previous deployment there is marked undeployed. Answers {created, deployment}; created=false when it already was the current deployment. The version must already be recorded (published a pact or verified one). Requires an MCP API key whose owner has pacts:create.
+WRITE: record that a pacticipant version is now deployed to an environment (PFX-4.5; pact-broker record-deployment). environment is the environment's name; application_instance names the instance (region, customer) when the environment has several. The pacticipant's previous deployment there is marked undeployed. Answers {created, deployment}; created=false when it already was the current deployment. The version must already be recorded (published a pact or verified one). Requires an MCP API key whose owner has pacts:create. The workspace must allow agents to record deployments (Contracts → Settings → Agents; off by default), and an agent never records to an environment marked production (mcp-pact-agent-production); every refusal is audited.
 
 **Hints:** Read-only: no, Destructive: no, Idempotent: yes, Open world: no.
 

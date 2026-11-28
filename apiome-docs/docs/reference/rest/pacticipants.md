@@ -1,6 +1,6 @@
 ---
 title: "Pacticipants"
-description: "REST endpoints tagged pacticipants: 28 operations."
+description: "REST endpoints tagged pacticipants: 31 operations."
 sidebar_position: 71
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.706.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.707.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pacticipants` · 28 operations
+Tag: `pacticipants` · 31 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-commit-statuses` {#get-pact-commit-statuses-v1-tenants-tenant-slug-pact-commit-statuses-get}
 
@@ -71,6 +71,93 @@ Operation id: `retry_pact_commit_status_v1_tenants__tenant_slug__pact_commit_sta
 | 200 | Successful response for send a pact commit status again. | `application/json` [`CommitStatusRecord`](#schema-commitstatusrecord) |
 | 404 | `pact-status-not-found`: no such status in this workspace. | — |
 | 409 | `pact-status-not-retryable`: the status was accepted or is being sent. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-contract-settings` {#read-contract-settings-v1-tenants-tenant-slug-pact-contract-settings-get}
+
+**Read the Contracts commit-status and agent switches**
+
+The **CI and commit statuses** switches — a verdict on the consumer's commit, on the provider's commit, and whether bi-directional verdicts set statuses and fire webhooks — and the **Agents** switches: what an MCP-connected agent may do with contracts (read, draft, publish, record a deployment). `configured: false` shows the defaults. `can_edit` says whether the caller may change them (`pacts:delete`).
+
+Requires `pacts:view`.
+
+Operation id: `read_contract_settings_v1_tenants__tenant_slug__pact_contract_settings_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the contracts commit-status and agent switches. | `application/json` [`ContractSettings`](#schema-contractsettings) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-contract-settings/agents` {#save-contract-agents-v1-tenants-tenant-slug-pact-contract-settings-agents-put}
+
+**Save what MCP agents may do with contracts**
+
+Replace the four agent switches. An MCP pact tool whose action is switched off is refused with `403 mcp-pact-agent-action-off` and the reason, and the refusal is audited (`pacts.agent.refused`). Whatever the switches say, an agent never records a deployment to an environment marked production. No agent tool drafts or publishes yet: those two switches apply when one ships.
+
+Requires `pacts:delete`.
+
+Operation id: `save_contract_agents_v1_tenants__tenant_slug__pact_contract_settings_agents_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for save what mcp agents may do with contracts.
+
+- `application/json` — [`AgentSettings`](#schema-agentsettings)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for save what mcp agents may do with contracts. | `application/json` [`ContractSettings`](#schema-contractsettings) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-contract-settings/commit-statuses` {#save-contract-commit-statuses-v1-tenants-tenant-slug-pact-contract-settings-commit-statuses-put}
+
+**Save the commit-status switches**
+
+Replace the three switches. A status a switch keeps from being written is still recorded, as `suppressed` with reason `pact-status-switched-off`, in `GET …/pact-commit-statuses`. Turning on `bidirectional` makes each new bi-directional verdict set its statuses and fire its `provider_verification_*` webhooks.
+
+Requires `pacts:delete`.
+
+Operation id: `save_contract_commit_statuses_v1_tenants__tenant_slug__pact_contract_settings_commit_statuses_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for save the commit-status switches.
+
+- `application/json` — [`CommitStatusSettings`](#schema-commitstatussettings)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for save the commit-status switches. | `application/json` [`ContractSettings`](#schema-contractsettings) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/tenants/{tenant_slug}/pact-retention` {#run-pact-retention-v1-tenants-tenant-slug-pact-retention-post}
@@ -873,6 +960,17 @@ Operation id: `put_pacticipant_version_tag_v1_tenants__tenant_slug__pacticipants
 
 ## Schemas used {#schemas-used}
 
+### `AgentSettings` {#schema-agentsettings}
+
+The **Agents** switches (``PUT …/pact-contract-settings/agents``).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `read` | boolean | no | Agents may read pacts, verdicts and can-i-deploy. |
+| `draft` | boolean | no | Agents may draft a pact for a person to review. No agent tool drafts yet; it applies when one ships. |
+| `publish` | boolean | no | Agents may publish pacts and provider contracts, never on a main branch. No agent tool publishes yet; it applies when one ships. |
+| `record` | boolean | no | Agents may record deployments, never to an environment marked production. |
+
 ### `CommitStatusList` {#schema-commitstatuslist}
 
 A page of commit statuses, newest first.
@@ -913,6 +1011,29 @@ Never carries a token: the credential is resolved at send time and stored nowher
 | `attempts` | integer | no | How many times the status was sent. |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
+
+### `CommitStatusSettings` {#schema-commitstatussettings}
+
+The **CI and commit statuses** switches (``PUT …/pact-contract-settings/commit-statuses``).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `consumer_commit` | boolean | no | Write pact verdicts (awaiting verification, verified, failed) on the consumer's commit. |
+| `provider_commit` | boolean | no | Write verification verdicts on the provider's commit. |
+| `bidirectional` | boolean | no | Bi-directional verdicts set commit statuses and fire their webhooks, as a verification does. |
+
+### `ContractSettings` {#schema-contractsettings}
+
+``GET …/pact-contract-settings``: both groups of switches.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `commit_statuses` | [`CommitStatusSettings`](#schema-commitstatussettings) | yes | Commit Statuses. |
+| `agents` | [`AgentSettings`](#schema-agentsettings) | yes | Agents. |
+| `configured` | boolean | yes | Whether the workspace saved any switch; `false` shows the defaults. |
+| `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
+| `updated_by` | string or null | no | Updated By. |
+| `can_edit` | boolean | yes | Whether the caller may change the switches (`pacts:delete`). |
 
 ### `ContractSourcesInput` {#schema-contractsourcesinput}
 

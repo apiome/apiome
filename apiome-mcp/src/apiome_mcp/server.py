@@ -484,6 +484,8 @@ _PACT_READ = ToolAnnotations(readOnlyHint=True, idempotentHint=True, openWorldHi
         "latestVerification (success, verifiedAt, providerVersion, kind) or null. No pact content. Optional "
         "provider / consumer filters (handle, id or name). limit 1-100 (default 50); pass nextCursor as cursor for "
         "the next page. Requires an MCP API key without a project limit, whose owner has pacts:view."
+        " Refused (mcp-pact-agent-action-off) when the workspace has switched agent reads off "
+        "(Contracts → Settings → Agents)."
     ),
     annotations=_PACT_READ,
 )
@@ -510,6 +512,8 @@ async def pact_list(
         "ask again), summary.reason, notices [{type, code, text}] and at most max_rows (1-100, default 50) compact "
         "rows with rowsTotal / rowsTruncated; the verdict always reads every row. Unknown selector keys are "
         "refused. Requires pacts:view."
+        " Refused (mcp-pact-agent-action-off) when the workspace has switched agent reads off "
+        "(Contracts → Settings → Agents)."
     ),
     annotations=_PACT_READ,
 )
@@ -548,6 +552,8 @@ async def pact_matrix(
         "pacticipants out of the verdict. Same answer as pact.matrix: read summary.deployable (true / false / null "
         "while a result is missing - retry after retryAfterSeconds), summary.reason and notices; at most max_rows "
         "rows. Requires pacts:view."
+        " Refused (mcp-pact-agent-action-off) when the workspace has switched agent reads off "
+        "(Contracts → Settings → Agents)."
     ),
     annotations=_PACT_READ,
 )
@@ -579,7 +585,9 @@ async def pact_can_i_deploy(
         "(region, customer) when the environment has several. The pacticipant's previous deployment there is "
         "marked undeployed. Answers {created, deployment}; created=false when it already was the current "
         "deployment. The version must already be recorded (published a pact or verified one). Requires an MCP API "
-        "key whose owner has pacts:create."
+        "key whose owner has pacts:create. The workspace must allow agents to record deployments (Contracts → "
+        "Settings → Agents; off by default), and an agent never records to an environment marked production "
+        "(mcp-pact-agent-production); every refusal is audited."
     ),
     annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False),
 )

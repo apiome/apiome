@@ -558,7 +558,12 @@ def publish_contract(
         raise _http_error(exc) from exc
     # PFX-2.3: compare the contract with the pacts that need it; the results land in the matrix.
     comparisons = compare_provider_contract(
-        db, tenant_id, outcome.contract.provider_slug, outcome.contract.provider_version, actor=actor
+        db,
+        tenant_id,
+        outcome.contract.provider_slug,
+        outcome.contract.provider_version,
+        actor=actor,
+        base=_base_url(request, tenant_slug),
     )
     document = _contract_document(_base_url(request, tenant_slug), outcome.contract)
     document["comparisons"] = comparisons.to_dict()

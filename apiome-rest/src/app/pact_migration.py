@@ -34,7 +34,9 @@ change nothing: a pacticipant's handle, ``<handle>/<number>`` for a version, and
 
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
@@ -44,7 +46,7 @@ from pydantic import BaseModel, Field
 from .pact_deployments import validate_application_instance
 from .pact_environment import EnvironmentInput, parse_environment_request
 from .pact_publication import PactPublicationError, PactToStore, prepare_pact
-from .pact_webhook import WebhookInput, parse_webhook_request, validate_webhook_uuid
+from .pact_webhook import REDACTED, WebhookInput, parse_webhook_request, validate_webhook_uuid
 from .pacticipant import (
     PacticipantValidationError,
     slugify_pacticipant_name,
@@ -342,14 +344,18 @@ class WebhookImport:
     Attributes:
         index: Position in the batch.
         uuid: The source's uuid, kept when no other workspace uses it; ``None`` to generate one.
-        webhook: The checked webhook.
+        webhook: The checked webhook. A secret the source redacted is a ``${user.<placeholder>}``
+            reference instead (PFX-8.15), and the webhook is then imported turned off.
         created_at: When the source created it.
+        placeholders: ``(name, description)`` of each secret to create without a value — one per
+            redacted value — so the webhook can be imported and wait for them.
     """
 
     index: int
     uuid: Optional[str]
     webhook: WebhookInput
     created_at: Optional[datetime]
+    placeholders: List[Tuple[str, str]] = field(default_factory=list)
     kind: str = field(default="webhook", init=False)
 
     @property
@@ -726,14 +732,65 @@ def _webhook(
         webhook = parse_webhook_request(_document(record, "webhook"), resolve=resolve)
     except PactPublicationError as exc:
         raise _pact_refusal(exc, "/webhook") from exc
-    if webhook.has_secrets() and any(
-        value == "**********" for value in (webhook.password, webhook.signing_secret, *webhook.secret_headers.values())
-    ):
-        raise _RecordError(
-            "/webhook",
-            "a secret the source redacted (**********) cannot be imported; re-enter it, or leave it out",
-        )
-    return WebhookImport(index=index, uuid=uuid, webhook=webhook, created_at=created_at)
+    webhook, placeholders = placeholder_secrets(webhook, uuid or f"webhook#{index}")
+    return WebhookImport(
+        index=index, uuid=uuid, webhook=webhook, created_at=created_at, placeholders=placeholders
+    )
+
+
+def _placeholder_name(key: str, field_name: str) -> str:
+    """A secret name for one redacted value: ``migrated_<8 hex of the webhook>_<field>`` (≤ 64 characters)."""
+    digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
+    shaped = re.sub(r"[^A-Za-z0-9_]", "_", field_name)
+    return f"migrated_{digest}_{shaped}"[:64]
+
+
+def placeholder_secrets(webhook: WebhookInput, key: str) -> Tuple[WebhookInput, List[Tuple[str, str]]]:
+    """Replace each value the source redacted (``**********``) with a reference to a placeholder secret.
+
+    Before PFX-8.15 such a webhook was refused. Now each redacted value — the basic-auth password, the
+    signing secret, a secret header — becomes ``${user.<placeholder>}``; the import creates the
+    placeholder without a value and the webhook turned off, and setting the value under Contracts →
+    Settings → Secrets turns it on.
+
+    Args:
+        webhook: The checked webhook as the source sent it.
+        key: The webhook's natural key (its uuid, else its position), so a re-run names the same secrets.
+
+    Returns:
+        The webhook with references in place of redacted values, and ``(name, description)`` of each
+        placeholder (empty when nothing was redacted).
+    """
+    placeholders: List[Tuple[str, str]] = []
+
+    def placeholder(field_name: str, what: str) -> str:
+        name = _placeholder_name(key, field_name)
+        placeholders.append((name, f"Waiting for a value: {what} of migrated webhook {key}"))
+        return "${user." + name + "}"
+
+    changes: Dict[str, Any] = {}
+    if webhook.password == REDACTED:
+        changes["password"] = placeholder("password", "the basic-auth password")
+    if webhook.signing_secret == REDACTED:
+        changes["signing_secret"] = placeholder("signing_secret", "the signing secret")
+    headers = dict(webhook.secret_headers)
+    for name, value in webhook.secret_headers.items():
+        if value == REDACTED:
+            headers[name] = placeholder(f"header_{name.lower()}", f"the {name} header")
+    # A header the source redacted but Apiome does not call secret moves to the secret headers, so
+    # its placeholder is sealed like any credential and never sent as `**********`.
+    plain = dict(webhook.headers)
+    for name, value in webhook.headers.items():
+        if value == REDACTED:
+            headers[name] = placeholder(f"header_{name.lower()}", f"the {name} header")
+            del plain[name]
+    if plain != webhook.headers:
+        changes["headers"] = plain
+    if headers != webhook.secret_headers:
+        changes["secret_headers"] = headers
+    if not placeholders:
+        return webhook, []
+    return webhook.model_copy(update={**changes, "enabled": False}), placeholders
 
 
 _PARSERS = {

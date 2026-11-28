@@ -52,6 +52,7 @@ from .pact_migration import (
 )
 from .pact_publication import CODE_PACT_CONFLICT, PactPublicationError
 from .pact_publication_store import _store_pact
+from .pact_secret_store import create_placeholder_tx
 from .pact_webhook import CODE_WEBHOOK_NOT_FOUND
 from .pact_webhook_store import create_webhook, get_webhook
 from .pacticipant import PacticipantRecord, PacticipantValidationError, slugify_pacticipant_name
@@ -416,17 +417,48 @@ def _import_webhook(db: Any, tenant_id: str, record: WebhookImport, actor: Consu
     A webhook with that uuid in the workspace is left as it is. When another workspace uses the uuid
     the webhook is created under a new one (said in the note). Every ``${user.<name>}`` reference
     must name a workspace secret (``pact-webhook-invalid`` otherwise): create the secrets first.
+
+    A value the source redacted is a reference to a placeholder secret (PFX-8.15): the placeholders
+    are created without a value and the webhook turned off, waiting for them (said in the note);
+    setting their values under Contracts → Settings → Secrets turns it on.
     """
     if _webhook_exists(db, tenant_id, record.uuid):
         return "unchanged", None
+    waiting = bool(record.placeholders)
+    if waiting:
+
+        def make(cursor: Any) -> bool:
+            for name, description in record.placeholders:
+                create_placeholder_tx(cursor, tenant_id, name, description, actor)
+            return True
+
+        db._guarded_tx(make)
+    note = (
+        "turned off until its secrets have values: set "
+        + ", ".join(name for name, _ in record.placeholders)
+        + " under Contracts → Settings → Secrets"
+        if waiting
+        else None
+    )
     try:
-        create_webhook(db, tenant_id, record.webhook, actor=actor, webhook_id=record.uuid, created_at=record.created_at)
+        create_webhook(
+            db,
+            tenant_id,
+            record.webhook,
+            actor=actor,
+            webhook_id=record.uuid,
+            created_at=record.created_at,
+            awaiting_secrets=waiting,
+        )
     except PactPublicationError as exc:
         if exc.code != CODE_WEBHOOK_NOT_FOUND or not record.uuid:
             raise
-        created = create_webhook(db, tenant_id, record.webhook, actor=actor, created_at=record.created_at)
-        return "created", f"another workspace uses the uuid {record.uuid}; created as {created.id}"
-    return "created", None
+        created = create_webhook(
+            db, tenant_id, record.webhook, actor=actor, created_at=record.created_at, awaiting_secrets=waiting
+        )
+        moved = f"another workspace uses the uuid {record.uuid}; created as {created.id}"
+        return "created", f"{moved}; {note}" if note else moved
+    return "created", note
 
 
 _IMPORTERS: Dict[str, Callable[[Any, str, Any, ConsumerActor], _Done]] = {

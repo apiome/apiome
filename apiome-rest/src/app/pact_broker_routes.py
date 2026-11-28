@@ -1139,7 +1139,9 @@ def publish_contracts(
     base = _base_url(request, tenant_slug)
     fire_publish_events(db, tenant_id, base, outcome)
     post_publish_statuses(db, tenant_id, base, outcome)
-    comparisons = compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id))
+    comparisons = compare_published_pacts(
+        db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id), base=base
+    )
     consumer_contracts = refresh_consumer_contracts(
         db, tenant_id, tenant_slug, outcome, actor=actor_from_auth(auth_data, user_id)
     )
@@ -1221,7 +1223,7 @@ def publish_pact(
     fire_publish_events(db, tenant_id, base, outcome)
     post_publish_statuses(db, tenant_id, base, outcome)
     # The comparisons are read in the matrix; this response stays the pact, as on a Pact Broker.
-    compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id))
+    compare_published_pacts(db, tenant_id, outcome, actor=actor_from_auth(auth_data, user_id), base=base)
     refresh_consumer_contracts(db, tenant_id, tenant_slug, outcome, actor=actor_from_auth(auth_data, user_id))
     return HalJSONResponse(
         _pact_document(base, published.pact),

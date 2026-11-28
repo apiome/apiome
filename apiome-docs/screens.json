@@ -2955,6 +2955,44 @@
       ]
     },
     {
+      "id": "pact-settings-secrets",
+      "route": "/ade/dashboard/pacts/settings?tab=secrets",
+      "waitFor": "[data-testid=\"psx-table\"]",
+      "data": "fixture:hive-a11y/pact-settings-secrets.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactSettings/SecretsTab.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/ContractsSettingsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/SettingsTabs.tsx",
+        "apiome-ui/lib/pact-contract-settings.ts"
+      ]
+    },
+    {
+      "id": "pact-settings-ci",
+      "route": "/ade/dashboard/pacts/settings?tab=ci",
+      "waitFor": "[data-testid=\"pci-switches\"]",
+      "data": "fixture:hive-a11y/pact-settings-ci.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactSettings/CiTab.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/ContractsSettingsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/SettingsTabs.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/SwitchList.tsx",
+        "apiome-ui/lib/pact-contract-settings.ts"
+      ]
+    },
+    {
+      "id": "pact-settings-agents",
+      "route": "/ade/dashboard/pacts/settings?tab=agents",
+      "waitFor": "[data-testid=\"pag-switches\"]",
+      "data": "fixture:hive-a11y/pact-settings-agents.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactSettings/AgentsTab.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/ContractsSettingsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/SettingsTabs.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/SwitchList.tsx",
+        "apiome-ui/lib/pact-contract-settings.ts"
+      ]
+    },
+    {
       "id": "pact-verification-settings",
       "route": "/ade/dashboard/pacts/settings?tab=verification",
       "waitFor": "[data-testid=\"prx-overrides-table\"]",

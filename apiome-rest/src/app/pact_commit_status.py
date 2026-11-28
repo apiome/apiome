@@ -38,6 +38,7 @@ from .repository_validation import normalize_clone_url_for_dedup
 
 __all__ = [
     "CODE_DISABLED",
+    "CODE_SWITCHED_OFF",
     "CODE_NO_REPOSITORY",
     "CODE_NOT_A_COMMIT",
     "CODE_PROVIDER_UNSUPPORTED",
@@ -110,6 +111,8 @@ CODE_REPOSITORY_NOT_REGISTERED = "pact-status-repository-not-registered"
 CODE_PROVIDER_UNSUPPORTED = "pact-status-provider-unsupported"
 #: Status publishing is switched off for the deployment (``APIOME_PROVIDER_CHECKS_ENABLED``).
 CODE_DISABLED = "check-publishing-disabled"
+#: The workspace switched this kind of status off (Contracts → Settings → CI and commit statuses, PFX-8.15).
+CODE_SWITCHED_OFF = "pact-status-switched-off"
 #: The status id names no status of this workspace.
 CODE_STATUS_NOT_FOUND = "pact-status-not-found"
 #: A retry of a status that was accepted, or is being sent.

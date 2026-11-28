@@ -319,9 +319,11 @@ def test_a_workspace_is_read_and_imported_in_dependency_order(httpx_mock: Any) -
     assert "testResults" not in verification["result"]
     webhook = next(r for r in records if r["kind"] == "webhook")
     assert webhook["uuid"] == "3f1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
-    assert webhook["webhook"]["enabled"] is False
+    # PFX-8.15: the redacted header is sent as it is; Apiome keeps it waiting for a value.
+    assert "enabled" not in webhook["webhook"]
     assert webhook["webhook"]["request"]["headers"] == {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": "**********",
     }
     assert webhook["webhook"]["events"] == [
         {"name": "contract_requiring_verification_published"}
@@ -332,7 +334,7 @@ def test_a_workspace_is_read_and_imported_in_dependency_order(httpx_mock: Any) -
     assert "Migration from https://broker.example.com to workspace acme" in out
     assert "display name 'Billing Service' is not carried over" in out
     assert "pactflow_only_event are not fired by Apiome" in out
-    assert "does not export header Authorization: imported disabled" in out
+    assert "does not export header Authorization: imported turned off, waiting for a value" in out
     assert "refers to the secret slackToken" in out
     assert "secret slackToken: PactFlow does not export secret values" in out
     assert "deployment history" in out

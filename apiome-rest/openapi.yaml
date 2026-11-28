@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.706.0
+  version: 1.707.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -14439,8 +14439,9 @@ paths:
           description: '`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot
             be answered as sent.'
         '403':
-          description: '`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the
-            key''s owner lacks `pacts`.'
+          description: '`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key''s
+            owner lacks `pacts`, or `mcp-pact-agent-action-off` / `mcp-pact-agent-production`:
+            the workspace''s Agents switches refuse it (audited as `pacts.agent.refused`).'
         '404':
           description: '`pacticipant-not-found`, `pacticipant-version-not-found` or
             `pact-environment-not-found`.'
@@ -14498,8 +14499,9 @@ paths:
           description: '`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot
             be answered as sent.'
         '403':
-          description: '`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the
-            key''s owner lacks `pacts`.'
+          description: '`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key''s
+            owner lacks `pacts`, or `mcp-pact-agent-action-off` / `mcp-pact-agent-production`:
+            the workspace''s Agents switches refuse it (audited as `pacts.agent.refused`).'
         '404':
           description: '`pacticipant-not-found`, `pacticipant-version-not-found` or
             `pact-environment-not-found`.'
@@ -14557,8 +14559,9 @@ paths:
           description: '`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot
             be answered as sent.'
         '403':
-          description: '`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the
-            key''s owner lacks `pacts`.'
+          description: '`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key''s
+            owner lacks `pacts`, or `mcp-pact-agent-action-off` / `mcp-pact-agent-production`:
+            the workspace''s Agents switches refuse it (audited as `pacts.agent.refused`).'
         '404':
           description: '`pacticipant-not-found`, `pacticipant-version-not-found` or
             `pact-environment-not-found`.'
@@ -14616,8 +14619,9 @@ paths:
           description: '`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot
             be answered as sent.'
         '403':
-          description: '`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the
-            key''s owner lacks `pacts`.'
+          description: '`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key''s
+            owner lacks `pacts`, or `mcp-pact-agent-action-off` / `mcp-pact-agent-production`:
+            the workspace''s Agents switches refuse it (audited as `pacts.agent.refused`).'
         '404':
           description: '`pacticipant-not-found`, `pacticipant-version-not-found` or
             `pact-environment-not-found`.'
@@ -30833,6 +30837,212 @@ paths:
                 description: Response payload for listrecentlydeletedpacticipantsandversioresponse200.
         '422':
           description: '`pact-retention-bad-cursor`.'
+  /v1/tenants/{tenant_slug}/pact-contract-settings:
+    get:
+      tags:
+      - pacticipants
+      summary: Read the Contracts commit-status and agent switches
+      description: 'The **CI and commit statuses** switches — a verdict on the consumer''s
+        commit, on the provider''s commit, and whether bi-directional verdicts set statuses
+        and fire webhooks — and the **Agents** switches: what an MCP-connected agent
+        may do with contracts (read, draft, publish, record a deployment). `configured:
+        false` shows the defaults. `can_edit` says whether the caller may change them
+        (`pacts:delete`).
+
+
+        Requires `pacts:view`.'
+      operationId: read_contract_settings_v1_tenants__tenant_slug__pact_contract_settings_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthe Contractscommitstatusandagentswitauthorization schema.
+          - type: 'null'
+            description: Readthe Contractscommitstatusandagentswitauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readthe Contractscommitstatusandagentswit Xapikey schema.
+          - type: 'null'
+            description: Readthe Contractscommitstatusandagentswit Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read the contracts commit-status and
+            agent switches.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSettings'
+                description: Response payload for readthe contractscommitstatusandagentswitresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readthe contractscommitstatusandagentswitresponse422.
+  /v1/tenants/{tenant_slug}/pact-contract-settings/commit-statuses:
+    put:
+      tags:
+      - pacticipants
+      summary: Save the commit-status switches
+      description: 'Replace the three switches. A status a switch keeps from being written
+        is still recorded, as `suppressed` with reason `pact-status-switched-off`, in
+        `GET …/pact-commit-statuses`. Turning on `bidirectional` makes each new bi-directional
+        verdict set its statuses and fire its `provider_verification_*` webhooks.
+
+
+        Requires `pacts:delete`.'
+      operationId: save_contract_commit_statuses_v1_tenants__tenant_slug__pact_contract_settings_commit_statuses_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savethecommitstatusswitchesauthorization schema.
+          - type: 'null'
+            description: Savethecommitstatusswitchesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savethecommitstatusswitches Xapikey schema.
+          - type: 'null'
+            description: Savethecommitstatusswitches Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommitStatusSettings'
+              description: Request body for savethecommitstatusswitchesrequest.
+        description: Request body for save the commit-status switches.
+      responses:
+        '200':
+          description: Successful response for save the commit-status switches.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSettings'
+                description: Response payload for savethecommitstatusswitchesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for savethecommitstatusswitchesresponse422.
+  /v1/tenants/{tenant_slug}/pact-contract-settings/agents:
+    put:
+      tags:
+      - pacticipants
+      summary: Save what MCP agents may do with contracts
+      description: 'Replace the four agent switches. An MCP pact tool whose action is
+        switched off is refused with `403 mcp-pact-agent-action-off` and the reason,
+        and the refusal is audited (`pacts.agent.refused`). Whatever the switches say,
+        an agent never records a deployment to an environment marked production. No
+        agent tool drafts or publishes yet: those two switches apply when one ships.
+
+
+        Requires `pacts:delete`.'
+      operationId: save_contract_agents_v1_tenants__tenant_slug__pact_contract_settings_agents_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savewhat Mcpagentsmaydowithcontractsauthorization schema.
+          - type: 'null'
+            description: Savewhat Mcpagentsmaydowithcontractsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Savewhat Mcpagentsmaydowithcontracts Xapikey schema.
+          - type: 'null'
+            description: Savewhat Mcpagentsmaydowithcontracts Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentSettings'
+              description: Request body for savewhat mcpagentsmaydowithcontractsrequest.
+        description: Request body for save what mcp agents may do with contracts.
+      responses:
+        '200':
+          description: Successful response for save what mcp agents may do with contracts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractSettings'
+                description: Response payload for savewhat mcpagentsmaydowithcontractsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for savewhat mcpagentsmaydowithcontractsresponse422.
   /v1/tenants/{tenant_slug}/pact-commit-statuses:
     get:
       tags:
@@ -117783,6 +117993,39 @@ components:
       - status
       title: AgentRef
       description: An agent, as a model lists the agents that run on it.
+    AgentSettings:
+      properties:
+        read:
+          type: boolean
+          title: Read
+          description: Agents may read pacts, verdicts and can-i-deploy.
+          default: true
+          example: false
+        draft:
+          type: boolean
+          title: Draft
+          description: Agents may draft a pact for a person to review. No agent tool drafts
+            yet; it applies when one ships.
+          default: true
+          examples:
+          - true
+        publish:
+          type: boolean
+          title: Publish
+          description: Agents may publish pacts and provider contracts, never on a main
+            branch. No agent tool publishes yet; it applies when one ships.
+          default: false
+          example: false
+        record:
+          type: boolean
+          title: Record
+          description: Agents may record deployments, never to an environment marked production.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      title: AgentSettings
+      description: The **Agents** switches (``PUT …/pact-contract-settings/agents``).
     AgentToolListResponse:
       properties:
         schemaVersion:
@@ -132272,6 +132515,32 @@ components:
       title: CommentThreadSummary
       description: 'A thread as a list read returns it: the thread plus its opening
         comment.'
+    CommitStatusSettings:
+      properties:
+        consumer_commit:
+          type: boolean
+          title: Consumer Commit
+          description: Write pact verdicts (awaiting verification, verified, failed) on
+            the consumer's commit.
+          default: true
+          example: false
+        provider_commit:
+          type: boolean
+          title: Provider Commit
+          description: Write verification verdicts on the provider's commit.
+          default: true
+          example: false
+        bidirectional:
+          type: boolean
+          title: Bidirectional
+          description: Bi-directional verdicts set commit statuses and fire their webhooks,
+            as a verification does.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      title: CommitStatusSettings
+      description: The **CI and commit statuses** switches (``PUT …/pact-contract-settings/commit-statuses``).
     ComparedRevisionOut:
       properties:
         revisionId:
@@ -225351,6 +225620,20 @@ components:
         used_by:
           $ref: '#/components/schemas/SecretUsage'
           description: Used By.
+        has_value:
+          type: boolean
+          title: Has Value
+          description: '`false`: created without a value; set one to use it.'
+          default: true
+          example: true
+        origin:
+          anyOf:
+          - type: string
+            description: Secret schema.
+          - type: 'null'
+            description: Secret schema.
+          title: Origin
+          description: '`migration` when `apiome pact migrate` created it.'
         value_updated_at:
           anyOf:
           - type: string
@@ -225385,9 +225668,12 @@ components:
       description: "A stored secret as everyone reads it: never its value.\n\nAttributes:\n\
         \    id: The secret's id.\n    name: The name references use.\n    description:\
         \ What it is for.\n    reference: How a webhook template writes it: ``${user.<name>}``.\n\
-        \    used_by: The webhooks and targets that refer to it.\n    value_updated_at:\
-        \ When the value was last set (created or rotated).\n    created_at: When it was\
-        \ created.\n    updated_at: When it was last changed."
+        \    used_by: The webhooks and targets that refer to it.\n    has_value: ``False``\
+        \ for a secret created without one (a migrated webhook's redacted secret);\n \
+        \       nothing that refers to it can be sent until a value is set.\n    origin:\
+        \ ``migration`` when ``apiome pact migrate`` created it; ``None`` for one a person\
+        \ created.\n    value_updated_at: When the value was last set (created or rotated).\n\
+        \    created_at: When it was created.\n    updated_at: When it was last changed."
     SecretUsage:
       properties:
         webhooks:
@@ -225427,6 +225713,15 @@ components:
           title: Name
           description: Human-readable name.
           example: Pet
+        enabled:
+          anyOf:
+          - type: boolean
+            description: Secret User schema.
+          - type: 'null'
+            description: Secret User schema.
+          title: Enabled
+          description: A webhook's switch; `false` for one turned off (e.g. waiting for
+            this value).
       additionalProperties: false
       type: object
       required:
@@ -225781,6 +226076,49 @@ components:
       type: object
       title: PactIntegrationsPage
       description: What ``GET /v1/tenants/{tenant}/pact-integrations`` answers.
+    ContractSettings:
+      properties:
+        commit_statuses:
+          $ref: '#/components/schemas/CommitStatusSettings'
+          description: Commit Statuses.
+        agents:
+          $ref: '#/components/schemas/AgentSettings'
+          description: Agents.
+        configured:
+          type: boolean
+          title: Configured
+          description: Whether the workspace saved any switch; `false` shows the defaults.
+          example: false
+        updated_at:
+          anyOf:
+          - type: string
+            description: Contract Settings schema.
+          - type: 'null'
+            description: Contract Settings schema.
+          title: Updated At
+          description: Last update timestamp (ISO 8601).
+        updated_by:
+          anyOf:
+          - type: string
+            description: Contract Settings schema.
+          - type: 'null'
+            description: Contract Settings schema.
+          title: Updated By
+          description: Updated By.
+        can_edit:
+          type: boolean
+          title: Can Edit
+          description: Whether the caller may change the switches (`pacts:delete`).
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - commit_statuses
+      - agents
+      - configured
+      - can_edit
+      title: ContractSettings
+      description: '``GET …/pact-contract-settings``: both groups of switches.'
     ContractSourcesInput:
       properties:
         onProjectPublish:

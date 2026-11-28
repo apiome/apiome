@@ -136,7 +136,8 @@ def test_a_webhook_whose_events_apiome_never_fires_is_not_imported() -> None:
     assert any("none of its events" in f.detail for f in plan.findings)
 
 
-def test_a_redacted_password_is_left_out_and_the_webhook_disabled() -> None:
+def test_a_redacted_secret_is_sent_for_apiome_to_keep_waiting() -> None:
+    """PFX-8.15: the redacted value goes as it is; Apiome makes a secret waiting for its value."""
     plan = Plan()
     add_webhook(
         plan,
@@ -147,17 +148,20 @@ def test_a_redacted_password_is_left_out_and_the_webhook_disabled() -> None:
                 "url": "https://x",
                 "username": "ci",
                 "password": "**********",
+                "headers": {"Authorization": "**********", "Accept": "application/json"},
             },
             "enabled": True,
         },
     )
     ((_, record),) = plan.records["webhook"]
-    assert (
-        "password" not in record["webhook"]["request"]
-        and record["webhook"]["enabled"] is False
-    )
+    request = record["webhook"]["request"]
+    assert request["password"] == "**********"
+    assert request["headers"] == {"Authorization": "**********", "Accept": "application/json"}
+    assert record["webhook"]["enabled"] is True  # Apiome turns it off while it waits
     assert record["uuid"] == "u1"
-    assert "basic-auth password" in plan.findings[0].detail
+    detail = plan.findings[0].detail
+    assert "header Authorization" in detail and "basic-auth password" in detail
+    assert "Contracts → Settings → Secrets" in detail
 
 
 def test_secret_references_are_found_once_each() -> None:

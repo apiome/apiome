@@ -1379,7 +1379,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: "Publish, check and record pacts from a terminal with pact-broker's flags and exit codes.",
     page: 'apiome-docs/docs/ship/pact-broker/cli.mdx',
     section: 'reference',
-    keywords: ['pact-broker', 'can-i-deploy', 'record-deployment', 'create-webhook', 'PACT_BROKER_TOKEN', 'exit codes', 'markdown', 'terminal', 'postman', 'newman', 'export-postman'],
+    keywords: ['pact-broker', 'can-i-deploy', 'record-deployment', 'create-webhook', 'PACT_BROKER_TOKEN', 'exit codes', 'markdown', 'terminal', 'postman', 'newman', 'export-postman', 'mcp agents', 'agent switches', 'mcp-pact-agent-action-off'],
   },
   {
     id: 'ci-pact',
@@ -1667,7 +1667,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Keep a token once and refer to it from webhooks and verification targets.',
     page: 'apiome-docs/docs/ship/pact-broker/secrets.mdx',
     section: 'reference',
-    keywords: ['contracts', 'pact', 'user.', 'credential vault', 'token', 'rotate', 'rotation', 'api key', 'verification', 'pactflow'],
+    keywords: ['contracts', 'pact', 'user.', 'credential vault', 'token', 'rotate', 'rotation', 'api key', 'verification', 'pactflow', 'no value', 'migrated', 'set value', 'write-only'],
   },
   {
     id: 'commit-statuses',
@@ -1675,7 +1675,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: "See each pact's verification verdict on GitHub and GitLab commits and pull requests.",
     page: 'apiome-docs/docs/ship/pact-broker/commit-statuses.mdx',
     section: 'reference',
-    keywords: ['github', 'gitlab', 'pull request', 'branch protection', 'pending', 'retry', 'repository URL', 'apiome-pact'],
+    keywords: ['github', 'gitlab', 'pull request', 'branch protection', 'pending', 'retry', 'repository URL', 'apiome-pact', 'bi-directional', 'switched off', 'pipeline recipes', 'jenkins', 'azure pipelines'],
   },
   {
     id: 'badges',

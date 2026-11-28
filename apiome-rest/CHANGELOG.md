@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.883.0] - 2026-11-30
+
+### Added
+- **Contracts settings: commit statuses, agents and secrets waiting for a value (PFX-8.15, #7312).**
+  OpenAPI 1.707.0; apiome-db V457 (`pact_contract_settings`; `pact_secret.awaiting_value` / `origin` with the
+  value optional while waiting; `pact_webhook.awaiting_secrets`).
+  - `GET /v1/tenants/{t}/pact-contract-settings` — the commit-status switches (`consumer_commit`,
+    `provider_commit`, `bidirectional`) and the agent switches (`read`, `draft`, `publish`, `record`), with
+    `configured` and `can_edit`. `pacts:view`.
+  - `PUT …/pact-contract-settings/commit-statuses` and `PUT …/pact-contract-settings/agents` — replace one group;
+    an unknown field or a non-boolean is 422. Audited as `pacts.settings.commit_statuses` / `pacts.settings.agents`.
+    `pacts:delete`.
+  - **Bi-directional verdicts set commit statuses and fire their webhooks** when `bidirectional` is on: each new
+    comparison stored by a pact or provider-contract publish runs the `provider_verification_*` webhooks and the
+    commit statuses a published verification runs (#6941). Off (the default): nothing fires, as before.
+  - `pact-secrets` records carry `has_value` and `origin`; a webhook in `used_by` carries `enabled`.
+
+### Changed
+- **Commit statuses follow the workspace's switches.** A status on a commit whose switch is off is recorded as
+  `suppressed` with reason `pact-status-switched-off` (listed in `GET …/pact-commit-statuses`) and not sent.
+  Both commit switches default to on, so nothing changes until a workspace turns one off.
+- **MCP pact tools follow the workspace's Agents switches.** `POST /v1/internal/mcp/pacts/{list,matrix,can-i-deploy}`
+  need `read` (on by default); `…/record-deployment` needs `record` (**off by default**: an agent that recorded
+  deployments before is now refused until a Contracts admin turns it on) and is always refused for an environment
+  marked production. Refusals are `403 mcp-pact-agent-action-off` / `mcp-pact-agent-production` with the reason,
+  audited as `pacts.agent.refused`.
+- **`POST …/pact-migration/import` no longer refuses a webhook whose secret the source redacted.** Each redacted
+  value becomes a `${user.migrated_<id>_<field>}` reference to a placeholder secret created without a value
+  (`origin: migration`), and the webhook is imported turned off, waiting; the record's note says what to set.
+  Setting the secret's value (`PUT …/pact-secrets/{id}`) turns on every webhook with nothing left waiting.
+  Resolving a secret with no value is refused (`pact-secret-no-value`), and a webhook referring to one cannot be
+  turned on (`pact-webhook-invalid` at `/enabled`).
+
 ## [1.882.0] - 2026-11-30
 
 ### Added

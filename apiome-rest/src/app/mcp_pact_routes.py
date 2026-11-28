@@ -21,6 +21,12 @@ after it has authenticated the caller's MCP API key and checked its scope:
 with ``rowsTotal`` / ``rowsTruncated`` and ``noticesTruncated`` saying what was left out — nothing is cut
 silently. Rows are compact: names, handles, version numbers, the verification and its reason; no HAL links.
 
+**What agents may do (PFX-8.15, #7312).** After RBAC, every route applies the workspace's Agents switches
+(:mod:`app.pact_contract_settings`): the three reads need ``read`` (on by default), ``record-deployment`` needs
+``record`` (off by default) and is always refused for an environment marked production. A refusal is a ``403``
+with the reason (``mcp-pact-agent-action-off`` / ``mcp-pact-agent-production``) and an ``access_audit`` row
+``pacts.agent.refused``.
+
 **RBAC as the key's owner.** An MCP API key is minted by a person (``mcp_api_keys.created_by``). Every route
 checks the ``pacts`` permission of that person in the key's tenant — ``pacts:view`` to read,
 ``pacts:create`` to record a deployment — through :func:`app.permissions.enforce_permission`, exactly as the
@@ -49,6 +55,7 @@ from .consumer_contract_store import actor_from_auth
 from .database import db
 from .pact_audit import record_pact_write
 from .pact_broker_routes import _http_error
+from .pact_contract_settings import AGENT_ACTIONS, read_settings
 from .pact_deployments import verdict_when_recorded
 from .pact_environment import DeployedVersionRecord, parse_application_instance
 from .pact_environment_store import list_environments, record_deployment
@@ -89,6 +96,10 @@ CODE_KEY_UNKNOWN = "mcp-pact-key-unknown"
 CODE_KEY_NO_OWNER = "mcp-pact-key-has-no-owner"
 CODE_INVALID = "mcp-pact-invalid"
 CODE_ENVIRONMENT_NOT_FOUND = "pact-environment-not-found"
+#: The workspace's Agents switches do not allow this action (Contracts → Settings → Agents, PFX-8.15).
+CODE_AGENT_ACTION_OFF = "mcp-pact-agent-action-off"
+#: An agent never records a deployment to an environment marked production (PFX-8.15).
+CODE_AGENT_PRODUCTION = "mcp-pact-agent-production"
 
 _REFUSALS = (PactPublicationError, PacticipantValidationError)
 
@@ -236,6 +247,53 @@ class McpPactDeploymentResponse(BaseModel):
 def _refuse(status: int, code: str, message: str) -> HTTPException:
     """An ``HTTPException`` with Apiome's ``{"code", "message"}`` detail."""
     return HTTPException(status_code=status, detail={"code": code, "message": message})
+
+
+def _refuse_agent(auth_data: Dict[str, Any], code: str, message: str, target: str, action: str) -> HTTPException:
+    """Audit an agent action the workspace refused (``pacts.agent.refused``) and build its 403.
+
+    Args:
+        auth_data: The key's auth context.
+        code: :data:`CODE_AGENT_ACTION_OFF` or :data:`CODE_AGENT_PRODUCTION`.
+        message: The reason, as the agent is told.
+        target: What the action was on.
+        action: The agent action (``read``, ``record``).
+
+    Returns:
+        The exception to raise.
+    """
+    record_pact_write(
+        db,
+        auth_data,
+        "pacts.agent.refused",
+        target,
+        {"via": "mcp", "action": action, "code": code, "key": auth_data.get("user_name")},
+    )
+    return _refuse(403, code, message)
+
+
+def require_agent_action(auth_data: Dict[str, Any], action: str, target: str) -> None:
+    """Refuse an MCP pact tool whose action the workspace's Agents switches have off (PFX-8.15).
+
+    Args:
+        auth_data: The key's auth context (its tenant is the workspace whose switches apply).
+        action: One of :data:`app.pact_contract_settings.AGENT_ACTIONS`.
+        target: What the action is on, for the audit row.
+
+    Raises:
+        HTTPException: 403 ``mcp-pact-agent-action-off`` with the reason; the refusal is audited.
+    """
+    agents = read_settings(db.execute_query, str(auth_data.get("tenant_id") or "")).agents
+    if getattr(agents, action):
+        return
+    raise _refuse_agent(
+        auth_data,
+        CODE_AGENT_ACTION_OFF,
+        f"This workspace does not let agents do this: {AGENT_ACTIONS[action]} is switched off for agents "
+        "(Contracts → Settings → Agents). A Contracts admin can turn it on.",
+        target,
+        action,
+    )
 
 
 def key_auth_data(tenant_id: str, key_id: str) -> Dict[str, Any]:
@@ -404,6 +462,7 @@ def list_latest_pacts(body: McpPactListRequest) -> McpPactListResponse:
     """
     auth_data = key_auth_data(body.tenant_id, body.key_id)
     enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    require_agent_action(auth_data, "read", "pact.list")
     after_provider, after_consumer = decode_list_cursor(body.cursor)
     try:
         provider_id = get_pacticipant(db, body.tenant_id, body.provider).id if body.provider else None
@@ -548,9 +607,11 @@ def answer_matrix(
         rows first, then ignored ones), with what was left out counted.
 
     Raises:
-        HTTPException: 403 without ``pacts:view``; 400 ``pact-matrix-invalid``.
+        HTTPException: 403 without ``pacts:view`` or when agents may not read (PFX-8.15);
+            400 ``pact-matrix-invalid``.
     """
     enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    require_agent_action(auth_data, "read", "pact.matrix")
     try:
         selectors, options = parse(query)
         result = query_matrix(db, tenant_id, selectors, options)
@@ -605,7 +666,8 @@ def record_mcp_deployment(body: McpPactRecordDeploymentRequest) -> McpPactDeploy
         The deployment, and whether this call created it.
 
     Raises:
-        HTTPException: 403 without ``pacts:create``; 404 for an unknown pacticipant, version or environment;
+        HTTPException: 403 without ``pacts:create``, when agents may not record deployments, or for a
+            production environment (PFX-8.15; audited); 404 for an unknown pacticipant, version or environment;
             422 ``pact-deployment-invalid`` for a malformed application instance.
     """
     auth_data = key_auth_data(body.tenant_id, body.key_id)
@@ -613,12 +675,23 @@ def record_mcp_deployment(body: McpPactRecordDeploymentRequest) -> McpPactDeploy
     name = (body.environment or "").strip()
     if not name:
         raise _refuse(400, CODE_INVALID, "Name the environment to record the deployment in.")
+    target = f"pacticipant/{body.pacticipant}/version/{body.version}/environment/{name}"
+    require_agent_action(auth_data, "record", target)
     environments = [e for e in list_environments(db, body.tenant_id, name=name) if e.name == name]
     if not environments:
         raise _refuse(
             404,
             CODE_ENVIRONMENT_NOT_FOUND,
             f"No environment named '{name}'. Create it first (`apiome pact create-environment`).",
+        )
+    if environments[0].production:
+        raise _refuse_agent(
+            auth_data,
+            CODE_AGENT_PRODUCTION,
+            f"Agents never record a deployment to '{name}': it is marked production. Record it from your "
+            "pipeline (`apiome pact record-deployment`) or the Environments page.",
+            target,
+            "record",
         )
     try:
         instance = parse_application_instance(
@@ -656,7 +729,11 @@ def record_mcp_deployment(body: McpPactRecordDeploymentRequest) -> McpPactDeploy
 
 _ERRORS: Dict[Any, Any] = {
     400: {"description": "`pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent."},
-    403: {"description": "`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`."},
+    403: {
+        "description": "`mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key's owner lacks `pacts`, or "
+        "`mcp-pact-agent-action-off` / `mcp-pact-agent-production`: the workspace's Agents switches refuse it "
+        "(audited as `pacts.agent.refused`)."
+    },
     404: {"description": "`pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`."},
 }
 
