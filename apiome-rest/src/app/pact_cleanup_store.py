@@ -103,6 +103,11 @@ AUDIT_ACTIONS = (
     "pacts.setup.update",
     "pacts.setup.github.secrets",
     "pacts.setup.github.pull_requests",
+    # PFX-9.1 (#7319): consumer-tagged mock capture — retention, sessions, capture URLs.
+    "pacts.capture.settings",
+    "pacts.capture.session.delete",
+    "pacts.capture.link.create",
+    "pacts.capture.link.revoke",
     "pacts.purge",
 )
 

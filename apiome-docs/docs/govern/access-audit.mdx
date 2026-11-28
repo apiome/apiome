@@ -145,6 +145,7 @@ from the Pact CLI, a Pact library, the console or an MCP tool. Source `api_key` 
 | `pacts.retention.apply`, `pacts.purge` | A retention run is applied, or deleted rows are purged after 30 days; the detail holds the counts. |
 | `pacts.settings.commit_statuses`, `pacts.settings.agents` | A Contracts admin changes the [commit-status switches](../ship/pact-broker/commit-statuses.mdx#choose-which-statuses-are-written) or [what agents may do](../ship/pact-broker/cli.mdx#choose-what-agents-may-do); the detail holds the switches. |
 | `pacts.setup.update`, `pacts.setup.github.secrets`, `pacts.setup.github.pull_requests` | A Contracts admin saves progress of the [guided set-up](../ship/pact-broker/overview.mdx#set-up-in-ten-minutes), writes the two broker secrets into repositories, or opens its pull requests; the detail holds each repository and its outcome, never the key. |
+| `pacts.capture.link.create`, `pacts.capture.link.revoke`, `pacts.capture.session.delete`, `pacts.capture.settings` | Someone creates or revokes a [mock capture URL](../reference/mock-runtime/mock-consumer-capture.md#use-a-capture-url-instead-of-a-header), deletes a capture session, or changes how long captures are kept; the detail holds the consumer, version and token prefix, never the token. |
 | `pacts.agent.refused` | An MCP agent asked for a pact action the workspace's Agents switches refuse, or to record a deployment to production; the detail holds the action and the code. |
 
 The detail holds the route, its path parameters and, when the call created something, its id. It

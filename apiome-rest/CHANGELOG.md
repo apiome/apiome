@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.889.0] - 2026-11-30
+
+### Added
+- **Consumer-tagged mock capture (PFX-9.1, #7319).** OpenAPI 1.713.0, apiome-db V461 (`mock_consumer_capture_*`),
+  apiome-mock 0.24.0.
+  - The hosted mock records a call for a consumer when it carries `X-Mock-Capture: <consumer>@<version>`, or arrives
+    through a private capture URL (`/{tenant}/{project}/{version}/~capture/{token}/…`). The call is served exactly as
+    an untagged one and answered `X-Mock-Capture: queued` with `X-Mock-Capture-Session`; a tag that cannot be read,
+    an unknown, revoked or foreign capture URL, or a full queue is answered `not-recorded` with
+    `X-Mock-Capture-Reason`. The proxy-capture opt-in values (`on`, `record`, …) keep their meaning. Untagged calls
+    are unaffected; no database work runs on the request path — calls are queued and written in batches, one
+    transaction per flush. Request and response are stored after the mock's redaction rules (always-on credential
+    rules plus the version's `proxyCapture.redaction`); a record that still looks credential-bearing is refused.
+  - `GET /v1/tenants/{t}/pact-captures/sessions` lists the live sessions (one per mock version, consumer and consumer
+    version), newest activity first, filtered by `project`, `version` and `consumer`; `GET …/sessions/{id}` reads a
+    session and a page of its calls — method, path, the spec's path template, status, `origin` (`spec`, `scenario`,
+    `session`, `chaos`, `forced`, `off-spec`, `rejected`), scenario, a digest of the `X-Mock-Session` token, request,
+    response and what redaction removed. Calls a session could not take are counted by reason (`session-full` past
+    5,000 calls, `credential-residual`). Requires `pacts:view`. `DELETE …/sessions/{id}` deletes a session and its
+    calls (audited `pacts.capture.session.delete`; `pacts:delete`).
+  - `POST /v1/tenants/{t}/pact-captures/links` creates a private capture URL for a consumer and version (the token is
+    shown once; only its SHA-256 digest is stored; default 7 days, at most 30; audited `pacts.capture.link.create`;
+    `pacts:create`). A capture URL tags calls only — a private draft mock still needs its API key. `GET …/links` lists
+    them as `live`, `revoked` or `expired` (`pacts:view`); `DELETE …/links/{id}` revokes one (audited
+    `pacts.capture.link.revoke`; `pacts:edit`).
+  - `GET` / `PUT /v1/tenants/{t}/pact-captures/settings`: captures are kept `retention_days` (default 7, 1–30; the
+    new value applies to calls recorded from then on; audited `pacts.capture.settings`; `pacts:delete` to change).
+    A workspace may have 500 live sessions; calls that would open another are counted in `refused_calls`. Every read
+    hides expired captures; the mock deletes them in batches.
+
 ## [1.888.0] - 2026-11-30
 
 ### Added

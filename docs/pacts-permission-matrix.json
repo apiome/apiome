@@ -827,6 +827,52 @@
         "token": "read-token"
       },
       "note": "Also needs pacts:edit, like the migration it repeats. Switching on keeps the source's credentials sealed; switching off deletes them."
+    },
+    {
+      "id": "capture.settings.save",
+      "label": "Set how many days mock captures are kept",
+      "permission": "pacts:delete",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-captures/settings",
+      "audit": "pacts.capture.settings",
+      "auditedBy": "transaction",
+      "body": {
+        "retention_days": 14
+      }
+    },
+    {
+      "id": "capture.session.delete",
+      "label": "Delete a mock capture session and its calls",
+      "permission": "pacts:delete",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-captures/sessions/{uuid}",
+      "audit": "pacts.capture.session.delete",
+      "auditedBy": "transaction"
+    },
+    {
+      "id": "capture.link.create",
+      "label": "Create a private mock capture URL",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-captures/links",
+      "audit": "pacts.capture.link.create",
+      "auditedBy": "transaction",
+      "body": {
+        "project": "payments",
+        "version": "1.0.0",
+        "consumer": "Orders UI",
+        "consumer_version": "3.4.0"
+      },
+      "note": "The token is shown once and never stored or audited; only its digest and prefix are kept."
+    },
+    {
+      "id": "capture.link.revoke",
+      "label": "Revoke a mock capture URL",
+      "permission": "pacts:edit",
+      "method": "DELETE",
+      "path": "/v1/tenants/{tenant}/pact-captures/links/{uuid}",
+      "audit": "pacts.capture.link.revoke",
+      "auditedBy": "transaction"
     }
   ],
   "reads": [

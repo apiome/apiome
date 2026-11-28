@@ -10,6 +10,10 @@ real answer, and keep a redacted copy of the exchange as a reviewable fixture ca
 "our mock data is nothing like production" into a short recording session — without turning Apiome
 into an SSRF pivot or a database full of bearer tokens.
 
+To record what a *consumer* asks of the mock, rather than what an upstream answers, see
+[Capture for a consumer](./mock-consumer-capture.md): it uses the same header with a
+`<consumer>@<version>` value.
+
 Nothing here is on by default. Capture requires an explicit, expiring, owner-issued grant; it
 records only what an allowlist authorizes; it stores only redacted content; and nothing it records
 serves traffic until a person reviews and publishes it.

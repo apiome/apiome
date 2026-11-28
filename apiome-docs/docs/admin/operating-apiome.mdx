@@ -393,6 +393,17 @@ of `APIOME_MOCK_SESSION_PURGE_BATCH_SIZE` taken with `SKIP LOCKED`. Until it run
 session still counts toward the limit, unless the same token is used again. The default `memory`
 backend is unchanged.
 
+**Consumer captures.** A call tagged for a consumer ([Capture for a consumer](../reference/mock-runtime/mock-consumer-capture.md))
+is queued in memory and costs the request no statement. Every
+`APIOME_MOCK_CONSUMER_CAPTURE_FLUSH_INTERVAL_SECONDS`, the runtime redacts what is queued and writes
+it in one transaction, however many calls arrived. A graceful shutdown writes what is waiting. A
+failed write keeps its calls for the next one, up to three tries. At most
+`APIOME_MOCK_CONSUMER_CAPTURE_MAX_PENDING` calls wait; past that a tagged call is answered
+`not-recorded`. A capture URL's token is looked up once and cached for
+`APIOME_MOCK_CONSUMER_CAPTURE_LINK_CACHE_TTL_SECONDS`, so a revoked link stops within that time.
+Expired captures are hidden from every read, and each replica deletes them every
+`APIOME_MOCK_CONSUMER_CAPTURE_PURGE_INTERVAL_SECONDS`, in batches.
+
 **Cache invalidation.** The runtime listens on `APIOME_MOCK_SPEC_NOTIFY_CHANNEL`. When that
 connection drops, it reconnects with backoff, from 0.5 seconds up to 30 seconds, without a restart.
 Every time it connects, it empties its caches, because changes made while it was disconnected were
@@ -417,6 +428,11 @@ never heard.
 | `APIOME_MOCK_SPEC_CACHE_TTL_SECONDS` | `300` | Seconds before a compiled spec is checked for changes. An unchanged spec is kept |
 | `APIOME_MOCK_SESSION_PURGE_INTERVAL_SECONDS` | `60` | Seconds between sweeps of expired `X-Mock-Session` state (PostgreSQL store only) |
 | `APIOME_MOCK_SESSION_PURGE_BATCH_SIZE` | `500` | Expired sessions one sweep statement deletes; a sweep repeats full batches |
+| `APIOME_MOCK_CONSUMER_CAPTURE_FLUSH_INTERVAL_SECONDS` | `2` | Seconds between writes of consumer-tagged captures |
+| `APIOME_MOCK_CONSUMER_CAPTURE_MAX_PENDING` | `10000` | Tagged calls that may wait for a write; past it a call is answered `not-recorded` |
+| `APIOME_MOCK_CONSUMER_CAPTURE_LINK_CACHE_TTL_SECONDS` | `30` | Seconds a capture URL's lookup is reused; a revoked link stops within it |
+| `APIOME_MOCK_CONSUMER_CAPTURE_PURGE_INTERVAL_SECONDS` | `300` | Seconds between sweeps of expired consumer captures |
+| `APIOME_MOCK_CONSUMER_CAPTURE_PURGE_BATCH_SIZE` | `1000` | Expired capture rows one sweep statement deletes |
 
 Measured on a scratch PostgreSQL 18 database, one hot public version, `GET` with 16 concurrent
 clients and 15,000 requests, before and after these changes. The usage totals matched the requests
