@@ -37,7 +37,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from urllib.parse import urlencode
 
 from .pact_environment import CODE_ENVIRONMENT_NOT_FOUND, EnvironmentRecord
-from .pact_environment_store import list_environments
+from .pact_environment_store import get_environment, list_environments
 from .pact_matrix import Verdict, deployment_verdict, parse_can_i_deploy_query
 from .pact_matrix_store import query_matrix
 from .pact_publication import PactPublicationError
@@ -59,6 +59,9 @@ __all__ = [
     "MAX_TOPOLOGY_ROWS",
     "PLACEMENT_PENDING",
     "PLACEMENT_RUNNING",
+    "VERDICT_DEPLOYABLE",
+    "VERDICT_NOT_DEPLOYABLE",
+    "VERDICT_UNKNOWN",
     "Check",
     "HistoryEntry",
     "HistoryPage",
@@ -76,6 +79,9 @@ __all__ = [
     "read_topology",
     "simulate_deployment",
     "validate_application_instance",
+    "verdict_for",
+    "verdict_when_recorded",
+    "verdict_word",
 ]
 
 #: An unreadable ``cursor`` (400).
@@ -212,6 +218,8 @@ class TopologyEntry:
         version_number: The version.
         application_instance: The instance (deployments only; ``None`` for the unnamed one).
         recorded_at: When the deployment or release was recorded.
+        version_seq: The version's place in the order its pacticipant's versions were recorded
+            (newer is larger) — how the board tells which version is newer.
     """
 
     environment_id: str
@@ -220,6 +228,7 @@ class TopologyEntry:
     version_number: str
     application_instance: Optional[str]
     recorded_at: Optional[str]
+    version_seq: int = 0
 
 
 @dataclass(frozen=True)
@@ -241,7 +250,7 @@ class Topology:
 
 _TOPOLOGY_DEPLOYED = """
     SELECT d.environment_id::text AS environment_id, p.slug AS pacticipant_slug, p.name AS pacticipant_name,
-           v.number AS version_number, d.application_instance, d.created_at AS recorded_at
+           v.number AS version_number, v.seq AS version_seq, d.application_instance, d.created_at AS recorded_at
     FROM apiome.deployed_version d
     JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id AND p.deleted_at IS NULL
     JOIN apiome.pacticipant_version v
@@ -253,7 +262,8 @@ _TOPOLOGY_DEPLOYED = """
 
 _TOPOLOGY_RELEASED = """
     SELECT r.environment_id::text AS environment_id, p.slug AS pacticipant_slug, p.name AS pacticipant_name,
-           v.number AS version_number, NULL::text AS application_instance, r.created_at AS recorded_at
+           v.number AS version_number, v.seq AS version_seq, NULL::text AS application_instance,
+           r.created_at AS recorded_at
     FROM apiome.released_version r
     JOIN apiome.pacticipant p ON p.id = r.pacticipant_id AND p.tenant_id = r.tenant_id AND p.deleted_at IS NULL
     JOIN apiome.pacticipant_version v
@@ -275,6 +285,7 @@ def _topology_entries(db: Any, query: str, tenant_id: str) -> Tuple[List[Topolog
             version_number=row["version_number"],
             application_instance=row.get("application_instance"),
             recorded_at=_iso(row.get("recorded_at")),
+            version_seq=int(row.get("version_seq") or 0),
         )
         for row in rows[:MAX_TOPOLOGY_ROWS]
     ]
@@ -621,7 +632,7 @@ _PLACED_VERSIONS = """
 """
 
 
-def _verdict(
+def verdict_for(
     db: Any,
     tenant_id: str,
     pacticipant_slug: str,
@@ -629,11 +640,81 @@ def _verdict(
     environment_name: str,
     override: Optional[Dict[str, List[Dict[str, Any]]]] = None,
 ) -> Check:
-    """One can-i-deploy verdict, read exactly as ``GET /can-i-deploy`` reads it."""
+    """One can-i-deploy verdict, read exactly as ``GET /can-i-deploy`` reads it.
+
+    The deploy simulator, the what-is-where board (PFX-8.13) and the verdict stored when a
+    deployment or release is recorded all ask through here, so they can never disagree.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        pacticipant_slug: The pacticipant's handle.
+        version_number: The version.
+        environment_name: The environment's name.
+        override: The simulator's hypothetical environment contents, or ``None`` for the recorded ones.
+
+    Returns:
+        The verdict.
+
+    Raises:
+        PactPublicationError: a query the matrix refuses.
+        PacticipantValidationError: an unknown pacticipant or version.
+    """
     query = urlencode({"pacticipant": pacticipant_slug, "version": version_number, "toEnvironment": environment_name})
     selectors, options = parse_can_i_deploy_query(query)
     result = query_matrix(db, tenant_id, selectors, options, environment_override=override)
     return Check.of(deployment_verdict(result))
+
+
+#: The words V455 stores for a verdict (``recorded_verdict``) and the board and history answer.
+VERDICT_DEPLOYABLE = "deployable"
+VERDICT_NOT_DEPLOYABLE = "not-deployable"
+VERDICT_UNKNOWN = "unknown"
+
+
+def verdict_word(deployable: Optional[bool]) -> str:
+    """A verdict as one word.
+
+    Args:
+        deployable: can-i-deploy's ``deployable`` (``None``: a verification is still missing).
+
+    Returns:
+        :data:`VERDICT_DEPLOYABLE`, :data:`VERDICT_NOT_DEPLOYABLE` or :data:`VERDICT_UNKNOWN`.
+    """
+    if deployable is True:
+        return VERDICT_DEPLOYABLE
+    if deployable is False:
+        return VERDICT_NOT_DEPLOYABLE
+    return VERDICT_UNKNOWN
+
+
+def verdict_when_recorded(
+    db: Any, tenant_id: str, pacticipant_ref: str, version_number: str, environment_id: str
+) -> Optional[str]:
+    """can-i-deploy's answer for a version and environment, asked just before recording it there.
+
+    ``record-deployment`` and ``record-release`` store it (V455) so the Environments history can
+    say whether a version was verified at the time. Recording never depends on it: a question the
+    matrix cannot answer (an unknown pacticipant, version or environment — the record call refuses
+    those itself) gives ``None``, "not known".
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        pacticipant_ref: The pacticipant's handle, id or name.
+        version_number: The version about to be recorded.
+        environment_id: The environment's id (the broker routes address it by ``uuid``).
+
+    Returns:
+        :func:`verdict_word`'s answer, or ``None``.
+    """
+    try:
+        environment = get_environment(db, tenant_id, environment_id)
+        pacticipant = get_pacticipant(db, tenant_id, pacticipant_ref)
+        check = verdict_for(db, tenant_id, pacticipant.slug, version_number, environment.name)
+    except (PactPublicationError, PacticipantValidationError):
+        return None
+    return verdict_word(check.deployable)
 
 
 def _array(ids: Sequence[str]) -> str:
@@ -714,7 +795,7 @@ def simulate_deployment(
     placements = _placements(placed, names, environment.id)
     checked, over_limit = plan_checks(placements)
 
-    verdict = _verdict(db, tenant_id, pacticipant.slug, candidate.number, environment.name)
+    verdict = verdict_for(db, tenant_id, pacticipant.slug, candidate.number, environment.name)
     impacts: List[Impact] = []
     not_checked = [
         NotChecked(
@@ -726,11 +807,11 @@ def simulate_deployment(
     ]
     for placement in checked:
         try:
-            before = _verdict(db, tenant_id, placement.pacticipant_slug, placement.version_number, environment.name)
+            before = verdict_for(db, tenant_id, placement.pacticipant_slug, placement.version_number, environment.name)
             after = (
                 before
                 if already
-                else _verdict(
+                else verdict_for(
                     db, tenant_id, placement.pacticipant_slug, placement.version_number, environment.name, override
                 )
             )

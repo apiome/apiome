@@ -1091,6 +1091,80 @@
         "scale:tenant:0",
         1000
       ]
+    },
+    {
+      "name": "pact.environment_board_deployed",
+      "source": "apiome-rest/src/app/pact_deployments.py _TOPOLOGY_DEPLOYED (the Environments board and topology, PFX-5.7 #6951 / PFX-8.13 #7310; capped at MAX_TOPOLOGY_ROWS)",
+      "sql": "SELECT d.environment_id::text AS environment_id, p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number, v.seq AS version_seq, d.application_instance, d.created_at AS recorded_at FROM apiome.deployed_version d JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id AND p.deleted_at IS NULL JOIN apiome.pacticipant_version v ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id AND v.deleted_at IS NULL WHERE d.tenant_id = $1::uuid AND d.currently_deployed ORDER BY p.name, p.slug, d.seq DESC LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        2001
+      ]
+    },
+    {
+      "name": "pact.environment_board_released",
+      "source": "apiome-rest/src/app/pact_deployments.py _TOPOLOGY_RELEASED (the Environments board's releases, PFX-8.13 #7310; capped at MAX_TOPOLOGY_ROWS)",
+      "sql": "SELECT r.environment_id::text AS environment_id, p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number, v.seq AS version_seq, NULL::text AS application_instance, r.created_at AS recorded_at FROM apiome.released_version r JOIN apiome.pacticipant p ON p.id = r.pacticipant_id AND p.tenant_id = r.tenant_id AND p.deleted_at IS NULL JOIN apiome.pacticipant_version v ON v.id = r.version_id AND v.pacticipant_id = r.pacticipant_id AND v.deleted_at IS NULL WHERE r.tenant_id = $1::uuid AND r.currently_supported ORDER BY p.name, p.slug, r.seq DESC LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        2001
+      ]
+    },
+    {
+      "name": "pact.environment_board_idle",
+      "source": "apiome-rest/src/app/pact_environment_board.py IDLE_SQL (the board's pacticipants with nothing anywhere, PFX-8.13 #7310; capped at MAX_IDLE_ROWS)",
+      "sql": "SELECT p.slug, p.name FROM apiome.pacticipant p WHERE p.tenant_id = $1::uuid AND p.deleted_at IS NULL AND NOT EXISTS ( SELECT 1 FROM apiome.deployed_version d WHERE d.pacticipant_id = p.id AND d.tenant_id = p.tenant_id AND d.currently_deployed) AND NOT EXISTS ( SELECT 1 FROM apiome.released_version r WHERE r.pacticipant_id = p.id AND r.tenant_id = p.tenant_id AND r.currently_supported) ORDER BY p.name, p.slug LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        51
+      ]
+    },
+    {
+      "name": "pact.environment_history_deployed",
+      "source": "apiome-rest/src/app/pact_environment_board.py history_sql('deployed') first page (the Environments history, PFX-8.13 #7310; V455 index)",
+      "sql": "SELECT 'deployed' AS kind, d.id::text AS id, d.created_at AS at, d.application_instance, d.actor_label AS actor, d.recorded_verdict AS verdict, rv.number AS replaces, p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number, d.environment_id::text AS environment_id FROM apiome.deployed_version d LEFT JOIN apiome.deployed_version rd ON rd.id = d.replaced_id LEFT JOIN apiome.pacticipant_version rv ON rv.id = rd.version_id AND rv.deleted_at IS NULL JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id AND p.deleted_at IS NULL JOIN apiome.pacticipant_version v ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id AND v.deleted_at IS NULL WHERE d.tenant_id = $1::uuid ORDER BY d.created_at DESC, d.id DESC LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        26
+      ]
+    },
+    {
+      "name": "pact.environment_history_released",
+      "source": "apiome-rest/src/app/pact_environment_board.py history_sql('released') first page (the Environments history, PFX-8.13 #7310; V455 index)",
+      "sql": "SELECT 'released' AS kind, d.id::text AS id, d.created_at AS at, NULL::text AS application_instance, d.actor_label AS actor, d.recorded_verdict AS verdict, NULL::text AS replaces, p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number, d.environment_id::text AS environment_id FROM apiome.released_version d JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id AND p.deleted_at IS NULL JOIN apiome.pacticipant_version v ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id AND v.deleted_at IS NULL WHERE d.tenant_id = $1::uuid ORDER BY d.created_at DESC, d.id DESC LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        26
+      ]
+    },
+    {
+      "name": "pact.environment_history_support_ended",
+      "source": "apiome-rest/src/app/pact_environment_board.py history_sql('support-ended') first page (the Environments history, PFX-8.13 #7310; V455 index)",
+      "sql": "SELECT 'support-ended' AS kind, d.id::text AS id, d.support_ended_at AS at, NULL::text AS application_instance, d.ended_actor_label AS actor, NULL::text AS verdict, NULL::text AS replaces, p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number, d.environment_id::text AS environment_id FROM apiome.released_version d JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id AND p.deleted_at IS NULL JOIN apiome.pacticipant_version v ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id AND v.deleted_at IS NULL WHERE d.tenant_id = $1::uuid AND d.support_ended_at IS NOT NULL ORDER BY d.support_ended_at DESC, d.id DESC LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        26
+      ]
+    },
+    {
+      "name": "pact.environment_history_undeployed",
+      "source": "apiome-rest/src/app/pact_environment_board.py history_sql('undeployed') first page (the Environments history, PFX-8.13 #7310; V455 index)",
+      "sql": "SELECT 'undeployed' AS kind, d.id::text AS id, d.undeployed_at AS at, d.application_instance, d.ended_actor_label AS actor, NULL::text AS verdict, NULL::text AS replaces, p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number, d.environment_id::text AS environment_id FROM apiome.deployed_version d JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id AND p.deleted_at IS NULL JOIN apiome.pacticipant_version v ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id AND v.deleted_at IS NULL WHERE d.tenant_id = $1::uuid AND d.undeployed_at IS NOT NULL AND d.ended_reason IS DISTINCT FROM 'replaced' ORDER BY d.undeployed_at DESC, d.id DESC LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        26
+      ]
+    },
+    {
+      "name": "pact.environment_history_deployed_after",
+      "source": "apiome-rest/src/app/pact_environment_board.py history_sql('deployed') with a cursor of the same kind (the Environments history's next page, PFX-8.13 #7310)",
+      "sql": "SELECT 'deployed' AS kind, d.id::text AS id, d.created_at AS at, d.application_instance, d.actor_label AS actor, d.recorded_verdict AS verdict, rv.number AS replaces, p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number AS version_number, d.environment_id::text AS environment_id FROM apiome.deployed_version d LEFT JOIN apiome.deployed_version rd ON rd.id = d.replaced_id LEFT JOIN apiome.pacticipant_version rv ON rv.id = rd.version_id AND rv.deleted_at IS NULL JOIN apiome.pacticipant p ON p.id = d.pacticipant_id AND p.tenant_id = d.tenant_id AND p.deleted_at IS NULL JOIN apiome.pacticipant_version v ON v.id = d.version_id AND v.pacticipant_id = d.pacticipant_id AND v.deleted_at IS NULL WHERE d.tenant_id = $1::uuid AND (d.created_at, d.id) < ($2, $3::uuid) ORDER BY d.created_at DESC, d.id DESC LIMIT $4",
+      "params": [
+        "scale:tenant:0",
+        "2100-01-01T00:00:00+00:00",
+        "ffffffff-ffff-4fff-bfff-ffffffffffff",
+        26
+      ]
     }
   ]
 }

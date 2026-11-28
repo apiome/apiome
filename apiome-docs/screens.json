@@ -3154,15 +3154,26 @@
       ]
     },
     {
-      "id": "pact-environments",
+      "id": "pact-environments-board",
       "route": "/ade/dashboard/pacts/environments",
-      "waitFor": "[data-testid=\"penv-grid\"]",
-      "data": "fixture:hive-a11y/pact-environments.html",
+      "waitFor": "[data-testid=\"penv-board\"]",
+      "data": "fixture:hive-a11y/pact-environments-board.html",
       "sources": [
         "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentsClient.tsx",
-        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentPanels.tsx",
-        "apiome-ui/lib/pact-environments.ts",
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentBoard.tsx",
+        "apiome-ui/lib/pact-environment-board.ts",
         "apiome-ui/lib/pact-environment-writes.ts"
+      ]
+    },
+    {
+      "id": "pact-environments-history",
+      "route": "/ade/dashboard/pacts/environments",
+      "waitFor": "[data-testid=\"penv-history\"]",
+      "data": "fixture:hive-a11y/pact-environments-history.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentTimeline.tsx",
+        "apiome-ui/lib/pact-environment-board.ts"
       ]
     },
     {

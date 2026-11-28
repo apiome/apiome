@@ -348,6 +348,41 @@ def recorded_lines(
     ]
 
 
+def undeployed_lines(
+    *, pacticipant: str, version: str, environment: str, application_instance: Optional[str] = None
+) -> list[str]:
+    """``record-undeployment``: the sentence ``pact-broker`` prints for each deployment it ended.
+
+    Args:
+        pacticipant: What was undeployed.
+        version: The version that was deployed.
+        environment: Where.
+        application_instance: The instance, when named.
+
+    Returns:
+        One line.
+    """
+    instance = f" (application instance {application_instance})" if application_instance else ""
+    return [
+        f"Recorded undeployment of {pacticipant} version {version} from {environment} environment{instance} "
+        "in the Pact Broker."
+    ]
+
+
+def support_ended_lines(*, pacticipant: str, version: str, environment: str) -> list[str]:
+    """``record-support-ended``: the sentence ``pact-broker`` prints.
+
+    Args:
+        pacticipant: The pacticipant.
+        version: The release whose support ended.
+        environment: Where it was released.
+
+    Returns:
+        One line.
+    """
+    return [f"Recorded support ended for {pacticipant} version {version} in {environment} environment in the Pact Broker."]
+
+
 def webhook_created_lines(document: Mapping[str, Any]) -> list[str]:
     """``create-webhook``: what was created, its UUID and its events."""
     events = _names(document.get("events"))

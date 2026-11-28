@@ -48,6 +48,7 @@ from .pact_broker_routes import (
     _tenant_id,
     _version_url,
 )
+from .pact_deployments import verdict_when_recorded
 from .pact_environment import (
     DeployedVersionRecord,
     EnvironmentRecord,
@@ -667,6 +668,8 @@ _RECORD_ERRORS = {
         "`overrideCanIDeploy=true` says the deployment is recorded although can-i-deploy answered "
         "no (the Environments page's *Record it anyway*, PFX-8.12). It changes nothing about the "
         "deployment; it is written to the audit row, so an override is never silent.\n\n"
+        "can-i-deploy's answer just before recording is stored with the deployment (the "
+        "Environments history's *verified at the time*, PFX-8.13).\n\n"
         "Answers `201` with the deployment and its URL in `Location`. Requires `pacts:create`."
     ),
     openapi_extra={"requestBody": _DEPLOYMENT_BODY},
@@ -686,9 +689,7 @@ def post_deployment(
     override_can_i_deploy: bool = Query(
         default=False,
         alias="overrideCanIDeploy",
-        description=(
-            "The deployment is recorded although can-i-deploy answered no. Audited; changes nothing else."
-        ),
+        description=("The deployment is recorded although can-i-deploy answered no. Audited; changes nothing else."),
     ),
     auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
 ) -> HalJSONResponse:
@@ -709,15 +710,18 @@ def post_deployment(
         The deployment.
     """
     user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.CREATE, target=pacticipant)
+    tenant_id = _tenant_id(auth_data)
     try:
+        instance = parse_application_instance(raw)
         deployed, created = record_deployment(
             db,
-            _tenant_id(auth_data),
+            tenant_id,
             pacticipant,
             version,
             uuid,
-            parse_application_instance(raw),
+            instance,
             actor=actor_from_auth(auth_data, user_id),
+            recorded_verdict=verdict_when_recorded(db, tenant_id, pacticipant, version, uuid),
         )
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
@@ -786,7 +790,8 @@ def read_deployments_of_version(
         "`pb:record-release` link, which `pact-broker record-release` posts to. Releases do not "
         "replace each other: every released version stays supported until "
         "`record-support-ended`. Recording a release again starts supporting it again and "
-        "answers `200`.\n\nThe body is ignored. Requires `pacts:create`."
+        "answers `200`. can-i-deploy's answer just before recording is stored with the release "
+        "(PFX-8.13).\n\nThe body is ignored. Requires `pacts:create`."
     ),
     responses={
         200: {"description": "The version was already released there; it is supported again."},
@@ -816,9 +821,16 @@ def post_release(
         The release.
     """
     user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.CREATE, target=pacticipant)
+    tenant_id = _tenant_id(auth_data)
     try:
         released, created = record_release(
-            db, _tenant_id(auth_data), pacticipant, version, uuid, actor=actor_from_auth(auth_data, user_id)
+            db,
+            tenant_id,
+            pacticipant,
+            version,
+            uuid,
+            actor=actor_from_auth(auth_data, user_id),
+            recorded_verdict=verdict_when_recorded(db, tenant_id, pacticipant, version, uuid),
         )
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
@@ -951,11 +963,15 @@ def patch_deployed_version(
     Returns:
         The deployment.
     """
-    enforce_permission(db, auth_data, Resource.PACTS, Action.EDIT)
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.EDIT)
     tenant_id = _tenant_id(auth_data)
     try:
         ends = parse_flag_patch(raw, "currentlyDeployed")
-        deployed = record_undeployment(db, tenant_id, uuid) if ends else get_deployed_version(db, tenant_id, uuid)
+        deployed = (
+            record_undeployment(db, tenant_id, uuid, actor=actor_from_auth(auth_data, user_id))
+            if ends
+            else get_deployed_version(db, tenant_id, uuid)
+        )
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
     return HalJSONResponse(_deployed_document(_base_url(request, tenant_slug), deployed))
@@ -1000,7 +1016,8 @@ def read_released_version(
     description=(
         '`{"currentlySupported": false}` records that the release is no longer supported — what '
         "`pact-broker record-support-ended` sends. The release stays in the history; `true` is "
-        "refused (record the release again instead).\n\nRequires `pacts:edit`."
+        "refused (record the release again instead). From then on can-i-deploy no longer counts "
+        "the version as one its counterparts must stay compatible with.\n\nRequires `pacts:edit`."
     ),
     openapi_extra={"requestBody": _patch_body("currentlySupported")},
     responses={
@@ -1028,11 +1045,15 @@ def patch_released_version(
     Returns:
         The release.
     """
-    enforce_permission(db, auth_data, Resource.PACTS, Action.EDIT)
+    user_id = enforce_permission(db, auth_data, Resource.PACTS, Action.EDIT)
     tenant_id = _tenant_id(auth_data)
     try:
         ends = parse_flag_patch(raw, "currentlySupported")
-        released = record_support_ended(db, tenant_id, uuid) if ends else get_released_version(db, tenant_id, uuid)
+        released = (
+            record_support_ended(db, tenant_id, uuid, actor=actor_from_auth(auth_data, user_id))
+            if ends
+            else get_released_version(db, tenant_id, uuid)
+        )
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
     return HalJSONResponse(_released_document(_base_url(request, tenant_slug), released))

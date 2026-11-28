@@ -124,6 +124,16 @@ export const PACT_VERBS: Readonly<Record<string, PactVerbSurfaces>> = {
     action: false,
     rest: 'POST /v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{environment}',
   },
+  'record-support-ended': {
+    pactCli: 'pact-broker record-support-ended',
+    action: false,
+    rest: 'PATCH /v1/tenants/{tenant}/pact-broker/released-versions/{release}',
+  },
+  'record-undeployment': {
+    pactCli: 'pact-broker record-undeployment',
+    action: false,
+    rest: 'PATCH /v1/tenants/{tenant}/pact-broker/deployed-versions/{deployment}',
+  },
   'restore-version': {
     pactCli: null,
     action: false,

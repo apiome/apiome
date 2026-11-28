@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 115 operations."
+description: "REST endpoints tagged pact-broker: 117 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.704.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.705.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 115 operations
+Tag: `pact-broker` · 117 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -890,6 +890,8 @@ Record that this version is now deployed to the environment — the version's `p
 
 `overrideCanIDeploy=true` says the deployment is recorded although can-i-deploy answered no (the Environments page's *Record it anyway*, PFX-8.12). It changes nothing about the deployment; it is written to the audit row, so an override is never silent.
 
+can-i-deploy's answer just before recording is stored with the deployment (the Environments history's *verified at the time*, PFX-8.13).
+
 Answers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.
 
 Operation id: `post_deployment_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__post`
@@ -957,7 +959,7 @@ Operation id: `read_releases_of_version_v1_tenants__tenant_slug__pact_broker_pac
 
 **Record a release**
 
-Record that this version is released to the environment — the version's `pb:record-release` link, which `pact-broker record-release` posts to. Releases do not replace each other: every released version stays supported until `record-support-ended`. Recording a release again starts supporting it again and answers `200`.
+Record that this version is released to the environment — the version's `pb:record-release` link, which `pact-broker record-release` posts to. Releases do not replace each other: every released version stays supported until `record-support-ended`. Recording a release again starts supporting it again and answers `200`. can-i-deploy's answer just before recording is stored with the release (PFX-8.13).
 
 The body is ignored. Requires `pacts:create`.
 
@@ -1799,7 +1801,7 @@ Operation id: `read_released_version_v1_tenants__tenant_slug__pact_broker_releas
 
 **Record the end of support for a release**
 
-`{"currentlySupported": false}` records that the release is no longer supported — what `pact-broker record-support-ended` sends. The release stays in the history; `true` is refused (record the release again instead).
+`{"currentlySupported": false}` records that the release is no longer supported — what `pact-broker record-support-ended` sends. The release stays in the history; `true` is refused (record the release again instead). From then on can-i-deploy no longer counts the version as one its counterparts must stay compatible with.
 
 Requires `pacts:edit`.
 
@@ -2392,6 +2394,64 @@ Operation id: `read_environment_topology_v1_tenants__tenant_slug__pact_environme
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for environments and what is deployed to them. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-environments/board` {#read-environment-board-v1-tenants-tenant-slug-pact-environments-board-get}
+
+**What is running where**
+
+The Environments page's board (PFX-8.13): one row per pacticipant (by name), one cell per environment — non-production first, production last — and every release it supports.
+
+- Each running version carries can-i-deploy's `verdict` for that environment (`deployable` true, false, or null while a verification is missing).
+- `next` is the version that could go next: the newest version in the nearest environment to the left that runs the pacticipant, when it is newer than anything here, with its verdict — the deploy simulator's answer to the same question.
+- `idle` rows have nothing deployed or released anywhere (at most 50 are listed).
+
+At most 100 verdicts are asked per read; the rest say `checked: false` and why (`notChecked`). `truncated` is true when a read stopped at its cap. Requires `pacts:view`.
+
+Operation id: `read_environment_board_v1_tenants__tenant_slug__pact_environments_board_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for what is running where. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-environments/history` {#read-environment-history-v1-tenants-tenant-slug-pact-environments-history-get}
+
+**History of every environment**
+
+What happened in the workspace's environments, newest first (PFX-8.13): `kind` is `deployed`, `undeployed`, `released` or `support-ended`, with the pacticipant, version, environment, application instance and `actor` (who recorded it, when known). A `deployed` event names the version it `replaces`; the replaced deployment has no event of its own. `deployed` and `released` carry `verdict` — can-i-deploy's answer when it was recorded (`deployable`, `not-deployable`, `unknown`), or null when not known (recorded before this was kept, or imported). `environment` (a name) and `pacticipant` (handle or name) narrow it. Pass `nextCursor` back as `cursor` for the next page. Requires `pacts:view`.
+
+Operation id: `read_environment_history_v1_tenants__tenant_slug__pact_environments_history_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `environment` | query | string or null | no | Only this environment (its name). |
+| `pacticipant` | query | string or null | no | Only this pacticipant (handle or name). |
+| `cursor` | query | string or null | no | The `nextCursor` of the previous page. |
+| `limit` | query | integer | no | The page size. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for history of every environment. | `application/json` object |
+| 400 | `pact-history-cursor-invalid`. | — |
+| 404 | `pact-environment-not-found` or `pacticipant-not-found`. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-environments/{environment}/deployments` {#read-deployment-history-v1-tenants-tenant-slug-pact-environments-environment-deployments-get}

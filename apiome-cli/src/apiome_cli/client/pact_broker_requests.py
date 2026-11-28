@@ -401,6 +401,64 @@ def embedded_environments(document: Mapping[str, Any]) -> list[dict[str, Any]]:
     return [item for item in items or [] if isinstance(item, dict)]
 
 
+def embedded_list(document: Mapping[str, Any], key: str) -> list[dict[str, Any]]:
+    """``_embedded.<key>`` of a broker list document (``deployedVersions``, ``releasedVersions``), or ``[]``."""
+    embedded = document.get("_embedded")
+    items = embedded.get(key) if isinstance(embedded, dict) else None
+    return [item for item in items or [] if isinstance(item, dict)]
+
+
+def embedded_version_number(entry: Mapping[str, Any]) -> str:
+    """The version number a deployed- or released-version entry embeds (``_embedded.version.number``)."""
+    embedded = entry.get("_embedded")
+    version = embedded.get("version") if isinstance(embedded, dict) else None
+    return str(version.get("number") or "") if isinstance(version, dict) else ""
+
+
+def undeployment_targets(
+    entries: Sequence[Mapping[str, Any]],
+    *,
+    pacticipant: str,
+    environment: str,
+    application_instance: Optional[str],
+) -> list[Mapping[str, Any]]:
+    """The current deployments ``record-undeployment`` ends, as ``pact-broker`` chooses them.
+
+    With ``--application-instance`` only that instance's deployment; without it, only the
+    deployment to the environment's unnamed instance. Nothing is ended on a guess: when nothing
+    matches, the error says what *is* deployed and which flag picks it.
+
+    Args:
+        entries: ``_embedded.deployedVersions`` of the environment's currently-deployed list for the
+            pacticipant.
+        pacticipant: The pacticipant, as given.
+        environment: The environment's name.
+        application_instance: ``--application-instance``, or ``None``.
+
+    Returns:
+        The entries to patch (at least one).
+
+    Raises:
+        ValueError: With ``pact-broker``'s sentence when nothing matches.
+    """
+    matches = [e for e in entries if (e.get("applicationInstance") or None) == application_instance]
+    if matches:
+        return matches
+    if not entries:
+        raise ValueError(f"{pacticipant} is not currently deployed to {environment} environment. Cannot record undeployment.")
+    named = sorted({str(e.get("applicationInstance")) for e in entries if e.get("applicationInstance")})
+    if application_instance is None:
+        raise ValueError(
+            "Please specify one of the following application instances to record the undeployment from: "
+            + ", ".join(named)
+        )
+    others = ", ".join(named) if named else "the unnamed instance (leave out --application-instance)"
+    raise ValueError(
+        f"{pacticipant} is not currently deployed to application instance {application_instance!r} in "
+        f"{environment} environment. It is deployed to: {others}. Cannot record undeployment."
+    )
+
+
 # ---------------------------------------------------------------------------------------------
 # create-webhook
 # ---------------------------------------------------------------------------------------------

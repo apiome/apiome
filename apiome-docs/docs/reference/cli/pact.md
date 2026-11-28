@@ -18,7 +18,7 @@ Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`restore-version`](#pact-restore-version), [`verify`](#pact-verify).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`record-support-ended`](#pact-record-support-ended), [`record-undeployment`](#pact-record-undeployment), [`restore-version`](#pact-restore-version), [`verify`](#pact-verify).
 
 ## apiome pact can-i-deploy {#pact-can-i-deploy}
 
@@ -513,6 +513,48 @@ apiome pact record-release [OPTIONS]
 | `--pacticipant`, `-a` | text |  | yes | What was released. |
 | `--version`, `-e` | text |  | yes | Its version. |
 | `--environment` | text |  | yes | The environment's name. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact record-support-ended {#pact-record-support-ended}
+
+Record that a released version is no longer supported (PATCH …/released-versions/{uuid}).
+
+Reads the release (GET …/environments/{uuid}/released-versions/currently-supported), then sends {"currentlySupported": false}. From then on can-i-deploy no longer holds its counterparts to it. A version that is not currently released there exits 1.
+
+```text
+apiome pact record-support-ended [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text |  | yes | The pacticipant. |
+| `--version`, `-e` | text |  | yes | The released version that is no longer supported. |
+| `--environment` | text |  | yes | The environment's name. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact record-undeployment {#pact-record-undeployment}
+
+Record that a pacticipant is no longer deployed to an environment (PATCH …/deployed-versions/{uuid}).
+
+Reads what is currently deployed there (GET …/environments/{uuid}/deployed-versions/currently-deployed), then sends {"currentlyDeployed": false} to the deployment in that instance. The deployment stays in the history. Nothing deployed there — or only to other instances — exits 1 and says what is.
+
+```text
+apiome pact record-undeployment [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text |  | yes | What was undeployed. |
+| `--environment` | text |  | yes | The environment's name. |
+| `--application-instance`, `--target` | text |  |  | The instance it was undeployed from; leave out for the environment's unnamed instance. |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |

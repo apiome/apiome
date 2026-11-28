@@ -326,6 +326,32 @@
       ]
     },
     {
+      "name": "record-support-ended",
+      "summary": "Record that a released version is no longer supported (PATCH …/released-versions/{uuid}).",
+      "arguments": [],
+      "options": [
+        "--pacticipant",
+        "--version",
+        "--environment",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
+      "name": "record-undeployment",
+      "summary": "Record that a pacticipant is no longer deployed to an environment (PATCH …/deployed-versions/{uuid}).",
+      "arguments": [],
+      "options": [
+        "--pacticipant",
+        "--environment",
+        "--application-instance",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
       "name": "restore-version",
       "summary": "Restore a deleted version with its pacts, results and deployments (POST …/versions/{v}/restore).",
       "arguments": [],

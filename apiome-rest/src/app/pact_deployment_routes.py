@@ -7,6 +7,10 @@ environment routes (PFX-1.5):
   releases it supports (the dashboard's grid);
 * ``GET …/pact-environments/{environment}/deployments`` — the environment's deployment history,
   newest first, narrowed by ``pacticipant``, one page at a time (``cursor``, ``limit``);
+* ``GET …/pact-environments/board`` — the what-is-where board (PFX-8.13): pacticipants ×
+  environments, each cell the running version(s) with a verdict, and whether the next version can go;
+* ``GET …/pact-environments/history`` — the workspace's deployments, undeployments, releases and
+  ends of support, newest first, with who and the verdict at the time (PFX-8.13);
 * ``GET …/pact-environments/{environment}/simulate`` — the deploy simulator: *what if
   ``pacticipant`` ``version`` were deployed here?* The candidate's can-i-deploy verdict and how the
   verdict of each counterpart version changes (running here: breaks / fixes; deployed elsewhere:
@@ -16,7 +20,7 @@ environment routes (PFX-1.5):
 live beside the Pact Broker surface, not under ``…/pact-broker``, because no Pact Broker or
 PactFlow client knows them; that surface stays the catalogued, PactFlow-compatible one.
 
-All three need ``pacts:view``. Only the caller's tenant is read.
+All need ``pacts:view``. Only the caller's tenant is read.
 """
 
 from __future__ import annotations
@@ -42,6 +46,16 @@ from .pact_deployments import (
     simulate_deployment,
 )
 from .pact_environment import CODE_ENVIRONMENT_NOT_FOUND, EnvironmentRecord
+from .pact_environment_board import (
+    CODE_HISTORY_CURSOR_INVALID,
+    MAX_BOARD_CHECKS,
+    BoardRow,
+    HistoryEvent,
+    list_history,
+    read_board,
+)
+from .pact_environment_board import DEFAULT_HISTORY_PAGE as DEFAULT_EVENTS_PAGE
+from .pact_environment_board import MAX_HISTORY_PAGE as MAX_EVENTS_PAGE
 from .pact_matrix import CODE_MATRIX_INVALID
 from .pact_publication import PactPublicationError
 from .pacticipant import CODE_NOT_FOUND, CODE_VERSION_NOT_FOUND, PacticipantValidationError
@@ -55,6 +69,7 @@ _PREFIX = "/{tenant_slug}/pact-environments"
 
 _STATUS_BY_CODE = {
     CODE_DEPLOYMENT_CURSOR_INVALID: 400,
+    CODE_HISTORY_CURSOR_INVALID: 400,
     CODE_SIMULATION_INVALID: 400,
     CODE_MATRIX_INVALID: 400,
     CODE_ENVIRONMENT_NOT_FOUND: 404,
@@ -186,6 +201,167 @@ def read_environment_topology(
         ],
         "truncated": topology.truncated,
     }
+
+
+def _verdict_document(check: Optional[Check], not_checked: Optional[str]) -> Dict[str, Any]:
+    """A board verdict: ``checked``, and either the verdict or ``notChecked`` (the reason)."""
+    if check is None:
+        return {"checked": False, "notChecked": not_checked or "Not checked."}
+    return {"checked": True, **_check_document(check)}
+
+
+def _board_row_document(row: BoardRow) -> Dict[str, Any]:
+    """One pacticipant's row of the board."""
+    return {
+        "pacticipant": {"name": row.pacticipant_name, "slug": row.pacticipant_slug},
+        "idle": row.idle,
+        "cells": [
+            {
+                "environment": cell.environment_id,
+                "deployed": [
+                    {
+                        "version": version.version_number,
+                        "applicationInstances": list(version.application_instances),
+                        "deployedAt": version.deployed_at,
+                        "verdict": _verdict_document(version.check, version.not_checked),
+                    }
+                    for version in cell.deployed
+                ],
+                "next": (
+                    {
+                        "version": cell.next.version_number,
+                        "from": cell.next.from_environment,
+                        "verdict": _verdict_document(cell.next.check, cell.next.not_checked),
+                    }
+                    if cell.next is not None
+                    else None
+                ),
+            }
+            for cell in row.cells
+        ],
+        "released": [
+            {
+                "version": release.version_number,
+                "environment": release.environment_name,
+                "releasedAt": release.released_at,
+                "verdict": _verdict_document(release.check, release.not_checked),
+            }
+            for release in row.released
+        ],
+    }
+
+
+@router.get(
+    _PREFIX + "/board",
+    summary="What is running where",
+    description=(
+        "The Environments page's board (PFX-8.13): one row per pacticipant (by name), one cell per "
+        "environment — non-production first, production last — and every release it supports.\n\n"
+        "- Each running version carries can-i-deploy's `verdict` for that environment "
+        "(`deployable` true, false, or null while a verification is missing).\n"
+        "- `next` is the version that could go next: the newest version in the nearest environment "
+        "to the left that runs the pacticipant, when it is newer than anything here, with its "
+        "verdict — the deploy simulator's answer to the same question.\n"
+        "- `idle` rows have nothing deployed or released anywhere (at most 50 are listed).\n\n"
+        f"At most {MAX_BOARD_CHECKS} verdicts are asked per read; the rest say `checked: false` and why "
+        "(`notChecked`). `truncated` is true when a read stopped at its cap. Requires `pacts:view`."
+    ),
+)
+def read_environment_board(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """Read the what-is-where board.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        auth_data: The authenticated principal.
+
+    Returns:
+        ``{"environments", "rows", "truncated", "checks", "notChecked", "evaluatedAt"}``.
+    """
+    del tenant_slug
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    board = read_board(db, _tenant_id(auth_data))
+    return {
+        "environments": [_environment_document(environment) for environment in board.environments],
+        "rows": [_board_row_document(row) for row in board.rows],
+        "truncated": board.truncated,
+        "checks": board.checks,
+        "notChecked": board.not_checked,
+        "evaluatedAt": board.evaluated_at,
+    }
+
+
+def _event_document(event: HistoryEvent) -> Dict[str, Any]:
+    """One history event."""
+    return {
+        "kind": event.kind,
+        "uuid": event.id,
+        "at": event.at,
+        "pacticipant": {"name": event.pacticipant_name, "slug": event.pacticipant_slug},
+        "version": event.version_number,
+        "environment": _environment_document(event.environment),
+        "applicationInstance": event.application_instance,
+        "actor": event.actor,
+        "verdict": event.verdict,
+        "replaces": event.replaces,
+    }
+
+
+@router.get(
+    _PREFIX + "/history",
+    summary="History of every environment",
+    description=(
+        "What happened in the workspace's environments, newest first (PFX-8.13): `kind` is "
+        "`deployed`, `undeployed`, `released` or `support-ended`, with the pacticipant, version, "
+        "environment, application instance and `actor` (who recorded it, when known). A `deployed` "
+        "event names the version it `replaces`; the replaced deployment has no event of its own. "
+        "`deployed` and `released` carry `verdict` — can-i-deploy's answer when it was recorded "
+        "(`deployable`, `not-deployable`, `unknown`), or null when not known (recorded before "
+        "this was kept, or imported). `environment` (a name) and `pacticipant` (handle or name) "
+        "narrow it. Pass `nextCursor` back as `cursor` for the next page. Requires `pacts:view`."
+    ),
+    responses={
+        400: {"description": "`pact-history-cursor-invalid`."},
+        404: {"description": "`pact-environment-not-found` or `pacticipant-not-found`."},
+    },
+)
+def read_environment_history(
+    tenant_slug: str,
+    environment: Optional[str] = Query(None, max_length=255, description="Only this environment (its name)."),
+    pacticipant: Optional[str] = Query(None, max_length=255, description="Only this pacticipant (handle or name)."),
+    cursor: Optional[str] = Query(None, max_length=200, description="The `nextCursor` of the previous page."),
+    limit: int = Query(DEFAULT_EVENTS_PAGE, ge=1, le=MAX_EVENTS_PAGE, description="The page size."),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """Read one page of the environments' history.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        environment: Only this environment.
+        pacticipant: Only this pacticipant.
+        cursor: Where the page starts.
+        limit: The page size.
+        auth_data: The authenticated principal.
+
+    Returns:
+        ``{"events": [...], "nextCursor": str | None}``.
+    """
+    del tenant_slug
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
+    try:
+        page = list_history(
+            db,
+            _tenant_id(auth_data),
+            environment_name=environment,
+            pacticipant_ref=pacticipant,
+            cursor=cursor,
+            limit=limit,
+        )
+    except (PactPublicationError, PacticipantValidationError) as exc:
+        raise _http_error(exc) from exc
+    return {"events": [_event_document(event) for event in page.events], "nextCursor": page.next_cursor}
 
 
 @router.get(

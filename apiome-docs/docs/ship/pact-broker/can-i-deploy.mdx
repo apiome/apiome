@@ -109,6 +109,10 @@ Apiome finds every application the version has a pact with, takes the versions o
   environment, on two [application instances](./environments.mdx#application-instances) or as two
   supported releases, the version must work with both. One of them without a result makes the
   answer unknown.
+- **An ended release no longer counts.** Once support for a release ends (`record-support-ended`,
+  or **End support** on the [Environments board](./environments-dashboard.mdx#end-support-for-a-release)),
+  its pacts no longer hold its counterparts back; an undeployed version
+  (`record-undeployment`) no longer counts either.
 - **Only the pacts of that version count.** A consumer version that no longer calls a provider has
   no pact with it, and that provider is not checked.
 - **The latest result decides.** When a provider version verified a pact more than once, the last

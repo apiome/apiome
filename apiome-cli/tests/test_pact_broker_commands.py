@@ -515,6 +515,114 @@ def test_record_deployment_of_an_unknown_version_exits_1(broker_env: None, httpx
     assert "No version abc" in result.output
 
 
+# --- record-undeployment / record-support-ended (PFX-8.13, #7310) -------------------------------
+
+_CURRENTLY_DEPLOYED = f"{_BROKER}/environments/env-1/deployed-versions/currently-deployed?pacticipant=Billing"
+
+
+def _deployed(uuid: str, version: str, instance: Any = None) -> dict[str, Any]:
+    return {"uuid": uuid, "applicationInstance": instance, "_embedded": {"version": {"number": version}}}
+
+
+def test_record_undeployment_patches_the_unnamed_instance(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(url=f"{_BROKER}/environments?name=production", json=_ENVIRONMENTS)
+    httpx_mock.add_response(
+        url=_CURRENTLY_DEPLOYED,
+        json={"_embedded": {"deployedVersions": [_deployed("d1", "abc"), _deployed("d2", "abd", "eu")]}},
+    )
+    httpx_mock.add_response(method="PATCH", url=f"{_BROKER}/deployed-versions/d1", json={"uuid": "d1"})
+    result = _invoke("record-undeployment", "-a", "Billing", "--environment", "production")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    patch = httpx_mock.get_requests()[2]
+    assert (patch.method, json.loads(patch.content)) == ("PATCH", {"currentlyDeployed": False})
+    assert patch.headers["X-API-Key"] == "broker-token"
+    assert "Recorded undeployment of Billing version abc from production environment in the Pact Broker." in (
+        result.output
+    )
+
+
+def test_record_undeployment_of_one_instance_with_the_target_alias(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(url=f"{_BROKER}/environments?name=production", json=_ENVIRONMENTS)
+    httpx_mock.add_response(
+        url=_CURRENTLY_DEPLOYED,
+        json={"_embedded": {"deployedVersions": [_deployed("d1", "abc"), _deployed("d2", "abd", "eu")]}},
+    )
+    httpx_mock.add_response(method="PATCH", url=f"{_BROKER}/deployed-versions/d2", json={"uuid": "d2"})
+    result = _invoke("record-undeployment", "-a", "Billing", "--environment", "production", "--target", "eu", "-o", "json")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert json.loads(result.output) == {"undeployedVersions": [{"uuid": "d2"}]}
+
+
+def test_record_undeployment_when_nothing_is_deployed_exits_1_without_patching(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(url=f"{_BROKER}/environments?name=production", json=_ENVIRONMENTS)
+    httpx_mock.add_response(url=_CURRENTLY_DEPLOYED, json={"_embedded": {"deployedVersions": []}})
+    result = _invoke("record-undeployment", "-a", "Billing", "--environment", "production")
+    assert result.exit_code == EXIT_ERROR
+    assert "Billing is not currently deployed to production environment. Cannot record undeployment." in result.output
+    assert [r.method for r in httpx_mock.get_requests()] == ["GET", "GET"]
+
+
+def test_record_undeployment_names_the_instances_when_none_is_given(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(url=f"{_BROKER}/environments?name=production", json=_ENVIRONMENTS)
+    httpx_mock.add_response(
+        url=_CURRENTLY_DEPLOYED,
+        json={"_embedded": {"deployedVersions": [_deployed("d1", "abc", "us"), _deployed("d2", "abd", "eu")]}},
+    )
+    result = _invoke("record-undeployment", "-a", "Billing", "--environment", "production")
+    assert result.exit_code == EXIT_ERROR
+    assert "application instances to record the undeployment from: eu, us" in result.output
+
+
+def test_record_undeployment_of_an_instance_that_is_not_there_says_what_is(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(url=f"{_BROKER}/environments?name=production", json=_ENVIRONMENTS)
+    httpx_mock.add_response(url=_CURRENTLY_DEPLOYED, json={"_embedded": {"deployedVersions": [_deployed("d1", "abc")]}})
+    result = _invoke("record-undeployment", "-a", "Billing", "--environment", "production", "--application-instance", "eu")
+    assert result.exit_code == EXIT_ERROR
+    assert "not currently deployed to application instance 'eu'" in result.output
+    assert "the unnamed instance" in result.output
+
+
+def test_record_undeployment_refused_by_rest_exits_1(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(url=f"{_BROKER}/environments?name=production", json=_ENVIRONMENTS)
+    httpx_mock.add_response(url=_CURRENTLY_DEPLOYED, json={"_embedded": {"deployedVersions": [_deployed("d1", "abc")]}})
+    httpx_mock.add_response(
+        method="PATCH", status_code=403, json={"detail": {"code": "forbidden", "message": "needs pacts:edit"}}
+    )
+    result = _invoke("record-undeployment", "-a", "Billing", "--environment", "production")
+    assert result.exit_code == EXIT_ERROR
+    assert "pacts:edit" in result.output
+
+
+def test_record_support_ended(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(url=f"{_BROKER}/environments?name=production", json=_ENVIRONMENTS)
+    httpx_mock.add_response(
+        url=f"{_BROKER}/environments/env-1/released-versions/currently-supported?pacticipant=Billing&version=1.8.7",
+        json={"_embedded": {"releasedVersions": [{"uuid": "r1"}]}},
+    )
+    httpx_mock.add_response(method="PATCH", url=f"{_BROKER}/released-versions/r1", json={"uuid": "r1"})
+    result = _invoke("record-support-ended", "-a", "Billing", "-e", "1.8.7", "--environment", "production")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert json.loads(httpx_mock.get_requests()[2].content) == {"currentlySupported": False}
+    assert "Recorded support ended for Billing version 1.8.7 in production environment in the Pact Broker." in (
+        result.output
+    )
+
+
+def test_record_support_ended_for_a_version_not_released_exits_1(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(url=f"{_BROKER}/environments?name=production", json=_ENVIRONMENTS)
+    httpx_mock.add_response(json={"_embedded": {"releasedVersions": []}})
+    result = _invoke("record-support-ended", "-a", "Billing", "-e", "9", "--environment", "production")
+    assert result.exit_code == EXIT_ERROR
+    assert "Billing version 9 is not currently released in production environment. Cannot record support ended." in (
+        result.output
+    )
+
+
+def test_record_support_ended_needs_the_version(broker_env: None) -> None:
+    result = _invoke("record-support-ended", "-a", "Billing", "--environment", "production")
+    assert result.exit_code == EXIT_ERROR
+
+
 # --- create-environment / create-webhook -------------------------------------------------------
 
 

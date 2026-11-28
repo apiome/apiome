@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.704.0",
+    "version": "1.705.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -50436,7 +50436,7 @@
           "pact-broker"
         ],
         "summary": "Record a deployment",
-        "description": "Record that this version is now deployed to the environment \u2014 the version's `pb:record-deployment` link, which `pact-broker record-deployment --pacticipant Ledger --version 4f1e2d0 --environment production` posts to.\n\n- The pacticipant's previous deployment to the same environment and application instance is marked undeployed; it stays in the history.\n- Deployments to other application instances are not touched.\n- Recording the version that is already deployed there returns that deployment, `200`.\n\n`overrideCanIDeploy=true` says the deployment is recorded although can-i-deploy answered no (the Environments page's *Record it anyway*, PFX-8.12). It changes nothing about the deployment; it is written to the audit row, so an override is never silent.\n\nAnswers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.",
+        "description": "Record that this version is now deployed to the environment \u2014 the version's `pb:record-deployment` link, which `pact-broker record-deployment --pacticipant Ledger --version 4f1e2d0 --environment production` posts to.\n\n- The pacticipant's previous deployment to the same environment and application instance is marked undeployed; it stays in the history.\n- Deployments to other application instances are not touched.\n- Recording the version that is already deployed there returns that deployment, `200`.\n\n`overrideCanIDeploy=true` says the deployment is recorded although can-i-deploy answered no (the Environments page's *Record it anyway*, PFX-8.12). It changes nothing about the deployment; it is written to the audit row, so an override is never silent.\n\ncan-i-deploy's answer just before recording is stored with the deployment (the Environments history's *verified at the time*, PFX-8.13).\n\nAnswers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.",
         "operationId": "post_deployment_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__post",
         "parameters": [
           {
@@ -50712,7 +50712,7 @@
           "pact-broker"
         ],
         "summary": "Record a release",
-        "description": "Record that this version is released to the environment \u2014 the version's `pb:record-release` link, which `pact-broker record-release` posts to. Releases do not replace each other: every released version stays supported until `record-support-ended`. Recording a release again starts supporting it again and answers `200`.\n\nThe body is ignored. Requires `pacts:create`.",
+        "description": "Record that this version is released to the environment \u2014 the version's `pb:record-release` link, which `pact-broker record-release` posts to. Releases do not replace each other: every released version stays supported until `record-support-ended`. Recording a release again starts supporting it again and answers `200`. can-i-deploy's answer just before recording is stored with the release (PFX-8.13).\n\nThe body is ignored. Requires `pacts:create`.",
         "operationId": "post_release_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__released_versions_environment__uuid__post",
         "parameters": [
           {
@@ -51281,7 +51281,7 @@
           "pact-broker"
         ],
         "summary": "Record the end of support for a release",
-        "description": "`{\"currentlySupported\": false}` records that the release is no longer supported \u2014 what `pact-broker record-support-ended` sends. The release stays in the history; `true` is refused (record the release again instead).\n\nRequires `pacts:edit`.",
+        "description": "`{\"currentlySupported\": false}` records that the release is no longer supported \u2014 what `pact-broker record-support-ended` sends. The release stays in the history; `true` is refused (record the release again instead). From then on can-i-deploy no longer counts the version as one its counterparts must stay compatible with.\n\nRequires `pacts:edit`.",
         "operationId": "patch_released_version_v1_tenants__tenant_slug__pact_broker_released_versions__uuid__patch",
         "parameters": [
           {
@@ -56793,6 +56793,267 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for environmentsandwhatisdeployedtothemresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-environments/board": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "What is running where",
+        "description": "The Environments page's board (PFX-8.13): one row per pacticipant (by name), one cell per environment \u2014 non-production first, production last \u2014 and every release it supports.\n\n- Each running version carries can-i-deploy's `verdict` for that environment (`deployable` true, false, or null while a verification is missing).\n- `next` is the version that could go next: the newest version in the nearest environment to the left that runs the pacticipant, when it is newer than anything here, with its verdict \u2014 the deploy simulator's answer to the same question.\n- `idle` rows have nothing deployed or released anywhere (at most 50 are listed).\n\nAt most 100 verdicts are asked per read; the rest say `checked: false` and why (`notChecked`). `truncated` is true when a read stopped at its cap. Requires `pacts:view`.",
+        "operationId": "read_environment_board_v1_tenants__tenant_slug__pact_environments_board_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Whatisrunningwhereauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Whatisrunningwhereauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Whatisrunningwhere Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Whatisrunningwhere Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for what is running where.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Read Environment Board V1 Tenants  Tenant Slug  Pact Environments Board Get",
+                  "description": "Response Read Environment Board V1 Tenants  Tenant Slug  Pact Environments Board Get schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for whatisrunningwhereresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-environments/history": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "History of every environment",
+        "description": "What happened in the workspace's environments, newest first (PFX-8.13): `kind` is `deployed`, `undeployed`, `released` or `support-ended`, with the pacticipant, version, environment, application instance and `actor` (who recorded it, when known). A `deployed` event names the version it `replaces`; the replaced deployment has no event of its own. `deployed` and `released` carry `verdict` \u2014 can-i-deploy's answer when it was recorded (`deployable`, `not-deployable`, `unknown`), or null when not known (recorded before this was kept, or imported). `environment` (a name) and `pacticipant` (handle or name) narrow it. Pass `nextCursor` back as `cursor` for the next page. Requires `pacts:view`.",
+        "operationId": "read_environment_history_v1_tenants__tenant_slug__pact_environments_history_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "environment",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255,
+                  "description": "Historyofeveryenvironmentenvironment schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Historyofeveryenvironmentenvironment schema."
+                }
+              ],
+              "description": "Only this environment (its name).",
+              "title": "Environment"
+            },
+            "description": "Only this environment (its name)."
+          },
+          {
+            "name": "pacticipant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255,
+                  "description": "Historyofeveryenvironmentpacticipant schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Historyofeveryenvironmentpacticipant schema."
+                }
+              ],
+              "description": "Only this pacticipant (handle or name).",
+              "title": "Pacticipant"
+            },
+            "description": "Only this pacticipant (handle or name)."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200,
+                  "description": "Historyofeveryenvironmentcursor schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Historyofeveryenvironmentcursor schema."
+                }
+              ],
+              "description": "The `nextCursor` of the previous page.",
+              "title": "Cursor"
+            },
+            "description": "The `nextCursor` of the previous page."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "The page size.",
+              "default": 25,
+              "title": "Limit"
+            },
+            "description": "The page size."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Historyofeveryenvironmentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Historyofeveryenvironmentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Historyofeveryenvironment Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Historyofeveryenvironment Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for history of every environment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Read Environment History V1 Tenants  Tenant Slug  Pact Environments History Get",
+                  "description": "Response Read Environment History V1 Tenants  Tenant Slug  Pact Environments History Get schema."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`pact-history-cursor-invalid`."
+          },
+          "404": {
+            "description": "`pact-environment-not-found` or `pacticipant-not-found`."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for historyofeveryenvironmentresponse422."
                 }
               }
             }

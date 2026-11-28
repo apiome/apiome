@@ -136,7 +136,9 @@ pact-broker record-undeployment --pacticipant "Ledger API" --environment product
 ```
 
 Add `--application-instance eu-1` to take only that copy out. You do not need to record an
-undeployment when you deploy a new version: `record-deployment` does that for you.
+undeployment when you deploy a new version: `record-deployment` does that for you. `apiome pact
+record-undeployment` takes the same flags, and the Environments board's column menu has **Record an
+undeployment** ([in the app](./environments-dashboard.mdx#record-an-undeployment)).
 
 ## Record a release
 
@@ -153,7 +155,9 @@ Every released version stays **supported** until you record that support has end
 pact-broker record-support-ended --pacticipant "Billing App" --version 1.0.0 --environment app-store
 ```
 
-Recording a release of the same version again starts supporting it again.
+Recording a release of the same version again starts supporting it again. `apiome pact
+record-support-ended` takes the same flags; in the app, use **End support** on the board
+([End support for a release](./environments-dashboard.mdx#end-support-for-a-release)).
 
 ## Record from the app
 

@@ -2,7 +2,8 @@
 
 ``publish``, ``check`` (PFX-8.4, #7301: a pre-publish comparison with several provider versions; no
 ``pact-broker`` equivalent), ``list-pacticipants``, ``describe-version``, ``can-i-deploy``, ``record-deployment``,
-``record-release``, ``create-environment``, ``create-webhook``, ``verify``, and
+``record-release``, ``record-undeployment`` / ``record-support-ended`` (PFX-8.13, #7310),
+``create-environment``, ``create-webhook``, ``verify``, and
 ``create-or-update-pacticipant`` / ``delete-pacticipant`` (PFX-8.10, #7307) and
 ``create-version-tag`` / ``delete-version`` / ``restore-version`` (PFX-8.11, #7308) take the flags of
 the ``pact-broker`` CLI they replace (``-a``, ``-e``, ``-l``, ``-t``, ``-b``, ``-k``, ``-o``, …)
@@ -44,10 +45,13 @@ from apiome_cli.client.pact_broker_requests import (
     deployable,
     detect_version_properties,
     embedded_environments,
+    embedded_list,
+    embedded_version_number,
     parse_check_selectors,
     parse_context,
     parse_selectors,
     read_pact_file,
+    undeployment_targets,
 )
 from apiome_cli.client.pact_migration_source import DEFAULT_MATRIX_LIMIT, SourceBroker, fetch_document, read_source
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
@@ -62,6 +66,8 @@ from apiome_cli.pact_broker_output import (
     pacticipant_saved_lines,
     publish_lines,
     recorded_lines,
+    support_ended_lines,
+    undeployed_lines,
     validate_output,
     verify_lines,
     version_deleted_lines,
@@ -704,6 +710,113 @@ def record_release(
 
 
 # ---------------------------------------------------------------------------------------------
+# record-undeployment / record-support-ended
+# ---------------------------------------------------------------------------------------------
+
+
+def record_undeployment(
+    ctx: typer.Context,
+    pacticipant: str = typer.Option(..., "--pacticipant", "-a", help="What was undeployed."),
+    environment: str = typer.Option(..., "--environment", help="The environment's name."),
+    application_instance: Optional[str] = typer.Option(
+        None,
+        "--application-instance",
+        "--target",
+        help="The instance it was undeployed from; leave out for the environment's unnamed instance.",
+    ),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Record that a pacticipant is no longer deployed to an environment (PATCH …/deployed-versions/{uuid}).
+
+    Reads what is currently deployed there (GET …/environments/{uuid}/deployed-versions/currently-deployed),
+    then sends {"currentlyDeployed": false} to the deployment in that instance. The deployment stays in the
+    history. Nothing deployed there — or only to other instances — exits 1 and says what is.
+    """
+    fmt = _format(ctx, output)
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    uuid = _environment_uuid(conn, environment)
+    listing = conn.client.get(
+        conn.broker_path(
+            f"/environments/{segment(uuid)}/deployed-versions/currently-deployed"
+            + _query([("pacticipant", pacticipant)])
+        )
+    ).json()
+    try:
+        targets = undeployment_targets(
+            embedded_list(listing, "deployedVersions"),
+            pacticipant=pacticipant,
+            environment=environment,
+            application_instance=application_instance,
+        )
+    except ValueError as exc:
+        raise CliError(str(exc), exit_code=EXIT_ERROR) from exc
+    documents: list[Any] = []
+    lines: list[str] = []
+    for target in targets:
+        response = conn.client.patch_raw(
+            conn.broker_path(f"/deployed-versions/{segment(str(target.get('uuid')))}"),
+            json={"currentlyDeployed": False},
+        )
+        exit_on_api_error(response)
+        documents.append(response.json())
+        lines += undeployed_lines(
+            pacticipant=pacticipant,
+            version=embedded_version_number(target),
+            environment=environment,
+            application_instance=application_instance,
+        )
+    _emit(fmt, {"undeployedVersions": documents}, lines)
+
+
+def record_support_ended(
+    ctx: typer.Context,
+    pacticipant: str = typer.Option(..., "--pacticipant", "-a", help="The pacticipant."),
+    version: str = typer.Option(..., "--version", "-e", help="The released version that is no longer supported."),
+    environment: str = typer.Option(..., "--environment", help="The environment's name."),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Record that a released version is no longer supported (PATCH …/released-versions/{uuid}).
+
+    Reads the release (GET …/environments/{uuid}/released-versions/currently-supported), then sends
+    {"currentlySupported": false}. From then on can-i-deploy no longer holds its counterparts to it. A
+    version that is not currently released there exits 1.
+    """
+    fmt = _format(ctx, output)
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    uuid = _environment_uuid(conn, environment)
+    listing = conn.client.get(
+        conn.broker_path(
+            f"/environments/{segment(uuid)}/released-versions/currently-supported"
+            + _query([("pacticipant", pacticipant), ("version", version)])
+        )
+    ).json()
+    targets = embedded_list(listing, "releasedVersions")
+    if not targets:
+        raise CliError(
+            f"{pacticipant} version {version} is not currently released in {environment} environment. "
+            "Cannot record support ended.",
+            exit_code=EXIT_ERROR,
+        )
+    documents: list[Any] = []
+    for target in targets:
+        response = conn.client.patch_raw(
+            conn.broker_path(f"/released-versions/{segment(str(target.get('uuid')))}"),
+            json={"currentlySupported": False},
+        )
+        exit_on_api_error(response)
+        documents.append(response.json())
+    _emit(
+        fmt,
+        {"releasedVersions": documents},
+        support_ended_lines(pacticipant=pacticipant, version=version, environment=environment),
+    )
+
+
+# ---------------------------------------------------------------------------------------------
 # create-environment
 # ---------------------------------------------------------------------------------------------
 
@@ -1090,6 +1203,8 @@ COMMANDS: tuple[tuple[str, Any], ...] = (
     ("can-i-deploy", can_i_deploy),
     ("record-deployment", record_deployment),
     ("record-release", record_release),
+    ("record-undeployment", record_undeployment),
+    ("record-support-ended", record_support_ended),
     ("create-environment", create_environment),
     ("create-webhook", create_webhook),
     ("verify", verify),

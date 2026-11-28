@@ -45638,9 +45638,151 @@ tr[data-selected="true"] > td:first-child {
   margin-inline-start: auto;
 }
 
-.penv-list__actions {
-  text-align: end;
-  white-space: nowrap;
+/* ===========================================================================
+   What-is-where board and history — PFX-8.13 (#7310). `.penv-facts` is the
+   one strip over the views (facts + Board / History); `.penv-board*` the
+   services × environments table, its verdict dots (`.penv-dot--ok|warn|
+   danger|neutral`), the "can go next" line and the legend; `.penv-timeline*`
+   the History view (it reuses `.lw-timeline`). Tokens only.
+   =========================================================================== */
+.penv-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.penv-facts__list {
+  margin: 0;
+}
+
+.penv-facts__views {
+  margin-inline-start: auto;
+}
+
+.penv-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: var(--r-full);
+  background: var(--neutral);
+}
+
+.penv-dot--ok {
+  background: var(--ok);
+}
+
+.penv-dot--warn {
+  background: var(--warn);
+}
+
+.penv-dot--danger {
+  background: var(--danger);
+}
+
+.penv-board__head,
+.penv-board__version,
+.penv-board__release,
+.penv-timeline__head {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.penv-board__cell {
+  vertical-align: top;
+}
+
+.penv-board__service {
+  font-weight: 600;
+}
+
+.penv-board__sub {
+  margin-block-start: var(--space-1);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.penv-board__next {
+  margin-block-start: var(--space-1);
+  font-size: var(--fs-xs);
+}
+
+.penv-board__next-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.penv-board__next-link svg {
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+  flex-shrink: 0;
+}
+
+.penv-board__next-link--ok {
+  color: var(--ok-fg);
+}
+
+.penv-board__next-link--danger {
+  color: var(--danger-fg);
+}
+
+.penv-board__next-link--neutral {
+  color: var(--fg-muted);
+}
+
+.penv-board__release {
+  display: flex;
+}
+
+.penv-board__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block-start: var(--space-3);
+}
+
+.penv-board__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.penv-board__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.penv-board__simulator {
+  font-size: var(--fs-xs);
+}
+
+.penv-timeline {
+  margin: 0 0 var(--space-3);
+  list-style: none;
+}
+
+.penv-supported__ticks {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 /* ===========================================================================

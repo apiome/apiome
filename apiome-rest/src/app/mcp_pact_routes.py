@@ -49,6 +49,7 @@ from .consumer_contract_store import actor_from_auth
 from .database import db
 from .pact_audit import record_pact_write
 from .pact_broker_routes import _http_error
+from .pact_deployments import verdict_when_recorded
 from .pact_environment import DeployedVersionRecord, parse_application_instance
 from .pact_environment_store import list_environments, record_deployment
 from .pact_matrix import (
@@ -633,6 +634,9 @@ def record_mcp_deployment(body: McpPactRecordDeploymentRequest) -> McpPactDeploy
             environments[0].id,
             instance,
             actor=actor_from_auth(auth_data, user_id),
+            recorded_verdict=verdict_when_recorded(
+                db, body.tenant_id, body.pacticipant, body.version, environments[0].id
+            ),
         )
     except _REFUSALS as exc:
         raise _http_error(exc) from exc
