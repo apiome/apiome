@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 117 operations."
+description: "REST endpoints tagged pact-broker: 123 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.707.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.708.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 117 operations
+Tag: `pact-broker` · 123 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2667,6 +2667,174 @@ Request body for import records from a pact broker or pactflow.
 | 413 | `pact-too-large`: the batch is over twice the pact size limit; send fewer records. | — |
 | 422 | `pact-migration-invalid`: the body is not `{"records": [...]}` or holds more than 100 records. A malformed *record* is answered `refused` instead. | — |
 
+## `GET /v1/tenants/{tenant_slug}/pact-migration/runs` {#list-migration-runs-v1-tenants-tenant-slug-pact-migration-runs-get}
+
+**List migration runs**
+
+The workspace's migration runs, newest first — the wizard's **Past migrations** drawer. Each carries its status, counts and choices; read one for its findings, failures and log. `can_migrate` says whether the caller may run one. Requires `pacts:view`.
+
+Operation id: `list_migration_runs_v1_tenants__tenant_slug__pact_migration_runs_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | The most runs to answer. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list migration runs. | `application/json` [`PactMigrationRunList`](#schema-pactmigrationrunlist) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-migration/runs` {#start-migration-run-v1-tenants-tenant-slug-pact-migration-runs-post}
+
+**Start a migration run**
+
+Run `apiome pact migrate` on the server (PFX-8.16). `mode: dry-run` reads the source and checks every record against the workspace, writing nothing — its counts fill the wizard's **Choose** step; `mode: copy` imports, honouring `options` (kinds, labels and tags, history depth, conflict policy). The answer is the run, `running`: poll `GET …/runs/{run_id}`. A copy skips what earlier copies from the same source imported unless `options.restart` is set, and importing a record twice changes nothing, so a run can be repeated. A workspace runs one migration at a time. The source is only read and its credentials are never stored. Requires `pacts:create` and `pacts:edit`.
+
+Operation id: `start_migration_run_v1_tenants__tenant_slug__pact_migration_runs_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for start a migration run.
+
+- `application/json` — [`StartPactMigrationRunRequest`](#schema-startpactmigrationrunrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 202 | Successful response for start a migration run. | `application/json` [`PactMigrationRunView`](#schema-pactmigrationrunview) |
+| 409 | `pact-migration-run-active`: the workspace already has a migration running. | — |
+| 422 | `pact-migration-run-invalid` (choices that cannot be honoured together, e.g. `versions: kept` without saved keep-rules) or a `pact-migration-source-*` code. | — |
+| 429 | `pact-migration-run-busy`: this server is running as many migrations as it may; try again. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}` {#read-migration-run-v1-tenants-tenant-slug-pact-migration-runs-run-id-get}
+
+**Read a migration run**
+
+One run: per-kind counts (copied, unchanged, skipped, failed — or exists / would-create for a dry run), everything the source holds that cannot be carried over (`findings`), every refused record with its reason (`failures`), and the log lines after `after`. Poll it while `status` is `running`. Requires `pacts:view`.
+
+Operation id: `read_migration_run_v1_tenants__tenant_slug__pact_migration_runs__run_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `run_id` | path | string | yes | Path parameter identifying the run id segment. |
+| `after` | query | integer | no | Only log lines numbered above this. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a migration run. | `application/json` [`PactMigrationRunView`](#schema-pactmigrationrunview) |
+| 404 | `pact-migration-run-not-found`: this workspace has no such run. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}/resume` {#resume-migration-run-v1-tenants-tenant-slug-pact-migration-runs-run-id-resume-post}
+
+**Resume a migration run**
+
+Set a stopped or failed copy running again, or retry the records a finished copy could not copy. The source is read again and everything the run already imported is skipped, so nothing is copied twice. The credentials are given again — they were never stored. Requires `pacts:create` and `pacts:edit`.
+
+Operation id: `resume_migration_run_v1_tenants__tenant_slug__pact_migration_runs__run_id__resume_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `run_id` | path | string | yes | Path parameter identifying the run id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for resume a migration run.
+
+- `application/json` — [`PactMigrationSourceCredentials`](#schema-pactmigrationsourcecredentials)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 202 | Successful response for resume a migration run. | `application/json` [`PactMigrationRunView`](#schema-pactmigrationrunview) |
+| 404 | `pact-migration-run-not-found`: this workspace has no such run. | — |
+| 409 | `pact-migration-run-active`: the workspace already has a migration running. | — |
+| 422 | `pact-migration-source-invalid` (the URL is not a public http(s) address), `pact-migration-source-refused` (the source refused the credentials) or `pact-migration-source-unreadable` (it could not be reached, or is not a Pact Broker). | — |
+| 429 | `pact-migration-run-busy`: this server is running as many migrations as it may; try again. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}/stop` {#stop-migration-run-v1-tenants-tenant-slug-pact-migration-runs-run-id-stop-post}
+
+**Stop a migration run**
+
+Ask a running migration to stop. It does before its next batch: what was copied stays, and `…/resume` carries on where it stopped. Stopping a run that is not running changes nothing. Requires `pacts:edit`.
+
+Operation id: `stop_migration_run_v1_tenants__tenant_slug__pact_migration_runs__run_id__stop_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `run_id` | path | string | yes | Path parameter identifying the run id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for stop a migration run. | `application/json` [`PactMigrationRunView`](#schema-pactmigrationrunview) |
+| 404 | `pact-migration-run-not-found`: this workspace has no such run. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-migration/test` {#test-migration-source-v1-tenants-tenant-slug-pact-migration-test-post}
+
+**Test the connection to a source broker**
+
+Sign in to a Pact Broker or PactFlow with the credentials given and count its pacticipants — the wizard's **Test connection** (PFX-8.16). The source is only read; nothing is stored, the credentials included; the audit trail records that the source was reached, not what was sent. Requires `pacts:create` and `pacts:edit`.
+
+Operation id: `test_migration_source_v1_tenants__tenant_slug__pact_migration_test_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for test the connection to a source broker.
+
+- `application/json` — [`PactMigrationSourceRequest`](#schema-pactmigrationsourcerequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for test the connection to a source broker. | `application/json` [`PactMigrationSourceTestResult`](#schema-pactmigrationsourcetestresult) |
+| 422 | `pact-migration-source-invalid` (the URL is not a public http(s) address), `pact-migration-source-refused` (the source refused the credentials) or `pact-migration-source-unreadable` (it could not be reached, or is not a Pact Broker). | — |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-postman-collections` {#export-pact-postman-collection-v1-tenants-tenant-slug-pact-postman-collections-post}
 
 **Export a pact as a Postman collection**
@@ -3913,6 +4081,76 @@ What ``GET /v1/tenants/{tenant}/pact-integrations`` answers.
 | `omitted_integrations` | integer | no | How many pairs were left out when truncated. |
 | `mine_available` | boolean | no | False for a credential with no user (no `mine` filter). |
 
+### `PactMigrationRunList` {#schema-pactmigrationrunlist}
+
+The workspace's migration runs.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `runs` | array of [`PactMigrationRunView`](#schema-pactmigrationrunview) | yes | Newest first, without findings, failures or log. |
+| `can_migrate` | boolean | no | Whether the caller may test a source and start, stop or resume a run (`pacts:create` and `pacts:edit`). |
+
+### `PactMigrationRunView` {#schema-pactmigrationrunview}
+
+A migration run, as the wizard and the **Past migrations** drawer read it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `source` | string | yes | The source broker's base URL. |
+| `host` | string | yes | Its host, for display. |
+| `auth_kind` | string | yes | `token`, `basic` or `none` — what a resume must be given again. |
+| `mode` | string | yes | `dry-run` (nothing written) or `copy`. |
+| `status` | string | yes | `running`, `completed`, `stopped` or `failed`. |
+| `phase` | string | yes | `reading`, the record kind being copied, or `done`. |
+| `percent` | integer | yes | Records dealt with, of those the source returned (0 while it is being read). |
+| `options` | `PactMigrationRunOptions` | yes | Options. |
+| `kinds` | array of `PactMigrationKindProgress` | yes | The chosen kinds, in copying order. |
+| `facts` | object | yes | What the run learned: `product`, `cleanup_rules_set`, and — from a dry run — `cleanup_would_skip` (versions the keep-rules would leave behind), `results_not_latest` and `labels_and_tags` (how many the source has). |
+| `findings` | array of `PactMigrationRunFinding` | no | Findings. |
+| `failures` | array of `PactMigrationRunFailure` | no | Failures. |
+| `failures_dropped` | integer | no | Refused records counted but not listed. |
+| `log` | array of `PactMigrationRunLogLine` | no | Log lines after `after`. |
+| `log_seq` | integer | no | The number of the newest log line. |
+| `error` | string or null | no | Why a run failed, or how it came to be stopped. |
+| `stop_requested` | boolean | no | Stop Requested. |
+| `can_resume` | boolean | yes | Whether it can be set running again (given the credentials). |
+| `started_by` | string or null | no | Started By. |
+| `created_at` | string or null | no | Creation timestamp (ISO 8601). |
+| `finished_at` | string or null | no | Finished At timestamp (ISO 8601). |
+| `not_read` | array of string | no | What a migration never reads from a source. |
+
+### `PactMigrationSourceCredentials` {#schema-pactmigrationsourcecredentials}
+
+How to sign in to the source. Used for this request's run only; never stored.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `token` | string (password) or null | no | A bearer token for the source; a read-only one is enough. Never stored. |
+| `username` | string or null | no | Basic-auth user of an open-source broker without tokens. |
+| `password` | string (password) or null | no | Basic-auth password. Never stored. |
+
+### `PactMigrationSourceRequest` {#schema-pactmigrationsourcerequest}
+
+A source broker and how to sign in to it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `token` | string (password) or null | no | A bearer token for the source; a read-only one is enough. Never stored. |
+| `username` | string or null | no | Basic-auth user of an open-source broker without tokens. |
+| `password` | string (password) or null | no | Basic-auth password. Never stored. |
+| `source` | string | yes | The source's base URL, e.g. `https://acme.pactflow.io` (no credentials in it). |
+
+### `PactMigrationSourceTestResult` {#schema-pactmigrationsourcetestresult}
+
+What **Test connection** found.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `host` | string | yes | The source's host. |
+| `product` | string | yes | `PactFlow` or `Pact Broker`. |
+| `pacticipants` | integer | yes | Pacticipants the source lists. |
+
 ### `PactPairHealthDetail` {#schema-pactpairhealthdetail}
 
 One pair's health with its trend.
@@ -4146,6 +4384,19 @@ Attributes:
 | `value_updated_at` | string or null | no | Value Updated At timestamp (ISO 8601). |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
+
+### `StartPactMigrationRunRequest` {#schema-startpactmigrationrunrequest}
+
+A run to start.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `token` | string (password) or null | no | A bearer token for the source; a read-only one is enough. Never stored. |
+| `username` | string or null | no | Basic-auth user of an open-source broker without tokens. |
+| `password` | string (password) or null | no | Basic-auth password. Never stored. |
+| `source` | string | yes | The source's base URL, e.g. `https://acme.pactflow.io` (no credentials in it). |
+| `mode` | enum `"dry-run"`, `"copy"` | no | `dry-run` reads and checks and writes nothing; `copy` imports. |
+| `options` | `PactMigrationRunOptions` | no | What to copy and how. |
 
 ### `StateCheckRequest` {#schema-statecheckrequest}
 

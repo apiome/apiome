@@ -317,6 +317,17 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
+    // PFX-8.16 (#7313): the Migration wizard on Choose (a finished dry run) and on Copy (a running
+    // copy with two failures), dumped by `tests/pact-migrate-wizard-ui.test.tsx`.
+    id: 'pact-migrate',
+    mockup: 'contracts/migrate.html',
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-migrate-choose.html', 'pact-migrate-copy.html'],
+    },
+  },
+  {
     // PFX-8.15 (#7312): Contracts settings → Secrets, CI and commit statuses, Agents, dumped by
     // `tests/pact-settings-tabs-ui.test.tsx`.
     id: 'pact-settings-tabs',

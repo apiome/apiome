@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.884.0] - 2026-11-30
+
+### Added
+- **Migration runs: `apiome pact migrate` on the server (PFX-8.16, #7313).** OpenAPI 1.708.0; apiome-db V458
+  (`pact_migration_run`, `pact_migration_run_done`). The Migration wizard's server side: apiome-rest reads the
+  source broker itself and runs the PFX-6.7 import as a job whose state any worker answers for.
+  - `POST /v1/tenants/{t}/pact-migration/test` — sign in to a Pact Broker or PactFlow and count its pacticipants.
+    Nothing is stored. `pacts:create` and `pacts:edit`; audited as `pacts.migration.source.test`.
+  - `POST …/pact-migration/runs` (202) — start a run: `mode: dry-run` reads and checks everything and writes
+    nothing; `mode: copy` imports, honouring `options`: `kinds`, `labels_and_tags`, `results` (`all` / `latest` /
+    `none`), `versions` (`all` / `kept` — only what the workspace's clean-up rules would keep, with the pacts and
+    results of a version left behind), `conflicts` (`keep` / `replace`), `restart`, `matrix_limit`, `batch_bytes`.
+    A workspace runs one migration at a time (`409 pact-migration-run-active`); choices that cannot be honoured
+    are `422 pact-migration-run-invalid`. Audited as `pacts.migration.run.start`.
+  - `GET …/pact-migration/runs` — the runs, newest first, and `can_migrate`. `GET …/runs/{id}?after=` — one run:
+    per-kind counts (copied, unchanged, skipped, failed; exists / would-create for a dry run), `findings`
+    (everything not portable), `failures` (every refused record with its code and reason), the log after the
+    cursor, and what a dry run learned (`cleanup_would_skip`, `results_not_latest`, `labels_and_tags`). `pacts:view`.
+  - `POST …/runs/{id}/stop` — stop before the next batch (`pacts:edit`). `POST …/runs/{id}/resume` (202) — set a
+    stopped or failed copy running again, or retry what a finished one could not copy; the run skips every record
+    it (or an earlier copy from the same source) imported, so nothing is copied twice.
+  - **The source is only read, and its credentials are never stored.** Only `GET` is sent; a link the source
+    returns is followed on the source's own host; the token or password lives in the request and the job's memory
+    — there is no column for it, and a resume is given it again. The source URL must be a public http(s) address
+    (`422 pact-migration-source-invalid`); a refused sign-in is `pact-migration-source-refused`.
+  - A run whose worker goes away is closed as `stopped` after three minutes without a heartbeat and can be resumed.
+
+### Changed
+- `import_records` takes `replace_conflicts`: with it, the source's pact or current deployment takes the place of a
+  different one Apiome records (the run option `conflicts: replace`). `POST …/pact-migration/import` and
+  `apiome pact migrate` are unchanged — a conflict is still refused there — and a verification result is never
+  replaced.
+
 ## [1.883.0] - 2026-11-30
 
 ### Added

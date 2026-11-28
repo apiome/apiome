@@ -21,6 +21,7 @@ import { SETTINGS_ROUTE } from '@lib/pact-remediation';
 import { PUBLISH_ROUTE } from '@lib/pact-publish-page';
 import { PROVIDER_CONTRACT_ROUTE } from '@lib/pact-provider-contract';
 import { VERIFY_RUN_ROUTE } from '@lib/pact-verify-run';
+import { MIGRATE_ROUTE } from '@lib/pact-migration';
 
 // --- types ------------------------------------------------------------------------------------------
 
@@ -586,7 +587,7 @@ export const WAYS_IN: readonly WayInGroup[] = [
         id: 'migrate',
         title: 'Migrate from a broker',
         description: 'Pact Broker or PactFlow, read-only at the source.',
-        command: 'apiome pact migrate --from https://broker.example.com --token "$PACT_BROKER_TOKEN" --dry-run',
+        route: MIGRATE_ROUTE,
       },
       {
         id: 'settings',

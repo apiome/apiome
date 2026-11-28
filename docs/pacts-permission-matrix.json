@@ -713,6 +713,56 @@
           }
         ]
       }
+    },
+    {
+      "id": "migration.source.test",
+      "label": "Test the connection to a source broker",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-migration/test",
+      "audit": "pacts.migration.source.test",
+      "auditedBy": "route",
+      "body": {
+        "source": "https://broker.example.com",
+        "token": "read-token"
+      },
+      "note": "Stores nothing, but the server reaches the source on the caller's word, so it needs what a migration needs (pacts:create and pacts:edit) and is audited."
+    },
+    {
+      "id": "migration.run.start",
+      "label": "Start a migration run (the Migration wizard)",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-migration/runs",
+      "audit": "pacts.migration.run.start",
+      "auditedBy": "route",
+      "body": {
+        "source": "https://broker.example.com",
+        "token": "read-token"
+      },
+      "note": "Also needs pacts:edit, like the import it runs. A dry run writes nothing but reaches the source from the server, so it needs the same."
+    },
+    {
+      "id": "migration.run.stop",
+      "label": "Stop a migration run",
+      "permission": "pacts:edit",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-migration/runs/{run}/stop",
+      "audit": "pacts.migration.run.stop",
+      "auditedBy": "route"
+    },
+    {
+      "id": "migration.run.resume",
+      "label": "Resume a migration run",
+      "permission": "pacts:create",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-migration/runs/{run}/resume",
+      "audit": "pacts.migration.run.resume",
+      "auditedBy": "route",
+      "body": {
+        "token": "read-token"
+      },
+      "note": "Also needs pacts:edit."
     }
   ],
   "reads": [

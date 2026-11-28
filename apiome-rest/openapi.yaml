@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.707.0
+  version: 1.708.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -36316,6 +36316,445 @@ paths:
                 created_at: '2025-03-01T09:31:00Z'
         description: Request body for check records from a pact broker or pactflow (dry
           run).
+  /v1/tenants/{tenant_slug}/pact-migration/test:
+    post:
+      tags:
+      - pact-broker
+      summary: Test the connection to a source broker
+      description: Sign in to a Pact Broker or PactFlow with the credentials given and
+        count its pacticipants — the wizard's **Test connection** (PFX-8.16). The source
+        is only read; nothing is stored, the credentials included; the audit trail records
+        that the source was reached, not what was sent. Requires `pacts:create` and
+        `pacts:edit`.
+      operationId: test_migration_source_v1_tenants__tenant_slug__pact_migration_test_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Testtheconnectiontoasourcebrokerauthorization schema.
+          - type: 'null'
+            description: Testtheconnectiontoasourcebrokerauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Testtheconnectiontoasourcebroker Xapikey schema.
+          - type: 'null'
+            description: Testtheconnectiontoasourcebroker Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PactMigrationSourceRequest'
+              description: Request body for testtheconnectiontoasourcebrokerrequest.
+        description: Request body for test the connection to a source broker.
+      responses:
+        '200':
+          description: Successful response for test the connection to a source broker.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactMigrationSourceTestResult'
+                description: Response payload for testtheconnectiontoasourcebrokerresponse200.
+        '422':
+          description: '`pact-migration-source-invalid` (the URL is not a public http(s)
+            address), `pact-migration-source-refused` (the source refused the credentials)
+            or `pact-migration-source-unreadable` (it could not be reached, or is not
+            a Pact Broker).'
+  /v1/tenants/{tenant_slug}/pact-migration/runs:
+    post:
+      tags:
+      - pact-broker
+      summary: Start a migration run
+      description: 'Run `apiome pact migrate` on the server (PFX-8.16). `mode: dry-run`
+        reads the source and checks every record against the workspace, writing nothing
+        — its counts fill the wizard''s **Choose** step; `mode: copy` imports, honouring
+        `options` (kinds, labels and tags, history depth, conflict policy). The answer
+        is the run, `running`: poll `GET …/runs/{run_id}`. A copy skips what earlier
+        copies from the same source imported unless `options.restart` is set, and importing
+        a record twice changes nothing, so a run can be repeated. A workspace runs one
+        migration at a time. The source is only read and its credentials are never stored.
+        Requires `pacts:create` and `pacts:edit`.'
+      operationId: start_migration_run_v1_tenants__tenant_slug__pact_migration_runs_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Startamigrationrunauthorization schema.
+          - type: 'null'
+            description: Startamigrationrunauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Startamigrationrun Xapikey schema.
+          - type: 'null'
+            description: Startamigrationrun Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartPactMigrationRunRequest'
+              description: Request body for startamigrationrunrequest.
+        description: Request body for start a migration run.
+      responses:
+        '202':
+          description: Successful response for start a migration run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactMigrationRunView'
+                description: Response payload for startamigrationrunresponse202.
+        '422':
+          description: '`pact-migration-run-invalid` (choices that cannot be honoured
+            together, e.g. `versions: kept` without saved keep-rules) or a `pact-migration-source-*`
+            code.'
+        '409':
+          description: '`pact-migration-run-active`: the workspace already has a migration
+            running.'
+        '429':
+          description: '`pact-migration-run-busy`: this server is running as many migrations
+            as it may; try again.'
+    get:
+      tags:
+      - pact-broker
+      summary: List migration runs
+      description: The workspace's migration runs, newest first — the wizard's **Past
+        migrations** drawer. Each carries its status, counts and choices; read one for
+        its findings, failures and log. `can_migrate` says whether the caller may run
+        one. Requires `pacts:view`.
+      operationId: list_migration_runs_v1_tenants__tenant_slug__pact_migration_runs_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: The most runs to answer.
+          default: 50
+          title: Limit
+        description: The most runs to answer.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listmigrationrunsauthorization schema.
+          - type: 'null'
+            description: Listmigrationrunsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listmigrationruns Xapikey schema.
+          - type: 'null'
+            description: Listmigrationruns Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list migration runs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactMigrationRunList'
+                description: Response payload for listmigrationrunsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listmigrationrunsresponse422.
+  /v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}:
+    get:
+      tags:
+      - pact-broker
+      summary: Read a migration run
+      description: 'One run: per-kind counts (copied, unchanged, skipped, failed — or
+        exists / would-create for a dry run), everything the source holds that cannot
+        be carried over (`findings`), every refused record with its reason (`failures`),
+        and the log lines after `after`. Poll it while `status` is `running`. Requires
+        `pacts:view`.'
+      operationId: read_migration_run_v1_tenants__tenant_slug__pact_migration_runs__run_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+          description: Run Id schema.
+        description: Path parameter identifying the run id segment.
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          description: Only log lines numbered above this.
+          default: 0
+          title: After
+        description: Only log lines numbered above this.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readamigrationrunauthorization schema.
+          - type: 'null'
+            description: Readamigrationrunauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readamigrationrun Xapikey schema.
+          - type: 'null'
+            description: Readamigrationrun Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read a migration run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactMigrationRunView'
+                description: Response payload for readamigrationrunresponse200.
+        '404':
+          description: '`pact-migration-run-not-found`: this workspace has no such run.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readamigrationrunresponse422.
+  /v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}/stop:
+    post:
+      tags:
+      - pact-broker
+      summary: Stop a migration run
+      description: 'Ask a running migration to stop. It does before its next batch:
+        what was copied stays, and `…/resume` carries on where it stopped. Stopping
+        a run that is not running changes nothing. Requires `pacts:edit`.'
+      operationId: stop_migration_run_v1_tenants__tenant_slug__pact_migration_runs__run_id__stop_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+          description: Run Id schema.
+        description: Path parameter identifying the run id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Stopamigrationrunauthorization schema.
+          - type: 'null'
+            description: Stopamigrationrunauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Stopamigrationrun Xapikey schema.
+          - type: 'null'
+            description: Stopamigrationrun Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for stop a migration run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactMigrationRunView'
+                description: Response payload for stopamigrationrunresponse200.
+        '404':
+          description: '`pact-migration-run-not-found`: this workspace has no such run.'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for stopamigrationrunresponse422.
+  /v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}/resume:
+    post:
+      tags:
+      - pact-broker
+      summary: Resume a migration run
+      description: Set a stopped or failed copy running again, or retry the records
+        a finished copy could not copy. The source is read again and everything the
+        run already imported is skipped, so nothing is copied twice. The credentials
+        are given again — they were never stored. Requires `pacts:create` and `pacts:edit`.
+      operationId: resume_migration_run_v1_tenants__tenant_slug__pact_migration_runs__run_id__resume_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Run Id
+          description: Run Id schema.
+        description: Path parameter identifying the run id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Resumeamigrationrunauthorization schema.
+          - type: 'null'
+            description: Resumeamigrationrunauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Resumeamigrationrun Xapikey schema.
+          - type: 'null'
+            description: Resumeamigrationrun Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PactMigrationSourceCredentials'
+              description: Request body for resumeamigrationrunrequest.
+        description: Request body for resume a migration run.
+      responses:
+        '202':
+          description: Successful response for resume a migration run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PactMigrationRunView'
+                description: Response payload for resumeamigrationrunresponse202.
+        '404':
+          description: '`pact-migration-run-not-found`: this workspace has no such run.'
+        '422':
+          description: '`pact-migration-source-invalid` (the URL is not a public http(s)
+            address), `pact-migration-source-refused` (the source refused the credentials)
+            or `pact-migration-source-unreadable` (it could not be reached, or is not
+            a Pact Broker).'
+        '409':
+          description: '`pact-migration-run-active`: the workspace already has a migration
+            running.'
+        '429':
+          description: '`pact-migration-run-busy`: this server is running as many migrations
+            as it may; try again.'
   /v1/tenants/{tenant_slug}/pact-migration/import:
     post:
       tags:
@@ -227203,6 +227642,560 @@ components:
         \ deployed or released (at most :data:`MAX_NAMES`).\n    blocked: Whether the\
         \ delete is refused now (a version is in use).\n    grace_days: Days the delete\
         \ can be undone before it is purged."
+    PactMigrationKindProgress:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: The record kind.
+          example: example
+        total:
+          type: integer
+          title: Total
+          description: Records of this kind the source returned.
+          default: 0
+          example: 1
+        done:
+          type: integer
+          title: Done
+          description: Records dealt with so far, whatever the outcome.
+          default: 0
+          example: 1
+        copied:
+          type: integer
+          title: Copied
+          description: Created or updated in Apiome.
+          default: 0
+          example: 1
+        unchanged:
+          type: integer
+          title: Unchanged
+          description: Already in Apiome exactly as the source has them.
+          default: 0
+          example: 1
+        skipped:
+          type: integer
+          title: Skipped
+          description: Left behind by a choice, copied by an earlier run, or kept as Apiome
+            has them.
+          default: 0
+          example: 1
+        failed:
+          type: integer
+          title: Failed
+          description: Refused; each is listed in `failures` with its reason.
+          default: 0
+          example: 1
+        exists:
+          type: integer
+          title: Exists
+          description: 'Dry run: already in Apiome.'
+          default: 0
+          example: 1
+        would_create:
+          type: integer
+          title: Would Create
+          description: 'Dry run: would be created.'
+          default: 0
+          example: 1
+      type: object
+      required:
+      - kind
+      title: PactMigrationKindProgress
+      description: One record kind of a run.
+    PactMigrationRunFailure:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: Kind.
+          example: example
+        key:
+          type: string
+          title: Key
+          description: The record's key at the source, without its kind.
+          example: example
+        code:
+          type: string
+          title: Code
+          description: Code.
+          example: example
+        message:
+          type: string
+          title: Message
+          description: Message.
+          example: Example validation message.
+      type: object
+      required:
+      - kind
+      - key
+      - code
+      - message
+      title: PactMigrationRunFailure
+      description: A refused record.
+    PactMigrationRunFinding:
+      properties:
+        kind:
+          type: string
+          title: Kind
+          description: Kind.
+          example: example
+        subject:
+          type: string
+          title: Subject
+          description: Subject.
+          example: example
+        detail:
+          type: string
+          title: Detail
+          description: Detail.
+          example: example
+      type: object
+      required:
+      - kind
+      - subject
+      - detail
+      title: PactMigrationRunFinding
+      description: Something the source holds that cannot be carried over as it is.
+    PactMigrationRunList:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/PactMigrationRunView'
+          type: array
+          title: Runs
+          description: Newest first, without findings, failures or log.
+          maxItems: 1000
+        can_migrate:
+          type: boolean
+          title: Can Migrate
+          description: Whether the caller may test a source and start, stop or resume
+            a run (`pacts:create` and `pacts:edit`).
+          default: false
+          example: false
+      type: object
+      required:
+      - runs
+      title: PactMigrationRunList
+      description: The workspace's migration runs.
+    PactMigrationRunLogLine:
+      properties:
+        seq:
+          type: integer
+          title: Seq
+          description: Its number; pass the last one seen as `after` to read only newer
+            lines.
+          example: 1
+        text:
+          type: string
+          title: Text
+          description: Text.
+          example: example
+      type: object
+      required:
+      - seq
+      - text
+      title: PactMigrationRunLogLine
+      description: One log line.
+    PactMigrationRunOptions:
+      properties:
+        kinds:
+          items:
+            type: string
+          type: array
+          title: Kinds
+          description: 'The record kinds to copy: `pacticipant`, `environment`, `version`,
+            `pact`, `verification`, `deployment`, `release`, `webhook`. All by default.'
+          maxItems: 1000
+        labels_and_tags:
+          type: boolean
+          title: Labels And Tags
+          description: 'Copy pacticipant labels and version tags. Off: both are left behind.'
+          default: true
+          example: false
+        results:
+          type: string
+          enum:
+          - all
+          - latest
+          - none
+          title: Results
+          description: 'Verification results to copy: every one, the latest of each pact,
+            or none.'
+          default: all
+          example: all
+        versions:
+          type: string
+          enum:
+          - all
+          - kept
+          title: Versions
+          description: 'Versions to copy: every one, or only those the workspace''s clean-up
+            rules would keep (`kept` needs saved keep-rules and `version` among `kinds`).'
+          default: all
+          example: all
+        conflicts:
+          type: string
+          enum:
+          - keep
+          - replace
+          title: Conflicts
+          description: 'When Apiome already records a pact or a current deployment differently:
+            `keep` Apiome''s (the record is skipped) or `replace` it with the source''s.
+            A verification result is never replaced.'
+          default: keep
+          example: keep
+        restart:
+          type: boolean
+          title: Restart
+          description: Ignore what earlier runs from this source imported and send everything.
+          default: false
+          example: false
+        matrix_limit:
+          type: integer
+          maximum: 100000.0
+          minimum: 1.0
+          title: Matrix Limit
+          description: Matrix rows read per integration.
+          default: 1000
+          example: 50
+        batch_bytes:
+          type: integer
+          maximum: 33554432.0
+          minimum: 1024.0
+          title: Batch Bytes
+          description: About how many bytes of records are written at a time.
+          default: 4194304
+          example: 1024
+      additionalProperties: false
+      type: object
+      title: PactMigrationRunOptions
+      description: What the wizard's **Choose** step (and the command's flags) decide.
+    PactMigrationRunView:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        source:
+          type: string
+          title: Source
+          description: The source broker's base URL.
+          example: human
+        host:
+          type: string
+          title: Host
+          description: Its host, for display.
+          example: example
+        auth_kind:
+          type: string
+          title: Auth Kind
+          description: '`token`, `basic` or `none` — what a resume must be given again.'
+          example: example
+        mode:
+          type: string
+          title: Mode
+          description: '`dry-run` (nothing written) or `copy`.'
+          example: example
+        status:
+          type: string
+          title: Status
+          description: '`running`, `completed`, `stopped` or `failed`.'
+          example: active
+        phase:
+          type: string
+          title: Phase
+          description: '`reading`, the record kind being copied, or `done`.'
+          example: example
+        percent:
+          type: integer
+          title: Percent
+          description: Records dealt with, of those the source returned (0 while it is
+            being read).
+          example: 100
+        options:
+          $ref: '#/components/schemas/PactMigrationRunOptions'
+          description: Options.
+        kinds:
+          items:
+            $ref: '#/components/schemas/PactMigrationKindProgress'
+          type: array
+          title: Kinds
+          description: The chosen kinds, in copying order.
+          maxItems: 1000
+        facts:
+          additionalProperties: true
+          type: object
+          title: Facts
+          description: 'What the run learned: `product`, `cleanup_rules_set`, and — from
+            a dry run — `cleanup_would_skip` (versions the keep-rules would leave behind),
+            `results_not_latest` and `labels_and_tags` (how many the source has).'
+        findings:
+          items:
+            $ref: '#/components/schemas/PactMigrationRunFinding'
+          type: array
+          title: Findings
+          description: Findings.
+          maxItems: 1000
+        failures:
+          items:
+            $ref: '#/components/schemas/PactMigrationRunFailure'
+          type: array
+          title: Failures
+          description: Failures.
+          maxItems: 1000
+        failures_dropped:
+          type: integer
+          title: Failures Dropped
+          description: Refused records counted but not listed.
+          default: 0
+          example: 1
+        log:
+          items:
+            $ref: '#/components/schemas/PactMigrationRunLogLine'
+          type: array
+          title: Log
+          description: Log lines after `after`.
+          maxItems: 1000
+        log_seq:
+          type: integer
+          title: Log Seq
+          description: The number of the newest log line.
+          default: 0
+          example: 1
+        error:
+          anyOf:
+          - type: string
+            description: Pact Migration Run View schema.
+          - type: 'null'
+            description: Pact Migration Run View schema.
+          title: Error
+          description: Why a run failed, or how it came to be stopped.
+        stop_requested:
+          type: boolean
+          title: Stop Requested
+          default: false
+          description: Stop Requested.
+          example: false
+        can_resume:
+          type: boolean
+          title: Can Resume
+          description: Whether it can be set running again (given the credentials).
+          example: false
+        started_by:
+          anyOf:
+          - type: string
+            description: Pact Migration Run View schema.
+          - type: 'null'
+            description: Pact Migration Run View schema.
+          title: Started By
+          description: Started By.
+        created_at:
+          anyOf:
+          - type: string
+            description: Pact Migration Run View schema.
+          - type: 'null'
+            description: Pact Migration Run View schema.
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+        finished_at:
+          anyOf:
+          - type: string
+            description: Pact Migration Run View schema.
+          - type: 'null'
+            description: Pact Migration Run View schema.
+          title: Finished At
+          description: Finished At timestamp (ISO 8601).
+        not_read:
+          items:
+            type: string
+          type: array
+          title: Not Read
+          description: What a migration never reads from a source.
+          maxItems: 1000
+      type: object
+      required:
+      - id
+      - source
+      - host
+      - auth_kind
+      - mode
+      - status
+      - phase
+      - percent
+      - options
+      - kinds
+      - facts
+      - can_resume
+      title: PactMigrationRunView
+      description: A migration run, as the wizard and the **Past migrations** drawer read
+        it.
+    PactMigrationSourceCredentials:
+      properties:
+        token:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Pact Migration Source Credentials schema.
+          - type: 'null'
+            description: Pact Migration Source Credentials schema.
+          title: Token
+          description: A bearer token for the source; a read-only one is enough. Never
+            stored.
+        username:
+          anyOf:
+          - type: string
+            maxLength: 512
+            description: Pact Migration Source Credentials schema.
+          - type: 'null'
+            description: Pact Migration Source Credentials schema.
+          title: Username
+          description: Basic-auth user of an open-source broker without tokens.
+        password:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Pact Migration Source Credentials schema.
+          - type: 'null'
+            description: Pact Migration Source Credentials schema.
+          title: Password
+          description: Basic-auth password. Never stored.
+      additionalProperties: false
+      type: object
+      title: PactMigrationSourceCredentials
+      description: How to sign in to the source. Used for this request's run only; never
+        stored.
+    PactMigrationSourceRequest:
+      properties:
+        token:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Request body for pact migration source.
+          - type: 'null'
+            description: Request body for pact migration source.
+          title: Token
+          description: A bearer token for the source; a read-only one is enough. Never
+            stored.
+        username:
+          anyOf:
+          - type: string
+            maxLength: 512
+            description: Request body for pact migration source.
+          - type: 'null'
+            description: Request body for pact migration source.
+          title: Username
+          description: Basic-auth user of an open-source broker without tokens.
+        password:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Request body for pact migration source.
+          - type: 'null'
+            description: Request body for pact migration source.
+          title: Password
+          description: Basic-auth password. Never stored.
+        source:
+          type: string
+          maxLength: 2048
+          minLength: 1
+          title: Source
+          description: The source's base URL, e.g. `https://acme.pactflow.io` (no credentials
+            in it).
+          example: human
+      additionalProperties: false
+      type: object
+      required:
+      - source
+      title: PactMigrationSourceRequest
+      description: A source broker and how to sign in to it.
+    PactMigrationSourceTestResult:
+      properties:
+        host:
+          type: string
+          title: Host
+          description: The source's host.
+          example: example
+        product:
+          type: string
+          title: Product
+          description: '`PactFlow` or `Pact Broker`.'
+          example: example
+        pacticipants:
+          type: integer
+          title: Pacticipants
+          description: Pacticipants the source lists.
+          example: 1
+      type: object
+      required:
+      - host
+      - product
+      - pacticipants
+      title: PactMigrationSourceTestResult
+      description: What **Test connection** found.
+    StartPactMigrationRunRequest:
+      properties:
+        token:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Request body for start pact migration run.
+          - type: 'null'
+            description: Request body for start pact migration run.
+          title: Token
+          description: A bearer token for the source; a read-only one is enough. Never
+            stored.
+        username:
+          anyOf:
+          - type: string
+            maxLength: 512
+            description: Request body for start pact migration run.
+          - type: 'null'
+            description: Request body for start pact migration run.
+          title: Username
+          description: Basic-auth user of an open-source broker without tokens.
+        password:
+          anyOf:
+          - type: string
+            format: password
+            writeOnly: true
+            description: Request body for start pact migration run.
+          - type: 'null'
+            description: Request body for start pact migration run.
+          title: Password
+          description: Basic-auth password. Never stored.
+        source:
+          type: string
+          maxLength: 2048
+          minLength: 1
+          title: Source
+          description: The source's base URL, e.g. `https://acme.pactflow.io` (no credentials
+            in it).
+          example: human
+        mode:
+          type: string
+          enum:
+          - dry-run
+          - copy
+          title: Mode
+          description: '`dry-run` reads and checks and writes nothing; `copy` imports.'
+          default: dry-run
+          example: dry-run
+        options:
+          $ref: '#/components/schemas/PactMigrationRunOptions'
+          description: What to copy and how.
+      additionalProperties: false
+      type: object
+      required:
+      - source
+      title: StartPactMigrationRunRequest
+      description: A run to start.
   securitySchemes:
     Bearer:
       type: http
