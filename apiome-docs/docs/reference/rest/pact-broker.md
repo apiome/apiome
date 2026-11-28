@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.706.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.707.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 117 operations
 
@@ -4127,6 +4127,9 @@ Attributes:
     description: What it is for.
     reference: How a webhook template writes it: ``${user.<name>}``.
     used_by: The webhooks and targets that refer to it.
+    has_value: ``False`` for a secret created without one (a migrated webhook's redacted secret);
+        nothing that refers to it can be sent until a value is set.
+    origin: ``migration`` when ``apiome pact migrate`` created it; ``None`` for one a person created.
     value_updated_at: When the value was last set (created or rotated).
     created_at: When it was created.
     updated_at: When it was last changed.
@@ -4138,6 +4141,8 @@ Attributes:
 | `description` | string or null | no | Free-text description. |
 | `reference` | string | yes | Reference. |
 | `used_by` | `SecretUsage` | no | Used By. |
+| `has_value` | boolean | no | `false`: created without a value; set one to use it. |
+| `origin` | string or null | no | `migration` when `apiome pact migrate` created it. |
 | `value_updated_at` | string or null | no | Value Updated At timestamp (ISO 8601). |
 | `created_at` | string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string or null | no | Last update timestamp (ISO 8601). |

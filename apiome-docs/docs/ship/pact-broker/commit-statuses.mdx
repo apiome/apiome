@@ -56,8 +56,27 @@ Statuses go to repositories on `github.com` and `gitlab.com`.
 A failed verification of a [pending pact](./pending-and-wip.mdx) is still reported as a failure on
 the commit. The pending rule only decides whether the verifier's own exit code fails the build.
 
-[Bi-directional](./bi-directional.mdx) verdicts don't post a commit status yet. They are in the
-matrix and in `can-i-deploy` as usual.
+A [bi-directional](./bi-directional.mdx) verdict posts its statuses only when **For bi-directional
+verdicts too** is on (it is off by default). It then also fires its `provider_verification_*`
+[webhooks](./webhooks.mdx), as a published verification does. Either way the verdict is in the
+matrix and in `can-i-deploy`.
+
+## Choose which statuses are written
+
+In **Contracts**, click **Settings**, then the **CI and commit statuses** tab.
+
+<Screenshot id="pact-settings-ci" alt="The CI and commit statuses tab: three switches (on the consumer's commit and on the provider's commit on, for bi-directional verdicts too off) with Save switches; pipeline recipes for GitHub Actions, GitLab CI, Jenkins and Azure Pipelines; and the broker address with PACT_BROKER_BASE_URL and PACT_BROKER_TOKEN." />
+
+1. Turn **On the consumer's commit** and **On the provider's commit** on or off. Both are on by
+   default.
+2. Turn on **For bi-directional verdicts too** to give spec comparisons statuses and webhooks.
+3. Click **Save switches**.
+
+A status a switch keeps off is still recorded, with the outcome `suppressed` and the reason
+`pact-status-switched-off`, so the list says why the commit has none. The switches need the
+Contracts admin permission (`pacts:delete`); everyone else sees them read-only. The same request
+from a script is `PUT /v1/tenants/{tenant}/pact-contract-settings/commit-statuses` with
+`{"consumer_commit": true, "provider_commit": true, "bidirectional": true}`.
 
 ## When a status isn't sent
 
@@ -73,6 +92,7 @@ with the reason:
 | `check-provider-forbidden` | No stored credential, or the provider refused the account | Re-link the account, or give it write access |
 | `check-provider-unavailable` | The provider could not be reached, or rate-limited the request | Retry |
 | `check-publishing-disabled` | Status publishing is off for this deployment (`APIOME_PROVIDER_CHECKS_ENABLED=false`) | Ask your administrator |
+| `pact-status-switched-off` | The workspace switched this kind of status off | Turn it on in [**Settings** → **CI and commit statuses**](#choose-which-statuses-are-written) |
 
 A status that was never attempted has the outcome `suppressed`. One that the provider refused or
 could not take has the outcome `failed`. A problem with a status never fails the publish or the

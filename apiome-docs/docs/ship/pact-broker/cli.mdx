@@ -300,10 +300,38 @@ missing. On `null`, `retryAfterSeconds` says how many seconds to wait before ask
   type, or you give both `to_environment` and `to_tag`, the tool refuses it and says why. A refusal
   from Apiome includes its code in brackets, such as `[pact-matrix-invalid]`.
 - **Recording is a write.** `pact.record_deployment` is marked as a write, so MCP hosts can ask before
-  they run it. The four tools form the **pact** toolset. Admins can turn it off for the workspace,
+  they run it, and it is off until the workspace allows it (see
+  [Choose what agents may do](#choose-what-agents-may-do)). The four tools form the **pact** toolset. Admins can turn it off for the workspace,
   or for one key, in [MCP settings](../../workspace/tenants.mdx#mcp-settings).
 
 Every argument is listed in the [MCP tool reference](../../reference/mcp/tools.md#pact-can-i-deploy).
+
+### Choose what agents may do
+
+In **Contracts**, click **Settings**, then the **Agents** tab.
+
+<Screenshot id="pact-settings-agents" alt="The Agents tab: four switches under What an AI agent may do with contracts — Read pacts, verdicts and can-i-deploy on; Draft a pact on, with a note that no agent tool drafts yet; Publish pacts and provider contracts off; Record deployments off, never to an environment marked production — and Save switches." />
+
+| Switch | Default | What it allows |
+| --- | --- | --- |
+| **Read pacts, verdicts and can-i-deploy** | On | `pact.list`, `pact.matrix` and `pact.can_i_deploy` |
+| **Draft a pact from a project or a mock capture** | On | No agent tool drafts pacts yet; the switch applies when one ships |
+| **Publish pacts and provider contracts** | Off | No agent tool publishes yet; the switch applies when one ships, never on a main branch |
+| **Record deployments** | Off | `pact.record_deployment`, never to an environment marked production |
+
+Turn the switches you want on and click **Save switches**. An agent whose action is switched off is
+refused with `mcp-pact-agent-action-off` and the reason, and an agent never records to an environment
+marked production (`mcp-pact-agent-production`), whatever the switch says. Every refusal is written to
+the [access audit](../../govern/access-audit.mdx) as `pacts.agent.refused`. The switches need the
+Contracts admin permission (`pacts:delete`); everyone else sees them read-only. From a script:
+`PUT /v1/tenants/{tenant}/pact-contract-settings/agents` with
+`{"read": true, "draft": true, "publish": false, "record": true}`.
+
+:::note Recording is off until you allow it
+Before PFX-8.15 any MCP key whose owner had **Pacts** → **Create** could record deployments. Now
+recording needs the **Record deployments** switch as well. Turn it on if your agents record
+deployments to non-production environments.
+:::
 
 ## Create a webhook
 

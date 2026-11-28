@@ -411,7 +411,7 @@ def publish_consumer_pact(
     base = _base_url(request, tenant_slug)
     fire_publish_events(db, tenant_id, base, outcome)
     post_publish_statuses(db, tenant_id, base, outcome)
-    comparisons = compare_published_pacts(db, tenant_id, outcome, actor=actor)
+    comparisons = compare_published_pacts(db, tenant_id, outcome, actor=actor, base=base)
     return PactExportPublishResponse(
         **_response_fields(contract, names, export, version_row),
         publish=_publish_result(base, outcome, comparisons),

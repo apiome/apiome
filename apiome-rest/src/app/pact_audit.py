@@ -86,6 +86,8 @@ AUDIT_ACTIONS = (
     # PFX-8.7 (#7304): a provider's standing contract sources, and each publish they make.
     "pacts.contract_source.update",
     "pacts.contract.auto_publish",
+    # PFX-8.15 (#7312): an MCP agent action the workspace's Agents switches refused.
+    "pacts.agent.refused",
 )
 
 #: Every endpoint :func:`audited_write` wraps, by qualified name, with the action it writes. The

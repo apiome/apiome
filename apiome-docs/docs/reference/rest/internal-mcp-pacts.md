@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.706.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.707.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `internal-mcp-pacts` · 4 operations
 
@@ -39,7 +39,7 @@ Request body for can i deploy? for the mcp `pact.can_i_deploy` tool.
 | --- | --- | --- |
 | 200 | Successful response for can i deploy? for the mcp `pact.can_i_deploy` tool. | `application/json` [`McpPactMatrixResponse`](#schema-mcppactmatrixresponse) |
 | 400 | `pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent. | — |
-| 403 | `mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`. | — |
+| 403 | `mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key's owner lacks `pacts`, or `mcp-pact-agent-action-off` / `mcp-pact-agent-production`: the workspace's Agents switches refuse it (audited as `pacts.agent.refused`). | — |
 | 404 | `pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
@@ -69,7 +69,7 @@ Request body for latest pacts for the mcp `pact.list` tool.
 | --- | --- | --- |
 | 200 | Successful response for latest pacts for the mcp `pact.list` tool. | `application/json` [`McpPactListResponse`](#schema-mcppactlistresponse) |
 | 400 | `pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent. | — |
-| 403 | `mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`. | — |
+| 403 | `mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key's owner lacks `pacts`, or `mcp-pact-agent-action-off` / `mcp-pact-agent-production`: the workspace's Agents switches refuse it (audited as `pacts.agent.refused`). | — |
 | 404 | `pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
@@ -99,7 +99,7 @@ Request body for matrix query for the mcp `pact.matrix` tool.
 | --- | --- | --- |
 | 200 | Successful response for matrix query for the mcp `pact.matrix` tool. | `application/json` [`McpPactMatrixResponse`](#schema-mcppactmatrixresponse) |
 | 400 | `pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent. | — |
-| 403 | `mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`. | — |
+| 403 | `mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key's owner lacks `pacts`, or `mcp-pact-agent-action-off` / `mcp-pact-agent-production`: the workspace's Agents switches refuse it (audited as `pacts.agent.refused`). | — |
 | 404 | `pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
@@ -129,7 +129,7 @@ Request body for record a deployment for the mcp `pact.record_deployment` tool.
 | --- | --- | --- |
 | 200 | Successful response for record a deployment for the mcp `pact.record_deployment` tool. | `application/json` [`McpPactDeploymentResponse`](#schema-mcppactdeploymentresponse) |
 | 400 | `pact-matrix-invalid` or `mcp-pact-invalid`: the request cannot be answered as sent. | — |
-| 403 | `mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, or the key's owner lacks `pacts`. | — |
+| 403 | `mcp-pact-key-unknown`, `mcp-pact-key-has-no-owner`, the key's owner lacks `pacts`, or `mcp-pact-agent-action-off` / `mcp-pact-agent-production`: the workspace's Agents switches refuse it (audited as `pacts.agent.refused`). | — |
 | 404 | `pacticipant-not-found`, `pacticipant-version-not-found` or `pact-environment-not-found`. | — |
 | 422 | `pact-deployment-invalid`: a malformed application instance. | — |
 

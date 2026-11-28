@@ -34,9 +34,11 @@ from .pact_secret import (
     CODE_SECRET_INVALID,
     CODE_SECRET_LIMIT,
     CODE_SECRET_NAME_TAKEN,
+    CODE_SECRET_NO_VALUE,
     CODE_SECRET_NOT_FOUND,
     CODE_SECRET_VAULT_UNAVAILABLE,
     MAX_SECRETS_PER_TENANT,
+    ORIGIN_MIGRATION,
     PactSecretError,
     SecretCreate,
     SecretRecord,
@@ -54,7 +56,10 @@ __all__ = [
     "delete_secret",
     "get_secret",
     "list_secrets",
+    "create_placeholder_tx",
+    "enable_waiting_webhooks_tx",
     "missing_secret_names",
+    "waiting_secret_names",
     "resolve_secrets",
     "secret_usage",
     "update_secret",
@@ -73,7 +78,8 @@ _CIPHER = EnvelopeCipher(
 )
 
 _SELECT = """
-    SELECT s.id::text AS id, s.name, s.description, s.value_updated_at, s.created_at, s.updated_at
+    SELECT s.id::text AS id, s.name, s.description, s.value_updated_at, s.created_at, s.updated_at,
+           s.awaiting_value, s.origin
     FROM apiome.pact_secret s
     WHERE s.tenant_id = %s::uuid
 """
@@ -117,7 +123,9 @@ def _record(row: Mapping[str, Any], usage: SecretUsage) -> SecretRecord:
         description=row.get("description"),
         reference=secret_reference(str(row["name"])),
         used_by=usage,
-        value_updated_at=_iso(row.get("value_updated_at")),
+        has_value=not bool(row.get("awaiting_value")),
+        origin=row.get("origin"),
+        value_updated_at=None if row.get("awaiting_value") else _iso(row.get("value_updated_at")),
         created_at=_iso(row.get("created_at")),
         updated_at=_iso(row.get("updated_at")),
     )
@@ -144,7 +152,7 @@ def _usages(db: Any, tenant_id: str, names: Optional[Sequence[str]] = None) -> D
     webhooks = (
         db.execute_query(
             """
-            SELECT w.id::text AS id, w.description, w.request_method, w.request_url, ref.name
+            SELECT w.id::text AS id, w.description, w.request_method, w.request_url, w.enabled, ref.name
             FROM apiome.pact_webhook w
             CROSS JOIN LATERAL unnest(w.secret_refs) AS ref(name)
             WHERE w.tenant_id = %s::uuid AND (%s::text[] IS NULL OR ref.name = ANY(%s::text[]))
@@ -159,7 +167,12 @@ def _usages(db: Any, tenant_id: str, names: Optional[Sequence[str]] = None) -> D
             str(row.get("request_method") or ""), str(row.get("request_url") or "")
         )
         usage.setdefault(row["name"], SecretUsage()).webhooks.append(
-            SecretUser(kind="webhook", id=str(row["id"]), name=str(shown))
+            SecretUser(
+                kind="webhook",
+                id=str(row["id"]),
+                name=str(shown),
+                enabled=bool(row["enabled"]) if row.get("enabled") is not None else None,
+            )
         )
     targets = (
         db.execute_query(
@@ -267,6 +280,31 @@ def missing_secret_names(db: Any, tenant_id: str, names: Sequence[str]) -> List[
     return [name for name in names if name not in known]
 
 
+def waiting_secret_names(db: Any, tenant_id: str, names: Sequence[str]) -> List[str]:
+    """The names among ``names`` whose secret has no value yet, in the order given (PFX-8.15).
+
+    Args:
+        db: The database.
+        tenant_id: The tenant whose secrets a reference may name.
+        names: The referred names.
+
+    Returns:
+        The names of secrets created without a value and not set since.
+    """
+    if not names:
+        return []
+    rows = (
+        db.execute_query(
+            "SELECT name FROM apiome.pact_secret WHERE tenant_id = %s::uuid AND name = ANY(%s::text[]) "
+            "AND awaiting_value",
+            (tenant_id, list(names)),
+        )
+        or []
+    )
+    waiting = {row["name"] for row in rows if isinstance(row, Mapping)}
+    return [name for name in names if name in waiting]
+
+
 def resolve_secrets(db: Any, tenant_id: str, names: Sequence[str]) -> Dict[str, str]:
     """Open the values of the secrets ``names`` refers to, in memory, for one send or run.
 
@@ -280,7 +318,8 @@ def resolve_secrets(db: Any, tenant_id: str, names: Sequence[str]) -> Dict[str, 
 
     Raises:
         PactSecretError: ``pact-secret-not-found`` naming the first name the workspace has no
-            secret for; ``pact-secret-vault-unavailable`` naming the first that cannot be opened
+            secret for; ``pact-secret-no-value`` for one created without a value (PFX-8.15);
+            ``pact-secret-vault-unavailable`` naming the first that cannot be opened
             (no key, wrong key, tampered). Never a value.
     """
     wanted = list(dict.fromkeys(names))
@@ -289,7 +328,7 @@ def resolve_secrets(db: Any, tenant_id: str, names: Sequence[str]) -> Dict[str, 
     rows = (
         db.execute_query(
             """
-            SELECT name, secret_ciphertext, key_version FROM apiome.pact_secret
+            SELECT name, secret_ciphertext, key_version, awaiting_value FROM apiome.pact_secret
             WHERE tenant_id = %s::uuid AND name = ANY(%s::text[])
             """,
             (tenant_id, wanted),
@@ -302,6 +341,11 @@ def resolve_secrets(db: Any, tenant_id: str, names: Sequence[str]) -> Dict[str, 
         row = by_name.get(name)
         if row is None:
             raise PactSecretError(CODE_SECRET_NOT_FOUND, f"no secret '{name}' in this workspace")
+        if row.get("awaiting_value") or row.get("secret_ciphertext") is None:
+            raise PactSecretError(
+                CODE_SECRET_NO_VALUE,
+                f"the secret '{name}' has no value yet: set it under Contracts → Settings → Secrets",
+            )
         opened = _CIPHER.unseal(bytes(row["secret_ciphertext"]), row.get("key_version"))
         value = opened.get("value") if isinstance(opened, Mapping) else None
         if not isinstance(value, str):
@@ -413,18 +457,85 @@ def update_secret(
             cursor.execute(
                 """
                 UPDATE apiome.pact_secret
-                SET description = %s, secret_ciphertext = %s, key_version = %s,
+                SET description = %s, secret_ciphertext = %s, key_version = %s, awaiting_value = FALSE,
                     value_updated_at = CURRENT_TIMESTAMP,
                     updated_by = %s::uuid, updated_at = CURRENT_TIMESTAMP
                 WHERE tenant_id = %s::uuid AND id = %s::uuid
                 """,
                 (change.description, sealed[0], sealed[1], user_id, tenant_id, secret_id),
             )
+            if cursor.rowcount > 0:
+                enable_waiting_webhooks_tx(cursor, tenant_id)
+                return True
         return cursor.rowcount > 0
 
     if not db._guarded_tx(work):
         raise _missing(secret_id)
     return get_secret(db, tenant_id, secret_id)
+
+
+def enable_waiting_webhooks_tx(cursor: Any, tenant_id: str) -> List[str]:
+    """Turn on the webhooks that were waiting for secrets once none of theirs is waiting (PFX-8.15).
+
+    A webhook ``apiome pact migrate`` imported turned off (``awaiting_secrets``) because a secret the
+    source redacted had no value comes back on when the last of its secrets has one.
+
+    Args:
+        cursor: The open transaction's cursor.
+        tenant_id: The tenant.
+
+    Returns:
+        The ids of the webhooks turned on.
+    """
+    cursor.execute(
+        """
+        UPDATE apiome.pact_webhook w
+        SET enabled = TRUE, awaiting_secrets = FALSE, updated_at = CURRENT_TIMESTAMP
+        WHERE w.tenant_id = %s::uuid AND w.awaiting_secrets
+          AND NOT EXISTS (SELECT 1 FROM apiome.pact_secret s
+                          WHERE s.tenant_id = w.tenant_id AND s.name = ANY(w.secret_refs) AND s.awaiting_value)
+        RETURNING w.id::text AS id
+        """,
+        (tenant_id,),
+    )
+    return [row["id"] for row in cursor.fetchall() or []]
+
+
+def create_placeholder_tx(cursor: Any, tenant_id: str, name: str, description: str, actor: ConsumerActor) -> bool:
+    """Create a secret with no value, for a value ``apiome pact migrate`` could not copy (PFX-8.15).
+
+    Args:
+        cursor: The open transaction's cursor.
+        tenant_id: The tenant.
+        name: The secret's name (already shaped like :data:`app.pact_secret.NAME_PATTERN`).
+        description: What it is for (which webhook, which field).
+        actor: Who is importing.
+
+    Returns:
+        ``True`` when it was created; ``False`` when a secret of that name exists already (it is
+        used as it is).
+
+    Raises:
+        PactSecretError: ``pact-secret-limit-reached`` at :data:`MAX_SECRETS_PER_TENANT`.
+    """
+    cursor.execute("SELECT count(*) AS n FROM apiome.pact_secret WHERE tenant_id = %s::uuid", (tenant_id,))
+    if int(cursor.fetchone()["n"]) >= MAX_SECRETS_PER_TENANT:
+        raise PactSecretError(
+            CODE_SECRET_LIMIT,
+            f"this workspace already has {MAX_SECRETS_PER_TENANT} secrets; a migrated webhook needs one more",
+        )
+    user_id = _user_id(actor)
+    cursor.execute(
+        """
+        INSERT INTO apiome.pact_secret
+          (tenant_id, name, description, secret_ciphertext, key_version, awaiting_value, origin, created_by, updated_by)
+        VALUES (%s::uuid, %s, %s, NULL, NULL, TRUE, %s, %s::uuid, %s::uuid)
+        ON CONFLICT (tenant_id, name) DO NOTHING
+        RETURNING id::text AS id
+        """,
+        (tenant_id, name, description[:1000], ORIGIN_MIGRATION, user_id, user_id),
+    )
+    return cursor.fetchone() is not None
 
 
 def _in_use_message(name: str, usage: SecretUsage) -> str:

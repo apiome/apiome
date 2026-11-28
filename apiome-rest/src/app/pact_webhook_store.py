@@ -38,7 +38,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .config import WEBHOOK_MAX_DELIVERY_ATTEMPTS
 from .consumer_contract_store import ConsumerActor
 from .pact_publication import PactPublicationError
-from .pact_secret_store import missing_secret_names
+from .pact_secret_store import missing_secret_names, waiting_secret_names
 from .pact_webhook import (
     CODE_TRIGGERED_WEBHOOK_NOT_FOUND,
     CODE_WEBHOOK_INVALID,
@@ -414,6 +414,16 @@ def _write_values(
     provider = _scope_pacticipant(db, tenant_id, webhook.provider_name, "provider")
     secrets = _secrets_to_seal(webhook, stored)
     refs = checked_references(db, tenant_id, webhook, secrets)
+    waiting = waiting_secret_names(db, tenant_id, refs)
+    if waiting and webhook.enabled:
+        raise PactPublicationError(
+            CODE_WEBHOOK_INVALID,
+            f"/enabled: the secret{'s' if len(waiting) > 1 else ''} {', '.join(waiting)} "
+            f"{'have' if len(waiting) > 1 else 'has'} no value yet; set "
+            f"{'them' if len(waiting) > 1 else 'it'} under Contracts → Settings → Secrets, or save the webhook "
+            "turned off",
+            pointer="/enabled",
+        )
     ciphertext, key_version, fields = _sealed_columns(secrets)
     return {
         "description": webhook.description,
@@ -432,6 +442,8 @@ def _write_values(
         "key_version": key_version,
         "secret_fields": fields,
         "secret_refs": refs,
+        # PFX-8.15: a webhook referring to a secret with no value yet stays off, waiting for it.
+        "awaiting_secrets": bool(waiting),
     }
 
 
@@ -499,6 +511,7 @@ def create_webhook(
     actor: ConsumerActor,
     webhook_id: Optional[str] = None,
     created_at: Optional[datetime] = None,
+    awaiting_secrets: bool = False,
 ) -> WebhookRecord:
     """Create a webhook.
 
@@ -509,6 +522,8 @@ def create_webhook(
         actor: Who is creating it.
         webhook_id: The ``uuid`` the client chose (``PUT …/webhooks/{uuid}``); generated when omitted.
         created_at: When the source broker created it, for an import (PFX-6.7, #6959); ``None`` is now.
+        awaiting_secrets: Imported turned off because a secret it refers to has no value yet
+            (PFX-8.15); it is turned on when none of them is waiting.
 
     Returns:
         The stored webhook.
@@ -520,6 +535,9 @@ def create_webhook(
             ``pact-webhook-not-found`` when ``webhook_id`` belongs to another workspace.
     """
     values = _write_values(db, tenant_id, webhook, {})
+    if awaiting_secrets:
+        values["enabled"] = False
+        values["awaiting_secrets"] = True
     user_id = _user_id(actor)
     columns = list(values)
 

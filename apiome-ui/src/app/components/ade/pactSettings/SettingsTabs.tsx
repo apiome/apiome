@@ -1,19 +1,27 @@
 /**
- * The tabs of `/ade/dashboard/pacts/settings` (PFX-8.14, #7311): **Clean-up** (the default) and
- * **Verification** (PFX-6.2's verification settings). Each tab is a link, so a tab can be bookmarked
- * and the browser's back button moves between them.
+ * The tabs of `/ade/dashboard/pacts/settings`, in the mockup's order: **Clean-up** (the default,
+ * PFX-8.14), **Secrets**, **CI and commit statuses** (PFX-8.15), **Verification schedule** (PFX-6.2's
+ * verification settings and what Apiome verifies on its own) and **Agents** (PFX-8.15). Each tab is a
+ * link, so a tab can be bookmarked and the browser's back button moves between them.
  */
 
 import Link from 'next/link';
-import { Eraser, CalendarClock } from 'lucide-react';
+import { Bot, CalendarClock, Eraser, GitPullRequest, LockKeyhole } from 'lucide-react';
+import { AGENTS_TAB_ROUTE, CI_TAB_ROUTE, SECRETS_TAB_ROUTE } from '@lib/pact-contract-settings';
 import { SETTINGS_ROUTE, VERIFICATION_TAB_ROUTE } from '@lib/pact-retention';
 
 /** A tab of the settings page. */
-export type SettingsTab = 'cleanup' | 'verification';
+export type SettingsTab = 'cleanup' | 'secrets' | 'ci' | 'verification' | 'agents';
+
+/** Every tab id, for the page to read `?tab=` with. */
+export const SETTINGS_TABS: readonly SettingsTab[] = ['cleanup', 'secrets', 'ci', 'verification', 'agents'];
 
 const TABS: ReadonlyArray<{ id: SettingsTab; label: string; href: string; Icon: typeof Eraser }> = [
   { id: 'cleanup', label: 'Clean-up', href: SETTINGS_ROUTE, Icon: Eraser },
-  { id: 'verification', label: 'Verification', href: VERIFICATION_TAB_ROUTE, Icon: CalendarClock },
+  { id: 'secrets', label: 'Secrets', href: SECRETS_TAB_ROUTE, Icon: LockKeyhole },
+  { id: 'ci', label: 'CI and commit statuses', href: CI_TAB_ROUTE, Icon: GitPullRequest },
+  { id: 'verification', label: 'Verification schedule', href: VERIFICATION_TAB_ROUTE, Icon: CalendarClock },
+  { id: 'agents', label: 'Agents', href: AGENTS_TAB_ROUTE, Icon: Bot },
 ];
 
 /**

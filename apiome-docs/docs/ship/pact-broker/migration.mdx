@@ -126,7 +126,7 @@ The report lists each of these with what to do.
 | What | Why | What to do |
 | --- | --- | --- |
 | PactFlow secret values | PactFlow never exports them; the dry run lists each secret's name | Create each one as a [workspace secret](./secrets.mdx) with the same name before the import |
-| A webhook header or password the source shows as `**********` | The source redacts credentials | The webhook is imported **disabled**. Add the credential (or a `${user.<name>}` reference) in [Webhooks](./webhooks-console.mdx), then enable it |
+| A webhook header or password the source shows as `**********` | The source redacts credentials | The webhook is imported **turned off**, and each credential becomes a secret [waiting for a value](./secrets.mdx#secrets-waiting-for-a-value). Set it on **Contracts** → **Settings** → **Secrets**; the webhook turns on by itself |
 | A webhook that refers to a secret Apiome does not have | Apiome resolves `${user.<name>}` from its own secrets | Create the secret, then run again |
 | Webhook events Apiome does not fire | PactFlow-only events | They are left out; a webhook with no event left is not imported |
 | A pacticipant's display name | An Apiome pacticipant has one name: the one pacts use | Nothing; the name is kept |
@@ -151,7 +151,8 @@ Run again with a larger `--matrix-limit`.
 
 ## After the import
 
-- [ ] **Re-enter the secrets** the report lists, and **enable** the webhooks it imported disabled.
+- [ ] **Set the secrets** the report lists on **Contracts** → **Settings** → **Secrets** (each reads
+      **No value**); the webhooks waiting for them turn on by themselves.
 - [ ] **Compare a few answers.** Run `apiome pact can-i-deploy` for one application against Apiome
       and against the source; the verdicts should match.
 - [ ] **Point CI at Apiome.** Change `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` in your pipelines

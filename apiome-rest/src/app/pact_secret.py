@@ -35,6 +35,8 @@ __all__ = [
     "CODE_SECRET_NAME_TAKEN",
     "CODE_SECRET_NOT_FOUND",
     "CODE_SECRET_VAULT_UNAVAILABLE",
+    "CODE_SECRET_NO_VALUE",
+    "ORIGIN_MIGRATION",
     "MAX_SECRETS_PER_TENANT",
     "MAX_SECRET_VALUE",
     "NAME_PATTERN",
@@ -69,6 +71,11 @@ CODE_SECRET_IN_USE = "pact-secret-in-use"
 CODE_SECRET_LIMIT = "pact-secret-limit-reached"
 #: The server has no key to seal or open a secret with (HTTP 503).
 CODE_SECRET_VAULT_UNAVAILABLE = "pact-secret-vault-unavailable"
+#: The secret was created without a value (a migrated webhook's redacted secret) and none is set yet (HTTP 409).
+CODE_SECRET_NO_VALUE = "pact-secret-no-value"
+
+#: A secret created by ``apiome pact migrate`` for a value the source redacted (PFX-8.15).
+ORIGIN_MIGRATION = "migration"
 
 #: The HTTP status of each refusal.
 STATUS_BY_CODE: Dict[str, int] = {
@@ -78,6 +85,7 @@ STATUS_BY_CODE: Dict[str, int] = {
     CODE_SECRET_IN_USE: 409,
     CODE_SECRET_LIMIT: 409,
     CODE_SECRET_VAULT_UNAVAILABLE: 503,
+    CODE_SECRET_NO_VALUE: 409,
 }
 
 #: The most secrets one workspace may keep.
@@ -380,6 +388,9 @@ class SecretUser(BaseModel):
     kind: str
     id: str
     name: str
+    enabled: Optional[bool] = Field(
+        default=None, description="A webhook's switch; `false` for one turned off (e.g. waiting for this value)."
+    )
 
 
 class SecretUsage(BaseModel):
@@ -409,6 +420,9 @@ class SecretRecord(BaseModel):
         description: What it is for.
         reference: How a webhook template writes it: ``${user.<name>}``.
         used_by: The webhooks and targets that refer to it.
+        has_value: ``False`` for a secret created without one (a migrated webhook's redacted secret);
+            nothing that refers to it can be sent until a value is set.
+        origin: ``migration`` when ``apiome pact migrate`` created it; ``None`` for one a person created.
         value_updated_at: When the value was last set (created or rotated).
         created_at: When it was created.
         updated_at: When it was last changed.
@@ -421,6 +435,8 @@ class SecretRecord(BaseModel):
     description: Optional[str] = None
     reference: str
     used_by: SecretUsage = Field(default_factory=SecretUsage)
+    has_value: bool = Field(default=True, description="`false`: created without a value; set one to use it.")
+    origin: Optional[str] = Field(default=None, description="`migration` when `apiome pact migrate` created it.")
     value_updated_at: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None

@@ -40,6 +40,7 @@ from .pact_commit_status import (
     CODE_REPOSITORY_NOT_REGISTERED,
     CODE_STATUS_NOT_FOUND,
     CODE_STATUS_NOT_RETRYABLE,
+    CODE_SWITCHED_OFF,
     OUTCOME_DISPATCHED,
     OUTCOME_FAILED,
     OUTCOME_QUEUED,
@@ -58,6 +59,7 @@ from .pact_commit_status import (
     repository_host,
     verdict_description,
 )
+from .pact_contract_settings import CommitStatusSettings, read_settings
 from .pact_publication_store import PublishOutcome
 from .provider_checks import CODE_PROVIDER_FORBIDDEN, STATE_FAIL, STATE_PASS, STATE_PENDING
 from .provider_status_adapter import (
@@ -77,6 +79,7 @@ __all__ = [
     "list_commit_statuses",
     "post_publish_statuses",
     "post_verification_statuses",
+    "switched_off",
     "resolve_target",
     "retry_commit_status",
     "send_status",
@@ -449,13 +452,60 @@ def _upsert(cursor: Any, intent: StatusIntent, resolution: Resolution) -> Dict[s
     return row
 
 
-def _record_all(db: Any, intents_of: Callable[[Any], List[StatusIntent]]) -> List[Dict[str, Any]]:
-    """Plan and record statuses in one transaction; returns the written rows."""
+def switched_off(switches: CommitStatusSettings, side: str, *, bidirectional: bool = False) -> Optional[str]:
+    """Why the workspace's switches keep a status from being written, or ``None`` when they allow it.
+
+    Args:
+        switches: The workspace's commit-status switches (PFX-8.15).
+        side: ``consumer`` or ``provider``: whose commit the status goes on.
+        bidirectional: Whether the verdict is a bi-directional comparison.
+
+    Returns:
+        The reason, as the status row records it.
+    """
+    where = "Contracts → Settings → CI and commit statuses"
+    if bidirectional and not switches.bidirectional:
+        return (
+            f"Bi-directional verdicts set no commit status in this workspace ({where}). "
+            "The verdict was recorded only."
+        )
+    if side == SIDE_CONSUMER and not switches.consumer_commit:
+        return f"Statuses on the consumer's commit are switched off ({where}). The verdict was recorded only."
+    if side == SIDE_PROVIDER and not switches.provider_commit:
+        return f"Statuses on the provider's commit are switched off ({where}). The verdict was recorded only."
+    return None
+
+
+def _cursor_fetch(cursor: Any) -> Callable[[str, Tuple[Any, ...]], List[Any]]:
+    """``execute_query``'s shape on an open transaction's cursor."""
+
+    def fetch(query: str, params: Tuple[Any, ...]) -> List[Any]:
+        cursor.execute(query, params)
+        return list(cursor.fetchall() or [])
+
+    return fetch
+
+
+def _record_all(
+    db: Any, intents_of: Callable[[Any], List[StatusIntent]], *, bidirectional: bool = False
+) -> List[Dict[str, Any]]:
+    """Plan and record statuses in one transaction; returns the written rows.
+
+    A status the workspace's switches keep from being written is recorded ``suppressed`` with
+    :data:`CODE_SWITCHED_OFF` and the reason, so the list says why nothing reached the commit.
+    """
 
     def work(cursor: Any) -> List[Dict[str, Any]]:
         rows: List[Dict[str, Any]] = []
+        switches: Dict[str, CommitStatusSettings] = {}
         for intent in intents_of(cursor):
-            resolution = resolve_target(cursor, intent.tenant_id, intent.repository_url, intent.version_number)
+            if intent.tenant_id not in switches:
+                switches[intent.tenant_id] = read_settings(_cursor_fetch(cursor), intent.tenant_id).commit_statuses
+            reason = switched_off(switches[intent.tenant_id], intent.side, bidirectional=bidirectional)
+            if reason is not None:
+                resolution = Resolution(OUTCOME_SUPPRESSED, CODE_SWITCHED_OFF, reason)
+            else:
+                resolution = resolve_target(cursor, intent.tenant_id, intent.repository_url, intent.version_number)
             rows.append(_upsert(cursor, intent, resolution))
         return rows
 
@@ -552,10 +602,12 @@ def send_status(db: Any, row: Mapping[str, Any], *, actor_id: Optional[str] = No
         return dict(row)
 
 
-def _post(db: Any, tenant_id: str, intents_of: Callable[[Any], List[StatusIntent]]) -> List[CommitStatusRecord]:
+def _post(
+    db: Any, tenant_id: str, intents_of: Callable[[Any], List[StatusIntent]], *, bidirectional: bool = False
+) -> List[CommitStatusRecord]:
     """Record, then send, the statuses ``intents_of`` plans. Never raises."""
     try:
-        rows = _record_all(db, intents_of)
+        rows = _record_all(db, intents_of, bidirectional=bidirectional)
     except Exception:  # noqa: BLE001 - a status problem never fails the publish
         logger.exception("pact commit status: failed to record statuses for tenant %s", tenant_id)
         return []
@@ -593,7 +645,12 @@ def post_verification_statuses(
     Returns:
         The recorded statuses after sending; empty when recording failed (logged).
     """
-    return _post(db, tenant_id, lambda cursor: intents_for_verification(cursor, tenant_id, base, result))
+    return _post(
+        db,
+        tenant_id,
+        lambda cursor: intents_for_verification(cursor, tenant_id, base, result),
+        bidirectional=getattr(result, "kind", "native") == "bidirectional",
+    )
 
 
 # ---------------------------------------------------------------------------------------------

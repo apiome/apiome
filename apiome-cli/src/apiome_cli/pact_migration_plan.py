@@ -536,9 +536,9 @@ def secret_references(value: Any) -> list[str]:
 def add_webhook(plan: Plan, href: str, document: Mapping[str, Any]) -> None:
     """Queue a webhook from ``GET /webhooks/{uuid}``, leaving out what cannot be imported.
 
-    * A redacted secret (``**********`` header, password) is left out and the webhook imported
-      **disabled**, so it does not call its target without credentials; re-enter the secret, then
-      enable it.
+    * A redacted secret (``**********`` header, password) is sent as it is: Apiome keeps it as a
+      secret with no value yet and imports the webhook turned off, waiting for it (PFX-8.15); setting
+      the value under Contracts → Settings → Secrets turns the webhook on.
     * An event Apiome does not fire is left out; with none left the webhook is not imported.
     * A ``${user.<name>}`` reference stays: Apiome resolves the same syntax, from its own secrets.
 
@@ -579,22 +579,19 @@ def add_webhook(plan: Plan, href: str, document: Mapping[str, Any]) -> None:
         request.get("headers") if isinstance(request.get("headers"), Mapping) else None
     )
     if headers:
-        request["headers"] = {
-            name: value for name, value in headers.items() if value != REDACTED
-        }
         redacted += [
             f"header {name}" for name, value in headers.items() if value == REDACTED
         ]
     if request.get("password") == REDACTED:
-        request.pop("password")
         redacted.append("basic-auth password")
     if redacted:
-        body["enabled"] = False
+        # PFX-8.15: the redacted values are sent as they are; Apiome keeps each as a secret with no
+        # value yet and imports the webhook turned off, waiting for it.
         plan.note(
             "webhook",
             subject,
-            f"the source does not export {', '.join(redacted)}: imported disabled — re-enter the value(s) "
-            "(or a ${user.<name>} secret reference) and enable it",
+            f"the source does not export {', '.join(redacted)}: imported turned off, waiting for a value — "
+            "set it under Contracts → Settings → Secrets and the webhook turns on",
         )
     for name in secret_references(body):
         plan.note(

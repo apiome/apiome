@@ -1,0 +1,76 @@
+{
+  "settings": {
+    "commit_statuses": { "consumer_commit": true, "provider_commit": true, "bidirectional": false },
+    "agents": { "read": true, "draft": true, "publish": false, "record": false },
+    "configured": true,
+    "updated_at": "2026-11-27T09:12:00+00:00",
+    "updated_by": "ada@example.com",
+    "can_edit": true
+  },
+  "secrets": {
+    "secrets": [
+      {
+        "id": "11111111-1111-4111-8111-000000000001",
+        "name": "billing_staging_token",
+        "description": "Staging sign-in for Billing Service",
+        "reference": "${user.billing_staging_token}",
+        "used_by": {
+          "webhooks": [],
+          "targets": [{ "kind": "verification_target", "id": "t-1", "name": "staging" }]
+        },
+        "has_value": true,
+        "origin": null,
+        "value_updated_at": "2026-11-06T10:00:00+00:00",
+        "created_at": "2026-10-01T10:00:00+00:00",
+        "updated_at": "2026-11-06T10:00:00+00:00"
+      },
+      {
+        "id": "11111111-1111-4111-8111-000000000002",
+        "name": "github_ci_token",
+        "description": null,
+        "reference": "${user.github_ci_token}",
+        "used_by": {
+          "webhooks": [
+            { "kind": "webhook", "id": "w-1", "name": "Verify Ledger API", "enabled": true },
+            { "kind": "webhook", "id": "w-2", "name": "Notify Orders UI", "enabled": true },
+            { "kind": "webhook", "id": "w-3", "name": "Nightly report", "enabled": true }
+          ],
+          "targets": []
+        },
+        "has_value": true,
+        "origin": null,
+        "value_updated_at": "2026-09-27T10:00:00+00:00",
+        "created_at": "2026-09-27T10:00:00+00:00",
+        "updated_at": "2026-09-27T10:00:00+00:00"
+      },
+      {
+        "id": "11111111-1111-4111-8111-000000000003",
+        "name": "migrated_3f1b2c4d_password",
+        "description": "Waiting for a value: the basic-auth password of migrated webhook 3f1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+        "reference": "${user.migrated_3f1b2c4d_password}",
+        "used_by": {
+          "webhooks": [{ "kind": "webhook", "id": "w-7", "name": "Slack contracts hook", "enabled": false }],
+          "targets": []
+        },
+        "has_value": false,
+        "origin": "migration",
+        "value_updated_at": null,
+        "created_at": "2026-11-26T10:00:00+00:00",
+        "updated_at": "2026-11-26T10:00:00+00:00"
+      },
+      {
+        "id": "11111111-1111-4111-8111-000000000004",
+        "name": "old_signing_secret",
+        "description": "No longer used",
+        "reference": "${user.old_signing_secret}",
+        "used_by": { "webhooks": [], "targets": [] },
+        "has_value": true,
+        "origin": null,
+        "value_updated_at": "2026-08-01T10:00:00+00:00",
+        "created_at": "2026-08-01T10:00:00+00:00",
+        "updated_at": "2026-08-01T10:00:00+00:00"
+      }
+    ],
+    "limit": 200
+  }
+}

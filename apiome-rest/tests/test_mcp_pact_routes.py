@@ -26,6 +26,7 @@ from fastapi.testclient import TestClient
 from app import mcp_pact_routes as routes
 from app.config import settings
 from app.main import app
+from app.pact_contract_settings import AgentSettings, CommitStatusSettings, ContractSettings
 from app.pact_environment import DeployedVersionRecord, EnvironmentRecord
 from app.pact_matrix import MatrixResult, MatrixRow, parse_can_i_deploy_query, parse_matrix_query
 from app.pact_publication import PactPublicationError
@@ -65,6 +66,13 @@ def _row(index: int = 0, success: Any = True) -> MatrixRow:
     )
 
 
+def _settings(**agents: bool) -> ContractSettings:
+    """The workspace's switches with these agent switches (the rest default)."""
+    return ContractSettings(
+        commit_statuses=CommitStatusSettings(), agents=AgentSettings(**agents), configured=True, can_edit=False
+    )
+
+
 @pytest.fixture(autouse=True)
 def _token(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "internal_service_token", TOKEN)
@@ -77,8 +85,11 @@ def mocks() -> Iterator[Dict[str, MagicMock]]:
         patch.object(routes, "key_auth_data", return_value=dict(_AUTH)) as key,
         patch.object(routes, "enforce_permission", return_value=OWNER) as permission,
         patch.object(routes, "query_matrix", return_value=MatrixResult(considered_rows=[_row()])) as query,
+        # PFX-8.15: every agent action allowed here; the Agents switches are tested on their own below.
+        patch.object(routes, "read_settings", return_value=_settings(read=True, record=True)) as agents,
+        patch.object(routes, "record_pact_write", return_value=True) as audit,
     ):
-        yield {"key": key, "permission": permission, "query": query}
+        yield {"key": key, "permission": permission, "query": query, "agents": agents, "audit": audit}
 
 
 # ---------------------------------------------------------------------------------------------
@@ -247,6 +258,7 @@ def test_notices_are_bounded() -> None:
     verdict = MagicMock(deployable=None, reasons=reasons, counts={"success": 0}, reason="r", unknown=True)
     with (
         patch.object(routes, "enforce_permission"),
+        patch.object(routes, "read_settings", return_value=_settings()),
         patch.object(routes, "query_matrix", return_value=MatrixResult()),
         patch.object(routes, "deployment_verdict", return_value=verdict),
     ):
@@ -289,7 +301,8 @@ def test_an_unknown_pacticipant_is_reported(mocks: Dict[str, MagicMock]) -> None
 # Record a deployment
 # ---------------------------------------------------------------------------------------------
 
-_PRODUCTION = EnvironmentRecord(id="e-id", name="production", display_name="Production", production=True)
+_STAGING = EnvironmentRecord(id="e-id", name="staging", display_name="Staging", production=False)
+_PRODUCTION = EnvironmentRecord(id="p-id", name="production", display_name="Production", production=True)
 
 
 def test_record_deployment_resolves_the_environment_by_name_and_needs_pacts_create(
@@ -300,12 +313,12 @@ def test_record_deployment_resolves_the_environment_by_name_and_needs_pacts_crea
         pacticipant_slug="billing-service",
         pacticipant_name="Billing Service",
         version_number="2.0.0",
-        environment=_PRODUCTION,
+        environment=_STAGING,
         application_instance="eu-1",
         created_at="2026-11-25T10:00:00+00:00",
     )
     with (
-        patch.object(routes, "list_environments", return_value=[_PRODUCTION]) as environments,
+        patch.object(routes, "list_environments", return_value=[_STAGING]) as environments,
         patch.object(routes, "record_deployment", return_value=(deployed, True)) as record,
     ):
         body = {
@@ -313,7 +326,7 @@ def test_record_deployment_resolves_the_environment_by_name_and_needs_pacts_crea
             "keyId": KEY,
             "pacticipant": "Billing Service",
             "version": "2.0.0",
-            "environment": "production",
+            "environment": "staging",
             "applicationInstance": " eu-1 ",
         }
         response = client.post(BASE + "/record-deployment", json=body, headers=HEADERS)
@@ -324,14 +337,14 @@ def test_record_deployment_resolves_the_environment_by_name_and_needs_pacts_crea
             "uuid": "d-id",
             "pacticipant": {"name": "Billing Service", "slug": "billing-service"},
             "version": "2.0.0",
-            "environment": {"uuid": "e-id", "name": "production", "displayName": "Production", "production": True},
+            "environment": {"uuid": "e-id", "name": "staging", "displayName": "Staging", "production": False},
             "applicationInstance": "eu-1",
             "currentlyDeployed": True,
             "createdAt": "2026-11-25T10:00:00+00:00",
         },
     }
     assert mocks["permission"].call_args.args[2:] == (Resource.PACTS, Action.CREATE)
-    assert environments.call_args.kwargs == {"name": "production"}
+    assert environments.call_args.kwargs == {"name": "staging"}
     args, kwargs = record.call_args
     assert args[1:] == (TENANT, "Billing Service", "2.0.0", "e-id", "eu-1")
     assert kwargs["actor"].user_id == OWNER and kwargs["actor"].label == "MCP key agent"
@@ -351,7 +364,7 @@ def test_record_deployment_to_an_unknown_environment_is_a_404(mocks: Dict[str, M
 
 def test_record_deployment_with_a_malformed_instance_is_refused(mocks: Dict[str, MagicMock]) -> None:
     with (
-        patch.object(routes, "list_environments", return_value=[_PRODUCTION]),
+        patch.object(routes, "list_environments", return_value=[_STAGING]),
         patch.object(routes, "record_deployment") as record,
     ):
         body = {
@@ -359,7 +372,7 @@ def test_record_deployment_with_a_malformed_instance_is_refused(mocks: Dict[str,
             "keyId": KEY,
             "pacticipant": "B",
             "version": "1",
-            "environment": "production",
+            "environment": "staging",
             "applicationInstance": "eu\n1",
         }
         response = client.post(BASE + "/record-deployment", json=body, headers=HEADERS)
@@ -465,3 +478,70 @@ def test_the_routes_are_in_the_openapi_document() -> None:
     paths = app.openapi()["paths"]
     for path in ("/list", "/matrix", "/can-i-deploy", "/record-deployment"):
         assert BASE + path in paths
+
+
+# ---------------------------------------------------------------------------------------------
+# What agents may do — PFX-8.15 (#7312)
+# ---------------------------------------------------------------------------------------------
+
+_READS = [
+    ("/list", {}),
+    ("/matrix", {"selectors": [{"pacticipant": "B"}]}),
+    ("/can-i-deploy", {"pacticipant": "B", "version": "1", "toEnvironment": "staging"}),
+]
+
+
+@pytest.mark.parametrize(("path", "extra"), _READS)
+def test_a_read_switched_off_is_refused_with_the_reason_and_audited(
+    mocks: Dict[str, MagicMock], path: str, extra: Dict[str, Any]
+) -> None:
+    mocks["agents"].return_value = _settings(read=False)
+    with patch.object(routes.db, "execute_query", return_value=[]):
+        response = client.post(BASE + path, json={"tenantId": TENANT, "keyId": KEY, **extra}, headers=HEADERS)
+    assert response.status_code == 403
+    detail = response.json()["detail"]
+    assert detail["code"] == "mcp-pact-agent-action-off"
+    assert "reading pacts, verdicts and can-i-deploy is switched off" in detail["message"]
+    assert "Contracts → Settings → Agents" in detail["message"]
+    audit = mocks["audit"].call_args
+    assert audit.args[2] == "pacts.agent.refused"
+    assert audit.args[4]["action"] == "read" and audit.args[4]["code"] == "mcp-pact-agent-action-off"
+    mocks["query"].assert_not_called()
+    # The switches read are the key's tenant's, never another workspace's.
+    assert mocks["agents"].call_args.args[1] == TENANT
+
+
+def test_recording_is_off_by_default_and_refused_with_the_reason(mocks: Dict[str, MagicMock]) -> None:
+    mocks["agents"].return_value = _settings()
+    with patch.object(routes, "list_environments") as environments, patch.object(routes, "record_deployment") as record:
+        body = {"tenantId": TENANT, "keyId": KEY, "pacticipant": "B", "version": "1", "environment": "staging"}
+        response = client.post(BASE + "/record-deployment", json=body, headers=HEADERS)
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == "mcp-pact-agent-action-off"
+    assert "recording deployments is switched off" in response.json()["detail"]["message"]
+    assert mocks["audit"].call_args.args[2:4] == ("pacts.agent.refused", "pacticipant/B/version/1/environment/staging")
+    environments.assert_not_called()
+    record.assert_not_called()
+
+
+def test_an_agent_never_records_a_deployment_to_production(mocks: Dict[str, MagicMock]) -> None:
+    with (
+        patch.object(routes, "list_environments", return_value=[_PRODUCTION]),
+        patch.object(routes, "record_deployment") as record,
+    ):
+        body = {"tenantId": TENANT, "keyId": KEY, "pacticipant": "B", "version": "1", "environment": "production"}
+        response = client.post(BASE + "/record-deployment", json=body, headers=HEADERS)
+    assert response.status_code == 403
+    detail = response.json()["detail"]
+    assert detail["code"] == "mcp-pact-agent-production"
+    assert "it is marked production" in detail["message"]
+    assert mocks["audit"].call_args.args[2] == "pacts.agent.refused"
+    record.assert_not_called()
+
+
+def test_the_rbac_check_comes_before_the_switches(mocks: Dict[str, MagicMock]) -> None:
+    mocks["permission"].side_effect = HTTPException(status_code=403, detail="Permission denied: pacts:view")
+    response = client.post(BASE + "/list", json={"tenantId": TENANT, "keyId": KEY}, headers=HEADERS)
+    assert response.status_code == 403
+    mocks["agents"].assert_not_called()
+    mocks["audit"].assert_not_called()

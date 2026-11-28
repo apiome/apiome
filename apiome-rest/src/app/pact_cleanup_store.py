@@ -97,6 +97,8 @@ AUDIT_ACTIONS = (
     "pacts.retention.apply",
     "pacts.retention.policy",
     "pacts.retention.nightly",
+    "pacts.settings.commit_statuses",
+    "pacts.settings.agents",
     "pacts.purge",
 )
 

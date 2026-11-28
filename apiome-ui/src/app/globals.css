@@ -48972,3 +48972,91 @@ html[data-motion='reduce'] .pvl-progress--striped::-webkit-progress-value {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
 }
+
+/* ===========================================================================
+   Contracts settings → Secrets, CI and commit statuses, Agents — PFX-8.15
+   (#7312), docs/mockups/contracts/settings.html. `.pcx-switches` a group of
+   switch rows with one Save; `.pcx-chips` / `.pcx-chip` the CI-system picker;
+   `.pcx-code` a recipe or the two broker variables; `.pcx-callout--warn` the
+   one "waiting for a value" note; `.psx-*` the Secrets table's actions and
+   the list of what blocks a delete. Tokens only.
+   =========================================================================== */
+.pcx-switches {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.pcx-switch-row__note {
+  color: var(--fg-subtle);
+  font-style: italic;
+}
+
+.pcx-callout--warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn-fg);
+}
+
+.pcx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pcx-chip {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.pcx-chip:hover {
+  color: var(--fg);
+}
+
+.pcx-chip:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pcx-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.pcx-code {
+  margin: 0;
+  max-block-size: 28rem;
+  overflow: auto;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre;
+}
+
+.pcx-code:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.psx-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.psx-blockers {
+  margin: 0;
+  padding-inline-start: var(--space-4);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}

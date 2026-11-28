@@ -57,6 +57,7 @@ import { fetchTargetOptions } from '../pactVerification/pactVerificationApi';
 import { fetchOverrides, fetchSettings, removeOverride, saveOverride, saveSettings } from './remediationApi';
 import { SETTINGS_DESCRIPTION, SETTINGS_TITLE } from '@lib/pact-retention';
 import { SettingsTabs } from '../pactSettings/SettingsTabs';
+import { VERIFY_RUN_ROUTE } from '@lib/pact-verify-run';
 
 /** Where the breadcrumb's first step goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -571,6 +572,84 @@ function OverridesTable({
 }
 
 /**
+ * **When Apiome verifies on its own** (PFX-8.15, #7312): every provider or pair whose override names a
+ * verification target — only those run on a schedule — with its cadence (the override's, else the
+ * workspace's), and **Edit** opening the override. The settings below say how each is decided.
+ *
+ * @param props - The overrides, the workspace cadence, and what Edit does.
+ * @returns The panel.
+ */
+export function ScheduleList({
+  overrides,
+  defaultCadence,
+  onEdit,
+}: {
+  overrides: OverrideRecord[];
+  defaultCadence: Cadence | null;
+  onEdit: (override: OverrideRecord) => void;
+}) {
+  const scheduled = overrides.filter((override) => override.target && !override.target_deleted);
+  return (
+    <Panel
+      id="prx-schedule"
+      title="When Apiome verifies on its own"
+      aside={
+        <Button size="sm" variant="outline" asChild>
+          <Link href={VERIFY_RUN_ROUTE}>Run a verification</Link>
+        </Button>
+      }
+    >
+      {scheduled.length === 0 ? (
+        <p className="ppx__statement" data-testid="prx-schedule-empty">
+          Nothing runs on a schedule yet: a provider needs a verification target. Add an override below and pick its
+          target.
+        </p>
+      ) : (
+        <div className="ppx__table-wrap">
+          <table className="ppx__table" data-testid="prx-schedule-table">
+            <caption className="sr-only">Scheduled verifications</caption>
+            <thead>
+              <tr>
+                <th scope="col">Provider</th>
+                <th scope="col">Pacts of</th>
+                <th scope="col">Target</th>
+                <th scope="col">When</th>
+                <th scope="col">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {scheduled.map((override) => (
+                <tr key={override.id} data-testid={`prx-schedule-${override.id}`}>
+                  <td>{override.provider_name}</td>
+                  <td>{override.consumer_name ?? 'Every consumer'}</td>
+                  <td>{override.target_name ?? override.target}</td>
+                  <td>
+                    {cadenceLabel(override.cadence ?? defaultCadence)}
+                    {override.cadence ? null : <span className="ppx__muted"> (workspace default)</span>}
+                  </td>
+                  <td className="pcx-table__actions">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(override)}
+                      aria-label={`Edit the schedule of ${override.provider_name}`}
+                    >
+                      Edit
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+/**
  * The Verification settings page.
  *
  * @returns The page.
@@ -673,6 +752,13 @@ export default function VerificationSettingsClient() {
           re-publish it.
         </p>
         <div className="ppx prx" data-testid="pact-verification-settings">
+          {overrides.data ? (
+            <ScheduleList
+              overrides={overrides.data}
+              defaultCadence={settings.data?.cadence ?? null}
+              onEdit={(override) => openDraft(override)}
+            />
+          ) : null}
           <Panel id="prx-defaults" title="Workspace defaults">
             {settings.error ? (
               <SectionError

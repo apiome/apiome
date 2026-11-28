@@ -141,6 +141,8 @@ from the Pact CLI, a Pact library, the console or an MCP tool. Source `api_key` 
 | `pacts.pacticipant.delete`, `.restore`, `pacts.version.delete`, `.restore` | A pacticipant or version is deleted or restored; the detail holds the `reason`. |
 | `pacts.label.add`, `pacts.label.remove` | A label is added or removed. |
 | `pacts.retention.apply`, `pacts.purge` | A retention run is applied, or deleted rows are purged after 30 days; the detail holds the counts. |
+| `pacts.settings.commit_statuses`, `pacts.settings.agents` | A Contracts admin changes the [commit-status switches](../ship/pact-broker/commit-statuses.mdx#choose-which-statuses-are-written) or [what agents may do](../ship/pact-broker/cli.mdx#choose-what-agents-may-do); the detail holds the switches. |
+| `pacts.agent.refused` | An MCP agent asked for a pact action the workspace's Agents switches refuse, or to record a deployment to production; the detail holds the action and the code. |
 
 The detail holds the route, its path parameters and, when the call created something, its id. It
 never holds a request body, so a webhook's token or a pact's content is never copied into the audit.

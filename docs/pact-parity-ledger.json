@@ -652,6 +652,46 @@
       "rest": "POST /v1/tenants/{tenant}/pact-retention/policy/preview",
       "ui": "/ade/dashboard/pacts/settings",
       "cli": "retention preview"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/secrets",
+      "rest": "POST /v1/tenants/{tenant}/pact-secrets",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": null,
+      "reason": "Workspace secrets have no apiome pact or Pact CLI command; they are managed on Settings → Secrets or with the REST request."
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/secrets/[secretId]",
+      "rest": "PUT /v1/tenants/{tenant}/pact-secrets/{secret}",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": null,
+      "reason": "Workspace secrets have no apiome pact or Pact CLI command; they are managed on Settings → Secrets or with the REST request."
+    },
+    {
+      "method": "DELETE",
+      "bff": "/api/pact/secrets/[secretId]",
+      "rest": "DELETE /v1/tenants/{tenant}/pact-secrets/{secret}",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": null,
+      "reason": "Workspace secrets have no apiome pact or Pact CLI command; they are managed on Settings → Secrets or with the REST request."
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/contract-settings/commit-statuses",
+      "rest": "PUT /v1/tenants/{tenant}/pact-contract-settings/commit-statuses",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": null,
+      "reason": "The commit-status and agent switches are workspace settings with no apiome pact or Pact CLI command; use Settings or REST."
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/contract-settings/agents",
+      "rest": "PUT /v1/tenants/{tenant}/pact-contract-settings/agents",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": null,
+      "reason": "The commit-status and agent switches are workspace settings with no apiome pact or Pact CLI command; use Settings or REST."
     }
   ]
 }

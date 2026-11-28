@@ -317,6 +317,17 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
+    // PFX-8.15 (#7312): Contracts settings → Secrets, CI and commit statuses, Agents, dumped by
+    // `tests/pact-settings-tabs-ui.test.tsx`.
+    id: 'pact-settings-tabs',
+    mockup: 'contracts/settings.html',
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-settings-secrets.html', 'pact-settings-ci.html', 'pact-settings-agents.html'],
+    },
+  },
+  {
     // PFX-8.14 (#7311): Contracts settings → Clean-up (keep-rules, If it ran now, Recently deleted),
     // dumped by `tests/pact-settings-cleanup-ui.test.tsx`.
     id: 'pact-settings-cleanup',

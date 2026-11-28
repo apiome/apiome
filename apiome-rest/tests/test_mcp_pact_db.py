@@ -20,6 +20,8 @@ import pytest
 from fastapi import HTTPException
 
 from app import mcp_pact_routes as routes
+from app.consumer_contract_store import ConsumerActor
+from app.pact_contract_settings import AgentSettings, save_agents
 from tests import test_pact_environment_db as environment_db
 from tests import test_pact_matrix_db as matrix_db
 
@@ -120,17 +122,19 @@ def test_the_key_lookup_acts_as_the_owner_and_refuses_the_rest(mcp: Dict[str, An
 
 
 def test_record_deployment_then_can_i_deploy(mcp: Dict[str, Any]) -> None:
-    environment_db._create_environment(mcp, "production", production=True)
+    environment_db._create_environment(mcp, "staging", production=False)
     sha = matrix_db._publish(mcp, "1.0.0", branch="main")
     matrix_db._provider_version(mcp, "p-1")
     matrix_db._verify(mcp, sha, "p-1", True)
     tenant, key = mcp["seed"]["tenant"], mcp["key"]
+    # PFX-8.15: recording is off for agents until the workspace allows it.
+    save_agents(mcp["db"], tenant, AgentSettings(record=True), actor=ConsumerActor(label="admin"))
 
     record = routes.McpPactRecordDeploymentRequest.model_validate(
-        {"tenantId": tenant, "keyId": key, "pacticipant": "Ledger API", "version": "p-1", "environment": "production"}
+        {"tenantId": tenant, "keyId": key, "pacticipant": "Ledger API", "version": "p-1", "environment": "staging"}
     )
     deployed = routes.record_mcp_deployment(record)
-    assert deployed.created is True and deployed.deployment["environment"]["name"] == "production"
+    assert deployed.created is True and deployed.deployment["environment"]["name"] == "staging"
     assert routes.record_mcp_deployment(record).created is False
 
     ask = routes.McpPactCanIDeployRequest.model_validate(
@@ -139,7 +143,7 @@ def test_record_deployment_then_can_i_deploy(mcp: Dict[str, Any]) -> None:
             "keyId": key,
             "pacticipant": "Billing Service",
             "version": "1.0.0",
-            "toEnvironment": "production",
+            "toEnvironment": "staging",
         }
     )
     answer = routes.answer_matrix(
@@ -158,7 +162,7 @@ def test_record_deployment_then_can_i_deploy(mcp: Dict[str, Any]) -> None:
             "keyId": key,
             "selectors": [{"pacticipant": "Billing Service", "version": "1.0.0"}],
             "latestby": "cvpv",
-            "toEnvironment": "production",
+            "toEnvironment": "staging",
             "maxRows": 1,
         }
     )
@@ -166,3 +170,28 @@ def test_record_deployment_then_can_i_deploy(mcp: Dict[str, Any]) -> None:
         tenant, routes.key_auth_data(tenant, key), routes.matrix_query_string(matrix), routes.parse_matrix_query, 1
     )
     assert same.summary == answer.summary
+
+
+def test_an_agent_refusal_is_audited_for_the_workspace(mcp: Dict[str, Any]) -> None:
+    """PFX-8.15: recording is off by default; production is refused even when it is on."""
+    environment_db._create_environment(mcp, "production", production=True)
+    matrix_db._publish(mcp, "1.0.0", branch="main")
+    matrix_db._provider_version(mcp, "p-1")
+    tenant, key = mcp["seed"]["tenant"], mcp["key"]
+    record = routes.McpPactRecordDeploymentRequest.model_validate(
+        {"tenantId": tenant, "keyId": key, "pacticipant": "Ledger API", "version": "p-1", "environment": "production"}
+    )
+    with pytest.raises(HTTPException) as off:
+        routes.record_mcp_deployment(record)
+    assert off.value.detail["code"] == "mcp-pact-agent-action-off"
+    save_agents(mcp["db"], tenant, AgentSettings(record=True), actor=ConsumerActor(label="admin"))
+    with pytest.raises(HTTPException) as production:
+        routes.record_mcp_deployment(record)
+    assert production.value.detail["code"] == "mcp-pact-agent-production"
+    mcp["cursor"].execute(
+        "SELECT detail->>'code' AS code FROM apiome.access_audit WHERE tenant_id = %s::uuid "
+        "AND action = 'pacts.agent.refused' ORDER BY created_at",
+        (tenant,),
+    )
+    codes = [row["code"] for row in mcp["cursor"].fetchall()]
+    assert codes == ["mcp-pact-agent-action-off", "mcp-pact-agent-production"]

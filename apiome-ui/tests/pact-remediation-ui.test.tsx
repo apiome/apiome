@@ -130,6 +130,27 @@ describe('Verification settings', () => {
     writeA11yFixture('pact-verification-settings', liveMarkup(container.firstElementChild!));
   });
 
+  it('lists what Apiome verifies on its own, with the cadence it inherits (PFX-8.15)', async () => {
+    render(<VerificationSettingsClient />);
+    const table = await screen.findByTestId('prx-schedule-table');
+    // Only an override with a live target runs on a schedule: the deleted target and the pair without one do not.
+    expect(within(table).getAllByRole('row')).toHaveLength(2);
+    const row = screen.getByTestId(`prx-schedule-${fixture.overrides.overrides[0].id}`);
+    expect(row).toHaveTextContent('Ledger API');
+    expect(row).toHaveTextContent('Every consumer');
+    expect(row).toHaveTextContent('Nightly');
+    expect(row).toHaveTextContent('(workspace default)');
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit the schedule of Ledger API' }));
+    expect(await screen.findByTestId('prx-override-dialog')).toHaveTextContent('Edit override');
+    expect(screen.getByTestId('pcx-tab-verification')).toHaveTextContent('Verification schedule');
+  });
+
+  it('says nothing runs on a schedule without a target', async () => {
+    answers[`${SETTINGS}/overrides`] = () => ({ status: 200, body: { overrides: [] } });
+    render(<VerificationSettingsClient />);
+    expect(await screen.findByTestId('prx-schedule-empty')).toHaveTextContent('Nothing runs on a schedule yet');
+  });
+
   it('saves the settings and says so', async () => {
     render(<VerificationSettingsClient />);
     fireEvent.change(await screen.findByLabelText('Verification cadence'), { target: { value: 'hourly' } });

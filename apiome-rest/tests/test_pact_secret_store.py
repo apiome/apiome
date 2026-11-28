@@ -83,6 +83,9 @@ class _Cursor:
     def fetchone(self) -> Optional[Dict[str, Any]]:
         return self.answers.pop(0)
 
+    def fetchall(self) -> List[Dict[str, Any]]:
+        return []
+
 
 def _db(rows: Any = None, cursor: Optional[_Cursor] = None) -> MagicMock:
     database = MagicMock()
@@ -163,6 +166,9 @@ def test_an_update_without_a_value_keeps_the_ciphertext(keyed: None) -> None:
     with patch("app.pact_secret_store.get_secret", return_value="record"):
         update_secret(database, _TENANT, _ID, SecretUpdate(value=_VALUE), actor=_ACTOR)
     assert "secret_ciphertext = %s" in cursor.statements[1][0] and _VALUE not in str(cursor.statements[1][1])
+    # Setting a value clears the waiting flag and turns on the webhooks that were waiting (PFX-8.15).
+    assert "awaiting_value = FALSE" in cursor.statements[1][0]
+    assert "awaiting_secrets" in cursor.statements[2][0] and cursor.statements[2][1] == (_TENANT,)
 
 
 def test_a_secret_in_use_is_not_deleted_and_the_refusal_names_the_users() -> None:

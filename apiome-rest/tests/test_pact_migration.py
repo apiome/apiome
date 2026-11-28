@@ -7,6 +7,7 @@ permission predicate (the live-database behaviour is ``test_pact_migration_db``)
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 from unittest.mock import patch
@@ -249,17 +250,44 @@ def test_a_webhook_record() -> None:
 
 
 @pytest.mark.parametrize(
-    "request_part",
+    ("request_part", "field"),
     [
-        {"headers": {"Authorization": "**********"}},
-        {"username": "ci", "password": "**********"},
+        ({"headers": {"Authorization": "**********"}}, "header_authorization"),
+        ({"username": "ci", "password": "**********"}, "password"),
     ],
 )
-def test_a_redacted_webhook_secret_is_refused_with_the_reason(request_part: Dict[str, Any]) -> None:
+def test_a_redacted_webhook_secret_waits_for_a_placeholder_secret(request_part: Dict[str, Any], field: str) -> None:
+    """PFX-8.15: a redacted value becomes a reference to a value-less secret; the webhook is turned off."""
+    uuid = "3f1b2c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
     body = {"request": {"method": "POST", "url": "https://ci.example.com/h", **request_part}}
-    refused = _one({"kind": "webhook", "webhook": body})
-    assert isinstance(refused, RefusedRecord)
-    assert "redacted" in refused.message or "**********" in refused.message
+    record = _one({"kind": "webhook", "uuid": uuid, "webhook": body})
+    assert not isinstance(record, RefusedRecord)
+    ((name, description),) = record.placeholders
+    assert name.startswith("migrated_") and name.endswith(field) and len(name) <= 64
+    assert re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,63}", name)
+    assert "Waiting for a value" in description and uuid in description
+    assert record.webhook.enabled is False
+    stored = record.webhook.password if field == "password" else record.webhook.secret_headers["Authorization"]
+    assert stored == "${user." + name + "}"
+    # The same webhook names the same placeholder on a re-run, so nothing is created twice.
+    again = _one({"kind": "webhook", "uuid": uuid, "webhook": body})
+    assert again.placeholders == record.placeholders
+
+
+def test_a_redacted_plain_header_becomes_a_sealed_placeholder() -> None:
+    """A header Apiome would not call secret, but the source redacted, is never sent as `**********`."""
+    body = {"request": {"method": "POST", "url": "https://ci.example.com/h", "headers": {"X-Build": "**********"}}}
+    record = _one({"kind": "webhook", "webhook": body})
+    ((name, _),) = record.placeholders
+    assert "X-Build" not in record.webhook.headers
+    assert record.webhook.secret_headers["X-Build"] == "${user." + name + "}"
+    assert record.webhook.enabled is False
+
+
+def test_a_webhook_with_its_secrets_needs_no_placeholder() -> None:
+    body = {"request": {"method": "POST", "url": "https://ci.example.com/h", "username": "ci", "password": "s3cret"}}
+    record = _one({"kind": "webhook", "webhook": body})
+    assert record.placeholders == [] and record.webhook.enabled is True and record.webhook.password == "s3cret"
 
 
 def test_count_outcomes() -> None:

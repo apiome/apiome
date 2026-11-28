@@ -39,6 +39,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from psycopg2.extras import Json
 
+from .bidirectional_events import publish_bidirectional_verdict
 from .bidirectional_verification import (
     ENGINE_NAME,
     KIND_BIDIRECTIONAL,
@@ -273,8 +274,12 @@ def _compare_pair(
     pact: _Pact,
     target: ContractTarget,
     actor: ConsumerActor,
+    base: Optional[str] = None,
 ) -> RunEntry:
     """Compare one pact version with one provider version's contract and store the result.
+
+    A stored verdict then fires its webhooks and sets its commit statuses when the workspace's
+    bi-directional switch is on (:func:`app.bidirectional_events.publish_bidirectional_verdict`).
 
     Args:
         db: The database.
@@ -284,6 +289,7 @@ def _compare_pair(
         pact: The pact version.
         target: The provider version and its contract.
         actor: Who published (recorded on the result).
+        base: The broker base URL the publishing client used, for the hooks' links.
 
     Returns:
         The pair's entry in the run report. Never raises: a failure to store is logged and
@@ -356,6 +362,9 @@ def _compare_pair(
     if number is None:
         # Another publish stored this pair between the check and the insert.
         return entry(STATUS_ALREADY_COMPARED)
+    publish_bidirectional_verdict(
+        db, tenant_id, provider_ref=provider.id, consumer_ref=pact.consumer_id, sha=pact.sha, number=number, base=base
+    )
     return entry(STATUS_COMPARED, verdict=stored.verdict, number=number, success=stored.success)
 
 
@@ -372,7 +381,9 @@ def _skipped(provider: PacticipantRecord, pact: _Pact, target: ContractTarget, l
     )
 
 
-def compare_published_pacts(db: Any, tenant_id: str, outcome: PublishOutcome, *, actor: ConsumerActor) -> ComparisonRun:
+def compare_published_pacts(
+    db: Any, tenant_id: str, outcome: PublishOutcome, *, actor: ConsumerActor, base: Optional[str] = None
+) -> ComparisonRun:
     """Compare the pacts a consumer version just published with their providers' contracts.
 
     Args:
@@ -380,6 +391,7 @@ def compare_published_pacts(db: Any, tenant_id: str, outcome: PublishOutcome, *,
         tenant_id: The caller's tenant.
         outcome: What the publish stored (it has committed).
         actor: Who published.
+        base: The broker base URL the client used (links of the bi-directional hooks).
 
     Returns:
         The run: one entry per pact and provider version considered. Empty when no provider of
@@ -402,7 +414,7 @@ def compare_published_pacts(db: Any, tenant_id: str, outcome: PublishOutcome, *,
                     _skipped(provider, pact, selected.target, MAX_CONTRACTS_PER_PACT, "provider versions")
                 )
                 continue
-            run.entries.append(_compare_pair(db, documents, tenant_id, provider, pact, selected.target, actor))
+            run.entries.append(_compare_pair(db, documents, tenant_id, provider, pact, selected.target, actor, base))
     return run
 
 
@@ -513,7 +525,13 @@ def preview_provider_contract(
 
 
 def compare_provider_contract(
-    db: Any, tenant_id: str, provider_ref: str, version_number: str, *, actor: ConsumerActor
+    db: Any,
+    tenant_id: str,
+    provider_ref: str,
+    version_number: str,
+    *,
+    actor: ConsumerActor,
+    base: Optional[str] = None,
 ) -> ComparisonRun:
     """Compare the contract a provider version just published with the pacts that need it.
 
@@ -523,6 +541,7 @@ def compare_provider_contract(
         provider_ref: The provider's handle, id or name.
         version_number: The provider version that published the contract (it has committed).
         actor: Who published.
+        base: The broker base URL the client used (links of the bi-directional hooks).
 
     Returns:
         The run: one entry per pact version considered. Empty when no consumer has a pact with
@@ -544,5 +563,5 @@ def compare_provider_contract(
         if position >= MAX_PACTS_PER_CONTRACT:
             run.entries.append(_skipped(provider, pact, target, MAX_PACTS_PER_CONTRACT, "pacts"))
             continue
-        run.entries.append(_compare_pair(db, documents, tenant_id, provider, pact, target, actor))
+        run.entries.append(_compare_pair(db, documents, tenant_id, provider, pact, target, actor, base))
     return run
