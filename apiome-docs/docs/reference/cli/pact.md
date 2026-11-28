@@ -18,7 +18,7 @@ Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`record-support-ended`](#pact-record-support-ended), [`record-undeployment`](#pact-record-undeployment), [`restore-version`](#pact-restore-version), [`retention`](#pact-retention), [`scaffold-provider-tests`](#pact-scaffold-provider-tests), [`verify`](#pact-verify).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`record-support-ended`](#pact-record-support-ended), [`record-undeployment`](#pact-record-undeployment), [`restore-version`](#pact-restore-version), [`retention`](#pact-retention), [`scaffold-provider-tests`](#pact-scaffold-provider-tests), [`setup`](#pact-setup), [`verify`](#pact-verify).
 
 ## apiome pact can-i-deploy {#pact-can-i-deploy}
 
@@ -682,6 +682,31 @@ apiome pact scaffold-provider-tests [OPTIONS]
 | `--language`, `-l` | `typescript` \| `java` \| `go` \| `python` |  | yes | typescript (pact-js), java (pact-jvm, JUnit 5), go (pact-go v2) or python (pact-python 2). |
 | `--output`, `-o` | file |  |  | Write the test file here instead of stdout. |
 | `--fail-on-unregistered` | flag |  |  | Exit 1 when a state the file handles is not registered in Apiome. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact setup {#pact-setup}
+
+Set up contracts: pacticipants, environments and pipelines, or show how far the set-up is.
+
+With no flag, shows the six sections of the guided set-up (GET …/pact-setup). Each flag sets one part up and leaves what already exists alone, so the command can be run again. Reading needs pacts:view, creating pacts:create, --ci and --write-secrets pacts:delete. Exits 1 when anything failed; a repository skipped with a reason is not a failure.
+
+```text
+apiome pact setup [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--from-projects` | flag |  |  | Create a pacticipant for each proposed project and repository that has none. |
+| `--environments` | text |  |  | Create these environments if missing, comma-separated: production,staging. |
+| `--require-contract` | flag |  |  | With --environments: can-i-deploy to production requires a contract. |
+| `--ci` | text |  |  | Open pull requests adding can-i-deploy and record-deployment. Only: github. |
+| `--ci-environment` | text |  |  | The environment the pipeline asks about (default: production, else the first). |
+| `--write-secrets` | flag |  |  | Store this command's broker address and key as Actions secrets in the workspace's GitHub repositories. |
+| `--dry-run` | flag |  |  | Print what a run would do; change nothing. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 

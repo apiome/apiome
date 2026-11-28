@@ -426,6 +426,23 @@
       ]
     },
     {
+      "name": "setup",
+      "summary": "Set up contracts: pacticipants, environments and pipelines, or show how far the set-up is.",
+      "arguments": [],
+      "options": [
+        "--from-projects",
+        "--environments",
+        "--require-contract",
+        "--ci",
+        "--ci-environment",
+        "--write-secrets",
+        "--dry-run",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
       "name": "verify",
       "summary": "Verify a provider against its pacts with Apiome's hosted verifier (POST …/pact-verifier/…/verify).",
       "arguments": [],

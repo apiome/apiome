@@ -1,0 +1,40 @@
+---
+slug: guided-set-up
+title: "Guided set-up for contracts"
+description: "One resumable page from an empty workspace to a verdict before every deploy."
+authors: [apiome]
+---
+
+Getting a contract loop working used to mean six commands and the docs. **Set up contracts** is the
+same path as one page you can leave and come back to — and `apiome pact setup` for workspaces that
+are created by script. See
+[Set up in ten minutes](/ship/pact-broker/overview#set-up-in-ten-minutes).
+
+{/* truncate */}
+
+- **Six sections, in the order they depend on each other.** Who talks to whom, where things run,
+  your pipelines, the first pact, the provider's side, and gates. Each shows **Done**, **Next** or
+  **To do**, and only the next one is open. A section is done when what it sets up exists, whoever
+  made it, so coming back never sets anything up twice.
+- **Pacticipants from what you already have.** Apiome proposes a provider for every project and a
+  consumer for every registered repository no project is read from, with its main branch and owner
+  team. Tick the ones that talk to each other.
+- **Pipelines without copy and paste.** The page creates an API key scoped to publishing pacts,
+  reading verdicts and recording deployments, shows it once, and writes `PACT_BROKER_BASE_URL` and
+  `PACT_BROKER_TOKEN` into your GitHub repositories as Actions secrets. It then opens a pull request
+  in each repository adding a workflow that asks can-i-deploy and records the deployment.
+- **Works without a linked GitHub account.** The secrets become two `gh secret set` commands and
+  the pull request becomes the workflow file to add by hand. A repository GitHub refuses is listed
+  with the reason; the others still go through.
+- **Two ways to the first pact.** Publish the files your Pact tests produce, or derive one from the
+  provider's spec. Recording a pact from a hosted mock will join them when it ships.
+- **The provider's side as one switch.** Turn on *the spec as the contract* for a provider, or go
+  on to run a hosted verification.
+- **Migrated workspaces start ahead.** After a move from Pact Broker or PactFlow the first two
+  sections arrive done.
+- **CLI:** `apiome pact setup` shows the six sections; `--from-projects`,
+  `--environments production,staging`, `--ci github` and `--write-secrets` do the work, `--dry-run`
+  prints what a run would do, and a second run reports what is already there.
+- **REST:** `GET` / `PUT /v1/tenants/{t}/pact-setup`, `POST …/pact-setup/github/secrets` and
+  `POST …/pact-setup/github/pull-requests` (OpenAPI 1.712.0). Acting on the page needs the Contracts
+  admin permission (**Pacts: delete**); reading it needs **Pacts: view**.

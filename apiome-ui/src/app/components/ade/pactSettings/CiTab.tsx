@@ -24,6 +24,7 @@ import {
   type CommitStatusSettings,
   type ContractSettings,
 } from '@lib/pact-contract-settings';
+import { SETUP_ROUTE } from '@lib/pact-setup';
 import { describeFailure } from '../pactPacticipants/describeFailure';
 import { Panel, SectionError } from '../pactVerification/PactVerificationClient';
 import { fetchBrokerAddress, fetchContractSettings, saveCommitStatuses } from './contractSettingsApi';
@@ -151,6 +152,11 @@ export default function CiTab() {
               <Link href={API_KEYS_ROUTE}>
                 <KeyRound aria-hidden />
                 Create a key with Pact scopes
+              </Link>
+            </Button>
+            <Button variant="link" size="sm" asChild>
+              <Link href={SETUP_ROUTE} data-testid="pci-setup">
+                Open the guided set-up
               </Link>
             </Button>
           </section>

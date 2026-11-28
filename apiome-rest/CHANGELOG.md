@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.888.0] - 2026-11-30
+
+### Added
+- **Guided set-up for contracts (PFX-8.20, #7317).** OpenAPI 1.712.0, apiome-db V460 (`pact_setup_progress`).
+  - `GET /v1/tenants/{t}/pact-setup` answers the six sections of the set-up — pacticipants, environments, pipelines,
+    first pact, provider's side, gates — each `done`, `next` or `todo`, derived from what the workspace has
+    (pacticipants, environments, published pacts, spec-as-contract sources, verification results) and, for the three
+    sections nothing proves, from a Contracts admin's mark. A workspace with a completed broker migration has the
+    first two done. It also proposes pacticipants from projects (providers, with the repository they are read from and
+    their owner team) and from registered repositories no project is read from (consumers), each naming the
+    pacticipant that already exists for it, and lists the registered GitHub repositories with whether a linked account
+    can write to them. Unbounded counts stop at 100; the proposal reads the first 200 projects and repositories and
+    reports the rest in `candidates_omitted`. Requires `pacts:view`.
+  - `PUT /v1/tenants/{t}/pact-setup` saves only what is sent: a section's by-hand mark, the first-pact path
+    (`tests` | `spec`), and the id and prefix of the API key created for CI (never its secret; a key that is deleted,
+    disabled or expired reads back as none). Audited `pacts.setup.update`. Requires `pacts:delete`.
+  - `POST /v1/tenants/{t}/pact-setup/github/secrets` writes `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` as GitHub
+    Actions secrets into registered repositories, sealed to each repository's key, with the GitHub account the
+    repository was registered with. The key is never stored, logged or audited. Audited
+    `pacts.setup.github.secrets`. Requires `pacts:delete`.
+  - `POST /v1/tenants/{t}/pact-setup/github/pull-requests` opens a pull request from `apiome/contracts-setup` adding
+    `.github/workflows/apiome-contracts.yml` (can-i-deploy on every pull request and push; record-deployment after a
+    push to the default branch). An open pull request from the set-up answers `exists` and its branch is brought up
+    to date; the same file already on the default branch is skipped. `preview: true` calls nothing and answers with
+    the file. Audited `pacts.setup.github.pull_requests`. Requires `pacts:delete`.
+  - Both GitHub routes answer per repository and never fail as a whole: `skipped` carries a reason a person can act on
+    (not this workspace's repository, not github.com, no linked account, the account may not manage secrets or push),
+    and a skipped pull request still carries the workflow's text. A pacticipant or environment name with a line break
+    is `422 pact-setup-invalid-workflow` before GitHub is called.
+  - New dependency: `pynacl` (the sealed box GitHub requires for Actions secrets).
+
 ## [1.887.0] - 2026-11-30
 
 ### Added

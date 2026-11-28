@@ -337,6 +337,13 @@ const ADDITIONAL: A11yRoute[] = [
     subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-export.html', 'pact-export-scaffold.html'] },
   },
   {
+    // PFX-8.20 (#7317): Set up contracts — six sections, the next one (Connect your pipelines) open,
+    // dumped by `tests/pact-setup-ui.test.tsx`.
+    id: 'pact-setup',
+    mockup: 'contracts/setup.html',
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-setup.html'] },
+  },
+  {
     // PFX-8.15 (#7312): Contracts settings → Secrets, CI and commit statuses, Agents, dumped by
     // `tests/pact-settings-tabs-ui.test.tsx`.
     id: 'pact-settings-tabs',

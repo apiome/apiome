@@ -1,6 +1,6 @@
 [project]
 name = "apiome-rest"
-version = "1.887.0"
+version = "1.888.0"
 description = "REST API for serving OpenAPI specifications from the Apiome database"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -29,6 +29,7 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "bcrypt==4.2.0",
     "cryptography>=42.0.0",
+    "pynacl>=1.5.0",
     "httpx>=0.27.0",
     "email-validator==2.2.0",
     "pyjwt>=2.8.0",

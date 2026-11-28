@@ -28,6 +28,111 @@ All of it is served through the API and the Pact tools, and you can read and act
   deployment, and let [contract webhooks](./webhooks.mdx) start a provider build when a pact
   changes.
 
+## Set up in ten minutes
+
+**Set up contracts** takes a workspace from nothing to a yes or no before every deploy, on one page
+you can leave and come back to. **Click Contracts** in the rail, then **click “⋯”** → **“Set up
+contracts”** — or **“Open the guided set-up”** on the landing's first-run checklist, or on
+**Settings** → **CI and commit statuses**. The page is `/ade/dashboard/pacts/setup`.
+
+<Screenshot id="pact-setup" alt="Set up contracts: six numbered sections. Who talks to whom and Where things run are Done, Connect your pipelines is Next and open with a Create a key button, the two broker variables and two repositories ticked for Write secrets, and three sections are To do. The side panel shows 2 of 6, about 8 minutes left, what you get at the end, and the apiome pact setup command."/>
+
+The six sections come in the order they depend on each other. Each shows **Done**, **Next** or **To
+do**; only the next one is open, and **clicking a section's title** opens or closes any of them. A
+section is **Done** when what it sets up exists — whoever made it, here, in CI or from the CLI — so
+nothing is set up twice when you come back.
+
+1. **Who talks to whom.** Apiome proposes a pacticipant for every project (as a **Provider**) and
+   for every registered repository no project is read from (as a **Consumer**), with where it was
+   found and its owner team. **Tick** the ones that talk to each other and **click “Create N
+   pacticipants”**. One that already exists reads **Already a pacticipant** and cannot be created
+   again. With nothing to propose, **click “Add one by hand”** or follow **import a project**.
+2. **Where things run.** **Tick** `production`, `staging` or `development`, or type another name and
+   **click “Add another”**; leave **“Require a verified contract before anything reaches
+   production”** ticked to make can-i-deploy refuse a version with no contract there. **Click
+   “Create N environments”**.
+3. **Connect your pipelines.** **Click “Create a key”**: an API key that can publish pacts, read
+   verdicts and record deployments. It is shown once — **click “Copy”**. Under **Where to point** are
+   the two variables every Pact tool reads, `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN`. Under
+   **Add them to**, **tick** your GitHub repositories and **click “Write secrets to N
+   repositories”**: Apiome stores both as Actions secrets with the GitHub account each repository
+   was registered with, and lists each repository as written or not written with the reason. Coming
+   back later, the section shows the key's prefix instead of offering a second key; paste the key
+   into **The key to store** to write it to another repository. Wired your pipelines another way?
+   **Click “I connected them myself”**.
+4. **The first consumer pact.** Choose **We already write Pact tests** and **click “Publish a
+   pact”** ([Publish and fetch pacts](./publish-pacts.mdx#publish-from-the-ui)), or **Start from the
+   spec** and **click “Derive a pact”** ([Export a contract](./export-contracts.mdx)). The section is
+   done when the first pact is published.
+5. **The provider's side.** Under **The spec as the contract**, **click “Turn on”** beside a
+   provider to publish each published version of its project as its provider contract
+   ([bi-directional](./bi-directional.mdx)) — no provider test to write. To replay pacts against a
+   running provider instead, or as well, **click “Run a verification”**
+   ([hosted verification](./hosted-verification.mdx)). If your own pipeline verifies the provider,
+   **click “Our pipeline verifies the provider”**.
+6. **Gate deploys and tell people.** Leave **“Add a can-i-deploy step to each pipeline”** and
+   **“Record deployments on merge”** ticked, choose the **Environment**, check the pacticipant beside
+   each repository, and **click “Open N pull requests”**. Each pull request adds
+   `.github/workflows/apiome-contracts.yml` from the branch `apiome/contracts-setup`. **Click “Show
+   the workflow”** to read the file first. Commit statuses are on by default and notifications are
+   [webhooks](./webhooks-console.mdx); the section links to both. **Click “Finish set-up”**.
+
+**“Finish later”** returns to Contracts; everything done so far is kept, and anyone with the
+Contracts admin permission can pick the page up. **“I already have a broker”** opens the
+[Migration wizard](./migration.mdx) instead.
+
+### What the page shows in special cases
+
+| When | What you see |
+| --- | --- |
+| Apiome finds no project or repository | Section 1 says so and offers **Add one by hand** and **import a project** |
+| No registered repository has a linked GitHub account | **Add them to** becomes two `gh secret set` commands to copy, and section 6 offers only **Show the workflow** — the file to add by hand |
+| A repository cannot be written to (no admin access, a branch rule, an archived repository) | That repository is listed as not written, or **No pull request**, with GitHub's reason and the workflow to add by hand; the others still go through |
+| A pull request from the set-up is already open | It is listed as **Pull request already open** with its link; its branch is brought up to date |
+| The workspace was [migrated from a broker](./migration.mdx) | Sections 1 and 2 arrive **Done**, and the side panel says the workspace was copied |
+| You are not a Contracts admin | The page is readable; each section reads **Ask a Contracts admin to do this step** in place of its buttons |
+| Projects and repositories number more than 200 | The first 200 are proposed and the page says how many are not listed |
+
+### The same, from a script
+
+`apiome pact setup` does sections 1, 2, 3 and 6 for a workspace created by script, and can be run
+again: what exists is reported as *already there* and left alone.
+
+```bash
+export PACT_BROKER_BASE_URL=https://api.apiome.dev/v1/tenants/acme/pact-broker
+export PACT_BROKER_TOKEN=$APIOME_API_KEY
+
+apiome pact setup                       # show the six sections and how far the set-up is
+apiome pact setup --from-projects \
+  --environments production,staging --require-contract \
+  --ci github --write-secrets           # pacticipants, environments, pull requests, secrets
+apiome pact setup --from-projects --ci github --dry-run   # print what a run would do
+```
+
+| Flag | What it does |
+| --- | --- |
+| `--from-projects` | Creates a pacticipant for each proposed project and repository that has none |
+| `--environments a,b` | Creates the environments that do not exist; `production` is marked production |
+| `--require-contract` | With `--environments`: can-i-deploy to production requires a contract |
+| `--ci github` | Opens the pull requests of section 6 for every GitHub repository a pacticipant names, and prints the workflow for any it could not open one in. Other CI systems have recipes on [Run Pact in CI](./ci-pact.mdx) |
+| `--ci-environment name` | The environment the pipeline asks about (default: `production`, else the first) |
+| `--write-secrets` | Stores this command's own broker address and key as the two Actions secrets |
+| `--dry-run` | Prints what a run would do and changes nothing |
+
+Every pacticipant, environment and repository ends as one line — created, already there, opened,
+written, or skipped with the reason. The command exits `1` when anything failed; a repository
+skipped with a reason is not a failure. The command cannot create its own first key: create one on
+the page or under [API keys](../../workspace/api-keys.mdx).
+
+The page reads `GET /v1/tenants/{t}/pact-setup` and saves its own marks with `PUT` on the same path;
+secrets and pull requests are `POST …/pact-setup/github/secrets` and
+`POST …/pact-setup/github/pull-requests`
+([REST reference](../../reference/rest/pacticipants.md)). Reading needs **Pacts: view**; every action
+on the page needs the Contracts admin permission (**Pacts: delete** — Admin and Owner). Saving,
+writing secrets and opening pull requests are recorded in the [access audit](../../govern/access-audit.mdx)
+as `pacts.setup.update`, `pacts.setup.github.secrets` and `pacts.setup.github.pull_requests`; the
+key's value is never stored or recorded.
+
 ## Where you work from
 
 | Where | Best for | Details |
@@ -112,6 +217,7 @@ checklist open. If the integrations cannot be read, one banner says why, with **
 | [**Verification settings**](./stale-pacts.mdx) | **Settings** → **Verification** | Stale thresholds, verification schedules and per-pair overrides |
 | [**Pact comparisons**](./bi-directional.mdx#in-the-app) | **Pacticipants** (`/ade/dashboard/pacts/comparisons`) | The fidelity report of each bi-directional comparison |
 | [**Provider states**](./provider-states.mdx#see-provider-states-in-the-app) | **Pacticipants** (`/ade/dashboard/pacts/provider-states`) | A provider's registered states, and a check of its pacts against them before a run |
+| [**Set up contracts**](#set-up-in-ten-minutes) | **Overview** (`/ade/dashboard/pacts/setup`, **“⋯”** → **“Set up contracts”**) | Six resumable sections from an empty workspace to a yes or no before every deploy |
 | [**Publish a consumer pact**](./publish-pacts.mdx#publish-from-the-ui) | **Overview** (`/ade/dashboard/pacts/publish`, **“Publish a pact”**) | Upload, paste or derive pacts, check them against what is published, and publish them for a consumer version |
 
 The landing reads `GET /v1/tenants/{t}/pact-integrations`
