@@ -367,6 +367,40 @@ def test_an_operation_with_only_a_default_response_is_omitted_entirely() -> None
     assert _reasons(export.findings, OUTCOME_OMITTED) == ["status-default", "no-response-declared"]
 
 
+def test_operations_map_each_declared_operation_to_its_interactions_and_findings() -> None:
+    """PFX-8.18 (#7315): the Export page's checklist reads which interactions each operation wrote."""
+    export = _export(
+        SurfaceSelection(
+            operations=[
+                _op("get", "/pets/{petId}", _response("name"), _response("code", "404")),
+                _op("get", "/pets", _response("total")),
+            ]
+        )
+    )
+    by_key = {(op.method, op.path): op for op in export.operations}
+    assert len(export.operations) == 2
+    shown = by_key[("GET", "/pets/{petId}")]
+    assert len(shown.interactions) == 2
+    assert shown.placeholder_count == 1
+    listed = by_key[("GET", "/pets")]
+    assert len(listed.interactions) == 1
+    assert listed.placeholder_count == 0
+    every = sorted(index for op in export.operations for index in op.interactions)
+    assert every == list(range(export.interaction_count))
+    assert sum(len(op.interactions) for op in export.operations) == export.interaction_count
+    for op in export.operations:
+        for index in op.interactions:
+            assert export.document["interactions"][index]["request"]["method"] == op.method
+
+
+def test_an_operation_left_out_has_no_interaction_and_its_omission_counted() -> None:
+    export = _export(SurfaceSelection(operations=[_op("get", "/pets/{petId}", _response("code", "default"))]))
+    (operation,) = export.operations
+    assert operation.interactions == []
+    assert operation.omitted_count == 2
+    assert operation.operation_id == "showPet"
+
+
 def test_a_status_range_becomes_its_first_code_and_a_non_json_body_is_omitted() -> None:
     index = _index()
     contract = _contract(SurfaceSelection(operations=[_op("get", "/health")]), index)

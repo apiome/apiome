@@ -3015,6 +3015,17 @@
       ]
     },
     {
+      "id": "pact-export",
+      "route": "/ade/dashboard/pacts/export",
+      "waitFor": "[data-testid=\"pexp-operations\"]",
+      "data": "fixture:hive-a11y/pact-export.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactExport/ExportPactClient.tsx",
+        "apiome-ui/src/app/components/ade/pactExport/DerivePanel.tsx",
+        "apiome-ui/lib/pact-export.ts"
+      ]
+    },
+    {
       "id": "pact-migrate-switch",
       "route": "/ade/dashboard/pacts/migrate",
       "waitFor": "[data-testid=\"pmg-switch\"]",

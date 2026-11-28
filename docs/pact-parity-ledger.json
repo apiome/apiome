@@ -106,15 +106,41 @@
     },
     {
       "cli": "export-consumer-contract",
-      "ui": null,
+      "ui": "/ade/dashboard/pacts/export",
       "rest": "GET /v1/tenants/{tenant}/projects/{project}/consumers/{consumer}/pact",
-      "reason": "No screen exports a project's consumer surface as a pact yet; the Export page ships with PFX-8.18 (#7315)."
+      "fields": {
+        "--project": "A pact from a project → Project",
+        "--consumer": "A pact from a project → Consumer",
+        "--revision": "A pact from a project → Revision",
+        "--provider": "A pact from a project → Provider",
+        "--output": "A pact from a project → Download pact",
+        "--fail-on-findings": "A pact from a project → Fail if anything needs review (the page lists every finding)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     },
     {
       "cli": "export-postman",
-      "ui": null,
+      "ui": "/ade/dashboard/pacts/export",
       "rest": "POST /v1/tenants/{tenant}/pact-postman-collections",
-      "reason": "No screen exports a pact as a Postman collection yet; the Export page ships with PFX-8.18 (#7315)."
+      "fields": {
+        "--provider": "A Postman collection → Provider",
+        "--consumer": "A Postman collection → Consumer",
+        "--consumer-version": "A Postman collection → Which pact → A consumer version",
+        "--tag": "A Postman collection → Which pact → Latest with a tag",
+        "--branch": "A Postman collection → Which pact → Latest on a branch",
+        "--pact-version": "A Postman collection → Which pact → A pact version (SHA)",
+        "--pact-file": "A Postman collection → Which pact → Upload a pact file",
+        "--provider-base-url": "A Postman collection → Provider base URL",
+        "--tests": "A Postman collection → Give each request a test script",
+        "--all-consumers": "A Postman collection → All consumers — one folder each",
+        "--state-setup": "A Postman collection → Include provider-state setup as pre-request scripts",
+        "--state-change-url": "A Postman collection → State change URL",
+        "--output": "A Postman collection → Download collection",
+        "--fail-on-left-out": "A Postman collection → Fail if any interaction is left out (the page lists what was left out)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     },
     {
       "cli": "list-pacticipants",
@@ -745,6 +771,13 @@
       "rest": "PUT /v1/tenants/{tenant}/pact-migration/runs/{run}/sync",
       "ui": "/ade/dashboard/pacts/migrate",
       "cli": "migrate"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/export/postman",
+      "rest": "POST /v1/tenants/{tenant}/pact-postman-collections",
+      "ui": "/ade/dashboard/pacts/export",
+      "cli": "export-postman"
     }
   ]
 }

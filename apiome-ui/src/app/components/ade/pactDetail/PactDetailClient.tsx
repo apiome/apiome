@@ -26,7 +26,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { RefreshCw } from 'lucide-react';
+import { PackageOpen, RefreshCw } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { ContractsTabs } from '../pactOverview/ContractsTabs';
@@ -51,6 +51,7 @@ import {
   type PreviousPactResponse,
 } from '@lib/pact-detail';
 import { verificationRoute } from '@lib/pact-verification';
+import { exportRoute } from '@lib/pact-export';
 import { CliSnippet } from '../pactPacticipants/PacticipantPanels';
 import { describeFailure } from '../pactPacticipants/describeFailure';
 import {
@@ -260,10 +261,18 @@ export default function PactDetailClient({
         ]}
         description="The interactions one consumer version expects of its provider, and how they were verified."
         actions={
-          <Button variant="outline" onClick={refreshAll}>
-            <RefreshCw aria-hidden />
-            Refresh
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link href={exportRoute({ kind: 'file', provider, consumer, version: version ?? '' })} data-testid="ppd-export">
+                <PackageOpen aria-hidden />
+                Export
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={refreshAll}>
+              <RefreshCw aria-hidden />
+              Refresh
+            </Button>
+          </>
         }
       />
       <PageBody>

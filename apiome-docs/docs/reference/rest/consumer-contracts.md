@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.709.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.710.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `consumer-contracts` · 20 operations
 
@@ -988,6 +988,7 @@ The generated pact, plus what the broker stored and the comparisons it ran.
 | `placeholder_count` | integer | yes | How many values were invented because no example exists. |
 | `omitted_count` | integer | yes | How many declared items could not be written at all. |
 | `findings` | array of `ExportFinding` | no | Every placeholder and omission, with a stable reason code. Never silently empty. |
+| `operations` | array of `ExportOperation` | no | What each declared operation became: the interactions it wrote (indexes into `pact.interactions`) and its finding counts. An operation with no interaction was left out; its `omitted` finding gives the reason. |
 | `pact` | object | yes | The Pact v4 document. |
 | `publish` | object | yes | The Pact Broker publish result, exactly as `POST …/pact-broker/contracts/publish` returns it: `notices`, the embedded pacticipant and version, `pb:contracts` and, when the provider has a provider contract, `comparisons`. |
 
@@ -1008,6 +1009,7 @@ A generated pact and what it could not say.
 | `placeholder_count` | integer | yes | How many values were invented because no example exists. |
 | `omitted_count` | integer | yes | How many declared items could not be written at all. |
 | `findings` | array of `ExportFinding` | no | Every placeholder and omission, with a stable reason code. Never silently empty. |
+| `operations` | array of `ExportOperation` | no | What each declared operation became: the interactions it wrote (indexes into `pact.interactions`) and its finding counts. An operation with no interaction was left out; its `omitted` finding gives the reason. |
 | `pact` | object | yes | The Pact v4 document. |
 
 ### `PactImportRequest` {#schema-pactimportrequest}

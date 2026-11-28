@@ -1638,6 +1638,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['create-webhook', 'repository_dispatch', 'GitHub Actions', 'pactbroker.pactUrl', 'signing secret', 'HMAC', 'dead-letter', 'retry', 'triggered'],
   },
   {
+    id: 'export-contracts',
+    title: 'Export a contract',
+    summary: 'Derive a pact from a project, replay a pact in Postman, or download published pact files.',
+    page: 'apiome-docs/docs/ship/pact-broker/export-contracts.mdx',
+    section: 'reference',
+    keywords: ['pact', 'postman', 'collection', 'newman', 'derive', 'operation checklist', 'findings', 'provider states', 'pre-request script', 'state change url', 'all consumers', 'download', 'zip', 'pact file', 'export-consumer-contract', 'export-postman', 'fidelity'],
+  },
+  {
     id: 'migration',
     title: 'Migrate from Pact Broker or PactFlow',
     summary: 'Import a Pact Broker or PactFlow workspace, check both answer alike, and keep copying until everyone has moved.',

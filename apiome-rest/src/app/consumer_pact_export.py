@@ -69,6 +69,7 @@ __all__ = [
     "OUTCOME_PLACEHOLDER",
     "PACT_SPECIFICATION_VERSION",
     "ExportFinding",
+    "ExportOperation",
     "PactExport",
     "build_consumer_pact",
 ]
@@ -154,6 +155,35 @@ class ExportFinding(BaseModel):
     field: Optional[str] = Field(default=None, description="Field data path or parameter name.")
 
 
+class ExportOperation(BaseModel):
+    """What one declared operation became in the generated pact (PFX-8.18, #7315).
+
+    The Export page lists these as its operation checklist: which interactions each operation
+    wrote, and whether any of their values had to be invented or anything was left out.
+
+    Attributes:
+        method: The operation's method, upper case.
+        path: The operation's path template.
+        operation_id: The declared ``operationId``, when there is one.
+        interactions: Indexes into ``pact.interactions`` of the interactions it wrote (empty when
+            the operation was left out — its ``omitted`` finding says why).
+        placeholder_count: How many of its values were invented.
+        omitted_count: How many of its declared items could not be written.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    method: str = Field(description="Operation method, upper case.")
+    path: str = Field(description="Operation path template.")
+    operation_id: Optional[str] = Field(default=None, description="Declared operationId.")
+    interactions: List[int] = Field(
+        default_factory=list,
+        description="Indexes into `pact.interactions` of what it wrote; empty when it was left out.",
+    )
+    placeholder_count: int = Field(default=0, description="How many of its values were invented.")
+    omitted_count: int = Field(default=0, description="How many of its declared items were not written.")
+
+
 @dataclass
 class PactExport:
     """A generated pact and the report that goes with it.
@@ -162,11 +192,13 @@ class PactExport:
         document: The Pact v4 document.
         interaction_count: How many interactions it carries.
         findings: Every placeholder and omission, in operation order.
+        operations: One entry per declared operation, in declaration order.
     """
 
     document: Dict[str, Any]
     interaction_count: int
     findings: List[ExportFinding] = dataclass_field(default_factory=list)
+    operations: List[ExportOperation] = dataclass_field(default_factory=list)
 
 
 # =============================================================================================
@@ -814,8 +846,22 @@ def build_consumer_pact(
         )
 
     interactions: List[Dict[str, Any]] = []
+    operations: List[ExportOperation] = []
     for operation in contract.surface.operations:
-        interactions.extend(generator.interactions(operation))
+        first_finding = len(generator.findings)
+        written = generator.interactions(operation)
+        own = generator.findings[first_finding:]
+        operations.append(
+            ExportOperation(
+                method=operation.method.upper(),
+                path=operation.path,
+                operation_id=operation.operation_id,
+                interactions=list(range(len(interactions), len(interactions) + len(written))),
+                placeholder_count=sum(1 for f in own if f.outcome == OUTCOME_PLACEHOLDER),
+                omitted_count=sum(1 for f in own if f.outcome == OUTCOME_OMITTED),
+            )
+        )
+        interactions.extend(written)
 
     apiome: Dict[str, Any] = {
         "generatedFrom": "consumer-contract",
@@ -833,4 +879,9 @@ def build_consumer_pact(
             "apiome": {key: value for key, value in apiome.items() if value is not None},
         },
     }
-    return PactExport(document=document, interaction_count=len(interactions), findings=generator.findings)
+    return PactExport(
+        document=document,
+        interaction_count=len(interactions),
+        findings=generator.findings,
+        operations=operations,
+    )

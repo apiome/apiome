@@ -8,8 +8,12 @@ in Postman or Newman against a provider build:
   ``{{baseUrl}}`` collection variable (its value is the ``base_url`` option, or empty to fill in).
   Method, path, query, headers and the example body are sent as the pact records them; a Pact 4
   body's ``contentType`` becomes a ``Content-Type`` header when the request has none.
-* **Provider states** are written into the request's description (``Given: …``): Postman cannot set
-  them up, so a run needs the provider in those states first. They are also listed once as a notice.
+* **Provider states** are written into the request's description (``Given: …``) and listed once as
+  a notice. By default Postman does not set them up, so a run needs the provider in those states
+  first. With ``state_setup`` (PFX-8.18, #7315) each request that needs a state gets a
+  **pre-request script** that first POSTs ``{"state", "params", "action": "setup"}`` — the body
+  ``pact_verifier_cli --state-change-url`` sends — to the ``{{stateChangeUrl}}`` collection
+  variable, one state at a time in the pact's order.
 * **A saved example response** carries the expected status, headers and body.
 * **Test scripts** (``tests`` option, on by default) assert the status, each expected header (a
   ``Content-Type`` by media type) and the body with Pact's default rules: an object may carry extra
@@ -56,6 +60,7 @@ __all__ = [
     "OUTCOME_NOT_APPLIED",
     "OUTCOME_NOT_ASSERTED",
     "POSTMAN_SCHEMA_URL",
+    "STATE_CHANGE_URL_VARIABLE",
     "PactPostmanExport",
     "PactPostmanNotice",
     "pact_to_postman",
@@ -66,6 +71,9 @@ POSTMAN_SCHEMA_URL = "https://schema.getpostman.com/json/collection/v2.1.0/colle
 
 #: The collection variable request URLs start with.
 BASE_URL_VARIABLE = "baseUrl"
+
+#: The collection variable the provider-state pre-request scripts POST to (``state_setup``).
+STATE_CHANGE_URL_VARIABLE = "stateChangeUrl"
 
 #: A message interaction (v3 ``messages``, v4 asynchronous or synchronous messages): left out.
 CODE_MESSAGE_LEFT_OUT = "pact-postman-message-left-out"
@@ -178,6 +186,8 @@ def pact_to_postman(
     base_url: Optional[str] = None,
     tests: bool = True,
     description: Optional[str] = None,
+    state_setup: bool = False,
+    state_change_url: Optional[str] = None,
 ) -> PactPostmanExport:
     """Write a pact's HTTP interactions as a Postman Collection v2.1.
 
@@ -188,12 +198,18 @@ def pact_to_postman(
         base_url: The ``{{baseUrl}}`` value; empty (to fill in) when ``None``.
         tests: Whether each request carries a test script checking the expected response.
         description: The collection description (where the pact came from), if any.
+        state_setup: Give each request that needs provider states a pre-request script that sets
+            them up through ``{{stateChangeUrl}}``.
+        state_change_url: The ``{{stateChangeUrl}}`` value; empty (to fill in) when ``None``.
+            Only written with ``state_setup``.
 
     Returns:
         The :class:`PactPostmanExport`. Never raises for a pact it cannot fully express: what it
         cannot carry becomes a notice.
     """
-    writer = _Writer(v4=(pact_specification_version(document) or "").startswith("4"), tests=tests)
+    writer = _Writer(
+        v4=(pact_specification_version(document) or "").startswith("4"), tests=tests, state_setup=state_setup
+    )
     entries = _entries(document)
     for pointer, kind, entry in entries:
         writer.add(pointer, kind, entry)
@@ -205,7 +221,15 @@ def pact_to_postman(
     variable: Dict[str, Any] = {"key": BASE_URL_VARIABLE, "value": (base_url or "").rstrip("/")}
     if not base_url:
         variable["description"] = "The provider's base URL: fill in before running."
-    collection = {"info": info, "item": writer.items, "variable": [variable]}
+    variables = [variable]
+    if state_setup:
+        state_variable: Dict[str, Any] = {"key": STATE_CHANGE_URL_VARIABLE, "value": (state_change_url or "").strip()}
+        if not state_change_url:
+            state_variable["description"] = (
+                "The provider's state change URL (as pact_verifier_cli --state-change-url): fill in before running."
+            )
+        variables.append(state_variable)
+    collection = {"info": info, "item": writer.items, "variable": variables}
     return PactPostmanExport(
         collection=collection,
         notices=writer.notices,
@@ -247,6 +271,66 @@ def _provider_states(entry: Mapping[str, Any]) -> List[str]:
         if isinstance(name, str) and name.strip() and name.strip() not in states:
             states.append(name.strip())
     return states
+
+
+def _provider_state_setups(entry: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    """Each provider state of an interaction with its parameters, in the pact's order.
+
+    Args:
+        entry: The interaction.
+
+    Returns:
+        ``{"name", "params"}`` per state (v2 ``providerState`` has no parameters).
+    """
+    setups: List[Dict[str, Any]] = []
+    single = entry.get("providerState")
+    if isinstance(single, str) and single.strip():
+        setups.append({"name": single.strip(), "params": {}})
+    for state in entry.get("providerStates") or []:
+        data = as_dict(state)
+        name = data.get("name")
+        if isinstance(name, str) and name.strip() and all(s["name"] != name.strip() for s in setups):
+            setups.append({"name": name.strip(), "params": as_dict(data.get("params"))})
+    return setups
+
+
+def _state_setup_script(setups: Sequence[Mapping[str, Any]]) -> List[str]:
+    """The pre-request script that puts the provider into an interaction's states.
+
+    One ``POST {{stateChangeUrl}}`` per state, one after the other, each with the body
+    ``pact_verifier_cli`` sends (``{"state", "params", "action": "setup"}``). An unset variable or a
+    failed setup stops the run with an error naming it, rather than sending the request anyway.
+
+    Args:
+        setups: The states, from :func:`_provider_state_setups`.
+
+    Returns:
+        The script lines.
+    """
+    return [
+        f"var states = {_js(list(setups))};",
+        f"var url = pm.variables.replaceIn(pm.variables.get({_js(STATE_CHANGE_URL_VARIABLE)}) || '');",
+        "if (!url) { throw new Error('Set the stateChangeUrl variable to the state change URL of the provider.'); }",
+        "(function setUp(i) {",
+        "  if (i >= states.length) { return; }",
+        "  pm.sendRequest({",
+        "    url: url,",
+        "    method: 'POST',",
+        "    header: { 'Content-Type': 'application/json' },",
+        "    body: { mode: 'raw', raw: JSON.stringify({",
+        "      state: states[i].name, params: states[i].params, action: 'setup'",
+        "    }) }",
+        "  }, function (err, res) {",
+        "    if (err) {",
+        "      throw new Error('Setting up the state ' + JSON.stringify(states[i].name) + ' failed: ' + err);",
+        "    }",
+        "    if (res.code >= 400) {",
+        "      throw new Error('Setting up the state ' + JSON.stringify(states[i].name) + ' answered ' + res.code);",
+        "    }",
+        "    setUp(i + 1);",
+        "  });",
+        "})(0);",
+    ]
 
 
 def _rule_paths(section: Mapping[str, Any], category: str) -> List[str]:
@@ -336,9 +420,10 @@ def _url(path: str, query: Mapping[str, Sequence[str]]) -> Dict[str, Any]:
 class _Writer:
     """Collects the items and notices of one export (single use)."""
 
-    def __init__(self, *, v4: bool, tests: bool) -> None:
+    def __init__(self, *, v4: bool, tests: bool, state_setup: bool = False) -> None:
         self._v4 = v4
         self._tests = tests
+        self._state_setup = state_setup
         self.items: List[Dict[str, Any]] = []
         self.notices: List[PactPostmanNotice] = []
         self._states: List[str] = []
@@ -448,8 +533,16 @@ class _Writer:
         response = as_dict(entry.get("response"))
         expected = self._expected(pointer, entry, response)
         item["response"] = [self._example(name, http, expected)]
+        events: List[Dict[str, Any]] = []
+        setups = _provider_state_setups(entry) if self._state_setup else []
+        if setups:
+            events.append(
+                {"listen": "prerequest", "script": {"type": "text/javascript", "exec": _state_setup_script(setups)}}
+            )
         if self._tests:
-            item["event"] = [{"listen": "test", "script": {"type": "text/javascript", "exec": self._script(expected)}}]
+            events.append({"listen": "test", "script": {"type": "text/javascript", "exec": self._script(expected)}})
+        if events:
+            item["event"] = events
         return item
 
     def _expected(self, pointer: str, entry: Mapping[str, Any], response: Mapping[str, Any]) -> Dict[str, Any]:
@@ -549,13 +642,19 @@ class _Writer:
     def report_states(self) -> None:
         """Add the one provider-states notice, when any exported request needs a state."""
         if self._states:
+            message = (
+                f"{len(self._states)} provider state(s) are set up by each request's pre-request script, "
+                f"which POSTs them to {{{{{STATE_CHANGE_URL_VARIABLE}}}}} first"
+                if self._state_setup
+                else f"{len(self._states)} provider state(s) must be set up on the provider before the run; "
+                "each request's description names its own"
+            )
             self.notices.append(
                 PactPostmanNotice(
                     CODE_PROVIDER_STATES,
                     OUTCOME_INFO,
                     "",
-                    f"{len(self._states)} provider state(s) must be set up on the provider before the run; "
-                    "each request's description names its own",
+                    message,
                     None,
                     tuple(self._states),
                 )

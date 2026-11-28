@@ -206,6 +206,8 @@ describe('PacticipantDetailClient', () => {
 
   it('shows the overview, branches, environments and versions, and passes axe', async () => {
     const { container } = render(<PacticipantDetailClient slug="billing-service" />);
+    // PFX-8.18 (#7315): the Export page opens on a Postman collection of this pacticipant's pacts.
+    expect(screen.getByTestId('ppx-export')).toHaveAttribute('href', '/ade/dashboard/pacts/export?kind=postman&provider=billing-service');
     const facts = await screen.findByTestId('ppx-facts');
     expect(facts).toHaveTextContent('Handlebilling-service');
     expect(facts).toHaveTextContent('Bound toConsumer');

@@ -25,7 +25,9 @@ exported to any of them.
 - **Share it without secrets.** No credential value is ever written: auth and every secret-looking
   value become empty variables you fill in in the client.
 - **Replay a consumer's pact.** To turn a pact (what a consumer sends and expects) into a Postman
-  collection with test scripts, use `apiome pact export-postman` instead — see
+  collection with test scripts — with provider-state setup scripts, or every consumer of a provider
+  at once — use **A Postman collection** on the [Export page](./pact-broker/export-contracts.mdx#a-postman-collection)
+  (**Export a contract** in Export studio), or `apiome pact export-postman` — see
   [Export a pact as a Postman collection](./pact-broker/cli.mdx#export-a-pact-as-a-postman-collection).
 
 A collection saves calls, not a contract, so every client export is **lossy**: types become example

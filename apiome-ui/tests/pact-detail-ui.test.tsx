@@ -192,6 +192,11 @@ describe('PactDetailClient', () => {
     );
     expect(await screen.findByTestId('ppd-facts')).toHaveTextContent('Consumer version1.3.2');
     expect(calls).not.toContain(BASE);
+    // PFX-8.18 (#7315): the Export page opens on this pact's file.
+    expect(screen.getByTestId('ppd-export')).toHaveAttribute(
+      'href',
+      '/ade/dashboard/pacts/export?kind=file&provider=ledger-api&consumer=billing-service&version=1.3.2',
+    );
   });
 
   it('says each outcome without a previous pact', async () => {

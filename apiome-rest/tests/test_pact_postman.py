@@ -37,6 +37,7 @@ from app.pact_postman import (
     OUTCOME_NOT_APPLIED,
     OUTCOME_NOT_ASSERTED,
     POSTMAN_SCHEMA_URL,
+    STATE_CHANGE_URL_VARIABLE,
     pact_to_postman,
 )
 from app.postman_emitter import validate_postman_collection
@@ -397,3 +398,115 @@ def test_a_v3_pact_with_states_and_v3_rules_validates() -> None:
     export = pact_to_postman(pact, consumer="Web", provider="Orders")
     validate_postman_collection(json.dumps(export.collection))
     assert _notice_codes(export) == [CODE_MATCHING_RULES_NOT_ASSERTED, CODE_PROVIDER_STATES]
+
+
+# --- provider-state setup (PFX-8.18, #7315) ----------------------------------------------------
+
+
+def _states_of(script: List[str]) -> List[Dict[str, Any]]:
+    """The ``states`` literal of a state-setup pre-request script."""
+    first = script[0]
+    assert first.startswith("var states = ") and first.endswith(";")
+    return json.loads(first[len("var states = ") : -1])
+
+
+def test_state_setup_writes_a_pre_request_script_with_each_state_and_its_params() -> None:
+    interaction = _v4_http(
+        providerStates=[{"name": "a customer exists", "params": {"id": 7}}, {"name": "stock is low"}]
+    )
+    export = pact_to_postman(_v4_pact(interaction), consumer="Web", provider="Orders", state_setup=True)
+    events = _item(export)["event"]
+    assert [event["listen"] for event in events] == ["prerequest", "test"]
+    script = events[0]["script"]["exec"]
+    assert _states_of(script) == [
+        {"name": "a customer exists", "params": {"id": 7}},
+        {"name": "stock is low", "params": {}},
+    ]
+    assert any("pm.sendRequest" in line for line in script)
+    assert any("action: 'setup'" in line for line in script)
+    validate_postman_collection(json.dumps(export.collection))
+
+
+def test_state_setup_adds_the_state_change_variable_empty_to_fill_in_or_given() -> None:
+    empty = pact_to_postman(_v2_pact(), consumer="Web", provider="Orders", state_setup=True)
+    (variable,) = [v for v in empty.collection["variable"] if v["key"] == STATE_CHANGE_URL_VARIABLE]
+    assert variable["value"] == ""
+    assert "fill in" in variable["description"]
+    given = pact_to_postman(
+        _v2_pact(), consumer="Web", provider="Orders", state_setup=True, state_change_url="http://p/_pact/states"
+    )
+    assert {"key": STATE_CHANGE_URL_VARIABLE, "value": "http://p/_pact/states"} in given.collection["variable"]
+
+
+def test_a_v2_provider_state_has_no_params_in_its_setup() -> None:
+    export = pact_to_postman(_v2_pact(), consumer="Web", provider="Orders", state_setup=True, tests=False)
+    (event,) = _item(export)["event"]
+    assert event["listen"] == "prerequest"
+    assert _states_of(event["script"]["exec"]) == [{"name": "order 42 exists", "params": {}}]
+
+
+def test_a_request_without_states_gets_no_pre_request_script() -> None:
+    export = pact_to_postman(
+        _v4_pact(_v4_http(providerStates=[])), consumer="Web", provider="Orders", state_setup=True
+    )
+    assert [event["listen"] for event in _item(export)["event"]] == ["test"]
+    assert CODE_PROVIDER_STATES not in _notice_codes(export)
+
+
+def test_without_state_setup_the_collection_is_unchanged() -> None:
+    export = pact_to_postman(_v2_pact(), consumer="Web", provider="Orders")
+    assert [v["key"] for v in export.collection["variable"]] == [BASE_URL_VARIABLE]
+    assert [event["listen"] for event in _item(export)["event"]] == ["test"]
+    (states,) = [n for n in export.notices if n.code == CODE_PROVIDER_STATES]
+    assert "must be set up" in states.message
+
+
+def test_the_states_notice_says_the_scripts_set_them_up() -> None:
+    export = pact_to_postman(_v2_pact(), consumer="Web", provider="Orders", state_setup=True)
+    (states,) = [n for n in export.notices if n.code == CODE_PROVIDER_STATES]
+    assert states.outcome == OUTCOME_INFO
+    assert "{{stateChangeUrl}}" in states.message
+
+
+def _run_setup(lines: List[str], variable: str, answer: int = 200) -> Dict[str, Any]:
+    """Run a state-setup script in Node with a stub ``pm``; return what it sent, or its error."""
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is not installed")
+    harness = (
+        "const sent = [];\n"
+        "const pm = {\n"
+        "  variables: { get: function () { return " + json.dumps(variable) + "; },\n"
+        "               replaceIn: function (v) { return v; } },\n"
+        "  sendRequest: function (req, cb) { sent.push({ url: req.url, method: req.method,"
+        " body: JSON.parse(req.body.raw) }); cb(null, { code: " + json.dumps(answer) + " }); },\n"
+        "};\n"
+        "try {\n" + "\n".join(lines) + "\nconsole.log(JSON.stringify({ sent }));\n"
+        "} catch (e) { console.log(JSON.stringify({ sent, error: e.message })); }\n"
+    )
+    out = subprocess.run([node, "-e", harness], capture_output=True, text=True, timeout=30, check=True)
+    return json.loads(out.stdout)
+
+
+def test_the_setup_script_posts_each_state_in_order_like_the_pact_verifier() -> None:
+    interaction = _v4_http(providerStates=[{"name": "a customer exists", "params": {"id": 7}}, {"name": "b"}])
+    export = pact_to_postman(_v4_pact(interaction), consumer="Web", provider="Orders", state_setup=True)
+    result = _run_setup(_item(export)["event"][0]["script"]["exec"], "http://p/_pact/states")
+    assert "error" not in result
+    assert result["sent"] == [
+        {
+            "url": "http://p/_pact/states",
+            "method": "POST",
+            "body": {"state": "a customer exists", "params": {"id": 7}, "action": "setup"},
+        },
+        {"url": "http://p/_pact/states", "method": "POST", "body": {"state": "b", "params": {}, "action": "setup"}},
+    ]
+
+
+def test_the_setup_script_stops_without_a_state_change_url_or_on_a_failed_setup() -> None:
+    export = pact_to_postman(_v2_pact(), consumer="Web", provider="Orders", state_setup=True)
+    script = _item(export)["event"][0]["script"]["exec"]
+    unset = _run_setup(script, "")
+    assert unset["sent"] == [] and "stateChangeUrl" in unset["error"]
+    refused = _run_setup(script, "http://p/states", answer=500)
+    assert len(refused["sent"]) == 1 and "answered 500" in refused["error"]

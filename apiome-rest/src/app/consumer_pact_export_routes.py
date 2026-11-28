@@ -50,6 +50,7 @@ from .consumer_pact_export import (
     OUTCOME_OMITTED,
     OUTCOME_PLACEHOLDER,
     ExportFinding,
+    ExportOperation,
     PactExport,
     build_consumer_pact,
 )
@@ -111,6 +112,12 @@ class PactExportResponse(BaseModel):
     findings: List[ExportFinding] = Field(
         default_factory=list,
         description="Every placeholder and omission, with a stable reason code. Never silently empty.",
+    )
+    operations: List[ExportOperation] = Field(
+        default_factory=list,
+        description="What each declared operation became: the interactions it wrote (indexes into "
+        "`pact.interactions`) and its finding counts. An operation with no interaction was left out; "
+        "its `omitted` finding gives the reason.",
     )
     pact: Dict[str, Any] = Field(description="The Pact v4 document.")
 
@@ -256,6 +263,7 @@ def _response_fields(
         "placeholder_count": sum(1 for f in export.findings if f.outcome == OUTCOME_PLACEHOLDER),
         "omitted_count": sum(1 for f in export.findings if f.outcome == OUTCOME_OMITTED),
         "findings": export.findings,
+        "operations": export.operations,
         "pact": export.document,
     }
 

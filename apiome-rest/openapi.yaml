@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.709.0
+  version: 1.710.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -175829,6 +175829,15 @@ components:
           description: Every placeholder and omission, with a stable reason code. Never
             silently empty.
           maxItems: 1000
+        operations:
+          items:
+            $ref: '#/components/schemas/ExportOperation'
+          type: array
+          title: Operations
+          description: 'What each declared operation became: the interactions it wrote
+            (indexes into `pact.interactions`) and its finding counts. An operation with
+            no interaction was left out; its `omitted` finding gives the reason.'
+          maxItems: 1000
         pact:
           additionalProperties: true
           type: object
@@ -175922,6 +175931,15 @@ components:
           title: Findings
           description: Every placeholder and omission, with a stable reason code. Never
             silently empty.
+          maxItems: 1000
+        operations:
+          items:
+            $ref: '#/components/schemas/ExportOperation'
+          type: array
+          title: Operations
+          description: 'What each declared operation became: the interactions it wrote
+            (indexes into `pact.interactions`) and its finding counts. An operation with
+            no interaction was left out; its `omitted` finding gives the reason.'
           maxItems: 1000
         pact:
           additionalProperties: true
@@ -176601,6 +176619,31 @@ components:
           description: Give each request a test script that checks the expected response.
           default: true
           example: false
+        allConsumers:
+          type: boolean
+          title: Allconsumers
+          description: 'Export the latest pact of every consumer of `provider` (with `tag`
+            or `branch`: the latest such pact), one folder per consumer. Leave `consumer`,
+            `consumerVersion`, `pactVersionSha` and `pact` out.'
+          default: false
+          example: false
+        stateSetup:
+          type: boolean
+          title: Statesetup
+          description: 'Give each request that needs provider states a pre-request script
+            that first POSTs `{"state", "params", "action": "setup"}` per state to the
+            `{{stateChangeUrl}}` variable.'
+          default: false
+          example: false
+        stateChangeUrl:
+          anyOf:
+          - type: string
+            description: Request body for pact postman.
+          - type: 'null'
+            description: Request body for pact postman.
+          title: Statechangeurl
+          description: 'The value of the `{{stateChangeUrl}}` variable (an http or https
+            URL; only with `stateSetup`). Omitted: empty, to fill in.'
       additionalProperties: false
       type: object
       title: PactPostmanRequest
@@ -228518,6 +228561,62 @@ components:
       - source
       title: StartPactMigrationRunRequest
       description: A run to start.
+    ExportOperation:
+      properties:
+        method:
+          type: string
+          title: Method
+          description: Operation method, upper case.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Operation path template.
+          example: /resources/{id}
+        operation_id:
+          anyOf:
+          - type: string
+            description: Export Operation schema.
+          - type: 'null'
+            description: Export Operation schema.
+          title: Operation Id
+          description: Declared operationId.
+        interactions:
+          items:
+            type: integer
+          type: array
+          title: Interactions
+          description: Indexes into `pact.interactions` of what it wrote; empty when it
+            was left out.
+          maxItems: 1000
+        placeholder_count:
+          type: integer
+          title: Placeholder Count
+          description: How many of its values were invented.
+          default: 0
+          example: 1
+        omitted_count:
+          type: integer
+          title: Omitted Count
+          description: How many of its declared items were not written.
+          default: 0
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - method
+      - path
+      title: ExportOperation
+      description: "What one declared operation became in the generated pact (PFX-8.18,\
+        \ #7315).\n\nThe Export page lists these as its operation checklist: which interactions\
+        \ each operation\nwrote, and whether any of their values had to be invented or\
+        \ anything was left out.\n\nAttributes:\n    method: The operation's method, upper\
+        \ case.\n    path: The operation's path template.\n    operation_id: The declared\
+        \ ``operationId``, when there is one.\n    interactions: Indexes into ``pact.interactions``\
+        \ of the interactions it wrote (empty when\n        the operation was left out\
+        \ — its ``omitted`` finding says why).\n    placeholder_count: How many of its\
+        \ values were invented.\n    omitted_count: How many of its declared items could\
+        \ not be written."
   securitySchemes:
     Bearer:
       type: http
