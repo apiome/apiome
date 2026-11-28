@@ -44,7 +44,14 @@ import {
   postmanExportAction,
   postmanFileName,
   postmanRequestBody,
+  pickScaffoldQuery,
   previewable,
+  readScaffold,
+  scaffoldAction,
+  scaffoldSummary,
+  scaffoldUrl,
+  validateScaffold,
+  EMPTY_SCAFFOLD,
   PREVIEW_LIMIT_CHARS,
   readDerivedPact,
   readExportPrefill,
@@ -89,8 +96,9 @@ describe('the prefill and the route', () => {
     const prefill = readExportPrefill({ kind: 'file', provider: 'billing', consumer: 'orders-ui', version: '3.4.0', colour: 'red' });
     expect(prefill).toMatchObject({ kind: 'file', provider: 'billing', consumer: 'orders-ui', version: '3.4.0' });
     expect(prefill.problems).toEqual(['?colour= is not something this page reads.']);
-    expect(readExportPrefill({ kind: 'tests' }).problems[0]).toContain('?kind=tests is not something to export');
-    expect(readExportPrefill({ kind: 'tests' }).kind).toBe('pact');
+    expect(readExportPrefill({ kind: 'cobol' }).problems[0]).toContain('?kind=cobol is not something to export');
+    expect(readExportPrefill({ kind: 'cobol' }).kind).toBe('pact');
+    expect(readExportPrefill({ kind: 'tests' })).toMatchObject({ kind: 'tests', problems: [] });
     expect(readExportPrefill({ provider: ['a', 'b'] })).toMatchObject({ provider: 'a', problems: ['?provider= was given more than once; the first is used.'] });
     expect(readExportPrefill({ consumer: 'x'.repeat(300) })).toMatchObject({ consumer: '' });
   });
@@ -334,8 +342,71 @@ describe('a pact file', () => {
   });
 });
 
+describe('provider test scaffolding', () => {
+  const answer = {
+    provider: 'billing-service',
+    provider_name: 'Billing Service',
+    label: 'TypeScript · pact-js',
+    dependency: 'npm install --save-dev @pact-foundation/pact',
+    file_name: 'billing-service.pact.test.ts',
+    content: "import { Verifier } from '@pact-foundation/pact';\n",
+    pacts: 2,
+    states: [
+      { name: 'an invoice exists', params: ['id'], registered: true, interactions: 2, consumers: ['orders-ui'] },
+      { name: 'a customer 7 exists', params: [], registered: false, interactions: 1, consumers: ['admin'] },
+      { bad: true },
+    ],
+    unregistered: 1,
+    notices: [{ code: 'provider-scaffold-state-unregistered', message: 'not registered', state: 'a customer 7 exists' }, {}],
+  };
+
+  it('builds and checks the proxy query', () => {
+    expect(scaffoldUrl({ ...EMPTY_SCAFFOLD, provider: 'Billing Service', language: 'go' })).toBe('/api/pact/export/provider-tests?provider=Billing+Service&language=go');
+    expect(pickScaffoldQuery(new URLSearchParams('provider=Billing%20Service&language=java'))).toEqual({ ok: true, path: 'pact-provider-tests/Billing%20Service?language=java' });
+  });
+
+  it.each([
+    ['provider=b', 'Language is one of typescript, java, go, python.'],
+    ['provider=b&language=cobol', 'Language is one of'],
+    ['language=go', 'Provider is required.'],
+    ['provider=b&language=go&tenant=x', 'Unsupported parameter tenant'],
+    ['provider=b&provider=c&language=go', 'more than once'],
+  ])('refuses %s', (query, error) => {
+    const picked = pickScaffoldQuery(new URLSearchParams(query));
+    expect(picked.ok).toBe(false);
+    expect(picked.ok ? '' : picked.error).toContain(error);
+  });
+
+  it('checks the form', () => {
+    expect(validateScaffold(EMPTY_SCAFFOLD)).toBe('Provider is required.');
+    expect(validateScaffold({ ...EMPTY_SCAFFOLD, provider: 'b' })).toBeNull();
+  });
+
+  it('reads the answer and says how many states have no handler', () => {
+    const scaffold = readScaffold(answer)!;
+    expect(scaffold.states.map((state) => [state.name, state.registered])).toEqual([
+      ['an invoice exists', true],
+      ['a customer 7 exists', false],
+    ]);
+    expect(scaffold.notices).toEqual([{ code: 'provider-scaffold-state-unregistered', message: 'not registered', state: 'a customer 7 exists' }]);
+    expect(scaffoldSummary(scaffold)).toBe('2 provider states · 1 has no handler in Apiome');
+    expect(scaffoldSummary({ ...scaffold, unregistered: 2 })).toBe('2 provider states · 2 have no handler in Apiome');
+    expect(scaffoldSummary({ ...scaffold, unregistered: 0, states: [scaffold.states[0]] })).toBe('1 provider state · all registered in Apiome');
+    expect(readScaffold({ content: 1 })).toBeNull();
+  });
+
+  it('is scaffold-provider-tests with every flag', () => {
+    const [apiome, , , rest] = pactCommandSurfaces(scaffoldAction({ provider: 'Billing Service', language: 'java', failOnUnregistered: true }, 'acme', 'BillingServicePactTest.java'));
+    expect(apiome.text).toContain('apiome pact scaffold-provider-tests');
+    expect(apiome.text).toContain('--language java');
+    expect(apiome.text).toContain('--output BillingServicePactTest.java');
+    expect(apiome.text).toContain('--fail-on-unregistered');
+    expect(rest.text).toContain('GET /v1/tenants/acme/pact-provider-tests/Billing%20Service?language=java');
+  });
+});
+
 describe('the parity ledger', () => {
-  it.each(['export-consumer-contract', 'export-postman'] as const)('maps every flag of %s to a control, as the ledger does', (name) => {
+  it.each(['export-consumer-contract', 'export-postman', 'scaffold-provider-tests'] as const)('maps every flag of %s to a control, as the ledger does', (name) => {
     const command = commands.commands.find((row) => row.name === name)!;
     const fields = EXPORT_FLAG_FIELDS[name];
     expect(Object.keys(fields).sort()).toEqual([...command.arguments, ...command.options].sort());

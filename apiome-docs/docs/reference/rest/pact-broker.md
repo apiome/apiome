@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 125 operations."
+description: "REST endpoints tagged pact-broker: 126 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.710.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.711.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 125 operations
+Tag: `pact-broker` · 126 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2927,6 +2927,35 @@ Request body for export a pact as a postman collection.
 | 404 | `pacticipant-not-found` or `pact-not-found`: no such stored pact in this workspace. | — |
 | 413 | `pact-too-large`: the inline pact is over the workspace's pact size limit. | — |
 | 422 | `pact-postman-export-invalid` (no pact named, two selections, an inline pact with a selection, a bad `baseUrl`), `pact-invalid` (the inline document is not a pact) or `pact-postman-no-http-interactions` (with `notices`). | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-provider-tests/{provider}` {#scaffold-provider-tests-v1-tenants-tenant-slug-pact-provider-tests-provider-get}
+
+**Scaffold a provider verification test**
+
+Writes a provider verification test in `language` — `typescript` (pact-js), `java` (pact-jvm, JUnit 5), `go` (pact-go v2) or `python` (pact-python 2) — from the pacts the recommended selectors choose (`{"mainBranch": true}`, `{"deployedOrReleased": true}`, pending on). The file reads the broker from `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN`, so no secret is written into it, and carries one state handler stub per provider state with the parameters the pacts send (`EXAMPLE_PARAMETERS`).
+
+`states` lists each state with its parameters, an example, whether the provider registered it in Apiome and how many interactions name it; `unregistered` counts those it has not. `notices` lists every flagged state (`provider-scaffold-state-unregistered`), every state left out with the reason (`provider-scaffold-state-left-out`) and a provider without pacts (`provider-scaffold-no-pacts`). Nothing is stored. Requires `pacts:view`.
+
+Operation id: `scaffold_provider_tests_v1_tenants__tenant_slug__pact_provider_tests__provider__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `provider` | path | string | yes | Path parameter identifying the provider segment. |
+| `language` | query | string | yes | One of: typescript, java, go, python. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for scaffold a provider verification test. | `application/json` object |
+| 403 | The credential lacks `pacts:view`. | — |
+| 404 | `pacticipant-not-found`: no such provider in this workspace. | — |
+| 422 | `provider-scaffold-language-unsupported`, or `pact-verify-too-many-pacts` when the selectors choose more pacts than a run takes. | — |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-republish-requests` {#read-requests-v1-tenants-tenant-slug-pact-republish-requests-get}
 

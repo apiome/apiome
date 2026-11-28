@@ -317,6 +317,19 @@
       }
     },
     {
+      "cli": "scaffold-provider-tests",
+      "ui": "/ade/dashboard/pacts/export",
+      "rest": "GET /v1/tenants/{tenant}/pact-provider-tests/{provider}",
+      "fields": {
+        "--provider": "Provider test scaffolding → Provider",
+        "--language": "Provider test scaffolding → Language",
+        "--output": "Provider test scaffolding → Download",
+        "--fail-on-unregistered": "Provider test scaffolding → Fail if a state has no handler in Apiome (the page flags each one)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
       "cli": "retention preview",
       "ui": "/ade/dashboard/pacts/settings",
       "rest": "POST /v1/tenants/{tenant}/pact-retention/policy/preview",

@@ -32,6 +32,7 @@ import { GET as consumerPact } from '../src/app/api/pact/export/consumer-pact/ro
 import { POST as postman } from '../src/app/api/pact/export/postman/route';
 import { GET as pactFile } from '../src/app/api/pact/export/pact-file/route';
 import { GET as providerPacts } from '../src/app/api/pact/export/provider-pacts/route';
+import { GET as providerTests } from '../src/app/api/pact/export/provider-tests/route';
 import { providerPactConsumers, refusalBody, zipReadme } from '../lib/pact-export-proxy';
 
 type Sent = { url: string; method: string; body?: unknown; auth?: string };
@@ -196,6 +197,31 @@ describe('every pact for a provider', () => {
   it('refuses a version without calling REST', async () => {
     expect((await providerPacts(await request('/api/pact/export/provider-pacts?provider=billing&version=1'))).status).toBe(400);
     expect(sent).toEqual([]);
+  });
+});
+
+describe('provider test scaffolding', () => {
+  it('forwards the checked query as the signed-in user', async () => {
+    answer = () => ({ status: 200, body: { content: '', file_name: 'x.ts' } });
+    expect((await providerTests(await request('/api/pact/export/provider-tests?provider=Billing%20Service&language=go'))).status).toBe(200);
+    expect(sent).toEqual([
+      { url: 'http://rest/v1/tenants/acme/pact-provider-tests/Billing%20Service?language=go', method: 'GET', body: undefined, auth: 'Bearer session' },
+    ]);
+  });
+
+  it('refuses an unknown language without calling REST', async () => {
+    const response = await providerTests(await request('/api/pact/export/provider-tests?provider=b&language=cobol'));
+    expect(response.status).toBe(400);
+    expect(sent).toEqual([]);
+  });
+
+  it('keeps REST’s 404 and 403', async () => {
+    answer = () => ({ status: 404, body: { detail: { code: 'pacticipant-not-found', message: 'no such provider' } } });
+    const missing = await providerTests(await request('/api/pact/export/provider-tests?provider=b&language=go'));
+    expect(missing.status).toBe(404);
+    expect(await missing.json()).toMatchObject({ code: 'pacticipant-not-found' });
+    answer = () => ({ status: 403, body: { detail: 'Permission denied' } });
+    expect((await providerTests(await request('/api/pact/export/provider-tests?provider=b&language=go'))).status).toBe(403);
   });
 });
 

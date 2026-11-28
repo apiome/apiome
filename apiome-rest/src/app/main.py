@@ -157,6 +157,7 @@ from .pact_integrations_routes import router as pact_integrations_router
 from .pact_migration_routes import router as pact_migration_router
 from .pact_migration_run_routes import router as pact_migration_run_router
 from .pact_postman_routes import router as pact_postman_router
+from .pact_provider_scaffold_routes import router as pact_provider_scaffold_router
 from .pact_provider_state_routes import router as pact_provider_state_router
 from .pact_remediation_routes import router as pact_remediation_router
 from .pact_retention_routes import router as pact_retention_router
@@ -611,6 +612,7 @@ app.include_router(pact_secret_router)  # PFX-6.5 (#6957): workspace secrets for
 app.include_router(pact_migration_router)  # PFX-6.7 (#6959): import from a Pact Broker / PactFlow
 app.include_router(pact_migration_run_router)  # PFX-8.16 (#7313): the Migration wizard's server-side runs
 app.include_router(pact_provider_state_router)  # PFX-3.3 (#6933): provider-state registry
+app.include_router(pact_provider_scaffold_router)  # PFX-8.19 (#7316): provider test scaffolding
 app.include_router(pact_broker_environment_router)
 app.include_router(pact_broker_matrix_router)
 app.include_router(pact_broker_webhook_router)

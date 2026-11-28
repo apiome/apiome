@@ -4,9 +4,10 @@
  * **Export a contract** — PFX-8.18 (#7315), `/ade/dashboard/pacts/export`
  * (docs/mockups/contracts/export.html).
  *
- * Three kinds as option cards, one visible at a time: **A pact from a project**
- * (`apiome pact export-consumer-contract`), **A Postman collection** (`apiome pact export-postman`)
- * and **A pact file** (any published pact, or every pact for a provider). Each kind has one primary
+ * Four kinds as option cards, one visible at a time: **A pact from a project**
+ * (`apiome pact export-consumer-contract`), **A Postman collection** (`apiome pact export-postman`),
+ * **A pact file** (any published pact, or every pact for a provider) and **Provider test
+ * scaffolding** (`apiome pact scaffold-provider-tests`, PFX-8.19). Each kind has one primary
  * action and its own **The same, from anywhere** block; the header carries no primary
  * (DESIGN.md §5.3), only a link to Export studio for specifications. Problems and refusals share
  * one status line (§5.4). `?kind=`, `?provider=`, `?consumer=`, `?version=` and `?project=` pre-fill
@@ -17,7 +18,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { FileJson2, Mailbox, PackageOpen, WandSparkles } from 'lucide-react';
+import { FileJson2, FlaskConical, Mailbox, PackageOpen, WandSparkles } from 'lucide-react';
 import { Alert, Button } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
@@ -27,6 +28,7 @@ import {
   EMPTY_DERIVE_EXPORT,
   EMPTY_PACT_FILE,
   EMPTY_POSTMAN,
+  EMPTY_SCAFFOLD,
   EXPORT_KIND_CARDS,
   EXPORT_KINDS,
   type DeriveExportDraft,
@@ -34,12 +36,14 @@ import {
   type ExportPrefill,
   type PactFileDraft,
   type PostmanDraft,
+  type ScaffoldDraft,
 } from '@lib/pact-export';
 import { ContractsTabs } from '../pactOverview/ContractsTabs';
 import { fetchProviders } from '../pactVerifyRun/verifyRunApi';
 import { DerivePanel } from './DerivePanel';
 import { PactFilePanel } from './PactFilePanel';
 import { PostmanPanel } from './PostmanPanel';
+import { ScaffoldPanel } from './ScaffoldPanel';
 
 /** Export studio, for exporting a specification rather than a contract. */
 export const EXPORT_STUDIO_ROUTE = '/ade/dashboard/export/studio';
@@ -49,6 +53,7 @@ const KIND_GLYPHS: Record<ExportKind, React.ComponentType<{ 'aria-hidden'?: bool
   pact: WandSparkles,
   postman: Mailbox,
   file: FileJson2,
+  tests: FlaskConical,
 };
 
 /** The page's one status line. */
@@ -69,6 +74,7 @@ export function ExportPactClient({ prefill }: ExportPactClientProps) {
   const versionChoice = prefill.version ? { choice: 'version' as const, choiceValue: prefill.version } : {};
   const [postman, setPostman] = React.useState<PostmanDraft>({ ...EMPTY_POSTMAN, provider: prefill.provider, consumer: prefill.consumer, ...versionChoice });
   const [file, setFile] = React.useState<PactFileDraft>({ ...EMPTY_PACT_FILE, provider: prefill.provider, consumer: prefill.consumer, ...versionChoice });
+  const [tests, setTests] = React.useState<ScaffoldDraft>({ ...EMPTY_SCAFFOLD, provider: prefill.provider });
 
   // The provider and consumer suggestions: the first page of pacticipants, read once.
   React.useEffect(() => {
@@ -126,6 +132,7 @@ export function ExportPactClient({ prefill }: ExportPactClientProps) {
           {kind === 'pact' ? <DerivePanel draft={derive} onDraft={setDerive} canPublish={canPublish} onStatus={setStatus} /> : null}
           {kind === 'postman' ? <PostmanPanel draft={postman} onDraft={setPostman} pacticipants={pacticipants} onStatus={setStatus} /> : null}
           {kind === 'file' ? <PactFilePanel draft={file} onDraft={setFile} pacticipants={pacticipants} onStatus={setStatus} /> : null}
+          {kind === 'tests' ? <ScaffoldPanel draft={tests} onDraft={setTests} pacticipants={pacticipants} onStatus={setStatus} /> : null}
         </div>
       </PageBody>
     </Page>

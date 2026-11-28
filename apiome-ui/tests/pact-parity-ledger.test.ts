@@ -29,8 +29,8 @@ describe('the parity ledger', () => {
     expect(checkParity(REAL)).toEqual([]);
   });
 
-  it('reads all twenty-six commands and every Contracts write route', () => {
-    expect(REAL.commands).toHaveLength(26);
+  it('reads all twenty-seven commands and every Contracts write route', () => {
+    expect(REAL.commands).toHaveLength(27);
     expect(REAL.writeHandlers.length).toBeGreaterThanOrEqual(13);
     expect(REAL.writeHandlers).toContainEqual({ method: 'POST', bff: '/api/pact/publish' });
     expect(REAL.writeHandlers).toContainEqual({ method: 'DELETE', bff: '/api/pact/webhooks/[webhookId]' });

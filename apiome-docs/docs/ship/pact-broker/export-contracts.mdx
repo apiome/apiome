@@ -7,7 +7,7 @@ tags: [contracts, pact, postman, export, ui, cli]
 
 import Screenshot from '@site/src/components/Screenshot';
 
-The **Export** page takes a contract out of Apiome in one of three ways:
+The **Export** page takes a contract out of Apiome in one of four ways:
 
 - **A pact from a project** — a consumer's declared surface written as a Pact v4 file
   (`apiome pact export-consumer-contract`).
@@ -15,6 +15,9 @@ The **Export** page takes a contract out of Apiome in one of three ways:
   (`apiome pact export-postman`).
 - **A pact file** — any published pact exactly as it was stored, or every pact for a provider as
   a zip.
+- **Provider test scaffolding** — a ready provider verification test in TypeScript, Java, Go or
+  Python, with a stub for every provider state the pacts use
+  (`apiome pact scaffold-provider-tests`). See [Provider test scaffolding](#provider-test-scaffolding).
 
 Open it from a pact's page (**Export**, which opens on that pact's file), from a pacticipant's
 page (**Export**, which opens on a Postman collection of its pacts) or from Export studio
@@ -22,7 +25,7 @@ page (**Export**, which opens on a Postman collection of its pacts) or from Expo
 Export studio itself exports an API *specification*; see
 [Export to an API client](../export-to-an-api-client.md) for a collection made from a spec.
 
-Pick one of the three cards at the top. Only that kind's form shows, with its own button and its
+Pick one of the four cards at the top. Only that kind's form shows, with its own button and its
 own **The same, from anywhere** block: the command (and REST request) that does the same from a
 terminal or a pipeline, updated as you fill in the form. Problems and refusals appear on one line
 above the cards.
@@ -128,9 +131,57 @@ that say why.
 No `apiome pact` command downloads a pact, so this kind's block shows the REST request: any HTTP
 client fetches the same document with your API key.
 
+## Provider test scaffolding
+
+A provider team adopting Pact otherwise starts from a blank file and has to find out which provider
+states its consumers rely on. This kind writes the starting point.
+
+1. Type the **Provider** (its name or handle).
+2. Choose the **Language**: **TypeScript · pact-js**, **Java · pact-jvm**, **Go · pact-go** or
+   **Python · pact-python**.
+3. **Click "Write tests"**.
+
+**Pacts** says which pacts the test verifies: the **recommended selectors** — each consumer's main
+branch, and whatever is deployed or released — with pending pacts on, so a new consumer
+expectation does not break the provider's build until it has been verified once.
+
+The file:
+
+- reads the broker from `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN`, and the provider's address
+  from `PROVIDER_BASE_URL` (default `http://localhost:8080`). **No secret is written into it**.
+- publishes results only when `CI=true`, as `GIT_COMMIT` on `GIT_BRANCH`.
+- has one **state handler stub** per provider state the pacts name, marked `TODO`, and an
+  `EXAMPLE_PARAMETERS` table with the parameters each state was sent with (one example value each).
+- marks each state **not registered in Apiome** with a comment: [hosted verification](./hosted-verification.mdx)
+  cannot set it up until it is registered under the provider's [provider states](./provider-states.mdx).
+
+The **states table** lists each state with its parameters and **In Apiome** — **Registered**, or
+**No handler**. The line under the file reads, for instance, *11 provider states · 2 have no
+handler in Apiome*. **Click "Download"** or **"Copy"**; the card names what to install (for
+pact-js, `npm install --save-dev @pact-foundation/pact`). A file over about 200 KB downloads without
+a preview.
+
+<Screenshot id="pact-export-scaffold" alt="Provider test scaffolding for Billing Service in TypeScript: the recommended selectors, the states table with one state flagged No handler, the generated pact-js test, Download and Copy, and the scaffold-provider-tests command" />
+
+| Language | Library | File |
+| --- | --- | --- |
+| TypeScript | pact-js (`Verifier`, Jest or Vitest) | `<provider>.pact.test.ts` |
+| Java | pact-jvm JUnit 5 (`@Provider`, `@PactBroker`, `@State`) | `<Provider>PactTest.java` |
+| Go | pact-go v2 (`provider.NewVerifier`) | `<provider>_pact_test.go` |
+| Python | pact-python 2 (`Verifier.verify_with_broker`) | `test_<provider>_pact.py` |
+
+pact-python 2 sets states through a state-change URL, so its file also has `handle_state_change`:
+mount it at `PROVIDER_BASE_URL` + `/_pact/provider_states` in a test build of the provider.
+
+A provider with no pact yet still gets a file, with no handlers and a note saying so. More than 200
+states, or a state name over 500 characters, is left out of the file with the reason listed.
+
+**Fail if a state has no handler in Apiome** only changes the command: `--fail-on-unregistered`
+exits `1` when a state is not registered.
+
 ## From the command line
 
-Every flag of both commands has a control on the page:
+Every flag of the three commands has a control on the page:
 
 ```bash
 apiome pact export-consumer-contract --project billing-api --consumer orders-ui \
@@ -140,6 +191,9 @@ apiome pact export-postman --provider "Billing Service" --all-consumers --branch
   --provider-base-url http://localhost:8080 \
   --state-setup --state-change-url http://localhost:8080/_pact/provider_states \
   --output collection.json --fail-on-left-out
+
+apiome pact scaffold-provider-tests --provider "Billing Service" --language typescript \
+  --output billing-service.pact.test.ts --fail-on-unregistered
 ```
 
 `--all-consumers` takes `--provider` and at most one of `--tag` or `--branch`. `--state-change-url`
@@ -152,6 +206,7 @@ and the [CLI reference](../../reference/cli/pact.md).
 | --- | --- | --- | --- | --- | --- |
 | Derive a pact from a project | `consumer_contracts:view` and `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | Export a Postman collection, download a pact file or a zip | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Write provider tests | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
 | **Review and publish** | `pacts:create` | — | ✓ | ✓ | ✓ |
 
 Every read is scoped to your workspace: a pact, project or pacticipant of another workspace is not

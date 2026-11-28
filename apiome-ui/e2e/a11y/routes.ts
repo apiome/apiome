@@ -333,7 +333,8 @@ const ADDITIONAL: A11yRoute[] = [
     // dumped by `tests/pact-export-ui.test.tsx`.
     id: 'pact-export',
     mockup: 'contracts/export.html',
-    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-export.html'] },
+    // PFX-8.19 (#7316): Provider test scaffolding, with a flagged state.
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-export.html', 'pact-export-scaffold.html'] },
   },
   {
     // PFX-8.15 (#7312): Contracts settings → Secrets, CI and commit statuses, Agents, dumped by
