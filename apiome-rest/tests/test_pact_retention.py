@@ -158,3 +158,103 @@ def test_the_request_model_bounds_its_selectors() -> None:
     with pytest.raises(ValidationError):
         RetentionRequest(keep=RetentionKeep(), unknown=True)
     assert RetentionRequest(keep=RetentionKeep()).dry_run is True
+
+
+# ---------------------------------------------------------------------------------------------
+# PFX-8.14 (#7311): main / other branch, tag selectors, and per-rule counts
+# ---------------------------------------------------------------------------------------------
+
+
+def _deleted_with_main(versions: Sequence[VersionFacts], main: str = "main", **keep: object) -> List[str]:
+    _plan, deletions = plan_retention(RetentionKeep(**keep), [BILLING], versions, now=NOW, main_branches={"p1": main})
+    return sorted(v.number for v in versions if v.id in set(deletions.get("p1", [])))
+
+
+BRANCHY = [
+    _v("m1", 1),
+    _v("m2", 2),
+    _v("m3", 3),
+    _v("old-feat", 4, branches=("feat/old",), days_old=200),
+    _v("new-feat", 5, branches=("feat/new",), days_old=2),
+    _v("m4", 6),
+]
+
+
+def test_latest_per_main_branch_keeps_only_the_main_branch() -> None:
+    assert _deleted_with_main(BRANCHY, latest_per_main_branch=2, deployed_or_released=False) == [
+        "m1",
+        "m2",
+        "new-feat",
+        "old-feat",
+    ]
+
+
+def test_a_pacticipant_without_a_main_branch_keeps_nothing_by_the_main_rule() -> None:
+    plan, deletions = plan_retention(
+        RetentionKeep(latest_per_main_branch=5, deployed_or_released=False), [BILLING], BRANCHY, now=NOW
+    )
+    # Only the latest version survives: there is no main branch to keep from.
+    assert len(deletions["p1"]) == len(BRANCHY) - 1
+    assert plan.pacticipants[0].kept_by == {"latest": 1}
+
+
+def test_latest_per_other_branch_keeps_every_other_branch_and_honours_its_age() -> None:
+    assert _deleted_with_main(BRANCHY, latest_per_other_branch=1, deployed_or_released=False) == [
+        "m1",
+        "m2",
+        "m3",
+    ]
+    assert _deleted_with_main(BRANCHY, latest_per_other_branch=1, other_branch_days=90, deployed_or_released=False) == [
+        "m1",
+        "m2",
+        "m3",
+        "old-feat",
+    ]
+
+
+def test_without_a_main_branch_every_branch_is_an_other_branch() -> None:
+    _plan, deletions = plan_retention(
+        RetentionKeep(latest_per_other_branch=1, deployed_or_released=False), [BILLING], BRANCHY, now=NOW
+    )
+    assert sorted(deletions["p1"]) == ["p1-m1", "p1-m2", "p1-m3"]
+
+
+def test_tags_keep_every_version_carrying_one() -> None:
+    tagged = [
+        _v("1", 1),
+        VersionFacts(id="p1-2", pacticipant_id="p1", number="2", seq=2, created_at=NOW, tags=("keep",)),
+        VersionFacts(id="p1-3", pacticipant_id="p1", number="3", seq=3, created_at=NOW, tags=("prod", "x")),
+        _v("4", 4),
+    ]
+    assert _deleted(tagged, tags=["keep", "prod"], deployed_or_released=False) == ["1"]
+    assert _deleted(tagged, tags=["nothing"], deployed_or_released=False) == ["1", "2", "3"]
+
+
+def test_matched_by_counts_every_rule_a_version_matches() -> None:
+    versions = [_v("m1", 1, in_use=True), _v("m2", 2), _v("m3", 3)]
+    plan, _ = plan_retention(
+        RetentionKeep(latest_per_main_branch=2), [BILLING], versions, now=NOW, main_branches={"p1": "main"}
+    )
+    # m3 is the latest *and* on the main branch's latest two; m1 is deployed.
+    assert plan.matched_by == {"latest": 1, "latest_per_main_branch": 2, "deployed_or_released": 1}
+    assert plan.pacticipants[0].kept_by == {"latest": 1, "latest_per_main_branch": 1, "deployed_or_released": 1}
+
+
+def test_a_tag_alone_is_a_selector() -> None:
+    plan, _ = plan_retention(RetentionKeep(deployed_or_released=False, tags=["keep"]), [BILLING], HISTORY, now=NOW)
+    assert plan.evaluated == len(HISTORY)
+
+
+def test_the_new_selectors_refuse_what_they_cannot_use() -> None:
+    with pytest.raises(ValidationError, match="other_branch_days needs latest_per_other_branch"):
+        RetentionKeep(other_branch_days=30)
+    with pytest.raises(ValidationError, match="more than once"):
+        RetentionKeep(tags=["keep", "keep"])
+    with pytest.raises(ValidationError, match="spaces"):
+        RetentionKeep(tags=[" keep"])
+    with pytest.raises(ValidationError, match="control character"):
+        RetentionKeep(tags=["a\tb"])
+    with pytest.raises(ValidationError):
+        RetentionKeep(tags=[str(n) for n in range(51)])
+    with pytest.raises(ValidationError):
+        RetentionKeep(latest_per_main_branch=0)

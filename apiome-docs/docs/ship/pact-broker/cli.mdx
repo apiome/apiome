@@ -57,7 +57,7 @@ Prefer the variables to `-k`: a secret on the command line is visible to other p
 If your operator set up a [broker host](./publish-pacts.mdx#the-broker-host-alias), the short form
 `https://acme.<broker host>` works for the commands that call Pact Broker routes. `list-pacticipants`,
 `create-or-update-pacticipant`, `delete-pacticipant`, `describe-version --latest`, `create-version-tag`,
-`delete-version`, `restore-version` and `verify` call Apiome's own API, which the short form does not
+`delete-version`, `restore-version`, `retention` and `verify` call Apiome's own API, which the short form does not
 serve; they stop and ask for the long form.
 
 A pipeline set up for basic auth works too: when no token or key is set, `PACT_BROKER_PASSWORD` is
@@ -124,6 +124,7 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 | `create-version-tag` | Tag a version (one request per tag) | `pact-broker create-version-tag` |
 | `delete-version` | Delete a version with its pacts and results; refused while it is deployed | — |
 | `restore-version` | Restore a deleted version with its pacts, results and deployments | — |
+| `retention show`, `retention set`, `retention preview` | Read, change or preview the clean-up rules, the nightly switch and the restore window | — |
 | `can-i-deploy` | Ask whether a version can be deployed | `pact-broker can-i-deploy` |
 | `record-deployment` | Record a deployment to an environment | `pact-broker record-deployment` |
 | `record-release` | Record a release to an environment | `pact-broker record-release` |
@@ -159,6 +160,7 @@ with secrets written as variables. The first were the
 | `delete-pacticipant` | A pacticipant's **Settings** → **Danger zone** |
 | `create-version-tag` | A pacticipant's **Versions** → **+ tag**, or **Add a tag** for the selection |
 | `delete-version`, `restore-version` | A pacticipant's **Versions** → **Delete version**, or **Deleted** → **Restore** |
+| `retention show`, `retention set`, `retention preview` | **Contracts** → **Settings** → **Clean-up** (**What to keep**, **Save rules**, **If it ran now**) |
 | `publish` | **Contracts** → **Publish a pact** (also a project's **Consumers** → **Import Pact file**) |
 | `publish-consumer-contract` | **Contracts** → **Publish a pact** → **Derive from a project** |
 | `check` | **Contracts** → **Publish a pact** → **Check it before it counts** |

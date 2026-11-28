@@ -1,6 +1,6 @@
 ---
 title: "Pacticipants"
-description: "REST endpoints tagged pacticipants: 24 operations."
+description: "REST endpoints tagged pacticipants: 28 operations."
 sidebar_position: 71
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.705.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.706.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pacticipants` · 24 operations
+Tag: `pacticipants` · 28 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-commit-statuses` {#get-pact-commit-statuses-v1-tenants-tenant-slug-pact-commit-statuses-get}
 
@@ -115,6 +115,122 @@ Request body for clean up pacticipant versions (dry run first).
 | 200 | Successful response for clean up pacticipant versions (dry run first). | `application/json` [`RetentionPlan`](#schema-retentionplan) |
 | 409 | `pact-retention-plan-changed`: review `detail.plan` and apply its digest. | — |
 | 422 | No keep selector, no `plan_digest` when applying, or a run too large. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-retention/deleted` {#list-pact-retention-deleted-v1-tenants-tenant-slug-pact-retention-deleted-get}
+
+**List recently deleted pacticipants and versions**
+
+Deleted pacticipants, and versions deleted on their own (by hand or by the clean-up), newest first, each with who deleted it, what comes back with a restore and `purge_after` — when it is removed for good under the workspace's restore window. Restore one with `POST …/pacticipants/{pacticipant}/restore` or `POST …/pacticipants/{pacticipant}/versions/{number}/restore`.
+
+Requires `pacts:view`; `can_restore` says whether the caller may restore (`pacts:delete`).
+
+Operation id: `list_pact_retention_deleted_v1_tenants__tenant_slug__pact_retention_deleted_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Rows per page. |
+| `cursor` | query | string | no | `next_cursor` of the previous page. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list recently deleted pacticipants and versions. | `application/json` [`DeletedPage`](#schema-deletedpage) |
+| 422 | `pact-retention-bad-cursor`. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-retention/policy` {#read-pact-retention-policy-v1-tenants-tenant-slug-pact-retention-policy-get}
+
+**Read the workspace's clean-up rules**
+
+The Contracts clean-up rules: what is kept (every deployed or released version, always; the latest N of each main branch; the latest N of every other branch, optionally for D days; versions with a listed tag), whether the clean-up runs nightly (after 02:00 UTC), and how many days a deleted item stays restorable. `configured: false` shows the defaults (clean-up off). `last_run` / `next_run_at` say what the nightly run did and when it runs next; `can_edit` whether the caller may change the rules.
+
+Requires `pacts:view`.
+
+Operation id: `read_pact_retention_policy_v1_tenants__tenant_slug__pact_retention_policy_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the workspace's clean-up rules. | `application/json` [`RetentionPolicy`](#schema-retentionpolicy) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-retention/policy` {#save-pact-retention-policy-v1-tenants-tenant-slug-pact-retention-policy-put}
+
+**Save the workspace's clean-up rules**
+
+Replace the clean-up rules; a field left out takes its default. Every version deployed or released anywhere is always kept: `keep_deployed_or_released: false` is refused with `422 pact-retention-keeps-in-use` (*Deployed and released versions are always kept.*). An unknown field, a repeated tag or `keep_other_branch_days` without `keep_other_branch_latest` is refused with the reason — nothing is dropped silently.
+
+Run `POST …/pact-retention/policy/preview` first to see what the rules remove. Requires `pacts:delete` (Owner and Admin).
+
+Operation id: `save_pact_retention_policy_v1_tenants__tenant_slug__pact_retention_policy_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for save the workspace's clean-up rules.
+
+- `application/json` — [`RetentionRules`](#schema-retentionrules)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for save the workspace's clean-up rules. | `application/json` [`RetentionPolicy`](#schema-retentionpolicy) |
+| 422 | `pact-retention-keeps-in-use`, or an invalid rule. | — |
+
+## `POST /v1/tenants/{tenant_slug}/pact-retention/policy/preview` {#preview-pact-retention-policy-v1-tenants-tenant-slug-pact-retention-policy-preview-post}
+
+**Preview what the clean-up rules remove**
+
+What the saved rules — or the draft in `rules` — would remove if the clean-up ran now: the versions, with the pacts and verification results that go with them, listed per pacticipant. It is planned exactly as the nightly run plans, so it is what the next run removes unless something is published, deployed or deleted in between. Nothing changes.
+
+`nightly_enabled: false` means nothing is removed while clean-up is off.
+
+Requires `pacts:view`.
+
+Operation id: `preview_pact_retention_policy_v1_tenants__tenant_slug__pact_retention_policy_preview_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for preview what the clean-up rules remove.
+
+- `application/json` — [`RetentionPreviewRequest`](#schema-retentionpreviewrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for preview what the clean-up rules remove. | `application/json` [`RetentionPreview`](#schema-retentionpreview) |
+| 422 | `pact-retention-keeps-in-use`, `pact-retention-too-many-versions`, or an invalid rule. | — |
 
 ## `GET /v1/tenants/{tenant_slug}/pacticipant-labels` {#list-workspace-labels-v1-tenants-tenant-slug-pacticipant-labels-get}
 
@@ -833,6 +949,19 @@ Attributes:
 | `warnings` | array of string | no | Warnings. |
 | `updatedAt` | string or null | no | Updated At. |
 
+### `DeletedPage` {#schema-deletedpage}
+
+A page of the Recently deleted list, newest first.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `items` | array of `DeletedItem` | yes | Items. |
+| `count` | integer | yes | Number of count. |
+| `has_more` | boolean | yes | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
+| `restore_window_days` | integer | yes | Restore Window Days. |
+| `can_restore` | boolean | yes | Whether the caller may restore (`pacts:delete`). |
+
 ### `DeletionImpact` {#schema-deletionimpact}
 
 What deleting one pacticipant would take with it, and whether it may be deleted now.
@@ -1121,9 +1250,51 @@ The answer to a retention run: the plan, and whether it was applied.
 | `kept` | integer | yes | Kept. |
 | `deleted` | integer | yes | Deleted. |
 | `remaining` | integer | no | Deletions past this run's cap; run again to make them. |
+| `pacts` | integer | no | Pacts published from the deleted versions, which go with them. |
+| `results` | integer | no | Verification results of the deleted versions, which go with them. |
+| `matched_by` | map of integer | no | Versions each rule matches on its own (a version two rules match is counted under both), so a rule can say how much it keeps. |
 | `max_deletions` | integer | no | Max Deletions. |
 | `grace_days` | integer | yes | Days a deleted version can still be restored before it is purged. |
 | `pacticipants` | array of `PacticipantPlan` | no | Pacticipants. |
+
+### `RetentionPolicy` {#schema-retentionpolicy}
+
+A workspace's clean-up rules as ``GET …/pact-retention/policy`` answers them.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `keep_deployed_or_released` | boolean | no | Every version deployed or released anywhere is kept. Always `true`: `false` is refused. |
+| `keep_main_branch_latest` | integer or null | no | Keep the newest N versions of each pacticipant's main branch. |
+| `keep_other_branch_latest` | integer or null | no | Keep the newest N versions of every other branch. |
+| `keep_other_branch_days` | integer or null | no | With `keep_other_branch_latest`: only while they were recorded in the last D days. |
+| `keep_tags` | array of string | no | Keep every version carrying one of these tags (at most 50). |
+| `nightly_enabled` | boolean | no | Apply the rules every night. Off: clean-up removes nothing. |
+| `restore_window_days` | integer | no | Days a deleted pacticipant or version can be restored before it is purged. |
+| `configured` | boolean | yes | Whether the workspace has saved rules; `false` shows the defaults. |
+| `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
+| `updated_by` | string or null | no | Who saved them last. |
+| `last_run` | `RetentionLastRun` or null | no | Last Run. |
+| `next_run_at` | string or null | no | When the nightly clean-up runs next; null while it is off. |
+| `can_edit` | boolean | yes | Whether the caller may save the rules and restore (`pacts:delete`); otherwise read-only. |
+
+### `RetentionPreview` {#schema-retentionpreview}
+
+What the rules would remove if clean-up ran now — what the next nightly run removes.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `draft` | boolean | yes | Whether this previews rules that are not saved. |
+| `nightly_enabled` | boolean | yes | Off: nothing is removed while clean-up is off. |
+| `next_run_at` | string or null | no | Next Run At timestamp (ISO 8601). |
+| `plan` | [`RetentionPlan`](#schema-retentionplan) | yes | Plan. |
+
+### `RetentionPreviewRequest` {#schema-retentionpreviewrequest}
+
+``POST …/pact-retention/policy/preview``: preview the saved rules, or a draft of them.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `rules` | [`RetentionRules`](#schema-retentionrules) or null | no | Rules not saved yet; the saved rules when omitted. |
 
 ### `RetentionRequest` {#schema-retentionrequest}
 
@@ -1143,3 +1314,29 @@ Attributes:
 | `dry_run` | boolean | no | Only answer the plan. `false` applies it. |
 | `plan_digest` | string or null | no | The `plan_digest` of the dry run being applied. Required when `dry_run` is false. |
 | `reason` | string or null | no | Why; stored on each deleted version (≤ 500 characters). |
+
+### `RetentionRules` {#schema-retentionrules}
+
+The clean-up rules a workspace saves (``PUT …/pact-retention/policy``).
+
+A field left out takes its default: a ``PUT`` replaces every rule. ``apiome pact retention set``
+reads the rules first and changes only the flags it is given.
+
+Attributes:
+    keep_deployed_or_released: Always ``true``; ``false`` is refused.
+    keep_main_branch_latest: Keep the newest N versions of each pacticipant's main branch.
+    keep_other_branch_latest: Keep the newest N versions of every other branch.
+    keep_other_branch_days: With ``keep_other_branch_latest``: only while recorded in the last D days.
+    keep_tags: Keep every version carrying one of these tags.
+    nightly_enabled: Apply the rules every night.
+    restore_window_days: Days a deleted pacticipant or version stays restorable.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `keep_deployed_or_released` | boolean | no | Every version deployed or released anywhere is kept. Always `true`: `false` is refused. |
+| `keep_main_branch_latest` | integer or null | no | Keep the newest N versions of each pacticipant's main branch. |
+| `keep_other_branch_latest` | integer or null | no | Keep the newest N versions of every other branch. |
+| `keep_other_branch_days` | integer or null | no | With `keep_other_branch_latest`: only while they were recorded in the last D days. |
+| `keep_tags` | array of string | no | Keep every version carrying one of these tags (at most 50). |
+| `nightly_enabled` | boolean | no | Apply the rules every night. Off: clean-up removes nothing. |
+| `restore_window_days` | integer | no | Days a deleted pacticipant or version can be restored before it is purged. |

@@ -2943,12 +2943,25 @@
       ]
     },
     {
-      "id": "pact-verification-settings",
+      "id": "pact-settings-cleanup",
       "route": "/ade/dashboard/pacts/settings",
+      "waitFor": "[data-testid=\"pcx-deleted-table\"]",
+      "data": "fixture:hive-a11y/pact-settings-cleanup.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactSettings/CleanupTab.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/ContractsSettingsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/SettingsTabs.tsx",
+        "apiome-ui/lib/pact-retention.ts"
+      ]
+    },
+    {
+      "id": "pact-verification-settings",
+      "route": "/ade/dashboard/pacts/settings?tab=verification",
       "waitFor": "[data-testid=\"prx-overrides-table\"]",
       "data": "fixture:hive-a11y/pact-verification-settings.html",
       "sources": [
         "apiome-ui/src/app/components/ade/pactRemediation/VerificationSettingsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactSettings/SettingsTabs.tsx",
         "apiome-ui/lib/pact-remediation.ts"
       ]
     },

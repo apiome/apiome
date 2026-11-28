@@ -92,9 +92,26 @@ def pact_commands(app: typer.Typer | None = None) -> list[dict[str, Any]]:
             "arguments": _arguments(command),
             "options": _option_flags(command),
         }
-        for name, command in sorted(group.commands.items())
-        if not command.hidden
+        for name, command in _leaf_commands(group)
     ]
+
+
+def _leaf_commands(group: click.Group, prefix: str = "") -> list[tuple[str, click.Command]]:
+    """Every visible command under ``group``, a sub-group's as ``"<group> <command>"`` (PFX-8.14).
+
+    :param group: The ``pact`` group, or one of its sub-groups.
+    :param prefix: The sub-group path so far (``"retention "``).
+    :returns: ``(name, command)`` pairs, sorted by name.
+    """
+    leaves: list[tuple[str, click.Command]] = []
+    for name, command in sorted(group.commands.items()):
+        if command.hidden:
+            continue
+        if isinstance(command, click.Group):
+            leaves += _leaf_commands(command, f"{prefix}{name} ")
+        else:
+            leaves.append((f"{prefix}{name}", command))
+    return leaves
 
 
 def render_pact_commands(app: typer.Typer | None = None) -> str:

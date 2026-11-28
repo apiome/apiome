@@ -37,8 +37,15 @@ def test_every_registered_pact_command_is_listed() -> None:
     registered |= {
         command.name for command in pact.app.registered_commands if command.name
     }
+    # Sub-groups (PFX-8.14: `retention`) are listed command by command.
+    for group in pact.app.registered_groups:
+        registered |= {
+            f"{group.name} {command.name}"
+            for command in group.typer_instance.registered_commands
+        }
     assert names == registered
-    assert len(names) == 23
+    assert len(names) == 26
+    assert {"retention preview", "retention set", "retention show"} <= names
 
 
 def test_an_entry_names_its_arguments_and_long_flags_but_not_help() -> None:

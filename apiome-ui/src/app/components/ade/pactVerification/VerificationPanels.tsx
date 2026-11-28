@@ -11,6 +11,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { VERIFICATION_TAB_ROUTE } from '@lib/pact-retention';
 import { Play } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui';
@@ -26,7 +27,6 @@ import {
 import { formatWhen, safeHttpUrl, shortVersion } from '@lib/pact-pacticipants';
 import { pactRoute, shortSha } from '@lib/pact-detail';
 import {
-  SETTINGS_ROUTE,
   SOURCE_TEXT,
   cadenceLabel,
   formatHours,
@@ -147,7 +147,7 @@ export function CadenceLine({ settings }: { settings: EffectiveSettings | null |
       Verification cadence: {cadenceLabel(settings.cadence)} ({SOURCE_TEXT[settings.cadence_source]}) · stale after{' '}
       {formatHours(settings.stale_threshold_hours)}
       {settings.target ? ` · scheduled runs replay against ${settings.target}` : ''} ·{' '}
-      <Link className="ppx__link" href={SETTINGS_ROUTE}>
+      <Link className="ppx__link" href={VERIFICATION_TAB_ROUTE}>
         Verification settings
       </Link>
     </p>

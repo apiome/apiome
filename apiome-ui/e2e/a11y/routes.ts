@@ -317,6 +317,17 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
+    // PFX-8.14 (#7311): Contracts settings → Clean-up (keep-rules, If it ran now, Recently deleted),
+    // dumped by `tests/pact-settings-cleanup-ui.test.tsx`.
+    id: 'pact-settings-cleanup',
+    mockup: 'contracts/settings.html',
+    subject: {
+      kind: 'fixtures',
+      dir: 'hive-a11y',
+      files: ['pact-settings-cleanup.html'],
+    },
+  },
+  {
     // PFX-8.1 (#7298): the Contracts landing (strip, facts, integrations, ways in) and an empty
     // workspace with the first-run checklist, dumped by `tests/pact-overview-ui.test.tsx`.
     id: 'pact-overview',

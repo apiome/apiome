@@ -1165,6 +1165,24 @@
         "ffffffff-ffff-4fff-bfff-ffffffffffff",
         26
       ]
+    },
+    {
+      "name": "pact.retention_deleted_pacticipants",
+      "source": "apiome-rest/src/app/pact_retention_policy_store.py _DELETED_PACTICIPANTS first page (Contracts Settings → Clean-up, Recently deleted, PFX-8.14 #7311; V456 index)",
+      "sql": "SELECT 'pacticipant' AS kind, p.id::text AS id, p.id::text AS pacticipant_id, p.slug AS pacticipant_slug, p.name AS pacticipant_name, NULL::text AS number, p.deleted_at, p.deleted_by_label AS deleted_by, 'pacticipant' AS cause, p.delete_reason AS reason, (SELECT count(*) FROM apiome.pacticipant_version v WHERE v.pacticipant_id = p.id AND v.delete_cause = 'pacticipant') AS versions, (SELECT count(*) FROM apiome.pact_publication pp JOIN apiome.pacticipant_version v ON v.id = pp.consumer_version_id AND v.pacticipant_id = pp.consumer_id WHERE pp.consumer_id = p.id AND v.delete_cause = 'pacticipant') AS pacts, (SELECT count(*) FROM apiome.verification_result r JOIN apiome.pacticipant_version v ON v.id = r.provider_version_id AND v.pacticipant_id = r.provider_id WHERE r.provider_id = p.id AND v.delete_cause = 'pacticipant') AS results FROM apiome.pacticipant p WHERE p.tenant_id = $1::uuid AND p.deleted_at IS NOT NULL ORDER BY p.deleted_at DESC, p.id DESC LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        26
+      ]
+    },
+    {
+      "name": "pact.retention_deleted_versions",
+      "source": "apiome-rest/src/app/pact_retention_policy_store.py _DELETED_VERSIONS first page (Contracts Settings → Clean-up, Recently deleted, PFX-8.14 #7311; V456 index)",
+      "sql": "SELECT 'version' AS kind, v.id::text AS id, p.id::text AS pacticipant_id, p.slug AS pacticipant_slug, p.name AS pacticipant_name, v.number, v.deleted_at, v.deleted_by_label AS deleted_by, v.delete_cause AS cause, v.delete_reason AS reason, 0 AS versions, (SELECT count(*) FROM apiome.pact_publication pp WHERE pp.consumer_version_id = v.id AND pp.consumer_id = v.pacticipant_id) AS pacts, (SELECT count(*) FROM apiome.verification_result r WHERE r.provider_version_id = v.id AND r.provider_id = v.pacticipant_id) AS results FROM apiome.pacticipant p JOIN apiome.pacticipant_version v ON v.pacticipant_id = p.id AND v.deleted_at IS NOT NULL AND v.delete_cause <> 'pacticipant' WHERE p.tenant_id = $1::uuid AND p.deleted_at IS NULL ORDER BY v.deleted_at DESC, v.id DESC LIMIT $2",
+      "params": [
+        "scale:tenant:0",
+        26
+      ]
     }
   ]
 }

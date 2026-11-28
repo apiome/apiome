@@ -684,11 +684,25 @@ apiome pact describe-version -a "Billing Service" --latest
 apiome pact create-version-tag -a "Billing Service" -e "$GIT_COMMIT" -t prod
 apiome pact delete-version -a "Billing Service" -e 3.3.1 --reason "bad build"
 apiome pact restore-version -a "Billing Service" -e 3.3.1
+apiome pact retention show
+apiome pact retention preview --main-branch-latest 5 --other-branch-latest 1 --other-branch-days 90
+apiome pact retention set --main-branch-latest 5 --other-branch-latest 1 --other-branch-days 90 \
+  --keep-tag keep --nightly --restore-days 30
 ```
 
 `delete-version` is soft: `restore-version` brings the version back with its pacts, results and
 deployments until it is purged (`APIOME_PACT_DELETION_GRACE_DAYS`, default 30). A version that is
 deployed or released is refused — record its undeployment first; the CLI never forces it (PFX-8.11).
+How long a deleted item stays restorable is the workspace's restore window (`retention set --restore-days`).
+
+`apiome pact retention show|set|preview` (PFX-8.14) reads and changes the Contracts clean-up rules
+(`/v1/tenants/{t}/pact-retention/policy`): every deployed or released version is always kept; then the
+latest N versions of each main branch (`--main-branch-latest`), the latest N of every other branch
+(`--other-branch-latest`, optionally only for `--other-branch-days`), and anything tagged `--keep-tag`.
+`--nightly` turns on the nightly clean-up (after 02:00 UTC); `--restore-days` sets how long deleted items stay
+restorable. `set` changes only the flags it is given (`0` removes a rule). `preview` prints what the saved
+rules — or, with flags, a draft that is not saved — would remove if the clean-up ran now. `set` needs
+`pacts:delete`; `show` and `preview` need `pacts:view`.
 
 `record-undeployment` ends the deployment in the instance named by `--application-instance` (alias
 `--target`), or the environment's unnamed instance; when nothing matches it exits `1` and lists what is

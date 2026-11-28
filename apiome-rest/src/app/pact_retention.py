@@ -5,6 +5,10 @@ covers is deleted (a soft delete — :mod:`app.pact_cleanup_store` — so a mist
 until the purge). The keep selectors, any of which keeps a version:
 
 * ``latest_per_branch`` — the newest *N* versions recorded on each branch;
+* ``latest_per_main_branch`` — the newest *N* versions of each pacticipant's main branch (PFX-8.14);
+* ``latest_per_other_branch`` — the newest *N* versions of every other branch, and with
+  ``other_branch_days`` only while they were recorded in the last *D* days (PFX-8.14);
+* ``tags`` — every version carrying one of the tags (PFX-8.14);
 * ``deployed_or_released`` — every version currently deployed to, or released in, an environment
   (on by default, so a run never removes what can-i-deploy is answering for);
 * ``created_within_days`` — every version recorded in the last *D* days.
@@ -27,9 +31,9 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 __all__ = [
     "CODE_NO_SELECTOR",
@@ -42,6 +46,7 @@ __all__ = [
     "MAX_PACTICIPANTS_PER_RUN",
     "MAX_VERSIONS_EVALUATED",
     "KEEP_REASONS",
+    "MAX_KEEP_TAGS",
     "PacticipantPlan",
     "PlannedDeletion",
     "RetentionError",
@@ -49,6 +54,7 @@ __all__ = [
     "RetentionPlan",
     "RetentionRequest",
     "VersionFacts",
+    "clean_tag",
     "digest_of",
     "plan_retention",
 ]
@@ -68,8 +74,19 @@ MAX_PACTICIPANTS_PER_RUN = 200
 #: The most to-be-deleted versions each pacticipant lists in the answer (the counts are complete).
 MAX_LISTED_PER_PACTICIPANT = 100
 
+#: The most tags one run (or one stored policy) keeps by.
+MAX_KEEP_TAGS = 50
+
 #: Why a version is kept, in the order they are checked.
-KEEP_REASONS = ("latest", "latest_per_branch", "deployed_or_released", "created_within_days")
+KEEP_REASONS = (
+    "latest",
+    "latest_per_branch",
+    "latest_per_main_branch",
+    "latest_per_other_branch",
+    "deployed_or_released",
+    "tagged",
+    "created_within_days",
+)
 
 
 class RetentionError(ValueError):
@@ -90,12 +107,29 @@ class RetentionError(ValueError):
         self.code = code
 
 
+def clean_tag(value: object) -> str:
+    """One keep tag, as ``pacticipant_version_tag.name`` stores it, or a refusal saying why."""
+    if not isinstance(value, str):
+        raise ValueError("a tag is text")
+    if value != value.strip() or not value:
+        raise ValueError(f"tag {value!r} is empty or has spaces around it")
+    if len(value) > 255:
+        raise ValueError("a tag is at most 255 characters")
+    if any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
+        raise ValueError(f"tag {value!r} has a control character")
+    return value
+
+
 class RetentionKeep(BaseModel):
     """The keep selectors of a run; a version any of them matches is kept.
 
     Attributes:
         latest_per_branch: Keep the newest N versions of each branch.
+        latest_per_main_branch: Keep the newest N versions of each pacticipant's main branch.
+        latest_per_other_branch: Keep the newest N versions of every branch that is not the main one.
+        other_branch_days: With ``latest_per_other_branch``: only while recorded in the last D days.
         deployed_or_released: Keep every version currently deployed or released.
+        tags: Keep every version carrying one of these tags.
         created_within_days: Keep every version recorded in the last D days.
     """
 
@@ -104,12 +138,60 @@ class RetentionKeep(BaseModel):
     latest_per_branch: Optional[int] = Field(
         default=None, ge=1, le=1000, description="Keep the newest N versions recorded on each branch."
     )
+    latest_per_main_branch: Optional[int] = Field(
+        default=None, ge=1, le=1000, description="Keep the newest N versions of each pacticipant's main branch."
+    )
+    latest_per_other_branch: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=1000,
+        description="Keep the newest N versions of every branch that is not its pacticipant's main branch.",
+    )
+    other_branch_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=3650,
+        description="With `latest_per_other_branch`: only while they were recorded in the last D days.",
+    )
     deployed_or_released: bool = Field(
         default=True, description="Keep every version currently deployed to or released in an environment."
+    )
+    tags: List[str] = Field(
+        default_factory=list,
+        max_length=MAX_KEEP_TAGS,
+        description=f"Keep every version carrying one of these tags (at most {MAX_KEEP_TAGS}).",
     )
     created_within_days: Optional[int] = Field(
         default=None, ge=1, le=3650, description="Keep every version recorded in the last D days."
     )
+
+    @field_validator("tags")
+    @classmethod
+    def _valid_tags(cls, tags: List[str]) -> List[str]:
+        """Refuse a blank, padded, over-long or repeated tag — none is dropped silently."""
+        cleaned = [clean_tag(tag) for tag in tags]
+        repeated = sorted({tag for tag in cleaned if cleaned.count(tag) > 1})
+        if repeated:
+            raise ValueError(f"tag listed more than once: {', '.join(repeated)}")
+        return cleaned
+
+    @model_validator(mode="after")
+    def _days_need_a_count(self) -> "RetentionKeep":
+        """``other_branch_days`` qualifies ``latest_per_other_branch``; alone it would keep nothing."""
+        if self.other_branch_days is not None and self.latest_per_other_branch is None:
+            raise ValueError("other_branch_days needs latest_per_other_branch")
+        return self
+
+    def selects_anything(self) -> bool:
+        """Whether any selector keeps a version beyond each pacticipant's latest one."""
+        return bool(
+            self.latest_per_branch
+            or self.latest_per_main_branch
+            or self.latest_per_other_branch
+            or self.deployed_or_released
+            or self.tags
+            or self.created_within_days
+        )
 
 
 class RetentionRequest(BaseModel):
@@ -152,6 +234,7 @@ class VersionFacts:
         created_at: When it was recorded (timezone-aware).
         branches: The branches it was recorded on.
         in_use: Whether it is currently deployed or released.
+        tags: Its tags.
     """
 
     id: str
@@ -161,6 +244,7 @@ class VersionFacts:
     created_at: datetime
     branches: Tuple[str, ...] = ()
     in_use: bool = False
+    tags: Tuple[str, ...] = ()
 
 
 class PlannedDeletion(BaseModel):
@@ -169,6 +253,8 @@ class PlannedDeletion(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     number: str
+    pacts: int = Field(default=0, description="Pacts published from this version that go with it.")
+    results: int = Field(default=0, description="Verification results recorded for this version that go with it.")
     created_at: Optional[str] = None
     branches: List[str] = Field(default_factory=list)
 
@@ -208,6 +294,15 @@ class RetentionPlan(BaseModel):
     kept: int
     deleted: int
     remaining: int = Field(default=0, description="Deletions past this run's cap; run again to make them.")
+    pacts: int = Field(default=0, description="Pacts published from the deleted versions, which go with them.")
+    results: int = Field(default=0, description="Verification results of the deleted versions, which go with them.")
+    matched_by: Dict[str, int] = Field(
+        default_factory=dict,
+        description=(
+            "Versions each rule matches on its own (a version two rules match is counted under both), "
+            "so a rule can say how much it keeps."
+        ),
+    )
     max_deletions: int = MAX_DELETIONS_PER_RUN
     grace_days: int = Field(description="Days a deleted version can still be restored before it is purged.")
     pacticipants: List[PacticipantPlan] = Field(default_factory=list)
@@ -222,37 +317,57 @@ class _Decision:
     versions: List[VersionFacts] = field(default_factory=list)
 
 
-def _keep_reason(
+def _matching_rules(
     version: VersionFacts,
     keep: RetentionKeep,
     latest_id: str,
-    branch_keepers: set,
+    keepers: Dict[str, set],
     cutoff: Optional[datetime],
-) -> Optional[str]:
-    """The first rule that keeps a version, or ``None`` when the run deletes it."""
-    if version.id == latest_id:
-        return "latest"
-    if version.id in branch_keepers:
-        return "latest_per_branch"
-    if keep.deployed_or_released and version.in_use:
-        return "deployed_or_released"
-    if cutoff is not None and version.created_at >= cutoff:
-        return "created_within_days"
-    return None
+) -> List[str]:
+    """Every rule that keeps a version, in :data:`KEEP_REASONS` order; empty when the run deletes it."""
+    tags = set(keep.tags)
+    matched = {
+        "latest": version.id == latest_id,
+        "latest_per_branch": version.id in keepers["latest_per_branch"],
+        "latest_per_main_branch": version.id in keepers["latest_per_main_branch"],
+        "latest_per_other_branch": version.id in keepers["latest_per_other_branch"],
+        "deployed_or_released": keep.deployed_or_released and version.in_use,
+        "tagged": bool(tags and tags.intersection(version.tags)),
+        "created_within_days": cutoff is not None and version.created_at >= cutoff,
+    }
+    return [reason for reason in KEEP_REASONS if matched[reason]]
 
 
-def _branch_keepers(versions: Sequence[VersionFacts], per_branch: Optional[int]) -> set:
-    """The ids of the newest ``per_branch`` versions of each branch."""
+def _branch_keepers(
+    versions: Sequence[VersionFacts],
+    per_branch: Optional[int],
+    *,
+    include: Optional[Callable[[str], bool]] = None,
+    since: Optional[datetime] = None,
+) -> set:
+    """The ids of the newest ``per_branch`` versions of each branch.
+
+    Args:
+        versions: One pacticipant's live versions.
+        per_branch: How many of each branch to keep; nothing when ``None``.
+        include: Only the branches this accepts (all of them when ``None``).
+        since: Only versions recorded at or after this time count as kept.
+
+    Returns:
+        The kept version ids.
+    """
     if not per_branch:
         return set()
     by_branch: Dict[str, List[VersionFacts]] = {}
     for version in versions:
         for branch in version.branches:
-            by_branch.setdefault(branch, []).append(version)
+            if include is None or include(branch):
+                by_branch.setdefault(branch, []).append(version)
     keepers = set()
     for members in by_branch.values():
         for version in sorted(members, key=lambda v: v.seq, reverse=True)[:per_branch]:
-            keepers.add(version.id)
+            if since is None or version.created_at >= since:
+                keepers.add(version.id)
     return keepers
 
 
@@ -293,6 +408,7 @@ def plan_retention(
     dry_run: bool = True,
     grace_days: int = 30,
     max_deletions: int = MAX_DELETIONS_PER_RUN,
+    main_branches: Optional[Mapping[str, Optional[str]]] = None,
 ) -> Tuple[RetentionPlan, Dict[str, List[str]]]:
     """Decide which versions a run keeps and which it deletes.
 
@@ -304,6 +420,9 @@ def plan_retention(
         dry_run: Copied to the answer.
         grace_days: Copied to the answer.
         max_deletions: The cap on deletions (the oldest versions are deleted first).
+        main_branches: Each pacticipant id's main branch. A pacticipant without one has no main
+            branch: ``latest_per_main_branch`` keeps none of its versions, and every branch it has
+            counts as an *other* branch.
 
     Returns:
         The plan (``applied`` false), and the version ids to delete per pacticipant id.
@@ -312,14 +431,16 @@ def plan_retention(
         RetentionError: ``pact-retention-no-selector`` when no selector would keep anything beyond
             each pacticipant's latest version.
     """
-    if keep.latest_per_branch is None and keep.created_within_days is None and not keep.deployed_or_released:
+    if not keep.selects_anything():
         raise RetentionError(
             CODE_NO_SELECTOR,
-            "a retention run needs at least one keep selector: latest_per_branch, created_within_days, "
-            "or deployed_or_released",
+            "a retention run needs at least one keep selector: latest_per_branch, latest_per_main_branch, "
+            "latest_per_other_branch, tags, created_within_days, or deployed_or_released",
         )
     moment = now or datetime.now(timezone.utc)
     cutoff = moment - timedelta(days=keep.created_within_days) if keep.created_within_days else None
+    other_since = moment - timedelta(days=keep.other_branch_days) if keep.other_branch_days else None
+    mains = main_branches or {}
 
     decisions: Dict[str, _Decision] = {pid: _Decision(slug=slug, name=name) for pid, slug, name in pacticipants}
     for version in versions:
@@ -328,17 +449,29 @@ def plan_retention(
 
     candidates: List[Tuple[VersionFacts, str]] = []
     kept_by: Dict[str, Dict[str, int]] = {pid: {} for pid in decisions}
+    matched_by: Dict[str, int] = {}
     for pid, decision in decisions.items():
         if not decision.versions:
             continue
         latest_id = max(decision.versions, key=lambda v: v.seq).id
-        keepers = _branch_keepers(decision.versions, keep.latest_per_branch)
+        main = mains.get(pid)
+        keepers = {
+            "latest_per_branch": _branch_keepers(decision.versions, keep.latest_per_branch),
+            "latest_per_main_branch": _branch_keepers(
+                decision.versions, keep.latest_per_main_branch if main else None, include=lambda b: b == main
+            ),
+            "latest_per_other_branch": _branch_keepers(
+                decision.versions, keep.latest_per_other_branch, include=lambda b: b != main, since=other_since
+            ),
+        }
         for version in decision.versions:
-            reason = _keep_reason(version, keep, latest_id, keepers, cutoff)
-            if reason is None:
+            rules = _matching_rules(version, keep, latest_id, keepers, cutoff)
+            for rule in rules:
+                matched_by[rule] = matched_by.get(rule, 0) + 1
+            if not rules:
                 candidates.append((version, pid))
             else:
-                kept_by[pid][reason] = kept_by[pid].get(reason, 0) + 1
+                kept_by[pid][rules[0]] = kept_by[pid].get(rules[0], 0) + 1
 
     # The oldest first, so a capped run makes the deletions a later run would make anyway.
     candidates.sort(key=lambda item: item[0].seq)
@@ -381,6 +514,7 @@ def plan_retention(
         kept=sum(row.kept for row in rows),
         deleted=len(deleted_ids),
         remaining=len(over),
+        matched_by={reason: matched_by[reason] for reason in KEEP_REASONS if reason in matched_by},
         max_deletions=max_deletions,
         grace_days=grace_days,
         pacticipants=rows,

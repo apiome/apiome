@@ -48759,3 +48759,216 @@ html[data-motion='reduce'] .pvl-progress--striped::-webkit-progress-value {
   color: var(--fg-muted);
   font-size: var(--fs-xs);
 }
+
+/* ===========================================================================
+   Contracts settings → Clean-up — PFX-8.14 (#7311),
+   docs/mockups/contracts/settings.html. `.pcx-tabs` the page's tab strip
+   (Clean-up / Verification); `.pcx-split` the rules + Recently deleted column
+   and its aside (If it ran now, The same from anywhere); `.pcx-rule` one keep
+   rule as a sentence with inline inputs; `.pcx-preview*` the headline count;
+   `.pcx-callout` the read-only note, shown once. Tokens only.
+   =========================================================================== */
+.pcx-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-block-end: var(--space-4);
+  border-block-end: 1px solid var(--border);
+}
+
+.pcx-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  margin-block-end: -1px;
+  border-block-end: 2px solid transparent;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+}
+
+.pcx-tabs__tab:hover {
+  color: var(--fg);
+}
+
+.pcx-tabs__tab:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pcx-tabs__tab[aria-current='page'] {
+  border-block-end-color: var(--accent);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.pcx-tabs__icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.prx-intro {
+  margin-block-end: var(--space-4);
+}
+
+.pcx {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pcx-callout {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pcx-split {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 64rem) {
+  .pcx-split {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.pcx-split__main,
+.pcx-split__aside {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.pcx-caps {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pcx-rules__list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pcx-rule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  font-size: var(--fs-sm);
+}
+
+.pcx-rule__sentence {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pcx-rule__aside {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pcx-rule__count {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pcx-inline-number {
+  inline-size: 4.5rem;
+}
+
+.pcx-inline-text {
+  inline-size: 14rem;
+  max-inline-size: 100%;
+}
+
+.pcx-rules__add,
+.pcx-rules__choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pcx-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-block-start: 1px solid var(--border);
+}
+
+.pcx-switch-row__title {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pcx-window {
+  max-inline-size: 20rem;
+}
+
+.pcx-preview__body {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pcx-preview__off {
+  margin: 0;
+  color: var(--warn-fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pcx-preview__headline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pcx-preview__count {
+  flex-shrink: 0;
+  color: var(--fg);
+  font-size: var(--fs-2xl);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.pcx-preview__title {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pcx-table__primary {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.pcx-table__actions {
+  text-align: end;
+}
+
+.pcx-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
