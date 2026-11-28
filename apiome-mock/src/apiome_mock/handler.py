@@ -9,6 +9,14 @@ from typing import Any, Mapping
 import structlog
 from app.mock_routing import MockOperation
 from app.mock_template import RenderBudget, RenderEnv, TemplateLimitError, make_rng
+from app.pact_capture import (
+    CAPTURE_HEADER,
+    CaptureHeaderProblem,
+    ConsumerTag,
+    classify_capture_header,
+    mock_session_digest,
+    origin_for_layer,
+)
 from fastapi import Request
 from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
@@ -28,6 +36,14 @@ from apiome_mock.chaos import (
     compute_delay_ms,
     effective_knobs,
     should_inject_error,
+)
+from apiome_mock.consumer_capture import (
+    CaptureLink,
+    ConsumerCaptureRecorder,
+    PendingCall,
+    captured_now,
+    mark_not_recorded,
+    mark_queued,
 )
 from apiome_mock.correlation import (
     CORRELATION_HEADER,
@@ -443,6 +459,8 @@ async def handle_mock_request(
     session_store: SessionStore | None = None,
     callback_dispatcher: CallbackDispatcher | None = None,
     capture_proxy: CaptureProxy | None = None,
+    capture_recorder: ConsumerCaptureRecorder | None = None,
+    capture_link: CaptureLink | CaptureHeaderProblem | None = None,
 ) -> Response:
     """Serve a mock response for ``/{tenant}/{project}/{version}/{path}`` (hosted, Postgres-backed).
 
@@ -467,6 +485,10 @@ async def handle_mock_request(
         callback_dispatcher: Delivers contract callbacks (#4746, PMR-2.3).
         capture_proxy: Guarded upstream proxy (#4747, PMR-2.4); ``None`` disables capture for the
             whole deployment, whatever any version's policy says.
+        capture_recorder: Writer of consumer-tagged captures (#7319, PFX-9.1); ``None`` means a
+            tagged call is served and answered ``not-recorded``.
+        capture_link: For a call through a private capture URL, the link its token named, or the
+            problem with the token (#7319). A link overrides any ``X-Mock-Capture`` header.
 
     Returns:
         The mock (or, when capturing, the upstream) response.
@@ -511,6 +533,22 @@ async def handle_mock_request(
             instance=instance,
         )
 
+    consumer = _consumer_capture_for(request, capture_link)
+    if consumer is not None:
+        return await _serve_and_capture(
+            request,
+            consumer=consumer,
+            compiled=compiled,
+            tenant=tenant,
+            project=project,
+            version=version,
+            path=path,
+            api_key=api_key,
+            session_store=session_store,
+            callback_dispatcher=callback_dispatcher,
+            recorder=capture_recorder,
+        )
+
     if capture_proxy is not None and wants_capture(request):
         relative_path = "/" + path.strip("/") if path.strip("/") else "/"
         operation, _, _ = match_request(compiled.operations, request.method, relative_path)
@@ -539,6 +577,109 @@ async def handle_mock_request(
         session_store=session_store,
         callback_dispatcher=callback_dispatcher,
     )
+
+
+def _consumer_capture_for(
+    request: Request, capture_link: CaptureLink | CaptureHeaderProblem | None
+) -> CaptureLink | ConsumerTag | CaptureHeaderProblem | None:
+    """Whether this call is to be recorded for a consumer (#7319, PFX-9.1).
+
+    Untagged calls cost one header lookup. The proxy's own opt-in values (``on``, ``record``)
+    return ``None`` here so the guarded proxy path keeps them.
+
+    Returns:
+        The capture URL's link, the header's tag, a problem to report on the response, or ``None``.
+    """
+    if capture_link is not None:
+        return capture_link
+    value = request.headers.get(CAPTURE_HEADER)
+    if value is None:
+        return None
+    classified = classify_capture_header(value)
+    if isinstance(classified, (ConsumerTag, CaptureHeaderProblem)):
+        return classified
+    return None
+
+
+async def _serve_and_capture(
+    request: Request,
+    *,
+    consumer: CaptureLink | ConsumerTag | CaptureHeaderProblem,
+    compiled: CompiledSpec,
+    tenant: str,
+    project: str,
+    version: str,
+    path: str,
+    api_key: ValidatedApiKey | None,
+    session_store: SessionStore | None,
+    callback_dispatcher: CallbackDispatcher | None,
+    recorder: ConsumerCaptureRecorder | None,
+) -> Response:
+    """Serve a tagged call exactly as an untagged one, then queue it for its consumer (#7319).
+
+    The response is never changed except for the ``X-Mock-Capture`` headers that say whether the
+    call was queued or why it was not. Queuing costs no I/O; the recorder writes in batches.
+    """
+    trace = ServeTrace()
+    response = await serve_compiled_request(
+        request,
+        compiled=compiled,
+        tenant=tenant,
+        project=project,
+        version=version,
+        path=path,
+        session_store=session_store,
+        callback_dispatcher=callback_dispatcher,
+        trace=trace,
+    )
+    if isinstance(consumer, CaptureHeaderProblem):
+        mark_not_recorded(response, consumer.code, consumer.message)
+        return response
+    if isinstance(consumer, CaptureLink):
+        if consumer.version_id != compiled.revision_id:
+            mark_not_recorded(response, "link-mismatch")
+            return response
+        tag, via, link_id = consumer.tag, "url", consumer.id
+    else:
+        tag, via, link_id = consumer, "header", None
+    if recorder is None:
+        mark_not_recorded(response, "write-failed", "Consumer capture is not available on this runtime.")
+        return response
+
+    operation = trace.operation
+    body = getattr(response, "body", None)
+    call = PendingCall(
+        version_id=compiled.revision_id,
+        project_slug=project,
+        version_label=version,
+        tag=tag,
+        via=via,
+        link_id=link_id,
+        api_key_id=api_key.id if api_key is not None else None,
+        captured_at=captured_now(),
+        method=request.method,
+        path="/" + path.strip("/") if path.strip("/") else "/",
+        query=list(request.query_params.multi_items()),
+        request_headers=dict(request.headers),
+        request_body=await request.body() or None,
+        request_media_type=request.headers.get("content-type"),
+        status=response.status_code,
+        response_headers=dict(response.headers),
+        response_body=bytes(body) if isinstance(body, (bytes, bytearray)) else None,
+        response_media_type=response.headers.get("content-type"),
+        path_template=operation.path_template if operation is not None else None,
+        operation_key=operation.key if operation is not None else None,
+        origin=origin_for_layer(trace.layer),
+        origin_detail=trace.detail or None,
+        scenario=trace.scenario,
+        mock_session=mock_session_digest(parse_mock_session_token(request)),
+        policy=compiled.capture_policy.document if compiled.capture_policy is not None else {},
+    )
+    if recorder.submit(call):
+        mark_queued(response, tag)
+    else:
+        mark_not_recorded(response, "queue-full")
+    return response
 
 
 async def serve_compiled_request(

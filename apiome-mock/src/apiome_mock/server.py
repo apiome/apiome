@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator, cast
 
 import structlog
+from app.pact_capture import CAPTURE_URL_SEGMENT, REFUSAL_REASONS, CaptureHeaderProblem
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import JSONResponse, Response
 from psycopg_pool import AsyncConnectionPool
@@ -19,6 +20,13 @@ from apiome_mock.callback_dispatch import build_dispatcher
 from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from apiome_mock.capture import build_capture_proxy
 from apiome_mock.channel_routes import CHANNELS_SEGMENT, handle_channel_publish, handle_list_channels
+from apiome_mock.consumer_capture import (
+    close_capture_recorder,
+    configure_capture_link_cache,
+    configure_capture_recorder,
+    resolve_capture_link,
+    run_capture_expiry_sweeper,
+)
 from apiome_mock.database_pool import create_async_pool, ping_pool
 from apiome_mock.event_transport import handle_event_sse, handle_event_websocket
 from apiome_mock.graphql_transport import handle_graphql_request
@@ -73,6 +81,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
         negative_ttl_seconds=settings.api_key_negative_cache_ttl_seconds,
     )
     configure_usage_recorder(pool, flush_interval_seconds=settings.usage_flush_interval_seconds)
+    # Consumer-tagged capture (#7319, PFX-9.1): queued in memory, written in batches.
+    capture_recorder = configure_capture_recorder(
+        pool,
+        flush_interval_seconds=settings.consumer_capture_flush_interval_seconds,
+        max_pending=settings.consumer_capture_max_pending,
+    )
+    configure_capture_link_cache(settings.consumer_capture_link_cache_ttl_seconds)
 
     _log.info("database_pool_opening")
     await pool.open()
@@ -117,6 +132,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
                 batch_size=settings.session_purge_batch_size,
             )
         )
+    # Expired consumer captures are deleted here, in batches, never on the request path (#7319).
+    capture_sweeper_task = asyncio.create_task(
+        run_capture_expiry_sweeper(
+            pool,
+            stop_event,
+            interval_seconds=settings.consumer_capture_purge_interval_seconds,
+            batch_size=settings.consumer_capture_purge_batch_size,
+        )
+    )
     callback_dispatcher = build_dispatcher(
         enabled=settings.callbacks_enabled,
         allow_private_destinations=settings.callback_allow_private,
@@ -155,6 +179,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
     app.state.session_store = session_store
     app.state.callback_dispatcher = callback_dispatcher
     app.state.capture_proxy = capture_proxy
+    app.state.capture_recorder = capture_recorder
     app.state.grpc_runtime = grpc_runtime
     yield {
         MOCK_DB_POOL_KEY: pool,
@@ -174,6 +199,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
             await producer_task
         except asyncio.CancelledError:
             pass
+    capture_sweeper_task.cancel()
+    try:
+        await capture_sweeper_task
+    except asyncio.CancelledError:
+        pass
     if session_sweeper_task is not None:
         session_sweeper_task.cancel()
         try:
@@ -193,6 +223,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[dict[str, object]]:
         except asyncio.CancelledError:
             pass
     await close_usage_recorder(pool)
+    await close_capture_recorder(pool)
     await close_audit_writer(pool)
     _log.info("database_pool_closing")
     await pool.close()
@@ -290,11 +321,14 @@ def create_app() -> FastAPI:
         version: str,
         path: str,
         validated_key: ValidatedApiKey | None | object = _unvalidated,
+        capture_token: str | None = None,
     ) -> Response:
         """Serve one request through the REST (OpenAPI) mock path: limits, resolution, usage.
 
         ``validated_key`` is the key a caller already validated for this request (the GraphQL
         route falling through to REST), so a request's key is checked once (#7207).
+        ``capture_token`` is the token of a private capture URL (#7319); the call is served for
+        the path after it and recorded for the link's consumer.
         """
         pool: AsyncConnectionPool = app.state.db_pool
         cache: SpecCache = app.state.spec_cache
@@ -323,6 +357,11 @@ def create_app() -> FastAPI:
             return blocked
 
         limits = await resolve_limits_for_tenant(pool, tenant, settings=settings)
+        capture_link = None
+        if capture_token is not None:
+            capture_link = await resolve_capture_link(pool, capture_token) or CaptureHeaderProblem(
+                "unknown-link", REFUSAL_REASONS["unknown-link"]
+            )
         response = await handle_mock_request(
             request,
             tenant=tenant,
@@ -335,6 +374,8 @@ def create_app() -> FastAPI:
             session_store=session_store,
             callback_dispatcher=callback_dispatcher,
             capture_proxy=capture_proxy,
+            capture_recorder=getattr(app.state, "capture_recorder", None),
+            capture_link=capture_link,
         )
         if limits is not None:
             record_mock_request(
@@ -412,6 +453,26 @@ def create_app() -> FastAPI:
         if response is not None:
             return response
         return await serve_rest(request, tenant, project, version, "graphql", validated_key)
+
+    # Private capture URLs (#7319, PFX-9.1): `/{t}/{p}/{v}/~capture/{token}/…` serves the path
+    # after the token and records the call for the link's consumer. Declared before the catch-all.
+    @app.api_route(
+        f"/{{tenant}}/{{project}}/{{version}}/{CAPTURE_URL_SEGMENT}/{{token}}",
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    )
+    @app.api_route(
+        f"/{{tenant}}/{{project}}/{{version}}/{CAPTURE_URL_SEGMENT}/{{token}}/{{path:path}}",
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    )
+    async def capture_url_route(
+        request: Request,
+        tenant: str,
+        project: str,
+        version: str,
+        token: str,
+        path: str = "",
+    ) -> Response:
+        return await serve_rest(request, tenant, project, version, path, capture_token=token)
 
     @app.api_route(
         "/{tenant}/{project}/{version}",

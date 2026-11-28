@@ -1,0 +1,32 @@
+---
+slug: consumer-tagged-mock-capture
+title: "Record a consumer's calls to the mock"
+description: "Tag hosted-mock calls with a consumer and version, and read them back."
+authors: [apiome]
+---
+
+The hosted mock can now record the calls one consumer makes to it. This is the first step toward
+writing a pact from mock traffic, with no Pact library and no test rewrite. Tag the calls with
+`X-Mock-Capture: <consumer>@<version>`, or use a private capture URL, and read them back as a
+session. See [Capture for a consumer](/reference/mock-runtime/mock-consumer-capture).
+
+{/* truncate */}
+
+- **Only tagged calls are recorded.** Every other caller of the same mock is served exactly as
+  before, at the same speed. A tagged call gets the same answer plus `X-Mock-Capture: queued`. When it
+  cannot be recorded it gets `not-recorded` and the reason, such as a tag with no version or an
+  unknown capture URL.
+- **A capture URL for clients that cannot add a header.** `POST …/pact-captures/links` gives a URL
+  such as `…/billing-api/2.7.0/~capture/mcap_…`. The token is shown once and only its digest is
+  stored. Links expire, can be revoked, and never open a private mock.
+- **Sessions you can read back.** One session per mock version, consumer and consumer version. Each
+  call has its method, path, the spec's path template and status. It also says where the answer came
+  from: the spec, a scenario, a stateful session, chaos, a forced status, nothing in the spec, or a
+  refused request.
+- **Stored redacted.** The mock's redaction rules run before anything is stored, and a call that
+  still looks credential-bearing is not stored at all. Calls a session cannot take are counted with
+  the reason.
+- **Kept for a week by default.** Retention is a workspace setting from 1 to 30 days. Expired
+  captures disappear from every read and are deleted in the background.
+
+Generating the pact from a session, and the page to record, review and publish it, come next.

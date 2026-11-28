@@ -271,6 +271,43 @@ class Settings(BaseSettings):
         description="Expired sessions one sweep statement deletes (postgres backend only).",
     )
 
+    consumer_capture_flush_interval_seconds: float = Field(
+        default=2.0,
+        ge=0.1,
+        le=60.0,
+        description=(
+            "How often consumer-tagged captures (X-Mock-Capture: <consumer>@<version>) queued in "
+            "memory are redacted and written, in one transaction per flush (#7319)."
+        ),
+    )
+    consumer_capture_max_pending: int = Field(
+        default=10_000,
+        ge=1,
+        le=1_000_000,
+        description="Tagged calls held between flushes; a call beyond it is answered as not recorded (#7319).",
+    )
+    consumer_capture_link_cache_ttl_seconds: float = Field(
+        default=30.0,
+        ge=0,
+        le=3600.0,
+        description="How long a resolved private capture URL is cached; a revoked link stops within it (#7319).",
+    )
+    consumer_capture_purge_interval_seconds: float = Field(
+        default=300.0,
+        gt=0,
+        le=86_400.0,
+        description=(
+            "Seconds between sweeps that delete expired consumer captures (expired captures are "
+            "already hidden from every read before they are swept) (#7319)."
+        ),
+    )
+    consumer_capture_purge_batch_size: int = Field(
+        default=1000,
+        ge=1,
+        le=100_000,
+        description="Expired capture rows one sweep statement deletes (#7319).",
+    )
+
     @model_validator(mode="after")
     def pool_size_bounds(self) -> Self:
         if self.database_pool_max_size < self.database_pool_min_size:

@@ -1,6 +1,6 @@
 ---
 title: "Pacticipants"
-description: "REST endpoints tagged pacticipants: 35 operations."
+description: "REST endpoints tagged pacticipants: 43 operations."
 sidebar_position: 71
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,239 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.712.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.713.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pacticipants` · 35 operations
+Tag: `pacticipants` · 43 operations
+
+## `GET /v1/tenants/{tenant_slug}/pact-captures/links` {#list-capture-links-v1-tenants-tenant-slug-pact-captures-links-get}
+
+**List mock capture URLs**
+
+The workspace's private capture URLs, newest first, with `state` `live`, `revoked` or `expired`. The token is never shown again after creation; `token_prefix` identifies it.
+
+Paged with `limit` (default 50, at most 200) and `cursor` (the previous page's `next_cursor`).
+
+Requires `pacts:view`.
+
+Operation id: `list_capture_links_v1_tenants__tenant_slug__pact_captures_links_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list mock capture urls. | `application/json` [`CaptureLinkList`](#schema-capturelinklist) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-captures/links` {#create-capture-link-v1-tenants-tenant-slug-pact-captures-links-post}
+
+**Create a mock capture URL**
+
+A private URL for clients that cannot add the `X-Mock-Capture` header: every call made under `{url}/<API path>` is served by the mock version and recorded for `consumer` at `consumer_version`. The token in it is shown **once**, in this response; only its digest is stored. The URL tags calls only — it does not open a private mock, which still needs its API key. It lasts `expires_in_days` (default 7, at most 30). Audited as `pacts.capture.link.create`.
+
+Requires `pacts:create`.
+
+Operation id: `create_capture_link_v1_tenants__tenant_slug__pact_captures_links_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create a mock capture url.
+
+- `application/json` — [`CaptureLinkCreate`](#schema-capturelinkcreate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create a mock capture url. | `application/json` [`CaptureLinkCreated`](#schema-capturelinkcreated) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-captures/links/{link_id}` {#revoke-capture-link-v1-tenants-tenant-slug-pact-captures-links-link-id-delete}
+
+**Revoke a mock capture URL**
+
+Stop recording through the URL. Calls made through it are still served; within 30 seconds (the mock's link cache) they are answered `X-Mock-Capture: not-recorded`. Revoking twice is harmless. Audited as `pacts.capture.link.revoke`.
+
+Requires `pacts:edit`.
+
+Operation id: `revoke_capture_link_v1_tenants__tenant_slug__pact_captures_links__link_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `link_id` | path | string | yes | Path parameter identifying the link id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for revoke a mock capture url. | `application/json` [`CaptureLink`](#schema-capturelink) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-captures/sessions` {#list-capture-sessions-v1-tenants-tenant-slug-pact-captures-sessions-get}
+
+**List mock capture sessions**
+
+The workspace's live capture sessions, newest activity first. A session holds the calls made to one mock version with `X-Mock-Capture: <consumer>@<version>`, or through a capture URL, for that consumer and version. Filter with `project`, `version` and `consumer` (exact). Expired sessions are never listed.
+
+Paged with `limit` (default 50, at most 200) and `cursor` (the previous page's `next_cursor`).
+
+Requires `pacts:view`.
+
+Operation id: `list_capture_sessions_v1_tenants__tenant_slug__pact_captures_sessions_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project` | query | string or null | no | Query parameter: project. |
+| `version` | query | string or null | no | Endpoint or API version metadata. |
+| `consumer` | query | string or null | no | Query parameter: consumer. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list mock capture sessions. | `application/json` [`CaptureSessionList`](#schema-capturesessionlist) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-captures/sessions/{session_id}` {#read-capture-session-v1-tenants-tenant-slug-pact-captures-sessions-session-id-get}
+
+**Read a mock capture session and its calls**
+
+One session and a page of its calls in the order they were made. Each call has its method, path, the spec's path template (`null` when nothing in the spec matched), status, and `origin`: `spec`, `scenario`, `session` (stateful `X-Mock-Session` CRUD), `chaos` (an injected error), `forced` (`Prefer: code=`), `off-spec` or `rejected` (the mock refused the request). Request and response are stored after the mock's redaction rules; `redactions` says what was removed and why. An expired or unknown session is `404 capture-session-not-found`.
+
+Paged with `limit` (default 50, at most 200) and `cursor` (the previous page's `next_cursor`).
+
+Requires `pacts:view`.
+
+Operation id: `read_capture_session_v1_tenants__tenant_slug__pact_captures_sessions__session_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `session_id` | path | string | yes | Path parameter identifying the session id segment. |
+| `limit` | query | integer | no | Page size. At most 200. |
+| `cursor` | query | string or null | no | Opaque cursor from the previous page (`next_cursor`, or the `X-Next-Cursor` header). Omit for the first page. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a mock capture session and its calls. | `application/json` [`CaptureSessionDetail`](#schema-capturesessiondetail) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/tenants/{tenant_slug}/pact-captures/sessions/{session_id}` {#delete-capture-session-v1-tenants-tenant-slug-pact-captures-sessions-session-id-delete}
+
+**Delete a mock capture session**
+
+Delete the session and every call in it, so the next tagged call starts a new one. Audited as `pacts.capture.session.delete`.
+
+Requires `pacts:delete`.
+
+Operation id: `delete_capture_session_v1_tenants__tenant_slug__pact_captures_sessions__session_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `session_id` | path | string | yes | Path parameter identifying the session id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete a mock capture session. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/pact-captures/settings` {#read-capture-settings-v1-tenants-tenant-slug-pact-captures-settings-get}
+
+**Read the mock capture settings**
+
+How many days captures are kept (default 7), the fixed limits, and how many tagged calls were refused because the workspace already had the most live sessions it may. `can_edit` is `pacts:delete`.
+
+Requires `pacts:view`.
+
+Operation id: `read_capture_settings_v1_tenants__tenant_slug__pact_captures_settings_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the mock capture settings. | `application/json` [`CaptureSettings`](#schema-capturesettings) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-captures/settings` {#save-capture-settings-v1-tenants-tenant-slug-pact-captures-settings-put}
+
+**Save the mock capture retention**
+
+Keep captures `retention_days` (1–30). The new value applies to calls recorded from now on; captures already stored keep the expiry they were written with. Audited as `pacts.capture.settings`.
+
+Requires `pacts:delete`.
+
+Operation id: `save_capture_settings_v1_tenants__tenant_slug__pact_captures_settings_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for save the mock capture retention.
+
+- `application/json` — [`CaptureSettingsSave`](#schema-capturesettingssave)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for save the mock capture retention. | `application/json` [`CaptureSettings`](#schema-capturesettings) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pact-commit-statuses` {#get-pact-commit-statuses-v1-tenants-tenant-slug-pact-commit-statuses-get}
 
@@ -1088,6 +1318,116 @@ The **Agents** switches (``PUT …/pact-contract-settings/agents``).
 | `draft` | boolean | no | Agents may draft a pact for a person to review. No agent tool drafts yet; it applies when one ships. |
 | `publish` | boolean | no | Agents may publish pacts and provider contracts, never on a main branch. No agent tool publishes yet; it applies when one ships. |
 | `record` | boolean | no | Agents may record deployments, never to an environment marked production. |
+
+### `CaptureLink` {#schema-capturelink}
+
+A private capture URL (never its token, except right after it is created).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `project` | string | yes | Project. |
+| `version` | string | yes | Version. |
+| `consumer` | string | yes | Consumer. |
+| `consumer_version` | string | yes | Consumer Version. |
+| `token_prefix` | string | yes | Token Prefix. |
+| `state` | enum `"live"`, `"revoked"`, `"expired"` | yes | State. |
+| `created_by_label` | string or null | no | Created By Label. |
+| `created_at` | string (date-time) | yes | Creation timestamp (ISO 8601). |
+| `expires_at` | string (date-time) | yes | Expires At timestamp (ISO 8601). |
+| `revoked_at` | string (date-time) or null | no | Revoked At timestamp (ISO 8601). |
+
+### `CaptureLinkCreate` {#schema-capturelinkcreate}
+
+``POST …/pact-captures/links``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `project` | string | yes | Project slug of the mocked API. |
+| `version` | string | yes | Version label of the mocked API. |
+| `consumer` | string | yes | Whose calls these are (`Orders UI`). |
+| `consumer_version` | string | yes | That consumer's version (`3.4.0`). |
+| `expires_in_days` | integer | no | Expires In Days. |
+
+### `CaptureLinkCreated` {#schema-capturelinkcreated}
+
+A new capture URL with its token — shown this once.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `project` | string | yes | Project. |
+| `version` | string | yes | Version. |
+| `consumer` | string | yes | Consumer. |
+| `consumer_version` | string | yes | Consumer Version. |
+| `token_prefix` | string | yes | Token Prefix. |
+| `state` | enum `"live"`, `"revoked"`, `"expired"` | yes | State. |
+| `created_by_label` | string or null | no | Created By Label. |
+| `created_at` | string (date-time) | yes | Creation timestamp (ISO 8601). |
+| `expires_at` | string (date-time) | yes | Expires At timestamp (ISO 8601). |
+| `revoked_at` | string (date-time) or null | no | Revoked At timestamp (ISO 8601). |
+| `token` | string | yes | Token. |
+| `path` | string | yes | `/{tenant}/{project}/{version}/~capture/{token}`; append the API path. |
+| `url` | string | yes | URL. |
+
+### `CaptureLinkList` {#schema-capturelinklist}
+
+A page of capture URLs.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `links` | array of [`CaptureLink`](#schema-capturelink) | yes | Links. |
+| `count` | integer | yes | Number of count. |
+| `has_more` | boolean | yes | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
+
+### `CaptureSessionDetail` {#schema-capturesessiondetail}
+
+A session and a page of its calls.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `session` | `CaptureSession` | yes | Session. |
+| `calls` | array of `CaptureCall` | yes | Calls. |
+| `count` | integer | yes | Number of count. |
+| `has_more` | boolean | yes | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
+
+### `CaptureSessionList` {#schema-capturesessionlist}
+
+A page of sessions.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sessions` | array of `CaptureSession` | yes | Sessions. |
+| `count` | integer | yes | Number of count. |
+| `has_more` | boolean | yes | Whether more. |
+| `next_cursor` | string or null | no | Next Cursor. |
+| `retention_days` | integer | yes | Retention Days. |
+
+### `CaptureSettings` {#schema-capturesettings}
+
+How long captures are kept, and calls refused for the whole workspace.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `retention_days` | integer | yes | Days a capture is kept after it is recorded. |
+| `configured` | boolean | yes | `false` while the default is in force. |
+| `refused_calls` | integer | yes | Tagged calls no session could take (the workspace had too many). |
+| `last_refused_reason` | string or null | no | Last Refused Reason. |
+| `last_refused_at` | string (date-time) or null | no | Last Refused At timestamp (ISO 8601). |
+| `updated_by_label` | string or null | no | Updated By Label. |
+| `updated_at` | string (date-time) or null | no | Last update timestamp (ISO 8601). |
+| `can_edit` | boolean | yes | Whether the caller may change the retention (`pacts:delete`). |
+| `limits` | `CaptureLimits` | yes | Limits. |
+
+### `CaptureSettingsSave` {#schema-capturesettingssave}
+
+``PUT …/pact-captures/settings``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `retention_days` | integer | yes | Days to keep captures. |
 
 ### `CommitStatusList` {#schema-commitstatuslist}
 

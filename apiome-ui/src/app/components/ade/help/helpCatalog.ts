@@ -850,6 +850,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['record', 'upstream', 'redaction', 'fixture', 'mock'],
   },
   {
+    id: 'mock-consumer-capture',
+    title: 'Capture for a consumer',
+    summary:
+      'Record the calls one consumer makes to a hosted mock with X-Mock-Capture or a capture URL, and read them back.',
+    page: 'apiome-docs/docs/reference/mock-runtime/mock-consumer-capture.md',
+    section: 'reference',
+    keywords: ['X-Mock-Capture', 'pact', 'record', 'session', 'redaction', 'traffic'],
+  },
+  {
     id: 'serverless-mock-adapter',
     title: 'Serverless mock adapter',
     summary: 'Run a mock bundle as a Lambda, Cloud Run or Azure function — limits, cold start, preflight.',
