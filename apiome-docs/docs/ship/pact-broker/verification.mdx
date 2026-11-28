@@ -15,6 +15,20 @@ Compiling only reads the pact. It does not run anything and saves nothing. To re
 against your provider and publish the result, see
 [Verify a provider from Apiome](./hosted-verification.mdx).
 
+## Start from generated tests
+
+To verify a provider in its own build instead, start from a generated test: **Provider test
+scaffolding** on the [Export page](./export-contracts.mdx#provider-test-scaffolding), or
+
+```bash
+apiome pact scaffold-provider-tests --provider "Ledger API" --language go -o ledger_api_pact_test.go
+```
+
+The file — pact-js, pact-jvm, pact-go or pact-python — fetches the provider's pacts from this
+broker with the recommended selectors and pending pacts on, and has a state handler stub for every
+provider state the pacts use. Fill in the stubs, set `PACT_BROKER_BASE_URL`, `PACT_BROKER_TOKEN` and
+`PROVIDER_BASE_URL`, and run it like any other test; in CI it publishes the results.
+
 ## Before you start
 
 - The consumer has [published the pact](./publish-pacts.mdx) to your workspace.

@@ -14,6 +14,9 @@ specification's examples) and write it, or publish it to the workspace's Pact Br
 ``apiome pact export-postman --provider … --consumer …`` (or ``--pact-file``) writes a pact as a
 Postman Collection v2.1 with test scripts, and prints what the collection does not carry (PFX-4.7).
 
+``apiome pact scaffold-provider-tests --provider … --language …`` writes a provider verification
+test (pact-js, pact-jvm, pact-go or pact-python) with a stub per provider state (PFX-8.19).
+
 ``apiome pact publish-verification-results <report> --provider … --consumer … --pact-version …
 --provider-app-version …`` publishes the result of a verification that ran elsewhere
 (``pact_verifier_cli --json`` output or JUnit XML) as a verification result in the broker, so
@@ -70,6 +73,16 @@ from apiome_cli.client.pact_postman_export import (
 )
 from apiome_cli.client.pact_postman_export import (
     summary_lines as postman_summary_lines,
+)
+from apiome_cli.client.pact_provider_scaffold import (
+    LANGUAGES as SCAFFOLD_LANGUAGES,
+)
+from apiome_cli.client.pact_provider_scaffold import (
+    has_unregistered,
+    scaffold_path,
+)
+from apiome_cli.client.pact_provider_scaffold import (
+    summary_lines as scaffold_summary_lines,
 )
 from apiome_cli.client.pact_provider_contract import (
     build_publish_body,
@@ -436,6 +449,53 @@ def export_postman(
         if output is not None:
             typer.echo(f"  wrote {output}")
     raise typer.Exit(EXIT_ERROR if fail_on_left_out and has_left_out(payload) else EXIT_SUCCESS)
+
+
+@app.command("scaffold-provider-tests")
+def scaffold_provider_tests(
+    ctx: typer.Context,
+    provider: str = typer.Option(..., "--provider", help="The provider pacticipant (handle, id or name)."),
+    language: str = typer.Option(
+        ...,
+        "--language",
+        "-l",
+        click_type=click.Choice(SCAFFOLD_LANGUAGES),
+        help="typescript (pact-js), java (pact-jvm, JUnit 5), go (pact-go v2) or python (pact-python 2).",
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", dir_okay=False, writable=True, help="Write the test file here instead of stdout."
+    ),
+    fail_on_unregistered: bool = typer.Option(
+        False, "--fail-on-unregistered", help="Exit 1 when a state the file handles is not registered in Apiome."
+    ),
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Write a provider verification test from the provider's pacts (GET …/pact-provider-tests/{provider}).
+
+    The file reads the broker from PACT_BROKER_BASE_URL and PACT_BROKER_TOKEN (no secret is
+    written into it), selects pacts with the recommended selectors (main branch, deployed or
+    released) with pending pacts on, and carries one state handler stub per provider state the
+    pacts name, with the parameters they send. Prints the states, flags those not registered in
+    Apiome and lists every notice. Without --output the file goes to stdout and the summary to
+    stderr. Exits 1 when the server refuses (no such provider), or with --fail-on-unregistered.
+    """
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    tenant_slug = conn.tenant(command="scaffold-provider-tests")
+    payload = conn.client.get(scaffold_path(tenant_slug, provider, language)).json()
+    content = str(payload.get("content") or "")
+    if output is not None:
+        output.write_text(content, encoding="utf-8")
+    if json_mode_from_context(ctx):
+        emit_json(payload)
+    else:
+        if output is None:
+            typer.echo(content, nl=False)
+        for line in scaffold_summary_lines(payload):
+            typer.echo(line, err=output is None)
+        if output is not None:
+            typer.echo(f"  wrote {output}")
+    raise typer.Exit(EXIT_ERROR if fail_on_unregistered and has_unregistered(payload) else EXIT_SUCCESS)
 
 
 @app.command("publish-consumer-contract")

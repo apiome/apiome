@@ -44,7 +44,7 @@ def test_every_registered_pact_command_is_listed() -> None:
             for command in group.typer_instance.registered_commands
         }
     assert names == registered
-    assert len(names) == 26
+    assert len(names) == 27
     assert {"retention preview", "retention set", "retention show"} <= names
 
 

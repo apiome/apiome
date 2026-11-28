@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.887.0] - 2026-11-30
+
+### Added
+- **Provider test scaffolding (PFX-8.19, #7316).** OpenAPI 1.711.0.
+  - `GET /v1/tenants/{t}/pact-provider-tests/{provider}?language=typescript|java|go|python` writes a ready
+    provider verification test — pact-js, pact-jvm (JUnit 5), pact-go v2 or pact-python 2 — from the pacts the
+    recommended selectors choose (`{"mainBranch": true}`, `{"deployedOrReleased": true}`, pending on). The file reads
+    the broker from `PACT_BROKER_BASE_URL` / `PACT_BROKER_TOKEN` (no secret is written), publishes results only in CI,
+    and carries one state handler stub per provider state with the parameters the pacts send (`EXAMPLE_PARAMETERS`).
+  - `states` lists each state with its parameters, an example, `registered` (in the PFX-3.3 registry) and how many
+    interactions name it; `unregistered` counts the rest. `notices`: `provider-scaffold-state-unregistered`,
+    `provider-scaffold-state-left-out` (over 200 states or a name over 500 characters) and
+    `provider-scaffold-no-pacts`. An unknown language is `422 provider-scaffold-language-unsupported`; an unknown
+    provider `404 pacticipant-not-found`. State names are only ever written as escaped string literals.
+  - The nightly suite compiles or type-checks each language with its toolchain when installed
+    (`APIOME_PACT_JS_DIR`, `APIOME_PACT_GO_DIR`, `APIOME_PACT_JVM_CLASSPATH`, `APIOME_PACT_PYTHON_DIR`).
+  - Requires `pacts:view`.
+
 ## [1.886.0] - 2026-11-30
 
 ### Added

@@ -17,7 +17,10 @@
  * A pact file: a pair without a pact says so; a download saves the file; every pact for a provider
  * downloads the zip. axe passes on every kind.
  *
- * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixture `pact-export`.
+ * Provider test scaffolding (PFX-8.19): the language and provider reach REST; the states table flags
+ * each state with no handler in Apiome; the file previews, downloads and copies; a refusal says why.
+ *
+ * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures `pact-export` and `pact-export-scaffold`.
  */
 
 import React from 'react';
@@ -181,7 +184,7 @@ describe('the page', () => {
   it('shows three kinds, one at a time, with no primary in the header', async () => {
     render(<ExportPactClient prefill={PREFILL} />);
     const kinds = screen.getByTestId('pexp-kinds');
-    expect(within(kinds).getAllByRole('radio')).toHaveLength(3);
+    expect(within(kinds).getAllByRole('radio')).toHaveLength(4);
     expect(screen.getByTestId('pexp-derive')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Export studio/ })).toHaveAttribute('href', '/ade/dashboard/export/studio');
     fireEvent.click(screen.getByRole('radio', { name: /^A Postman collection/ }));
@@ -410,5 +413,87 @@ describe('a pact file', () => {
     fireEvent.change(screen.getByLabelText('Which pact'), { target: { value: 'version' } });
     expect(screen.getByTestId('pexp-file-every')).toBeDisabled();
     expect(screen.getByTestId('pexp-file-command')).toHaveTextContent('No apiome pact command downloads a stored pact');
+  });
+});
+
+describe('provider test scaffolding', () => {
+  const SCAFFOLD = {
+    provider: 'billing-service',
+    provider_name: 'Billing Service',
+    language: 'typescript',
+    label: 'TypeScript · pact-js',
+    dependency: 'npm install --save-dev @pact-foundation/pact',
+    file_name: 'billing-service.pact.test.ts',
+    content: "import { Verifier } from '@pact-foundation/pact';\n\nnew Verifier({ provider: 'Billing Service' });\n",
+    pacts: 3,
+    states: [
+      { name: 'a customer 7 exists', params: [], registered: false, interactions: 1, consumers: ['admin'] },
+      { name: 'an invoice exists', params: ['id'], registered: true, interactions: 4, consumers: ['orders-ui'] },
+    ],
+    unregistered: 1,
+    notices: [{ code: 'provider-scaffold-state-unregistered', message: 'not registered in Apiome: hosted verification cannot set this state up until it is', state: 'a customer 7 exists' }],
+  };
+
+  function openTests() {
+    const view = render(<ExportPactClient prefill={PREFILL} />);
+    fireEvent.click(screen.getByRole('radio', { name: /^Provider test scaffolding/ }));
+    fireEvent.change(screen.getByLabelText('Provider'), { target: { value: 'Billing Service' } });
+    return view;
+  }
+
+  it('writes the tests, flags each state with no handler, and passes axe', async () => {
+    answers['/api/pact/export/provider-tests'] = () => ({ status: 200, body: SCAFFOLD });
+    const { container } = openTests();
+    fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'java' } });
+    fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'typescript' } });
+    expect(screen.getByTestId('pexp-tests-selectors')).toHaveTextContent('Recommended selectors');
+    fireEvent.click(screen.getByTestId('pexp-tests-run'));
+    const rows = await screen.findAllByTestId('pexp-tests-state');
+    expect(calls.find((call) => call.url.startsWith('/api/pact/export/provider-tests'))?.url).toBe('/api/pact/export/provider-tests?provider=Billing+Service&language=typescript');
+    expect(rows[0]).toHaveTextContent('a customer 7 exists');
+    expect(rows[0]).toHaveTextContent('No handler');
+    expect(rows[1]).toHaveTextContent('Registered');
+    expect(screen.getByTestId('pexp-tests-summary')).toHaveTextContent('2 provider states · 1 has no handler in Apiome');
+    expect(screen.getByTestId('pexp-tests-notices')).toHaveTextContent('hosted verification cannot set this state up');
+    expect(screen.getByTestId('pexp-tests-preview')).toHaveTextContent("import { Verifier }");
+    expect(screen.getByTestId('pexp-tests-command')).toHaveTextContent('apiome pact scaffold-provider-tests');
+    expect(screen.getByTestId('pexp-tests-command')).toHaveTextContent('--output billing-service.pact.test.ts');
+    fireEvent.click(screen.getByTestId('pexp-tests-download'));
+    expect(saved).toEqual(['billing-service.pact.test.ts']);
+    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+    writeA11yFixture('pact-export-scaffold', liveMarkup(container.firstElementChild!));
+  });
+
+  it('copies the file', async () => {
+    answers['/api/pact/export/provider-tests'] = () => ({ status: 200, body: SCAFFOLD });
+    const writeText = jest.fn(async () => undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    openTests();
+    fireEvent.click(screen.getByTestId('pexp-tests-run'));
+    await screen.findByTestId('pexp-tests-preview');
+    fireEvent.click(screen.getByTestId('pexp-tests-copy'));
+    expect(await screen.findByText('Copied.')).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledWith(SCAFFOLD.content);
+  });
+
+  it('says why when the provider is unknown, and sends nothing without one', async () => {
+    answers['/api/pact/export/provider-tests'] = () => ({ status: 404, body: { success: false, error: 'no pacticipant Billing Service', code: 'pacticipant-not-found' } });
+    render(<ExportPactClient prefill={PREFILL} />);
+    fireEvent.click(screen.getByRole('radio', { name: /^Provider test scaffolding/ }));
+    fireEvent.click(screen.getByTestId('pexp-tests-run'));
+    expect(screen.getByTestId('pexp-status')).toHaveTextContent('Provider is required.');
+    expect(calls.some((call) => call.url.startsWith('/api/pact/export/provider-tests'))).toBe(false);
+    fireEvent.change(screen.getByLabelText('Provider'), { target: { value: 'Billing Service' } });
+    fireEvent.click(screen.getByTestId('pexp-tests-run'));
+    expect(await screen.findByTestId('pexp-status')).toHaveTextContent('no pacticipant Billing Service');
+    expect(screen.getByTestId('pexp-tests-download')).toBeDisabled();
+  });
+
+  it('downloads a large file without a preview', async () => {
+    answers['/api/pact/export/provider-tests'] = () => ({ status: 200, body: { ...SCAFFOLD, content: 'x'.repeat(250_000) } });
+    openTests();
+    fireEvent.click(screen.getByTestId('pexp-tests-run'));
+    expect(await screen.findByTestId('pexp-tests-large')).toHaveTextContent('too large to preview');
+    expect(screen.queryByTestId('pexp-tests-preview')).not.toBeInTheDocument();
   });
 });

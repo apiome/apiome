@@ -1,0 +1,27 @@
+---
+slug: provider-test-scaffolding
+title: "Provider test scaffolding"
+description: "Generate a provider verification test with a stub for every provider state."
+authors: [apiome]
+---
+
+A provider team no longer starts Pact from a blank file. **Provider test scaffolding** — the
+fourth card on the Export page, and `apiome pact scaffold-provider-tests` — writes a ready provider
+verification test from the provider's pacts. See
+[Provider test scaffolding](/ship/pact-broker/export-contracts#provider-test-scaffolding).
+
+{/* truncate */}
+
+- **Four languages.** TypeScript (pact-js), Java (pact-jvm, JUnit 5), Go (pact-go v2) and Python
+  (pact-python 2). Each file is compiled or type-checked against its real library in the nightly
+  suite.
+- **Wired to this broker, with no secret in it.** The broker and its token come from
+  `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN`; pacts are chosen with the recommended selectors
+  (main branch, deployed or released) and pending pacts are on; results are published only in CI.
+- **A stub per provider state.** Every state the pacts use gets a handler stub and an example of
+  the parameters it is sent with. States the provider has not registered in Apiome are flagged —
+  *No handler* in the states table and a comment in the file — because hosted verification cannot
+  set them up yet.
+- **CLI:** `apiome pact scaffold-provider-tests --provider … --language …`, with
+  `--fail-on-unregistered` for CI.
+- **REST:** `GET /v1/tenants/{t}/pact-provider-tests/{provider}?language=…` (OpenAPI 1.711.0).

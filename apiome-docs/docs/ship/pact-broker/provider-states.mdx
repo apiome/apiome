@@ -162,6 +162,12 @@ check of its pacts against the registry, with each problem and the interaction i
 **Registered states** lists every state with its parameters, its setup and each target's override.
 States are registered through the REST API.
 
+To write the handlers in the provider's own test instead, **Provider test scaffolding** on the
+[Export page](./export-contracts.mdx#provider-test-scaffolding) (or
+`apiome pact scaffold-provider-tests`) generates a verification test with one stub per state the
+pacts use, and flags each state that is not registered here — *No handler* in its states table,
+and a comment in the file.
+
 <Screenshot id="pact-provider-states" alt="The Provider states page for Ledger API: Before a run is Not ready, with the unregistered state 'the ledger has entries' listed first and an undeclared-parameter warning on 'invoice 1042 exists'; Registered states lists each state's parameters, setup and target override."/>
 
 ## During a run

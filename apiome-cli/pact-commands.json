@@ -413,6 +413,19 @@
       ]
     },
     {
+      "name": "scaffold-provider-tests",
+      "summary": "Write a provider verification test from the provider's pacts (GET …/pact-provider-tests/{provider}).",
+      "arguments": [],
+      "options": [
+        "--provider",
+        "--language",
+        "--output",
+        "--fail-on-unregistered",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
       "name": "verify",
       "summary": "Verify a provider against its pacts with Apiome's hosted verifier (POST …/pact-verifier/…/verify).",
       "arguments": [],

@@ -3026,6 +3026,17 @@
       ]
     },
     {
+      "id": "pact-export-scaffold",
+      "route": "/ade/dashboard/pacts/export?kind=tests",
+      "waitFor": "[data-testid=\"pexp-tests-states\"]",
+      "data": "fixture:hive-a11y/pact-export-scaffold.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactExport/ExportPactClient.tsx",
+        "apiome-ui/src/app/components/ade/pactExport/ScaffoldPanel.tsx",
+        "apiome-ui/lib/pact-export.ts"
+      ]
+    },
+    {
       "id": "pact-migrate-switch",
       "route": "/ade/dashboard/pacts/migrate",
       "waitFor": "[data-testid=\"pmg-switch\"]",

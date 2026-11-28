@@ -18,7 +18,7 @@ Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`record-support-ended`](#pact-record-support-ended), [`record-undeployment`](#pact-record-undeployment), [`restore-version`](#pact-restore-version), [`retention`](#pact-retention), [`verify`](#pact-verify).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`record-support-ended`](#pact-record-support-ended), [`record-undeployment`](#pact-record-undeployment), [`restore-version`](#pact-restore-version), [`retention`](#pact-retention), [`scaffold-provider-tests`](#pact-scaffold-provider-tests), [`verify`](#pact-verify).
 
 ## apiome pact can-i-deploy {#pact-can-i-deploy}
 
@@ -661,6 +661,27 @@ apiome pact retention show [OPTIONS]
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact scaffold-provider-tests {#pact-scaffold-provider-tests}
+
+Write a provider verification test from the provider's pacts (GET …/pact-provider-tests/{provider}).
+
+The file reads the broker from PACT_BROKER_BASE_URL and PACT_BROKER_TOKEN (no secret is written into it), selects pacts with the recommended selectors (main branch, deployed or released) with pending pacts on, and carries one state handler stub per provider state the pacts name, with the parameters they send. Prints the states, flags those not registered in Apiome and lists every notice. Without --output the file goes to stdout and the summary to stderr. Exits 1 when the server refuses (no such provider), or with --fail-on-unregistered.
+
+```text
+apiome pact scaffold-provider-tests [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--provider` | text |  | yes | The provider pacticipant (handle, id or name). |
+| `--language`, `-l` | `typescript` \| `java` \| `go` \| `python` |  | yes | typescript (pact-js), java (pact-jvm, JUnit 5), go (pact-go v2) or python (pact-python 2). |
+| `--output`, `-o` | file |  |  | Write the test file here instead of stdout. |
+| `--fail-on-unregistered` | flag |  |  | Exit 1 when a state the file handles is not registered in Apiome. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 

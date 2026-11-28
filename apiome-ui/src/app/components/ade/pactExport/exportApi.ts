@@ -11,12 +11,16 @@ import {
   readFindings,
   readNotices,
   readPostmanOutcome,
+  readScaffold,
+  scaffoldUrl,
   type DerivedPact,
   type DeriveExportDraft,
   type ExportFinding,
   type PactFileDraft,
   type PostmanNotice,
   type PostmanOutcome,
+  type ProviderScaffold,
+  type ScaffoldDraft,
 } from '@lib/pact-export';
 
 /** A refusal: the proxy's message, REST's code and status, and what REST said was left out. */
@@ -139,6 +143,19 @@ export async function fetchProviderPacts(draft: PactFileDraft): Promise<{ blob: 
   } catch {
     return failureOf({ error: UNREACHABLE }, 503, UNREACHABLE);
   }
+}
+
+/**
+ * Write a provider's verification test (`scaffold-provider-tests`).
+ *
+ * @param draft - The checked form.
+ * @returns The file, its states and notices, or the refusal.
+ */
+export async function scaffoldTests(draft: ScaffoldDraft): Promise<ProviderScaffold | ExportFailure> {
+  const answer = await send(scaffoldUrl(draft));
+  if (!answer) return failureOf({ error: UNREACHABLE }, 503, UNREACHABLE);
+  if (answer.status >= 400) return failureOf(answer.body, answer.status, 'Could not write the tests');
+  return readScaffold(answer.body) ?? failureOf(null, 502, 'The answer was not a test file');
 }
 
 /**

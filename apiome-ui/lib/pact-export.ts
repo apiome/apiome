@@ -1,7 +1,7 @@
 /**
  * The **Export a contract** page — PFX-8.18 (#7315), `/ade/dashboard/pacts/export`.
  *
- * Three kinds, one visible at a time (docs/mockups/contracts/export.html):
+ * Four kinds, one visible at a time (docs/mockups/contracts/export.html):
  *
  * * **A pact from a project** — `apiome pact export-consumer-contract`: a consumer's declared surface
  *   as a Pact v4 file, with an operation checklist saying where each example came from and why an
@@ -10,6 +10,8 @@
  *   an uploaded file) as a Postman Collection v2.1, with a variable base URL, provider-state setup
  *   scripts and a bar of how many interactions the collection keeps.
  * * **A pact file** — any published pact exactly as stored, or every pact for a provider as a zip.
+ * * **Provider test scaffolding** (PFX-8.19, #7316) — `apiome pact scaffold-provider-tests`: a ready
+ *   provider verification test in four languages, with a stub per provider state.
  *
  * Everything here is pure: the form drafts and their checks, the proxy queries and their pickers
  * (what each `/api/pact/export/*` proxy accepts), the readers of REST's answers and the
@@ -27,7 +29,7 @@ import { tenantPath, type PactAction, type PactOption, type PactUnsupported } fr
 export const EXPORT_ROUTE = '/ade/dashboard/pacts/export';
 
 /** What can be exported. */
-export const EXPORT_KINDS = ['pact', 'postman', 'file'] as const;
+export const EXPORT_KINDS = ['pact', 'postman', 'file', 'tests'] as const;
 
 /** One kind of export. */
 export type ExportKind = (typeof EXPORT_KINDS)[number];
@@ -37,6 +39,7 @@ export const EXPORT_KIND_CARDS: Readonly<Record<ExportKind, { title: string; des
   pact: { title: 'A pact from a project', description: 'One interaction per operation the consumer declares.' },
   postman: { title: 'A Postman collection', description: 'Replay a pact as requests with tests.' },
   file: { title: 'A pact file', description: 'Any published pact, exactly as stored.' },
+  tests: { title: 'Provider test scaffolding', description: 'A starting test suite from the pacts a provider must honour.' },
 };
 
 /**
@@ -107,7 +110,7 @@ export function readExportPrefill(query: Record<string, string | string[] | unde
   let kind: ExportKind = 'pact';
   if (kindText) {
     if ((EXPORT_KINDS as readonly string[]).includes(kindText)) kind = kindText as ExportKind;
-    else problems.push(`?kind=${kindText} is not something to export (pact, postman or file).`);
+    else problems.push(`?kind=${kindText} is not something to export (pact, postman, file or tests).`);
   }
   return { kind, provider: one('provider'), consumer: one('consumer'), version: one('version'), project: one('project'), problems };
 }
@@ -921,14 +924,194 @@ export function pactFileAction(draft: PactFileDraft, tenant: string): PactAction
   return { verb: null, noCommandReason: PACT_FILE_HAS_NO_COMMAND, rest: { method: 'GET', path: tenantPath(tenant, `/${path}`) } };
 }
 
+// --- provider test scaffolding (PFX-8.19, #7316) -------------------------------------------------
+
+/** The languages a scaffold is written in — `apiome pact scaffold-provider-tests --language`. */
+export const SCAFFOLD_LANGUAGES = ['typescript', 'java', 'go', 'python'] as const;
+
+/** One scaffold language. */
+export type ScaffoldLanguage = (typeof SCAFFOLD_LANGUAGES)[number];
+
+/** How each language reads in the picker. */
+export const SCAFFOLD_LANGUAGE_LABELS: Readonly<Record<ScaffoldLanguage, string>> = {
+  typescript: 'TypeScript · pact-js',
+  java: 'Java · pact-jvm',
+  go: 'Go · pact-go',
+  python: 'Python · pact-python',
+};
+
+/** What the **Pacts** field says: the selectors every scaffold uses. */
+export const RECOMMENDED_SELECTORS_LABEL =
+  'Recommended selectors: each consumer’s main branch, and whatever is deployed or released — pending pacts on.';
+
+/** The **Provider test scaffolding** form. */
+export interface ScaffoldDraft {
+  provider: string;
+  language: ScaffoldLanguage;
+  /** `--fail-on-unregistered`: only changes the command. */
+  failOnUnregistered: boolean;
+}
+
+/** An empty form: TypeScript, as the mockup opens. */
+export const EMPTY_SCAFFOLD: ScaffoldDraft = { provider: '', language: 'typescript', failOnUnregistered: false };
+
+/**
+ * Check the form before anything is sent.
+ *
+ * @param draft - The form.
+ * @returns A sentence naming the first problem, or `null`.
+ */
+export function validateScaffold(draft: ScaffoldDraft): string | null {
+  if (!(SCAFFOLD_LANGUAGES as readonly string[]).includes(draft.language)) return `Language is one of ${SCAFFOLD_LANGUAGES.join(', ')}.`;
+  return referenceProblem('Provider', draft.provider);
+}
+
+/**
+ * The browser's URL of the scaffold proxy.
+ *
+ * @param draft - The checked form.
+ * @returns `/api/pact/export/provider-tests?provider=…&language=…`.
+ */
+export function scaffoldUrl(draft: ScaffoldDraft): string {
+  return `/api/pact/export/provider-tests?${new URLSearchParams({ provider: draft.provider.trim(), language: draft.language }).toString()}`;
+}
+
+/**
+ * Check the scaffold proxy's query and build REST's path.
+ *
+ * @param params - The query.
+ * @returns `pact-provider-tests/{provider}?language=…`, or a 400 sentence.
+ */
+export function pickScaffoldQuery(params: URLSearchParams): PickedPath {
+  const values: Record<string, string> = {};
+  for (const [key, value] of params.entries()) {
+    if (key !== 'provider' && key !== 'language') return { ok: false, error: `Unsupported parameter ${key}: a scaffold takes provider and language.` };
+    if (key in values) return { ok: false, error: `The ${key} parameter is given more than once.` };
+    values[key] = value.trim();
+  }
+  const problem = validateScaffold({ provider: values.provider ?? '', language: (values.language ?? '') as ScaffoldLanguage, failOnUnregistered: false });
+  if (problem) return { ok: false, error: problem };
+  return { ok: true, path: `pact-provider-tests/${encodeURIComponent(values.provider)}?${new URLSearchParams({ language: values.language }).toString()}` };
+}
+
+/** One provider state of a scaffold. */
+export interface ScaffoldStateRow {
+  name: string;
+  params: string[];
+  registered: boolean;
+  interactions: number;
+  consumers: string[];
+}
+
+/** A scaffold, read. */
+export interface ProviderScaffold {
+  providerName: string;
+  label: string;
+  dependency: string;
+  fileName: string;
+  content: string;
+  pacts: number;
+  states: ScaffoldStateRow[];
+  unregistered: number;
+  notices: Array<{ code: string; message: string; state?: string }>;
+}
+
+/**
+ * Read REST's scaffold (`GET …/pact-provider-tests/{provider}`).
+ *
+ * @param data - REST's body.
+ * @returns The scaffold, or `null` when the body is not one.
+ */
+export function readScaffold(data: unknown): ProviderScaffold | null {
+  if (!isObject(data) || typeof data.content !== 'string' || typeof data.file_name !== 'string') return null;
+  const text = (value: unknown) => (typeof value === 'string' ? value : '');
+  const states = Array.isArray(data.states)
+    ? data.states.flatMap((raw) =>
+        isObject(raw) && typeof raw.name === 'string'
+          ? [
+              {
+                name: raw.name,
+                params: Array.isArray(raw.params) ? raw.params.filter((p): p is string => typeof p === 'string') : [],
+                registered: raw.registered === true,
+                interactions: typeof raw.interactions === 'number' ? raw.interactions : 0,
+                consumers: Array.isArray(raw.consumers) ? raw.consumers.filter((c): c is string => typeof c === 'string') : [],
+              },
+            ]
+          : [],
+      )
+    : [];
+  const notices = Array.isArray(data.notices)
+    ? data.notices.flatMap((raw) =>
+        isObject(raw) && typeof raw.message === 'string'
+          ? [{ code: text(raw.code), message: raw.message, ...(typeof raw.state === 'string' ? { state: raw.state } : {}) }]
+          : [],
+      )
+    : [];
+  return {
+    providerName: text(data.provider_name),
+    label: text(data.label),
+    dependency: text(data.dependency),
+    fileName: data.file_name,
+    content: data.content,
+    pacts: typeof data.pacts === 'number' ? data.pacts : 0,
+    states,
+    unregistered: typeof data.unregistered === 'number' ? data.unregistered : states.filter((s) => !s.registered).length,
+    notices,
+  };
+}
+
+/**
+ * The line under the code: `11 provider states · 2 have no handler in Apiome`.
+ *
+ * @param scaffold - The scaffold.
+ * @returns The sentence.
+ */
+export function scaffoldSummary(scaffold: ProviderScaffold): string {
+  const states = `${scaffold.states.length} provider state${scaffold.states.length === 1 ? '' : 's'}`;
+  if (scaffold.unregistered === 0) return `${states} · all registered in Apiome`;
+  return `${states} · ${scaffold.unregistered} ${scaffold.unregistered === 1 ? 'has' : 'have'} no handler in Apiome`;
+}
+
+/**
+ * The form as `apiome pact scaffold-provider-tests` and its REST request.
+ *
+ * @param draft - The form.
+ * @param tenant - The workspace slug.
+ * @param fileName - The file name REST suggested, once known.
+ * @returns The action for `pactCommandSurfaces`.
+ */
+export function scaffoldAction(draft: ScaffoldDraft, tenant: string, fileName: string | null): PactAction {
+  const provider = draft.provider.trim() || '{provider}';
+  return {
+    verb: 'scaffold-provider-tests',
+    options: [
+      { flag: '--provider', value: provider },
+      { flag: '--language', value: draft.language },
+      { flag: '--output', value: fileName ?? '' },
+      { flag: '--fail-on-unregistered', value: draft.failOnUnregistered },
+    ],
+    rest: { method: 'GET', path: tenantPath(tenant, `/pact-provider-tests/${encodeURIComponent(provider)}?language=${draft.language}`) },
+  };
+}
+
 // --- the same, from anywhere ---------------------------------------------------------------------
 
 /**
- * Every flag of the two commands this page does, and the control that sets it — the ledger's
- * `fields` for `export-consumer-contract` and `export-postman` (`docs/pact-parity-ledger.json`);
+ * Every flag of the three commands this page does, and the control that sets it — the ledger's
+ * `fields` for `export-consumer-contract`, `export-postman` and `scaffold-provider-tests` (`docs/pact-parity-ledger.json`);
  * the model test holds the two together.
  */
-export const EXPORT_FLAG_FIELDS: Readonly<Record<'export-consumer-contract' | 'export-postman', Readonly<Record<string, string>>>> = {
+export const EXPORT_FLAG_FIELDS: Readonly<
+  Record<'export-consumer-contract' | 'export-postman' | 'scaffold-provider-tests', Readonly<Record<string, string>>>
+> = {
+  'scaffold-provider-tests': {
+    '--provider': 'Provider test scaffolding → Provider',
+    '--language': 'Provider test scaffolding → Language',
+    '--output': 'Provider test scaffolding → Download',
+    '--fail-on-unregistered': 'Provider test scaffolding → Fail if a state has no handler in Apiome (the page flags each one)',
+    '--broker-base-url': 'The workspace you are signed in to',
+    '--broker-token': 'Your session',
+  },
   'export-consumer-contract': {
     '--project': 'A pact from a project → Project',
     '--consumer': 'A pact from a project → Consumer',

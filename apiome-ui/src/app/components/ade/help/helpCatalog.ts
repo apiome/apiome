@@ -1640,10 +1640,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'export-contracts',
     title: 'Export a contract',
-    summary: 'Derive a pact from a project, replay a pact in Postman, or download published pact files.',
+    summary: 'Derive a pact, replay one in Postman, download pact files, or scaffold provider tests.',
     page: 'apiome-docs/docs/ship/pact-broker/export-contracts.mdx',
     section: 'reference',
-    keywords: ['pact', 'postman', 'collection', 'newman', 'derive', 'operation checklist', 'findings', 'provider states', 'pre-request script', 'state change url', 'all consumers', 'download', 'zip', 'pact file', 'export-consumer-contract', 'export-postman', 'fidelity'],
+    keywords: ['pact', 'postman', 'collection', 'newman', 'derive', 'operation checklist', 'findings', 'provider states', 'pre-request script', 'state change url', 'all consumers', 'download', 'zip', 'pact file', 'export-consumer-contract', 'export-postman', 'fidelity', 'scaffold', 'provider tests', 'pact-js', 'pact-jvm', 'pact-go', 'pact-python', 'state handlers', 'scaffold-provider-tests', 'verifier'],
   },
   {
     id: 'migration',
