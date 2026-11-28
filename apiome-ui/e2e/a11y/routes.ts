@@ -351,15 +351,21 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
-    // PFX-5.7 (#6951): the Environments dashboard (pacticipants × environments), one environment
-    // (overview, deployed now, released, deployment history) and the deploy simulator (verdict,
-    // what else changes, CLI), dumped by `tests/pact-environments-ui.test.tsx`.
+    // PFX-5.7 (#6951): the Environments dashboard — since PFX-8.13 (#7310) the what-is-where board
+    // and its History view — one environment (overview, deployed now, released, deployment history)
+    // and the deploy simulator (verdict, what else changes, CLI), dumped by
+    // `tests/pact-environments-ui.test.tsx`.
     id: 'pact-environments',
     mockup: null,
     subject: {
       kind: 'fixtures',
       dir: 'hive-a11y',
-      files: ['pact-environments.html', 'pact-environment-detail.html', 'pact-deploy-simulator.html'],
+      files: [
+        'pact-environments-board.html',
+        'pact-environments-history.html',
+        'pact-environment-detail.html',
+        'pact-deploy-simulator.html',
+      ],
     },
   },
   {

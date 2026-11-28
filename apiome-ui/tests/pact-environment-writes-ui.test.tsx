@@ -88,6 +88,7 @@ function baseRoutes(permissions = EDITOR): Record<string, Answer> {
   return {
     '/api/access/permissions/me': ok({ success: true, data: permissions }),
     '/api/pact/environment-topology': ok(fixture.topology),
+    '/api/pact/environment-board': ok(fixture.board),
     '/api/pact/environments': ok(BROKER_LIST),
     '/api/pact/pacticipants': ok({
       pacticipants: [
@@ -123,7 +124,7 @@ function openMenu(trigger: HTMLElement) {
 
 async function renderPage() {
   render(<EnvironmentsClient />);
-  await screen.findByTestId('penv-grid');
+  await screen.findByTestId('penv-board');
 }
 
 describe('roles', () => {
@@ -150,6 +151,7 @@ describe('roles', () => {
 
   it('offers New environment, as the primary action, to an empty workspace', async () => {
     routes['/api/pact/environment-topology'] = ok({ environments: [], truncated: false });
+    routes['/api/pact/environment-board'] = ok({ environments: [], rows: [], truncated: false, checks: 0, notChecked: 0 });
     render(<EnvironmentsClient />);
     expect(await screen.findByTestId('penv-empty')).toHaveTextContent('Add production and staging so can-i-deploy has somewhere to look');
     expect(await screen.findByTestId('penv-action-new')).toBeInTheDocument();

@@ -238,6 +238,32 @@
       }
     },
     {
+      "cli": "record-support-ended",
+      "ui": "/ade/dashboard/pacts/environments",
+      "rest": "PATCH /v1/tenants/{tenant}/pact-broker/released-versions/{release}",
+      "fields": {
+        "--pacticipant": "Board → Released to users → End support (the row's service)",
+        "--version": "Board → Released to users → End support (the release's version); or untick it in Record a release",
+        "--environment": "Board → Released to users → End support (the release's environment)",
+        "--output": "The status line on the page after it (the CLI’s text or JSON output)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
+      "cli": "record-undeployment",
+      "ui": "/ade/dashboard/pacts/environments",
+      "rest": "PATCH /v1/tenants/{tenant}/pact-broker/deployed-versions/{deployment}",
+      "fields": {
+        "--pacticipant": "Record an undeployment → Service",
+        "--environment": "Board → the environment's column menu → Record an undeployment",
+        "--application-instance": "Record an undeployment → Instance",
+        "--output": "The status line on the page after it (the CLI’s text or JSON output)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
       "cli": "restore-version",
       "ui": "/ade/dashboard/pacts/pacticipants/[pacticipant]/versions",
       "rest": "POST /v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{version}/restore",
@@ -554,6 +580,20 @@
       "rest": "POST /v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{environment}",
       "ui": "/ade/dashboard/pacts/environments",
       "cli": "record-release"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/environments/[environment]/support-ended",
+      "rest": "PATCH /v1/tenants/{tenant}/pact-broker/released-versions/{release}",
+      "ui": "/ade/dashboard/pacts/environments",
+      "cli": "record-support-ended"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/environments/[environment]/undeployments",
+      "rest": "PATCH /v1/tenants/{tenant}/pact-broker/deployed-versions/{deployment}",
+      "ui": "/ade/dashboard/pacts/environments",
+      "cli": "record-undeployment"
     }
   ]
 }

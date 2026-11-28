@@ -11,9 +11,7 @@ import Link from 'next/link';
 import { Badge } from '@/app/components/ui/Badge';
 import { formatWhen, pacticipantRoute, shortVersion } from '@lib/pact-pacticipants';
 import {
-  buildGrid,
   effectLabel,
-  environmentRoute,
   placementLabel,
   replacementSentence,
   summaryLine,
@@ -23,8 +21,6 @@ import {
   type HistoryDeployment,
   type Simulation,
   type SimulationVerdict,
-  type Topology,
-  type TopologyEnvironment,
 } from '@lib/pact-environments';
 
 /**
@@ -53,130 +49,6 @@ export function ProductionBadge({ production }: { production: boolean }) {
       Production
     </Badge>
   ) : null;
-}
-
-/**
- * The dashboard grid: each pacticipant (rows) in each environment (columns) — the versions
- * deployed there now (with the instance) and the releases it supports.
- *
- * @param props - The topology.
- * @returns The table.
- */
-export function DeployedVersionsGrid({ topology }: { topology: Topology }) {
-  const rows = buildGrid(topology);
-  if (rows.length === 0) {
-    return <p className="ppx__muted">Nothing is deployed or released to any environment yet.</p>;
-  }
-  return (
-    <div className="ppx__table-wrap">
-      <table className="ppx__table" data-testid="penv-grid">
-        <caption className="sr-only">Deployed versions: pacticipants by environment</caption>
-        <thead>
-          <tr>
-            <th scope="col">Pacticipant</th>
-            {topology.environments.map((environment) => (
-              <th scope="col" key={environment.uuid}>
-                <Link className="ppx__link" href={environmentRoute(environment.name)}>
-                  {environment.displayName}
-                </Link>
-                <ProductionBadge production={environment.production} />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.pacticipant.slug} data-testid={`penv-row-${row.pacticipant.slug}`}>
-              <th scope="row" className="ppx__name-cell">
-                <Link className="ppx__link ppx__name" href={pacticipantRoute(row.pacticipant.slug)}>
-                  {row.pacticipant.name}
-                </Link>
-              </th>
-              {row.cells.map((cell, index) => (
-                <td key={topology.environments[index].uuid}>
-                  {cell.deployed.length === 0 && cell.released.length === 0 ? (
-                    <span className="ppx__muted">—</span>
-                  ) : (
-                    <ul className="ppx__plain-list">
-                      {cell.deployed.map((deployment) => (
-                        <li key={`d-${deployment.version}-${deployment.applicationInstance ?? ''}`}>
-                          <Version number={deployment.version} />
-                          {deployment.applicationInstance ? (
-                            <span className="ppx__muted"> · {deployment.applicationInstance}</span>
-                          ) : null}
-                        </li>
-                      ))}
-                      {cell.released.map((release) => (
-                        <li key={`r-${release.version}`}>
-                          <Version number={release.version} />
-                          <span className="ppx__muted"> · released</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-/**
- * The environments: display name (with **Production**), name, how many versions are deployed and
- * released there now, and whether a contract is required. PFX-8.12 (#7309): `actions`, when given,
- * draws each row's menu (Edit, Record a deployment here, Delete) in a last column.
- *
- * @param props - The environments, and the row menu for a role that may change them.
- * @returns The table.
- */
-export function EnvironmentList({
-  environments,
-  actions,
-}: {
-  environments: TopologyEnvironment[];
-  actions?: (environment: TopologyEnvironment) => React.ReactNode;
-}) {
-  return (
-    <div className="ppx__table-wrap">
-      <table className="ppx__table" data-testid="penv-environments">
-        <caption className="sr-only">Environments, by name</caption>
-        <thead>
-          <tr>
-            <th scope="col">Environment</th>
-            <th scope="col">Name</th>
-            <th scope="col">Deployed</th>
-            <th scope="col">Released</th>
-            <th scope="col">Contract required</th>
-            {actions ? (
-              <th scope="col">
-                <span className="sr-only">Actions</span>
-              </th>
-            ) : null}
-          </tr>
-        </thead>
-        <tbody>
-          {environments.map((environment) => (
-            <tr key={environment.uuid} data-testid={`penv-env-${environment.name}`}>
-              <th scope="row" className="ppx__name-cell">
-                <Link className="ppx__link ppx__name" href={environmentRoute(environment.name)}>
-                  {environment.displayName}
-                </Link>
-                <ProductionBadge production={environment.production} />
-              </th>
-              <td className="ppx__mono">{environment.name}</td>
-              <td>{environment.deployed.length}</td>
-              <td>{environment.released.length}</td>
-              <td>{environment.contractRequired ? 'Yes' : 'No'}</td>
-              {actions ? <td className="penv-list__actions">{actions(environment)}</td> : null}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
 }
 
 /**

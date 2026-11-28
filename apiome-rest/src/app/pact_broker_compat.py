@@ -703,6 +703,11 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "GET PATCH",
         "GET PATCH",
         used_by="`pact-broker record-undeployment`",
+        note=(
+            "`apiome pact record-undeployment` picks the deployment the same way (the named instance, or the "
+            "unnamed one) and the Environments board's **Record an undeployment** sends the same patch; who "
+            "ended it is kept for the Environments history (PFX-8.13)."
+        ),
     ),
     _e(
         _G_ENVIRONMENTS,
@@ -711,6 +716,10 @@ ENDPOINTS: Tuple[BrokerEndpoint, ...] = (
         "GET PATCH",
         "GET PATCH",
         used_by="`pact-broker record-support-ended`",
+        note=(
+            "`apiome pact record-support-ended` and the board's **End support** send the same patch; from then "
+            "on can-i-deploy no longer counts the release (PFX-8.13)."
+        ),
     ),
     # Matrix and can-i-deploy ------------------------------------------------------------------
     _e(

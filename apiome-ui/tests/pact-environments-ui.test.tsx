@@ -1,9 +1,11 @@
 /**
  * The **Environments** pages — PFX-5.7 (#6951).
  *
- * Dashboard:
- * * the grid of pacticipants × environments with each version deployed (and its instance) and each
- *   release, and the environments; axe passes;
+ * Dashboard (the what-is-where board since PFX-8.13, #7310):
+ * * services × environments, non-production first: each running version with its verdict dot and
+ *   instances, whether the next version can go (or is blocked, linking the simulator), releases, an
+ *   idle service's **Record its first deployment**, the facts strip; axe passes;
+ * * **History** shows the timeline with "Not verified at the time" and **Show older**;
  * * an empty workspace shows the CLI commands; a refused read offers **Try again**.
  *
  * Environment page:
@@ -17,8 +19,8 @@
  * * the form checks what is missing, writes the address and asks; versions not checked are listed
  *   with the reason; REST's refusal is shown with **Try again**.
  *
- * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures `pact-environments`,
- * `pact-environment-detail` and `pact-deploy-simulator`.
+ * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures `pact-environments-board`,
+ * `pact-environments-history`, `pact-environment-detail` and `pact-deploy-simulator`.
  */
 
 import React from 'react';
@@ -45,6 +47,8 @@ import { liveMarkup, writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const AXE_OPTIONS = { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } };
 const TOPOLOGY = '/api/pact/environment-topology';
+const BOARD = '/api/pact/environment-board';
+const EVENTS = '/api/pact/environment-history';
 const HISTORY = '/api/pact/environments/production/deployments';
 const SIMULATE = '/api/pact/environments/production/simulate';
 
@@ -74,6 +78,12 @@ beforeEach(() => {
       body: { success: true, data: { is_admin: false, permissions: ['pacts:view', 'pacts:create', 'pacts:edit', 'pacts:delete'] } },
     }),
     [TOPOLOGY]: () => ({ status: 200, body: fixture.topology }),
+    [BOARD]: () => ({ status: 200, body: fixture.board }),
+    [EVENTS]: () => ({ status: 200, body: fixture.events }),
+    [`${EVENTS}?cursor=bmV4dA`]: () => ({
+      status: 200,
+      body: { events: [{ ...fixture.events.events[4], uuid: 'e0000000-0000-4000-8000-000000000009', version: '5.1.0' }], nextCursor: null },
+    }),
     [HISTORY]: () => ({ status: 200, body: fixture.history }),
     [`${HISTORY}?cursor=17`]: () => ({
       status: 200,
@@ -108,50 +118,90 @@ beforeEach(() => {
 });
 
 describe('Environments dashboard', () => {
-  it('lays out every pacticipant in every environment, and the environments', async () => {
+  it('lays out what is running where, with a verdict per version and what can go next', async () => {
     const { container } = render(<EnvironmentsClient />);
-    const grid = await screen.findByTestId('penv-grid');
+    const board = await screen.findByTestId('penv-board');
     await screen.findByTestId('penv-action-deploy');
-    expect(screen.getByTestId('penv-count')).toHaveTextContent('3 environments');
-    expect(within(grid).getByRole('link', { name: 'Production' })).toHaveAttribute(
+    expect(screen.getByTestId('penv-facts')).toHaveTextContent('3 environments5 services6 versions running1 blocked promotion');
+    const columns = within(board).getAllByRole('columnheader').map((cell) => cell.textContent);
+    expect(columns[0]).toBe('Service');
+    expect(columns[1]).toContain('QA');
+    expect(columns[3]).toContain('Production');
+    expect(columns[4]).toBe('Released to users');
+    expect(within(board).getByRole('link', { name: 'Production' })).toHaveAttribute('href', '/ade/dashboard/pacts/environments/production');
+
+    const billing = within(board).getByTestId('penv-cell-billing-service-production');
+    expect(billing).toHaveTextContent('2.3.1');
+    expect(within(billing).getByRole('img', { name: 'verified with everything beside it' })).toBeInTheDocument();
+    const blocked = within(billing).getByRole('link', { name: /2\.4\.0 blocked/ });
+    expect(blocked).toHaveAttribute(
       'href',
-      '/ade/dashboard/pacts/environments/production',
+      '/ade/dashboard/pacts/environments/production/simulate?pacticipant=billing-service&version=2.4.0',
     );
-    const ledger = within(grid).getByTestId('penv-row-ledger-api');
-    expect(ledger).toHaveTextContent('3f2a9c1b7e6d');
-    expect(ledger).toHaveTextContent('9c8b7a6f5e4d');
-    expect(within(ledger).getByRole('link', { name: 'Ledger API' })).toHaveAttribute(
-      'href',
-      '/ade/dashboard/pacts/pacticipants/ledger-api',
-    );
-    expect(within(grid).getByTestId('penv-row-reporting-job')).toHaveTextContent('1.4.2 · eu-west');
-    expect(within(grid).getByTestId('penv-row-mobile-app')).toHaveTextContent('5.2.0 · released');
-    const list = screen.getByTestId('penv-environments');
-    expect(within(list).getByTestId('penv-env-production')).toHaveTextContent('Production');
-    expect(within(list).getByTestId('penv-env-production')).toHaveTextContent('Yes');
-    expect(within(list).getByTestId('penv-env-qa')).toHaveTextContent('qa00No');
+    const ledger = within(board).getByTestId('penv-next-ledger-api-production');
+    expect(within(ledger).getByRole('button', { name: /9c8b7a6f5e4d can go|can go/ })).toBeInTheDocument();
+    const reporting = within(board).getByTestId('penv-cell-reporting-job-production');
+    expect(reporting).toHaveTextContent('eu-west · us-east · unverified');
+    expect(within(board).getByTestId('penv-cell-mobile-app-released')).toHaveTextContent('5.2.0 · production');
+    expect(within(board).getByTestId('penv-first-orders-ui')).toHaveTextContent('Record its first deployment');
     expect(screen.queryByTestId('penv-truncated')).toBeNull();
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
-    writeA11yFixture('pact-environments', liveMarkup(container.firstElementChild!));
+    writeA11yFixture('pact-environments-board', liveMarkup(container.firstElementChild!));
   });
 
-  it('says when the topology was cut short', async () => {
-    answers[TOPOLOGY] = () => ({ status: 200, body: { ...fixture.topology, truncated: true } });
+  it('opens Record a deployment filled in from a "can go"', async () => {
     render(<EnvironmentsClient />);
-    expect(await screen.findByTestId('penv-truncated')).toHaveTextContent('more than 2000');
+    const next = await screen.findByTestId('penv-next-ledger-api-production');
+    fireEvent.click(within(next).getByRole('button'));
+    const dialog = await screen.findByTestId('penv-deploy-dialog');
+    expect(within(dialog).getByLabelText('Environment')).toHaveValue('production');
+    await waitFor(() => expect(within(dialog).getByLabelText('Service')).toHaveValue('ledger-api'));
+    expect(within(dialog).getByLabelText('Version')).toHaveValue('9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b');
+  });
+
+  it('shows the history as a timeline and reads older events', async () => {
+    const { container } = render(<EnvironmentsClient />);
+    await screen.findByTestId('penv-board');
+    fireEvent.mouseDown(screen.getByTestId('penv-view-history'));
+    fireEvent.click(screen.getByTestId('penv-view-history'));
+    const history = await screen.findByTestId('penv-history');
+    const events = within(history).getAllByTestId('penv-event');
+    expect(events[0]).toHaveTextContent('Billing Service 2.4.0 deployed to Staging');
+    expect(events[0]).toHaveTextContent('Not verified at the time');
+    expect(events[0]).toHaveTextContent('Replaced 2.3.1');
+    expect(events[0]).toHaveTextContent('billing-service CI');
+    expect(events[1]).toHaveTextContent('Verified at the time');
+    expect(events[2]).toHaveTextContent('Mobile App 5.1.0 — support ended in Production');
+    expect(events[3]).toHaveTextContent('Reporting Job 1.4.1 undeployed from Production');
+    expect(events[3]).toHaveTextContent('instance ap-south');
+    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+    writeA11yFixture('pact-environments-history', liveMarkup(container.firstElementChild!));
+    fireEvent.click(screen.getByTestId('penv-history-more'));
+    await waitFor(() => expect(within(history).getAllByTestId('penv-event')).toHaveLength(6));
+    expect(screen.queryByTestId('penv-history-more')).toBeNull();
+  });
+
+  it('says when the board was cut short or left versions unchecked', async () => {
+    answers[BOARD] = () => ({ status: 200, body: { ...fixture.board, truncated: true, notChecked: 2 } });
+    render(<EnvironmentsClient />);
+    const note = await screen.findByTestId('penv-truncated');
+    expect(note).toHaveTextContent('more than 2000');
+    expect(note).toHaveTextContent('2 versions were not checked');
   });
 
   it('shows the CLI commands for an empty workspace, and Try again for a refused read', async () => {
+    answers[BOARD] = () => ({ status: 200, body: { environments: [], rows: [], truncated: false, checks: 0, notChecked: 0 } });
     answers[TOPOLOGY] = () => ({ status: 200, body: { environments: [], truncated: false } });
     const { unmount } = render(<EnvironmentsClient />);
     expect(await screen.findByTestId('penv-empty')).toHaveTextContent('apiome pact create-environment');
     unmount();
-    answers[TOPOLOGY] = () => ({ status: 403, body: { success: false, error: 'Permission denied' } });
+    answers[BOARD] = () => ({ status: 403, body: { success: false, error: 'Permission denied' } });
     render(<EnvironmentsClient />);
     expect(await screen.findByText('Permission denied')).toBeInTheDocument();
+    answers[BOARD] = () => ({ status: 200, body: fixture.board });
     answers[TOPOLOGY] = () => ({ status: 200, body: fixture.topology });
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(await screen.findByTestId('penv-grid')).toBeInTheDocument();
+    expect(await screen.findByTestId('penv-board')).toBeInTheDocument();
   });
 });
 

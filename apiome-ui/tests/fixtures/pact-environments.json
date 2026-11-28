@@ -354,5 +354,404 @@
       "code": "pact-simulation-over-limit",
       "reason": "Only 20 counterpart versions are checked per simulation."
     }
-  ]
+  ],
+  "board": {
+    "environments": [
+      {
+        "uuid": "a1b2c3d4-0003-4000-8000-000000000003",
+        "name": "qa",
+        "displayName": "QA",
+        "production": false,
+        "contractRequired": false
+      },
+      {
+        "uuid": "a1b2c3d4-0002-4000-8000-000000000002",
+        "name": "staging",
+        "displayName": "Staging",
+        "production": false,
+        "contractRequired": false
+      },
+      {
+        "uuid": "a1b2c3d4-0001-4000-8000-000000000001",
+        "name": "production",
+        "displayName": "Production",
+        "production": true,
+        "contractRequired": true
+      }
+    ],
+    "rows": [
+      {
+        "pacticipant": {
+          "name": "Billing Service",
+          "slug": "billing-service"
+        },
+        "idle": false,
+        "cells": [
+          {
+            "environment": "a1b2c3d4-0003-4000-8000-000000000003",
+            "deployed": [],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0002-4000-8000-000000000002",
+            "deployed": [
+              {
+                "version": "2.4.0",
+                "applicationInstances": [
+                  null
+                ],
+                "deployedAt": "2026-11-25T08:10:00+00:00",
+                "verdict": {
+                  "checked": true,
+                  "deployable": true,
+                  "reason": "All required verification results are published and successful",
+                  "counts": {
+                    "success": 2,
+                    "failed": 0,
+                    "unknown": 0
+                  }
+                }
+              }
+            ],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0001-4000-8000-000000000001",
+            "deployed": [
+              {
+                "version": "2.3.1",
+                "applicationInstances": [
+                  null
+                ],
+                "deployedAt": "2026-11-24T09:30:00+00:00",
+                "verdict": {
+                  "checked": true,
+                  "deployable": true,
+                  "reason": "All required verification results are published and successful",
+                  "counts": {
+                    "success": 2,
+                    "failed": 0,
+                    "unknown": 0
+                  }
+                }
+              }
+            ],
+            "next": {
+              "version": "2.4.0",
+              "from": "staging",
+              "verdict": {
+                "checked": true,
+                "deployable": false,
+                "reason": "The verification for the pact between Billing Service 2.4.0 and Ledger API 3f2a9c1b7e6d failed",
+                "counts": {
+                  "success": 0,
+                  "failed": 1,
+                  "unknown": 0
+                }
+              }
+            }
+          }
+        ],
+        "released": []
+      },
+      {
+        "pacticipant": {
+          "name": "Ledger API",
+          "slug": "ledger-api"
+        },
+        "idle": false,
+        "cells": [
+          {
+            "environment": "a1b2c3d4-0003-4000-8000-000000000003",
+            "deployed": [],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0002-4000-8000-000000000002",
+            "deployed": [
+              {
+                "version": "9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b",
+                "applicationInstances": [
+                  null
+                ],
+                "deployedAt": "2026-11-25T07:45:00+00:00",
+                "verdict": {
+                  "checked": true,
+                  "deployable": true,
+                  "reason": "All required verification results are published and successful",
+                  "counts": {
+                    "success": 2,
+                    "failed": 0,
+                    "unknown": 0
+                  }
+                }
+              }
+            ],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0001-4000-8000-000000000001",
+            "deployed": [
+              {
+                "version": "3f2a9c1b7e6d4a5b8c9d0e1f2a3b4c5d6e7f8a9b",
+                "applicationInstances": [
+                  null
+                ],
+                "deployedAt": "2026-11-22T17:00:00+00:00",
+                "verdict": {
+                  "checked": true,
+                  "deployable": true,
+                  "reason": "All required verification results are published and successful",
+                  "counts": {
+                    "success": 2,
+                    "failed": 0,
+                    "unknown": 0
+                  }
+                }
+              }
+            ],
+            "next": {
+              "version": "9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b",
+              "from": "staging",
+              "verdict": {
+                "checked": true,
+                "deployable": true,
+                "reason": "All required verification results are published and successful",
+                "counts": {
+                  "success": 2,
+                  "failed": 0,
+                  "unknown": 0
+                }
+              }
+            }
+          }
+        ],
+        "released": []
+      },
+      {
+        "pacticipant": {
+          "name": "Mobile App",
+          "slug": "mobile-app"
+        },
+        "idle": false,
+        "cells": [
+          {
+            "environment": "a1b2c3d4-0003-4000-8000-000000000003",
+            "deployed": [],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0002-4000-8000-000000000002",
+            "deployed": [],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0001-4000-8000-000000000001",
+            "deployed": [],
+            "next": null
+          }
+        ],
+        "released": [
+          {
+            "version": "5.2.0",
+            "environment": "production",
+            "releasedAt": "2026-11-18T12:00:00+00:00",
+            "verdict": {
+              "checked": true,
+              "deployable": true,
+              "reason": "All required verification results are published and successful",
+              "counts": {
+                "success": 2,
+                "failed": 0,
+                "unknown": 0
+              }
+            }
+          }
+        ]
+      },
+      {
+        "pacticipant": {
+          "name": "Orders UI",
+          "slug": "orders-ui"
+        },
+        "idle": true,
+        "cells": [
+          {
+            "environment": "a1b2c3d4-0003-4000-8000-000000000003",
+            "deployed": [],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0002-4000-8000-000000000002",
+            "deployed": [],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0001-4000-8000-000000000001",
+            "deployed": [],
+            "next": null
+          }
+        ],
+        "released": []
+      },
+      {
+        "pacticipant": {
+          "name": "Reporting Job",
+          "slug": "reporting-job"
+        },
+        "idle": false,
+        "cells": [
+          {
+            "environment": "a1b2c3d4-0003-4000-8000-000000000003",
+            "deployed": [],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0002-4000-8000-000000000002",
+            "deployed": [],
+            "next": null
+          },
+          {
+            "environment": "a1b2c3d4-0001-4000-8000-000000000001",
+            "deployed": [
+              {
+                "version": "1.4.2",
+                "applicationInstances": [
+                  "eu-west",
+                  "us-east"
+                ],
+                "deployedAt": "2026-11-20T06:00:00+00:00",
+                "verdict": {
+                  "checked": true,
+                  "deployable": null,
+                  "reason": "There is no verified pact between Reporting Job 1.4.2 and Ledger API 3f2a9c1b7e6d",
+                  "counts": {
+                    "success": 0,
+                    "failed": 0,
+                    "unknown": 1
+                  }
+                }
+              }
+            ],
+            "next": null
+          }
+        ],
+        "released": []
+      }
+    ],
+    "truncated": false,
+    "checks": 7,
+    "notChecked": 0,
+    "evaluatedAt": "2026-11-27T10:00:00+00:00"
+  },
+  "events": {
+    "events": [
+      {
+        "kind": "deployed",
+        "uuid": "e0000000-0000-4000-8000-000000000001",
+        "at": "2026-11-25T08:10:00+00:00",
+        "pacticipant": {
+          "name": "Billing Service",
+          "slug": "billing-service"
+        },
+        "version": "2.4.0",
+        "environment": {
+          "uuid": "a1b2c3d4-0002-4000-8000-000000000002",
+          "name": "staging",
+          "displayName": "Staging",
+          "production": false,
+          "contractRequired": false
+        },
+        "applicationInstance": null,
+        "actor": "billing-service CI",
+        "verdict": "not-deployable",
+        "replaces": "2.3.1"
+      },
+      {
+        "kind": "deployed",
+        "uuid": "e0000000-0000-4000-8000-000000000002",
+        "at": "2026-11-25T07:45:00+00:00",
+        "pacticipant": {
+          "name": "Ledger API",
+          "slug": "ledger-api"
+        },
+        "version": "9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b",
+        "environment": {
+          "uuid": "a1b2c3d4-0002-4000-8000-000000000002",
+          "name": "staging",
+          "displayName": "Staging",
+          "production": false,
+          "contractRequired": false
+        },
+        "applicationInstance": null,
+        "actor": "ledger-api CI",
+        "verdict": "deployable",
+        "replaces": null
+      },
+      {
+        "kind": "support-ended",
+        "uuid": "e0000000-0000-4000-8000-000000000003",
+        "at": "2026-11-24T16:00:00+00:00",
+        "pacticipant": {
+          "name": "Mobile App",
+          "slug": "mobile-app"
+        },
+        "version": "5.1.0",
+        "environment": {
+          "uuid": "a1b2c3d4-0001-4000-8000-000000000001",
+          "name": "production",
+          "displayName": "Production",
+          "production": true,
+          "contractRequired": true
+        },
+        "applicationInstance": null,
+        "actor": "Grace Hopper",
+        "verdict": null,
+        "replaces": null
+      },
+      {
+        "kind": "undeployed",
+        "uuid": "e0000000-0000-4000-8000-000000000004",
+        "at": "2026-11-23T11:20:00+00:00",
+        "pacticipant": {
+          "name": "Reporting Job",
+          "slug": "reporting-job"
+        },
+        "version": "1.4.1",
+        "environment": {
+          "uuid": "a1b2c3d4-0001-4000-8000-000000000001",
+          "name": "production",
+          "displayName": "Production",
+          "production": true,
+          "contractRequired": true
+        },
+        "applicationInstance": "ap-south",
+        "actor": "Grace Hopper",
+        "verdict": null,
+        "replaces": null
+      },
+      {
+        "kind": "released",
+        "uuid": "e0000000-0000-4000-8000-000000000005",
+        "at": "2026-11-18T12:00:00+00:00",
+        "pacticipant": {
+          "name": "Mobile App",
+          "slug": "mobile-app"
+        },
+        "version": "5.2.0",
+        "environment": {
+          "uuid": "a1b2c3d4-0001-4000-8000-000000000001",
+          "name": "production",
+          "displayName": "Production",
+          "production": true,
+          "contractRequired": true
+        },
+        "applicationInstance": null,
+        "actor": "Grace Hopper",
+        "verdict": "deployable",
+        "replaces": null
+      }
+    ],
+    "nextCursor": "bmV4dA"
+  }
 }

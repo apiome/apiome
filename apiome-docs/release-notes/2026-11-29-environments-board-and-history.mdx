@@ -1,0 +1,31 @@
+---
+slug: environments-board-and-history
+title: "Environments: what is where, history, undeployment and end of support"
+description: "A board of what runs where and can go next, the history, and ending deployments and releases."
+authors: [apiome]
+---
+
+**Contracts** → **Environments** now opens on a **Board** of what runs where: every service against
+every environment, a verdict for each running version, and whether the next version can go. A
+**History** view says who deployed, released, undeployed or ended support for what, and whether it
+was verified at the time. Deployments and releases can now be ended from the app and the CLI. See
+[Read the board](/ship/pact-broker/environments-dashboard#read-the-board) and
+[Read the history](/ship/pact-broker/environments-dashboard#read-the-history).
+
+{/* truncate */}
+
+- **The board.** Services down, environments across (production last), then **Released to users**.
+  Each running version has a dot — verified with everything beside it, unverified or failing — and
+  where the environment to the left runs a newer version, the cell says **can go** (click to record
+  it) or **blocked** (click to open the deploy simulator with that question). The facts line counts
+  the blocked promotions.
+- **History.** Every deployment, undeployment, release and end of support, newest first, with who
+  recorded it, **Verified at the time** or **Not verified at the time**, and the version a deployment
+  replaced.
+- **Record an undeployment** from an environment's menu, **End support** from a release on the
+  board, or untick a release in **Record a release** to end its support.
+- **CLI:** `apiome pact record-undeployment` and `apiome pact record-support-ended`, with
+  `pact-broker`'s flags and sentences.
+- **REST:** `GET /v1/tenants/{t}/pact-environments/board` and `…/history`; recording a deployment
+  or a release stores can-i-deploy's answer at the time, and ending one stores who ended it
+  (OpenAPI 1.705.0).

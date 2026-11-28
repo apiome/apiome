@@ -12,6 +12,11 @@
  *   `recordAnyway: true`; then it is recorded with `?overrideCanIDeploy=true`, which REST writes to
  *   the audit row. A "no" is never overridden silently, whatever the browser sends.
  * * {@link recordRelease} — `POST …/released-versions/environment/{uuid}`.
+ * * {@link recordUndeployment} (PFX-8.13) — reads what is currently deployed for the service and ends
+ *   the deployment in the named instance (or the unnamed one), as `pact-broker record-undeployment`
+ *   chooses it; nothing matching is a 404 that says what is deployed.
+ * * {@link recordSupportEnded} (PFX-8.13) — reads the currently supported release of that version and
+ *   ends its support; a version not released there is a 404.
  *
  * Every REST call is made as the signed-in user, so tenant scoping and the `pacts` permission stay
  * REST's; a refusal keeps its status and message.
@@ -30,6 +35,13 @@ import {
   type EnvironmentBody,
   type ReleaseBody,
 } from '@lib/pact-environment-writes';
+import {
+  parseCurrentlyDeployed,
+  parseCurrentlySupported,
+  undeploymentTargets,
+  type SupportEndedBody,
+  type UndeploymentBody,
+} from '@lib/pact-environment-endings';
 
 /** The unreachable answer. */
 function unavailable(): ProxyAnswer {
@@ -171,4 +183,72 @@ export async function recordRelease(call: RestCall, name: string, body: ReleaseB
   const found = await findEnvironment(call, name);
   if (!isEnvironment(found)) return found;
   return passThrough(await call('POST', recordProxyPath('released', body.pacticipant, body.version, found.uuid), {}));
+}
+
+/**
+ * Record an undeployment: end the service's deployment in that instance of the environment.
+ *
+ * @param call - The REST call.
+ * @param name - The environment's name.
+ * @param body - The checked body.
+ * @returns `{ undeployed: [{uuid, version, applicationInstance}] }`, a 404 saying what is deployed when
+ *   nothing matches, or REST's refusal (403 without `pacts:edit`).
+ */
+export async function recordUndeployment(call: RestCall, name: string, body: UndeploymentBody): Promise<ProxyAnswer> {
+  const found = await findEnvironment(call, name);
+  if (!isEnvironment(found)) return found;
+  const listed = await call(
+    'GET',
+    `pact-broker/environments/${encodeURIComponent(found.uuid)}/deployed-versions/currently-deployed?pacticipant=${encodeURIComponent(body.pacticipant)}`,
+  );
+  if (!listed) return unavailable();
+  if (listed.status >= 400) return refusal(listed.status, listed.body);
+  const chosen = undeploymentTargets(parseCurrentlyDeployed(listed.body), {
+    pacticipant: body.pacticipant,
+    environment: found.name,
+    applicationInstance: body.applicationInstance ?? null,
+  });
+  if (!chosen.ok) return refuse(404, chosen.error, { code: 'not-currently-deployed' });
+  for (const target of chosen.targets) {
+    const answer = await call('PATCH', `pact-broker/deployed-versions/${encodeURIComponent(target.uuid)}`, {
+      currentlyDeployed: false,
+    });
+    if (!answer) return unavailable();
+    if (answer.status >= 400) return refusal(answer.status, answer.body);
+  }
+  return { status: 200, body: { undeployed: chosen.targets } };
+}
+
+/**
+ * End support for a released version in the environment.
+ *
+ * @param call - The REST call.
+ * @param name - The environment's name.
+ * @param body - The checked body.
+ * @returns `{ ended: <count> }`, a 404 when that version is not released there, or REST's refusal.
+ */
+export async function recordSupportEnded(call: RestCall, name: string, body: SupportEndedBody): Promise<ProxyAnswer> {
+  const found = await findEnvironment(call, name);
+  if (!isEnvironment(found)) return found;
+  const query = `pacticipant=${encodeURIComponent(body.pacticipant)}&version=${encodeURIComponent(body.version)}`;
+  const listed = await call(
+    'GET',
+    `pact-broker/environments/${encodeURIComponent(found.uuid)}/released-versions/currently-supported?${query}`,
+  );
+  if (!listed) return unavailable();
+  if (listed.status >= 400) return refusal(listed.status, listed.body);
+  const uuids = parseCurrentlySupported(listed.body);
+  if (!uuids.length) {
+    return refuse(
+      404,
+      `${body.pacticipant} version ${body.version} is not currently released in ${found.name} environment. Cannot record support ended.`,
+      { code: 'not-currently-supported' },
+    );
+  }
+  for (const uuid of uuids) {
+    const answer = await call('PATCH', `pact-broker/released-versions/${encodeURIComponent(uuid)}`, { currentlySupported: false });
+    if (!answer) return unavailable();
+    if (answer.status >= 400) return refusal(answer.status, answer.body);
+  }
+  return { status: 200, body: { ended: uuids.length } };
 }

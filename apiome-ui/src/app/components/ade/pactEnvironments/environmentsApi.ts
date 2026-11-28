@@ -7,6 +7,9 @@
  * The writes of PFX-8.12 (#7309) — create, edit and delete an environment, record a deployment or a
  * release — answer the result or a {@link EnvironmentWriteFailure} with the proxy's status and, for
  * a "no" from can-i-deploy, its reasons, so the dialog can say what happened where it happened.
+ *
+ * PFX-8.13 (#7310) adds the board and the history reads, and the two endings: record an
+ * undeployment and end support for a release.
  */
 
 import {
@@ -23,6 +26,8 @@ import {
   type EnvironmentBody,
   type ReleaseBody,
 } from '@lib/pact-environment-writes';
+import type { Board, EventsPage } from '@lib/pact-environment-board';
+import type { SupportEndedBody, UndeploymentBody } from '@lib/pact-environment-endings';
 import { readJson } from '../pactPacticipants/pacticipantsApi';
 
 const BASE = '/api/pact';
@@ -38,6 +43,36 @@ export async function fetchTopology(): Promise<Topology> {
     'Could not load the environments',
   );
   return { environments: Array.isArray(body.environments) ? body.environments : [], truncated: Boolean(body.truncated) };
+}
+
+/**
+ * The what-is-where board.
+ *
+ * @returns The board.
+ */
+export async function fetchBoard(): Promise<Board> {
+  const body = await readJson<Board>(await fetch(`${BASE}/environment-board`, { cache: 'no-store' }), 'Could not load the board');
+  return {
+    ...body,
+    environments: Array.isArray(body.environments) ? body.environments : [],
+    rows: Array.isArray(body.rows) ? body.rows : [],
+    truncated: Boolean(body.truncated),
+  };
+}
+
+/**
+ * One page of the environments' history (every environment, newest first).
+ *
+ * @param cursor - The previous page's `nextCursor`, or nothing for the first page.
+ * @returns The page.
+ */
+export async function fetchEvents(cursor?: string | null): Promise<EventsPage> {
+  const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+  const body = await readJson<EventsPage>(
+    await fetch(`${BASE}/environment-history${query}`, { cache: 'no-store' }),
+    'Could not load the history',
+  );
+  return { events: Array.isArray(body.events) ? body.events : [], nextCursor: body.nextCursor ?? null };
 }
 
 /**
@@ -203,4 +238,31 @@ export function recordDeployment(environment: string, body: DeploymentBody) {
  */
 export function recordRelease(environment: string, body: ReleaseBody) {
   return send<WriteAnswer>(`${environmentBase(environment)}/releases`, 'POST', 'Could not record the release', body);
+}
+
+/** What recording an undeployment answers: the deployments it ended. */
+export interface RecordedUndeployment {
+  undeployed: { uuid: string; version: string; applicationInstance: string | null }[];
+}
+
+/**
+ * Record an undeployment (the deployment in that instance, or the unnamed one).
+ *
+ * @param environment - The environment's name.
+ * @param body - The checked body.
+ * @returns The deployments ended, or the failure (404 saying what is deployed when nothing matches).
+ */
+export function recordUndeployment(environment: string, body: UndeploymentBody) {
+  return send<RecordedUndeployment>(`${environmentBase(environment)}/undeployments`, 'POST', 'Could not record the undeployment', body);
+}
+
+/**
+ * End support for a released version.
+ *
+ * @param environment - The environment's name.
+ * @param body - The checked body.
+ * @returns How many releases were ended, or the failure.
+ */
+export function endSupport(environment: string, body: SupportEndedBody) {
+  return send<{ ended: number }>(`${environmentBase(environment)}/support-ended`, 'POST', 'Could not end support', body);
 }

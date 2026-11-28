@@ -373,6 +373,7 @@ def record_deployment(
     actor: ConsumerActor,
     created_at: Optional[datetime] = None,
     replace_current: bool = True,
+    recorded_verdict: Optional[str] = None,
 ) -> Tuple[DeployedVersionRecord, bool]:
     """Record that a version is now deployed to an environment (``pact-broker record-deployment``).
 
@@ -390,6 +391,9 @@ def record_deployment(
         created_at: When the source broker recorded it, for an import (PFX-6.7, #6959); ``None`` is now.
         replace_current: Whether a different version currently deployed there is marked undeployed.
             An import passes ``False``: Apiome's own newer record is kept and the import refused.
+        recorded_verdict: can-i-deploy's answer for the version and environment just before it was
+            recorded (``deployable``, ``not-deployable``, ``unknown``; V455), or ``None`` when not
+            known (an import). Kept for the history's "verified at the time".
 
     Returns:
         The deployment, and whether this call created it (``False``: that version was already the
@@ -427,18 +431,18 @@ def record_deployment(
             )
         if current is not None:
             cursor.execute(
-                "UPDATE apiome.deployed_version SET currently_deployed = FALSE, undeployed_at = CURRENT_TIMESTAMP"
-                " WHERE id = %s::uuid",
-                (current["id"],),
+                "UPDATE apiome.deployed_version SET currently_deployed = FALSE, undeployed_at = CURRENT_TIMESTAMP,"
+                " ended_reason = 'replaced', ended_actor_label = %s WHERE id = %s::uuid",
+                (actor.label, current["id"]),
             )
         inserted = _fetch_one(
             cursor,
             """
             INSERT INTO apiome.deployed_version
                 (tenant_id, pacticipant_id, version_id, environment_id, application_instance, created_by, actor_label,
-                 created_at)
+                 created_at, recorded_verdict, replaced_id)
             VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s, %s::uuid, %s,
-                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
+                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP), %s, %s::uuid)
             RETURNING id::text AS id
             """,
             (
@@ -450,6 +454,8 @@ def record_deployment(
                 _user_id(actor),
                 actor.label,
                 created_at,
+                recorded_verdict,
+                current["id"] if current is not None else None,
             ),
         )
         assert inserted is not None
@@ -473,13 +479,16 @@ def get_deployed_version(db: Any, tenant_id: str, deployed_id: str) -> DeployedV
     return record
 
 
-def record_undeployment(db: Any, tenant_id: str, deployed_id: str) -> DeployedVersionRecord:
+def record_undeployment(
+    db: Any, tenant_id: str, deployed_id: str, *, actor: Optional[ConsumerActor] = None
+) -> DeployedVersionRecord:
     """Mark a deployment undeployed (``pact-broker record-undeployment``). Idempotent.
 
     Args:
         db: The database.
         tenant_id: The caller's tenant.
         deployed_id: The deployment's id.
+        actor: Who is recording it (the history's "by whom"; V455), or ``None`` when not known.
 
     Returns:
         The deployment, no longer currently deployed.
@@ -493,9 +502,10 @@ def record_undeployment(db: Any, tenant_id: str, deployed_id: str) -> DeployedVe
 
     def work(cursor: Any) -> DeployedVersionRecord:
         cursor.execute(
-            "UPDATE apiome.deployed_version SET currently_deployed = FALSE, undeployed_at = CURRENT_TIMESTAMP"
+            "UPDATE apiome.deployed_version SET currently_deployed = FALSE, undeployed_at = CURRENT_TIMESTAMP,"
+            " ended_reason = 'undeployed', ended_actor_label = %s"
             " WHERE tenant_id = %s::uuid AND id = %s::uuid AND currently_deployed",
-            (tenant_id, current.id),
+            (actor.label if actor else None, tenant_id, current.id),
         )
         record = _read_deployed(cursor, tenant_id, current.id)
         assert record is not None
@@ -601,6 +611,7 @@ def record_release(
     *,
     actor: ConsumerActor,
     created_at: Optional[datetime] = None,
+    recorded_verdict: Optional[str] = None,
 ) -> Tuple[ReleasedVersionRecord, bool]:
     """Record that a version is released to an environment (``pact-broker record-release``).
 
@@ -616,6 +627,8 @@ def record_release(
         actor: Who is recording it.
         created_at: When the source broker recorded it, for an import (PFX-6.7, #6959); ``None`` is
             now. Only a new release takes it.
+        recorded_verdict: can-i-deploy's answer just before it was recorded (V455), or ``None`` when
+            not known. Recording the release again stores the new answer.
 
     Returns:
         The release, and whether this call created it.
@@ -634,11 +647,12 @@ def record_release(
             """
             INSERT INTO apiome.released_version
                 (tenant_id, pacticipant_id, version_id, environment_id, created_by, actor_label,
-                 created_at, updated_at)
+                 created_at, updated_at, recorded_verdict)
             VALUES (%s::uuid, %s::uuid, %s::uuid, %s::uuid, %s::uuid, %s,
-                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP), COALESCE(%s::timestamptz, CURRENT_TIMESTAMP))
+                    COALESCE(%s::timestamptz, CURRENT_TIMESTAMP), COALESCE(%s::timestamptz, CURRENT_TIMESTAMP), %s)
             ON CONFLICT (version_id, environment_id) DO UPDATE
-                SET currently_supported = TRUE, support_ended_at = NULL,
+                SET currently_supported = TRUE, support_ended_at = NULL, ended_actor_label = NULL,
+                    recorded_verdict = COALESCE(EXCLUDED.recorded_verdict, released_version.recorded_verdict),
                     updated_at = CASE WHEN released_version.currently_supported
                                       THEN released_version.updated_at ELSE CURRENT_TIMESTAMP END
             RETURNING id::text AS id, (xmax = 0) AS created
@@ -652,6 +666,7 @@ def record_release(
                 actor.label,
                 created_at,
                 created_at,
+                recorded_verdict,
             ),
         )
         assert row is not None
@@ -675,8 +690,22 @@ def get_released_version(db: Any, tenant_id: str, released_id: str) -> ReleasedV
     return record
 
 
-def record_support_ended(db: Any, tenant_id: str, released_id: str) -> ReleasedVersionRecord:
+def record_support_ended(
+    db: Any, tenant_id: str, released_id: str, *, actor: Optional[ConsumerActor] = None
+) -> ReleasedVersionRecord:
     """Mark a release no longer supported (``pact-broker record-support-ended``). Idempotent.
+
+    can-i-deploy reads only the currently supported releases, so from now on this version's pacts
+    no longer hold its counterparts back.
+
+    Args:
+        db: The database.
+        tenant_id: The caller's tenant.
+        released_id: The release's id.
+        actor: Who is recording it (the history's "by whom"; V455), or ``None`` when not known.
+
+    Returns:
+        The release, no longer supported.
 
     Raises:
         PactPublicationError: ``pact-released-version-not-found``.
@@ -688,8 +717,9 @@ def record_support_ended(db: Any, tenant_id: str, released_id: str) -> ReleasedV
     def work(cursor: Any) -> ReleasedVersionRecord:
         cursor.execute(
             "UPDATE apiome.released_version SET currently_supported = FALSE, support_ended_at = CURRENT_TIMESTAMP,"
-            " updated_at = CURRENT_TIMESTAMP WHERE tenant_id = %s::uuid AND id = %s::uuid AND currently_supported",
-            (tenant_id, current.id),
+            " updated_at = CURRENT_TIMESTAMP, ended_actor_label = %s"
+            " WHERE tenant_id = %s::uuid AND id = %s::uuid AND currently_supported",
+            (actor.label if actor else None, tenant_id, current.id),
         )
         record = _read_released(cursor, tenant_id, current.id)
         assert record is not None

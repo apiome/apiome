@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.881.0] - 2026-11-29
+
+### Added
+- **What is running where, the environments' history, and who ended a deployment or release (PFX-8.13, #7310).**
+  OpenAPI 1.705.0; apiome-db V455 (`recorded_verdict`, `ended_actor_label` on `deployed_version` and
+  `released_version`; `ended_reason`, `replaced_id` on `deployed_version`; four history indexes).
+  - `GET /v1/tenants/{t}/pact-environments/board` — the Environments board: one row per pacticipant, one cell per
+    environment (non-production first, production last), each running version with can-i-deploy's `verdict` for
+    that environment, `next` (the newest version in the nearest environment to the left that runs the pacticipant,
+    when it is newer than anything here, with its verdict — the deploy simulator's answer to the same question),
+    every supported release, and `idle` rows for pacticipants with nothing anywhere (at most 50). At most 100
+    verdicts per read; the rest say `checked: false` with the reason (`notChecked`). `pacts:view`.
+  - `GET /v1/tenants/{t}/pact-environments/history` — every `deployed`, `undeployed`, `released` and
+    `support-ended` event, newest first, with `actor`, `verdict` (the answer when it was recorded; null when not
+    known) and `replaces` (the version a deployment replaced; the replaced one has no event of its own).
+    `environment`, `pacticipant`, `cursor`, `limit` (≤ 50). `400 pact-history-cursor-invalid`; `404` for an
+    unknown environment or pacticipant. `pacts:view`.
+
+### Changed
+- Recording a deployment or a release (the broker routes and the MCP `record_deployment` tool) asks can-i-deploy
+  first and stores the answer; recording never depends on it. `PATCH …/deployed-versions/{uuid}` and
+  `PATCH …/released-versions/{uuid}` (`record-undeployment` / `record-support-ended`) store who ended it; a
+  replaced deployment records who replaced it. Response bodies are unchanged.
+
 ## [1.880.0] - 2026-11-29
 
 ### Added

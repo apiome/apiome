@@ -671,6 +671,9 @@ apiome pact publish ./pacts --consumer-app-version "$GIT_COMMIT" --auto-detect-v
 apiome pact can-i-deploy -a "Billing Service" -e "$GIT_COMMIT" --to-environment production \
   --retry-while-unknown 6 --retry-interval 10
 apiome pact record-deployment -a "Billing Service" -e "$GIT_COMMIT" --environment production
+apiome pact record-undeployment -a "Billing Service" --environment production --application-instance eu-west
+apiome pact record-release -a "Mobile App" -e 1.9.3 --environment production
+apiome pact record-support-ended -a "Mobile App" -e 1.8.7 --environment production
 apiome pact create-environment --name production --production
 apiome pact create-webhook https://ci.example.com/hook --provider "Ledger API" \
   --contract-requiring-verification-published
@@ -686,6 +689,11 @@ apiome pact restore-version -a "Billing Service" -e 3.3.1
 `delete-version` is soft: `restore-version` brings the version back with its pacts, results and
 deployments until it is purged (`APIOME_PACT_DELETION_GRACE_DAYS`, default 30). A version that is
 deployed or released is refused — record its undeployment first; the CLI never forces it (PFX-8.11).
+
+`record-undeployment` ends the deployment in the instance named by `--application-instance` (alias
+`--target`), or the environment's unnamed instance; when nothing matches it exits `1` and lists what is
+deployed. `record-support-ended` ends support for one released version, so can-i-deploy stops holding its
+counterparts to it. Both keep the record in the Environments history (PFX-8.13).
 
 `apiome pact migrate --from https://acme.pactflow.io` (PFX-6.7) imports a Pact Broker or PactFlow
 workspace — pacticipants and labels, versions with branches and tags, pacts, verification results,

@@ -178,8 +178,8 @@ Checked against Pact Broker **2.124.0**: 105 endpoints — **41** supported, **6
 | `/environments/{uuid}/released-versions/currently-supported` — What is released and supported | `GET` | — | ✅ Supported | Used by `pact-broker record-support-ended`. |
 | `/pacticipants/{pacticipant}/versions/{version}/deployed-versions/environment/{uuid}` — Record a deployment | `GET` `POST` | — | ✅ Supported | Used by `pact-broker record-deployment`. |
 | `/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{uuid}` — Record a release | `GET` `POST` | — | ✅ Supported | Used by `pact-broker record-release`. |
-| `/deployed-versions/{uuid}` — A deployment (mark it undeployed) | `GET` `PATCH` | — | ✅ Supported | Used by `pact-broker record-undeployment`. |
-| `/released-versions/{uuid}` — A release (end its support) | `GET` `PATCH` | — | ✅ Supported | Used by `pact-broker record-support-ended`. |
+| `/deployed-versions/{uuid}` — A deployment (mark it undeployed) | `GET` `PATCH` | — | ✅ Supported | Used by `pact-broker record-undeployment`. `apiome pact record-undeployment` picks the deployment the same way (the named instance, or the unnamed one) and the Environments board's **Record an undeployment** sends the same patch; who ended it is kept for the Environments history (PFX-8.13). |
+| `/released-versions/{uuid}` — A release (end its support) | `GET` `PATCH` | — | ✅ Supported | Used by `pact-broker record-support-ended`. `apiome pact record-support-ended` and the board's **End support** send the same patch; from then on can-i-deploy no longer counts the release (PFX-8.13). |
 
 ### Matrix and can-i-deploy
 
