@@ -89,6 +89,8 @@ AUDIT_ACTIONS = (
     "pacts.migration.run.start",
     "pacts.migration.run.stop",
     "pacts.migration.run.resume",
+    # PFX-8.17 (#7314): keep-in-sync switched on (credentials sealed) or off.
+    "pacts.migration.sync.update",
     # PFX-8.7 (#7304): a provider's standing contract sources, and each publish they make.
     "pacts.contract_source.update",
     "pacts.contract.auto_publish",

@@ -12,6 +12,10 @@
  *   the request that starts or resumes a run; opening a past migration asks for it again.
  * * **A run is the server's.** Leaving the page changes nothing about it: the wizard reads it again
  *   when it is opened, from **Past migrations** or because it is still running.
+ * * **Switch over** (PFX-8.17, #7314): after a copy REST asks both brokers the same can-i-deploy
+ *   questions (`facts.agreement`) and lists where each pacticipant last published (`facts.moved`);
+ *   keep-in-sync copies what is new on a schedule. Its credentials are the one thing kept — sealed,
+ *   and only while it is on.
  */
 
 import { tenantPath, type PactAction, type PactOption, type PactUnsupported } from './pact-commands';
@@ -81,7 +85,12 @@ export interface MigrationOptions {
   restart: boolean;
   matrix_limit: number;
   batch_bytes: number;
+  /** After a copy, how many can-i-deploy questions to ask both brokers (0 skips the check). */
+  agreement_questions: number;
 }
+
+/** Questions the agreement check asks unless told otherwise (REST's default). */
+export const DEFAULT_AGREEMENT_QUESTIONS = 40;
 
 /** Everything is copied, Apiome's records win, nothing is thinned. */
 export const DEFAULT_OPTIONS: MigrationOptions = {
@@ -93,6 +102,7 @@ export const DEFAULT_OPTIONS: MigrationOptions = {
   restart: false,
   matrix_limit: DEFAULT_MATRIX_LIMIT,
   batch_bytes: DEFAULT_BATCH_BYTES,
+  agreement_questions: DEFAULT_AGREEMENT_QUESTIONS,
 };
 
 /** One record kind of a run. */
@@ -148,6 +158,12 @@ export interface MigrationRun {
     results_not_latest?: number;
     labels_and_tags?: number;
     conflicts_kept?: number;
+    /** After a copy: both brokers asked the same can-i-deploy questions (PFX-8.17). */
+    agreement?: Agreement | FactError;
+    /** After a copy: where each pacticipant last published (PFX-8.17). */
+    moved?: Moved | FactError;
+    /** The `pact-migration-source-*` code of a run the source broke. */
+    source_error?: string;
   };
   findings: MigrationFinding[];
   failures: MigrationFailure[];
@@ -515,6 +531,7 @@ export interface RunBadge {
 export function runBadge(run: MigrationRun): RunBadge {
   const dry = run.mode === 'dry-run';
   if (run.status === 'running') {
+    if (!run.stop_requested && run.phase === 'checking') return { status: 'running', label: 'asking both brokers' };
     const doing = run.stop_requested ? 'stopping' : run.phase === 'reading' ? 'reading' : dry ? 'checking' : 'copying';
     return { status: 'running', label: run.phase === 'reading' ? doing : `${doing} · ${run.percent}%` };
   }
@@ -572,6 +589,8 @@ export function reportDocument(run: MigrationRun, log: MigrationLogLine[]): Reco
     failures_not_listed: run.failures_dropped,
     not_portable: run.findings,
     not_read: run.not_read,
+    agreement: run.facts.agreement ?? null,
+    moved: run.facts.moved ?? null,
     log: log.map((line) => line.text),
   };
 }
@@ -802,4 +821,309 @@ export function formatWhen(iso: string | null): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const two = (value: number) => String(value).padStart(2, '0');
   return `${moment.getUTCDate()} ${months[moment.getUTCMonth()]} ${moment.getUTCFullYear()}, ${two(moment.getUTCHours())}:${two(moment.getUTCMinutes())} UTC`;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Switch over: the agreement check, who has moved, keep-in-sync — PFX-8.17 (#7314)
+// ---------------------------------------------------------------------------------------------
+
+/** A switch-over fact REST could not work out, and why. */
+export interface FactError {
+  error: string;
+}
+
+/** One can-i-deploy question the two brokers answered differently. */
+export interface AgreementDifference {
+  /** E.g. `Web 3 → production`. */
+  question: string;
+  pacticipant: string;
+  version: string;
+  environment: string | null;
+  /** `yes`, `no`, `unknown` or `no answer`. */
+  source: string;
+  apiome: string;
+  /** Why they differ: a result not copied (and why), a selector the old broker does not support … */
+  cause: string;
+}
+
+/** The agreement check (`facts.agreement`). */
+export interface Agreement {
+  asked: number;
+  agree: number;
+  not_asked: number;
+  differences: AgreementDifference[];
+  differences_dropped: number;
+  checked_at: string | null;
+}
+
+/** Where one pacticipant last published. */
+export interface MovedEntry {
+  name: string;
+  /** `apiome` (moved), `source` (still on the old broker) or `none` (published to neither). */
+  last: 'apiome' | 'source' | 'none';
+  apiome_at: string | null;
+  source_at: string | null;
+}
+
+/** Who has moved (`facts.moved`). */
+export interface Moved {
+  total: number;
+  moved: number;
+  pacticipants: MovedEntry[];
+  dropped: number;
+  checked_at: string | null;
+}
+
+/** A migration's keep-in-sync, as REST answers it. */
+export interface MigrationSync {
+  run_id: string;
+  enabled: boolean;
+  interval_minutes: number;
+  next_run_at: string | null;
+  last_pass_at: string | null;
+  last_success_at: string | null;
+  unreachable_since: string | null;
+  passes: number;
+  last_error: string | null;
+  stopped_reason: string | null;
+  enabled_by: string | null;
+  /** Whether the server can keep credentials at all. */
+  available: boolean;
+  unreachable_limit_hours: number;
+}
+
+/** Minutes between keep-in-sync passes (REST's default; the mockup's "Every 15 minutes"). */
+export const SYNC_INTERVAL_MINUTES = 15;
+
+/** Whether a fact is REST's "could not work it out". */
+function isFactError(value: unknown): value is FactError {
+  return Boolean(value && typeof value === 'object' && typeof (value as FactError).error === 'string');
+}
+
+/** How the agreement check reads at the top of **Switch over**. */
+export interface AgreementSummary {
+  /** `ok` all agree; `warn` some differ; `info` nothing was asked; `danger` the check broke. */
+  tone: 'ok' | 'warn' | 'info' | 'danger';
+  title: string;
+  detail: string;
+}
+
+/**
+ * The headline of the agreement check.
+ *
+ * @param run - The finished copy.
+ * @returns The tone, title and detail (mockup: “Copied. Apiome and acme.pactflow.io give the same
+ *   answers.” / “38 of 40 agree”).
+ */
+export function agreementSummary(run: MigrationRun): AgreementSummary {
+  const agreement = run.facts.agreement;
+  if (isFactError(agreement)) {
+    return { tone: 'danger', title: 'The agreement check could not run.', detail: `${agreement.error}. The copy stands.` };
+  }
+  if (!agreement) {
+    return {
+      tone: 'info',
+      title: copiedHeadline(run),
+      detail: 'The agreement check was not run for this copy.',
+    };
+  }
+  const more = agreement.not_asked > 0 ? ` ${formatCount(agreement.not_asked)} more were not asked.` : '';
+  if (agreement.asked === 0) {
+    return {
+      tone: 'info',
+      title: copiedHeadline(run),
+      detail: 'There was no can-i-deploy question to ask: the source has no versions or pacts.',
+    };
+  }
+  const questions = `${formatCount(agreement.asked)} can-i-deploy ${agreement.asked === 1 ? 'question' : 'questions'}`;
+  if (agreement.agree === agreement.asked) {
+    return {
+      tone: 'ok',
+      title: `Copied. Apiome and ${run.host} give the same answers.`,
+      detail: `Checked ${questions} on both sides: ${formatCount(agreement.agree)} agree.${more}`,
+    };
+  }
+  const differ = agreement.asked - agreement.agree;
+  return {
+    tone: 'warn',
+    title: `${formatCount(agreement.agree)} of ${formatCount(agreement.asked)} agree.`,
+    detail: `Checked ${questions} on both sides: ${formatCount(differ)} ${differ === 1 ? 'answer differs' : 'answers differ'}, each listed with why.${more}`,
+  };
+}
+
+/**
+ * The differences to list.
+ *
+ * @param run - The finished copy.
+ * @returns The differences, and how many more REST counted but did not list.
+ */
+export function agreementDifferences(run: MigrationRun): { rows: AgreementDifference[]; more: number } {
+  const agreement = run.facts.agreement;
+  if (!agreement || isFactError(agreement)) return { rows: [], more: 0 };
+  return { rows: agreement.differences ?? [], more: agreement.differences_dropped ?? 0 };
+}
+
+/** One row of **Watch who has moved**. */
+export interface MovedRow {
+  name: string;
+  /** What the badge says. */
+  label: 'Apiome' | 'Old broker' | 'Nothing published';
+  /** The badge's `data-status`. */
+  status: 'passed' | 'warning' | 'neutral';
+  /** When it last published there (relative), or empty. */
+  when: string;
+}
+
+/**
+ * How long ago a moment was, as a list cell reads it.
+ *
+ * @param iso - The moment.
+ * @param now - The current time (tests pin it).
+ * @returns `just now`, `12 min ago`, `3 h ago`, `yesterday`, `5 days ago`, or the date; `''` without one.
+ */
+export function sinceWhen(iso: string | null, now: Date = new Date()): string {
+  const moment = iso ? new Date(iso) : null;
+  if (!moment || Number.isNaN(moment.getTime())) return '';
+  const minutes = Math.floor((now.getTime() - moment.getTime()) / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 2) return 'yesterday';
+  if (days < 30) return `${days} days ago`;
+  return formatWhen(iso);
+}
+
+/**
+ * The rows of **Watch who has moved**: stragglers first.
+ *
+ * @param run - The finished copy.
+ * @param now - The current time.
+ * @returns The rows, the summary line, how many more REST did not list, and the error when it
+ *   could not be read.
+ */
+export function movedRows(
+  run: MigrationRun,
+  now: Date = new Date(),
+): { rows: MovedRow[]; summary: string; more: number; error: string | null } {
+  const moved = run.facts.moved;
+  if (isFactError(moved)) return { rows: [], summary: '', more: 0, error: `${moved.error}.` };
+  if (!moved) return { rows: [], summary: '', more: 0, error: null };
+  const rows = (moved.pacticipants ?? []).map((entry): MovedRow => {
+    if (entry.last === 'apiome') return { name: entry.name, label: 'Apiome', status: 'passed', when: sinceWhen(entry.apiome_at, now) };
+    if (entry.last === 'source') return { name: entry.name, label: 'Old broker', status: 'warning', when: sinceWhen(entry.source_at, now) };
+    return { name: entry.name, label: 'Nothing published', status: 'neutral', when: '' };
+  });
+  const summary =
+    moved.total === 0
+      ? 'The source lists no pacticipants.'
+      : moved.moved === moved.total
+        ? `All ${formatCount(moved.total)} have moved: each last published to Apiome.`
+        : `${formatCount(moved.moved)} of ${formatCount(moved.total)} have moved. The rest last published to ${run.host}.`;
+  return { rows, summary, more: moved.dropped ?? 0, error: null };
+}
+
+/** The note under **Keep copying until everyone has moved**, and its tone. */
+export interface SyncNote {
+  tone: 'info' | 'warn' | 'danger';
+  text: string;
+}
+
+/**
+ * What keep-in-sync says about itself.
+ *
+ * @param sync - The sync, or `null` before it is read.
+ * @param host - The old broker's host.
+ * @param now - The current time.
+ * @returns The line to show, or `null` when there is nothing to say.
+ */
+export function syncNote(sync: MigrationSync | null, host: string, now: Date = new Date()): SyncNote | null {
+  if (!sync) return null;
+  if (!sync.enabled && sync.stopped_reason) return { tone: 'danger', text: sync.stopped_reason };
+  if (!sync.enabled) {
+    return sync.available
+      ? null
+      : {
+          tone: 'info',
+          text: 'This server cannot keep credentials (no encryption key is set), so it cannot keep copying. Run `apiome pact migrate --follow` instead.',
+        };
+  }
+  if (sync.unreachable_since) {
+    return {
+      tone: 'warn',
+      text: `${host} has not answered since ${formatWhen(sync.unreachable_since)}${sync.last_error ? ` (${sync.last_error})` : ''}. Keep-in-sync stops itself after ${sync.unreachable_limit_hours} hours of that.`,
+    };
+  }
+  if (sync.last_error) return { tone: 'warn', text: `The last pass did not finish: ${sync.last_error}` };
+  const last = sync.last_success_at ? `Last copied ${sinceWhen(sync.last_success_at, now)}. ` : '';
+  const next = sync.next_run_at ? `Next pass ${formatWhen(sync.next_run_at)}.` : '';
+  return last || next ? { tone: 'info', text: `${last}${next}`.trim() } : null;
+}
+
+/**
+ * The sentence under the switch.
+ *
+ * @param sync - The sync, or `null`.
+ * @returns E.g. “Every 15 minutes, anything new at the old broker is brought over, so stragglers lose nothing.”
+ */
+export function syncSentence(sync: MigrationSync | null): string {
+  const minutes = sync?.interval_minutes ?? SYNC_INTERVAL_MINUTES;
+  return `Every ${minutes} minutes, anything new at the old broker is brought over, so stragglers lose nothing. The token is kept encrypted while this is on and deleted when it is off.`;
+}
+
+/**
+ * Check a keep-in-sync switch: on or off, how often, and (to switch on) the credentials.
+ *
+ * @param body - The parsed JSON.
+ * @returns The body, or why it is refused (a field REST does not know is refused by name).
+ */
+export function checkSyncBody(body: unknown): Checked {
+  const record = objectOf(body);
+  if (!record) return { ok: false, error: 'Send the switch as a JSON object.' };
+  const allowed = ['enabled', 'interval_minutes', ...CREDENTIAL_FIELDS];
+  const unknown = Object.keys(record).find((key) => !allowed.includes(key));
+  if (unknown !== undefined) return { ok: false, error: `Unsupported field ${unknown}.` };
+  if (typeof record.enabled !== 'boolean') return { ok: false, error: 'enabled is true or false.' };
+  if (record.interval_minutes !== undefined && !Number.isInteger(record.interval_minutes)) {
+    return { ok: false, error: 'interval_minutes is a whole number of minutes.' };
+  }
+  const problem = credentialProblem(record);
+  return problem ? { ok: false, error: problem } : { ok: true, body: record };
+}
+
+/**
+ * Keep-in-sync as `apiome pact migrate --follow` and as the REST request that switches it on.
+ *
+ * @param form - The **Connect** step (the source and how to sign in).
+ * @param runId - The copy to keep in sync.
+ * @param tenant - The workspace's handle, or empty to leave `{tenant}` in the REST path.
+ * @returns The action for `pactCommandSurfaces`.
+ */
+export function syncCommandAction(form: SourceForm, runId: string, tenant = ''): PactAction {
+  const source = form.source.trim() || 'https://broker.example.com';
+  const basic = form.auth === 'basic';
+  return {
+    verb: 'migrate',
+    options: [
+      { flag: '--from', value: source },
+      ...(basic
+        ? [
+            { flag: '--username', value: form.username || '<username>' },
+            { flag: '--password', value: form.password || 'password', secret: `${SOURCE_VARIABLE_PREFIX}PASSWORD` },
+          ]
+        : [{ flag: '--token', value: form.token || 'token', secret: `${SOURCE_VARIABLE_PREFIX}TOKEN` }]),
+      { flag: '--follow', value: true },
+    ],
+    rest: {
+      method: 'PUT',
+      path: tenantPath(tenant, `/${MIGRATION_PROXY_PATH}/runs/${runId}/sync`),
+      body: {
+        enabled: true,
+        ...(basic ? { username: form.username || '<username>', password: form.password || 'password' } : { token: form.token || 'token' }),
+        interval_minutes: SYNC_INTERVAL_MINUTES,
+      },
+      variablePrefix: SOURCE_VARIABLE_PREFIX,
+    },
+  };
 }

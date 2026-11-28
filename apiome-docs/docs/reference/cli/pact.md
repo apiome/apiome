@@ -321,6 +321,8 @@ Migrate a Pact Broker or PactFlow workspace into Apiome (POST …/pact-migration
 
 Reads the source through its REST API — pacticipants and labels, versions with branches and tags, pacts, verification results, environments, current deployments and releases, webhooks — and re-creates them in the workspace -b/-k (or PACT_BROKER_BASE_URL/TOKEN) names, keeping the source's timestamps. Importing again changes nothing, so a run can be repeated; progress is kept in --state, so a second run skips what the first imported. --dry-run checks every record and writes nothing.
 
+--follow keeps copying while pipelines move over one by one: every --interval minutes (15) it runs again from --state, so only what was published to the source since is read and copied. It stops on Ctrl-C, or by itself when the source has been unreachable for 24 hours (exit 1, saying so).
+
 The report lists everything not portable (PactFlow secrets, which are never exported, are listed for re-entry; webhooks with redacted credentials are imported disabled) and every refused record with its reason. Exits 0 when every record was imported (or, with --dry-run, would be); 1 otherwise.
 
 ```text
@@ -340,6 +342,8 @@ apiome pact migrate [OPTIONS]
 | `--restart` | flag |  |  | Ignore the progress kept in --state and send everything. |
 | `--matrix-limit` | integer range | `1000` |  | Matrix rows read per integration (pacts and results). |
 | `--batch-bytes` | integer range | `4194304` |  | About how many bytes of records one request carries. |
+| `--follow` | flag |  |  | Keep copying until everyone has moved: after the copy, run again every --interval minutes, copying only what is new, until stopped (Ctrl-C) or the source has been unreachable for 24 hours. |
+| `--interval` | integer range | `15` |  | Minutes between --follow passes. |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |

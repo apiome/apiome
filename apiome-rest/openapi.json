@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.708.0",
+    "version": "1.709.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -50157,6 +50157,216 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}/sync": {
+      "get": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Read a migration's keep-in-sync",
+        "description": "Whether the migration is kept in sync with the old broker (PFX-8.17): how often, when the next pass is due, when one last copied, since when the source could not be read, and why the sync stopped itself if it did. A run that was never kept in sync answers `enabled: false`. Requires `pacts:view`.",
+        "operationId": "read_migration_sync_v1_tenants__tenant_slug__pact_migration_runs__run_id__sync_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id",
+              "description": "Run Id schema."
+            },
+            "description": "Path parameter identifying the run id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readamigrationskeepinsyncauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readamigrationskeepinsyncauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readamigrationskeepinsync Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readamigrationskeepinsync Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read a migration's keep-in-sync.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactMigrationSyncView",
+                  "description": "Response payload for readamigrationskeepinsyncresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`pact-migration-run-not-found`: this workspace has no such run."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readamigrationskeepinsyncresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pact-broker"
+        ],
+        "summary": "Switch a migration's keep-in-sync on or off",
+        "description": "Keep copying until everyone has moved (PFX-8.17) \u2014 the CLI's `apiome pact migrate --follow`, run by the server. `enabled: true` with the source's credentials: they are tried against the source, then kept sealed (AES-256-GCM, never in clear) and every `interval_minutes` (15 by default) the run copies again, skipping everything it already imported \u2014 only what is new is copied, and its agreement check and who-has-moved list are refreshed. `enabled: false` stops it and deletes the credentials. A sync stops itself, and says why, when the source has been unreachable for 24 hours. A workspace keeps one migration in sync at a time. Requires `pacts:create` and `pacts:edit`.",
+        "operationId": "update_migration_sync_v1_tenants__tenant_slug__pact_migration_runs__run_id__sync_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id",
+              "description": "Run Id schema."
+            },
+            "description": "Path parameter identifying the run id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Switchamigrationskeepinsynconoroffauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Switchamigrationskeepinsynconoroffauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Switchamigrationskeepinsynconoroff Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Switchamigrationskeepinsynconoroff Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePactMigrationSyncRequest",
+                "description": "Request body for switchamigrationskeepinsynconoroffrequest."
+              }
+            }
+          },
+          "description": "Request body for switch a migration's keep-in-sync on or off."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for switch a migration's keep-in-sync on or off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactMigrationSyncView",
+                  "description": "Response payload for switchamigrationskeepinsynconoroffresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`pact-migration-run-not-found`: this workspace has no such run."
+          },
+          "409": {
+            "description": "`pact-migration-sync-active`: another migration of this workspace is kept in sync."
+          },
+          "422": {
+            "description": "`pact-migration-sync-invalid` (the run is a dry run), or a `pact-migration-source-*` code: the credentials were tried before anything was kept."
+          },
+          "503": {
+            "description": "`pact-migration-sync-unavailable`: no master key (`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`) is configured, so the credentials cannot be kept."
           }
         }
       }
@@ -235582,6 +235792,155 @@
         "title": "PactMatchingRuleEntry",
         "description": "One matching rule, in one shape whichever specification version filed it."
       },
+      "PactMigrationSyncView": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id",
+            "description": "Run ID.",
+            "example": "run_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether what is new at the old broker is copied on a schedule.",
+            "example": true
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "title": "Interval Minutes",
+            "description": "How often a pass runs.",
+            "example": 1
+          },
+          "next_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Migration Sync View schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Migration Sync View schema."
+              }
+            ],
+            "title": "Next Run At",
+            "description": "When the next pass is due (while enabled)."
+          },
+          "last_pass_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Migration Sync View schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Migration Sync View schema."
+              }
+            ],
+            "title": "Last Pass At",
+            "description": "Last Pass At timestamp (ISO 8601)."
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Migration Sync View schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Migration Sync View schema."
+              }
+            ],
+            "title": "Last Success At",
+            "description": "When a pass last copied without failing."
+          },
+          "unreachable_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Migration Sync View schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Migration Sync View schema."
+              }
+            ],
+            "title": "Unreachable Since",
+            "description": "Since when the old broker could not be read; after 24 hours the sync stops itself."
+          },
+          "passes": {
+            "type": "integer",
+            "title": "Passes",
+            "description": "Passes that ran to the end.",
+            "default": 0,
+            "example": 1
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Migration Sync View schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Migration Sync View schema."
+              }
+            ],
+            "title": "Last Error",
+            "description": "What went wrong in the last pass."
+          },
+          "stopped_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Migration Sync View schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Migration Sync View schema."
+              }
+            ],
+            "title": "Stopped Reason",
+            "description": "Why the sync stopped itself (an unreachable source, unopenable credentials \u2026)."
+          },
+          "enabled_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Migration Sync View schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Migration Sync View schema."
+              }
+            ],
+            "title": "Enabled By",
+            "description": "Enabled By."
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "description": "Whether this server can keep credentials at all (a master key is configured); without one, switching on answers 503 `pact-migration-sync-unavailable`.",
+            "example": false
+          },
+          "unreachable_limit_hours": {
+            "type": "integer",
+            "title": "Unreachable Limit Hours",
+            "description": "How long the source may be unreachable before the sync stops.",
+            "example": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "enabled",
+          "interval_minutes",
+          "available",
+          "unreachable_limit_hours"
+        ],
+        "title": "PactMigrationSyncView",
+        "description": "Whether a migration is kept in sync, and how its passes have gone."
+      },
       "PactPairHealth": {
         "properties": {
           "provider": {
@@ -280336,6 +280695,79 @@
         "title": "UnresolvedRefsResponse",
         "description": "Tenant-wide unresolved-``$ref`` summary for the type registry (#3457).\n\n``unresolved_ref_count`` (every unresolved edge) and ``affected_primitive_count``\n(distinct primitives carrying at least one) are the KPIs consumed by the registry\ncoverage/stats endpoint (#3454); ``primitives`` is the per-primitive breakdown the\nresolver UI lists (#3470), one page at a time: ``has_more`` says whether another page\nexists and ``next_cursor`` is the ``cursor`` that reads it (#7196). The two counts cover\nthe whole tenant, not the page."
       },
+      "UpdatePactMigrationSyncRequest": {
+        "properties": {
+          "token": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "password",
+                "writeOnly": true,
+                "description": "Request body for update pact migration sync."
+              },
+              {
+                "type": "null",
+                "description": "Request body for update pact migration sync."
+              }
+            ],
+            "title": "Token",
+            "description": "A bearer token for the source; a read-only one is enough. Never stored."
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512,
+                "description": "Request body for update pact migration sync."
+              },
+              {
+                "type": "null",
+                "description": "Request body for update pact migration sync."
+              }
+            ],
+            "title": "Username",
+            "description": "Basic-auth user of an open-source broker without tokens."
+          },
+          "password": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "password",
+                "writeOnly": true,
+                "description": "Request body for update pact migration sync."
+              },
+              {
+                "type": "null",
+                "description": "Request body for update pact migration sync."
+              }
+            ],
+            "title": "Password",
+            "description": "Basic-auth password. Never stored."
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "On: copy what is new on a schedule. Off: stop, and let go of the credentials.",
+            "example": true
+          },
+          "interval_minutes": {
+            "type": "integer",
+            "maximum": 1440.0,
+            "minimum": 5.0,
+            "title": "Interval Minutes",
+            "description": "How often to copy again (5 minutes to a day).",
+            "default": 15,
+            "example": 5
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "UpdatePactMigrationSyncRequest",
+        "description": "Switch keep-in-sync on (with the source's credentials) or off."
+      },
       "UpgradeApplyRequest": {
         "properties": {
           "target": {
@@ -301942,6 +302374,15 @@
             "description": "About how many bytes of records are written at a time.",
             "default": 4194304,
             "example": 1024
+          },
+          "agreement_questions": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Agreement Questions",
+            "description": "After a copy, how many can-i-deploy questions to ask both brokers to check they agree (PFX-8.17). 0 skips the check.",
+            "default": 40,
+            "example": 1
           }
         },
         "additionalProperties": false,
@@ -301990,7 +302431,7 @@
           "phase": {
             "type": "string",
             "title": "Phase",
-            "description": "`reading`, the record kind being copied, or `done`.",
+            "description": "`reading`, the record kind being copied, `checking` (the agreement check), or `done`.",
             "example": "example"
           },
           "percent": {
@@ -302016,7 +302457,7 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Facts",
-            "description": "What the run learned: `product`, `cleanup_rules_set`, and \u2014 from a dry run \u2014 `cleanup_would_skip` (versions the keep-rules would leave behind), `results_not_latest` and `labels_and_tags` (how many the source has)."
+            "description": "What the run learned: `product`, `cleanup_rules_set`, and \u2014 from a dry run \u2014 `cleanup_would_skip` (versions the keep-rules would leave behind), `results_not_latest` and `labels_and_tags` (how many the source has). After a copy (PFX-8.17): `agreement` \u2014 `{asked, agree, not_asked, differences: [{question, pacticipant, version, environment, source, apiome, cause}], differences_dropped, checked_at}` or `{error}`; `moved` \u2014 `{total, moved, pacticipants: [{name, last: apiome|source|none, apiome_at, source_at}], dropped, checked_at}` or `{error}`. `source_error` is the `pact-migration-source-*` code of a run the source broke."
           },
           "findings": {
             "items": {

@@ -61,6 +61,13 @@ def _segment(value: str) -> str:
     return quote(value, safe="")
 
 
+class SourceReadError(CliError):
+    """The source broker could not be read: unreachable, refusing, or not answering as a broker.
+
+    ``apiome pact migrate --follow`` waits out this error (and only this one) for up to 24 hours.
+    """
+
+
 class SourceBroker:
     """A read-only client for the source broker.
 
@@ -146,7 +153,7 @@ class SourceBroker:
             The JSON object, or ``None`` for an allowed ``404``.
 
         Raises:
-            CliError: For a refusal, another error status, a body that is not a JSON object, or a
+            SourceReadError: For a refusal, another error status, a body that is not a JSON object, or a
                 connection failure — naming the path, never the token.
         """
         url = self.url(href)
@@ -154,32 +161,32 @@ class SourceBroker:
         try:
             response = self._client.get(url)
         except httpx.RequestError as exc:
-            raise CliError(
+            raise SourceReadError(
                 f"could not read {path} from the source broker: {exc}",
                 exit_code=EXIT_ERROR,
             ) from exc
         if response.status_code == 404 and missing_ok:
             return None
         if response.status_code in (401, 403):
-            raise CliError(
+            raise SourceReadError(
                 f"the source broker refused {path} (HTTP {response.status_code}): check --token "
                 "(a read token is enough) or --username/--password",
                 exit_code=EXIT_ERROR,
             )
         if response.status_code >= 300:
-            raise CliError(
+            raise SourceReadError(
                 f"the source broker answered HTTP {response.status_code} for {path}",
                 exit_code=EXIT_ERROR,
             )
         try:
             document = response.json()
         except ValueError as exc:
-            raise CliError(
+            raise SourceReadError(
                 f"the source broker's answer for {path} is not JSON",
                 exit_code=EXIT_ERROR,
             ) from exc
         if not isinstance(document, dict):
-            raise CliError(
+            raise SourceReadError(
                 f"the source broker's answer for {path} is not a JSON object",
                 exit_code=EXIT_ERROR,
             )

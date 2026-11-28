@@ -1113,6 +1113,15 @@ as a publish would refuse it. Imported webhook URLs are checked against the same
 policy as webhooks created by hand. Only members with **Pacts** create and edit can import, and each
 request writes one `pacts.migration.import` row to the access audit.
 
+`V459` (PFX-8.17) adds `pact_migration_sync`, the [keep-in-sync](../ship/pact-broker/migration.mdx#keep-copying-until-everyone-has-moved)
+of a migration: one new table, nothing existing touched. While a sync is on it holds the source
+broker's credentials sealed with `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS` (the same master keys as the
+credential vault); without a key, keep-in-sync cannot be switched on. A sweep runs the due passes
+every `APIOME_PACT_MIGRATION_SYNC_INTERVAL` seconds (default 60), at most
+`APIOME_PACT_MIGRATION_SYNC_BATCH_SIZE` (default 2) per tick, each an incremental copy from the old
+broker; set `APIOME_PACT_MIGRATION_SYNC_ENABLED=false` to hold them. A sync whose source has not
+answered for 24 hours switches itself off and deletes the credentials.
+
 ## Find slow queries
 
 Three tools show where database time goes: a statement counter in the apps, PostgreSQL's

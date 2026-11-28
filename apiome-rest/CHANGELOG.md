@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.885.0] - 2026-11-30
+
+### Added
+- **Migration switch-over: agreement check, who has moved, keep-in-sync (PFX-8.17, #7314).** OpenAPI 1.709.0;
+  apiome-db V459 (`pact_migration_sync`).
+  - **Agreement check.** After a copy, the run asks the old broker and Apiome the same can-i-deploy questions — up
+    to `options.agreement_questions` (default 40, 0–200; 0 skips it): every version the source has deployed or
+    released, then the latest version of each pacticipant, against each environment — as the matrix query
+    `pact-broker can-i-deploy` sends. `facts.agreement` holds `asked`, `agree`, `not_asked` and each difference
+    with both answers and its `cause`: the version, pact or verification result that was not copied (with the
+    reason the run left it behind), a result only Apiome has, a question the old broker could not answer, or a
+    different environment. A question either side cannot answer is a difference, never dropped. The run's phase
+    reads `checking` meanwhile.
+  - **Who has moved.** `facts.moved` lists each pacticipant's `last` publication — `apiome`, `source` or `none` —
+    from its newest pact (as consumer) or verification result (as provider) on each side; copied records keep the
+    source's time, so only a publication to Apiome after the source's newest counts as moved.
+  - **Keep-in-sync.** `GET` / `PUT /v1/tenants/{t}/pact-migration/runs/{id}/sync` — `{"enabled": true, "token": …,
+    "interval_minutes": 15}` tries the credentials on the source, then keeps them sealed (envelope cipher `OPMS`,
+    `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`) while it is on; every interval a sweep reopens the run, which skips
+    every record it already imported — their documents are not fetched — so only what is new is copied, and its
+    agreement check and who-has-moved list are refreshed. `{"enabled": false}` deletes the credentials. After 24
+    hours of the source not answering, the sync stops itself and says why (`stopped_reason`). One migration per
+    workspace is kept in sync (`409 pact-migration-sync-active`); a dry run cannot be (`422
+    pact-migration-sync-invalid`); without a master key `503 pact-migration-sync-unavailable`. `pacts:create` and
+    `pacts:edit` to switch, `pacts:view` to read; audited as `pacts.migration.sync.update`.
+  - Settings: `APIOME_PACT_MIGRATION_SYNC_ENABLED` (kill switch), `APIOME_PACT_MIGRATION_SYNC_INTERVAL` (sweep
+    tick, 60 s) and `APIOME_PACT_MIGRATION_SYNC_BATCH_SIZE` (passes per tick, 2).
+
+### Changed
+- `facts.source_error` names the `pact-migration-source-*` code of a run the source broke.
+
 ## [1.884.0] - 2026-11-30
 
 ### Added

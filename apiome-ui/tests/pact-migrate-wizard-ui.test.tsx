@@ -16,7 +16,13 @@
  * still going is reopened on arrival. Without the permission the wizard is read-only and says who to
  * ask. The token never appears in the page. axe passes on every step.
  *
- * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures `pact-migrate-choose` and `pact-migrate-copy`.
+ * Switch over (PFX-8.17, #7314): the agreement check — all agree, or “38 of 40 agree.” with each
+ * difference and its cause; who has moved; keep-in-sync switched on with the credentials (asked for
+ * first when the wizard has none) and off, a sync that stopped itself, REST's refusal, and the switch
+ * read-only without the permission.
+ *
+ * `A11Y_FIXTURE_DUMP=1` writes the docs-screenshot fixtures `pact-migrate-choose`, `pact-migrate-copy`
+ * and `pact-migrate-switch`.
  */
 
 import React from 'react';
@@ -59,6 +65,7 @@ let rest: {
   read: (id: string) => Answer;
   stop: (id: string) => Answer;
   resume: (id: string, body: Record<string, unknown>) => Answer;
+  sync: (id: string, method: string, body?: Record<string, unknown>) => Answer;
 };
 let calls: Call[];
 
@@ -72,17 +79,104 @@ function installFetch() {
     const body = init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : undefined;
     calls.push({ url, method, body });
     let answer: Answer = refused(404, 'not found');
-    const run = /^\/api\/pact\/migrations\/([0-9a-f-]{36})(\/stop|\/resume)?/.exec(url);
+    const run = /^\/api\/pact\/migrations\/([0-9a-f-]{36})(\/stop|\/resume|\/sync)?/.exec(url);
     if (url === '/api/pact/broker-address') answer = ok({ broker_base_url: fixture.broker });
     else if (url === API && method === 'GET') answer = rest.list();
     else if (url === API) answer = rest.start(body ?? {});
     else if (url === `${API}/test`) answer = rest.test(body ?? {});
     else if (run && run[2] === '/stop') answer = rest.stop(run[1]);
     else if (run && run[2] === '/resume') answer = rest.resume(run[1], body ?? {});
+    else if (run && run[2] === '/sync') answer = rest.sync(run[1], method, body);
     else if (run) answer = rest.read(run[1]);
     return { ok: answer.status < 400, status: answer.status, json: async () => answer.body } as Response;
   }) as unknown as typeof fetch;
 }
+
+/** Keep-in-sync off, as REST answers a run never kept in sync. */
+function syncOff(id: string, extra: Record<string, unknown> = {}) {
+  return {
+    run_id: id,
+    enabled: false,
+    interval_minutes: 15,
+    next_run_at: null,
+    last_pass_at: null,
+    last_success_at: null,
+    unreachable_since: null,
+    passes: 0,
+    last_error: null,
+    stopped_reason: null,
+    enabled_by: null,
+    available: true,
+    unreachable_limit_hours: 24,
+    ...extra,
+  };
+}
+
+/** Keep-in-sync on, its next pass due. */
+function syncOn(id: string) {
+  return syncOff(id, { enabled: true, next_run_at: '2026-11-27T14:45:00Z', enabled_by: 'ada@acme.example' });
+}
+
+const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+
+/** A finished copy with the switch-over facts: every answer agrees, two of three have moved. */
+function agreedCopy() {
+  return {
+    ...COPY_DONE,
+    facts: {
+      ...COPY_DONE.facts,
+      agreement: { asked: 40, agree: 40, not_asked: 0, differences: [], differences_dropped: 0, checked_at: minutesAgo(1) },
+      moved: {
+        total: 3,
+        moved: 2,
+        dropped: 0,
+        checked_at: minutesAgo(1),
+        pacticipants: [
+          { name: 'Mobile App', last: 'source', apiome_at: null, source_at: minutesAgo(26 * 60) },
+          { name: 'Orders UI', last: 'apiome', apiome_at: minutesAgo(12), source_at: minutesAgo(3 * 24 * 60) },
+          { name: 'Billing Service', last: 'apiome', apiome_at: minutesAgo(60), source_at: minutesAgo(5 * 24 * 60) },
+        ],
+      },
+    },
+  };
+}
+
+/** The same copy where two answers differ. */
+function disagreedCopy() {
+  const run = agreedCopy();
+  return {
+    ...run,
+    facts: {
+      ...run.facts,
+      agreement: {
+        ...run.facts.agreement,
+        agree: 38,
+        differences: [
+          {
+            question: 'Legacy Cart 4.2.0 → production',
+            pacticipant: 'Legacy Cart',
+            version: '4.2.0',
+            environment: 'production',
+            source: 'yes',
+            apiome: 'unknown',
+            cause: 'the verification result of Legacy Cart 4.2.0 by Payments API 9.1.0 was not copied: consumer version missing at source',
+          },
+          {
+            question: 'Orders UI 7.0.1 → production',
+            pacticipant: 'Orders UI',
+            version: '7.0.1',
+            environment: 'production',
+            source: 'no answer',
+            apiome: 'yes',
+            cause: 'acme.pactflow.io could not answer it — a selector it does not support? (acme.pactflow.io answered HTTP 400 for /matrix.)',
+          },
+        ],
+      },
+    },
+  };
+}
+
+const puts = (suffix: string) => calls.filter((call) => call.method === 'PUT' && call.url === `${API}${suffix}`);
 
 const posts = (suffix = '') => calls.filter((call) => call.method === 'POST' && call.url === `${API}${suffix}`);
 
@@ -95,6 +189,7 @@ beforeEach(() => {
     read: (id) => ok([DRY, COPY, COPY_FAILED, COPY_DONE, COPY_STOPPED, OLDER].find((run) => run.id === id) ?? DRY),
     stop: () => ok({ ...COPY, stop_requested: true }),
     resume: () => ok(COPY),
+    sync: (id, method, body) => ok(method === 'PUT' && body?.enabled ? syncOn(id) : syncOff(id)),
   };
   installFetch();
 });
@@ -287,6 +382,7 @@ describe('Choose', () => {
         restart: true,
         matrix_limit: 5000,
         batch_bytes: 4194304,
+        agreement_questions: 40,
       },
     });
   });
@@ -518,5 +614,153 @@ describe('Past migrations', () => {
     await mount();
     expect(await screen.findByTestId('pmg-copy')).toBeInTheDocument();
     expect(screen.getByTestId('pmg-copy-state')).toHaveTextContent('copying · 31%');
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Switch over — PFX-8.17 (#7314)
+// ---------------------------------------------------------------------------------------------
+
+describe('Switch over: agreement, who has moved, keep-in-sync', () => {
+  /** Copy with a token in hand, then continue to Switch over on `run`. */
+  async function toSwitch(run: ReturnType<typeof agreedCopy>) {
+    rest.read = () => ok(run);
+    const view = await toChoose();
+    fireEvent.click(screen.getByTestId('pmg-start'));
+    await screen.findByTestId('pmg-copy');
+    await waitFor(() => expect(screen.getByTestId('pmg-continue')).toBeEnabled());
+    fireEvent.click(screen.getByTestId('pmg-continue'));
+    await screen.findByTestId('pmg-switch');
+    await waitFor(() => expect(calls.some((call) => call.url === `${API}/${run.id}/sync`)).toBe(true));
+    await act(async () => {});
+    return view;
+  }
+
+  it('says both brokers agree, lists who has moved, and passes axe', async () => {
+    const run = agreedCopy();
+    const { container } = await toSwitch(run);
+    expect(screen.getByTestId('pmg-agreement')).toHaveAttribute('data-tone', 'ok');
+    expect(screen.getByTestId('pmg-headline')).toHaveTextContent('Copied. Apiome and acme.pactflow.io give the same answers.');
+    expect(screen.getByTestId('pmg-agreement-detail')).toHaveTextContent(
+      'Checked 40 can-i-deploy questions on both sides: 40 agree.',
+    );
+    expect(screen.queryByTestId('pmg-differences')).not.toBeInTheDocument();
+    expect(screen.getByTestId('pmg-moved-summary')).toHaveTextContent('2 of 3 have moved. The rest last published to acme.pactflow.io.');
+    const rows = within(screen.getByTestId('pmg-moved')).getAllByRole('row').slice(1);
+    expect(rows.map((row) => row.textContent)).toEqual([
+      'Mobile AppOld brokeryesterday',
+      'Orders UIApiome12 min ago',
+      'Billing ServiceApiome1 h ago',
+    ]);
+    expect(screen.getByTestId('pmg-sync-switch')).not.toBeChecked();
+    expect(screen.getByTestId('pmg-sync')).toHaveTextContent('Every 15 minutes, anything new at the old broker is brought over');
+
+    fireEvent.click(screen.getByTestId('pmg-sync-switch'));
+    await waitFor(() => expect(puts(`/${run.id}/sync`)).toHaveLength(1));
+    expect(puts(`/${run.id}/sync`)[0].body).toEqual({ enabled: true, token: TOKEN });
+    await waitFor(() => expect(screen.getByTestId('pmg-sync-switch')).toBeChecked());
+    expect(screen.getByTestId('pmg-sync-note')).toHaveTextContent('Next pass 27 Nov 2026, 14:45 UTC.');
+    const block = screen.getByTestId('pmg-command-block');
+    expect(block).toHaveTextContent('--follow');
+    expect(block).not.toHaveTextContent(TOKEN);
+    expect(container).not.toHaveTextContent(TOKEN);
+    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+    writeA11yFixture('pact-migrate-switch', liveMarkup(container.firstElementChild!));
+
+    fireEvent.click(screen.getByTestId('pmg-sync-switch'));
+    await waitFor(() => expect(puts(`/${run.id}/sync`)).toHaveLength(2));
+    expect(puts(`/${run.id}/sync`)[1].body).toEqual({ enabled: false });
+    await waitFor(() => expect(screen.getByTestId('pmg-sync-switch')).not.toBeChecked());
+  });
+
+  it('lists each difference with its cause when the answers disagree', async () => {
+    const run = disagreedCopy();
+    const { container } = await toSwitch(run);
+    expect(screen.getByTestId('pmg-agreement')).toHaveAttribute('data-tone', 'warn');
+    expect(screen.getByTestId('pmg-headline')).toHaveTextContent('38 of 40 agree.');
+    expect(screen.getByTestId('pmg-agreement-detail')).toHaveTextContent('2 answers differ, each listed with why.');
+    const table = screen.getByTestId('pmg-differences');
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent('Legacy Cart 4.2.0 → production');
+    expect(rows[0]).toHaveTextContent('was not copied: consumer version missing at source');
+    expect(rows[1]).toHaveTextContent('no answer');
+    expect(rows[1]).toHaveTextContent('a selector it does not support?');
+    expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+  });
+
+  it('asks for the credentials before keeping a reopened copy in sync', async () => {
+    const run = agreedCopy();
+    rest.list = () => ok({ runs: [run], can_migrate: true });
+    rest.read = () => ok(run);
+    await mount();
+    await openPast(run);
+    await screen.findByTestId('pmg-switch');
+    await act(async () => {});
+    fireEvent.click(screen.getByTestId('pmg-sync-switch'));
+    const ask = await screen.findByTestId('pmg-sync-credentials');
+    expect(ask).toHaveTextContent('Sign in to acme.pactflow.io to keep copying');
+    expect(ask).toHaveTextContent('Kept encrypted while keep-in-sync is on; deleted when it is off.');
+    expect(puts(`/${run.id}/sync`)).toHaveLength(0);
+    expect(screen.getByTestId('pmg-sync-on')).toBeDisabled();
+    fireEvent.change(screen.getByTestId('pmg-sync-token'), { target: { value: TOKEN } });
+    fireEvent.click(screen.getByTestId('pmg-sync-on'));
+    await waitFor(() => expect(puts(`/${run.id}/sync`)).toHaveLength(1));
+    expect(puts(`/${run.id}/sync`)[0].body).toEqual({ enabled: true, token: TOKEN });
+    await waitFor(() => expect(screen.queryByTestId('pmg-sync-credentials')).not.toBeInTheDocument());
+  });
+
+  it('says why a sync stopped itself', async () => {
+    const run = agreedCopy();
+    const reason =
+      'Keep-in-sync stopped itself: acme.pactflow.io could not be read for 24 hours (last: Could not reach acme.pactflow.io (ConnectError). Check the URL.). Nothing was lost; switch it on again once the old broker answers.';
+    rest.sync = (id) => ok(syncOff(id, { stopped_reason: reason, unreachable_since: '2026-11-26T09:00:00Z' }));
+    await toSwitch(run);
+    const note = await screen.findByTestId('pmg-sync-note');
+    expect(note).toHaveTextContent(reason);
+    expect(note).toHaveAttribute('role', 'alert');
+    expect(screen.getByTestId('pmg-sync-switch')).not.toBeChecked();
+    expect(screen.getByTestId('pmg-sync-switch')).toBeEnabled();
+  });
+
+  it('warns while the old broker has not answered', async () => {
+    const run = agreedCopy();
+    rest.sync = (id) => ok({ ...syncOn(id), unreachable_since: '2026-11-27T09:00:00Z', last_error: 'acme.pactflow.io answered HTTP 503 for /.' });
+    await toSwitch(run);
+    expect(await screen.findByTestId('pmg-sync-note')).toHaveTextContent(
+      'acme.pactflow.io has not answered since 27 Nov 2026, 09:00 UTC (acme.pactflow.io answered HTTP 503 for /.). Keep-in-sync stops itself after 24 hours of that.',
+    );
+  });
+
+  it('shows REST’s refusal and leaves the switch off', async () => {
+    const run = agreedCopy();
+    rest.sync = (id, method) =>
+      method === 'PUT'
+        ? refused(503, 'this server cannot keep credentials: set APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS to keep a migration in sync')
+        : ok(syncOff(id));
+    await toSwitch(run);
+    fireEvent.click(screen.getByTestId('pmg-sync-switch'));
+    expect(await screen.findByTestId('pmg-sync-error')).toHaveTextContent('APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS');
+    expect(screen.getByTestId('pmg-sync-switch')).not.toBeChecked();
+  });
+
+  it('cannot be switched without the permission and says who to ask', async () => {
+    const run = agreedCopy();
+    rest.list = () => ok({ runs: [run], can_migrate: false });
+    rest.read = () => ok(run);
+    await mount();
+    await openPast(run);
+    await screen.findByTestId('pmg-switch');
+    await act(async () => {});
+    expect(screen.getByTestId('pmg-sync-switch')).toBeDisabled();
+    expect(screen.getByTestId('pmg-sync')).toHaveTextContent('Ask a workspace admin to keep this migration in sync.');
+  });
+
+  it('says what could not be worked out instead of hiding it', async () => {
+    const run = { ...COPY_DONE, facts: { ...COPY_DONE.facts, agreement: { error: 'the agreement check could not run (RuntimeError)' }, moved: { error: 'who has moved could not be read (RuntimeError)' } } };
+    await toSwitch(run as ReturnType<typeof agreedCopy>);
+    expect(screen.getByTestId('pmg-agreement')).toHaveAttribute('data-tone', 'danger');
+    expect(screen.getByTestId('pmg-headline')).toHaveTextContent('The agreement check could not run.');
+    expect(screen.getByTestId('pmg-moved-error')).toHaveTextContent('who has moved could not be read (RuntimeError).');
   });
 });

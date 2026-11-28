@@ -279,3 +279,148 @@ describe('the proxies’ checks', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------------------------
+// Switch over — PFX-8.17 (#7314)
+// ---------------------------------------------------------------------------------------------
+
+describe('switch over', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const model = require('../lib/pact-migration') as typeof import('../lib/pact-migration');
+  const NOW = new Date('2026-11-27T15:00:00Z');
+  const done = fixture.copyDone as unknown as import('../lib/pact-migration').MigrationRun;
+  const withFacts = (facts: Record<string, unknown>) => ({ ...done, facts: { ...done.facts, ...facts } });
+  const agreement = { asked: 40, agree: 40, not_asked: 0, differences: [], differences_dropped: 0, checked_at: null };
+
+  it('reads the agreement check as the mockup does', () => {
+    expect(model.agreementSummary(withFacts({ agreement }))).toEqual({
+      tone: 'ok',
+      title: 'Copied. Apiome and acme.pactflow.io give the same answers.',
+      detail: 'Checked 40 can-i-deploy questions on both sides: 40 agree.',
+    });
+    const differ = model.agreementSummary(withFacts({ agreement: { ...agreement, agree: 38, not_asked: 12 } }));
+    expect(differ.tone).toBe('warn');
+    expect(differ.title).toBe('38 of 40 agree.');
+    expect(differ.detail).toBe(
+      'Checked 40 can-i-deploy questions on both sides: 2 answers differ, each listed with why. 12 more were not asked.',
+    );
+    expect(model.agreementSummary(withFacts({ agreement: { ...agreement, asked: 0, agree: 0 } })).detail).toContain(
+      'no can-i-deploy question to ask',
+    );
+    expect(model.agreementSummary(withFacts({ agreement: { error: 'it broke' } }))).toMatchObject({
+      tone: 'danger',
+      detail: 'it broke. The copy stands.',
+    });
+    expect(model.agreementSummary(done).detail).toBe('The agreement check was not run for this copy.');
+  });
+
+  it('lists the differences and how many were not listed', () => {
+    const difference = { question: 'Web 2 → production', pacticipant: 'Web', version: '2', environment: 'production', source: 'yes', apiome: 'unknown', cause: 'x' };
+    expect(model.agreementDifferences(withFacts({ agreement: { ...agreement, differences: [difference], differences_dropped: 3 } }))).toEqual({
+      rows: [difference],
+      more: 3,
+    });
+    expect(model.agreementDifferences(withFacts({ agreement: { error: 'x' } }))).toEqual({ rows: [], more: 0 });
+  });
+
+  it('says how long ago, in words', () => {
+    expect(model.sinceWhen(null, NOW)).toBe('');
+    expect(model.sinceWhen('2026-11-27T14:59:40Z', NOW)).toBe('just now');
+    expect(model.sinceWhen('2026-11-27T14:48:00Z', NOW)).toBe('12 min ago');
+    expect(model.sinceWhen('2026-11-27T12:00:00Z', NOW)).toBe('3 h ago');
+    expect(model.sinceWhen('2026-11-26T10:00:00Z', NOW)).toBe('yesterday');
+    expect(model.sinceWhen('2026-11-22T10:00:00Z', NOW)).toBe('5 days ago');
+    expect(model.sinceWhen('2026-09-01T10:00:00Z', NOW)).toBe('1 Sep 2026, 10:00 UTC');
+  });
+
+  it('lists who has moved, stragglers as REST orders them', () => {
+    const moved = {
+      total: 3,
+      moved: 1,
+      dropped: 2,
+      checked_at: null,
+      pacticipants: [
+        { name: 'Mobile App', last: 'source', apiome_at: null, source_at: '2026-11-26T10:00:00Z' },
+        { name: 'Orders UI', last: 'apiome', apiome_at: '2026-11-27T14:48:00Z', source_at: null },
+        { name: 'Ledger', last: 'none', apiome_at: null, source_at: null },
+      ],
+    };
+    const read = model.movedRows(withFacts({ moved }), NOW);
+    expect(read.rows).toEqual([
+      { name: 'Mobile App', label: 'Old broker', status: 'warning', when: 'yesterday' },
+      { name: 'Orders UI', label: 'Apiome', status: 'passed', when: '12 min ago' },
+      { name: 'Ledger', label: 'Nothing published', status: 'neutral', when: '' },
+    ]);
+    expect(read.summary).toBe('1 of 3 have moved. The rest last published to acme.pactflow.io.');
+    expect(read.more).toBe(2);
+    expect(model.movedRows(withFacts({ moved: { ...moved, moved: 3 } }), NOW).summary).toBe(
+      'All 3 have moved: each last published to Apiome.',
+    );
+    expect(model.movedRows(withFacts({ moved: { error: 'no' } }), NOW).error).toBe('no.');
+  });
+
+  it('says what keep-in-sync is doing', () => {
+    const off = {
+      run_id: done.id,
+      enabled: false,
+      interval_minutes: 15,
+      next_run_at: null,
+      last_pass_at: null,
+      last_success_at: null,
+      unreachable_since: null,
+      passes: 0,
+      last_error: null,
+      stopped_reason: null,
+      enabled_by: null,
+      available: true,
+      unreachable_limit_hours: 24,
+    };
+    expect(model.syncNote(null, 'h')).toBeNull();
+    expect(model.syncNote(off, 'h')).toBeNull();
+    expect(model.syncNote({ ...off, available: false }, 'h')?.text).toContain('apiome pact migrate --follow');
+    expect(model.syncNote({ ...off, stopped_reason: 'Stopped: gone.' }, 'h')).toEqual({ tone: 'danger', text: 'Stopped: gone.' });
+    const on = { ...off, enabled: true, next_run_at: '2026-11-27T15:15:00Z', last_success_at: '2026-11-27T14:48:00Z' };
+    expect(model.syncNote(on, 'h', NOW)).toEqual({ tone: 'info', text: 'Last copied 12 min ago. Next pass 27 Nov 2026, 15:15 UTC.' });
+    expect(model.syncNote({ ...on, unreachable_since: '2026-11-27T09:00:00Z' }, 'acme.pactflow.io', NOW)?.text).toBe(
+      'acme.pactflow.io has not answered since 27 Nov 2026, 09:00 UTC. Keep-in-sync stops itself after 24 hours of that.',
+    );
+    expect(model.syncNote({ ...on, last_error: 'A migration was running.' }, 'h', NOW)).toEqual({
+      tone: 'warn',
+      text: 'The last pass did not finish: A migration was running.',
+    });
+    expect(model.syncSentence(null)).toContain('Every 15 minutes, anything new at the old broker is brought over');
+  });
+
+  it('checks a keep-in-sync switch and names what it refuses', () => {
+    expect(model.checkSyncBody({ enabled: true, token: 't', interval_minutes: 30 })).toEqual({
+      ok: true,
+      body: { enabled: true, token: 't', interval_minutes: 30 },
+    });
+    expect(model.checkSyncBody({ enabled: false })).toEqual({ ok: true, body: { enabled: false } });
+    expect(model.checkSyncBody({ enabled: 1 })).toEqual({ ok: false, error: 'enabled is true or false.' });
+    expect(model.checkSyncBody({ enabled: true, every: 5 })).toEqual({ ok: false, error: 'Unsupported field every.' });
+    expect(model.checkSyncBody({ enabled: true, token: 't', password: 'p' })).toMatchObject({ ok: false });
+    expect(model.checkSyncBody([])).toMatchObject({ ok: false });
+  });
+
+  it('writes keep-in-sync as apiome pact migrate --follow and the REST PUT, the token as a variable', () => {
+    const form = { ...EMPTY_SOURCE, source: 'https://acme.pactflow.io', token: 's3cr3t' };
+    const action = model.syncCommandAction(form, done.id, 'acme');
+    const surfaces = pactCommandSurfaces(action);
+    const text = JSON.stringify(surfaces);
+    expect(text).toContain('--from https://acme.pactflow.io');
+    expect(text).toContain('--follow');
+    expect(text).toContain('$PACT_SOURCE_BROKER_TOKEN');
+    expect(text).not.toContain('s3cr3t');
+    expect(action.rest).toMatchObject({ method: 'PUT', path: `/v1/tenants/acme/pact-migration/runs/${done.id}/sync` });
+    expect(unsupportedLines(action)).toEqual([]);
+  });
+
+  it('badges a copy that is asking both brokers, and reports the switch-over facts', () => {
+    expect(runBadge({ ...done, status: 'running', phase: 'checking' })).toEqual({ status: 'running', label: 'asking both brokers' });
+    const report = reportDocument(withFacts({ agreement }), []);
+    expect(report.agreement).toEqual(agreement);
+    expect(report.moved).toBeNull();
+    expect(DEFAULT_OPTIONS.agreement_questions).toBe(40);
+  });
+});

@@ -11,13 +11,15 @@
  *    what happens on a conflict; everything not portable is one status strip.
  * 3. **Copy** — the server runs the migration: progress, a per-kind table, failures and a live log.
  *    It survives leaving the page, can be stopped, and resumes without copying anything twice.
- * 4. **Switch over** — the two variables that point a pipeline at Apiome, and the report.
+ * 4. **Switch over** — whether both brokers give the same can-i-deploy answers, the two variables
+ *    that point a pipeline at Apiome, who has moved, keep-in-sync (PFX-8.17), and the report.
  *
  * **Past migrations** (the header's one action) lists every run and reopens one. The page's **The
  * same, from anywhere** block writes the wizard as `apiome pact migrate` and as the REST request.
  *
  * The source is only read. Its token or password stays in this component's memory and in the request
- * that starts or resumes a run; it is never stored, so reopening a run asks for it again.
+ * that starts or resumes a run; it is not stored, so reopening a run asks for it again — except while
+ * keep-in-sync is on, which REST keeps it for, sealed.
  * Without `pacts:create` and `pacts:edit` the wizard is read-only and says who to ask.
  */
 
@@ -40,6 +42,7 @@ import {
   hasCredentials,
   migrateCommandAction,
   runIsOver,
+  syncCommandAction,
   stepForRun,
   type MigrationOptions,
   type MigrationRun,
@@ -230,7 +233,8 @@ export default function MigrateWizardClient({ pollMs }: { pollMs?: number }) {
       : null);
 
   const mode: MigrationRun['mode'] = step === 'connect' || (step === 'choose' && !copy) ? 'dry-run' : 'copy';
-  const action = migrateCommandAction(form, options, step === 'choose' ? 'copy' : mode);
+  const action =
+    step === 'switch' && copy ? syncCommandAction(form, copy.id) : migrateCommandAction(form, options, step === 'choose' ? 'copy' : mode);
 
   return (
     <Page>
@@ -329,7 +333,15 @@ export default function MigrateWizardClient({ pollMs }: { pollMs?: number }) {
               />
             ) : null}
             {step === 'switch' && copy ? (
-              <SwitchOverStep run={copy} log={tracked.log} broker={broker} onBack={() => setStep('copy')} />
+              <SwitchOverStep
+                run={copy}
+                log={tracked.log}
+                broker={broker}
+                canMigrate={canMigrate}
+                form={form}
+                onForm={setForm}
+                onBack={() => setStep('copy')}
+              />
             ) : null}
           </section>
 
@@ -338,7 +350,11 @@ export default function MigrateWizardClient({ pollMs }: { pollMs?: number }) {
               headingLevel={2}
               surfaces={pactCommandSurfaces(action)}
               unsupported={unsupportedLines(action)}
-              footnote="The command keeps its progress in a state file (--state) on your machine; the wizard keeps it on the server, under Past migrations. Replace {tenant} with your workspace’s handle in the REST path."
+              footnote={
+                step === 'switch'
+                  ? 'apiome pact migrate --follow keeps copying from your machine, every 15 minutes (--interval), until you stop it or the source has been unreachable for 24 hours; the switch above does the same on the server. Replace {tenant} with your workspace’s handle in the REST path.'
+                  : 'The command keeps its progress in a state file (--state) on your machine; the wizard keeps it on the server, under Past migrations. Replace {tenant} with your workspace’s handle in the REST path.'
+              }
               data-testid="pmg-command-block"
             />
           </section>

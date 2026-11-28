@@ -856,6 +856,7 @@ _usage_sweep_task: asyncio.Task | None = None
 _lint_waiver_expiry_task: asyncio.Task | None = None
 _verification_schedule_task: asyncio.Task | None = None
 _pact_remediation_task: asyncio.Task | None = None
+_pact_migration_sync_task: asyncio.Task | None = None
 _async_job_retention_task: asyncio.Task | None = None
 _mock_activity_flush_task: asyncio.Task | None = None
 _document_lifecycle_task: asyncio.Task | None = None
@@ -1337,6 +1338,38 @@ async def startup_event():
             except Exception:
                 log.exception("pact remediation sweep")
 
+    async def _pact_migration_sync_sweep() -> None:
+        """Run the due keep-in-sync passes of broker migrations (PFX-8.17, #7314).
+
+        Ticks on ``APIOME_PACT_MIGRATION_SYNC_INTERVAL`` (default 60s) and runs at most
+        ``APIOME_PACT_MIGRATION_SYNC_BATCH_SIZE`` passes, each an incremental copy from the old
+        broker. ``APIOME_PACT_MIGRATION_SYNC_ENABLED=false`` halts it (passes wait; nothing is lost).
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        tick_seconds = max(15, int(settings.pact_migration_sync_interval_seconds))
+        sweep_db = sweep_database()
+        while True:
+            await asyncio.sleep(tick_seconds)
+            if not settings.pact_migration_sync_enabled:
+                continue
+            try:
+
+                def _run_sync() -> Any:
+                    with sweep_tick(sweep_db) as thread_db:
+                        from .pact_migration_sync import process_migration_sync_sweep
+
+                        return process_migration_sync_sweep(
+                            thread_db, limit=max(1, int(settings.pact_migration_sync_batch_size))
+                        )
+
+                await asyncio.to_thread(_run_sync)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("pact migration sync sweep")
+
     async def _async_job_retention_sweep() -> None:
         """Periodically reap expired async jobs and export artifacts (IXH-6.3, #5122).
 
@@ -1600,6 +1633,8 @@ async def startup_event():
     _verification_schedule_task = asyncio.create_task(_verification_schedule_sweep())
     global _pact_remediation_task
     _pact_remediation_task = asyncio.create_task(_pact_remediation_sweep())
+    global _pact_migration_sync_task
+    _pact_migration_sync_task = asyncio.create_task(_pact_migration_sync_sweep())
     global _async_job_retention_task
     _async_job_retention_task = asyncio.create_task(_async_job_retention_sweep())
 
@@ -1740,6 +1775,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _pact_remediation_task = None
+    global _pact_migration_sync_task
+    if _pact_migration_sync_task is not None:
+        _pact_migration_sync_task.cancel()
+        try:
+            await _pact_migration_sync_task
+        except asyncio.CancelledError:
+            pass
+        _pact_migration_sync_task = None
     global _mock_activity_flush_task
     if _mock_activity_flush_task is not None:
         _mock_activity_flush_task.cancel()

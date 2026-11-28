@@ -46,7 +46,8 @@ export interface ConnectStepProps {
  * The credential fields for one way of signing in — shared with the **Copy** step, which asks for
  * them again before a resume.
  *
- * @param props - The form, its setter, an id prefix and whether the fields are read-only.
+ * @param props - The form, its setter, an id prefix, whether the fields are read-only, and whether
+ *   the credentials will be kept (keep-in-sync keeps them sealed while it is on — PFX-8.17).
  * @returns The token field, or the username and password fields.
  */
 export function CredentialFields({
@@ -54,18 +55,23 @@ export function CredentialFields({
   onChange,
   idPrefix,
   disabled = false,
+  kept = false,
 }: {
   form: SourceForm;
   onChange: (form: SourceForm) => void;
   idPrefix: string;
   disabled?: boolean;
+  kept?: boolean;
 }) {
+  const storage = kept
+    ? 'Kept encrypted while keep-in-sync is on; deleted when it is off.'
+    : 'Used for this migration only; not stored.';
   if (form.auth === 'token') {
     return (
       <FormField
         label="Token"
         htmlFor={`${idPrefix}-token`}
-        helperText="A read-only token is enough. Used for this migration only; not stored."
+        helperText={`A read-only token is enough. ${storage}`}
       >
         <Input
           id={`${idPrefix}-token`}
@@ -94,7 +100,7 @@ export function CredentialFields({
       <FormField
         label="Password"
         htmlFor={`${idPrefix}-password`}
-        helperText="Used for this migration only; not stored."
+        helperText={storage}
       >
         <Input
           id={`${idPrefix}-password`}

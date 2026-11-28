@@ -53,7 +53,13 @@ from apiome_cli.client.pact_broker_requests import (
     read_pact_file,
     undeployment_targets,
 )
-from apiome_cli.client.pact_migration_source import DEFAULT_MATRIX_LIMIT, SourceBroker, fetch_document, read_source
+from apiome_cli.client.pact_migration_source import (
+    DEFAULT_MATRIX_LIMIT,
+    SourceBroker,
+    SourceReadError,
+    fetch_document,
+    read_source,
+)
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS
 from apiome_cli.output import emit_json, json_mode_from_context
 from apiome_cli.pact_broker_output import (
@@ -1017,6 +1023,15 @@ def verify(
 #: Where ``migrate`` keeps its progress unless ``--state`` says otherwise.
 DEFAULT_STATE_FILE = "apiome-pact-migrate.state.json"
 
+#: Minutes between ``migrate --follow`` passes unless --interval says otherwise.
+DEFAULT_FOLLOW_MINUTES = 15
+#: How long ``migrate --follow`` waits for an unreachable source before it stops itself.
+FOLLOW_GIVE_UP_SECONDS = 24 * 60 * 60
+
+#: Waits between passes and reads the clock (tests replace both).
+_sleep = time.sleep
+_clock = time.monotonic
+
 
 def _ready(
     broker: SourceBroker,
@@ -1090,6 +1105,21 @@ def migrate(
         min=1024,
         help="About how many bytes of records one request carries.",
     ),
+    follow: bool = typer.Option(
+        False,
+        "--follow",
+        help=(
+            "Keep copying until everyone has moved: after the copy, run again every --interval minutes, "
+            "copying only what is new, until stopped (Ctrl-C) or the source has been unreachable for 24 hours."
+        ),
+    ),
+    interval: int = typer.Option(
+        DEFAULT_FOLLOW_MINUTES,
+        "--interval",
+        min=1,
+        max=1440,
+        help="Minutes between --follow passes.",
+    ),
     output: str = OUTPUT,
     broker_base_url: Optional[str] = BROKER_BASE_URL,
     broker_token: Optional[str] = BROKER_TOKEN,
@@ -1102,6 +1132,10 @@ def migrate(
     timestamps. Importing again changes nothing, so a run can be repeated; progress is kept in --state,
     so a second run skips what the first imported. --dry-run checks every record and writes nothing.
 
+    --follow keeps copying while pipelines move over one by one: every --interval minutes (15) it runs
+    again from --state, so only what was published to the source since is read and copied. It stops on
+    Ctrl-C, or by itself when the source has been unreachable for 24 hours (exit 1, saying so).
+
     The report lists everything not portable (PactFlow secrets, which are never exported, are listed
     for re-entry; webhooks with redacted credentials are imported disabled) and every refused record
     with its reason. Exits 0 when every record was imported (or, with --dry-run, would be); 1 otherwise.
@@ -1111,82 +1145,190 @@ def migrate(
         raise typer.BadParameter(
             "give the source broker's base URL", param_hint="--from"
         )
+    if follow and dry_run:
+        raise typer.BadParameter(
+            "--follow copies on a schedule; a --dry-run writes nothing to follow with",
+            param_hint="--follow",
+        )
     conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
     tenant = conn.tenant(command="migrate")
-    plan = Plan()
-    summary = MigrationSummary(dry_run=dry_run)
     route = conn.api_path(
         "/pact-migration/" + ("check" if dry_run else "import"), command="migrate"
     )
 
-    with SourceBroker(
-        source,
-        token=token,
-        username=username,
-        password=password,
-        verify=not insecure_from_context(ctx),
-    ) as broker:
-        try:
-            progress = MigrationState.load(
-                state, source=broker.base_url, target=tenant, restart=restart
+    def one_pass(first: bool) -> MigrationSummary:
+        """Read the source and import (or check) what is not done yet; print the report."""
+        plan = Plan()
+        summary = MigrationSummary(dry_run=dry_run)
+        with SourceBroker(
+            source,
+            token=token,
+            username=username,
+            password=password,
+            verify=not insecure_from_context(ctx),
+        ) as broker:
+            _migrate_pass(
+                conn,
+                broker,
+                plan,
+                summary,
+                route=route,
+                tenant=tenant,
+                state=state,
+                restart=restart and first,
+                dry_run=dry_run,
+                matrix_limit=matrix_limit,
+                batch_bytes=batch_bytes,
             )
-        except ValueError as exc:
-            raise typer.BadParameter(str(exc), param_hint="--state") from exc
-        to_fetch = read_source(
-            broker,
-            plan,
-            matrix_limit=matrix_limit,
-            progress=lambda line: typer.echo(line + " …", err=True),
+            base_url = broker.base_url
+        report = dict(
+            source=base_url,
+            tenant=tenant,
+            read_counts=plan.read_counts,
+            findings=plan.findings,
+            state_file=None if dry_run else str(state),
         )
-        for kind in KINDS:
-            queued = plan.records[kind]
-            pending = [
-                (key, record) for key, record in queued if key not in progress.done
-            ]
-            summary.skipped[kind] = len(queued) - len(pending)
-            if pending:
+        _emit(
+            fmt,
+            migration_document(summary, **report),
+            migration_lines(summary, fmt=fmt, **report),
+        )
+        return summary
+
+    if not follow:
+        summary = one_pass(True)
+        raise typer.Exit(EXIT_ERROR if summary.refused else EXIT_SUCCESS)
+    raise typer.Exit(_follow(one_pass, source=source, interval_minutes=interval))
+
+
+def _migrate_pass(
+    conn: BrokerConnection,
+    broker: SourceBroker,
+    plan: Plan,
+    summary: MigrationSummary,
+    *,
+    route: str,
+    tenant: str,
+    state: Path,
+    restart: bool,
+    dry_run: bool,
+    matrix_limit: int,
+    batch_bytes: int,
+) -> None:
+    """Run one migration pass: read the source and send every record not done yet, in batches.
+
+    Args:
+        conn: The connection to Apiome.
+        broker: The source.
+        plan: Where the records read go.
+        summary: Where each outcome is counted.
+        route: ``…/pact-migration/import`` (or ``/check`` for a dry run).
+        tenant: The workspace.
+        state: The progress file.
+        restart: Ignore the progress kept in ``state``.
+        dry_run: Check only; write no state.
+        matrix_limit: Matrix rows read per integration.
+        batch_bytes: About how many bytes one request carries.
+
+    Raises:
+        SourceReadError: When the source cannot be read.
+        CliError: When Apiome's answer is not what an import answers.
+    """
+    try:
+        progress = MigrationState.load(
+            state, source=broker.base_url, target=tenant, restart=restart
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc), param_hint="--state") from exc
+    to_fetch = read_source(
+        broker,
+        plan,
+        matrix_limit=matrix_limit,
+        progress=lambda line: typer.echo(line + " …", err=True),
+    )
+    for kind in KINDS:
+        queued = plan.records[kind]
+        pending = [(key, record) for key, record in queued if key not in progress.done]
+        summary.skipped[kind] = len(queued) - len(pending)
+        if pending:
+            typer.echo(
+                f"{'Checking' if dry_run else 'Importing'} {len(pending)} {kind} record(s) …",
+                err=True,
+            )
+        for batch in batches(
+            _ready(broker, pending, to_fetch, summary, plan), max_bytes=batch_bytes
+        ):
+            body = {
+                "source": broker.base_url,
+                "records": [record for _, record in batch],
+            }
+            answer = conn.client.post(route, json=body).json()
+            results = answer.get("results") if isinstance(answer, dict) else None
+            if not isinstance(results, list) or len(results) != len(batch):
+                raise CliError(
+                    "Apiome's answer to an import batch did not list every record",
+                    exit_code=EXIT_ERROR,
+                )
+            for (key, record), result in zip(batch, results):
+                summary.add(kind, key, result)
+                if not dry_run and result.get("outcome") in DONE_OUTCOMES:
+                    progress.done.add(key)
+                if kind in ("pact", "verification"):
+                    record["content" if kind == "pact" else "result"] = None  # free the document
+            if not dry_run:
+                progress.save()
+
+
+def _follow(one_pass: Any, *, source: str, interval_minutes: int) -> int:
+    """Run ``one_pass`` now and then every ``interval_minutes`` until stopped.
+
+    The first pass must read the source (a wrong URL or token is a mistake to say at once); a later
+    pass that cannot is waited out — up to :data:`FOLLOW_GIVE_UP_SECONDS`, after which following stops
+    itself and says so.
+
+    Args:
+        one_pass: Runs one pass; ``one_pass(first)`` answers its summary.
+        source: The source URL, for the messages.
+        interval_minutes: Minutes between passes.
+
+    Returns:
+        The exit code: 0 when stopped with Ctrl-C after a clean pass; 1 when the last pass refused
+        records or the source stayed unreachable for 24 hours.
+    """
+    last = one_pass(True)
+    unreachable_since: Optional[float] = None
+    passes = 1
+    try:
+        while True:
+            typer.echo(
+                f"Following {source}: next pass in {interval_minutes} min (Ctrl-C to stop) …",
+                err=True,
+            )
+            _sleep(interval_minutes * 60)
+            passes += 1
+            try:
+                last = one_pass(False)
+                unreachable_since = None
+            except SourceReadError as exc:
+                now = _clock()
+                unreachable_since = now if unreachable_since is None else unreachable_since
+                waited = now - unreachable_since
+                if waited >= FOLLOW_GIVE_UP_SECONDS:
+                    typer.echo(
+                        f"Stopped following: {source} could not be read for "
+                        f"{int(waited // 3600)} hours ({exc.message}). Nothing was lost; run "
+                        "`apiome pact migrate --follow` again once it answers.",
+                        err=True,
+                    )
+                    return EXIT_ERROR
                 typer.echo(
-                    f"{'Checking' if dry_run else 'Importing'} {len(pending)} {kind} record(s) …",
+                    f"Pass {passes}: {exc.message} — trying again in {interval_minutes} min "
+                    f"(stops after 24 hours unreachable).",
                     err=True,
                 )
-            for batch in batches(
-                _ready(broker, pending, to_fetch, summary, plan), max_bytes=batch_bytes
-            ):
-                body = {
-                    "source": broker.base_url,
-                    "records": [record for _, record in batch],
-                }
-                answer = conn.client.post(route, json=body).json()
-                results = answer.get("results") if isinstance(answer, dict) else None
-                if not isinstance(results, list) or len(results) != len(batch):
-                    raise CliError(
-                        "Apiome's answer to an import batch did not list every record",
-                        exit_code=EXIT_ERROR,
-                    )
-                for (key, record), result in zip(batch, results):
-                    summary.add(kind, key, result)
-                    if not dry_run and result.get("outcome") in DONE_OUTCOMES:
-                        progress.done.add(key)
-                    if kind in ("pact", "verification"):
-                        record["content" if kind == "pact" else "result"] = (
-                            None  # free the document
-                        )
-                if not dry_run:
-                    progress.save()
-
-    report = dict(
-        source=broker.base_url,
-        tenant=tenant,
-        read_counts=plan.read_counts,
-        findings=plan.findings,
-        state_file=None if dry_run else str(state),
-    )
-    _emit(
-        fmt,
-        migration_document(summary, **report),
-        migration_lines(summary, fmt=fmt, **report),
-    )
-    raise typer.Exit(EXIT_ERROR if summary.refused else EXIT_SUCCESS)
+    except KeyboardInterrupt:
+        typer.echo(f"Stopped following {source} after {passes} pass(es).", err=True)
+    return EXIT_ERROR if last.refused else EXIT_SUCCESS
 
 
 #: ``(command name, function)`` in the order ``pact-broker help`` lists them.

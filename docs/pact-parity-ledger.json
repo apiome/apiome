@@ -135,6 +135,8 @@
         "--restart": "Choose \u2192 Advanced \u2192 Start from scratch",
         "--matrix-limit": "Choose \u2192 Advanced \u2192 Matrix rows read per integration",
         "--batch-bytes": "Choose \u2192 Advanced \u2192 Bytes written at a time",
+        "--follow": "Switch over → Keep copying until everyone has moved (the server copies on a schedule)",
+        "--interval": "Switch over → Keep copying until everyone has moved: every 15 minutes (REST interval_minutes)",
         "--output": "Copy (the per-kind table, failures and log) and Switch over \u2192 Download report",
         "--broker-base-url": "The workspace you are signed in to",
         "--broker-token": "Your session"
@@ -736,6 +738,13 @@
       "ui": "/ade/dashboard/pacts/migrate",
       "cli": null,
       "reason": "Resuming a server-side run is the wizard\u2019s or REST\u2019s; apiome pact migrate resumes its own runs by being run again with the same --state file."
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/migrations/[runId]/sync",
+      "rest": "PUT /v1/tenants/{tenant}/pact-migration/runs/{run}/sync",
+      "ui": "/ade/dashboard/pacts/migrate",
+      "cli": "migrate"
     }
   ]
 }

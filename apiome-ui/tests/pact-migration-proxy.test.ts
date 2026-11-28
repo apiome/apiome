@@ -141,3 +141,32 @@ describe('one run', () => {
     expect(forwarded).toEqual([]);
   });
 });
+
+describe('keep-in-sync (PFX-8.17)', () => {
+  it('reads and switches a run’s keep-in-sync, credentials passing through', async () => {
+    const { GET: readSync, PUT: switchSync } = await import('../src/app/api/pact/migrations/[runId]/sync/route');
+    const url = `/api/pact/migrations/${RUN_ID}/sync`;
+    expect((await readSync(await request(url, undefined, 'GET'), params(RUN_ID))).status).toBe(200);
+    const on = { enabled: true, token: TOKEN, interval_minutes: 15 };
+    expect((await switchSync(await request(url, on, 'PUT'), params(RUN_ID))).status).toBe(200);
+    expect((await switchSync(await request(url, { enabled: false }, 'PUT'), params(RUN_ID))).status).toBe(200);
+    expect(forwarded).toEqual([
+      { url: `${BASE}/runs/${RUN_ID}/sync`, method: 'GET', body: undefined },
+      { url: `${BASE}/runs/${RUN_ID}/sync`, method: 'PUT', body: on },
+      { url: `${BASE}/runs/${RUN_ID}/sync`, method: 'PUT', body: { enabled: false } },
+    ]);
+  });
+
+  it('refuses a bad id or body without calling REST, and keeps REST’s refusal', async () => {
+    const { GET: readSync, PUT: switchSync } = await import('../src/app/api/pact/migrations/[runId]/sync/route');
+    expect((await readSync(await request('/x', undefined, 'GET'), params('nope'))).status).toBe(404);
+    const url = `/api/pact/migrations/${RUN_ID}/sync`;
+    for (const body of [{ enabled: 'yes' }, { enabled: true, schedule: 'hourly' }, { enabled: true, interval_minutes: 1.5 }, null]) {
+      const refused = await switchSync(await request(url, body, 'PUT'), params(RUN_ID));
+      expect(refused.status).toBe(400);
+    }
+    expect(forwarded).toHaveLength(0);
+    restAnswer = () => NextResponse.json({ success: false, error: 'cannot keep credentials' }, { status: 503 });
+    expect((await switchSync(await request(url, { enabled: true, token: TOKEN }, 'PUT'), params(RUN_ID))).status).toBe(503);
+  });
+});

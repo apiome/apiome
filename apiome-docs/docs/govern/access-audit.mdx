@@ -139,6 +139,7 @@ from the Pact CLI, a Pact library, the console or an MCP tool. Source `api_key` 
 | `pacts.contract.auto_publish` | A standing source published (or tried to publish) a provider contract. The detail holds the `trigger` (`project-publish` or `push`), the `outcome` (`published`, `unchanged`, `failed` or `skipped`), the source and, unless it published, the `reason`. Its source is `system`. |
 | `pacts.migration.import` | A batch of records [imported from another Pact Broker](../ship/pact-broker/migration.mdx) (one entry per request of `apiome pact migrate`). The entry never holds the records. |
 | `pacts.migration.source.test`, `pacts.migration.run.start`, `.stop`, `.resume` | The [Migration wizard](../ship/pact-broker/migration.mdx#migrate-from-the-ui) tested the connection to a source broker, or started, stopped or resumed a migration run. The entry never holds the source's credentials or the records. |
+| `pacts.migration.sync.update` | [Keep-in-sync](../ship/pact-broker/migration.mdx#keep-copying-until-everyone-has-moved) of a migration was switched on (the source's credentials were sealed) or off (they were deleted). The entry never holds the credentials. |
 | `pacts.pacticipant.delete`, `.restore`, `pacts.version.delete`, `.restore` | A pacticipant or version is deleted or restored; the detail holds the `reason`. |
 | `pacts.label.add`, `pacts.label.remove` | A label is added or removed. |
 | `pacts.retention.apply`, `pacts.purge` | A retention run is applied, or deleted rows are purged after 30 days; the detail holds the counts. |

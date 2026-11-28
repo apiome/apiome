@@ -11,6 +11,7 @@ import {
   type MigrationOptions,
   type MigrationRun,
   type MigrationRunList,
+  type MigrationSync,
   type SourceTest,
 } from '@lib/pact-migration';
 import { fetchBrokerAddress } from '../pactSettings/contractSettingsApi';
@@ -119,4 +120,46 @@ export async function stopMigration(runId: string): Promise<MigrationRun> {
  */
 export async function resumeMigration(runId: string, credentials: Credentials): Promise<MigrationRun> {
   return readJson<MigrationRun>(await fetch(runPath(runId, '/resume'), post(credentials)), 'Could not resume the migration');
+}
+
+/**
+ * Read whether a copy is kept in sync (PFX-8.17).
+ *
+ * @param runId - The copy.
+ * @returns Its keep-in-sync.
+ */
+export async function fetchSync(runId: string): Promise<MigrationSync> {
+  return readJson<MigrationSync>(
+    await fetch(runPath(runId, '/sync'), { cache: 'no-store' }),
+    'Could not read keep-in-sync',
+  );
+}
+
+/**
+ * Switch keep-in-sync on (with the source's credentials, which REST keeps sealed) or off.
+ *
+ * @param runId - The copy.
+ * @param enabled - On or off.
+ * @param credentials - To switch on: how to sign in to the source.
+ * @param intervalMinutes - How often to copy again.
+ * @returns The keep-in-sync afterwards.
+ */
+export async function switchSync(
+  runId: string,
+  enabled: boolean,
+  credentials: Credentials = {},
+  intervalMinutes?: number,
+): Promise<MigrationSync> {
+  const body = enabled
+    ? { enabled, ...credentials, ...(intervalMinutes ? { interval_minutes: intervalMinutes } : {}) }
+    : { enabled };
+  return readJson<MigrationSync>(
+    await fetch(runPath(runId, '/sync'), {
+      method: 'PUT',
+      cache: 'no-store',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+    enabled ? 'Could not switch keep-in-sync on' : 'Could not switch keep-in-sync off',
+  );
 }

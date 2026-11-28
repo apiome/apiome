@@ -1640,10 +1640,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'migration',
     title: 'Migrate from Pact Broker or PactFlow',
-    summary: 'Import a Pact Broker or PactFlow workspace with the Migration wizard or one command.',
+    summary: 'Import a Pact Broker or PactFlow workspace, check both answer alike, and keep copying until everyone has moved.',
     page: 'apiome-docs/docs/ship/pact-broker/migration.mdx',
     section: 'reference',
-    keywords: ['contracts', 'migration', 'wizard', 'import', 'dry run', 'resume', 'past migrations', 'conflicts', 'state file', 'webhooks', 'secrets', 'timestamps'],
+    keywords: ['contracts', 'migration', 'wizard', 'import', 'dry run', 'resume', 'past migrations', 'conflicts', 'state file', 'webhooks', 'secrets', 'timestamps', 'switch over', 'agreement check', 'can-i-deploy', 'who has moved', 'keep in sync', 'follow'],
   },
   {
     id: 'self-host',

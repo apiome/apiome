@@ -52,6 +52,42 @@ def _row(version: str, day: int, result: Optional[int]) -> Dict[str, Any]:
     return row
 
 
+def _answer(deployable: Optional[bool], *rows: Dict[str, Any]) -> Dict[str, Any]:
+    """A source's matrix answer to a can-i-deploy question."""
+    return {"summary": {"deployable": deployable}, "matrix": list(rows)}
+
+
+def _question_row(version: str, result: Optional[int], *, success: Optional[bool] = None) -> Dict[str, Any]:
+    """One row of a can-i-deploy answer: Web ``version``'s pact, verified by API 10 as result ``result``."""
+    base = f"http://internal.broker:9292/pacts/provider/API/consumer/Web/version/{version}"
+    row: Dict[str, Any] = {
+        "consumer": {"name": "Web", "version": {"number": version}},
+        "provider": {"name": "API"},
+        "pact": {"_links": {"self": {"href": base}}},
+    }
+    if result is not None:
+        row["provider"] = {"name": "API", "version": {"number": "10"}}
+        row["verificationResult"] = {
+            "success": success,
+            "_links": {"self": {"href": f"{base}/verification-results/{result}"}},
+        }
+    return row
+
+
+#: The three can-i-deploy questions the agreement check asks of :func:`documents`, and the source's answers.
+QUESTIONS = {
+    "/matrix?q[][pacticipant]=Web&q[][version]=2&latestby=cvp&environment=production": _answer(
+        True, _question_row("2", 3, success=True)
+    ),
+    "/matrix?q[][pacticipant]=Web&q[][version]=3&latestby=cvp&environment=production": _answer(
+        None, _question_row("3", None)
+    ),
+    "/matrix?q[][pacticipant]=API&q[][version]=10&latestby=cvp&environment=production": _answer(
+        True, _question_row("2", 3, success=True)
+    ),
+}
+
+
 def documents() -> Dict[str, Any]:
     """The source: 2 pacticipants, 4 versions, 3 pacts, 3 results, 1 environment, 1 deployment, 1 webhook."""
     pact = "/pacts/provider/API/consumer/Web/version/"
@@ -90,6 +126,8 @@ def documents() -> Dict[str, Any]:
                 ]
             }
         },
+        **QUESTIONS,
+        "/": {"_links": {"pb:pacticipants": {"href": "/pacticipants"}}},
         "/webhooks": {"_links": {"pb:webhooks": [{"href": "/webhooks/w1", "title": "ci"}]}},
         "/webhooks/w1": {
             "description": "ci",
@@ -107,7 +145,8 @@ class FakeSource:
     """An httpx transport answering from :func:`documents`, recording what was asked.
 
     Attributes:
-        docs: ``{path: document | status code}``; a missing path answers 404.
+        docs: ``{path: document | status code}``; a missing path answers 404. A key with its query
+            (``/matrix?q[][pacticipant]=Web&…``) answers that query only.
         requests: Every request received.
     """
 
@@ -124,7 +163,10 @@ class FakeSource:
 
         def handle(request: httpx.Request) -> httpx.Response:
             self.requests.append(request)
-            answer = self.docs.get(unquote(request.url.path), 404)
+            path = unquote(request.url.path)
+            query = unquote(request.url.query.decode() if isinstance(request.url.query, bytes) else request.url.query)
+            # A document keyed with its query (a can-i-deploy question) wins over the bare path.
+            answer = self.docs.get(f"{path}?{query}", self.docs.get(path, 404)) if query else self.docs.get(path, 404)
             if isinstance(answer, int):
                 return httpx.Response(answer, json={"error": "no"})
             return httpx.Response(200, json=answer)
@@ -194,3 +236,62 @@ class FakeStore:
 
     def done_keys(self, _db: Any, _tenant_id: str, _source: str) -> Set[str]:
         return {key for keys in self.done.values() for key in keys}
+
+
+class FakeApiomeMatrix:
+    """Answers can-i-deploy from what an ``Importer`` (``test_pact_migration_job``) wrote.
+
+    A question about a consumer version reads its pacts and their results; one about a provider
+    version reads the pacts of the consumer versions deployed (and their results by that version).
+    The verdict: ``None`` while a row has no result, ``False`` when one failed, else ``True``.
+    """
+
+    def __init__(self, importer: Any) -> None:
+        self.importer = importer
+        self.asked: List[Any] = []
+
+    def __call__(self, _db: Any, tenant_id: str, question: Any) -> Any:
+        from app.pact_migration_agreement import Answer
+
+        assert tenant_id == "tenant-acme"
+        self.asked.append(question)
+        written = self.importer.written
+        handle = question.pacticipant.lower()
+        deployed = {ident.split(":", 1)[1].split("@")[0] for ident in written if ident.startswith("deployment:")}
+        rows = set()
+        for ident in written:
+            if not ident.startswith("pact:"):
+                continue
+            provider, consumer, consumer_version = ident.split(":", 1)[1].split("/")
+            as_consumer = consumer == handle and consumer_version == question.version
+            as_provider = provider == handle and f"{consumer}/{consumer_version}" in deployed
+            if not (as_consumer or as_provider):
+                continue
+            results = [
+                record
+                for key, record in self.importer.records.items()
+                if key.startswith(f"verification:{provider}/{consumer}/{consumer_version}/")
+                and (as_consumer or record.result.provider_version == question.version)
+            ]
+            for record in results:
+                rows.add(
+                    (
+                        consumer,
+                        consumer_version,
+                        provider,
+                        record.result.provider_version,
+                        record.result.success,
+                        record.number,
+                    )
+                )
+            if not results:
+                rows.add((consumer, consumer_version, provider, None, None, None))
+        latest = {}
+        for row in sorted(rows, key=lambda r: r[5] or 0):
+            latest[row[:4]] = row
+        kept = frozenset(latest.values())
+        if not kept or any(row[4] is None for row in kept):
+            deployable = None
+        else:
+            deployable = all(row[4] for row in kept)
+        return Answer(deployable=deployable, rows=kept)

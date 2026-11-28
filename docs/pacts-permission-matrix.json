@@ -763,6 +763,20 @@
         "token": "read-token"
       },
       "note": "Also needs pacts:edit."
+    },
+    {
+      "id": "migration.sync.update",
+      "label": "Switch a migration's keep-in-sync on or off",
+      "permission": "pacts:create",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-migration/runs/{run}/sync",
+      "audit": "pacts.migration.sync.update",
+      "auditedBy": "route",
+      "body": {
+        "enabled": true,
+        "token": "read-token"
+      },
+      "note": "Also needs pacts:edit, like the migration it repeats. Switching on keeps the source's credentials sealed; switching off deletes them."
     }
   ],
   "reads": [
