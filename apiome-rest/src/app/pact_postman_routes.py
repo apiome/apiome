@@ -6,7 +6,12 @@ expected response, and test scripts that check it. The pact is either
 
 * **stored** in the workspace's Pact Broker — ``provider`` and ``consumer``, plus at most one of
   ``consumerVersion``, ``tag``, ``branch`` or ``pactVersionSha`` (none: the latest pact), or
-* **inline** — ``pact``, a Pact document not yet published (the names default to its own).
+* **inline** — ``pact``, a Pact document not yet published (the names default to its own), or
+* **every consumer** of a provider — ``provider`` with ``allConsumers`` (PFX-8.18, #7315), and at
+  most one of ``tag`` or ``branch``: the latest such pact of each consumer, one folder each.
+
+``stateSetup`` (PFX-8.18) gives each request that needs provider states a pre-request script that
+sets them up through a ``{{stateChangeUrl}}`` variable (``stateChangeUrl`` fills it in).
 
 The call is stateless: nothing is stored. It needs ``pacts:view`` and reads only the caller's
 tenant. What the collection cannot carry (message and gRPC interactions, non-text bodies, values
@@ -23,7 +28,7 @@ PactFlow client knows it.
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -33,7 +38,7 @@ from .auth import validate_authentication
 from .config import settings
 from .database import db
 from .pact_contract_import import pact_consumer_name, pact_provider_name, pact_specification_version
-from .pact_postman import pact_to_postman
+from .pact_postman import OUTCOME_LEFT_OUT, POSTMAN_SCHEMA_URL, pact_to_postman
 from .pact_publication import (
     CODE_PACT_INVALID,
     CODE_PACT_NOT_FOUND,
@@ -43,11 +48,12 @@ from .pact_publication import (
     pact_content_sha,
     validate_pact_document,
 )
-from .pact_publication_store import get_latest_pact, get_pact, get_pact_by_sha
+from .pact_publication_store import get_latest_pact, get_pact, get_pact_by_sha, list_latest_pact_candidates
 from .pacticipant import CODE_NOT_FOUND, PacticipantValidationError
 from .permissions import Action, Resource, enforce_permission
 
 __all__ = [
+    "CODE_CONSUMER_NO_PACT",
     "CODE_EXPORT_INVALID",
     "CODE_NO_HTTP_INTERACTIONS",
     "PactPostmanRequest",
@@ -60,6 +66,8 @@ router = APIRouter(prefix="/v1/tenants", tags=["pact-broker"])
 CODE_EXPORT_INVALID = "pact-postman-export-invalid"
 #: The pact has no HTTP interaction the collection could carry.
 CODE_NO_HTTP_INTERACTIONS = "pact-postman-no-http-interactions"
+#: With ``allConsumers``: a consumer of the provider has no pact matching the tag or branch.
+CODE_CONSUMER_NO_PACT = "pact-postman-consumer-no-pact"
 
 _STATUS_BY_CODE = {
     CODE_EXPORT_INVALID: 422,
@@ -101,6 +109,24 @@ class PactPostmanRequest(BaseModel):
         "Omitted: empty, to fill in (Newman: `--env-var baseUrl=…`).",
     )
     tests: bool = Field(True, description="Give each request a test script that checks the expected response.")
+    all_consumers: bool = Field(
+        False,
+        alias="allConsumers",
+        description="Export the latest pact of every consumer of `provider` (with `tag` or `branch`: the latest "
+        "such pact), one folder per consumer. Leave `consumer`, `consumerVersion`, `pactVersionSha` and `pact` out.",
+    )
+    state_setup: bool = Field(
+        False,
+        alias="stateSetup",
+        description="Give each request that needs provider states a pre-request script that first POSTs "
+        '`{"state", "params", "action": "setup"}` per state to the `{{stateChangeUrl}}` variable.',
+    )
+    state_change_url: Optional[str] = Field(
+        None,
+        alias="stateChangeUrl",
+        description="The value of the `{{stateChangeUrl}}` variable (an http or https URL; only with `stateSetup`). "
+        "Omitted: empty, to fill in.",
+    )
 
 
 def _refuse(code: str, message: str, **extra: Any) -> HTTPException:
@@ -135,7 +161,23 @@ def _check_request(body: PactPostmanRequest) -> None:
         )
         if value is not None
     ]
-    if body.pact is not None:
+    if body.all_consumers:
+        if body.pact is not None or (body.consumer or "").strip():
+            raise _refuse(
+                CODE_EXPORT_INVALID,
+                "'allConsumers' exports every consumer of 'provider': leave 'consumer' and 'pact' out",
+            )
+        if not (body.provider or "").strip():
+            raise _refuse(CODE_EXPORT_INVALID, "'allConsumers' needs 'provider'")
+        pinned = [name for name in selections if name in ("consumerVersion", "pactVersionSha")]
+        if pinned:
+            raise _refuse(
+                CODE_EXPORT_INVALID,
+                f"'allConsumers' takes 'tag' or 'branch', not {', '.join(pinned)}: those name one consumer's pact",
+            )
+        if len(selections) > 1:
+            raise _refuse(CODE_EXPORT_INVALID, f"choose one of {', '.join(selections)}, not several")
+    elif body.pact is not None:
         if selections:
             raise _refuse(
                 CODE_EXPORT_INVALID,
@@ -146,10 +188,19 @@ def _check_request(body: PactPostmanRequest) -> None:
             raise _refuse(CODE_EXPORT_INVALID, "name the stored pact with 'provider' and 'consumer', or send 'pact'")
         if len(selections) > 1:
             raise _refuse(CODE_EXPORT_INVALID, f"choose one of {', '.join(selections)}, not several")
-    if body.base_url is not None:
-        parts = urlsplit(body.base_url.strip())
-        if parts.scheme not in ("http", "https") or not parts.netloc:
-            raise _refuse(CODE_EXPORT_INVALID, "'baseUrl' must be an absolute http or https URL")
+    if body.base_url is not None and not _is_http_url(body.base_url):
+        raise _refuse(CODE_EXPORT_INVALID, "'baseUrl' must be an absolute http or https URL")
+    if body.state_change_url is not None:
+        if not body.state_setup:
+            raise _refuse(CODE_EXPORT_INVALID, "'stateChangeUrl' is only used with 'stateSetup'")
+        if not _is_http_url(body.state_change_url):
+            raise _refuse(CODE_EXPORT_INVALID, "'stateChangeUrl' must be an absolute http or https URL")
+
+
+def _is_http_url(value: str) -> bool:
+    """Whether ``value`` is an absolute http or https URL."""
+    parts = urlsplit(value.strip())
+    return parts.scheme in ("http", "https") and bool(parts.netloc)
 
 
 def _load_stored(tenant_id: str, body: PactPostmanRequest) -> PactRecord:
@@ -246,6 +297,8 @@ def export_pact_postman_collection(
     """
     enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW)
     _check_request(body)
+    if body.all_consumers:
+        return _export_all_consumers(_tenant_id(auth_data), body)
     source: Dict[str, Any]
     try:
         if body.pact is not None:
@@ -280,6 +333,8 @@ def export_pact_postman_collection(
         base_url=body.base_url.strip() if body.base_url else None,
         tests=body.tests,
         description=described,
+        state_setup=body.state_setup,
+        state_change_url=body.state_change_url,
     )
     notices = [notice.as_json() for notice in export.notices]
     if export.exported_count == 0:
@@ -297,5 +352,108 @@ def export_pact_postman_collection(
             "exported": export.exported_count,
             "leftOut": export.left_out_count,
         },
+        "notices": notices,
+    }
+
+
+def _export_all_consumers(tenant_id: str, body: PactPostmanRequest) -> Dict[str, Any]:
+    """One collection with a folder per consumer of the provider (``allConsumers``).
+
+    Each consumer's pact is the latest it published for the provider (from consumer versions with
+    ``tag`` or on ``branch``, when one is given). A consumer without such a pact is not dropped
+    silently: it is a ``left-out`` notice. Every notice carries the ``consumer`` it is about.
+
+    Args:
+        tenant_id: The caller's tenant.
+        body: The checked request.
+
+    Returns:
+        ``{"collection", "pact": {"provider", "consumers": [...]}, "counts", "notices"}``.
+
+    Raises:
+        HTTPException: 404 for an unknown provider or one no consumer published a pact for; 422
+            ``pact-postman-no-http-interactions`` when no consumer's pact has an HTTP interaction.
+    """
+    provider_ref = str(body.provider).strip()
+    try:
+        provider, candidates = list_latest_pact_candidates(db, tenant_id, provider_ref)
+    except PacticipantValidationError as exc:
+        raise _refuse(getattr(exc, "code", CODE_NOT_FOUND), str(exc)) from exc
+    if not candidates:
+        raise _refuse(CODE_PACT_NOT_FOUND, f"no consumer has published a pact for provider '{provider.slug}'")
+
+    qualifier = f" with tag '{body.tag}'" if body.tag else f" from branch '{body.branch}'" if body.branch else ""
+    folders: List[Dict[str, Any]] = []
+    consumers: List[Dict[str, Any]] = []
+    notices: List[Dict[str, Any]] = []
+    counts = {"interactions": 0, "exported": 0, "leftOut": 0}
+    variables: List[Dict[str, Any]] = []
+    for candidate in sorted(candidates, key=lambda c: c.consumer_name.casefold()):
+        try:
+            record = get_latest_pact(
+                db, tenant_id, str(provider.id), str(candidate.consumer_id), tag=body.tag, branch=body.branch
+            )
+        except (PactPublicationError, PacticipantValidationError) as exc:
+            notices.append(
+                {
+                    "code": CODE_CONSUMER_NO_PACT,
+                    "outcome": OUTCOME_LEFT_OUT,
+                    "pointer": "",
+                    "message": f"{candidate.consumer_name} has no pact{qualifier} for {provider.name}: {exc}",
+                    "consumer": candidate.consumer_name,
+                }
+            )
+            continue
+        export = pact_to_postman(
+            record.content,
+            consumer=record.consumer_name,
+            provider=record.provider_name,
+            base_url=body.base_url.strip() if body.base_url else None,
+            tests=body.tests,
+            state_setup=body.state_setup,
+            state_change_url=body.state_change_url,
+        )
+        notices.extend({**notice.as_json(), "consumer": record.consumer_name} for notice in export.notices)
+        counts["interactions"] += export.interaction_count
+        counts["exported"] += export.exported_count
+        counts["leftOut"] += export.left_out_count
+        consumers.append(
+            {
+                "consumer": record.consumer_name,
+                "consumerVersion": record.consumer_version,
+                "pactVersionSha": record.sha,
+                "specificationVersion": pact_specification_version(record.content),
+            }
+        )
+        if export.collection["item"]:
+            folders.append(
+                {
+                    "name": record.consumer_name,
+                    "description": f"The pact {record.consumer_name} version {record.consumer_version} published "
+                    f"(pact version {record.sha}).",
+                    "item": export.collection["item"],
+                }
+            )
+        variables = export.collection["variable"]
+
+    if counts["exported"] == 0:
+        raise _refuse(
+            CODE_NO_HTTP_INTERACTIONS,
+            f"no consumer's pact{qualifier} for {provider.name} has an HTTP interaction a Postman collection can carry",
+            notices=notices,
+        )
+    collection = {
+        "info": {
+            "name": f"Pact: every consumer → {provider.name}",
+            "schema": POSTMAN_SCHEMA_URL,
+            "description": f"Exported by Apiome from the latest pact{qualifier} of each consumer of {provider.name}.",
+        },
+        "item": folders,
+        "variable": variables,
+    }
+    return {
+        "collection": collection,
+        "pact": {"provider": provider.name, "consumers": consumers},
+        "counts": counts,
         "notices": notices,
     }

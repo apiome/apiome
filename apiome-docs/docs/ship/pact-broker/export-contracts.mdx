@@ -1,0 +1,164 @@
+---
+title: Export a contract
+description: Derive a pact, replay one in Postman, or download published pact files.
+sidebar_position: 2.5
+tags: [contracts, pact, postman, export, ui, cli]
+---
+
+import Screenshot from '@site/src/components/Screenshot';
+
+The **Export** page takes a contract out of Apiome in one of three ways:
+
+- **A pact from a project** — a consumer's declared surface written as a Pact v4 file
+  (`apiome pact export-consumer-contract`).
+- **A Postman collection** — a pact replayed as Postman requests with test scripts
+  (`apiome pact export-postman`).
+- **A pact file** — any published pact exactly as it was stored, or every pact for a provider as
+  a zip.
+
+Open it from a pact's page (**Export**, which opens on that pact's file), from a pacticipant's
+page (**Export**, which opens on a Postman collection of its pacts) or from Export studio
+(**Export a contract**). Its address is `/ade/dashboard/pacts/export`.
+Export studio itself exports an API *specification*; see
+[Export to an API client](../export-to-an-api-client.md) for a collection made from a spec.
+
+Pick one of the three cards at the top. Only that kind's form shows, with its own button and its
+own **The same, from anywhere** block: the command (and REST request) that does the same from a
+terminal or a pipeline, updated as you fill in the form. Problems and refusals appear on one line
+above the cards.
+
+<Screenshot id="pact-export" alt="The Export page on A pact from a project: the Billing API project and the Orders UI consumer, the operation checklist with where each example comes from, the pact preview, Download pact and Review and publish, and the export-consumer-contract command" />
+
+## A pact from a project
+
+A consumer you declared with the picker on a project's **Consumers** tab has no pact file of its
+own. This kind writes one: one interaction per operation and response status the consumer reads,
+carrying only the fields it declared, with the specification's own examples as sample values.
+
+1. **Choose the project** and **the consumer**. A consumer whose contract was imported from a Pact
+   file, or that has no contract revision yet, is greyed out with the reason — publish that Pact
+   file instead.
+2. Optionally give a **Revision** (the current one otherwise) and the **Provider** name to write
+   into the pact (otherwise the pacticipant bound to the project).
+3. **Click "Derive pact".** The operation checklist fills in.
+
+Each row of the checklist is one declared operation and says where its examples came from:
+
+| The column reads | What it means |
+| --- | --- |
+| **The spec's example** | Every value came from the specification's examples. |
+| **Generated from the schema — review** | At least one value had no example and was invented from the schema (a typed placeholder). The number says how many. Review them before you rely on the pact. |
+| **Left out — *reason*** | No interaction could be written, for example *no response to assert on*. The box cannot be ticked. |
+
+Under the checklist, every finding is listed with its reason code (`no-example`,
+`status-default`, `media-type-not-json`, …): nothing is dropped without saying so.
+
+- **Untick an operation** to leave its interactions out of the preview and the download. The
+  command cannot do this — it always writes every declared operation — so **The same, from
+  anywhere** lists what you left out and why. To leave an operation out of the command too, change
+  the consumer's declared surface.
+- **Click "Download pact"** to save it as `<consumer>-<provider>.json`. The preview shows the pact
+  while it is small; a pact over about 200 KB downloads without a preview.
+- **Click "Review and publish"** to take it to the [Publish page](./publish-pacts.mdx#publish-from-the-ui).
+  With every operation ticked and the current revision, the page opens on **Derive from a project**
+  with the project and consumer filled in, so the pact is published as derived. Otherwise the exact
+  file you see is handed over on **Paste**. Either way nothing is published until you say whose
+  version it is and click **Publish pact**. The button shows only with **Pacts** → **Create**.
+
+**Fail if anything needs review** only changes the command: `--fail-on-findings` makes it exit `1`
+in CI when a value had to be invented or anything was left out.
+
+A revision with nothing to export says *This revision has no operations a pact can describe.*, with
+the findings that explain why.
+
+## A Postman collection
+
+This kind writes a pact as a **Postman Collection v2.1**, so a provider team can run the consumer's
+requests in Postman — or in CI with Newman — before any Pact tooling is set up.
+
+1. **Choose which pact** under **Which pact**: **The latest pact**, **Latest on a branch**, **Latest
+   with a tag**, **A consumer version**, **A pact version (SHA)**, or **Upload a pact file…** for one
+   you have not published (it is sent once to make the collection and is not stored).
+2. For a stored pact, type the **Provider** and **Consumer** (names or handles; the workspace's
+   pacticipants are suggested). Tick **All consumers — one folder each** to export the latest pact
+   of every consumer of the provider — or, with a branch or a tag, each consumer's latest such pact.
+3. Set the **Provider base URL**, or leave it empty to fill in the `{{baseUrl}}` variable later
+   (Newman: `--env-var baseUrl=http://localhost:8080`). Pointing it at a hosted mock is a safe way
+   to try the collection.
+4. Choose the switches:
+   - **Include provider-state setup as pre-request scripts** (on by default) — each request that
+     needs provider states first POSTs `{"state", "params", "action": "setup"}` per state, in the
+     pact's order, to the `{{stateChangeUrl}}` variable: the body `pact_verifier_cli
+     --state-change-url` sends, so the state-change endpoint your verification already uses works
+     unchanged. Fill in **State change URL**, or set the variable in Postman. If it is not set, or
+     a setup answers an error, the request stops with an error naming the state instead of running
+     against the wrong data.
+   - **Give each request a test script** (on by default) — checks the status, the expected headers
+     and the body by Pact's default rules.
+   - **Fail if any interaction is left out** — only changes the command (`--fail-on-left-out`).
+5. **Click "Export collection"**, then **Download collection**.
+
+The **Result** card names the file (`<consumer>-<provider>.postman.json`, or
+`every-consumer-<provider>.postman.json`) and shows **What the collection keeps**: a bar of how many
+of the pact's interactions became requests. Below it, every notice is listed with its reason:
+
+| Outcome | For |
+| --- | --- |
+| `left-out` | Message interactions, gRPC calls, interactions without a method, request bodies that are not text — and, with **All consumers**, a consumer with no such pact. Postman sends HTTP requests with text bodies only. |
+| `not-asserted` | Response values governed by a matching rule, and response bodies that are not text. |
+| `not-applied` | Request generators: the request sends the pact's example values. |
+| `info` | The provider states the requests need. |
+
+A pair without a pact reads *Orders UI has not published a pact for Billing Service. Record one
+from a mock, or upload a file.* A pact with no HTTP interaction at all is refused, with the notices
+that say why.
+
+## A pact file
+
+1. Type the **Consumer** and **Provider**, and choose **Which pact** (as for Postman, without an
+   upload).
+2. **Click "Download pact.json"** to save the pact exactly as it was published: the broker's
+   `_links` and `createdAt`, which a [read through the Pact Broker API](./publish-pacts.mdx#fetch-a-pact)
+   adds, are taken off.
+3. Or **click "Every pact for this provider (.zip)"** for one file per consumer — its latest pact,
+   or its latest on the branch or with the tag — and a `README.txt` naming every consumer left out
+   and why. A version or a SHA names one consumer's pact, so the zip takes the latest, a branch or a
+   tag only. A zip holds at most 100 pacts; the README lists the rest.
+
+No `apiome pact` command downloads a pact, so this kind's block shows the REST request: any HTTP
+client fetches the same document with your API key.
+
+## From the command line
+
+Every flag of both commands has a control on the page:
+
+```bash
+apiome pact export-consumer-contract --project billing-api --consumer orders-ui \
+  --revision 4 --output pact.json --fail-on-findings
+
+apiome pact export-postman --provider "Billing Service" --all-consumers --branch main \
+  --provider-base-url http://localhost:8080 \
+  --state-setup --state-change-url http://localhost:8080/_pact/provider_states \
+  --output collection.json --fail-on-left-out
+```
+
+`--all-consumers` takes `--provider` and at most one of `--tag` or `--branch`. `--state-change-url`
+needs `--state-setup`. See [Export a pact as a Postman collection](./cli.mdx#export-a-pact-as-a-postman-collection)
+and the [CLI reference](../../reference/cli/pact.md).
+
+## Who can do what
+
+| Action | Needs | Viewer | Editor | Admin | Owner |
+| --- | --- | --- | --- | --- | --- |
+| Derive a pact from a project | `consumer_contracts:view` and `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| Export a Postman collection, download a pact file or a zip | `pacts:view` | ✓ | ✓ | ✓ | ✓ |
+| **Review and publish** | `pacts:create` | — | ✓ | ✓ | ✓ |
+
+Every read is scoped to your workspace: a pact, project or pacticipant of another workspace is not
+found.
+
+## Related
+
+- [Publish and fetch pacts](./publish-pacts.mdx)
+- [The Pact CLI commands](./cli.mdx)
+- [Export to an API client](../export-to-an-api-client.md)

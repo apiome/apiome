@@ -193,6 +193,10 @@ def test_export_returns_the_pact_and_its_report(registry: _Registry) -> None:
     interaction = body["pact"]["interactions"][0]
     assert interaction["response"]["body"]["content"] == {"total": 3}
     assert body["pact"]["metadata"]["pactSpecification"]["version"] == "4.0"
+    (operation,) = body["operations"]
+    assert operation["interactions"] == [0]
+    assert (operation["placeholder_count"], operation["omitted_count"]) == (0, 0)
+    assert operation["method"] == interaction["request"]["method"]
 
 
 def test_export_needs_consumer_contracts_view_and_pacts_view(registry: _Registry) -> None:

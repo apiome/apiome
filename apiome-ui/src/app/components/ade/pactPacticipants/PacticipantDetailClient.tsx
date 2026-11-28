@@ -21,7 +21,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { RefreshCw, X } from 'lucide-react';
+import { PackageOpen, RefreshCw, X } from 'lucide-react';
 import { Button, EmptyState, LoadingState } from '@/app/components/ui';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { ContractsTabs } from '../pactOverview/ContractsTabs';
@@ -46,6 +46,7 @@ import { fetchPacticipantPacts } from '../pactDetail/pactDetailApi';
 import type { PacticipantPacts } from '@lib/pact-detail';
 import { networkRoute } from '@lib/pact-network';
 import { verificationRoute } from '@lib/pact-verification';
+import { exportRoute } from '@lib/pact-export';
 
 /** Where the breadcrumb's first step goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -256,10 +257,18 @@ export default function PacticipantDetailClient({ slug }: { slug: string }) {
         ]}
         description="Versions, branches, tags and environments of one application."
         actions={
-          <Button variant="outline" onClick={refreshAll}>
-            <RefreshCw aria-hidden />
-            Refresh
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link href={exportRoute({ kind: 'postman', provider: slug })} data-testid="ppx-export">
+                <PackageOpen aria-hidden />
+                Export
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={refreshAll}>
+              <RefreshCw aria-hidden />
+              Refresh
+            </Button>
+          </>
         }
       />
       <PageBody>

@@ -230,3 +230,138 @@ def test_a_pact_with_no_http_interaction_is_refused_with_its_notices(allowed: Ma
     detail = response.json()["detail"]
     assert detail["code"] == CODE_NO_HTTP_INTERACTIONS
     assert [notice["code"] for notice in detail["notices"]] == ["pact-postman-message-left-out"]
+
+
+# --- PFX-8.18 (#7315): provider-state setup and every consumer ---------------------------------
+
+
+def _candidate(name: str, consumer_id: str) -> MagicMock:
+    """A latest-pact candidate of the provider, as ``list_latest_pact_candidates`` returns it."""
+    candidate = MagicMock()
+    candidate.consumer_name = name
+    candidate.consumer_id = consumer_id
+    return candidate
+
+
+def _provider() -> MagicMock:
+    provider = MagicMock()
+    provider.id = "pp"
+    provider.slug = "orders-api"
+    provider.name = "Orders API"
+    return provider
+
+
+def test_state_setup_adds_a_pre_request_script_and_the_state_change_variable(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.get_latest_pact", return_value=_record()):
+        response = client.post(
+            _PATH,
+            json={
+                "provider": "orders-api",
+                "consumer": "web-app",
+                "stateSetup": True,
+                "stateChangeUrl": "http://localhost:8080/_pact/provider_states",
+            },
+        )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    (item,) = body["collection"]["item"]
+    listens = [event["listen"] for event in item["event"]]
+    assert listens == ["prerequest", "test"]
+    script = "\n".join(item["event"][0]["script"]["exec"])
+    assert '"order 42 exists"' in script
+    assert "action: 'setup'" in script
+    assert {"key": "stateChangeUrl", "value": "http://localhost:8080/_pact/provider_states"} in body["collection"][
+        "variable"
+    ]
+    states = [n for n in body["notices"] if n["code"] == "pact-postman-provider-states"]
+    assert "pre-request script" in states[0]["message"]
+
+
+def test_without_state_setup_no_pre_request_script_is_written(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.get_latest_pact", return_value=_record()):
+        response = client.post(_PATH, json={"provider": "orders-api", "consumer": "web-app"})
+    (item,) = response.json()["collection"]["item"]
+    assert [event["listen"] for event in item["event"]] == ["test"]
+
+
+@pytest.mark.parametrize(
+    "body, reason",
+    [
+        ({"provider": "p", "consumer": "c", "stateChangeUrl": "http://x"}, "only used with 'stateSetup'"),
+        ({"provider": "p", "consumer": "c", "stateSetup": True, "stateChangeUrl": "x"}, "'stateChangeUrl' must be"),
+        ({"allConsumers": True}, "'allConsumers' needs 'provider'"),
+        ({"allConsumers": True, "provider": "p", "consumer": "c"}, "leave 'consumer' and 'pact' out"),
+        ({"allConsumers": True, "provider": "p", "consumerVersion": "1"}, "not consumerVersion"),
+        ({"allConsumers": True, "provider": "p", "pactVersionSha": "ab" * 32}, "not pactVersionSha"),
+        ({"allConsumers": True, "provider": "p", "tag": "a", "branch": "b"}, "choose one of tag, branch"),
+    ],
+)
+def test_bad_state_setup_and_all_consumer_requests_are_refused(
+    allowed: MagicMock, body: Dict[str, Any], reason: str
+) -> None:
+    with patch(f"{_ROUTES}.list_latest_pact_candidates") as listing:
+        response = client.post(_PATH, json=body)
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert detail["code"] == CODE_EXPORT_INVALID
+    assert reason in detail["message"]
+    listing.assert_not_called()
+
+
+def test_all_consumers_writes_one_folder_per_consumer_and_reports_a_consumer_without_a_pact(
+    allowed: MagicMock,
+) -> None:
+    candidates = [_candidate("Web App", "c1"), _candidate("Admin", "c2")]
+    admin_missing = PactPublicationError(CODE_PACT_NOT_FOUND, "no pact from branch 'main'")
+
+    def latest(_db: Any, _tenant: str, _provider: str, consumer: str, **_kw: Any) -> PactRecord:
+        if consumer == "c2":
+            raise admin_missing
+        return _record()
+
+    with (
+        patch(f"{_ROUTES}.list_latest_pact_candidates", return_value=(_provider(), candidates)) as listing,
+        patch(f"{_ROUTES}.get_latest_pact", side_effect=latest) as reader,
+    ):
+        response = client.post(_PATH, json={"provider": "orders-api", "allConsumers": True, "branch": "main"})
+    assert response.status_code == 200, response.text
+    assert listing.call_args.args[1:] == (_TENANT, "orders-api")
+    assert all(call.kwargs == {"tag": None, "branch": "main"} for call in reader.call_args_list)
+    body = response.json()
+    assert [folder["name"] for folder in body["collection"]["item"]] == ["Web App"]
+    assert body["collection"]["item"][0]["item"][0]["name"] == "get order 42"
+    assert body["pact"]["provider"] == "Orders API"
+    assert [c["consumer"] for c in body["pact"]["consumers"]] == ["Web App"]
+    assert body["counts"] == {"interactions": 2, "exported": 1, "leftOut": 1}
+    missing = [n for n in body["notices"] if n["code"] == "pact-postman-consumer-no-pact"]
+    assert missing[0]["consumer"] == "Admin"
+    assert missing[0]["outcome"] == "left-out"
+    assert all("consumer" in notice for notice in body["notices"])
+
+
+def test_all_consumers_for_a_provider_without_pacts_is_a_404(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.list_latest_pact_candidates", return_value=(_provider(), [])):
+        response = client.post(_PATH, json={"provider": "orders-api", "allConsumers": True})
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == CODE_PACT_NOT_FOUND
+
+
+def test_all_consumers_for_an_unknown_provider_is_a_404(allowed: MagicMock) -> None:
+    error = PacticipantValidationError(CODE_NOT_FOUND, "no such pacticipant")
+    with patch(f"{_ROUTES}.list_latest_pact_candidates", side_effect=error):
+        response = client.post(_PATH, json={"provider": "nope", "allConsumers": True})
+    assert response.status_code == 404
+
+
+def test_all_consumers_with_no_http_interaction_anywhere_is_422_with_the_notices(allowed: MagicMock) -> None:
+    messages = [{"description": "evt", "contents": {}}]
+    only_messages = _record(content={"consumer": {"name": "W"}, "provider": {"name": "O"}, "messages": messages})
+    with (
+        patch(f"{_ROUTES}.list_latest_pact_candidates", return_value=(_provider(), [_candidate("W", "c1")])),
+        patch(f"{_ROUTES}.get_latest_pact", return_value=only_messages),
+    ):
+        response = client.post(_PATH, json={"provider": "orders-api", "allConsumers": True})
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert detail["code"] == CODE_NO_HTTP_INTERACTIONS
+    assert detail["notices"][0]["consumer"] == "Web App"

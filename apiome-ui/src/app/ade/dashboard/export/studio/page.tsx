@@ -20,6 +20,10 @@ import {
   exportStudioTabFromParams,
 } from '../../../../components/ade/export-studio';
 import PageHeader from '../../../../components/shell/PageHeader';
+import Link from 'next/link';
+import { FileJson2 } from 'lucide-react';
+import { Button } from '@/app/components/ui';
+import { EXPORT_ROUTE } from '@lib/pact-export';
 import { Page, PageBody } from '../../../../components/shell/pageChrome';
 import SdkSettingsClient from '../../sdk-settings/SdkSettingsClient';
 import SdkCompatClient from '@/app/components/ade/export-studio/compat/SdkCompatClient';
@@ -119,6 +123,15 @@ function ExportStudioRouteContent() {
           breadcrumb={exportStudioBreadcrumb(workspaceName)}
           title={<ExportStudioTitle />}
           tabs={tabs}
+          actions={
+            // PFX-8.18 (#7315): a pact, a Postman collection from a pact, or a published pact file.
+            <Button variant="outline" asChild>
+              <Link href={EXPORT_ROUTE} data-testid="export-studio-contract-link">
+                <FileJson2 aria-hidden />
+                Export a contract
+              </Link>
+            </Button>
+          }
         />
         <PageBody>
           {/* E1-2 (#6218): no source yet — the Source step is a picker. Choosing writes the

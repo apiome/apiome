@@ -347,6 +347,23 @@ def export_postman(
         None, "--provider-base-url", help="The value of the {{baseUrl}} collection variable (http or https URL)."
     ),
     tests: bool = typer.Option(True, "--tests/--no-tests", help="Give each request a test script."),
+    all_consumers: bool = typer.Option(
+        False,
+        "--all-consumers",
+        help="Export the latest pact of every consumer of --provider (or the latest with --tag / on --branch), "
+        "one folder per consumer.",
+    ),
+    state_setup: bool = typer.Option(
+        False,
+        "--state-setup",
+        help="Give each request that needs provider states a pre-request script that sets them up "
+        "through {{stateChangeUrl}}.",
+    ),
+    state_change_url: Optional[str] = typer.Option(
+        None,
+        "--state-change-url",
+        help="The value of the {{stateChangeUrl}} variable (http or https URL); needs --state-setup.",
+    ),
     output: Optional[Path] = typer.Option(
         None, "--output", "-o", dir_okay=False, writable=True, help="Write the collection here instead of stdout."
     ),
@@ -361,7 +378,9 @@ def export_postman(
     One request per HTTP interaction against {{baseUrl}}, a saved example of the expected response
     and a test script checking it (status, headers, body by Pact's default rules). Name a stored
     pact with --provider and --consumer (the latest pact, or one of --consumer-version, --tag,
-    --branch, --pact-version), or send a local file with --pact-file. Prints every notice — what was
+    --branch, --pact-version), every consumer's latest pact with --provider and --all-consumers, or
+    send a local file with --pact-file. --state-setup adds a pre-request script per request that
+    POSTs its provider states to {{stateChangeUrl}} (--state-change-url) first. Prints every notice — what was
     left out, not asserted or not applied, with a reason, and the provider states to set up.
     Without --output the collection goes to stdout and the summary to stderr. Exits 1 when the
     server refuses (no such pact, no HTTP interaction to export), or with --fail-on-left-out when an
@@ -389,6 +408,9 @@ def export_postman(
             pact=document,
             provider_base_url=provider_base_url,
             tests=tests,
+            all_consumers=all_consumers,
+            state_setup=state_setup,
+            state_change_url=state_change_url,
         ),
     )
     if response.status_code >= 400:

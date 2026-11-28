@@ -49426,3 +49426,165 @@ html[data-motion='reduce'] .pvl-progress--striped::-webkit-progress-value {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Export a contract — PFX-8.18 (#7315), /ade/dashboard/pacts/export.
+ * Authority: docs/mockups/contracts/export.html (ct-opt kinds, ct-split, ct-bar). Reuses the
+ * Publish page's .ppub-* card, field, table and switch rows and the .ppc-option cards.
+ * --------------------------------------------------------------------------------------------- */
+
+.pexp-kinds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+@media (max-width: 900px) {
+  .pexp-kinds {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pexp-kind__glyph {
+  flex: none;
+  inline-size: var(--fs-lg);
+  block-size: var(--fs-lg);
+  color: var(--accent-fg);
+}
+
+.pexp-check-col {
+  inline-size: 1%;
+}
+
+.pexp-op {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.pexp-path,
+.pexp-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.pexp-source {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pexp-source--generated {
+  color: var(--warn-fg);
+}
+
+.pexp-source--left-out {
+  color: var(--danger-fg);
+}
+
+.pexp-findings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--fg);
+  font-size: var(--fs-xs);
+}
+
+.pexp-finding {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.pexp-preview {
+  max-block-size: 16rem;
+  margin: 0;
+  padding: var(--space-3);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: pre;
+}
+
+.pexp-preview:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pexp-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+}
+
+.pexp-inline-check input {
+  accent-color: var(--accent);
+}
+
+.pexp-result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.pexp-result__glyph {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+.pexp-result__body {
+  min-inline-size: 0;
+}
+
+.pexp-result__name {
+  overflow: hidden;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The fidelity bar: kept in the ok tone over the warn tone of what was left out. */
+.pexp-bar {
+  inline-size: 100%;
+  block-size: 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--warn);
+  overflow: hidden;
+  appearance: none;
+}
+
+.pexp-bar::-webkit-progress-bar {
+  border-radius: 999px;
+  background: var(--warn);
+}
+
+.pexp-bar::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--ok);
+}
+
+.pexp-bar::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--ok);
+}

@@ -1,0 +1,32 @@
+---
+slug: export-a-contract
+title: "Export a contract: a pact from a project, a Postman collection, a pact file"
+description: "Derive a pact, replay one in Postman, or download published pact files from the app."
+authors: [apiome]
+---
+
+A new **Export** page takes a contract out of Apiome — the screen for
+`apiome pact export-consumer-contract` and `apiome pact export-postman`, and a way to download any
+published pact. See [Export a contract](/ship/pact-broker/export-contracts).
+
+{/* truncate */}
+
+- **A pact from a project.** Derive a consumer's declared surface as a Pact v4 file. The operation
+  checklist says where each operation's examples came from — the spec's own, or *Generated from the
+  schema — review* — and why an operation was *Left out*; every finding is listed with its reason.
+  Untick operations before **Download pact**, or **Review and publish** on the Publish page.
+- **A Postman collection.** Replay a stored pact (the latest, on a branch, with a tag, a consumer
+  version or a pact version SHA), **every consumer** of a provider at once (one folder each) or an
+  uploaded pact file, with a `{{baseUrl}}` variable and **provider-state setup as pre-request
+  scripts**: each request first POSTs its states to `{{stateChangeUrl}}`, as the Pact verifier does.
+  A bar shows how many interactions the collection keeps; what it leaves out is listed with the
+  reason.
+- **A pact file.** Download any published pact exactly as stored, or every pact for a provider as a
+  zip with a README naming any consumer left out.
+- **Linked where you need it.** **Export** on a pact's page and a pacticipant's page, and **Export a
+  contract** in Export studio. Large outputs download without an inline preview.
+- **CLI:** `apiome pact export-postman --all-consumers`, `--state-setup` and `--state-change-url`.
+  With this page every `apiome pact` command has a screen.
+- **REST:** the derived pact answers `operations` (each operation's interactions and finding
+  counts); `POST /v1/tenants/{t}/pact-postman-collections` takes `allConsumers`, `stateSetup` and
+  `stateChangeUrl` (OpenAPI 1.710.0).

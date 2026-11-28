@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.886.0] - 2026-11-30
+
+### Added
+- **Export page support: operation map, provider-state setup scripts, every consumer (PFX-8.18, #7315).** OpenAPI
+  1.710.0.
+  - `GET …/projects/{project}/consumers/{consumer}/pact` (and `…/pact/publish`) answer `operations`: one entry per
+    declared operation with the `interactions` it wrote (indexes into `pact.interactions`) and its
+    `placeholder_count` / `omitted_count`. An operation with no interaction was left out; its `omitted` finding
+    gives the reason. The pact document itself is unchanged.
+  - `POST …/pact-postman-collections` takes `stateSetup`: each request that needs provider states gets a
+    pre-request script that first POSTs `{"state", "params", "action": "setup"}` — the body
+    `pact_verifier_cli --state-change-url` sends — per state, in order, to a `{{stateChangeUrl}}` collection
+    variable (`stateChangeUrl` fills it in; empty otherwise). An unset variable or a failed setup stops the request
+    with an error. `stateChangeUrl` without `stateSetup`, or a non-http(s) URL, is `422 pact-postman-export-invalid`.
+  - `allConsumers` with `provider` (and at most one of `tag` / `branch`) writes the latest pact of every consumer of
+    the provider, one folder per consumer. A consumer without such a pact is a `left-out` notice
+    (`pact-postman-consumer-no-pact`), never dropped; every notice names its `consumer`. `consumer`,
+    `consumerVersion`, `pactVersionSha` or `pact` with it is a 422; a provider no consumer published a pact for is
+    `404 pact-not-found`.
+
 ## [1.885.0] - 2026-11-30
 
 ### Added

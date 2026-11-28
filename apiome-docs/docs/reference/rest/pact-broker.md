@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.709.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.710.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 125 operations
 
@@ -4258,6 +4258,9 @@ What to export: a stored pact (by pair and selection) or an inline Pact document
 | `pact` | object or null | no | An inline Pact document (specification 1–4) instead of a stored pact. `consumer` and `provider` then only name the collection, and default to the document's own. |
 | `baseUrl` | string or null | no | The value of the `{{baseUrl}}` collection variable (an http or https URL). Omitted: empty, to fill in (Newman: `--env-var baseUrl=…`). |
 | `tests` | boolean | no | Give each request a test script that checks the expected response. |
+| `allConsumers` | boolean | no | Export the latest pact of every consumer of `provider` (with `tag` or `branch`: the latest such pact), one folder per consumer. Leave `consumer`, `consumerVersion`, `pactVersionSha` and `pact` out. |
+| `stateSetup` | boolean | no | Give each request that needs provider states a pre-request script that first POSTs `{"state", "params", "action": "setup"}` per state to the `{{stateChangeUrl}}` variable. |
+| `stateChangeUrl` | string or null | no | The value of the `{{stateChangeUrl}}` variable (an http or https URL; only with `stateSetup`). Omitted: empty, to fill in. |
 
 ### `PactSuiteCompileRequest` {#schema-pactsuitecompilerequest}
 

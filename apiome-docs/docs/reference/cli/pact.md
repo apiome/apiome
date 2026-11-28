@@ -272,7 +272,7 @@ apiome pact export-consumer-contract [OPTIONS]
 
 Export a pact as a Postman Collection v2.1 (POST …/pact-postman-collections).
 
-One request per HTTP interaction against {{baseUrl}}, a saved example of the expected response and a test script checking it (status, headers, body by Pact's default rules). Name a stored pact with --provider and --consumer (the latest pact, or one of --consumer-version, --tag, --branch, --pact-version), or send a local file with --pact-file. Prints every notice — what was left out, not asserted or not applied, with a reason, and the provider states to set up. Without --output the collection goes to stdout and the summary to stderr. Exits 1 when the server refuses (no such pact, no HTTP interaction to export), or with --fail-on-left-out when an interaction was left out. For a collection from a specification, use apiome export postman.
+One request per HTTP interaction against {{baseUrl}}, a saved example of the expected response and a test script checking it (status, headers, body by Pact's default rules). Name a stored pact with --provider and --consumer (the latest pact, or one of --consumer-version, --tag, --branch, --pact-version), every consumer's latest pact with --provider and --all-consumers, or send a local file with --pact-file. --state-setup adds a pre-request script per request that POSTs its provider states to {{stateChangeUrl}} (--state-change-url) first. Prints every notice — what was left out, not asserted or not applied, with a reason, and the provider states to set up. Without --output the collection goes to stdout and the summary to stderr. Exits 1 when the server refuses (no such pact, no HTTP interaction to export), or with --fail-on-left-out when an interaction was left out. For a collection from a specification, use apiome export postman.
 
 ```text
 apiome pact export-postman [OPTIONS]
@@ -291,6 +291,9 @@ apiome pact export-postman [OPTIONS]
 | `--pact-file` | file |  |  | Export a local Pact file instead of a stored pact (nothing is published). |
 | `--provider-base-url` | text |  |  | The value of the {{baseUrl}} collection variable (http or https URL). |
 | `--tests` / `--no-tests` | flag | `--tests` |  | Give each request a test script. |
+| `--all-consumers` | flag |  |  | Export the latest pact of every consumer of --provider (or the latest with --tag / on --branch), one folder per consumer. |
+| `--state-setup` | flag |  |  | Give each request that needs provider states a pre-request script that sets them up through {{stateChangeUrl}}. |
+| `--state-change-url` | text |  |  | The value of the {{stateChangeUrl}} variable (http or https URL); needs --state-setup. |
 | `--output`, `-o` | file |  |  | Write the collection here instead of stdout. |
 | `--fail-on-left-out` | flag |  |  | Exit 1 when any interaction was left out of the collection. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |

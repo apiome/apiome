@@ -205,3 +205,65 @@ def test_json_mode_prints_the_whole_response(httpx_mock: Any, api_key_env: None)
     result = runner.invoke(app, ["--json", "pact", "export-postman", "--provider", "orders", "--consumer", "web"])
     assert result.exit_code == EXIT_SUCCESS, result.output
     assert json.loads(result.stdout)["notices"] == [_STATES]
+
+
+# --- PFX-8.18 (#7315): every consumer and provider-state setup ------------------------------------
+
+
+def test_the_body_carries_all_consumers_and_state_setup_only_when_asked() -> None:
+    blank = dict.fromkeys(
+        ("provider", "consumer", "consumer_version", "tag", "branch", "pact_version", "pact", "provider_base_url")
+    )
+    assert build_export_body(**blank, tests=True, all_consumers=False, state_setup=False) == {"tests": True}
+    assert build_export_body(
+        **{**blank, "provider": "orders"},
+        tests=True,
+        all_consumers=True,
+        state_setup=True,
+        state_change_url="http://p/_pact/states",
+    ) == {
+        "tests": True,
+        "provider": "orders",
+        "stateChangeUrl": "http://p/_pact/states",
+        "allConsumers": True,
+        "stateSetup": True,
+    }
+
+
+def test_the_summary_of_every_consumer_names_them_and_each_notice_s_consumer() -> None:
+    response = {
+        "collection": _COLLECTION,
+        "pact": {"provider": "orders", "consumers": [{"consumer": "web"}, {"consumer": "admin"}]},
+        "counts": {"interactions": 3, "exported": 2, "leftOut": 1},
+        "notices": [{**_LEFT_OUT, "consumer": "web"}],
+    }
+    lines = summary_lines(response)
+    assert lines[0] == (
+        "Postman collection for every consumer (web, admin) → orders: 2 request(s) from 3 interaction(s), 1 left out"
+    )
+    assert lines[2].startswith("    left-out [pact-postman-message-left-out] (web) /messages/0")
+
+
+def test_export_of_every_consumer_with_state_setup_sends_the_flags(
+    tmp_path: Path, httpx_mock: Any, api_key_env: None
+) -> None:
+    response = {**_response(), "pact": {"provider": "orders", "consumers": [{"consumer": "web"}]}}
+    httpx_mock.add_response(url=_URL, method="POST", json=response)
+    target = tmp_path / "c.json"
+    result = runner.invoke(
+        app,
+        [
+            "pact", "export-postman", "--provider", "orders", "--all-consumers", "--tag", "prod",
+            "--state-setup", "--state-change-url", "http://localhost:8080/_pact/states", "-o", str(target),
+        ],
+    )
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert _sent(httpx_mock) == {
+        "tests": True,
+        "provider": "orders",
+        "tag": "prod",
+        "stateChangeUrl": "http://localhost:8080/_pact/states",
+        "allConsumers": True,
+        "stateSetup": True,
+    }
+    assert "every consumer (web)" in result.output

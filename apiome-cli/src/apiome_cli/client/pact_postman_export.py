@@ -2,8 +2,10 @@
 
 ``apiome pact export-postman`` calls ``POST /v1/tenants/{t}/pact-postman-collections``. The server
 writes a Postman Collection v2.1 from a stored pact (provider + consumer, and a consumer version,
-tag, branch or pact version SHA) or from a local Pact file sent inline, and lists in ``notices``
-everything the collection does not carry, each with a reason.
+tag, branch or pact version SHA), from every consumer's latest pact of a provider (``allConsumers``,
+one folder each) or from a local Pact file sent inline, and lists in ``notices`` everything the
+collection does not carry, each with a reason. ``stateSetup`` adds provider-state pre-request
+scripts that POST to ``{{stateChangeUrl}}`` (PFX-8.18, #7315).
 
 This module holds the pure parts — the path, the request body, the summary lines and the refusal
 message — so the command stays thin and every rule here is unit-tested without HTTP.
@@ -34,6 +36,9 @@ def build_export_body(
     pact: Optional[dict[str, Any]],
     provider_base_url: Optional[str],
     tests: bool,
+    all_consumers: bool = False,
+    state_setup: bool = False,
+    state_change_url: Optional[str] = None,
 ) -> dict[str, Any]:
     """The JSON body of the export, with only the fields that were given.
 
@@ -47,6 +52,9 @@ def build_export_body(
         pact: A local Pact document, sent inline.
         provider_base_url: The ``{{baseUrl}}`` value.
         tests: Whether requests carry test scripts.
+        all_consumers: Export every consumer of the provider, one folder each.
+        state_setup: Give requests that need provider states a pre-request setup script.
+        state_change_url: The ``{{stateChangeUrl}}`` value the setup scripts POST to.
 
     Returns:
         The body; the server checks the combination and refuses with the reason.
@@ -60,11 +68,16 @@ def build_export_body(
         ("branch", branch),
         ("pactVersionSha", pact_version),
         ("baseUrl", provider_base_url),
+        ("stateChangeUrl", state_change_url),
     ):
         if value is not None:
             body[key] = value
     if pact is not None:
         body["pact"] = pact
+    if all_consumers:
+        body["allConsumers"] = True
+    if state_setup:
+        body["stateSetup"] = True
     return body
 
 
@@ -79,9 +92,10 @@ def notice_lines(notices: list[dict[str, Any]]) -> list[str]:
     for notice in notices:
         where = f" {notice['pointer']}" if notice.get("pointer") else ""
         named = f" '{notice['description']}'" if notice.get("description") else ""
+        whose = f" ({notice['consumer']})" if notice.get("consumer") else ""
         paths = f" ({', '.join(notice['paths'])})" if notice.get("paths") else ""
         lines.append(
-            f"    {notice.get('outcome')} [{notice.get('code')}]{where}{named}: {notice.get('message')}{paths}"
+            f"    {notice.get('outcome')} [{notice.get('code')}]{whose}{where}{named}: {notice.get('message')}{paths}"
         )
     return lines
 
@@ -97,9 +111,14 @@ def summary_lines(response: dict[str, Any]) -> list[str]:
     """
     pact = response.get("pact") or {}
     counts = response.get("counts") or {}
-    version = f" version {pact['consumerVersion']}" if pact.get("consumerVersion") else ""
+    if isinstance(pact.get("consumers"), list):
+        names = ", ".join(str(entry.get("consumer")) for entry in pact["consumers"] if isinstance(entry, dict))
+        whose = f"every consumer ({names or 'none'})"
+    else:
+        version = f" version {pact['consumerVersion']}" if pact.get("consumerVersion") else ""
+        whose = f"{pact.get('consumer')}{version}"
     lines = [
-        f"Postman collection for {pact.get('consumer')}{version} → {pact.get('provider')}: "
+        f"Postman collection for {whose} → {pact.get('provider')}: "
         f"{counts.get('exported', 0)} request(s) from {counts.get('interactions', 0)} interaction(s), "
         f"{counts.get('leftOut', 0)} left out",
     ]

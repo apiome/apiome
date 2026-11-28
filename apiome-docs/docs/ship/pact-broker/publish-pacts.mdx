@@ -279,6 +279,14 @@ and the REST request — and lists anything the command cannot carry. See [the C
 Publishing needs **Pacts** → **Create**. A role without it sees why and the command block only, so
 the pact can still be published from a build with an API key.
 
+### From the Export page
+
+**Review and publish** on the [Export page](./export-contracts.mdx#a-pact-from-a-project) brings a
+pact derived from a project here. With every operation ticked and the current revision, the page
+opens on **Derive from a project** with the project and consumer filled in; a pact with some
+operations left out, or from an older revision, arrives on **Paste** exactly as it was previewed.
+Say whose version it is, check it and publish as usual.
+
 ### From the Import dialog
 
 You can also publish a pact as you import it. On a project's **Consumers** screen, **click
@@ -395,7 +403,10 @@ build URL; use the CLI, or `POST …/pact-broker/contracts/publish`, to send tho
 
 **Latest** means the consumer version that was recorded last, not the highest version number.
 
-The answer is the pact document as published, with two additions: `createdAt` and `_links`.
+The answer is the pact document as published, with two additions: `createdAt` and `_links`. To
+save a pact as a file from the app — exactly as published, without those two — or every pact for a
+provider as a zip, use **A pact file** on the [Export page](./export-contracts.mdx#a-pact-file)
+(**Export** on a pact's page opens it on that pact).
 
 | Link | Leads to |
 | --- | --- |

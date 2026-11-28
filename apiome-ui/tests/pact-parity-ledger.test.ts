@@ -37,8 +37,7 @@ describe('the parity ledger', () => {
   });
 
   it('names a reason for every command without a screen', () => {
-    const missing = REAL.ledger.commands.filter((row) => row.ui === null).map((row) => row.cli);
-    expect(missing.length).toBeGreaterThan(0);
+    // Since PFX-8.18 (#7315) every command has its screen; a new command without one names its ticket.
     for (const row of REAL.ledger.commands.filter((r) => r.ui === null)) expect(row.reason).toMatch(/#\d+/);
   });
 

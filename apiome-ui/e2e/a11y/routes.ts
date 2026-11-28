@@ -329,6 +329,13 @@ const ADDITIONAL: A11yRoute[] = [
     },
   },
   {
+    // PFX-8.18 (#7315): the Export page on A pact from a project (a derived pact with its checklist),
+    // dumped by `tests/pact-export-ui.test.tsx`.
+    id: 'pact-export',
+    mockup: 'contracts/export.html',
+    subject: { kind: 'fixtures', dir: 'hive-a11y', files: ['pact-export.html'] },
+  },
+  {
     // PFX-8.15 (#7312): Contracts settings → Secrets, CI and commit statuses, Agents, dumped by
     // `tests/pact-settings-tabs-ui.test.tsx`.
     id: 'pact-settings-tabs',
