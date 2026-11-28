@@ -2887,7 +2887,22 @@
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantSubTabs.tsx",
         "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantOwnerPanel.tsx",
         "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
-        "apiome-ui/lib/pact-pacticipant-settings.ts"
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantBadgesPanel.tsx",
+        "apiome-ui/lib/pact-pacticipant-settings.ts",
+        "apiome-ui/lib/pact-badges.ts"
+      ]
+    },
+    {
+      "id": "pact-pacticipant-versions",
+      "route": "/ade/dashboard/pacts/pacticipants/orders-ui/versions",
+      "waitFor": "[data-testid=\"ppx-versions-manage-table\"]",
+      "data": "fixture:hive-a11y/pact-pacticipant-versions.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantVersionsClient.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/VersionsManageTable.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/DeleteVersionsDialog.tsx",
+        "apiome-ui/src/app/components/ade/pactPacticipants/PacticipantSubTabs.tsx",
+        "apiome-ui/lib/pact-pacticipant-versions.ts"
       ]
     },
     {

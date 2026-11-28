@@ -203,7 +203,7 @@ export function withQuery(path: string, query: URLSearchParams, limit: number): 
 export const LIST_FILTERS = ['label', 'state'] as const;
 
 /** The filters the version list accepts. */
-export const VERSION_FILTERS = ['branch', 'tag'] as const;
+export const VERSION_FILTERS = ['branch', 'tag', 'state'] as const;
 
 /** The REST path of one pacticipant, or `null` for a malformed handle. */
 export function pacticipantProxyPath(slug: string): string | null {

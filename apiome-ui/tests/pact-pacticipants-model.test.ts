@@ -250,7 +250,7 @@ describe('the /api/pact proxies', () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
       success: false,
-      error: 'Unsupported parameter limit: this list accepts label, cursor.',
+      error: 'Unsupported parameter limit: this list accepts label, state, cursor.',
     });
     expect(forward).not.toHaveBeenCalled();
   });
@@ -269,7 +269,8 @@ describe('the /api/pact proxies', () => {
   });
 
   it('refuses a version filter the list does not accept, and a branch filter on branches', async () => {
-    const versions = await versionsGet(req('/api/pact/pacticipants/x/versions?state=deleted'), ctx('x'));
+    // `state` (live / deleted) is accepted since PFX-8.11 (#7308); `label` is not a version filter.
+    const versions = await versionsGet(req('/api/pact/pacticipants/x/versions?label=web'), ctx('x'));
     expect(versions.status).toBe(400);
     const branches = await branchesGet(req('/api/pact/pacticipants/x/branches?branch=main'), ctx('x'));
     expect(branches.status).toBe(400);

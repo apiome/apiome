@@ -12,6 +12,7 @@
  *   handle and the history, and the old name keeps resolving; a name another pacticipant has is
  *   refused under **Name**. A role without `pacts:edit` sees the same values without inputs.
  * - **Owner** — the shipped owner panel (PFX-6.4), unchanged.
+ * - **Badges** — preview and copy the README badge (PFX-8.11, #7308; `PacticipantBadgesPanel`).
  * - **Danger zone** — **Delete {name}…** (`pacts:delete` only) opens the delete dialog.
  * - The aside: the handle, when it was registered, the names it had before, and **The same, from
  *   anywhere** (`apiome pact create-or-update-pacticipant`, Pact CLI, REST).
@@ -52,6 +53,7 @@ import { fetchProjects, type ProjectChoice } from '../pactPublish/publishApi';
 import { DeletePacticipantDialog, type DeleteStage } from './DeletePacticipantDialog';
 import { PacticipantFields, PacticipantValues } from './PacticipantFields';
 import PacticipantOwnerPanel from './PacticipantOwnerPanel';
+import PacticipantBadgesPanel from './PacticipantBadgesPanel';
 import { PacticipantSubTabs } from './PacticipantSubTabs';
 import { changeLabel, fetchPacticipant, savePacticipant } from './pacticipantsApi';
 import { describeFailure } from './describeFailure';
@@ -312,6 +314,8 @@ export default function PacticipantSettingsClient({
                 </section>
 
                 <PacticipantOwnerPanel pacticipantId={pacticipant.id} />
+
+                <PacticipantBadgesPanel pacticipant={pacticipant} projects={projects} />
 
                 {canDelete ? (
                   <section

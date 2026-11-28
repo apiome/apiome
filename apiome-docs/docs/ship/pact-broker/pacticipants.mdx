@@ -1,6 +1,6 @@
 ---
 title: Pacticipants
-description: Browse, create, rename and delete the applications in your pacts.
+description: Browse and manage the applications in your pacts and their versions.
 sidebar_position: 1.5
 tags: [contracts, pact, ui]
 ---
@@ -12,6 +12,9 @@ branches, tags, labels, and what each environment runs. For the terms, see
 
 You can also set one up before its first pact, edit its name, display name, main branch, repository,
 owner, linked project and labels, and delete it. See [Manage a pacticipant](#manage-a-pacticipant).
+On its **Versions** tab you tag, delete and restore its versions. See
+[Manage versions](#manage-versions). Its **Settings** tab also gives you a README badge. See
+[Add a badge](#add-a-badge).
 
 ## Before you start
 
@@ -58,7 +61,8 @@ apiome pact publish ./pacts \
 
 ## Open a pacticipant
 
-Click a pacticipant's name. Its page has two tabs: **Overview** and **Settings**. See
+Click a pacticipant's name. Its page has three tabs: **Overview**, **Versions** and **Settings**.
+See [Manage versions](#manage-versions) for **Versions** and
 [Manage a pacticipant](#manage-a-pacticipant) for **Settings**. **Overview** has six sections:
 
 - **Overview** shows the handle, the main branch, the repository, the labels, what the pacticipant is
@@ -79,7 +83,8 @@ Click a pacticipant's name. Its page has two tabs: **Overview** and **Settings**
   results, re-run a pact and verify the stale ones. See
   [Verification results and re-runs](./verification-console.mdx).
 - **Versions** lists the recorded versions, latest first, with their branches, tags, when they were
-  recorded and by whom, and a link to the build.
+  recorded and by whom, and a link to the build. To tag, delete or restore them, use the
+  **Versions** tab.
 
 <Screenshot id="pact-pacticipant-detail" alt="The Billing Service page: Overview facts, the Owner section naming the Billing team, two branches with main marked Main, Production and Staging with the versions deployed and released there, and three pacts with their roles and verdicts."/>
 
@@ -133,6 +138,95 @@ If the workspace has no environment yet, **Environments** shows the commands tha
 record a deployment. See [Environments and deployments](./environments.mdx). If no pact names the
 pacticipant yet, **Pacts** shows the `apiome pact publish` command.
 
+## Manage versions
+
+The **Versions** tab lists the pacticipant's versions, latest first, and lets you tag, delete and
+restore them.
+
+1. Open the pacticipant and click the **Versions** tab.
+2. To find a version, type part of its number, a branch or a tag in **Search versions, branches,
+   tags…**. The search covers the versions loaded so far. When there are more, the tab says so;
+   click **Load more** to search further.
+3. To change what the list shows, click a chip:
+
+   | Chip | What it lists |
+   | --- | --- |
+   | **All** | Every version. |
+   | The main branch, for example **main** | The versions recorded on the main branch. Shown when the pacticipant has a main branch. |
+   | **Deployed** | The versions that are deployed to, or released in, an environment now. |
+   | **Unverified** | The versions whose pacts have no verification result yet. |
+   | **Deleted** | The deleted versions that can still be restored. The count is next to it. |
+
+Each row shows the version, its branch, its tags, where it is **Running in**, and when it was
+created. A commit SHA is shortened; hover over it to see the full number.
+
+<Screenshot id="pact-pacticipant-versions" alt="The Versions tab of Orders UI: a search field and the All, main, Deployed, Unverified and Deleted chips, three versions with their branches, tags and the environments they run in, two of them selected, and the selection bar with Add a tag, Delete and Clear."/>
+
+### Tag a version
+
+1. In the version's **Tags** cell, click **+ tag**.
+2. Type the tag, for example `prod`. A tag may contain `/`, for example `feat/new-invoice`.
+3. Click **Add**. The tag shows on the row.
+
+Tagging a version that already has the tag changes nothing. If the tag is refused, the reason shows
+under the field.
+
+### Delete a version
+
+Deleting a version hides it with its pacts, the verification results it published, its branch
+membership and its tags. A branch it headed falls back to its previous version. Can-i-deploy answers
+that relied on it change. You can restore it until it is purged, after 30 days by default.
+
+1. On the version's row, click the **⋯** menu, then **Delete version**.
+2. Read what goes with it.
+3. Optional: type a **Reason**. It is stored with the delete and in the
+   [audit trail](../../govern/access-audit.mdx).
+4. Click **Delete *version***.
+
+A version that is deployed or released now cannot be deleted. The dialog says, for example,
+**3.3.2 is running in Production. Record its undeployment first.** and offers no delete. See
+[Environments and deployments](./environments.mdx).
+
+The **⋯** menu also opens **Pacts of this version**, on the [Matrix](./matrix.mdx), and
+**Can I deploy this?**, on the [Can I deploy?](./can-i-deploy.mdx#check-in-the-console) page.
+
+### Restore a deleted version
+
+1. Click the **Deleted** chip. Each row shows when the version was deleted, by whom and why, and when
+   it is purged.
+2. Click **Restore** on the row.
+
+The version comes back with its pacts, verification results and deployments exactly as they were. A
+branch it headed is headed by it again. If a new version has taken its number since, restoring is
+refused. A version that was deleted with its pacticipant comes back when you
+[restore the pacticipant](#restore-a-deleted-pacticipant).
+
+### Act on several versions
+
+1. Tick the box of each version, or the box in the header to select every version shown.
+2. In the bar at the bottom, choose an action:
+   - **Add a tag**: type the tag and click **Add a tag**. Every selected version gets it.
+   - **Delete**: opens the delete dialog for the selected versions. Versions that are deployed or
+     released are listed as blocked and are not deleted.
+   - **Restore** (in the **Deleted** view): restores every selected version.
+   - **Clear**: unselects them.
+
+After a bulk action, one line says how many versions changed. It names every version that did not,
+with the reason.
+
+**The same, from anywhere** under the list shows the `apiome pact create-version-tag` (or
+`restore-version`) command, the Pact CLI command and the REST request for the first selected version.
+
+### When something cannot be read
+
+If the environments cannot be read, the **Running in** column is empty and the tab says so. Apiome
+still refuses to delete a version that is deployed or released. If the versions cannot be read, the
+tab shows the reason and **Try again**. With no version yet, it says **Nothing published under
+*name* yet. Publish a pact, or record one from a mock.**
+
+The **Deployed** and **Unverified** views read each version on its own and show at most 50. The tab
+says when it left some out. **Unverified** reads the pacticipant's first 1,000 matrix rows.
+
 ## Manage a pacticipant
 
 ### Create a pacticipant
@@ -174,7 +268,7 @@ tab.
 The page says **Saved.** If a label could not be added or removed, it says which one and why. The
 other changes are kept.
 
-<Screenshot id="pact-pacticipant-settings" alt="The Settings tab of Billing Service: General with Name, Display name, Main branch, Repository, Linked project and Labels, the Owner section, the Danger zone, and an aside with the handle, previous names and the same settings as an apiome pact command."/>
+<Screenshot id="pact-pacticipant-settings" alt="The Settings tab of Billing Service: General with Name, Display name, Main branch, Repository, Linked project and Labels, the Owner section, Badges with a verified badge preview and its Markdown, the Danger zone, and an aside with the handle, previous names and the same settings as an apiome pact command."/>
 
 The **Owner** section is the same as on **Overview**. See
 [Give a pacticipant an owner](#give-a-pacticipant-an-owner). The aside shows the handle, when the
@@ -182,6 +276,24 @@ pacticipant was registered, its **Previous names**, and **The same, from anywher
 an `apiome pact create-or-update-pacticipant` command, a Pact CLI command and a REST request.
 
 Without **Pacts** → **Edit**, the tab shows the values without inputs.
+
+### Add a badge
+
+The **Badges** section of the **Settings** tab gives you a README badge that says whether the
+pacticipant's pacts are **verified**, **failing** or **unknown**. Badges are served for a
+pacticipant linked to a public project. See [Pact badges](./badges.mdx).
+
+1. Open the pacticipant and click the **Settings** tab.
+2. Under **Badges**, choose what the badge is **For**: the pacticipant (all its pacts), or one of its
+   pacts, for example `Orders UI → Billing Service`.
+3. Check the preview. It is the badge exactly as anyone fetching it sees it now.
+4. Click a pill: **Markdown** (Apiome's SVG badge), **shields.io** (shields.io draws it from the
+   `shields.json` endpoint) or **Image URL**. Then click the copy button.
+5. Paste it into your README.
+
+The badge shows the latest pact's verification. A badge for a branch, a tag or an environment is not
+served. If the pacticipant has no linked project, the section says to link one under **General**. If
+the linked project has no published, public version, the section says it serves no badge.
 
 ### Rename a pacticipant
 
@@ -233,7 +345,16 @@ apiome pact create-or-update-pacticipant --name "Billing Service" \
 
 # Delete one (refused while a version is deployed or released)
 apiome pact delete-pacticipant --name "Billing Service" --reason "retired"
+
+# Tag a version, delete one and restore it
+apiome pact create-version-tag -a "Billing Service" -e 3.3.2 -t prod
+apiome pact delete-version -a "Billing Service" -e 3.3.1 --reason "bad build"
+apiome pact restore-version -a "Billing Service" -e 3.3.1
 ```
+
+`create-version-tag` takes `pact-broker create-version-tag`'s flags, including
+`--auto-create-version` and `--tag-with-git-branch`. `delete-version` is refused while the version is
+deployed or released.
 
 `create-or-update-pacticipant` takes `pact-broker create-or-update-pacticipant`'s flags. It never
 renames: rename on the **Settings** tab, or with `PATCH /v1/tenants/{tenant}/pacticipants/{handle}`.
@@ -250,9 +371,14 @@ See [`apiome pact` commands](./cli.mdx) and the
 | Change its settings, rename it, add or remove labels | **Pacts** → **Edit** |
 | Assign, change, confirm or remove a pacticipant's owner | **Pacts** → **Edit** |
 | Delete a pacticipant, or restore a deleted one | **Pacts** → **Delete** (Owner and Admin) |
+| Tag a version | **Pacts** → **Create** |
+| Delete a version, or restore a deleted one | **Pacts** → **Delete** (Owner and Admin) |
+| See a badge preview and copy its Markdown | **Pacts** → **View** |
 
 Every read and write is scoped to your current workspace. Creating, changing, deleting and restoring
-a pacticipant is recorded in the audit trail.
+a pacticipant, and tagging, deleting and restoring a version, is recorded in the audit trail. Without
+**Pacts** → **Create**, the **Versions** tab shows no **+ tag**; without **Pacts** → **Delete**, it
+shows no delete, restore or select boxes.
 
 ## Related
 
@@ -264,5 +390,6 @@ a pacticipant is recorded in the audit trail.
 - [Environments and deployments](./environments.mdx)
 - [Environments and the deploy simulator](./environments-dashboard.mdx)
 - [Labels, deletes and retention](./retention.mdx)
+- [Pact badges](./badges.mdx)
 - [Teams → Ownership](../../workspace/teams.mdx#ownership)
 - [Pacticipants API](../../reference/rest/pacticipants.md)

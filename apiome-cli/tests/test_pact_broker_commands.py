@@ -815,3 +815,125 @@ def test_delete_pacticipant_unknown_or_forbidden_exits_1(broker_env: None, httpx
     httpx_mock.add_response(method="DELETE", status_code=403, json={"detail": "Permission denied: pacts:delete"})
     result = _invoke("delete-pacticipant", "--name", "orders-ui")
     assert result.exit_code == EXIT_ERROR and "pacts:delete" in result.output
+
+
+# --- create-version-tag / delete-version / restore-version (PFX-8.11, #7308) -------------------
+
+_VERSION_RECORD = {
+    "id": "v1",
+    "pacticipant_id": "p1",
+    "number": "3.3.2",
+    "seq": 7,
+    "branches": ["main"],
+    "tags": ["prod", "feat/new"],
+    "created_at": "2026-11-20T10:00:00Z",
+}
+
+
+def test_create_version_tag_puts_each_tag_once(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="PUT", json=_VERSION_RECORD, is_reusable=True)
+    result = _invoke("create-version-tag", "-a", "Orders UI", "-e", "3.3.2", "-t", "prod", "-t", "feat/new", "-t", "prod")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    paths = [urlparse(str(request.url)).path for request in httpx_mock.get_requests()]
+    assert paths == [
+        "/v1/tenants/acme/pacticipants/Orders%20UI/versions/3.3.2/tags/prod",
+        "/v1/tenants/acme/pacticipants/Orders%20UI/versions/3.3.2/tags/feat/new",
+    ]
+    assert all(request.headers["X-API-Key"] == "broker-token" for request in httpx_mock.get_requests())
+    assert "Tagged Orders UI version 3.3.2 with prod, feat/new" in result.output
+
+
+def test_create_version_tag_auto_create_records_the_version_first(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="PUT", json={"version": _VERSION_RECORD, "created": True}, status_code=201)
+    httpx_mock.add_response(method="PUT", json=_VERSION_RECORD)
+    result = _invoke("create-version-tag", "-a", "orders-ui", "-e", "3.3.2", "-t", "prod", "--auto-create-version")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    first, second = httpx_mock.get_requests()
+    assert urlparse(str(first.url)).path == "/v1/tenants/acme/pacticipants/orders-ui/versions/3.3.2"
+    assert json.loads(first.content) == {}
+    assert urlparse(str(second.url)).path.endswith("/versions/3.3.2/tags/prod")
+
+
+def test_create_version_tag_with_git_branch(broker_env: None, httpx_mock: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GITHUB_REF_NAME", "feature/x")
+    httpx_mock.add_response(method="PUT", json=_VERSION_RECORD)
+    result = _invoke("create-version-tag", "-a", "orders-ui", "-e", "3.3.2", "-g")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert urlparse(str(httpx_mock.get_requests()[0].url)).path.endswith("/tags/feature/x")
+
+
+def test_create_version_tag_without_a_tag_is_refused_before_sending(broker_env: None, httpx_mock: Any) -> None:
+    result = _invoke("create-version-tag", "-a", "orders-ui", "-e", "3.3.2")
+    assert result.exit_code == EXIT_ERROR and "at least one tag" in result.output
+    assert httpx_mock.get_requests() == []
+
+
+def test_create_version_tag_refuses_a_version_with_a_slash(broker_env: None, httpx_mock: Any) -> None:
+    result = _invoke("create-version-tag", "-a", "orders-ui", "-e", "1/2", "-t", "prod")
+    assert result.exit_code == EXIT_ERROR and "cannot be addressed" in result.output
+    assert httpx_mock.get_requests() == []
+
+
+def test_create_version_tag_unknown_version_names_the_tags_already_added(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="PUT", json=_VERSION_RECORD)
+    httpx_mock.add_response(method="PUT", status_code=400, json={"detail": "tag 'bad tag' is not a valid tag"})
+    result = _invoke("create-version-tag", "-a", "orders-ui", "-e", "3.3.2", "-t", "prod", "-t", "bad tag")
+    assert result.exit_code == EXIT_ERROR
+    assert "Tagged with prod before the refusal." in result.output
+    assert "not a valid tag" in result.output
+
+
+def test_delete_version_sends_the_reason_and_never_force(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="DELETE", status_code=204)
+    result = _invoke("delete-version", "-a", "Orders UI", "-e", "3.3.1", "--reason", "bad build")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    request = httpx_mock.get_requests()[0]
+    assert urlparse(str(request.url)).path == "/v1/tenants/acme/pacticipants/Orders%20UI/versions/3.3.1"
+    assert _query(request) == [("reason", "bad build")]
+    assert "Orders UI version 3.3.1 deleted" in result.output and "restore-version" in result.output
+
+
+def test_delete_version_deployed_is_refused_without_offering_force(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(
+        method="DELETE", status_code=409,
+        json={"detail": {
+            "code": "pacticipant-version-in-use",
+            "message": "cannot delete version '3.3.2': version(s) 3.3.2 are currently deployed or released. "
+            "Record the undeployment first, or pass force=true to delete anyway.",
+        }},
+    )
+    result = _invoke("delete-version", "-a", "orders-ui", "-e", "3.3.2")
+    assert result.exit_code == EXIT_ERROR
+    assert "3.3.2 are currently deployed or released. Record the undeployment first." in result.output
+    assert "force" not in result.output
+
+
+def test_delete_version_forbidden_exits_1(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="DELETE", status_code=403, json={"detail": "Permission denied: pacts:delete"})
+    result = _invoke("delete-version", "-a", "orders-ui", "-e", "3.3.2")
+    assert result.exit_code == EXIT_ERROR and "pacts:delete" in result.output
+
+
+def test_restore_version_prints_the_version(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="POST", json=_VERSION_RECORD)
+    result = _invoke("restore-version", "-a", "orders-ui", "-e", "3.3.2")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    request = httpx_mock.get_requests()[0]
+    assert urlparse(str(request.url)).path == "/v1/tenants/acme/pacticipants/orders-ui/versions/3.3.2/restore"
+    assert "orders-ui version 3.3.2 restored" in result.output and "prod, feat/new" in result.output
+
+
+def test_restore_version_json(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(method="POST", json=_VERSION_RECORD)
+    result = _invoke("restore-version", "-a", "orders-ui", "-e", "3.3.2", "-o", "json")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert json.loads(result.output)["number"] == "3.3.2"
+
+
+def test_restore_version_conflict_exits_1_with_the_reason(broker_env: None, httpx_mock: Any) -> None:
+    httpx_mock.add_response(
+        method="POST", status_code=409,
+        json={"detail": {"code": "pacticipant-restore-conflict", "message": "a live version 3.3.2 exists"}},
+    )
+    result = _invoke("restore-version", "-a", "orders-ui", "-e", "3.3.2")
+    assert result.exit_code == EXIT_ERROR and "a live version 3.3.2 exists" in result.output

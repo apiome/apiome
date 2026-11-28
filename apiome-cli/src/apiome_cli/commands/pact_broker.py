@@ -3,7 +3,8 @@
 ``publish``, ``check`` (PFX-8.4, #7301: a pre-publish comparison with several provider versions; no
 ``pact-broker`` equivalent), ``list-pacticipants``, ``describe-version``, ``can-i-deploy``, ``record-deployment``,
 ``record-release``, ``create-environment``, ``create-webhook``, ``verify``, and
-``create-or-update-pacticipant`` / ``delete-pacticipant`` (PFX-8.10, #7307) take the flags of
+``create-or-update-pacticipant`` / ``delete-pacticipant`` (PFX-8.10, #7307) and
+``create-version-tag`` / ``delete-version`` / ``restore-version`` (PFX-8.11, #7308) take the flags of
 the ``pact-broker`` CLI they replace (``-a``, ``-e``, ``-l``, ``-t``, ``-b``, ``-k``, ``-o``, …)
 and print the same sentences, so a pipeline moves over by changing the command name. ``migrate``
 (PFX-6.7, #6959) imports a whole Pact Broker or PactFlow workspace: the source is read by
@@ -24,7 +25,7 @@ import os
 import time
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import typer
 
@@ -63,7 +64,10 @@ from apiome_cli.pact_broker_output import (
     recorded_lines,
     validate_output,
     verify_lines,
+    version_deleted_lines,
     version_lines,
+    version_restored_lines,
+    version_tagged_lines,
     webhook_created_lines,
 )
 from apiome_cli.pact_migration_output import MigrationSummary, migration_document, migration_lines
@@ -407,6 +411,133 @@ def delete_pacticipant(
             raise CliError(f"{first}. Record the undeployment first.", exit_code=EXIT_ERROR)
     exit_on_api_error(response)
     _emit(fmt, {"name": name, "deleted": True}, pacticipant_deleted_lines(name, fmt))
+
+
+# ---------------------------------------------------------------------------------------------
+# create-version-tag / delete-version / restore-version (PFX-8.11, #7308)
+# ---------------------------------------------------------------------------------------------
+
+
+def _version_path(conn: BrokerConnection, pacticipant: str, version: str, suffix: str, *, command: str) -> str:
+    """``/v1/tenants/{t}/pacticipants/{p}/versions/{v}{suffix}``, refusing a number REST cannot address.
+
+    Args:
+        conn: The connection.
+        pacticipant: The pacticipant's name or handle.
+        version: The version number, exactly as recorded.
+        suffix: What follows the version segment (``''``, ``/restore``, ``/tags/{tag}``).
+        command: The command asking, named in a refusal.
+
+    Returns:
+        The path.
+
+    Raises:
+        typer.BadParameter: for an empty number, or one with a ``/`` (it is a path segment).
+    """
+    if not version.strip():
+        raise typer.BadParameter("give the version number", param_hint="--version")
+    if "/" in version:
+        raise typer.BadParameter(
+            "a version number with a '/' cannot be addressed: it is one path segment", param_hint="--version"
+        )
+    return conn.api_path(f"/pacticipants/{segment(pacticipant)}/versions/{segment(version)}{suffix}", command=command)
+
+
+def create_version_tag(
+    ctx: typer.Context,
+    pacticipant: str = typer.Option(..., "--pacticipant", "-a", help="The pacticipant's name or handle."),
+    version: str = typer.Option(..., "--version", "-e", help="The version number to tag."),
+    tag: Optional[list[str]] = typer.Option(None, "--tag", "-t", help="The tag (repeatable)."),
+    auto_create_version: bool = typer.Option(
+        False, "--auto-create-version", help="Record the version first when it does not exist yet."
+    ),
+    tag_with_git_branch: bool = typer.Option(
+        False, "--tag-with-git-branch", "-g", help="Also tag the version with the detected git branch."
+    ),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Tag a pacticipant version (PUT /v1/tenants/{t}/pacticipants/{p}/versions/{v}/tags/{tag}), as `pact-broker create-version-tag`.
+
+    Sends one request per tag; a tag the version already has changes nothing. Without
+    --auto-create-version an unknown version is refused (404). Needs pacts:create. Exits 1 on any
+    refusal, after naming the tags that were added before it.
+    """
+    fmt = _format(ctx, output)
+    tags = [value for value in (tag or []) if value.strip()]
+    if tag_with_git_branch:
+        detected = detect_version_properties(os.environ)
+        if not detected.branch:
+            raise typer.BadParameter("no branch could be detected from the CI environment or git", param_hint="-g")
+        tags.append(detected.branch)
+    if not tags:
+        raise typer.BadParameter("give at least one tag", param_hint="--tag")
+    command = "create-version-tag"
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    base = _version_path(conn, pacticipant, version, "", command=command)
+    if auto_create_version:
+        exit_on_api_error(conn.client.put_raw(base, json={}))
+    record: dict[str, Any] = {}
+    added: list[str] = []
+    for name in dict.fromkeys(tags):
+        response = conn.client.put_raw(f"{base}/tags/{quote(name, safe='/')}")
+        if response.status_code >= 400 and added:
+            typer.echo(f"Tagged with {', '.join(added)} before the refusal.", err=True)
+        exit_on_api_error(response)
+        record = response.json()
+        added.append(name)
+    _emit(fmt, record, version_tagged_lines(pacticipant, version, added, fmt))
+
+
+def delete_version(
+    ctx: typer.Context,
+    pacticipant: str = typer.Option(..., "--pacticipant", "-a", help="The pacticipant's name or handle."),
+    version: str = typer.Option(..., "--version", "-e", help="The version number to delete."),
+    reason: Optional[str] = typer.Option(None, "--reason", help="Why; stored with the delete and audited."),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Delete a pacticipant version with its pacts and results (DELETE …/pacticipants/{p}/versions/{v}).
+
+    The delete is soft: restore-version (or the Versions tab's Restore) brings the version, its
+    pacts and results back until it is purged. Refused while the version is deployed or released:
+    record the undeployment first. Needs pacts:delete. Exits 1 on any refusal.
+    """
+    fmt = _format(ctx, output)
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    path = _version_path(conn, pacticipant, version, "", command="delete-version")
+    response = conn.client.delete_raw(path, params={"reason": reason} if reason else None)
+    if response.status_code == 409:
+        code, message = _refusal(response)
+        if code == _VERSION_IN_USE:
+            # The REST message also names `force=true`, which this command deliberately does not offer.
+            first = message.split(". Record")[0].rstrip(".")
+            raise CliError(f"{first}. Record the undeployment first.", exit_code=EXIT_ERROR)
+    exit_on_api_error(response)
+    payload = {"pacticipant": pacticipant, "version": version, "deleted": True}
+    _emit(fmt, payload, version_deleted_lines(pacticipant, version, fmt))
+
+
+def restore_version(
+    ctx: typer.Context,
+    pacticipant: str = typer.Option(..., "--pacticipant", "-a", help="The pacticipant's name or handle."),
+    version: str = typer.Option(..., "--version", "-e", help="The deleted version's number."),
+    output: str = OUTPUT,
+    broker_base_url: Optional[str] = BROKER_BASE_URL,
+    broker_token: Optional[str] = BROKER_TOKEN,
+) -> None:
+    """Restore a deleted version with its pacts, results and deployments (POST …/versions/{v}/restore).
+
+    Works until the version is purged. Refused (409) when the version is not deleted, or when a
+    live version has taken the number since. Needs pacts:delete. Exits 1 on any refusal.
+    """
+    fmt = _format(ctx, output)
+    conn = connect(ctx, broker_base_url=broker_base_url, broker_token=broker_token)
+    path = _version_path(conn, pacticipant, version, "/restore", command="restore-version")
+    record = conn.client.post(path).json()
+    _emit(fmt, record, version_restored_lines(pacticipant, record, fmt))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -953,6 +1084,9 @@ COMMANDS: tuple[tuple[str, Any], ...] = (
     ("create-or-update-pacticipant", create_or_update_pacticipant),
     ("delete-pacticipant", delete_pacticipant),
     ("describe-version", describe_version),
+    ("create-version-tag", create_version_tag),
+    ("delete-version", delete_version),
+    ("restore-version", restore_version),
     ("can-i-deploy", can_i_deploy),
     ("record-deployment", record_deployment),
     ("record-release", record_release),

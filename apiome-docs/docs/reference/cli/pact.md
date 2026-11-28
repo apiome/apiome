@@ -18,7 +18,7 @@ Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`verify`](#pact-verify).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`restore-version`](#pact-restore-version), [`verify`](#pact-verify).
 
 ## apiome pact can-i-deploy {#pact-can-i-deploy}
 
@@ -121,6 +121,29 @@ apiome pact create-or-update-pacticipant [OPTIONS]
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
 
+## apiome pact create-version-tag {#pact-create-version-tag}
+
+Tag a pacticipant version (PUT /v1/tenants/{t}/pacticipants/{p}/versions/{v}/tags/{tag}), as `pact-broker create-version-tag`.
+
+Sends one request per tag; a tag the version already has changes nothing. Without --auto-create-version an unknown version is refused (404). Needs pacts:create. Exits 1 on any refusal, after naming the tags that were added before it.
+
+```text
+apiome pact create-version-tag [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text |  | yes | The pacticipant's name or handle. |
+| `--version`, `-e` | text |  | yes | The version number to tag. |
+| `--tag`, `-t` | text (repeatable) |  |  | The tag (repeatable). |
+| `--auto-create-version` | flag |  |  | Record the version first when it does not exist yet. |
+| `--tag-with-git-branch`, `-g` | flag |  |  | Also tag the version with the detected git branch. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
 ## apiome pact create-webhook {#pact-create-webhook}
 
 Create a webhook (POST …/webhooks), with `pact-broker create-webhook`'s options.
@@ -174,6 +197,27 @@ apiome pact delete-pacticipant [OPTIONS]
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
 | `--name` | text |  | yes | The pacticipant's name or handle. |
+| `--reason` | text |  |  | Why; stored with the delete and audited. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact delete-version {#pact-delete-version}
+
+Delete a pacticipant version with its pacts and results (DELETE …/pacticipants/{p}/versions/{v}).
+
+The delete is soft: restore-version (or the Versions tab's Restore) brings the version, its pacts and results back until it is purged. Refused while the version is deployed or released: record the undeployment first. Needs pacts:delete. Exits 1 on any refusal.
+
+```text
+apiome pact delete-version [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text |  | yes | The pacticipant's name or handle. |
+| `--version`, `-e` | text |  | yes | The version number to delete. |
 | `--reason` | text |  |  | Why; stored with the delete and audited. |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
@@ -469,6 +513,26 @@ apiome pact record-release [OPTIONS]
 | `--pacticipant`, `-a` | text |  | yes | What was released. |
 | `--version`, `-e` | text |  | yes | Its version. |
 | `--environment` | text |  | yes | The environment's name. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact restore-version {#pact-restore-version}
+
+Restore a deleted version with its pacts, results and deployments (POST …/versions/{v}/restore).
+
+Works until the version is purged. Refused (409) when the version is not deleted, or when a live version has taken the number since. Needs pacts:delete. Exits 1 on any refusal.
+
+```text
+apiome pact restore-version [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--pacticipant`, `-a` | text |  | yes | The pacticipant's name or handle. |
+| `--version`, `-e` | text |  | yes | The deleted version's number. |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |

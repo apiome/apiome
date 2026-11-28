@@ -678,7 +678,14 @@ apiome pact verify --provider "Ledger API" -a "$GIT_COMMIT" --target ledger-stag
   --consumer-version-selector '{"mainBranch": true}'
 apiome pact list-pacticipants -o markdown
 apiome pact describe-version -a "Billing Service" --latest
+apiome pact create-version-tag -a "Billing Service" -e "$GIT_COMMIT" -t prod
+apiome pact delete-version -a "Billing Service" -e 3.3.1 --reason "bad build"
+apiome pact restore-version -a "Billing Service" -e 3.3.1
 ```
+
+`delete-version` is soft: `restore-version` brings the version back with its pacts, results and
+deployments until it is purged (`APIOME_PACT_DELETION_GRACE_DAYS`, default 30). A version that is
+deployed or released is refused — record its undeployment first; the CLI never forces it (PFX-8.11).
 
 `apiome pact migrate --from https://acme.pactflow.io` (PFX-6.7) imports a Pact Broker or PactFlow
 workspace — pacticipants and labels, versions with branches and tags, pacts, verification results,

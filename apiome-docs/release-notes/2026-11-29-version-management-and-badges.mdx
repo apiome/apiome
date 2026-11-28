@@ -1,0 +1,31 @@
+---
+slug: version-management-and-badges
+title: "Version management and badges"
+description: "Tag, delete and restore pacticipant versions, and copy a README badge."
+authors: [apiome]
+---
+
+A pacticipant's versions could be listed but not tagged or removed, a deleted version could only be
+restored through REST, and the pact badges had no place in the app. A pacticipant's page now has a
+**Versions** tab, and its **Settings** tab has **Badges**. See
+[Manage versions](/ship/pact-broker/pacticipants#manage-versions) and
+[Add a badge](/ship/pact-broker/pacticipants#add-a-badge).
+
+{/* truncate */}
+
+- **Versions as a managed list.** Search the versions by number, branch or tag, and narrow them with
+  **All**, the main branch, **Deployed**, **Unverified** and **Deleted**. Each row shows where the
+  version runs now.
+- **Tag inline.** **+ tag** on a row puts a tag on that version. A tag may contain `/`.
+- **Delete and restore.** **Delete version** spells out what goes, takes an optional audited reason,
+  and can be undone from **Deleted** until the version is purged. A restored version gets back its
+  pacts, results and deployments exactly as they were. A version that is deployed or released
+  cannot be deleted: the dialog says, for example, *3.3.2 is running in production. Record its
+  undeployment first.*
+- **Bulk actions.** Select versions and use the bar at the bottom to tag, delete or restore them
+  together. One line says what changed and names every version that did not, with the reason.
+- **Badges.** Choose what the badge is for (the pacticipant, or one of its pacts) and see the badge
+  exactly as REST serves it. Copy the Markdown, the shields.io Markdown or the image URL. Badges are
+  served for a pacticipant linked to a public project.
+- **CLI:** `apiome pact create-version-tag` (with `pact-broker`'s flags), `apiome pact
+  delete-version` and `apiome pact restore-version`.

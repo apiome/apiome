@@ -1400,7 +1400,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'pacticipants',
     title: 'Pacticipants',
-    summary: 'Browse, create, rename and delete the applications in your pacts: versions, branches, environments and labels.',
+    summary: 'Browse, create, rename and delete the applications in your pacts, and tag, delete and restore their versions.',
     page: 'apiome-docs/docs/ship/pact-broker/pacticipants.mdx',
     section: 'reference',
     keywords: [
@@ -1421,6 +1421,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
       'delete',
       'restore',
       'create-or-update-pacticipant',
+      'versions tab',
+      'tag a version',
+      'delete version',
+      'restore version',
+      'bulk',
+      'unverified',
+      'create-version-tag',
+      'delete-version',
+      'restore-version',
     ],
   },
   {
@@ -1636,7 +1645,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Show in a README whether the pacts of a public project are verified.',
     page: 'apiome-docs/docs/ship/pact-broker/badges.mdx',
     section: 'reference',
-    keywords: ['shields.io', 'SVG', 'README', 'verified', 'failing', 'public project', 'status'],
+    keywords: ['shields.io', 'SVG', 'README', 'verified', 'failing', 'public project', 'status', 'markdown', 'preview', 'settings', 'copy'],
   },
   {
     id: 'retention',
@@ -1644,7 +1653,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Group pacticipants, undo a delete, and clean up old versions with a dry run.',
     page: 'apiome-docs/docs/ship/pact-broker/retention.mdx',
     section: 'reference',
-    keywords: ['soft delete', 'restore', 'purge', 'grace period', 'plan digest', 'keep selectors', 'cleanup', 'force'],
+    keywords: ['soft delete', 'restore', 'purge', 'grace period', 'plan digest', 'keep selectors', 'cleanup', 'force', 'deleted versions', 'restore-version'],
   },
   {
     id: 'compatibility',

@@ -45336,6 +45336,224 @@ tr[data-selected="true"] > td:first-child {
 }
 
 /* ===========================================================================
+   A pacticipant's Versions and Badges — PFX-8.11 (#7308). `.ppx-versions-*`
+   is the managed versions list (toolbar, view chips, table, inline tag form,
+   sticky bulk bar, delete dialog); `.ppx-badges-*` the Settings badge
+   preview. Tokens only.
+   =========================================================================== */
+.ppx-versions {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ppx-versions__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.ppx-versions__search {
+  position: relative;
+  flex: 1 1 16rem;
+  max-inline-size: 22rem;
+}
+
+.ppx-versions__search-icon {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--space-2);
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+  color: var(--fg-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ppx-versions__search-input {
+  padding-inline-start: var(--space-8);
+}
+
+.ppx-versions__chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.ppx-versions__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.ppx-versions__chip:hover {
+  border-color: var(--border-strong);
+  color: var(--fg);
+}
+
+.ppx-versions__chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+.ppx-versions__chip:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.ppx-versions__count {
+  padding: 0 var(--space-1);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ppx-versions__hint {
+  margin-inline-start: auto;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.ppx-versions__select {
+  inline-size: var(--space-8);
+}
+
+.ppx-versions__branch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+}
+
+.ppx-versions__branch svg {
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+  color: var(--fg-muted);
+}
+
+.ppx-versions__tag,
+.ppx-versions__env {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+}
+
+.ppx-versions__env--production {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.ppx-versions__tag-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ppx-versions__tag-input {
+  inline-size: 9rem;
+}
+
+.ppx-versions__tag-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.ppx-versions__row--deleted > * {
+  color: var(--fg-muted);
+}
+
+.ppx-versions__deleted {
+  font-size: var(--fs-xs);
+}
+
+.ppx-versions__actions {
+  text-align: end;
+  white-space: nowrap;
+}
+
+.ppx-versions__menu-sep {
+  block-size: 1px;
+  margin: var(--space-1) 0;
+  background: var(--border);
+}
+
+.ppx-versions__menu-danger {
+  color: var(--danger-fg);
+}
+
+.ppx-versions__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ppx-versions__bulk {
+  position: sticky;
+  inset-block-end: var(--space-3);
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.ppx-versions__bulk-count {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.ppx-versions__bulk-tag {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ppx-versions__dialog-body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ppx-versions__blocked {
+  margin: 0;
+  padding-inline-start: var(--space-4);
+}
+
+.ppx-badges__preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ppx-badges__none {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+/* ===========================================================================
    A pact — PFX-5.2 (#6946). `.ppd-*` is one integration's pact page (it
    reuses the `.ppx-*` panels, tables and facts): the interaction disclosures
    with their states, request and response; the code blocks; the changes

@@ -73,8 +73,18 @@ export const PACT_VERBS: Readonly<Record<string, PactVerbSurfaces>> = {
     action: false,
     rest: 'PATCH /v1/tenants/{tenant}/pacticipants/{pacticipant}',
   },
+  'create-version-tag': {
+    pactCli: 'pact-broker create-version-tag',
+    action: false,
+    rest: 'PUT /v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{version}/tags/{tag}',
+  },
   'create-webhook': { pactCli: 'pact-broker create-webhook', action: false, rest: 'POST /v1/tenants/{tenant}/pact-broker/webhooks' },
   'delete-pacticipant': { pactCli: null, action: false, rest: 'DELETE /v1/tenants/{tenant}/pacticipants/{pacticipant}' },
+  'delete-version': {
+    pactCli: null,
+    action: false,
+    rest: 'DELETE /v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{version}',
+  },
   'describe-version': {
     pactCli: 'pact-broker describe-version',
     action: false,
@@ -113,6 +123,11 @@ export const PACT_VERBS: Readonly<Record<string, PactVerbSurfaces>> = {
     pactCli: 'pact-broker record-release',
     action: false,
     rest: 'POST /v1/tenants/{tenant}/pact-broker/pacticipants/{pacticipant}/versions/{version}/released-versions/environment/{environment}',
+  },
+  'restore-version': {
+    pactCli: null,
+    action: false,
+    rest: 'POST /v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{version}/restore',
   },
   verify: { pactCli: null, action: false, rest: 'POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify' },
 };
