@@ -1,12 +1,14 @@
 ---
 title: Migrate from Pact Broker or PactFlow
-description: Import a Pact Broker or PactFlow workspace into Apiome with one command.
+description: Import a Pact Broker or PactFlow workspace with the Migration wizard or one command.
 sidebar_position: 6.95
 tags: [contracts, pact, migration, cli]
 ---
 
-`apiome pact migrate` moves an existing Pact Broker or PactFlow workspace into Apiome in one
-command. It reads the source through its REST API and re-creates everything in your Apiome workspace:
+Apiome moves an existing Pact Broker or PactFlow workspace into your workspace in two ways: the
+**Migration wizard** in the console ([Migrate from the UI](#migrate-from-the-ui)), and
+`apiome pact migrate` from a terminal or a pipeline. Both read the source through its REST API — the
+source is only ever read — and re-create everything in your Apiome workspace:
 
 - pacticipants, with their repository, main branch and labels;
 - versions, with their build URL, branches and tags;
@@ -15,7 +17,7 @@ command. It reads the source through its REST API and re-creates everything in y
 - webhooks.
 
 Each row keeps the time the source recorded it, so history, **latest** and branch heads read the
-same as before. Running the command again changes nothing that is already there, and a run that
+same as before. Running a migration again changes nothing that is already there, and a run that
 stops part-way **resumes** where it left off. Before it writes anything, a **dry run** tells you
 what would be created and what cannot be carried over.
 
@@ -41,6 +43,68 @@ Work through this checklist before the first run.
 - [ ] **A pause on publishing to the source** while you migrate, or plan a second run after the
       cut-over to pick up what was published meanwhile.
 
+## Migrate from the UI
+
+Open **Contracts**, then **Migrate from a broker** under **Start something** (or in the header's
+**⋯** menu). The wizard has four steps, and the migration itself runs on Apiome's servers: you can
+close the page while it copies.
+
+1. **Connect.** Enter the **Broker URL** — a public `http(s)` address — and choose how to **Sign in
+   with**: an **API token**, or a **Username and password**. Press **Test connection**. The wizard
+   answers with what it found, for example *PactFlow · 42 pacticipants found*, or with why not:
+   *Could not sign in to acme.pactflow.io (401). Check the token.* **Continue** stays disabled until
+   a test has passed. The token or password is used for this migration only and is **never stored**.
+2. **Choose.** **Continue** starts a dry run; the step fills in when it finishes.
+
+   <Screenshot id="pact-migrate-choose" alt="The Choose step of the Migration wizard: eight ticked tiles with counts from a dry run (42 pacticipants, 3,816 versions, 1,284 pacts, 9,402 verification results, 4 environments, 57 deployments and releases, 11 webhooks, 318 labels and tags), How much history with What clean-up would keep selected, the conflict policy on Keep Apiome’s, and a Before you copy strip open on 11 webhook notes." />
+
+   - **What to copy**: untick a kind to leave it behind. Each tile shows how many the source holds.
+   - **How much history**: copy **All** verification results, the **Latest per pact**, or **None**;
+     copy **All** versions, or only **What clean-up would keep** — the versions your
+     [keep-rules](./retention.mdx) would remove anyway stay behind, with their pacts and results.
+     That choice needs saved keep-rules.
+   - **When something already exists here**: **Keep Apiome’s, skip the source’s** (the default), or
+     **Replace with the source’s**. Replacing applies to a pact and to what is currently deployed; a
+     verification result is never replaced, and is listed if it differs.
+   - **Before you copy**: one strip lists everything the source holds that cannot be carried over as
+     it is (see [What is not carried over](#what-is-not-carried-over)). Open a chip to read it.
+   - **Advanced**: **Start from scratch** copies everything again instead of skipping what an earlier
+     migration from this source copied; the two numbers are the command's `--matrix-limit` and
+     `--batch-bytes`.
+
+   Press **Start copying**.
+3. **Copy.** A progress bar, one row per kind (**Copied**, **Skipped**, **Failed**) and a live log.
+
+   <Screenshot id="pact-migrate-copy" alt="The Copy step of the Migration wizard at 31%: a striped progress bar, a table of kinds with copied, skipped and failed counts (pacts 612 of 1,284 with 2 failed, verification results waiting), the two failed pacts with their reasons, a log, and a Stop button." />
+
+   - Every record that fails is listed with its reason — see
+     [When a record is refused](#when-a-record-is-refused). When the copy ends with failures,
+     **Retry the N that failed** takes the place of **Continue**; **Continue without them** moves on
+     and leaves them in the report.
+   - **Stop** stops the copy before its next batch. **Resume** carries on where it stopped: what was
+     already copied is skipped, so nothing is copied twice.
+   - You can leave the page. **Past migrations** in the header lists every migration of the
+     workspace; **Open** puts one back in the wizard, and a copy that is still running opens by itself
+     when you return.
+   - Resuming a migration you reopened asks you to **sign in to the source again**, because the
+     credentials were not kept.
+4. **Switch over.** The step shows the two variables that point a pipeline at Apiome —
+   `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` — and **Create a key with Pact scopes**.
+   **Download report** saves the run as JSON: the counts, every failure with its reason, everything
+   not portable and the log. Press **Finish**, then work through [After the import](#after-the-import).
+
+Until every pipeline has switched, run the migration again to bring over what was published to the
+old broker in the meantime: a repeat copies only what changed.
+
+The wizard's **The same, from anywhere** block writes what you chose as `apiome pact migrate` and
+as the REST request. The kinds, the history depth and **Replace with the source’s** have no flag on
+the command, and the block says so.
+
+Without permission to migrate (see [Who can do what](#who-can-do-what)) the wizard is read-only and
+reads *Ask a workspace admin to run this migration.* You can still open **Past migrations**.
+
+## Migrate from the command line
+
 Set up the target as for every `apiome pact` command, and the source token in its own variable:
 
 ```bash
@@ -51,7 +115,7 @@ export PACT_SOURCE_BROKER_TOKEN=<read token for the source>
 
 Prefer the variable to `--token`: other users of the machine can read a command line.
 
-## Check first: the dry run
+### Check first: the dry run
 
 ```bash
 apiome pact migrate --from https://acme.pactflow.io --dry-run
@@ -71,7 +135,7 @@ The dry run checks each record on its own. It does not check whether one record 
 verification result whose pact is not imported yet, or a deployment to an environment that does
 not exist yet. The import itself checks those.
 
-## Import
+### Import
 
 ```bash
 apiome pact migrate --from https://acme.pactflow.io
@@ -85,7 +149,7 @@ reads each part and sends each kind, then the report.
 Each record is imported on its own. A refused record does not stop the others. The report lists it
 with the reason, and the command exits `1`.
 
-### Resume and run again
+#### Resume and run again
 
 Progress is kept in `apiome-pact-migrate.state.json` in the current directory (`--state` picks
 another file). A second run with the same `--from` and workspace skips every record the first run
@@ -95,7 +159,7 @@ is sent. Fix what the report names, then run the same command again.
 Importing a record that is already in Apiome changes nothing, so running again is always safe, even
 without the state file. `--restart` ignores the state file and sends everything again.
 
-### Exit codes
+#### Exit codes
 
 | Code | Meaning |
 | --- | --- |
@@ -145,7 +209,7 @@ Run again with a larger `--matrix-limit`.
 | --- | --- | --- |
 | `pact-migration-invalid` | The record cannot be read; the message names the field, e.g. `/records/3/number` | Usually a value the source holds that Apiome does not accept; fix it at the source or leave it |
 | `pact-migration-reference-missing` | A verification result whose pact, or a deployment whose environment, is not in Apiome | Run again: the earlier record is usually refused for another reason listed above it |
-| `pact-migration-conflict` | Apiome already records it differently: another pact for that consumer version, another version deployed there, or another result with that number | Decide which one is right; Apiome's own record is kept |
+| `pact-migration-conflict` | Apiome already records it differently: another pact for that consumer version, another version deployed there, or another result with that number | Decide which one is right; Apiome's own record is kept. In the wizard, **Keep Apiome’s** counts it as skipped rather than failed, and **Replace with the source’s** replaces a pact or a deployment |
 | `pact-webhook-invalid` | The webhook breaks a webhook rule, such as a private host or a missing secret | Fix the webhook or create the secret, then run again |
 | `source-unreadable` | The source listed a pact or result but no longer returns it | Nothing, or run again if the source was briefly unavailable |
 
@@ -169,15 +233,38 @@ Run again with a larger `--matrix-limit`.
 
 | Action | Permission |
 | --- | --- |
-| Run the import | **Pacts** create and edit (Editor, Admin, Owner) |
-| Run a dry run | **Pacts** view (every role) |
+| Run the import with `apiome pact migrate` | **Pacts** create and edit (Editor, Admin, Owner) |
+| Run a dry run with `apiome pact migrate --dry-run` | **Pacts** view (every role) |
+| Use the wizard: test a connection, run a dry run, copy, resume | **Pacts** create and edit (Editor, Admin, Owner) |
+| Stop a migration in the wizard | **Pacts** edit |
+| Read **Past migrations** | **Pacts** view (every role) |
 
-Each import request is recorded in the [Access audit](../../govern/access-audit.mdx#pact-broker-events)
-as `pacts.migration.import`. The audit entry holds the request's route, never its records.
+The wizard needs create and edit even for a dry run, because Apiome's servers reach the source on
+your word.
+
+Each import request of the command is recorded in the
+[Access audit](../../govern/access-audit.mdx#pact-broker-events) as `pacts.migration.import`. The
+wizard records `pacts.migration.source.test`, `pacts.migration.run.start`, `.stop` and `.resume`.
+An audit entry holds the request's route, never its records and never the source's credentials.
 
 ## For automation: the REST API
 
-The command sends what it reads to two routes, which any tool can call:
+The wizard's server-side runs are routes any tool can call:
+
+- `POST /v1/tenants/{tenant}/pact-migration/test` signs in to a source and counts its pacticipants;
+- `POST /v1/tenants/{tenant}/pact-migration/runs` starts a run — `mode: "dry-run"` or `"copy"`, with
+  `options` for the kinds, history depth and conflict policy — and answers `202` with the run;
+- `GET /v1/tenants/{tenant}/pact-migration/runs` lists the runs, and
+  `GET …/runs/{run_id}?after=<last log line>` reads one: counts per kind, findings, failures and log;
+- `POST …/runs/{run_id}/stop` stops it, and `POST …/runs/{run_id}/resume` carries on, given the
+  source's credentials again.
+
+A workspace runs one migration at a time (`409 pact-migration-run-active`). The source URL must be a
+public `http(s)` address (`422 pact-migration-source-invalid`); a refused sign-in is
+`422 pact-migration-source-refused`. The credentials are sent with the request that starts or
+resumes a run and are never stored.
+
+The command itself sends what it reads to two routes, which any tool can also call:
 
 - `POST /v1/tenants/{tenant}/pact-migration/import` writes a batch of up to 100 records;
 - `POST /v1/tenants/{tenant}/pact-migration/check` answers the same batch without writing it.

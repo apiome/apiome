@@ -49060,3 +49060,341 @@ html[data-motion='reduce'] .pvl-progress--striped::-webkit-progress-value {
   color: var(--fg);
   font-size: var(--fs-sm);
 }
+
+/* =============================================================================================
+   MIGRATION WIZARD — /ade/dashboard/pacts/migrate (PFX-8.16, #7313)
+   Authority: `docs/mockups/contracts/migrate.html` (`.ct-wiz`, `.ct-tile`, the wizard's dialog
+   header, body and footer) and `DESIGN.md` §8 (wizard). Progress, tables and the log reuse the
+   live-run drawer's `.pvl-*`; chips, callouts and code reuse `.pcx-*`. Tokens only.
+   ============================================================================================= */
+
+.pmg {
+  display: grid;
+  gap: var(--space-4);
+  max-inline-size: 60rem;
+}
+
+.pmg-wizard {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.pmg-wizard--plain {
+  padding: var(--space-4);
+  overflow: visible;
+}
+
+.pmg-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.pmg-head__icon,
+.pmg-done__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+.pmg-done__icon {
+  background: var(--ok-soft);
+  color: var(--ok-fg);
+}
+
+.pmg-head__icon svg,
+.pmg-done__icon svg {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
+.pmg-head__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.pmg-steps {
+  padding: 0 var(--space-4) var(--space-3);
+  border-block-end: 1px solid var(--border);
+}
+
+.pmg-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.pmg-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-block-start: 1px solid var(--border);
+  background: var(--bg-subtle);
+}
+
+.pmg-footer__start,
+.pmg-footer__note {
+  margin-inline-end: auto;
+}
+
+.pmg-footer__note,
+.pmg-subtle {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.pmg-subtle a {
+  color: var(--accent-fg);
+  text-decoration: underline;
+}
+
+.pmg-strong {
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pmg-heading {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.pmg-label {
+  margin-block-end: var(--space-1);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.pmg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.pmg-pair,
+.pmg-columns {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pmg-url {
+  position: relative;
+}
+
+.pmg-url__icon {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--space-3);
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--fg-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.pmg-url input {
+  padding-inline-start: calc(var(--space-3) * 2 + 1rem);
+}
+
+.pmg-test {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pmg-test__result {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pmg-test__ok {
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--ok-fg);
+}
+
+.pmg-counting {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pmg-tiles {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pmg-tile {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  cursor: pointer;
+}
+
+.pmg-tile:has(input:checked) {
+  border-color: var(--accent);
+}
+
+.pmg-tile:has(input:disabled) {
+  cursor: default;
+}
+
+.pmg-tile:has(input:focus-visible) {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pmg-tile__value {
+  color: var(--fg);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pmg-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+}
+
+.pmg-radios {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.pmg-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.pmg-radio input {
+  flex: none;
+  margin-block-start: 0.2em;
+}
+
+.pmg-lines {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-inline-start: var(--space-4);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  list-style: disc;
+  overflow-wrap: anywhere;
+}
+
+.pmg-advanced {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.pmg-advanced > summary {
+  padding: var(--space-2) var(--space-3);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pmg-advanced > summary:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pmg-advanced__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+.pmg-number {
+  display: grid;
+}
+
+.pmg-number__input {
+  block-size: var(--control-h);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.pmg-number__input:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.pmg-meter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pmg-meter__value {
+  flex: none;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.pmg-failed {
+  color: var(--danger-fg);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.pmg-done {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+@media (min-width: 48rem) {
+  .pmg-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .pmg-pair,
+  .pmg-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

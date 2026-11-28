@@ -1,0 +1,1522 @@
+{
+  "test": {
+    "host": "acme.pactflow.io",
+    "product": "PactFlow",
+    "pacticipants": 42
+  },
+  "dry": {
+    "source": "https://acme.pactflow.io",
+    "host": "acme.pactflow.io",
+    "auth_kind": "token",
+    "error": null,
+    "stop_requested": false,
+    "started_by": "ada@acme.example",
+    "not_read": [
+      "deployment history (versions no longer deployed) and releases whose support ended: the source lists only current deployments and releases",
+      "PactFlow teams, users, roles, API tokens and provider contracts: set them up in Apiome",
+      "webhook execution history (triggered webhooks and their logs)"
+    ],
+    "failures_dropped": 0,
+    "id": "0b0f4a52-8d5e-4a53-9f0c-2c0f6f6f1a11",
+    "mode": "dry-run",
+    "status": "completed",
+    "phase": "done",
+    "percent": 100,
+    "options": {
+      "kinds": [
+        "pacticipant",
+        "environment",
+        "version",
+        "pact",
+        "verification",
+        "deployment",
+        "release",
+        "webhook"
+      ],
+      "labels_and_tags": true,
+      "results": "all",
+      "versions": "all",
+      "conflicts": "keep",
+      "restart": false,
+      "matrix_limit": 1000,
+      "batch_bytes": 4194304
+    },
+    "kinds": [
+      {
+        "kind": "pacticipant",
+        "total": 42,
+        "done": 42,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 6,
+        "would_create": 36
+      },
+      {
+        "kind": "environment",
+        "total": 4,
+        "done": 4,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 4
+      },
+      {
+        "kind": "version",
+        "total": 3816,
+        "done": 3816,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 3816
+      },
+      {
+        "kind": "pact",
+        "total": 1284,
+        "done": 1284,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 1284
+      },
+      {
+        "kind": "verification",
+        "total": 9402,
+        "done": 9402,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 9402
+      },
+      {
+        "kind": "deployment",
+        "total": 51,
+        "done": 51,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 51
+      },
+      {
+        "kind": "release",
+        "total": 6,
+        "done": 6,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 6
+      },
+      {
+        "kind": "webhook",
+        "total": 11,
+        "done": 11,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 11
+      }
+    ],
+    "facts": {
+      "product": "PactFlow",
+      "cleanup_rules_set": true,
+      "cleanup_would_skip": 1912,
+      "results_not_latest": 8118,
+      "labels_and_tags": 318
+    },
+    "findings": [
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-1",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-2",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-3",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-4",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-5",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-6",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-7",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-8",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-9",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-10",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-11",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "pacticipant",
+        "subject": "billing-service",
+        "detail": "display name 'Billing Service' is not carried over: an Apiome pacticipant has one name (the one pacts use)"
+      },
+      {
+        "kind": "pact",
+        "subject": "legacy-cart → payments-api",
+        "detail": "the source returned 1000 matrix rows, the limit asked: older pacts or results may be missing — run again with a larger matrix limit"
+      }
+    ],
+    "failures": [],
+    "log": [
+      {
+        "seq": 1,
+        "text": "14:02:11 Reading acme.pactflow.io"
+      },
+      {
+        "seq": 2,
+        "text": "14:05:40 Checked: nothing was written"
+      }
+    ],
+    "log_seq": 2,
+    "can_resume": false,
+    "created_at": "2026-11-27T14:02:11Z",
+    "finished_at": "2026-11-27T14:05:40Z"
+  },
+  "dryRunning": {
+    "source": "https://acme.pactflow.io",
+    "host": "acme.pactflow.io",
+    "auth_kind": "token",
+    "error": null,
+    "stop_requested": false,
+    "started_by": "ada@acme.example",
+    "not_read": [
+      "deployment history (versions no longer deployed) and releases whose support ended: the source lists only current deployments and releases",
+      "PactFlow teams, users, roles, API tokens and provider contracts: set them up in Apiome",
+      "webhook execution history (triggered webhooks and their logs)"
+    ],
+    "failures_dropped": 0,
+    "id": "0b0f4a52-8d5e-4a53-9f0c-2c0f6f6f1a11",
+    "mode": "dry-run",
+    "status": "running",
+    "phase": "pact",
+    "percent": 31,
+    "options": {
+      "kinds": [
+        "pacticipant",
+        "environment",
+        "version",
+        "pact",
+        "verification",
+        "deployment",
+        "release",
+        "webhook"
+      ],
+      "labels_and_tags": true,
+      "results": "all",
+      "versions": "all",
+      "conflicts": "keep",
+      "restart": false,
+      "matrix_limit": 1000,
+      "batch_bytes": 4194304
+    },
+    "kinds": [
+      {
+        "kind": "pacticipant",
+        "total": 42,
+        "done": 42,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "environment",
+        "total": 4,
+        "done": 4,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "version",
+        "total": 3816,
+        "done": 3816,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "pact",
+        "total": 1284,
+        "done": 650,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "verification",
+        "total": 9402,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "deployment",
+        "total": 51,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "release",
+        "total": 6,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "webhook",
+        "total": 11,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      }
+    ],
+    "facts": {
+      "product": "PactFlow",
+      "cleanup_rules_set": true
+    },
+    "findings": [],
+    "failures": [],
+    "log": [
+      {
+        "seq": 1,
+        "text": "14:02:11 Reading acme.pactflow.io"
+      },
+      {
+        "seq": 2,
+        "text": "14:05:40 Checked: nothing was written"
+      }
+    ],
+    "log_seq": 2,
+    "can_resume": false,
+    "created_at": "2026-11-27T14:02:11Z",
+    "finished_at": null
+  },
+  "copy": {
+    "source": "https://acme.pactflow.io",
+    "host": "acme.pactflow.io",
+    "auth_kind": "token",
+    "error": null,
+    "stop_requested": false,
+    "started_by": "ada@acme.example",
+    "not_read": [
+      "deployment history (versions no longer deployed) and releases whose support ended: the source lists only current deployments and releases",
+      "PactFlow teams, users, roles, API tokens and provider contracts: set them up in Apiome",
+      "webhook execution history (triggered webhooks and their logs)"
+    ],
+    "failures_dropped": 0,
+    "id": "6f9c2d1e-0b7a-4c3e-9a51-2f8e7d6c5b4a",
+    "mode": "copy",
+    "status": "running",
+    "phase": "pact",
+    "percent": 31,
+    "options": {
+      "kinds": [
+        "pacticipant",
+        "environment",
+        "version",
+        "pact",
+        "verification",
+        "deployment",
+        "release",
+        "webhook"
+      ],
+      "labels_and_tags": true,
+      "results": "all",
+      "versions": "kept",
+      "conflicts": "keep",
+      "restart": false,
+      "matrix_limit": 1000,
+      "batch_bytes": 4194304
+    },
+    "kinds": [
+      {
+        "kind": "pacticipant",
+        "total": 42,
+        "done": 42,
+        "copied": 36,
+        "unchanged": 6,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "environment",
+        "total": 4,
+        "done": 4,
+        "copied": 4,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "version",
+        "total": 3816,
+        "done": 3816,
+        "copied": 1904,
+        "unchanged": 0,
+        "skipped": 1912,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "pact",
+        "total": 1284,
+        "done": 614,
+        "copied": 612,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 2,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "verification",
+        "total": 9402,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "deployment",
+        "total": 51,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "release",
+        "total": 6,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "webhook",
+        "total": 11,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      }
+    ],
+    "facts": {
+      "product": "PactFlow",
+      "cleanup_rules_set": true
+    },
+    "findings": [
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-1",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-2",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-3",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-4",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-5",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-6",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-7",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-8",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-9",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-10",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-11",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "pacticipant",
+        "subject": "billing-service",
+        "detail": "display name 'Billing Service' is not carried over: an Apiome pacticipant has one name (the one pacts use)"
+      },
+      {
+        "kind": "pact",
+        "subject": "legacy-cart → payments-api",
+        "detail": "the source returned 1000 matrix rows, the limit asked: older pacts or results may be missing — run again with a larger matrix limit"
+      }
+    ],
+    "failures": [
+      {
+        "kind": "pact",
+        "key": "billing-service/orders-ui/8d2f1c",
+        "code": "pact-migration-reference-missing",
+        "message": "consumer version missing at source"
+      },
+      {
+        "kind": "pact",
+        "key": "payments-api/legacy-cart/0aa41e",
+        "code": "source-unreadable",
+        "message": "the source listed it but answered 404 for /pacts/provider/payments-api/consumer/legacy-cart/version/0aa41e"
+      }
+    ],
+    "log": [
+      {
+        "seq": 40,
+        "text": "14:21:05 pact  600 of 1284"
+      },
+      {
+        "seq": 41,
+        "text": "14:21:07 pact  billing-service/orders-ui/8d2f1c  failed: consumer version missing at source"
+      },
+      {
+        "seq": 42,
+        "text": "14:21:07 pact  payments-api/legacy-cart/0aa41e  failed: the source listed it but answered 404 for /pacts/provider/payments-api/consumer/legacy-cart/version/0aa41e"
+      },
+      {
+        "seq": 43,
+        "text": "14:21:08 pact  614 of 1284"
+      }
+    ],
+    "log_seq": 43,
+    "can_resume": false,
+    "created_at": "2026-11-27T14:17:00Z",
+    "finished_at": null
+  },
+  "copyFailed": {
+    "source": "https://acme.pactflow.io",
+    "host": "acme.pactflow.io",
+    "auth_kind": "token",
+    "error": null,
+    "stop_requested": false,
+    "started_by": "ada@acme.example",
+    "not_read": [
+      "deployment history (versions no longer deployed) and releases whose support ended: the source lists only current deployments and releases",
+      "PactFlow teams, users, roles, API tokens and provider contracts: set them up in Apiome",
+      "webhook execution history (triggered webhooks and their logs)"
+    ],
+    "failures_dropped": 0,
+    "id": "6f9c2d1e-0b7a-4c3e-9a51-2f8e7d6c5b4a",
+    "mode": "copy",
+    "status": "completed",
+    "phase": "done",
+    "percent": 100,
+    "options": {
+      "kinds": [
+        "pacticipant",
+        "environment",
+        "version",
+        "pact",
+        "verification",
+        "deployment",
+        "release",
+        "webhook"
+      ],
+      "labels_and_tags": true,
+      "results": "all",
+      "versions": "kept",
+      "conflicts": "keep",
+      "restart": false,
+      "matrix_limit": 1000,
+      "batch_bytes": 4194304
+    },
+    "kinds": [
+      {
+        "kind": "pacticipant",
+        "total": 42,
+        "done": 42,
+        "copied": 36,
+        "unchanged": 6,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "environment",
+        "total": 4,
+        "done": 4,
+        "copied": 4,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "version",
+        "total": 3816,
+        "done": 3816,
+        "copied": 1904,
+        "unchanged": 0,
+        "skipped": 1912,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "pact",
+        "total": 1284,
+        "done": 1284,
+        "copied": 1282,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 2,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "verification",
+        "total": 9402,
+        "done": 9402,
+        "copied": 9402,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "deployment",
+        "total": 51,
+        "done": 51,
+        "copied": 51,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "release",
+        "total": 6,
+        "done": 6,
+        "copied": 6,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "webhook",
+        "total": 11,
+        "done": 11,
+        "copied": 11,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      }
+    ],
+    "facts": {
+      "product": "PactFlow",
+      "cleanup_rules_set": true
+    },
+    "findings": [
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-1",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-2",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-3",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-4",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-5",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-6",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-7",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-8",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-9",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-10",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-11",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "pacticipant",
+        "subject": "billing-service",
+        "detail": "display name 'Billing Service' is not carried over: an Apiome pacticipant has one name (the one pacts use)"
+      },
+      {
+        "kind": "pact",
+        "subject": "legacy-cart → payments-api",
+        "detail": "the source returned 1000 matrix rows, the limit asked: older pacts or results may be missing — run again with a larger matrix limit"
+      }
+    ],
+    "failures": [
+      {
+        "kind": "pact",
+        "key": "billing-service/orders-ui/8d2f1c",
+        "code": "pact-migration-reference-missing",
+        "message": "consumer version missing at source"
+      },
+      {
+        "kind": "pact",
+        "key": "payments-api/legacy-cart/0aa41e",
+        "code": "source-unreadable",
+        "message": "the source listed it but answered 404 for /pacts/provider/payments-api/consumer/legacy-cart/version/0aa41e"
+      }
+    ],
+    "log": [
+      {
+        "seq": 40,
+        "text": "14:21:05 pact  600 of 1284"
+      },
+      {
+        "seq": 41,
+        "text": "14:21:07 pact  billing-service/orders-ui/8d2f1c  failed: consumer version missing at source"
+      },
+      {
+        "seq": 42,
+        "text": "14:21:07 pact  payments-api/legacy-cart/0aa41e  failed: the source listed it but answered 404 for /pacts/provider/payments-api/consumer/legacy-cart/version/0aa41e"
+      },
+      {
+        "seq": 43,
+        "text": "14:21:08 pact  614 of 1284"
+      }
+    ],
+    "log_seq": 43,
+    "can_resume": true,
+    "created_at": "2026-11-27T14:17:00Z",
+    "finished_at": "2026-11-27T14:29:30Z"
+  },
+  "copyDone": {
+    "source": "https://acme.pactflow.io",
+    "host": "acme.pactflow.io",
+    "auth_kind": "token",
+    "error": null,
+    "stop_requested": false,
+    "started_by": "ada@acme.example",
+    "not_read": [
+      "deployment history (versions no longer deployed) and releases whose support ended: the source lists only current deployments and releases",
+      "PactFlow teams, users, roles, API tokens and provider contracts: set them up in Apiome",
+      "webhook execution history (triggered webhooks and their logs)"
+    ],
+    "failures_dropped": 0,
+    "id": "6f9c2d1e-0b7a-4c3e-9a51-2f8e7d6c5b4a",
+    "mode": "copy",
+    "status": "completed",
+    "phase": "done",
+    "percent": 100,
+    "options": {
+      "kinds": [
+        "pacticipant",
+        "environment",
+        "version",
+        "pact",
+        "verification",
+        "deployment",
+        "release",
+        "webhook"
+      ],
+      "labels_and_tags": true,
+      "results": "all",
+      "versions": "kept",
+      "conflicts": "keep",
+      "restart": false,
+      "matrix_limit": 1000,
+      "batch_bytes": 4194304
+    },
+    "kinds": [
+      {
+        "kind": "pacticipant",
+        "total": 42,
+        "done": 42,
+        "copied": 36,
+        "unchanged": 6,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "environment",
+        "total": 4,
+        "done": 4,
+        "copied": 4,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "version",
+        "total": 3816,
+        "done": 3816,
+        "copied": 1904,
+        "unchanged": 0,
+        "skipped": 1912,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "pact",
+        "total": 1284,
+        "done": 1284,
+        "copied": 1284,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "verification",
+        "total": 9402,
+        "done": 9402,
+        "copied": 9402,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "deployment",
+        "total": 51,
+        "done": 51,
+        "copied": 51,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "release",
+        "total": 6,
+        "done": 6,
+        "copied": 6,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "webhook",
+        "total": 11,
+        "done": 11,
+        "copied": 11,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      }
+    ],
+    "facts": {
+      "product": "PactFlow",
+      "cleanup_rules_set": true
+    },
+    "findings": [
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-1",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-2",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-3",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-4",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-5",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-6",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-7",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-8",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-9",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-10",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-11",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "pacticipant",
+        "subject": "billing-service",
+        "detail": "display name 'Billing Service' is not carried over: an Apiome pacticipant has one name (the one pacts use)"
+      },
+      {
+        "kind": "pact",
+        "subject": "legacy-cart → payments-api",
+        "detail": "the source returned 1000 matrix rows, the limit asked: older pacts or results may be missing — run again with a larger matrix limit"
+      }
+    ],
+    "failures": [],
+    "log": [
+      {
+        "seq": 40,
+        "text": "14:21:05 pact  600 of 1284"
+      },
+      {
+        "seq": 41,
+        "text": "14:21:07 pact  billing-service/orders-ui/8d2f1c  failed: consumer version missing at source"
+      },
+      {
+        "seq": 42,
+        "text": "14:21:07 pact  payments-api/legacy-cart/0aa41e  failed: the source listed it but answered 404 for /pacts/provider/payments-api/consumer/legacy-cart/version/0aa41e"
+      },
+      {
+        "seq": 43,
+        "text": "14:21:08 pact  614 of 1284"
+      }
+    ],
+    "log_seq": 43,
+    "can_resume": false,
+    "created_at": "2026-11-27T14:17:00Z",
+    "finished_at": "2026-11-27T14:31:02Z"
+  },
+  "copyStopped": {
+    "source": "https://acme.pactflow.io",
+    "host": "acme.pactflow.io",
+    "auth_kind": "token",
+    "error": "Stopped. Resume it to carry on where it stopped.",
+    "stop_requested": false,
+    "started_by": "ada@acme.example",
+    "not_read": [
+      "deployment history (versions no longer deployed) and releases whose support ended: the source lists only current deployments and releases",
+      "PactFlow teams, users, roles, API tokens and provider contracts: set them up in Apiome",
+      "webhook execution history (triggered webhooks and their logs)"
+    ],
+    "failures_dropped": 0,
+    "id": "6f9c2d1e-0b7a-4c3e-9a51-2f8e7d6c5b4a",
+    "mode": "copy",
+    "status": "stopped",
+    "phase": "pact",
+    "percent": 31,
+    "options": {
+      "kinds": [
+        "pacticipant",
+        "environment",
+        "version",
+        "pact",
+        "verification",
+        "deployment",
+        "release",
+        "webhook"
+      ],
+      "labels_and_tags": true,
+      "results": "all",
+      "versions": "kept",
+      "conflicts": "keep",
+      "restart": false,
+      "matrix_limit": 1000,
+      "batch_bytes": 4194304
+    },
+    "kinds": [
+      {
+        "kind": "pacticipant",
+        "total": 42,
+        "done": 42,
+        "copied": 36,
+        "unchanged": 6,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "environment",
+        "total": 4,
+        "done": 4,
+        "copied": 4,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "version",
+        "total": 3816,
+        "done": 3816,
+        "copied": 1904,
+        "unchanged": 0,
+        "skipped": 1912,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "pact",
+        "total": 1284,
+        "done": 614,
+        "copied": 612,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 2,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "verification",
+        "total": 9402,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "deployment",
+        "total": 51,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "release",
+        "total": 6,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "webhook",
+        "total": 11,
+        "done": 0,
+        "copied": 0,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      }
+    ],
+    "facts": {
+      "product": "PactFlow",
+      "cleanup_rules_set": true
+    },
+    "findings": [
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-1",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-2",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-3",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-4",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-5",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-6",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-7",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-8",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-9",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-10",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-11",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "pacticipant",
+        "subject": "billing-service",
+        "detail": "display name 'Billing Service' is not carried over: an Apiome pacticipant has one name (the one pacts use)"
+      },
+      {
+        "kind": "pact",
+        "subject": "legacy-cart → payments-api",
+        "detail": "the source returned 1000 matrix rows, the limit asked: older pacts or results may be missing — run again with a larger matrix limit"
+      }
+    ],
+    "failures": [
+      {
+        "kind": "pact",
+        "key": "billing-service/orders-ui/8d2f1c",
+        "code": "pact-migration-reference-missing",
+        "message": "consumer version missing at source"
+      },
+      {
+        "kind": "pact",
+        "key": "payments-api/legacy-cart/0aa41e",
+        "code": "source-unreadable",
+        "message": "the source listed it but answered 404 for /pacts/provider/payments-api/consumer/legacy-cart/version/0aa41e"
+      }
+    ],
+    "log": [
+      {
+        "seq": 40,
+        "text": "14:21:05 pact  600 of 1284"
+      },
+      {
+        "seq": 41,
+        "text": "14:21:07 pact  billing-service/orders-ui/8d2f1c  failed: consumer version missing at source"
+      },
+      {
+        "seq": 42,
+        "text": "14:21:07 pact  payments-api/legacy-cart/0aa41e  failed: the source listed it but answered 404 for /pacts/provider/payments-api/consumer/legacy-cart/version/0aa41e"
+      },
+      {
+        "seq": 43,
+        "text": "14:21:08 pact  614 of 1284"
+      }
+    ],
+    "log_seq": 43,
+    "can_resume": true,
+    "created_at": "2026-11-27T14:17:00Z",
+    "finished_at": "2026-11-27T14:22:00Z"
+  },
+  "older": {
+    "source": "https://broker.internal.example",
+    "host": "broker.internal.example",
+    "auth_kind": "basic",
+    "error": null,
+    "stop_requested": false,
+    "started_by": "grace@acme.example",
+    "not_read": [
+      "deployment history (versions no longer deployed) and releases whose support ended: the source lists only current deployments and releases",
+      "PactFlow teams, users, roles, API tokens and provider contracts: set them up in Apiome",
+      "webhook execution history (triggered webhooks and their logs)"
+    ],
+    "failures_dropped": 0,
+    "id": "3a1d7c90-2b4e-4f6a-8c1d-9e0f1a2b3c4d",
+    "mode": "copy",
+    "status": "completed",
+    "phase": "done",
+    "percent": 100,
+    "options": {
+      "kinds": [
+        "pacticipant",
+        "environment",
+        "version",
+        "pact",
+        "verification",
+        "deployment",
+        "release",
+        "webhook"
+      ],
+      "labels_and_tags": true,
+      "results": "all",
+      "versions": "kept",
+      "conflicts": "keep",
+      "restart": false,
+      "matrix_limit": 1000,
+      "batch_bytes": 4194304
+    },
+    "kinds": [
+      {
+        "kind": "pacticipant",
+        "total": 42,
+        "done": 42,
+        "copied": 36,
+        "unchanged": 6,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "environment",
+        "total": 4,
+        "done": 4,
+        "copied": 4,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "version",
+        "total": 3816,
+        "done": 3816,
+        "copied": 1904,
+        "unchanged": 0,
+        "skipped": 1912,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "pact",
+        "total": 1284,
+        "done": 1284,
+        "copied": 1284,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "verification",
+        "total": 9402,
+        "done": 9402,
+        "copied": 9402,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "deployment",
+        "total": 51,
+        "done": 51,
+        "copied": 51,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "release",
+        "total": 6,
+        "done": 6,
+        "copied": 6,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      },
+      {
+        "kind": "webhook",
+        "total": 11,
+        "done": 11,
+        "copied": 11,
+        "unchanged": 0,
+        "skipped": 0,
+        "failed": 0,
+        "exists": 0,
+        "would_create": 0
+      }
+    ],
+    "facts": {
+      "product": "PactFlow",
+      "cleanup_rules_set": true
+    },
+    "findings": [
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-1",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-2",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-3",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-4",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-5",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-6",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-7",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-8",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-9",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-10",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "webhook",
+        "subject": "ci-trigger-11",
+        "detail": "the source does not export header Authorization: imported turned off, waiting for a value — set it under Contracts → Settings → Secrets and the webhook turns on"
+      },
+      {
+        "kind": "pacticipant",
+        "subject": "billing-service",
+        "detail": "display name 'Billing Service' is not carried over: an Apiome pacticipant has one name (the one pacts use)"
+      },
+      {
+        "kind": "pact",
+        "subject": "legacy-cart → payments-api",
+        "detail": "the source returned 1000 matrix rows, the limit asked: older pacts or results may be missing — run again with a larger matrix limit"
+      }
+    ],
+    "failures": [],
+    "log": [
+      {
+        "seq": 40,
+        "text": "14:21:05 pact  600 of 1284"
+      },
+      {
+        "seq": 41,
+        "text": "14:21:07 pact  billing-service/orders-ui/8d2f1c  failed: consumer version missing at source"
+      },
+      {
+        "seq": 42,
+        "text": "14:21:07 pact  payments-api/legacy-cart/0aa41e  failed: the source listed it but answered 404 for /pacts/provider/payments-api/consumer/legacy-cart/version/0aa41e"
+      },
+      {
+        "seq": 43,
+        "text": "14:21:08 pact  614 of 1284"
+      }
+    ],
+    "log_seq": 43,
+    "can_resume": false,
+    "created_at": "2026-11-13T09:12:00Z",
+    "finished_at": "2026-11-13T09:20:00Z"
+  },
+  "broker": "https://api.apiome.dev/v1/tenants/acme/pact-broker"
+}

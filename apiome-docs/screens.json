@@ -2993,6 +2993,28 @@
       ]
     },
     {
+      "id": "pact-migrate-choose",
+      "route": "/ade/dashboard/pacts/migrate",
+      "waitFor": "[data-testid=\"pmg-choose\"]",
+      "data": "fixture:hive-a11y/pact-migrate-choose.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactMigrate/ChooseStep.tsx",
+        "apiome-ui/src/app/components/ade/pactMigrate/MigrateWizardClient.tsx",
+        "apiome-ui/lib/pact-migration.ts"
+      ]
+    },
+    {
+      "id": "pact-migrate-copy",
+      "route": "/ade/dashboard/pacts/migrate",
+      "waitFor": "[data-testid=\"pmg-copy\"]",
+      "data": "fixture:hive-a11y/pact-migrate-copy.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactMigrate/CopyStep.tsx",
+        "apiome-ui/src/app/components/ade/pactMigrate/MigrateWizardClient.tsx",
+        "apiome-ui/lib/pact-migration.ts"
+      ]
+    },
+    {
       "id": "pact-verification-settings",
       "route": "/ade/dashboard/pacts/settings?tab=verification",
       "waitFor": "[data-testid=\"prx-overrides-table\"]",

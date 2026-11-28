@@ -251,8 +251,11 @@ describe('Contracts landing', () => {
     // PFX-8.6 (#7303): the provider contract has its page now.
     expect(screen.getByTestId('ctx-way-publish-provider-contract')).toHaveAttribute('href', '/ade/dashboard/pacts/provider-contracts/new');
 
-    fireEvent.click(screen.getByTestId('ctx-way-migrate'));
-    expect(await screen.findByTestId('ctx-command-dialog')).toHaveTextContent('apiome pact migrate');
+    // PFX-8.16 (#7313): migrating has its wizard now.
+    expect(screen.getByTestId('ctx-way-migrate')).toHaveAttribute('href', '/ade/dashboard/pacts/migrate');
+
+    fireEvent.click(screen.getByTestId('ctx-way-export-consumer-contract'));
+    expect(await screen.findByTestId('ctx-command-dialog')).toHaveTextContent('apiome pact export-consumer-contract');
   });
 
   it('draws the page of integrations as a network', async () => {

@@ -61,7 +61,7 @@ from .revision_deprecation import is_uuid_string
 from .verification_result import TRIGGER_PUBLISHED
 from .verification_result_store import publish_verification_result
 
-__all__ = ["check_records", "import_records"]
+__all__ = ["REPLACEABLE_KINDS", "check_records", "import_records"]
 
 #: What one importer returns: the outcome (``created`` / ``updated`` / ``unchanged``) and a note.
 _Done = Tuple[str, Optional[str]]
@@ -245,12 +245,16 @@ def _import_version(db: Any, tenant_id: str, record: VersionImport, actor: Consu
     return db._guarded_tx(work)
 
 
-def _import_pact(db: Any, tenant_id: str, record: PactImport, actor: ConsumerActor) -> _Done:
+def _import_pact(
+    db: Any, tenant_id: str, record: PactImport, actor: ConsumerActor, *, replace: bool = False
+) -> _Done:
     """Store the pact a consumer version published, keeping the source's time.
 
     The consumer, the provider and the consumer version are registered when missing. A consumer
     version that already has a *different* pact for the provider is refused
-    (``pact-content-conflict``): a published pact is never replaced.
+    (``pact-content-conflict``): a published pact is never replaced — unless ``replace`` is set (the
+    Migration wizard's *Replace with the source's*, PFX-8.16), when the source's pact takes its place
+    and the outcome is ``updated``.
     """
 
     def work(cursor: Any) -> _Done:
@@ -274,9 +278,11 @@ def _import_pact(db: Any, tenant_id: str, record: PactImport, actor: ConsumerAct
             version,
             record.pact,
             actor=actor,
-            allow_modification=False,
+            allow_modification=replace,
             created_at=record.created_at,
         )
+        if stored.replaced:
+            return "updated", "replaced the pact Apiome had for this consumer version"
         return ("created" if stored.created else "unchanged"), None
 
     return db._guarded_tx(work)
@@ -359,11 +365,15 @@ def _environment_id(db: Any, tenant_id: str, name: str) -> str:
         ) from exc
 
 
-def _import_deployment(db: Any, tenant_id: str, record: DeploymentImport, actor: ConsumerActor) -> _Done:
+def _import_deployment(
+    db: Any, tenant_id: str, record: DeploymentImport, actor: ConsumerActor, *, replace: bool = False
+) -> _Done:
     """Record that a version is currently deployed, keeping the source's time.
 
     The version must have been imported. When Apiome already records *another* version as deployed
-    in that place, the import is refused (``pact-migration-conflict``) and Apiome's record kept.
+    in that place, the import is refused (``pact-migration-conflict``) and Apiome's record kept —
+    unless ``replace`` is set (PFX-8.16), when that version is marked undeployed and the source's
+    takes its place.
     """
     environment_id = _environment_id(db, tenant_id, record.environment)
     try:
@@ -376,7 +386,7 @@ def _import_deployment(db: Any, tenant_id: str, record: DeploymentImport, actor:
             record.application_instance,
             actor=actor,
             created_at=record.created_at,
-            replace_current=False,
+            replace_current=replace,
         )
     except PactPublicationError as exc:
         if exc.code != CODE_DEPLOYMENT_CONFLICT:
@@ -461,7 +471,7 @@ def _import_webhook(db: Any, tenant_id: str, record: WebhookImport, actor: Consu
     return "created", note
 
 
-_IMPORTERS: Dict[str, Callable[[Any, str, Any, ConsumerActor], _Done]] = {
+_IMPORTERS: Dict[str, Callable[..., _Done]] = {
     "pacticipant": _import_pacticipant,
     "version": _import_version,
     "pact": _import_pact,
@@ -583,7 +593,13 @@ def _run(record: Any, attempt: Callable[[], _Done]) -> MigrationOutcome:
     return MigrationOutcome(index=record.index, kind=record.kind, key=record.key, outcome=outcome, note=note)
 
 
-def import_records(db: Any, tenant_id: str, request: ImportRequest, *, actor: ConsumerActor) -> List[MigrationOutcome]:
+#: The kinds whose importer takes ``replace``: what Apiome records differently can give way to the source.
+REPLACEABLE_KINDS = frozenset({"pact", "deployment"})
+
+
+def import_records(
+    db: Any, tenant_id: str, request: ImportRequest, *, actor: ConsumerActor, replace_conflicts: bool = False
+) -> List[MigrationOutcome]:
     """Write a batch, record by record.
 
     Args:
@@ -591,14 +607,21 @@ def import_records(db: Any, tenant_id: str, request: ImportRequest, *, actor: Co
         tenant_id: The caller's tenant.
         request: The read batch.
         actor: Who is importing.
+        replace_conflicts: Let the source's pact or current deployment take the place of a different
+            one Apiome records (PFX-8.16). Off — what ``apiome pact migrate`` and
+            ``POST …/pact-migration/import`` do — such a record is refused (``pact-migration-conflict``).
+            A verification result is never replaced.
 
     Returns:
         One outcome per record, in batch order: ``created``, ``updated``, ``unchanged`` or ``refused``.
     """
-    return [
-        _run(record, lambda record=record: _IMPORTERS[record.kind](db, tenant_id, record, actor))
-        for record in request.records
-    ]
+
+    def write(record: Any) -> _Done:
+        if replace_conflicts and record.kind in REPLACEABLE_KINDS:
+            return _IMPORTERS[record.kind](db, tenant_id, record, actor, replace=True)
+        return _IMPORTERS[record.kind](db, tenant_id, record, actor)
+
+    return [_run(record, lambda record=record: write(record)) for record in request.records]
 
 
 def check_records(db: Any, tenant_id: str, request: ImportRequest) -> List[MigrationOutcome]:

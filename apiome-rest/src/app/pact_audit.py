@@ -83,6 +83,12 @@ AUDIT_ACTIONS = (
     "pacts.secret.update",
     "pacts.secret.delete",
     "pacts.migration.import",
+    # PFX-8.16 (#7313): the Migration wizard — a source broker reached from the server, and a
+    # migration run started, stopped, resumed.
+    "pacts.migration.source.test",
+    "pacts.migration.run.start",
+    "pacts.migration.run.stop",
+    "pacts.migration.run.resume",
     # PFX-8.7 (#7304): a provider's standing contract sources, and each publish they make.
     "pacts.contract_source.update",
     "pacts.contract.auto_publish",

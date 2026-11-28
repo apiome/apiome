@@ -1,0 +1,28 @@
+---
+slug: migration-wizard
+title: "Migration wizard: move a Pact Broker or PactFlow in from the console"
+description: "Connect, choose what to copy, watch it copy, and switch your pipelines over."
+authors: [apiome]
+---
+
+**Contracts** → **Migrate from a broker** is a four-step wizard for `apiome pact migrate`. Apiome's
+servers read your Pact Broker or PactFlow — the source is only ever read — and copy it into your
+workspace while you watch, or after you have closed the page. See
+[Migrate from the UI](/ship/pact-broker/migration#migrate-from-the-ui).
+
+{/* truncate */}
+
+- **Connect.** Enter the broker's URL and an API token, or a username and password, and **Test
+  connection**. The credentials are used for this migration only and are never stored.
+- **Choose.** A dry run counts what the source holds. Tick what to copy by kind, choose how much
+  history comes along — every verification result, the latest of each pact, or none; every version,
+  or only what your clean-up rules would keep — and what happens when something already exists here:
+  keep Apiome's, or replace it with the source's. Everything that cannot be carried over as it is
+  shows in one **Before you copy** strip.
+- **Copy.** A progress bar, a row per kind with copied, skipped and failed counts, every failure
+  with its reason, and a live log. **Stop** is safe: **Resume** carries on where it stopped and
+  copies nothing twice. **Retry the N that failed** tries the failures again.
+- **Switch over.** The two variables that point a pipeline at Apiome, and **Download report**.
+- **Past migrations** lists every migration of the workspace and reopens one.
+- **REST:** `POST /v1/tenants/{t}/pact-migration/test`, `POST` and `GET …/pact-migration/runs`,
+  `GET …/runs/{id}`, `POST …/runs/{id}/stop` and `POST …/runs/{id}/resume` (OpenAPI 1.708.0).

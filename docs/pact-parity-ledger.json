@@ -123,9 +123,22 @@
     },
     {
       "cli": "migrate",
-      "ui": null,
+      "ui": "/ade/dashboard/pacts/migrate",
       "rest": "POST /v1/tenants/{tenant}/pact-migration/import",
-      "reason": "No screen migrates a broker yet; the Migration wizard ships with PFX-8.16 (#7313)."
+      "fields": {
+        "--from": "Connect \u2192 Broker URL",
+        "--token": "Connect \u2192 Sign in with API token \u2192 Token (never stored)",
+        "--username": "Connect \u2192 Sign in with Username and password \u2192 Username",
+        "--password": "Connect \u2192 Sign in with Username and password \u2192 Password (never stored)",
+        "--dry-run": "Connect \u2192 Continue: the dry run whose counts fill Choose",
+        "--state": "Past migrations: the server keeps each run\u2019s progress, so a stopped copy resumes from Copy \u2192 Resume",
+        "--restart": "Choose \u2192 Advanced \u2192 Start from scratch",
+        "--matrix-limit": "Choose \u2192 Advanced \u2192 Matrix rows read per integration",
+        "--batch-bytes": "Choose \u2192 Advanced \u2192 Bytes written at a time",
+        "--output": "Copy (the per-kind table, failures and log) and Switch over \u2192 Download report",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
     },
     {
       "cli": "publish",
@@ -692,6 +705,37 @@
       "ui": "/ade/dashboard/pacts/settings",
       "cli": null,
       "reason": "The commit-status and agent switches are workspace settings with no apiome pact or Pact CLI command; use Settings or REST."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/migrations",
+      "rest": "POST /v1/tenants/{tenant}/pact-migration/runs",
+      "ui": "/ade/dashboard/pacts/migrate",
+      "cli": "migrate"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/migrations/test",
+      "rest": "POST /v1/tenants/{tenant}/pact-migration/test",
+      "ui": "/ade/dashboard/pacts/migrate",
+      "cli": null,
+      "reason": "Test connection only signs in to the source and counts its pacticipants; apiome pact migrate --dry-run fails the same way on a bad URL or token, so no separate command exists."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/migrations/[runId]/stop",
+      "rest": "POST /v1/tenants/{tenant}/pact-migration/runs/{run}/stop",
+      "ui": "/ade/dashboard/pacts/migrate",
+      "cli": null,
+      "reason": "A server-side run is stopped from the wizard or REST; apiome pact migrate runs on the caller\u2019s machine and is stopped with Ctrl-C, resuming from its --state file."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/migrations/[runId]/resume",
+      "rest": "POST /v1/tenants/{tenant}/pact-migration/runs/{run}/resume",
+      "ui": "/ade/dashboard/pacts/migrate",
+      "cli": null,
+      "reason": "Resuming a server-side run is the wizard\u2019s or REST\u2019s; apiome pact migrate resumes its own runs by being run again with the same --state file."
     }
   ]
 }
