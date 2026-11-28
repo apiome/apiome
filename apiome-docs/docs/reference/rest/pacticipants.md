@@ -1,6 +1,6 @@
 ---
 title: "Pacticipants"
-description: "REST endpoints tagged pacticipants: 31 operations."
+description: "REST endpoints tagged pacticipants: 35 operations."
 sidebar_position: 71
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.711.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.712.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pacticipants` · 31 operations
+Tag: `pacticipants` · 35 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-commit-statuses` {#get-pact-commit-statuses-v1-tenants-tenant-slug-pact-commit-statuses-get}
 
@@ -318,6 +318,124 @@ Request body for preview what the clean-up rules remove.
 | --- | --- | --- |
 | 200 | Successful response for preview what the clean-up rules remove. | `application/json` [`RetentionPreview`](#schema-retentionpreview) |
 | 422 | `pact-retention-keeps-in-use`, `pact-retention-too-many-versions`, or an invalid rule. | — |
+
+## `GET /v1/tenants/{tenant_slug}/pact-setup` {#read-pact-setup-v1-tenants-tenant-slug-pact-setup-get}
+
+**Read the Contracts guided set-up**
+
+The six sections of the set-up — who talks to whom, where things run, pipelines, the first pact, the provider's side, gates — each `done`, `next` or `todo`. A section is done when what it sets up exists, whoever made it, or (pipelines, provider's side, gates) when a Contracts admin marked it; a workspace with a completed broker migration has the first two done. Also: the pacticipants proposed from projects (providers) and from registered repositories no project is read from (consumers), each with its main branch, owner team and the pacticipant that already exists for it; and the registered GitHub repositories with whether a linked account can write to them. Counts that could grow without bound stop at 100.
+
+Requires `pacts:view`. `can_edit` is `pacts:delete`.
+
+Operation id: `read_pact_setup_v1_tenants__tenant_slug__pact_setup_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read the contracts guided set-up. | `application/json` [`PactSetupState`](#schema-pactsetupstate) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-setup` {#save-pact-setup-v1-tenants-tenant-slug-pact-setup-put}
+
+**Save progress of the Contracts guided set-up**
+
+Change only what is sent: `mark` sets or clears a section's by-hand mark, `first_pact_path` records the chosen way to the first pact, `ci_key` records the API key just created for CI (its id and prefix, never its secret) so a resume does not create a second one, and `forget_ci_key` clears it without revoking the key. Audited as `pacts.setup.update`.
+
+Requires `pacts:delete`.
+
+Operation id: `save_pact_setup_v1_tenants__tenant_slug__pact_setup_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for save progress of the contracts guided set-up.
+
+- `application/json` — [`PactSetupSave`](#schema-pactsetupsave)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for save progress of the contracts guided set-up. | `application/json` [`PactSetupState`](#schema-pactsetupstate) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-setup/github/pull-requests` {#open-pact-setup-pull-requests-v1-tenants-tenant-slug-pact-setup-github-pull-requests-post}
+
+**Open pull requests adding can-i-deploy and record-deployment**
+
+For each registered repository, open a pull request from the branch `apiome/contracts-setup` adding `.github/workflows/apiome-contracts.yml`: can-i-deploy for the given pacticipant and environment on every pull request and push, and record-deployment after a push to the default branch. Each repository answers `opened`, `exists` (a pull request from the set-up is already open; its branch is brought up to date), or `skipped` with the reason (the same file is already on the default branch, no linked account, a branch rule) — and always the workflow's text, so it can be added by hand. With `preview: true` GitHub is not called and every repository answers `preview`. Audited as `pacts.setup.github.pull_requests` (a preview is not).
+
+Requires `pacts:delete`.
+
+Operation id: `open_pact_setup_pull_requests_v1_tenants__tenant_slug__pact_setup_github_pull_requests_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for open pull requests adding can-i-deploy and record-deployment.
+
+- `application/json` — [`PactSetupPullRequestsRequest`](#schema-pactsetuppullrequestsrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for open pull requests adding can-i-deploy and record-deployment. | `application/json` [`PactSetupPullRequestsResponse`](#schema-pactsetuppullrequestsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/pact-setup/github/secrets` {#write-pact-setup-secrets-v1-tenants-tenant-slug-pact-setup-github-secrets-post}
+
+**Write the broker address and key into repositories as Actions secrets**
+
+Write `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` as GitHub Actions secrets into each registered repository, with the GitHub account the repository was registered with. The token is sealed to the repository's key and sent on; it is never stored, logged or audited. Each repository answers `written`, or `skipped` with the reason (not this workspace's, not github.com, no linked account, the account may not manage secrets): nothing fails as a whole. Writing again replaces the values. Audited as `pacts.setup.github.secrets`.
+
+Requires `pacts:delete`.
+
+Operation id: `write_pact_setup_secrets_v1_tenants__tenant_slug__pact_setup_github_secrets_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for write the broker address and key into repositories as actions secrets.
+
+- `application/json` — [`PactSetupSecretsRequest`](#schema-pactsetupsecretsrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for write the broker address and key into repositories as actions secrets. | `application/json` [`PactSetupSecretsResponse`](#schema-pactsetupsecretsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/pacticipant-labels` {#list-workspace-labels-v1-tenants-tenant-slug-pacticipant-labels-get}
 
@@ -1134,6 +1252,75 @@ One page of the workspace's distinct labels.
 | `count` | integer | yes | How many labels were returned. |
 | `has_more` | boolean | no | Whether another page exists. |
 | `next_cursor` | string or null | no | Pass as `cursor` to read the next page; null on the last page. |
+
+### `PactSetupPullRequestsRequest` {#schema-pactsetuppullrequestsrequest}
+
+``POST …/pact-setup/github/pull-requests``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `repositories` | array of `PactSetupPullRequestRepository` | yes | Repositories. |
+| `environment` | string | yes | The environment can-i-deploy asks about. |
+| `can_i_deploy` | boolean | no | Add the can-i-deploy step. |
+| `record_deployment` | boolean | no | Add the record-deployment step. |
+| `preview` | boolean | no | Only answer with the file each pull request would add; GitHub is not called. |
+
+### `PactSetupPullRequestsResponse` {#schema-pactsetuppullrequestsresponse}
+
+Every repository asked for.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `results` | array of `PactSetupPullRequestResult` | yes | Results. |
+
+### `PactSetupSave` {#schema-pactsetupsave}
+
+``PUT …/pact-setup``: only what is sent changes.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `mark` | map of boolean or null | no | Sections to mark done (`true`) or unmark (`false`); the others keep their mark. |
+| `first_pact_path` | enum `"tests"`, `"spec"` or null | no | The chosen first-pact path. |
+| `ci_key` | `PactSetupCiKey` or null | no | The key just created for CI. |
+| `forget_ci_key` | boolean | no | Forget the recorded CI key (it is not revoked). |
+
+### `PactSetupSecretsRequest` {#schema-pactsetupsecretsrequest}
+
+``POST …/pact-setup/github/secrets``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `repository_ids` | array of string | yes | Registered repositories to write to. |
+| `broker_base_url` | string | yes | What `PACT_BROKER_BASE_URL` is set to. |
+| `token` | string | yes | What `PACT_BROKER_TOKEN` is set to: an Apiome API key. Sent on to GitHub sealed; never stored. |
+
+### `PactSetupSecretsResponse` {#schema-pactsetupsecretsresponse}
+
+Every repository asked for, written or skipped with the reason.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `results` | array of `PactSetupSecretsResult` | yes | Results. |
+
+### `PactSetupState` {#schema-pactsetupstate}
+
+``GET …/pact-setup``: the six sections and everything the page draws them from.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sections` | array of `PactSetupSection` | yes | Sections. |
+| `done` | integer | yes | How many sections are done. |
+| `total` | integer | yes | How many there are (6). |
+| `complete` | boolean | yes | Whether all are done. |
+| `facts` | `PactSetupFacts` | yes | Facts. |
+| `saved` | `PactSetupSaved` | yes | Saved. |
+| `candidates` | array of `PactSetupCandidate` | no | Candidates. |
+| `candidates_omitted` | integer | no | Candidates left out of `candidates` because the list is capped. |
+| `github` | `PactSetupGithub` | yes | Github. |
+| `workflow_path` | string | yes | Where the pull request puts the workflow. |
+| `can_edit` | boolean | yes | Whether the caller may act on the page (`pacts:delete`). |
+| `updated_at` | string or null | no | Last update timestamp (ISO 8601). |
+| `updated_by` | string or null | no | Updated By. |
 
 ### `PacticipantBranchListResponse` {#schema-pacticipantbranchlistresponse}
 

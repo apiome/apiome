@@ -99,6 +99,10 @@ AUDIT_ACTIONS = (
     "pacts.retention.nightly",
     "pacts.settings.commit_statuses",
     "pacts.settings.agents",
+    # PFX-8.20 (#7317): the guided set-up — progress saved, and its two GitHub actions.
+    "pacts.setup.update",
+    "pacts.setup.github.secrets",
+    "pacts.setup.github.pull_requests",
     "pacts.purge",
 )
 

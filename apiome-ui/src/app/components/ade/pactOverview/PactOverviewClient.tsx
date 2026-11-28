@@ -25,7 +25,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { FileCheck2, FileUp, Import, Rocket, Search, ShieldCheck, Table2, Waypoints, WandSparkles } from 'lucide-react';
+import { FileCheck2, FileUp, Import, ListChecks, Rocket, Search, ShieldCheck, Table2, Waypoints, WandSparkles } from 'lucide-react';
 import {
   Button,
   DismissibleCallout,
@@ -42,6 +42,7 @@ import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
 import { CAN_I_DEPLOY_ROUTE } from '@lib/pact-matrix';
 import { MIGRATE_ROUTE } from '@lib/pact-migration';
+import { SETUP_ROUTE } from '@lib/pact-setup';
 import { PUBLISH_ROUTE } from '@lib/pact-publish-page';
 import type { HealthOverview } from '@lib/pact-health';
 import {
@@ -200,6 +201,7 @@ export default function PactOverviewClient({ query }: { query: OverviewQuery }) 
                     onSelect: () => setCommand(commandFor('export-consumer-contract')),
                   },
                   { id: 'can-i-deploy', label: 'Can I deploy?', icon: Rocket, href: CAN_I_DEPLOY_ROUTE, separatorBefore: true },
+                  { id: 'setup', label: 'Set up contracts', icon: ListChecks, href: SETUP_ROUTE },
                   { id: 'migrate', label: 'Migrate from a broker', icon: Import, href: MIGRATE_ROUTE },
                 ],
               }

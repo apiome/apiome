@@ -1266,7 +1266,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Use Apiome as your Pact Broker, from publishing pacts to can-i-deploy.',
     page: 'apiome-docs/docs/ship/pact-broker/overview.mdx',
     section: 'reference',
-    keywords: ['consumer-driven contracts', 'pact cli', 'pact-js', 'can-i-deploy', 'record-deployment', 'verification', 'contract testing'],
+    keywords: ['consumer-driven contracts', 'pact cli', 'pact-js', 'can-i-deploy', 'record-deployment', 'verification', 'contract testing', 'set up contracts', 'guided set-up', 'ten minutes', 'first contract', 'pacticipants from projects', 'environments', 'CI key', 'PACT_BROKER_BASE_URL', 'PACT_BROKER_TOKEN', 'GitHub secrets', 'pull request', 'apiome pact setup'],
   },
   {
     id: 'concepts',

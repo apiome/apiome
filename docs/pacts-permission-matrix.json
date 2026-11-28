@@ -198,6 +198,56 @@
       }
     },
     {
+      "id": "setup.save",
+      "label": "Save progress of the guided set-up",
+      "permission": "pacts:delete",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-setup",
+      "audit": "pacts.setup.update",
+      "auditedBy": "transaction",
+      "body": {
+        "mark": {
+          "gates": true
+        }
+      }
+    },
+    {
+      "id": "setup.github.secrets",
+      "label": "Write the broker address and key into repositories as Actions secrets",
+      "permission": "pacts:delete",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-setup/github/secrets",
+      "audit": "pacts.setup.github.secrets",
+      "auditedBy": "transaction",
+      "body": {
+        "repository_ids": [
+          "22222222-2222-4222-8222-222222222222"
+        ],
+        "broker_base_url": "https://api.apiome.dev/v1/tenants/acme/pact-broker",
+        "token": "apk_live_0123456789abcdef"
+      },
+      "note": "Uses the GitHub account each repository was registered with. The key is sealed and sent on; it is never stored or audited."
+    },
+    {
+      "id": "setup.github.pull_requests",
+      "label": "Open pull requests adding can-i-deploy and record-deployment",
+      "permission": "pacts:delete",
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-setup/github/pull-requests",
+      "audit": "pacts.setup.github.pull_requests",
+      "auditedBy": "transaction",
+      "body": {
+        "repositories": [
+          {
+            "repository_id": "22222222-2222-4222-8222-222222222222",
+            "pacticipant": "Billing Service"
+          }
+        ],
+        "environment": "production"
+      },
+      "note": "With preview: true GitHub is not called and no audit row is written."
+    },
+    {
       "id": "broker.pacticipant.delete",
       "label": "Delete a pacticipant (Pact Broker API)",
       "permission": "pacts:delete",

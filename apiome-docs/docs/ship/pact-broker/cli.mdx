@@ -138,6 +138,7 @@ Create a key with the matching preset on [API keys](../../workspace/api-keys.mdx
 | `export-consumer-contract`, `publish-consumer-contract` | Turn a declared consumer surface into a pact | — |
 | `export-postman` | Write a pact as a Postman collection with test scripts | — |
 | `scaffold-provider-tests` | Write a provider verification test (pact-js, pact-jvm, pact-go, pact-python) with a stub per provider state | — |
+| `setup` | Show the guided set-up, or create pacticipants from projects, environments, CI pull requests and Actions secrets in one re-runnable command | — |
 | `migrate` | Import a Pact Broker or PactFlow workspace | — |
 
 Every option of every command is in the [CLI reference](../../reference/cli/pact.md).
@@ -175,6 +176,7 @@ with secrets written as variables. The first were the
 | `publish-verification-results` | **Contracts** → **Verification** → **Upload results** |
 | `export-consumer-contract` | The [Export page](./export-contracts.mdx) → **A pact from a project** |
 | `scaffold-provider-tests` | The [Export page](./export-contracts.mdx) → **Provider test scaffolding** |
+| `setup` | [**Set up contracts**](./overview.mdx#set-up-in-ten-minutes) (**Contracts** → **“⋯”** → **“Set up contracts”**) |
 | `export-postman` | The [Export page](./export-contracts.mdx) → **A Postman collection** (`--all-consumers` is **All consumers — one folder each**; `--state-setup` is **Include provider-state setup as pre-request scripts**) |
 | `migrate` | **Contracts** → **Migrate from a broker** (the [Migration wizard](./migration.mdx#migrate-from-the-ui)); `--follow` is **Switch over** → **Keep copying until everyone has moved** |
 

@@ -23,6 +23,10 @@ switches on the same tab.
 
 ## Before you start
 
+Starting from an empty workspace? [Set up contracts](./overview.mdx#set-up-in-ten-minutes) creates the
+key, writes the two secrets into your GitHub repositories and opens a pull request with the
+can-i-deploy and record-deployment steps for you. The rest of this page is the same pipeline by hand.
+
 1. **Two CI secrets.** `PACT_BROKER_BASE_URL` — your workspace's broker base URL, such as
    `https://api.apiome.dev/v1/tenants/acme/pact-broker` — and `PACT_BROKER_TOKEN`, an API key from a
    member whose role holds **Pacts** → **Create**. Create the key on

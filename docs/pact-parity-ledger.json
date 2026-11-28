@@ -330,6 +330,23 @@
       }
     },
     {
+      "cli": "setup",
+      "ui": "/ade/dashboard/pacts/setup",
+      "rest": "GET /v1/tenants/{tenant}/pact-setup",
+      "fields": {
+        "--from-projects": "Who talks to whom → Create pacticipants (the ticked proposals)",
+        "--environments": "Where things run → the ticked environments and Add another",
+        "--require-contract": "Where things run → Require a verified contract before anything reaches production",
+        "--ci": "Gate deploys and tell people → Open pull requests (GitHub)",
+        "--ci-environment": "Gate deploys and tell people → Environment",
+        "--write-secrets": "Connect your pipelines → Write secrets to repositories",
+        "--dry-run": "Gate deploys and tell people → Show the workflow (nothing is created until a section\u2019s own button)",
+        "--output": "The page itself",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
       "cli": "retention preview",
       "ui": "/ade/dashboard/pacts/settings",
       "rest": "POST /v1/tenants/{tenant}/pact-retention/policy/preview",
@@ -791,6 +808,28 @@
       "rest": "POST /v1/tenants/{tenant}/pact-postman-collections",
       "ui": "/ade/dashboard/pacts/export",
       "cli": "export-postman"
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/setup",
+      "rest": "PUT /v1/tenants/{tenant}/pact-setup",
+      "ui": "/ade/dashboard/pacts/setup",
+      "cli": null,
+      "reason": "Saves the page\u2019s own marks and choices (a section marked done by hand, the first-pact path, the key it created). apiome pact setup derives its state from what exists and has nothing to mark."
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/setup/github/secrets",
+      "rest": "POST /v1/tenants/{tenant}/pact-setup/github/secrets",
+      "ui": "/ade/dashboard/pacts/setup",
+      "cli": "setup"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/setup/github/pull-requests",
+      "rest": "POST /v1/tenants/{tenant}/pact-setup/github/pull-requests",
+      "ui": "/ade/dashboard/pacts/setup",
+      "cli": "setup"
     }
   ]
 }

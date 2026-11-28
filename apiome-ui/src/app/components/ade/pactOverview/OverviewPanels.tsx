@@ -27,6 +27,7 @@ import { formatWhen, pacticipantRoute } from '@lib/pact-pacticipants';
 import { pactRoute } from '@lib/pact-detail';
 import { verificationRoute } from '@lib/pact-verification';
 import { pairHealthRoute } from '@lib/pact-health';
+import { SETUP_ROUTE } from '@lib/pact-setup';
 import { CAN_I_DEPLOY_ROUTE } from '@lib/pact-matrix';
 import {
   KIND_LABEL,
@@ -314,6 +315,9 @@ export function FirstRunChecklist({ steps }: { steps: FirstRunStep[] }) {
         <span className="ppx__meta">
           {done} of {steps.length} done
         </span>
+        <Link className="ppx__panel-link" href={SETUP_ROUTE} data-testid="ctx-first-run-setup">
+          Open the guided set-up
+        </Link>
       </div>
       <progress className="ctx-first-run__progress" max={steps.length} value={done} aria-label="Steps done" />
       <ul className="ctx-first-run__steps">

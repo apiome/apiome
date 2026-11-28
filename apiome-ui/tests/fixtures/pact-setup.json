@@ -1,0 +1,102 @@
+{
+  "sections": [
+    { "id": "pacticipants", "title": "Who talks to whom", "state": "done", "summary": "2 pacticipants", "marked": false },
+    { "id": "environments", "title": "Where things run", "state": "done", "summary": "production and staging", "marked": false },
+    { "id": "pipelines", "title": "Connect your pipelines", "state": "next", "summary": "A key and two variables", "marked": false },
+    { "id": "first-pact", "title": "The first consumer pact", "state": "todo", "summary": "Publish one or derive one from the spec", "marked": false },
+    { "id": "provider", "title": "The provider's side", "state": "todo", "summary": "Spec as the contract, a live verification, or both", "marked": false },
+    { "id": "gates", "title": "Gate deploys and tell people", "state": "todo", "summary": "can-i-deploy in CI, commit statuses, notifications", "marked": false }
+  ],
+  "done": 2,
+  "total": 6,
+  "complete": false,
+  "facts": {
+    "pacticipants": 2,
+    "environments": ["production", "staging"],
+    "production_environment": true,
+    "pacts": 0,
+    "contract_sources": 0,
+    "verification_results": 0,
+    "webhooks": 0,
+    "migrated": false
+  },
+  "saved": { "marked": [], "first_pact_path": null, "ci_key": null },
+  "candidates": [
+    {
+      "name": "Billing API",
+      "slug": "billing-api",
+      "source": "project",
+      "source_label": "Project · Billing API",
+      "role": "provider",
+      "project": "billing-api",
+      "repository_id": "22222222-2222-4222-8222-222222222222",
+      "repository_url": "https://github.com/acme/billing-service",
+      "main_branch": "main",
+      "owner": "Payments team",
+      "pacticipant": "billing-service",
+      "pacticipant_name": "Billing Service",
+      "contract_source": false
+    },
+    {
+      "name": "Payments API",
+      "slug": "payments-api",
+      "source": "project",
+      "source_label": "Project · Payments API",
+      "role": "provider",
+      "project": "payments-api",
+      "repository_id": null,
+      "repository_url": null,
+      "main_branch": null,
+      "owner": null,
+      "pacticipant": null,
+      "pacticipant_name": null,
+      "contract_source": false
+    },
+    {
+      "name": "orders-ui",
+      "slug": "orders-ui",
+      "source": "repository",
+      "source_label": "Repository · acme/orders-ui",
+      "role": "consumer",
+      "project": null,
+      "repository_id": "44444444-4444-4444-8444-444444444444",
+      "repository_url": "https://github.com/acme/orders-ui",
+      "main_branch": "main",
+      "owner": null,
+      "pacticipant": "orders-ui",
+      "pacticipant_name": "Orders UI",
+      "contract_source": false
+    }
+  ],
+  "candidates_omitted": 0,
+  "github": {
+    "linked": true,
+    "reason": null,
+    "repositories": [
+      {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "full_name": "acme/billing-service",
+        "default_branch": "main",
+        "linked": true,
+        "pacticipant": "billing-service",
+        "pacticipant_name": "Billing Service",
+        "secrets_written_at": null,
+        "pull_request_url": null
+      },
+      {
+        "id": "44444444-4444-4444-8444-444444444444",
+        "full_name": "acme/orders-ui",
+        "default_branch": "main",
+        "linked": true,
+        "pacticipant": "orders-ui",
+        "pacticipant_name": "Orders UI",
+        "secrets_written_at": null,
+        "pull_request_url": null
+      }
+    ]
+  },
+  "workflow_path": ".github/workflows/apiome-contracts.yml",
+  "can_edit": true,
+  "updated_at": "2026-11-30T10:00:00+00:00",
+  "updated_by": "ada@example.com"
+}

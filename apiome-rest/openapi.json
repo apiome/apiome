@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.711.0",
+    "version": "1.712.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -45998,6 +45998,388 @@
           },
           "422": {
             "description": "`provider-scaffold-language-unsupported`, or `pact-verify-too-many-pacts` when the selectors choose more pacts than a run takes."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-setup": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Read the Contracts guided set-up",
+        "description": "The six sections of the set-up \u2014 who talks to whom, where things run, pipelines, the first pact, the provider's side, gates \u2014 each `done`, `next` or `todo`. A section is done when what it sets up exists, whoever made it, or (pipelines, provider's side, gates) when a Contracts admin marked it; a workspace with a completed broker migration has the first two done. Also: the pacticipants proposed from projects (providers) and from registered repositories no project is read from (consumers), each with its main branch, owner team and the pacticipant that already exists for it; and the registered GitHub repositories with whether a linked account can write to them. Counts that could grow without bound stop at 100.\n\nRequires `pacts:view`. `can_edit` is `pacts:delete`.",
+        "operationId": "read_pact_setup_v1_tenants__tenant_slug__pact_setup_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readthe Contractsguidedsetupauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readthe Contractsguidedsetupauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readthe Contractsguidedsetup Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readthe Contractsguidedsetup Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read the contracts guided set-up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactSetupState",
+                  "description": "Response payload for readthe contractsguidedsetupresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readthe contractsguidedsetupresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Save progress of the Contracts guided set-up",
+        "description": "Change only what is sent: `mark` sets or clears a section's by-hand mark, `first_pact_path` records the chosen way to the first pact, `ci_key` records the API key just created for CI (its id and prefix, never its secret) so a resume does not create a second one, and `forget_ci_key` clears it without revoking the key. Audited as `pacts.setup.update`.\n\nRequires `pacts:delete`.",
+        "operationId": "save_pact_setup_v1_tenants__tenant_slug__pact_setup_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Saveprogressofthe Contractsguidedsetupauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Saveprogressofthe Contractsguidedsetupauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Saveprogressofthe Contractsguidedsetup Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Saveprogressofthe Contractsguidedsetup Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PactSetupSave",
+                "description": "Request body for saveprogressofthe contractsguidedsetuprequest."
+              }
+            }
+          },
+          "description": "Request body for save progress of the contracts guided set-up."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for save progress of the contracts guided set-up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactSetupState",
+                  "description": "Response payload for saveprogressofthe contractsguidedsetupresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for saveprogressofthe contractsguidedsetupresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-setup/github/secrets": {
+      "post": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Write the broker address and key into repositories as Actions secrets",
+        "description": "Write `PACT_BROKER_BASE_URL` and `PACT_BROKER_TOKEN` as GitHub Actions secrets into each registered repository, with the GitHub account the repository was registered with. The token is sealed to the repository's key and sent on; it is never stored, logged or audited. Each repository answers `written`, or `skipped` with the reason (not this workspace's, not github.com, no linked account, the account may not manage secrets): nothing fails as a whole. Writing again replaces the values. Audited as `pacts.setup.github.secrets`.\n\nRequires `pacts:delete`.",
+        "operationId": "write_pact_setup_secrets_v1_tenants__tenant_slug__pact_setup_github_secrets_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Writethebrokeraddressandkeyintorepositorauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Writethebrokeraddressandkeyintorepositorauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Writethebrokeraddressandkeyintorepositor Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Writethebrokeraddressandkeyintorepositor Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PactSetupSecretsRequest",
+                "description": "Request body for writethebrokeraddressandkeyintorepositorrequest."
+              }
+            }
+          },
+          "description": "Request body for write the broker address and key into repositories as actions secrets."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for write the broker address and key into repositories as actions secrets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactSetupSecretsResponse",
+                  "description": "Response payload for writethebrokeraddressandkeyintorepositorresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for writethebrokeraddressandkeyintorepositorresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-setup/github/pull-requests": {
+      "post": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Open pull requests adding can-i-deploy and record-deployment",
+        "description": "For each registered repository, open a pull request from the branch `apiome/contracts-setup` adding `.github/workflows/apiome-contracts.yml`: can-i-deploy for the given pacticipant and environment on every pull request and push, and record-deployment after a push to the default branch. Each repository answers `opened`, `exists` (a pull request from the set-up is already open; its branch is brought up to date), or `skipped` with the reason (the same file is already on the default branch, no linked account, a branch rule) \u2014 and always the workflow's text, so it can be added by hand. With `preview: true` GitHub is not called and every repository answers `preview`. Audited as `pacts.setup.github.pull_requests` (a preview is not).\n\nRequires `pacts:delete`.",
+        "operationId": "open_pact_setup_pull_requests_v1_tenants__tenant_slug__pact_setup_github_pull_requests_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Request body for openpullrequestsaddingcanideployandrecorauthorization."
+                },
+                {
+                  "type": "null",
+                  "description": "Request body for openpullrequestsaddingcanideployandrecorauthorization."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Request body for openpullrequestsaddingcanideployandrecor xapikey."
+                },
+                {
+                  "type": "null",
+                  "description": "Request body for openpullrequestsaddingcanideployandrecor xapikey."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PactSetupPullRequestsRequest",
+                "description": "Request body for openpullrequestsaddingcanideployandrecorrequest."
+              }
+            }
+          },
+          "description": "Request body for open pull requests adding can-i-deploy and record-deployment."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for open pull requests adding can-i-deploy and record-deployment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PactSetupPullRequestsResponse",
+                  "description": "Request body for openpullrequestsaddingcanideployandrecorresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Request body for openpullrequestsaddingcanideployandrecorresponse422."
+                }
+              }
+            }
           }
         }
       }
@@ -303045,6 +303427,1030 @@
         ],
         "title": "ExportOperation",
         "description": "What one declared operation became in the generated pact (PFX-8.18, #7315).\n\nThe Export page lists these as its operation checklist: which interactions each operation\nwrote, and whether any of their values had to be invented or anything was left out.\n\nAttributes:\n    method: The operation's method, upper case.\n    path: The operation's path template.\n    operation_id: The declared ``operationId``, when there is one.\n    interactions: Indexes into ``pact.interactions`` of the interactions it wrote (empty when\n        the operation was left out \u2014 its ``omitted`` finding says why).\n    placeholder_count: How many of its values were invented.\n    omitted_count: How many of its declared items could not be written."
+      },
+      "PactSetupCandidate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The proposed pacticipant name.",
+            "examples": [
+              "Billing API"
+            ]
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "The handle it would get.",
+            "examples": [
+              "billing-api"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "project",
+              "repository"
+            ],
+            "title": "Source",
+            "description": "Provenance source for the record (for example human or imported).",
+            "example": "project"
+          },
+          "source_label": {
+            "type": "string",
+            "title": "Source Label",
+            "description": "Where it was found.",
+            "examples": [
+              "Project \u00b7 Billing API"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "consumer"
+            ],
+            "title": "Role",
+            "description": "A project describes an API, so it is proposed as a provider; a repository no project is read from is proposed as a consumer. A pacticipant can be both: the role only orders the page.",
+            "example": "provider"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Candidate schema."
+              }
+            ],
+            "title": "Project",
+            "description": "The project's slug, for a provider."
+          },
+          "repository_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Candidate schema."
+              }
+            ],
+            "title": "Repository Id",
+            "description": "The linked repository, when one is known."
+          },
+          "repository_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Candidate schema."
+              }
+            ],
+            "title": "Repository Url",
+            "description": "Repository URL."
+          },
+          "main_branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Candidate schema."
+              }
+            ],
+            "title": "Main Branch",
+            "description": "Main Branch."
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Candidate schema."
+              }
+            ],
+            "title": "Owner",
+            "description": "The confirmed owner team's name, or null for none."
+          },
+          "pacticipant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Candidate schema."
+              }
+            ],
+            "title": "Pacticipant",
+            "description": "The handle of the pacticipant that already exists for it, or null."
+          },
+          "pacticipant_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Candidate schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Candidate schema."
+              }
+            ],
+            "title": "Pacticipant Name",
+            "description": "That pacticipant's name, as pacts use it."
+          },
+          "contract_source": {
+            "type": "boolean",
+            "title": "Contract Source",
+            "description": "Whether that pacticipant already publishes each published version of its project as its provider contract.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "slug",
+          "source",
+          "source_label",
+          "role"
+        ],
+        "title": "PactSetupCandidate",
+        "description": "A pacticipant the set-up proposes."
+      },
+      "PactSetupCiKey": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The key's id.",
+            "examples": [
+              "7b1f0c1e-6f4e-4f0a-9d53-3d0e3f5a2a11"
+            ]
+          },
+          "prefix": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Prefix",
+            "description": "The key's visible prefix.",
+            "examples": [
+              "apk_9f2c\u2026"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "prefix"
+        ],
+        "title": "PactSetupCiKey",
+        "description": "The API key the page created for CI. Never its secret."
+      },
+      "PactSetupFacts": {
+        "properties": {
+          "pacticipants": {
+            "type": "integer",
+            "title": "Pacticipants",
+            "description": "Live pacticipants.",
+            "default": 0,
+            "example": 1
+          },
+          "environments": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Environments",
+            "description": "Environment names.",
+            "maxItems": 1000
+          },
+          "production_environment": {
+            "type": "boolean",
+            "title": "Production Environment",
+            "description": "Whether one is marked production.",
+            "default": false,
+            "example": false
+          },
+          "pacts": {
+            "type": "integer",
+            "title": "Pacts",
+            "description": "Published pacts (consumer \u00d7 provider \u00d7 version).",
+            "default": 0,
+            "example": 1
+          },
+          "contract_sources": {
+            "type": "integer",
+            "title": "Contract Sources",
+            "description": "Providers whose published project versions become their provider contract.",
+            "default": 0,
+            "example": 1
+          },
+          "verification_results": {
+            "type": "integer",
+            "title": "Verification Results",
+            "description": "Verification results recorded, of any kind.",
+            "default": 0,
+            "example": 1
+          },
+          "webhooks": {
+            "type": "integer",
+            "title": "Webhooks",
+            "description": "Webhooks, enabled or not.",
+            "default": 0,
+            "example": 1
+          },
+          "migrated": {
+            "type": "boolean",
+            "title": "Migrated",
+            "description": "Whether a migration from another broker completed here.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PactSetupFacts",
+        "description": "What the workspace has, as far as the set-up's sections care."
+      },
+      "PactSetupGithub": {
+        "properties": {
+          "linked": {
+            "type": "boolean",
+            "title": "Linked",
+            "description": "Whether at least one repository can be written with a linked account.",
+            "example": false
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Github schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Github schema."
+              }
+            ],
+            "title": "Reason",
+            "description": "Why not, when `linked` is false: the page then shows copyable snippets."
+          },
+          "repositories": {
+            "items": {
+              "$ref": "#/components/schemas/PactSetupGithubRepository"
+            },
+            "type": "array",
+            "title": "Repositories",
+            "description": "Repositories.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "linked"
+        ],
+        "title": "PactSetupGithub",
+        "description": "Whether the secret and pull-request actions can run, and on what."
+      },
+      "PactSetupGithubRepository": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name",
+            "description": "Full Name.",
+            "example": "Example"
+          },
+          "default_branch": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Github Repository schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Github Repository schema."
+              }
+            ],
+            "title": "Default Branch",
+            "description": "Default Branch."
+          },
+          "linked": {
+            "type": "boolean",
+            "title": "Linked",
+            "description": "Whether it was registered with a linked GitHub account that can be written with.",
+            "example": false
+          },
+          "pacticipant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Github Repository schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Github Repository schema."
+              }
+            ],
+            "title": "Pacticipant",
+            "description": "The handle of the pacticipant whose repository URL names it, or null."
+          },
+          "pacticipant_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Github Repository schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Github Repository schema."
+              }
+            ],
+            "title": "Pacticipant Name",
+            "description": "That pacticipant's name \u2014 what the workflow passes to can-i-deploy."
+          },
+          "secrets_written_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Github Repository schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Github Repository schema."
+              }
+            ],
+            "title": "Secrets Written At",
+            "description": "When the two Actions secrets were last written by the set-up."
+          },
+          "pull_request_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Github Repository schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Github Repository schema."
+              }
+            ],
+            "title": "Pull Request Url",
+            "description": "The pull request the set-up opened."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "full_name",
+          "linked"
+        ],
+        "title": "PactSetupGithubRepository",
+        "description": "A registered GitHub repository and what the set-up did to it."
+      },
+      "PactSetupPullRequestRepository": {
+        "properties": {
+          "repository_id": {
+            "type": "string",
+            "title": "Repository Id",
+            "description": "Repository ID.",
+            "example": "repository_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "pacticipant": {
+            "type": "string",
+            "title": "Pacticipant",
+            "description": "The pacticipant name the workflow passes to can-i-deploy.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repository_id",
+          "pacticipant"
+        ],
+        "title": "PactSetupPullRequestRepository",
+        "description": "One repository and the pacticipant its pipeline asks about."
+      },
+      "PactSetupPullRequestResult": {
+        "properties": {
+          "repository_id": {
+            "type": "string",
+            "title": "Repository Id",
+            "description": "Repository ID.",
+            "example": "repository_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact setup pull request."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact setup pull request."
+              }
+            ],
+            "title": "Full Name",
+            "description": "Full Name."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "opened",
+              "exists",
+              "preview",
+              "skipped"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "opened"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact setup pull request."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact setup pull request."
+              }
+            ],
+            "title": "Reason",
+            "description": "Why it was skipped, or what `exists` found."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pact setup pull request."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact setup pull request."
+              }
+            ],
+            "title": "Url",
+            "description": "The pull request."
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Request body for pact setup pull request."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pact setup pull request."
+              }
+            ],
+            "title": "Number",
+            "description": "Number."
+          },
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "Where the workflow goes.",
+            "example": "/resources/{id}"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "The workflow, so it can be added by hand when no pull request was opened.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repository_id",
+          "status",
+          "path",
+          "content"
+        ],
+        "title": "PactSetupPullRequestResult",
+        "description": "What happened in one repository."
+      },
+      "PactSetupPullRequestsRequest": {
+        "properties": {
+          "repositories": {
+            "items": {
+              "$ref": "#/components/schemas/PactSetupPullRequestRepository"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Repositories",
+            "description": "Repositories."
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment",
+            "description": "The environment can-i-deploy asks about.",
+            "examples": [
+              "production"
+            ]
+          },
+          "can_i_deploy": {
+            "type": "boolean",
+            "title": "Can I Deploy",
+            "description": "Add the can-i-deploy step.",
+            "default": true,
+            "example": false
+          },
+          "record_deployment": {
+            "type": "boolean",
+            "title": "Record Deployment",
+            "description": "Add the record-deployment step.",
+            "default": true,
+            "example": false
+          },
+          "preview": {
+            "type": "boolean",
+            "title": "Preview",
+            "description": "Only answer with the file each pull request would add; GitHub is not called.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repositories",
+          "environment"
+        ],
+        "title": "PactSetupPullRequestsRequest",
+        "description": "``POST \u2026/pact-setup/github/pull-requests``."
+      },
+      "PactSetupPullRequestsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PactSetupPullRequestResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "Results.",
+            "maxItems": 100
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "PactSetupPullRequestsResponse",
+        "description": "Every repository asked for."
+      },
+      "PactSetupSave": {
+        "properties": {
+          "mark": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "propertyNames": {
+                  "enum": [
+                    "pacticipants",
+                    "environments",
+                    "pipelines",
+                    "first-pact",
+                    "provider",
+                    "gates"
+                  ]
+                },
+                "type": "object",
+                "description": "Pact Setup Save schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Save schema."
+              }
+            ],
+            "title": "Mark",
+            "description": "Sections to mark done (`true`) or unmark (`false`); the others keep their mark.",
+            "examples": [
+              {
+                "pipelines": true
+              }
+            ]
+          },
+          "first_pact_path": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "tests",
+                  "spec"
+                ],
+                "description": "Pact Setup Save schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Save schema."
+              }
+            ],
+            "title": "First Pact Path",
+            "description": "The chosen first-pact path."
+          },
+          "ci_key": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PactSetupCiKey"
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Save schema."
+              }
+            ],
+            "description": "The key just created for CI."
+          },
+          "forget_ci_key": {
+            "type": "boolean",
+            "title": "Forget Ci Key",
+            "description": "Forget the recorded CI key (it is not revoked).",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PactSetupSave",
+        "description": "``PUT \u2026/pact-setup``: only what is sent changes."
+      },
+      "PactSetupSaved": {
+        "properties": {
+          "marked": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "pacticipants",
+                "environments",
+                "pipelines",
+                "first-pact",
+                "provider",
+                "gates"
+              ]
+            },
+            "type": "array",
+            "title": "Marked",
+            "description": "Sections marked done by hand.",
+            "maxItems": 1000
+          },
+          "first_pact_path": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "tests",
+                  "spec"
+                ],
+                "description": "Pact Setup Saved schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Saved schema."
+              }
+            ],
+            "title": "First Pact Path",
+            "description": "The chosen way to the first pact."
+          },
+          "ci_key": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PactSetupCiKey"
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Saved schema."
+              }
+            ],
+            "description": "The key the page created for CI, while it is still live."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PactSetupSaved",
+        "description": "What the workspace marked and did on the page (``pact_setup_progress``)."
+      },
+      "PactSetupSecretsRequest": {
+        "properties": {
+          "repository_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Repository Ids",
+            "description": "Registered repositories to write to."
+          },
+          "broker_base_url": {
+            "type": "string",
+            "title": "Broker Base Url",
+            "description": "What `PACT_BROKER_BASE_URL` is set to.",
+            "examples": [
+              "https://api.apiome.dev/v1/tenants/acme/pact-broker"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 8,
+            "title": "Token",
+            "description": "What `PACT_BROKER_TOKEN` is set to: an Apiome API key. Sent on to GitHub sealed; never stored.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repository_ids",
+          "broker_base_url",
+          "token"
+        ],
+        "title": "PactSetupSecretsRequest",
+        "description": "``POST \u2026/pact-setup/github/secrets``."
+      },
+      "PactSetupSecretsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PactSetupSecretsResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "Results.",
+            "maxItems": 100
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "title": "PactSetupSecretsResponse",
+        "description": "Every repository asked for, written or skipped with the reason."
+      },
+      "PactSetupSecretsResult": {
+        "properties": {
+          "repository_id": {
+            "type": "string",
+            "title": "Repository Id",
+            "description": "Repository ID.",
+            "example": "repository_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Secrets schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Secrets schema."
+              }
+            ],
+            "title": "Full Name",
+            "description": "Full Name."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "written",
+              "skipped"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "written"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup Secrets schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup Secrets schema."
+              }
+            ],
+            "title": "Reason",
+            "description": "Why it was skipped, in words a person can act on."
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Names",
+            "description": "The secrets written.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "repository_id",
+          "status"
+        ],
+        "title": "PactSetupSecretsResult",
+        "description": "What happened in one repository."
+      },
+      "PactSetupSection": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "pacticipants",
+              "environments",
+              "pipelines",
+              "first-pact",
+              "provider",
+              "gates"
+            ],
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "pacticipants"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Title.",
+            "example": "example"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "done",
+              "next",
+              "todo"
+            ],
+            "title": "State",
+            "description": "`done`, `next` (the one to do now) or `todo`.",
+            "example": "done"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "description": "One line: what is there, or what the section sets up.",
+            "example": "List pets"
+          },
+          "marked": {
+            "type": "boolean",
+            "title": "Marked",
+            "description": "Whether an admin marked it done by hand.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "state",
+          "summary"
+        ],
+        "title": "PactSetupSection",
+        "description": "One section of the set-up."
+      },
+      "PactSetupState": {
+        "properties": {
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/PactSetupSection"
+            },
+            "type": "array",
+            "title": "Sections",
+            "description": "Sections.",
+            "maxItems": 1000
+          },
+          "done": {
+            "type": "integer",
+            "title": "Done",
+            "description": "How many sections are done.",
+            "example": 1
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "How many there are (6).",
+            "example": 1
+          },
+          "complete": {
+            "type": "boolean",
+            "title": "Complete",
+            "description": "Whether all are done.",
+            "example": false
+          },
+          "facts": {
+            "$ref": "#/components/schemas/PactSetupFacts",
+            "description": "Facts."
+          },
+          "saved": {
+            "$ref": "#/components/schemas/PactSetupSaved",
+            "description": "Saved."
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/PactSetupCandidate"
+            },
+            "type": "array",
+            "title": "Candidates",
+            "description": "Candidates.",
+            "maxItems": 1000
+          },
+          "candidates_omitted": {
+            "type": "integer",
+            "title": "Candidates Omitted",
+            "description": "Candidates left out of `candidates` because the list is capped.",
+            "default": 0,
+            "example": 1
+          },
+          "github": {
+            "$ref": "#/components/schemas/PactSetupGithub",
+            "description": "Github."
+          },
+          "workflow_path": {
+            "type": "string",
+            "title": "Workflow Path",
+            "description": "Where the pull request puts the workflow.",
+            "example": "example"
+          },
+          "can_edit": {
+            "type": "boolean",
+            "title": "Can Edit",
+            "description": "Whether the caller may act on the page (`pacts:delete`).",
+            "example": false
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup State schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup State schema."
+              }
+            ],
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601)."
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Pact Setup State schema."
+              },
+              {
+                "type": "null",
+                "description": "Pact Setup State schema."
+              }
+            ],
+            "title": "Updated By",
+            "description": "Updated By."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sections",
+          "done",
+          "total",
+          "complete",
+          "facts",
+          "saved",
+          "github",
+          "workflow_path",
+          "can_edit"
+        ],
+        "title": "PactSetupState",
+        "description": "``GET \u2026/pact-setup``: the six sections and everything the page draws them from."
       }
     },
     "securitySchemes": {
