@@ -323,6 +323,28 @@ def test_recording_a_deployment(allowed: MagicMock, created: bool, status: int) 
     assert record.call_args.args[1:6] == (_TENANT, "ledger-api", "4f1e2d0", _ENV, "eu-1")
 
 
+@pytest.mark.parametrize(("query", "overridden"), [("", False), ("?overrideCanIDeploy=true", True)])
+def test_recording_over_a_no_from_can_i_deploy_is_audited(allowed: MagicMock, query: str, overridden: bool) -> None:
+    """PFX-8.12 (#7309): the Environments page's *Record it anyway* tick lands in the audit row."""
+    with (
+        patch(f"{_ROUTES}.record_deployment", return_value=(_deployed(), True)) as record,
+        patch("app.pact_audit.record_pact_write") as audit,
+    ):
+        response = client.post(f"{_VERSION}/deployed-versions/environment/{_ENV}{query}")
+    assert response.status_code == 201
+    assert record.call_count == 1
+    (call,) = audit.call_args_list
+    assert call.args[2] == "pacts.deployment.record"
+    assert call.args[4]["params"]["override_can_i_deploy"] is overridden
+
+
+def test_a_malformed_override_flag_is_a_422(allowed: MagicMock) -> None:
+    with patch(f"{_ROUTES}.record_deployment") as record:
+        response = client.post(f"{_VERSION}/deployed-versions/environment/{_ENV}?overrideCanIDeploy=maybe")
+    assert response.status_code == 422
+    record.assert_not_called()
+
+
 def test_recording_a_deployment_without_a_body_is_the_unnamed_instance(allowed: MagicMock) -> None:
     with patch(f"{_ROUTES}.record_deployment", return_value=(_deployed(application_instance=None), True)) as record:
         response = client.post(f"{_VERSION}/deployed-versions/environment/{_ENV}")

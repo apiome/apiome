@@ -45554,6 +45554,96 @@ tr[data-selected="true"] > td:first-child {
 }
 
 /* ===========================================================================
+   Environments writes — PFX-8.12 (#7309). `.penv-dialog__*` lays out the New /
+   Edit environment, Record a deployment / release and Delete dialogs;
+   `.penv-verdict*` is the can-i-deploy answer a deployment is recorded over;
+   `.penv-supported*` the releases that stay supported. Tokens only.
+   =========================================================================== */
+.penv-dialog__form,
+.penv-supported {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.penv-dialog__switches {
+  display: grid;
+}
+
+.penv-verdict {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+}
+
+.penv-verdict__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.penv-verdict__head svg {
+  inline-size: var(--space-4);
+  block-size: var(--space-4);
+  flex-shrink: 0;
+}
+
+.penv-verdict__head--ok svg {
+  color: var(--ok-fg);
+}
+
+.penv-verdict__head--no svg {
+  color: var(--danger-fg);
+}
+
+.penv-verdict__reasons,
+.penv-supported__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-inline-start: var(--space-4);
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.penv-verdict__tick {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.penv-supported__title {
+  margin: 0;
+  color: var(--fg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.penv-notice {
+  margin: 0;
+  color: var(--ok-fg);
+  font-size: var(--fs-sm);
+}
+
+.penv-refresh {
+  margin-inline-start: auto;
+}
+
+.penv-list__actions {
+  text-align: end;
+  white-space: nowrap;
+}
+
+/* ===========================================================================
    A pact — PFX-5.2 (#6946). `.ppd-*` is one integration's pact page (it
    reuses the `.ppx-*` panels, tables and facts): the interaction disclosures
    with their states, request and response; the code blocks; the changes

@@ -1,6 +1,6 @@
 ---
 title: Environments and deployments
-description: Record which version of each application runs in each environment.
+description: Create environments and record which version runs in each, in the app or CI.
 sidebar_position: 5
 tags: [contracts, pact, ci, rest]
 ---
@@ -8,7 +8,8 @@ tags: [contracts, pact, ci, rest]
 [Can-i-deploy](./can-i-deploy.mdx) answers "is it safe to deploy this version to **production**?" To answer, Apiome has
 to know what runs in production now. You tell it with **environments** and **deployment
 records**: create each environment once, then have your deploy job record every deployment or
-release. The `pact-broker` CLI does this against Apiome unchanged.
+release. The `pact-broker` CLI does this against Apiome unchanged, and the **Environments** page
+does it in the app.
 
 The [**Environments** pages](./environments-dashboard.mdx) show what is recorded — which version
 runs where, each environment's deployment history — and simulate a deployment before you make it.
@@ -26,6 +27,42 @@ the pacts of the consumer versions that are really in production.
   role: it can create environments and record deployments.
 
 ## Create your environments
+
+### In the app
+
+You need **Pacts** → **Create**.
+
+1. In the rail, under **Ship**, click **Contracts**, then the **Environments** tab.
+2. Click **New environment**.
+3. In **Display name**, type the name people read, such as `Production EU`. **Name** fills in as
+   you type (`production-eu`); change it if your deploy jobs use another. It is one word, with no
+   spaces.
+4. Turn on **Production** for a production environment. It is marked red everywhere, and
+   verification never sends requests that change data there.
+5. Turn on **Contracts required** to make [can-i-deploy](./can-i-deploy.mdx#require-a-contract)
+   refuse a version that has no verified contract here.
+6. Optional: in **Contact** and **Contact email**, say who looks after it (`Platform team`,
+   `platform@acme.dev`).
+7. Click **Create environment**.
+
+<Screenshot id="pact-environment-new" alt="The New environment dialog: Display name Production EU, Name production-eu, the Production and Contracts required switches on, Contact Platform team with platform@acme.dev, and The same, from anywhere showing apiome pact create-environment --name production-eu --display-name 'Production EU' --production --contract-required."/>
+
+A field the workspace would refuse says so under it before anything is sent — a name with a space,
+or one another environment already has. **The same, from anywhere** shows the
+`apiome pact create-environment` command for what you filled in; the **Pact CLI** pill leaves out
+`--contract-required`, which only Apiome has.
+
+To change an environment, click **⋯** on its row in **Environments**, then **Edit environment**.
+Saving replaces every field. Contacts the dialog does not show (a second contact, say) are kept as
+they are, and the dialog says so. Renaming keeps every deployment. No `apiome pact` command changes
+an environment yet, so **The same, from anywhere** shows the REST request. You need **Pacts** →
+**Edit**.
+
+To delete one, click **⋯** → **Delete environment** (**Pacts** → **Delete**). While any version
+is deployed or released there, the dialog says so — “Production still has 9 versions running.” —
+and offers no delete. Record their undeployment or end their support first.
+
+### From a script
 
 Create each environment once, for example from a setup script:
 
@@ -117,6 +154,15 @@ pact-broker record-support-ended --pacticipant "Billing App" --version 1.0.0 --e
 ```
 
 Recording a release of the same version again starts supporting it again.
+
+## Record from the app
+
+A deployment or a release that happened outside a pipeline — a hotfix, a manual rollout, an app
+store release — can be recorded on the **Environments** page. See
+[Record a deployment in the app](./environments-dashboard.mdx#record-a-deployment) and
+[Record a release in the app](./environments-dashboard.mdx#record-a-release). The page asks
+can-i-deploy first, and recording over a “no” needs an explicit tick that is written to the audit
+trail.
 
 ## What the provider verifies
 

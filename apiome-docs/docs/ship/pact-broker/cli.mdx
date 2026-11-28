@@ -160,7 +160,9 @@ with secrets written as variables. The first were the
 | `publish` | **Contracts** → **Publish a pact** (also a project's **Consumers** → **Import Pact file**) |
 | `publish-consumer-contract` | **Contracts** → **Publish a pact** → **Derive from a project** |
 | `check` | **Contracts** → **Publish a pact** → **Check it before it counts** |
-| `create-environment`, `record-deployment`, `record-release` | Coming: environment dialogs (PFX-8.12) |
+| `create-environment` | **Contracts** → **Environments** → **New environment** |
+| `record-deployment` | **Contracts** → **Environments** → **Record a deployment**, or an environment's menu → **Record a deployment here** |
+| `record-release` | **Contracts** → **Environments** → **Record a release** |
 | `verify` | **Contracts** → **Verification** (**Run a verification**) |
 | `publish-provider-contract` | **Contracts** → **Publish a provider contract** |
 | `publish-verification-results` | **Contracts** → **Verification** → **Upload results** |
@@ -170,8 +172,8 @@ with secrets written as variables. The first were the
 A few things in the app have no command yet, and say so in their **The same, from anywhere** block:
 editing, deleting and testing a webhook, redelivering a delivery, re-running one verification,
 answering a re-publish request, the verification settings, **Compare only** on the Publish a
-provider contract page, and a pacticipant's rename, linked project, labels and restore. Each has a
-REST route. A pacticipant's README badge (its **Settings** → **Badges**) is a public URL, not a
+provider contract page, a pacticipant's rename, linked project, labels and restore, and editing or
+deleting an environment. Each has a REST route. A pacticipant's README badge (its **Settings** → **Badges**) is a public URL, not a
 command.
 
 On the Publish page every flag of `publish` and `publish-consumer-contract` has a field, and on the

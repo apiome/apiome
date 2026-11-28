@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.703.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.704.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `pact-broker` · 115 operations
 
@@ -888,6 +888,8 @@ Record that this version is now deployed to the environment — the version's `p
 - Deployments to other application instances are not touched.
 - Recording the version that is already deployed there returns that deployment, `200`.
 
+`overrideCanIDeploy=true` says the deployment is recorded although can-i-deploy answered no (the Environments page's *Record it anyway*, PFX-8.12). It changes nothing about the deployment; it is written to the audit row, so an override is never silent.
+
 Answers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.
 
 Operation id: `post_deployment_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__post`
@@ -900,6 +902,7 @@ Operation id: `post_deployment_v1_tenants__tenant_slug__pact_broker_pacticipants
 | `pacticipant` | path | string | yes | The pacticipant's handle, id or name. |
 | `version` | path | string | yes | The version number, exactly as recorded. |
 | `uuid` | path | string | yes | The environment's `uuid`, as `GET …/environments` lists it. |
+| `overrideCanIDeploy` | query | boolean | no | The deployment is recorded although can-i-deploy answered no. Audited; changes nothing else. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 

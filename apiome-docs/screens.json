@@ -3161,7 +3161,29 @@
       "sources": [
         "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentsClient.tsx",
         "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentPanels.tsx",
-        "apiome-ui/lib/pact-environments.ts"
+        "apiome-ui/lib/pact-environments.ts",
+        "apiome-ui/lib/pact-environment-writes.ts"
+      ]
+    },
+    {
+      "id": "pact-environment-new",
+      "route": "/ade/dashboard/pacts/environments",
+      "waitFor": "[data-testid=\"penv-env-dialog\"]",
+      "data": "fixture:hive-a11y/pact-environment-new.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/EnvironmentDialog.tsx",
+        "apiome-ui/lib/pact-environment-writes.ts"
+      ]
+    },
+    {
+      "id": "pact-record-deployment",
+      "route": "/ade/dashboard/pacts/environments",
+      "waitFor": "[data-testid=\"penv-deploy-dialog\"]",
+      "data": "fixture:hive-a11y/pact-record-deployment.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactEnvironments/RecordDeploymentDialog.tsx",
+        "apiome-ui/src/app/components/ade/pactEnvironments/RecordFields.tsx",
+        "apiome-ui/lib/pact-environment-writes.ts"
       ]
     },
     {

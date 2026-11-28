@@ -1,0 +1,28 @@
+---
+slug: environments-create-and-record
+title: "Environments: create, record a deployment, record a release"
+description: "Create and edit environments, and record deployments and releases from the app."
+authors: [apiome]
+---
+
+The **Environments** page showed what was recorded, but an environment, a deployment or a release
+could only be recorded from the CLI. The page now has **Record a deployment**, **New environment**
+and **Record a release**, and each environment a menu to edit or delete it. See
+[Record a deployment](/ship/pact-broker/environments-dashboard#record-a-deployment) and
+[Create your environments](/ship/pact-broker/environments#in-the-app).
+
+{/* truncate */}
+
+- **New environment.** Display name, name (suggested from the display name), **Production**,
+  **Contracts required** and a contact. A taken name is shown under **Name** before you save.
+- **Edit and delete.** **⋯** → **Edit environment** changes every field and keeps the contacts the
+  dialog does not show. **Delete environment** is blocked while versions run there — *Production
+  still has 9 versions running.*
+- **Record a deployment, can-i-deploy first.** Choose the service, version, environment and
+  instance; the dialog asks can-i-deploy and shows the reasons for a “no”. Recording anyway needs
+  the **Record it anyway — this already happened** tick, which is written to the audit trail.
+- **Record a release.** Lists the service's other releases that stay supported there.
+- **The same, from anywhere** in every dialog: `apiome pact create-environment`,
+  `record-deployment` and `record-release`; editing and deleting show the REST request.
+- **REST:** `POST …/deployed-versions/environment/{uuid}` takes `overrideCanIDeploy=true`, recorded
+  in the audit row (OpenAPI 1.704.0).
