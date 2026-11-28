@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * **Verification settings** — `/ade/dashboard/pacts/settings` (PFX-6.2, #6954).
+ * **Verification settings** — the **Verification** tab of `/ade/dashboard/pacts/settings?tab=verification`
+ * (PFX-6.2, #6954; a tab of Contracts settings since PFX-8.14, #7311).
  *
  * * **Workspace defaults** — the verification cadence (when Apiome's hosted verifier runs a pair on
  *   its own), the stale threshold (a pact not verified for longer opens a re-publish request to its
@@ -54,6 +55,8 @@ import { fetchPacticipants } from '../pactPacticipants/pacticipantsApi';
 import { Panel, SectionError } from '../pactVerification/PactVerificationClient';
 import { fetchTargetOptions } from '../pactVerification/pactVerificationApi';
 import { fetchOverrides, fetchSettings, removeOverride, saveOverride, saveSettings } from './remediationApi';
+import { SETTINGS_DESCRIPTION, SETTINGS_TITLE } from '@lib/pact-retention';
+import { SettingsTabs } from '../pactSettings/SettingsTabs';
 
 /** Where the breadcrumb's first step goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -638,13 +641,13 @@ export default function VerificationSettingsClient() {
     <Page>
       <PageHeader
         tabs={<ContractsTabs active="settings" />}
-        title="Verification settings"
+        title={SETTINGS_TITLE}
         breadcrumb={[
           { label: 'Home', href: HOME_ROUTE },
           { label: 'Contracts', href: CONTRACTS_ROUTE },
-          { label: 'Verification settings' },
+          { label: 'Settings' },
         ]}
-        description="When Apiome verifies pacts on its own, when a pact counts as stale, and how its consumer is asked to re-publish it."
+        description={SETTINGS_DESCRIPTION}
         actions={
           <div className="ppx__actions">
             <Button variant="outline" asChild>
@@ -664,6 +667,11 @@ export default function VerificationSettingsClient() {
         }
       />
       <PageBody>
+        <SettingsTabs active="verification" />
+        <p className="ppx__muted prx-intro">
+          When Apiome verifies pacts on its own, when a pact counts as stale, and how its consumer is asked to
+          re-publish it.
+        </p>
         <div className="ppx prx" data-testid="pact-verification-settings">
           <Panel id="prx-defaults" title="Workspace defaults">
             {settings.error ? (

@@ -276,6 +276,50 @@
       }
     },
     {
+      "cli": "retention preview",
+      "ui": "/ade/dashboard/pacts/settings",
+      "rest": "POST /v1/tenants/{tenant}/pact-retention/policy/preview",
+      "fields": {
+        "--main-branch-latest": "What to keep → The latest N versions on each pacticipant’s main branch (remove the rule: 0)",
+        "--other-branch-latest": "What to keep → The latest N on every other branch (remove the rule: 0)",
+        "--other-branch-days": "What to keep → … on every other branch, for D days (empty: however old)",
+        "--keep-tag": "What to keep → Anything tagged … (comma-separated)",
+        "--no-tags": "What to keep → the tag rule’s remove button",
+        "--nightly": "Run clean-up nightly (on / off)",
+        "--restore-days": "Keep deleted items restorable for",
+        "--output": "If it ran now → See the list",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
+      "cli": "retention set",
+      "ui": "/ade/dashboard/pacts/settings",
+      "rest": "PUT /v1/tenants/{tenant}/pact-retention/policy",
+      "fields": {
+        "--main-branch-latest": "What to keep → The latest N versions on each pacticipant’s main branch (remove the rule: 0)",
+        "--other-branch-latest": "What to keep → The latest N on every other branch (remove the rule: 0)",
+        "--other-branch-days": "What to keep → … on every other branch, for D days (empty: however old)",
+        "--keep-tag": "What to keep → Anything tagged … (comma-separated)",
+        "--no-tags": "What to keep → the tag rule’s remove button",
+        "--nightly": "Run clean-up nightly (on / off)",
+        "--restore-days": "Keep deleted items restorable for",
+        "--output": "The status line after Save rules",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
+      "cli": "retention show",
+      "ui": "/ade/dashboard/pacts/settings",
+      "rest": "GET /v1/tenants/{tenant}/pact-retention/policy",
+      "fields": {
+        "--output": "The Clean-up tab itself (the CLI’s text, markdown or JSON output)",
+        "--broker-base-url": "The workspace you are signed in to",
+        "--broker-token": "Your session"
+      }
+    },
+    {
       "cli": "verify",
       "ui": "/ade/dashboard/pacts/verification/new",
       "rest": "POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify",
@@ -594,6 +638,20 @@
       "rest": "PATCH /v1/tenants/{tenant}/pact-broker/deployed-versions/{deployment}",
       "ui": "/ade/dashboard/pacts/environments",
       "cli": "record-undeployment"
+    },
+    {
+      "method": "PUT",
+      "bff": "/api/pact/retention/policy",
+      "rest": "PUT /v1/tenants/{tenant}/pact-retention/policy",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": "retention set"
+    },
+    {
+      "method": "POST",
+      "bff": "/api/pact/retention/policy/preview",
+      "rest": "POST /v1/tenants/{tenant}/pact-retention/policy/preview",
+      "ui": "/ade/dashboard/pacts/settings",
+      "cli": "retention preview"
     }
   ]
 }

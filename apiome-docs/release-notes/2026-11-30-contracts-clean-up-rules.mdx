@@ -1,0 +1,30 @@
+---
+slug: contracts-clean-up-rules
+title: "Contracts settings: clean-up rules, preview and restore"
+description: "Keep-rules as sentences, a live preview of what goes, nightly clean-up and restore."
+authors: [apiome]
+---
+
+**Contracts** → **Settings** now opens on **Clean-up**: say once what to keep, see what the rules
+would remove before they remove anything, let them run every night, and restore anything deleted
+until it is purged. The same rules are in `apiome pact retention show|set|preview`. See
+[Set the clean-up rules](/ship/pact-broker/retention#set-the-clean-up-rules).
+
+{/* truncate */}
+
+- **What to keep, as sentences.** Every version deployed or released anywhere — always, and no rule
+  set can turn it off; the latest *N* versions of each main branch; the latest *N* of every other
+  branch, for *D* days; anything with a listed tag. Each rule says how many versions it keeps today.
+- **If it ran now.** How many versions would go, with how many pacts and verification results,
+  redrawn as you edit, with **See the list**. It is planned by the same code as the nightly run, so
+  it is what the next run removes.
+- **Run clean-up nightly** (after 02:00 UTC; off by default — nothing is removed while it is off)
+  and **Keep deleted items restorable for** 7, 30 or 90 days: the workspace's own restore window.
+- **Recently deleted** lists deleted pacticipants and versions, who deleted them (**Clean-up** for
+  the nightly run) and when they are purged, with **Restore**.
+- Changing the rules and restoring need the Contracts admin permission (`pacts:delete`); everyone
+  else sees the tab read-only. The verification settings moved to the **Verification** tab.
+- **CLI:** `apiome pact retention show`, `set` (changes only the flags you give) and `preview`.
+- **REST:** `GET` / `PUT /v1/tenants/{t}/pact-retention/policy`, `POST …/policy/preview` and
+  `GET …/pact-retention/deleted`; retention runs gain the main-branch, other-branch and tag selectors
+  (OpenAPI 1.706.0).

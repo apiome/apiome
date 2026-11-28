@@ -18,7 +18,7 @@ Pact Broker: publish pacts, can-i-deploy, deployments, webhooks and verification
 apiome pact [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`record-support-ended`](#pact-record-support-ended), [`record-undeployment`](#pact-record-undeployment), [`restore-version`](#pact-restore-version), [`verify`](#pact-verify).
+Subcommands: [`can-i-deploy`](#pact-can-i-deploy), [`check`](#pact-check), [`create-environment`](#pact-create-environment), [`create-or-update-pacticipant`](#pact-create-or-update-pacticipant), [`create-version-tag`](#pact-create-version-tag), [`create-webhook`](#pact-create-webhook), [`delete-pacticipant`](#pact-delete-pacticipant), [`delete-version`](#pact-delete-version), [`describe-version`](#pact-describe-version), [`export-consumer-contract`](#pact-export-consumer-contract), [`export-postman`](#pact-export-postman), [`list-pacticipants`](#pact-list-pacticipants), [`migrate`](#pact-migrate), [`publish`](#pact-publish), [`publish-consumer-contract`](#pact-publish-consumer-contract), [`publish-provider-contract`](#pact-publish-provider-contract), [`publish-verification-results`](#pact-publish-verification-results), [`record-deployment`](#pact-record-deployment), [`record-release`](#pact-record-release), [`record-support-ended`](#pact-record-support-ended), [`record-undeployment`](#pact-record-undeployment), [`restore-version`](#pact-restore-version), [`retention`](#pact-retention), [`verify`](#pact-verify).
 
 ## apiome pact can-i-deploy {#pact-can-i-deploy}
 
@@ -575,6 +575,84 @@ apiome pact restore-version [OPTIONS]
 | --- | --- | --- | --- | --- |
 | `--pacticipant`, `-a` | text |  | yes | The pacticipant's name or handle. |
 | `--version`, `-e` | text |  | yes | The deleted version's number. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact retention {#pact-retention}
+
+Contracts clean-up rules: show them, change them, preview what they remove.
+
+```text
+apiome pact retention [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`preview`](#pact-retention-preview), [`set`](#pact-retention-set), [`show`](#pact-retention-show).
+
+## apiome pact retention preview {#pact-retention-preview}
+
+Preview what the clean-up rules remove if they ran now (POST …/pact-retention/policy/preview).
+
+Without flags it previews the saved rules — exactly what the next nightly run removes. With rule flags it previews the saved rules changed by them, without saving. Needs pacts:view.
+
+```text
+apiome pact retention preview [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--main-branch-latest` | integer range |  |  | Keep the latest N versions of each main branch (0: no such rule). |
+| `--other-branch-latest` | integer range |  |  | Keep the latest N versions of every other branch (0: no such rule). |
+| `--other-branch-days` | integer range |  |  | With --other-branch-latest: only while recorded in the last D days (0: however old). |
+| `--keep-tag` | text (repeatable) |  |  | Keep every version with this tag (repeat for several; replaces the saved tags). |
+| `--no-tags` | flag |  |  | Keep nothing by tag (clears the saved tags). |
+| `--nightly` / `--no-nightly` | flag | `--no-nightly` |  | Run the clean-up every night after 02:00 UTC, or not. |
+| `--restore-days` | integer range |  |  | Days a deleted pacticipant or version stays restorable. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact retention set {#pact-retention-set}
+
+Change the clean-up rules; the ones not given stay as saved (PUT …/pact-retention/policy).
+
+Deployed and released versions are always kept. Run `apiome pact retention preview` with the same flags first to see what the rules remove. Needs pacts:delete. Exits 1 on any refusal.
+
+```text
+apiome pact retention set [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--main-branch-latest` | integer range |  |  | Keep the latest N versions of each main branch (0: no such rule). |
+| `--other-branch-latest` | integer range |  |  | Keep the latest N versions of every other branch (0: no such rule). |
+| `--other-branch-days` | integer range |  |  | With --other-branch-latest: only while recorded in the last D days (0: however old). |
+| `--keep-tag` | text (repeatable) |  |  | Keep every version with this tag (repeat for several; replaces the saved tags). |
+| `--no-tags` | flag |  |  | Keep nothing by tag (clears the saved tags). |
+| `--nightly` / `--no-nightly` | flag | `--no-nightly` |  | Run the clean-up every night after 02:00 UTC, or not. |
+| `--restore-days` | integer range |  |  | Days a deleted pacticipant or version stays restorable. |
+| `--output`, `-o` | text | `table` |  | table, json or markdown. |
+| `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
+| `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |
+
+## apiome pact retention show {#pact-retention-show}
+
+Show the clean-up rules, the nightly switch and the restore window (GET …/pact-retention/policy).
+
+Needs pacts:view. Exits 1 on any refusal.
+
+```text
+apiome pact retention show [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
 | `--output`, `-o` | text | `table` |  | table, json or markdown. |
 | `--broker-base-url`, `-b` | text |  |  | Broker base URL, https://&lt;api&gt;/v1/tenants/&lt;tenant&gt;/pact-broker (overrides PACT_BROKER_BASE_URL). |
 | `--broker-token`, `-k` | text |  |  | Workspace API key (overrides PACT_BROKER_TOKEN). Prefer the variable: argv is visible to others. |

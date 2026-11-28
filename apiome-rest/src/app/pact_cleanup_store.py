@@ -19,7 +19,9 @@ their own before.
 deleted head and is hidden until a version is recorded on it.
 
 **The purge is the only hard delete.** :func:`purge_deleted` removes rows stamped longer ago than
-``APIOME_PACT_DELETION_GRACE_DAYS`` in bounded batches, on the retention tick.
+the tenant's restore window in bounded batches, on the retention tick. The window is the
+workspace's Clean-up setting (``pact_retention_policy.restore_window_days``, PFX-8.14), or
+``APIOME_PACT_DELETION_GRACE_DAYS`` for a workspace that never saved one.
 
 **Every change is audited.** Each delete, restore, label change and purge appends an
 ``access_audit`` row inside the same transaction (``pacts.*`` actions), so nothing changes without a
@@ -78,6 +80,8 @@ __all__ = [
     "remove_label",
     "restore_pacticipant",
     "restore_version",
+    "restore_window_sql",
+    "tenant_grace_days",
     "soft_delete_versions_tx",
     "with_purge_after",
 ]
@@ -91,6 +95,8 @@ AUDIT_ACTIONS = (
     "pacts.label.add",
     "pacts.label.remove",
     "pacts.retention.apply",
+    "pacts.retention.policy",
+    "pacts.retention.nightly",
     "pacts.purge",
 )
 
@@ -111,15 +117,62 @@ PACTICIPANT_LABELS_ORDER = ListOrder("pacticipant-label", (SortColumn("l.name", 
 
 
 def grace_days() -> int:
-    """How many days a deleted pacticipant or version can be restored before it is purged."""
+    """The deployment's default restore window: days a deleted item can be restored before the purge."""
     return max(1, int(settings.pact_deletion_grace_days))
 
 
-def purge_after(deleted_at: Optional[str]) -> Optional[str]:
+def _window(days: Any) -> int:
+    """A stored restore window, or the deployment's default when there is none (or it is unreadable)."""
+    if isinstance(days, int) and not isinstance(days, bool) and days >= 1:
+        return days
+    return grace_days()
+
+
+def restore_window_sql(tenant_column: str) -> str:
+    """A select-list item reading the tenant's stored restore window as ``restore_window_days``.
+
+    Args:
+        tenant_column: The SQL expression of the row's tenant id (e.g. ``pacticipant.tenant_id``).
+
+    Returns:
+        ``(SELECT … ) AS restore_window_days`` — NULL when the workspace never saved a window.
+    """
+    return (
+        "(SELECT rp.restore_window_days FROM apiome.pact_retention_policy rp "
+        f"WHERE rp.tenant_id = {tenant_column}) AS restore_window_days"
+    )
+
+
+def tenant_grace_days(fetch: Any, tenant_id: str) -> int:
+    """The tenant's restore window (PFX-8.14), or the deployment's default.
+
+    Args:
+        fetch: The database's ``execute_query`` (or any callable with that shape).
+        tenant_id: The tenant.
+
+    Returns:
+        Days a deleted pacticipant or version of this tenant stays restorable.
+    """
+    if not is_uuid_string(str(tenant_id or "")):
+        return grace_days()
+    try:
+        rows = fetch(
+            "SELECT restore_window_days FROM apiome.pact_retention_policy WHERE tenant_id = %s::uuid",
+            (tenant_id,),
+        )
+        row = rows[0] if isinstance(rows, (list, tuple)) and rows else None
+        return _window(row.get("restore_window_days") if isinstance(row, dict) else None)
+    except (psycopg2.Error, LookupError, TypeError, AttributeError, StopIteration):
+        # An unreadable setting never blocks a read or a purge: the default window applies.
+        return grace_days()
+
+
+def purge_after(deleted_at: Optional[str], days: Optional[int] = None) -> Optional[str]:
     """When a row deleted at ``deleted_at`` is purged.
 
     Args:
         deleted_at: The ISO-8601 deletion time, as a record carries it, or ``None``.
+        days: The tenant's restore window; the deployment's default when ``None``.
 
     Returns:
         The ISO-8601 purge time, or ``None`` for a live row (or an unreadable time).
@@ -132,20 +185,21 @@ def purge_after(deleted_at: Optional[str]) -> Optional[str]:
         return None
     if stamp.tzinfo is None:
         stamp = stamp.replace(tzinfo=timezone.utc)
-    return (stamp + timedelta(days=grace_days())).isoformat()
+    return (stamp + timedelta(days=_window(days))).isoformat()
 
 
-def with_purge_after(record: Any) -> Any:
+def with_purge_after(record: Any, days: Optional[int] = None) -> Any:
     """The record with ``purge_after`` filled in from its ``deleted_at``.
 
     Args:
         record: A :class:`~app.pacticipant.PacticipantRecord` or
             :class:`~app.pacticipant.PacticipantVersionRecord`.
+        days: The tenant's restore window; the deployment's default when ``None``.
 
     Returns:
         A copy carrying ``purge_after`` (unchanged when the record is live).
     """
-    return record.model_copy(update={"purge_after": purge_after(record.deleted_at)})
+    return record.model_copy(update={"purge_after": purge_after(record.deleted_at, days)})
 
 
 def _user_id(actor: ConsumerActor) -> Optional[str]:
@@ -318,19 +372,25 @@ def soft_delete_versions_tx(
 def _read_pacticipant_tx(cursor: Any, pacticipant_id: str) -> PacticipantRecord:
     """Re-read one pacticipant row (live or deleted) inside a transaction."""
     cursor.execute(
-        f"SELECT {PACTICIPANT_COLUMNS} FROM apiome.pacticipant WHERE id = %s::uuid",
+        f"SELECT {PACTICIPANT_COLUMNS}, {restore_window_sql('pacticipant.tenant_id')} "
+        "FROM apiome.pacticipant WHERE id = %s::uuid",
         (pacticipant_id,),
     )
-    return with_purge_after(pacticipant_record_from_row(dict(cursor.fetchone())))
+    row = dict(cursor.fetchone())
+    return with_purge_after(pacticipant_record_from_row(row), row.get("restore_window_days"))
 
 
 def _read_version_by_id_tx(cursor: Any, version_id: str) -> PacticipantVersionRecord:
     """Re-read one version row (live or deleted) inside a transaction."""
+    window = restore_window_sql(
+        "(SELECT wp.tenant_id FROM apiome.pacticipant wp WHERE wp.id = v.pacticipant_id)"
+    )
     cursor.execute(
-        f"SELECT {VERSION_COLUMNS} FROM apiome.pacticipant_version v WHERE v.id = %s::uuid",
+        f"SELECT {VERSION_COLUMNS}, {window} FROM apiome.pacticipant_version v WHERE v.id = %s::uuid",
         (version_id,),
     )
-    return with_purge_after(version_record_from_row(dict(cursor.fetchone())))
+    row = dict(cursor.fetchone())
+    return with_purge_after(version_record_from_row(row), row.get("restore_window_days"))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -431,7 +491,7 @@ def _find_deleted_pacticipant(db: Any, tenant_id: str, ref: str) -> PacticipantR
     params = (tenant_id, *([candidate] if by_id else []), slugify_pacticipant_name(candidate))
     rows = db.execute_query(
         f"""
-        SELECT {PACTICIPANT_COLUMNS}
+        SELECT {PACTICIPANT_COLUMNS}, {restore_window_sql("pacticipant.tenant_id")}
         FROM apiome.pacticipant
         WHERE tenant_id = %s::uuid AND ({by_id}slug = %s)
         ORDER BY (deleted_at IS NULL), deleted_at DESC
@@ -440,7 +500,7 @@ def _find_deleted_pacticipant(db: Any, tenant_id: str, ref: str) -> PacticipantR
     ) or []
     deleted = [dict(row) for row in rows if row.get("deleted_at") is not None]
     if deleted:
-        return with_purge_after(pacticipant_record_from_row(deleted[0]))
+        return with_purge_after(pacticipant_record_from_row(deleted[0]), deleted[0].get("restore_window_days"))
     if rows:
         raise PacticipantValidationError(CODE_NOT_DELETED, f"pacticipant '{candidate}' is not deleted")
     raise PacticipantValidationError(CODE_NOT_FOUND, f"no deleted pacticipant '{candidate}' in this tenant")
@@ -892,8 +952,16 @@ def remove_label(
 # ---------------------------------------------------------------------------------------------
 
 
-def _purge_versions_tx(db: Any, cursor: Any, cutoff: datetime, batch: int) -> Dict[str, int]:
-    """Hard-delete one batch of versions deleted before ``cutoff`` (their pacticipant still live).
+#: A row of a tenant is past its restore window: deleted before ``now - window`` (PFX-8.14).
+_PAST_WINDOW = """{column} < %s::timestamptz - make_interval(days => COALESCE(
+        (SELECT rp.restore_window_days FROM apiome.pact_retention_policy rp WHERE rp.tenant_id = {tenant}),
+        %s))"""
+
+
+def _purge_versions_tx(db: Any, cursor: Any, now: datetime, batch: int) -> Dict[str, int]:
+    """Hard-delete one batch of versions deleted longer ago than their tenant's restore window.
+
+    (Their pacticipant still live.)
 
     A branch whose head is purged gets the latest version it still has; a branch left with none is
     removed. The version delete then cascades to its pacts, results, deployments, tags and branch
@@ -902,23 +970,24 @@ def _purge_versions_tx(db: Any, cursor: Any, cutoff: datetime, batch: int) -> Di
     Args:
         db: The database (for the audit rows).
         cursor: The open transaction's cursor.
-        cutoff: Versions deleted before this go.
+        now: The current time; each tenant's window counts back from it.
         batch: The most versions this batch removes.
 
     Returns:
         Versions removed per tenant id.
     """
+    past = _PAST_WINDOW.format(column="v.deleted_at", tenant="p.tenant_id")
     cursor.execute(
-        """
+        f"""
         SELECT v.id::text AS id, v.pacticipant_id::text AS pacticipant_id, p.tenant_id::text AS tenant_id
         FROM apiome.pacticipant_version v
         JOIN apiome.pacticipant p ON p.id = v.pacticipant_id
-        WHERE v.deleted_at IS NOT NULL AND v.deleted_at < %s AND p.deleted_at IS NULL
+        WHERE v.deleted_at IS NOT NULL AND {past} AND p.deleted_at IS NULL
         ORDER BY v.deleted_at
         LIMIT %s
         FOR UPDATE OF v SKIP LOCKED
         """,
-        (cutoff, batch),
+        (now, grace_days(), batch),
     )
     rows = cursor.fetchall() or []
     if not rows:
@@ -953,28 +1022,29 @@ def _purge_versions_tx(db: Any, cursor: Any, cutoff: datetime, batch: int) -> Di
     return per_tenant
 
 
-def _purge_pacticipants_tx(cursor: Any, cutoff: datetime, batch: int) -> Dict[str, List[str]]:
-    """Hard-delete one batch of pacticipants deleted before ``cutoff``, with everything they hold.
+def _purge_pacticipants_tx(cursor: Any, now: datetime, batch: int) -> Dict[str, List[str]]:
+    """Hard-delete one batch of pacticipants deleted longer ago than their tenant's restore window.
 
     Args:
         cursor: The open transaction's cursor.
-        cutoff: Pacticipants deleted before this go.
+        now: The current time; each tenant's window counts back from it.
         batch: The most pacticipants this batch removes.
 
     Returns:
         The handles removed, per tenant id.
     """
+    past = _PAST_WINDOW.format(column="dp.deleted_at", tenant="dp.tenant_id")
     cursor.execute(
-        """
+        f"""
         DELETE FROM apiome.pacticipant
-        WHERE id IN (SELECT id FROM apiome.pacticipant
-                     WHERE deleted_at IS NOT NULL AND deleted_at < %s
-                     ORDER BY deleted_at
+        WHERE id IN (SELECT dp.id FROM apiome.pacticipant dp
+                     WHERE dp.deleted_at IS NOT NULL AND {past}
+                     ORDER BY dp.deleted_at
                      LIMIT %s
                      FOR UPDATE SKIP LOCKED)
         RETURNING id::text AS id, tenant_id::text AS tenant_id, slug
         """,
-        (cutoff, batch),
+        (now, grace_days(), batch),
     )
     rows = cursor.fetchall() or []
     per_tenant: Dict[str, List[str]] = {}
@@ -1011,7 +1081,7 @@ def purge_deleted(
     batch: int = PURGE_BATCH,
     max_batches: int = PURGE_MAX_BATCHES,
 ) -> Dict[str, int]:
-    """Remove for good what was deleted longer ago than the grace period.
+    """Remove for good what was deleted longer ago than its tenant's restore window.
 
     Each batch is its own transaction and appends one ``pacts.purge`` audit row per tenant it
     touched. Concurrent replicas are safe: rows are claimed ``FOR UPDATE SKIP LOCKED``.
@@ -1025,7 +1095,7 @@ def purge_deleted(
     Returns:
         ``{"versions": n, "pacticipants": m}`` removed.
     """
-    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=grace_days())
+    moment = now or datetime.now(timezone.utc)
     totals = {"versions": 0, "pacticipants": 0}
 
     def run(kind: str) -> int:
@@ -1033,11 +1103,11 @@ def purge_deleted(
 
         def work(cursor: Any) -> int:
             if kind == "versions":
-                counts = _purge_versions_tx(db, cursor, cutoff, batch)
+                counts = _purge_versions_tx(db, cursor, moment, batch)
                 details = {tenant: {"versions": count} for tenant, count in counts.items()}
                 removed = sum(counts.values())
             else:
-                slugs = _purge_pacticipants_tx(cursor, cutoff, batch)
+                slugs = _purge_pacticipants_tx(cursor, moment, batch)
                 details = {tenant: {"pacticipants": names} for tenant, names in slugs.items()}
                 removed = sum(len(names) for names in slugs.values())
             for tenant, detail in details.items():
@@ -1048,7 +1118,7 @@ def purge_deleted(
                     "pacts.purge",
                     None,
                     kind,
-                    {**detail, "deleted_before": cutoff.isoformat(), "grace_days": grace_days()},
+                    {**detail, "default_grace_days": grace_days(), "restore_window": "per workspace"},
                 )
             return removed
 

@@ -139,6 +139,9 @@ export const PACT_VERBS: Readonly<Record<string, PactVerbSurfaces>> = {
     action: false,
     rest: 'POST /v1/tenants/{tenant}/pacticipants/{pacticipant}/versions/{version}/restore',
   },
+  'retention preview': { pactCli: null, action: false, rest: 'POST /v1/tenants/{tenant}/pact-retention/policy/preview' },
+  'retention set': { pactCli: null, action: false, rest: 'PUT /v1/tenants/{tenant}/pact-retention/policy' },
+  'retention show': { pactCli: null, action: false, rest: 'GET /v1/tenants/{tenant}/pact-retention/policy' },
   verify: { pactCli: null, action: false, rest: 'POST /v1/tenants/{tenant}/pact-verifier/pacts/provider/{provider}/verify' },
 };
 

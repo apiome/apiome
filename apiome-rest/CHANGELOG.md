@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.882.0] - 2026-11-30
+
+### Added
+- **Contracts clean-up rules, their preview, the nightly run and Recently deleted (PFX-8.14, #7311).**
+  OpenAPI 1.706.0; apiome-db V456 (`pact_retention_policy`, two partial indexes for the deleted rows).
+  - `GET /v1/tenants/{t}/pact-retention/policy` — the workspace's rules: every deployed or released version
+    always kept; `keep_main_branch_latest`, `keep_other_branch_latest` (+ `keep_other_branch_days`),
+    `keep_tags`; `nightly_enabled`; `restore_window_days`; `last_run`, `next_run_at` and `can_edit`
+    (`pacts:delete`). `configured: false` shows the defaults (clean-up off). `pacts:view`.
+  - `PUT /v1/tenants/{t}/pact-retention/policy` — replace the rules. `keep_deployed_or_released: false` is
+    `422 pact-retention-keeps-in-use` (*Deployed and released versions are always kept.*); an unknown field, a
+    repeated or padded tag and `keep_other_branch_days` without `keep_other_branch_latest` are 422 with the
+    reason. Audited as `pacts.retention.policy`. `pacts:delete`.
+  - `POST /v1/tenants/{t}/pact-retention/policy/preview` — what the saved rules, or the draft in `rules`, would
+    remove if the clean-up ran now, with the pacts and verification results that go with each version. Planned
+    by the same code as the nightly run. Changes nothing. `pacts:view`.
+  - `GET /v1/tenants/{t}/pact-retention/deleted` — deleted pacticipants and versions deleted on their own,
+    newest first, with who deleted them (`Clean-up` for the nightly run), what a restore brings back and
+    `purge_after`. `limit` (≤ 100), `cursor`; `422 pact-retention-bad-cursor`. `can_restore`. `pacts:view`.
+  - The nightly clean-up: each workspace with `nightly_enabled` runs its rules once a day after 02:00 UTC on the
+    retention tick (claimed `FOR UPDATE SKIP LOCKED`, audited as `pacts.retention.nightly`, deletions restorable);
+    a refused run stores its reason in `last_run.error` and deletes nothing.
+  - `POST /v1/tenants/{t}/pact-retention` keep selectors `latest_per_main_branch`, `latest_per_other_branch`,
+    `other_branch_days` and `tags`; plans gain `matched_by`, `pacts`, `results`, and per-deletion `pacts` /
+    `results` (dry runs).
+
+### Changed
+- The purge, `purge_after` and the deletion impact's `grace_days` use the workspace's restore window
+  (`restore_window_days`) instead of `APIOME_PACT_DELETION_GRACE_DAYS`, which stays the default for a workspace
+  that never saved rules.
+
 ## [1.881.0] - 2026-11-29
 
 ### Added

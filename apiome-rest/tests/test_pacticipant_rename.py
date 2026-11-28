@@ -210,14 +210,17 @@ def test_the_impact_counts_one_pacticipant_and_names_both_sides() -> None:
         [{"name": "Billing Service", "total": 2}, {"name": "Orders API", "total": 2}],
         [],
         [{"number": "3.3.2"}],
+        [{"restore_window_days": 14}],
     ]
     impact = read_deletion_impact(db, pacticipant_record_from_row(ROW))
     assert (impact.versions, impact.pacts, impact.verification_results) == (214, 31, 90)
     assert impact.providers == ["Billing Service", "Orders API"] and impact.providers_total == 2
     assert impact.consumers == [] and impact.consumers_total == 0
     assert impact.in_use == ["3.3.2"] and impact.blocked is True
-    assert impact.grace_days >= 1
-    counts, providers, consumers, in_use = (call.args for call in db.execute_query.call_args_list)
+    # The workspace's Clean-up restore window (PFX-8.14), not the deployment default.
+    assert impact.grace_days == 14
+    counts, providers, consumers, in_use, window = (call.args for call in db.execute_query.call_args_list)
+    assert "pact_retention_policy" in window[0]
     assert counts[1] == (PID,) * 6
     assert "pp.consumer_id = %s::uuid" in _flat(providers[0]) and "SELECT pp.provider_id" in _flat(providers[0])
     assert "pp.provider_id = %s::uuid" in _flat(consumers[0]) and "SELECT pp.consumer_id" in _flat(consumers[0])

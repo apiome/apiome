@@ -1688,10 +1688,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'retention',
     title: 'Labels, deletes and retention',
-    summary: 'Group pacticipants, undo a delete, and clean up old versions with a dry run.',
+    summary: 'Group pacticipants, undo a delete, set the nightly clean-up rules and preview what they remove.',
     page: 'apiome-docs/docs/ship/pact-broker/retention.mdx',
     section: 'reference',
-    keywords: ['soft delete', 'restore', 'purge', 'grace period', 'plan digest', 'keep selectors', 'cleanup', 'force', 'deleted versions', 'restore-version'],
+    keywords: ['soft delete', 'restore', 'purge', 'grace period', 'plan digest', 'keep selectors', 'cleanup', 'force', 'deleted versions', 'restore-version', 'clean-up rules', 'nightly clean-up', 'recently deleted', 'restore window', 'contracts settings', 'if it ran now', 'keep rules'],
   },
   {
     id: 'compatibility',

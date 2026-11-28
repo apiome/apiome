@@ -79,7 +79,7 @@ from apiome_cli.client.pact_provider_contract import (
     is_verified,
     summary_lines,
 )
-from apiome_cli.commands import pact_broker
+from apiome_cli.commands import pact_broker, pact_retention
 from apiome_cli.commands.pact_broker import BROKER_BASE_URL, BROKER_TOKEN
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_SUCCESS, EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
@@ -572,3 +572,6 @@ def publish_verification_results(
 
 for _name, _command in pact_broker.COMMANDS:
     app.command(_name)(_command)
+
+# `apiome pact retention show|set|preview` — the Contracts clean-up rules (PFX-8.14, #7311).
+app.add_typer(pact_retention.app, name="retention")

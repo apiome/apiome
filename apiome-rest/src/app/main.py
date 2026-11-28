@@ -1364,8 +1364,16 @@ async def startup_event():
                             process_operational_retention_sweep(thread_db)
                         except Exception:
                             log.exception("operational retention sweep")
-                        # Pacticipants and versions deleted longer ago than the grace period
-                        # (PFX-1.11, #6924) are purged on the same tick.
+                        # Each workspace with Contracts clean-up on runs its rules once a day
+                        # after 02:00 UTC (PFX-8.14, #7311), before the purge below.
+                        try:
+                            from .pact_retention_policy_store import run_nightly_clean_up
+
+                            run_nightly_clean_up(thread_db)
+                        except Exception:
+                            log.exception("pact nightly clean-up")
+                        # Pacticipants and versions deleted longer ago than their workspace's
+                        # restore window (PFX-1.11, #6924; PFX-8.14) are purged on the same tick.
                         try:
                             from .pact_cleanup_store import purge_deleted
 

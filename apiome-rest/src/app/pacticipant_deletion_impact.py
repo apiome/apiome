@@ -19,7 +19,7 @@ from typing import Any, Dict, List
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .pact_cleanup_store import _in_use_sql, grace_days
+from .pact_cleanup_store import _in_use_sql, tenant_grace_days
 from .pacticipant import PacticipantRecord
 
 __all__ = ["MAX_NAMES", "DeletionImpact", "read_deletion_impact"]
@@ -140,5 +140,5 @@ def read_deletion_impact(db: Any, pacticipant: PacticipantRecord) -> DeletionImp
         consumers_total=consumers_total,
         in_use=in_use,
         blocked=bool(in_use),
-        grace_days=grace_days(),
+        grace_days=tenant_grace_days(db.execute_query, pacticipant.tenant_id),
     )

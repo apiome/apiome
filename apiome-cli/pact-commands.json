@@ -364,6 +364,50 @@
       ]
     },
     {
+      "name": "retention preview",
+      "summary": "Preview what the clean-up rules remove if they ran now (POST …/pact-retention/policy/preview).",
+      "arguments": [],
+      "options": [
+        "--main-branch-latest",
+        "--other-branch-latest",
+        "--other-branch-days",
+        "--keep-tag",
+        "--no-tags",
+        "--nightly",
+        "--restore-days",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
+      "name": "retention set",
+      "summary": "Change the clean-up rules; the ones not given stay as saved (PUT …/pact-retention/policy).",
+      "arguments": [],
+      "options": [
+        "--main-branch-latest",
+        "--other-branch-latest",
+        "--other-branch-days",
+        "--keep-tag",
+        "--no-tags",
+        "--nightly",
+        "--restore-days",
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
+      "name": "retention show",
+      "summary": "Show the clean-up rules, the nightly switch and the restore window (GET …/pact-retention/policy).",
+      "arguments": [],
+      "options": [
+        "--output",
+        "--broker-base-url",
+        "--broker-token"
+      ]
+    },
+    {
       "name": "verify",
       "summary": "Verify a provider against its pacts with Apiome's hosted verifier (POST …/pact-verifier/…/verify).",
       "arguments": [],

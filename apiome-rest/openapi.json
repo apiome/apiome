@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.705.0",
+    "version": "1.706.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -1034,6 +1034,379 @@
           },
           "422": {
             "description": "No keep selector, no `plan_digest` when applying, or a run too large."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-retention/policy": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Read the workspace's clean-up rules",
+        "description": "The Contracts clean-up rules: what is kept (every deployed or released version, always; the latest N of each main branch; the latest N of every other branch, optionally for D days; versions with a listed tag), whether the clean-up runs nightly (after 02:00 UTC), and how many days a deleted item stays restorable. `configured: false` shows the defaults (clean-up off). `last_run` / `next_run_at` say what the nightly run did and when it runs next; `can_edit` whether the caller may change the rules.\n\nRequires `pacts:view`.",
+        "operationId": "read_pact_retention_policy_v1_tenants__tenant_slug__pact_retention_policy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readtheworkspacescleanuprulesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacescleanuprulesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readtheworkspacescleanuprules Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readtheworkspacescleanuprules Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read the workspace's clean-up rules.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionPolicy",
+                  "description": "Response payload for readtheworkspacescleanuprulesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readtheworkspacescleanuprulesresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Save the workspace's clean-up rules",
+        "description": "Replace the clean-up rules; a field left out takes its default. Every version deployed or released anywhere is always kept: `keep_deployed_or_released: false` is refused with `422 pact-retention-keeps-in-use` (*Deployed and released versions are always kept.*). An unknown field, a repeated tag or `keep_other_branch_days` without `keep_other_branch_latest` is refused with the reason \u2014 nothing is dropped silently.\n\nRun `POST \u2026/pact-retention/policy/preview` first to see what the rules remove. Requires `pacts:delete` (Owner and Admin).",
+        "operationId": "save_pact_retention_policy_v1_tenants__tenant_slug__pact_retention_policy_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Savetheworkspacescleanuprulesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Savetheworkspacescleanuprulesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Savetheworkspacescleanuprules Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Savetheworkspacescleanuprules Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionRules",
+                "description": "Request body for savetheworkspacescleanuprulesrequest."
+              }
+            }
+          },
+          "description": "Request body for save the workspace's clean-up rules."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for save the workspace's clean-up rules.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionPolicy",
+                  "description": "Response payload for savetheworkspacescleanuprulesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`pact-retention-keeps-in-use`, or an invalid rule."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-retention/policy/preview": {
+      "post": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "Preview what the clean-up rules remove",
+        "description": "What the saved rules \u2014 or the draft in `rules` \u2014 would remove if the clean-up ran now: the versions, with the pacts and verification results that go with them, listed per pacticipant. It is planned exactly as the nightly run plans, so it is what the next run removes unless something is published, deployed or deleted in between. Nothing changes.\n\n`nightly_enabled: false` means nothing is removed while clean-up is off.\n\nRequires `pacts:view`.",
+        "operationId": "preview_pact_retention_policy_v1_tenants__tenant_slug__pact_retention_policy_preview_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Previewwhatthecleanuprulesremoveauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Previewwhatthecleanuprulesremoveauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Previewwhatthecleanuprulesremove Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Previewwhatthecleanuprulesremove Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetentionPreviewRequest",
+                "description": "Request body for previewwhatthecleanuprulesremoverequest."
+              }
+            }
+          },
+          "description": "Request body for preview what the clean-up rules remove."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for preview what the clean-up rules remove.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionPreview",
+                  "description": "Response payload for previewwhatthecleanuprulesremoveresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`pact-retention-keeps-in-use`, `pact-retention-too-many-versions`, or an invalid rule."
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_slug}/pact-retention/deleted": {
+      "get": {
+        "tags": [
+          "pacticipants"
+        ],
+        "summary": "List recently deleted pacticipants and versions",
+        "description": "Deleted pacticipants, and versions deleted on their own (by hand or by the clean-up), newest first, each with who deleted it, what comes back with a restore and `purge_after` \u2014 when it is removed for good under the workspace's restore window. Restore one with `POST \u2026/pacticipants/{pacticipant}/restore` or `POST \u2026/pacticipants/{pacticipant}/versions/{number}/restore`.\n\nRequires `pacts:view`; `can_restore` says whether the caller may restore (`pacts:delete`).",
+        "operationId": "list_pact_retention_deleted_v1_tenants__tenant_slug__pact_retention_deleted_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Rows per page.",
+              "default": 25,
+              "title": "Limit"
+            },
+            "description": "Rows per page."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 512,
+              "description": "`next_cursor` of the previous page.",
+              "default": "",
+              "title": "Cursor"
+            },
+            "description": "`next_cursor` of the previous page."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listrecentlydeletedpacticipantsandversioauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listrecentlydeletedpacticipantsandversioauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listrecentlydeletedpacticipantsandversio Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listrecentlydeletedpacticipantsandversio Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list recently deleted pacticipants and versions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedPage",
+                  "description": "Response payload for listrecentlydeletedpacticipantsandversioresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`pact-retention-bad-cursor`."
           }
         }
       }
@@ -157745,6 +158118,20 @@
             "description": "Number.",
             "example": "example"
           },
+          "pacts": {
+            "type": "integer",
+            "title": "Pacts",
+            "description": "Pacts published from this version that go with it.",
+            "default": 0,
+            "example": 1
+          },
+          "results": {
+            "type": "integer",
+            "title": "Results",
+            "description": "Verification results recorded for this version that go with it.",
+            "default": 0,
+            "example": 1
+          },
           "created_at": {
             "anyOf": [
               {
@@ -157833,12 +158220,69 @@
             "title": "Latest Per Branch",
             "description": "Keep the newest N versions recorded on each branch."
           },
+          "latest_per_main_branch": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0,
+                "description": "Retention Keep schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Keep schema."
+              }
+            ],
+            "title": "Latest Per Main Branch",
+            "description": "Keep the newest N versions of each pacticipant's main branch."
+          },
+          "latest_per_other_branch": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0,
+                "description": "Retention Keep schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Keep schema."
+              }
+            ],
+            "title": "Latest Per Other Branch",
+            "description": "Keep the newest N versions of every branch that is not its pacticipant's main branch."
+          },
+          "other_branch_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3650.0,
+                "minimum": 1.0,
+                "description": "Retention Keep schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Keep schema."
+              }
+            ],
+            "title": "Other Branch Days",
+            "description": "With `latest_per_other_branch`: only while they were recorded in the last D days."
+          },
           "deployed_or_released": {
             "type": "boolean",
             "title": "Deployed Or Released",
             "description": "Keep every version currently deployed to or released in an environment.",
             "default": true,
             "example": false
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Tags",
+            "description": "Keep every version carrying one of these tags (at most 50)."
           },
           "created_within_days": {
             "anyOf": [
@@ -157860,7 +158304,66 @@
         "additionalProperties": false,
         "type": "object",
         "title": "RetentionKeep",
-        "description": "The keep selectors of a run; a version any of them matches is kept.\n\nAttributes:\n    latest_per_branch: Keep the newest N versions of each branch.\n    deployed_or_released: Keep every version currently deployed or released.\n    created_within_days: Keep every version recorded in the last D days."
+        "description": "The keep selectors of a run; a version any of them matches is kept.\n\nAttributes:\n    latest_per_branch: Keep the newest N versions of each branch.\n    latest_per_main_branch: Keep the newest N versions of each pacticipant's main branch.\n    latest_per_other_branch: Keep the newest N versions of every branch that is not the main one.\n    other_branch_days: With ``latest_per_other_branch``: only while recorded in the last D days.\n    deployed_or_released: Keep every version currently deployed or released.\n    tags: Keep every version carrying one of these tags.\n    created_within_days: Keep every version recorded in the last D days."
+      },
+      "RetentionLastRun": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "title": "At",
+            "description": "When it finished.",
+            "example": "example"
+          },
+          "deleted": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Retention Last Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Last Run schema."
+              }
+            ],
+            "title": "Deleted",
+            "description": "Versions it deleted."
+          },
+          "remaining": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Retention Last Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Last Run schema."
+              }
+            ],
+            "title": "Remaining",
+            "description": "Versions past its cap, left for the next night."
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Retention Last Run schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Last Run schema."
+              }
+            ],
+            "title": "Error",
+            "description": "Why it deleted nothing, when it was refused."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "at"
+        ],
+        "title": "RetentionLastRun",
+        "description": "What the last nightly clean-up did."
       },
       "RetentionPlan": {
         "properties": {
@@ -157911,6 +158414,28 @@
             "default": 0,
             "example": 1
           },
+          "pacts": {
+            "type": "integer",
+            "title": "Pacts",
+            "description": "Pacts published from the deleted versions, which go with them.",
+            "default": 0,
+            "example": 1
+          },
+          "results": {
+            "type": "integer",
+            "title": "Results",
+            "description": "Verification results of the deleted versions, which go with them.",
+            "default": 0,
+            "example": 1
+          },
+          "matched_by": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Matched By",
+            "description": "Versions each rule matches on its own (a version two rules match is counted under both), so a rule can say how much it keeps."
+          },
           "max_deletions": {
             "type": "integer",
             "title": "Max Deletions",
@@ -157948,6 +158473,227 @@
         ],
         "title": "RetentionPlan",
         "description": "The answer to a retention run: the plan, and whether it was applied."
+      },
+      "RetentionPolicy": {
+        "properties": {
+          "keep_deployed_or_released": {
+            "type": "boolean",
+            "title": "Keep Deployed Or Released",
+            "description": "Every version deployed or released anywhere is kept. Always `true`: `false` is refused.",
+            "default": true,
+            "example": false
+          },
+          "keep_main_branch_latest": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0,
+                "description": "Retention Policy schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Policy schema."
+              }
+            ],
+            "title": "Keep Main Branch Latest",
+            "description": "Keep the newest N versions of each pacticipant's main branch."
+          },
+          "keep_other_branch_latest": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0,
+                "description": "Retention Policy schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Policy schema."
+              }
+            ],
+            "title": "Keep Other Branch Latest",
+            "description": "Keep the newest N versions of every other branch."
+          },
+          "keep_other_branch_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3650.0,
+                "minimum": 1.0,
+                "description": "Retention Policy schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Policy schema."
+              }
+            ],
+            "title": "Keep Other Branch Days",
+            "description": "With `keep_other_branch_latest`: only while they were recorded in the last D days."
+          },
+          "keep_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Keep Tags",
+            "description": "Keep every version carrying one of these tags (at most 50)."
+          },
+          "nightly_enabled": {
+            "type": "boolean",
+            "title": "Nightly Enabled",
+            "description": "Apply the rules every night. Off: clean-up removes nothing.",
+            "default": false,
+            "example": false
+          },
+          "restore_window_days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Restore Window Days",
+            "description": "Days a deleted pacticipant or version can be restored before it is purged.",
+            "default": 30,
+            "example": 1
+          },
+          "configured": {
+            "type": "boolean",
+            "title": "Configured",
+            "description": "Whether the workspace has saved rules; `false` shows the defaults.",
+            "example": false
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Retention Policy schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Policy schema."
+              }
+            ],
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601)."
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Retention Policy schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Policy schema."
+              }
+            ],
+            "title": "Updated By",
+            "description": "Who saved them last."
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RetentionLastRun"
+              },
+              {
+                "type": "null",
+                "description": "Retention Policy schema."
+              }
+            ],
+            "description": "Last Run."
+          },
+          "next_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Retention Policy schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Policy schema."
+              }
+            ],
+            "title": "Next Run At",
+            "description": "When the nightly clean-up runs next; null while it is off."
+          },
+          "can_edit": {
+            "type": "boolean",
+            "title": "Can Edit",
+            "description": "Whether the caller may save the rules and restore (`pacts:delete`); otherwise read-only.",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "configured",
+          "can_edit"
+        ],
+        "title": "RetentionPolicy",
+        "description": "A workspace's clean-up rules as ``GET \u2026/pact-retention/policy`` answers them."
+      },
+      "RetentionPreview": {
+        "properties": {
+          "draft": {
+            "type": "boolean",
+            "title": "Draft",
+            "description": "Whether this previews rules that are not saved.",
+            "example": "2020-12"
+          },
+          "nightly_enabled": {
+            "type": "boolean",
+            "title": "Nightly Enabled",
+            "description": "Off: nothing is removed while clean-up is off.",
+            "example": false
+          },
+          "next_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Retention schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention schema."
+              }
+            ],
+            "title": "Next Run At",
+            "description": "Next Run At timestamp (ISO 8601)."
+          },
+          "plan": {
+            "$ref": "#/components/schemas/RetentionPlan",
+            "description": "Plan."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "draft",
+          "nightly_enabled",
+          "plan"
+        ],
+        "title": "RetentionPreview",
+        "description": "What the rules would remove if clean-up ran now \u2014 what the next nightly run removes."
+      },
+      "RetentionPreviewRequest": {
+        "properties": {
+          "rules": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RetentionRules"
+              },
+              {
+                "type": "null",
+                "description": "Request body for retention preview."
+              }
+            ],
+            "description": "Rules not saved yet; the saved rules when omitted."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RetentionPreviewRequest",
+        "description": "``POST \u2026/pact-retention/policy/preview``: preview the saved rules, or a draft of them."
       },
       "RetentionRequest": {
         "properties": {
@@ -186960,6 +187706,201 @@
         ],
         "title": "DeleteVariantResponse",
         "description": "The outcome of removing a variant."
+      },
+      "DeletedItem": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pacticipant",
+              "version"
+            ],
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "pacticipant"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "The pacticipant's or the version's id.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "pacticipant_id": {
+            "type": "string",
+            "title": "Pacticipant Id",
+            "description": "Pacticipant ID.",
+            "example": "pacticipant_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "pacticipant_slug": {
+            "type": "string",
+            "title": "Pacticipant Slug",
+            "description": "Pacticipant Slug.",
+            "example": "example-resource"
+          },
+          "pacticipant_name": {
+            "type": "string",
+            "title": "Pacticipant Name",
+            "description": "Pacticipant Name.",
+            "example": "Example"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Deleted schema."
+              },
+              {
+                "type": "null",
+                "description": "Deleted schema."
+              }
+            ],
+            "title": "Number",
+            "description": "The version number (versions only)."
+          },
+          "deleted_at": {
+            "type": "string",
+            "title": "Deleted At",
+            "description": "Deleted At timestamp (ISO 8601).",
+            "example": "2026-11-28T01:45:33Z"
+          },
+          "deleted_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Deleted schema."
+              },
+              {
+                "type": "null",
+                "description": "Deleted schema."
+              }
+            ],
+            "title": "Deleted By",
+            "description": "Who deleted it; `Clean-up` for the nightly run."
+          },
+          "cause": {
+            "type": "string",
+            "title": "Cause",
+            "description": "`pacticipant`, `version` (deleted by hand) or `retention` (clean-up).",
+            "example": "example"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Deleted schema."
+              },
+              {
+                "type": "null",
+                "description": "Deleted schema."
+              }
+            ],
+            "title": "Reason",
+            "description": "Reason."
+          },
+          "purge_after": {
+            "type": "string",
+            "title": "Purge After",
+            "description": "When it is removed for good unless restored.",
+            "example": "example"
+          },
+          "versions": {
+            "type": "integer",
+            "title": "Versions",
+            "description": "Versions deleted with the pacticipant (pacticipants only).",
+            "default": 0,
+            "example": 1
+          },
+          "pacts": {
+            "type": "integer",
+            "title": "Pacts",
+            "description": "Pacts that come back with a restore.",
+            "default": 0,
+            "example": 1
+          },
+          "results": {
+            "type": "integer",
+            "title": "Results",
+            "description": "Verification results that come back with a restore.",
+            "default": 0,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "pacticipant_id",
+          "pacticipant_slug",
+          "pacticipant_name",
+          "deleted_at",
+          "cause",
+          "purge_after"
+        ],
+        "title": "DeletedItem",
+        "description": "One row of the Recently deleted list: a deleted pacticipant, or a version deleted on its own."
+      },
+      "DeletedPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DeletedItem"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Items.",
+            "maxItems": 100
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of count.",
+            "example": 1
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "Whether more.",
+            "example": true
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Deleted Page schema."
+              },
+              {
+                "type": "null",
+                "description": "Deleted Page schema."
+              }
+            ],
+            "title": "Next Cursor",
+            "description": "Next Cursor."
+          },
+          "restore_window_days": {
+            "type": "integer",
+            "title": "Restore Window Days",
+            "description": "Restore Window Days.",
+            "example": 1
+          },
+          "can_restore": {
+            "type": "boolean",
+            "title": "Can Restore",
+            "description": "Whether the caller may restore (`pacts:delete`).",
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "count",
+          "has_more",
+          "restore_window_days",
+          "can_restore"
+        ],
+        "title": "DeletedPage",
+        "description": "A page of the Recently deleted list, newest first."
       },
       "DeletedResponse": {
         "properties": {
@@ -252428,6 +253369,94 @@
         ],
         "title": "RetentionResponse",
         "description": "Outcome of a retention sweep."
+      },
+      "RetentionRules": {
+        "properties": {
+          "keep_deployed_or_released": {
+            "type": "boolean",
+            "title": "Keep Deployed Or Released",
+            "description": "Every version deployed or released anywhere is kept. Always `true`: `false` is refused.",
+            "default": true,
+            "example": false
+          },
+          "keep_main_branch_latest": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0,
+                "description": "Retention Rules schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Rules schema."
+              }
+            ],
+            "title": "Keep Main Branch Latest",
+            "description": "Keep the newest N versions of each pacticipant's main branch."
+          },
+          "keep_other_branch_latest": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0,
+                "description": "Retention Rules schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Rules schema."
+              }
+            ],
+            "title": "Keep Other Branch Latest",
+            "description": "Keep the newest N versions of every other branch."
+          },
+          "keep_other_branch_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3650.0,
+                "minimum": 1.0,
+                "description": "Retention Rules schema."
+              },
+              {
+                "type": "null",
+                "description": "Retention Rules schema."
+              }
+            ],
+            "title": "Keep Other Branch Days",
+            "description": "With `keep_other_branch_latest`: only while they were recorded in the last D days."
+          },
+          "keep_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Keep Tags",
+            "description": "Keep every version carrying one of these tags (at most 50)."
+          },
+          "nightly_enabled": {
+            "type": "boolean",
+            "title": "Nightly Enabled",
+            "description": "Apply the rules every night. Off: clean-up removes nothing.",
+            "default": false,
+            "example": false
+          },
+          "restore_window_days": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Restore Window Days",
+            "description": "Days a deleted pacticipant or version can be restored before it is purged.",
+            "default": 30,
+            "example": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RetentionRules",
+        "description": "The clean-up rules a workspace saves (``PUT \u2026/pact-retention/policy``).\n\nA field left out takes its default: a ``PUT`` replaces every rule. ``apiome pact retention set``\nreads the rules first and changes only the flags it is given.\n\nAttributes:\n    keep_deployed_or_released: Always ``true``; ``false`` is refused.\n    keep_main_branch_latest: Keep the newest N versions of each pacticipant's main branch.\n    keep_other_branch_latest: Keep the newest N versions of every other branch.\n    keep_other_branch_days: With ``keep_other_branch_latest``: only while recorded in the last D days.\n    keep_tags: Keep every version carrying one of these tags.\n    nightly_enabled: Apply the rules every night.\n    restore_window_days: Days a deleted pacticipant or version stays restorable."
       },
       "RetentionUpdate": {
         "properties": {

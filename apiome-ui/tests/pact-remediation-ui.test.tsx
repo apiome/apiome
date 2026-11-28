@@ -337,7 +337,7 @@ describe('the Verification page', () => {
     expect(line).toHaveTextContent('scheduled runs replay against ledger-staging');
     expect(within(line).getByRole('link', { name: 'Verification settings' })).toHaveAttribute(
       'href',
-      '/ade/dashboard/pacts/settings',
+      '/ade/dashboard/pacts/settings?tab=verification',
     );
   });
 });

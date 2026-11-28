@@ -45,6 +45,7 @@ from .pact_cleanup_store import (
     remove_label,
     restore_pacticipant,
     restore_version,
+    tenant_grace_days,
     with_purge_after,
 )
 from .pacticipant import (
@@ -271,7 +272,8 @@ def list_tenant_pacticipants(
         db, _tenant_id(auth_data), limit=limit + 1, cursor=after, label=label, deleted=state == "deleted"
     )
     page = PACTICIPANTS_ORDER.page(rows, limit)
-    items = [with_purge_after(row) for row in page.items]
+    window = tenant_grace_days(db.execute_query, _tenant_id(auth_data)) if state == "deleted" else None
+    items = [with_purge_after(row, window) for row in page.items]
     return PacticipantListResponse(
         pacticipants=items, count=len(items), has_more=page.has_more, next_cursor=page.next_cursor
     )
@@ -601,7 +603,8 @@ def list_pacticipant_versions(
         db, pacticipant, branch=branch, tag=tag, limit=limit + 1, cursor=after, deleted=state == "deleted"
     )
     page = VERSIONS_ORDER.page(rows, limit)
-    items = [with_purge_after(row) for row in page.items]
+    window = tenant_grace_days(db.execute_query, pacticipant.tenant_id) if state == "deleted" else None
+    items = [with_purge_after(row, window) for row in page.items]
     return PacticipantVersionListResponse(
         versions=items, count=len(items), has_more=page.has_more, next_cursor=page.next_cursor
     )

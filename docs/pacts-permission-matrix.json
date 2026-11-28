@@ -161,6 +161,19 @@
       }
     },
     {
+      "id": "retention.policy.save",
+      "label": "Save the clean-up rules",
+      "permission": "pacts:delete",
+      "method": "PUT",
+      "path": "/v1/tenants/{tenant}/pact-retention/policy",
+      "audit": "pacts.retention.policy",
+      "auditedBy": "transaction",
+      "body": {
+        "keep_main_branch_latest": 5,
+        "nightly_enabled": true
+      }
+    },
+    {
       "id": "broker.pacticipant.delete",
       "label": "Delete a pacticipant (Pact Broker API)",
       "permission": "pacts:delete",
@@ -714,6 +727,12 @@
       "path": "/v1/tenants/{tenant}/pact-retention",
       "permission": "pacts:view",
       "why": "A dry run (dry_run: true) plans a retention run and deletes nothing; applying it is the retention.apply write."
+    },
+    {
+      "method": "POST",
+      "path": "/v1/tenants/{tenant}/pact-retention/policy/preview",
+      "permission": "pacts:view",
+      "why": "Previews what the clean-up rules (saved or a draft) would remove; deletes nothing."
     },
     {
       "method": "POST",

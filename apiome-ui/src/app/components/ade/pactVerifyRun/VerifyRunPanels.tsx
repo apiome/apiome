@@ -454,7 +454,7 @@ export function ScheduleDialog({
             </div>
             <p className="ppub-hint">
               A schedule keeps the provider’s pacts verified on this target. It does not keep these rules or options: a scheduled
-              run verifies what is overdue, read-only. Change it later in <Link href="/ade/dashboard/pacts/settings">Verification settings</Link>.
+              run verifies what is overdue, read-only. Change it later in <Link href="/ade/dashboard/pacts/settings?tab=verification">Verification settings</Link>.
             </p>
             {state.error ? (
               <p className="ppub-hint ppub-hint--danger" role="alert">
