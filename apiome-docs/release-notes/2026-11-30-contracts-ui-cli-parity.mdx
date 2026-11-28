@@ -1,0 +1,45 @@
+---
+slug: contracts-ui-cli-parity
+title: "Contracts: every command has a screen"
+description: "Everything apiome pact does can now be done from the Contracts workspace."
+authors: [apiome]
+---
+
+The Contracts workspace started as a place to read pacts and verdicts; doing anything meant a
+command. Now every one of the 28 `apiome pact` commands has a screen, and every screen that changes
+something shows the command that does the same. See
+[One model, every surface](/ship/pact-broker/overview#one-model-every-surface).
+
+{/* truncate */}
+
+**What the epic covers:**
+
+- **A landing and one tab row.** **Contracts** opens on what needs attention, every integration and
+  where to start, and the same tabs are on every Contracts page —
+  [The Contracts workspace](/ship/pact-broker/overview#the-contracts-workspace).
+- **Publish from the app.** Upload, paste, write or derive a consumer pact and check it against
+  several provider versions first —
+  [Publish from the UI](/ship/pact-broker/publish-pacts#publish-from-the-ui); publish a provider
+  contract with graded evidence, a preview and standing sources —
+  [Publish a provider contract](/ship/pact-broker/bi-directional#publish-from-the-ui).
+- **Run a verification.** Choose the provider version and its pacts, preview, watch the run live or
+  upload a verifier's results —
+  [Run a verification from the app](/ship/pact-broker/hosted-verification#run-a-verification-from-the-app).
+- **Manage pacticipants and environments.** Create, edit and delete pacticipants, manage their
+  versions and badges, create environments and record deployments, releases, undeployments and end of
+  support — [Pacticipants](/ship/pact-broker/pacticipants#manage-a-pacticipant),
+  [Environments](/ship/pact-broker/environments-dashboard#record-a-deployment).
+- **Settings.** Clean-up rules with a preview and restore, secrets, commit statuses and CI recipes,
+  verification schedules and what agents may do —
+  [Set the clean-up rules](/ship/pact-broker/retention#set-the-clean-up-rules).
+- **Migrate, export and set up.** The [Migration wizard](/ship/pact-broker/migration#migrate-from-the-ui)
+  with its switch-over check, the [Export page](/ship/pact-broker/export-contracts) (a pact from a
+  project, a Postman collection, a pact file, provider test scaffolding) and
+  [guided set-up](/ship/pact-broker/overview#set-up-in-ten-minutes).
+- **The same, from anywhere.** Each of those screens shows what you filled in as an `apiome pact`
+  command, a Pact CLI command, a GitHub Action step and a REST request, and a check in CI keeps the
+  commands and screens in step —
+  [The same command, in the app](/ship/pact-broker/cli#the-same-command-in-the-app).
+
+The landing's **Publish provider contract**, **Run a verification** and **Derive a pact from a
+project** now open their screens instead of a command.
