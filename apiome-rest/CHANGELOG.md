@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.880.0] - 2026-11-29
+
+### Added
+- **Record a deployment over a "no" from can-i-deploy, audited (PFX-8.12, #7309).** OpenAPI 1.704.0.
+  `POST /v1/tenants/{t}/pact-broker/pacticipants/{p}/versions/{v}/deployed-versions/environment/{uuid}`
+  takes `overrideCanIDeploy=true` (default `false`): the Environments page's *Record it anyway* sends it
+  when can-i-deploy answered no. It changes nothing about the deployment; the `pacts.deployment.record`
+  audit row carries `override_can_i_deploy` in its `params`, so an override is never silent. A value
+  that is not a boolean is a `422`.
+
 ## [1.879.0] - 2026-11-29
 
 ### Added

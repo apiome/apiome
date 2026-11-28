@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.703.0
+  version: 1.704.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -37478,6 +37478,12 @@ paths:
         `200`.
 
 
+        `overrideCanIDeploy=true` says the deployment is recorded although can-i-deploy
+        answered no (the Environments page''s *Record it anyway*, PFX-8.12). It changes
+        nothing about the deployment; it is written to the audit row, so an override
+        is never silent.
+
+
         Answers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.'
       operationId: post_deployment_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__post
       parameters:
@@ -37513,6 +37519,17 @@ paths:
           description: The environment's `uuid`, as `GET …/environments` lists it.
           title: Uuid
         description: The environment's `uuid`, as `GET …/environments` lists it.
+      - name: overrideCanIDeploy
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: The deployment is recorded although can-i-deploy answered no.
+            Audited; changes nothing else.
+          default: false
+          title: Overridecanideploy
+        description: The deployment is recorded although can-i-deploy answered no. Audited;
+          changes nothing else.
       - name: authorization
         in: header
         required: false

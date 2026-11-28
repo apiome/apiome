@@ -664,6 +664,9 @@ _RECORD_ERRORS = {
         "instance is marked undeployed; it stays in the history.\n"
         "- Deployments to other application instances are not touched.\n"
         "- Recording the version that is already deployed there returns that deployment, `200`.\n\n"
+        "`overrideCanIDeploy=true` says the deployment is recorded although can-i-deploy answered "
+        "no (the Environments page's *Record it anyway*, PFX-8.12). It changes nothing about the "
+        "deployment; it is written to the audit row, so an override is never silent.\n\n"
         "Answers `201` with the deployment and its URL in `Location`. Requires `pacts:create`."
     ),
     openapi_extra={"requestBody": _DEPLOYMENT_BODY},
@@ -680,6 +683,13 @@ def post_deployment(
     version: str = Path(description="The version number, exactly as recorded."),
     uuid: str = Path(description="The environment's `uuid`, as `GET …/environments` lists it."),
     raw: bytes = Depends(_read_pact_body),
+    override_can_i_deploy: bool = Query(
+        default=False,
+        alias="overrideCanIDeploy",
+        description=(
+            "The deployment is recorded although can-i-deploy answered no. Audited; changes nothing else."
+        ),
+    ),
     auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
 ) -> HalJSONResponse:
     """Record a deployment.
@@ -691,6 +701,8 @@ def post_deployment(
         uuid: The environment's id.
         request: The request.
         raw: The body, already size-limited.
+        override_can_i_deploy: Recorded over a "no" from can-i-deploy. Only the audit row reads it
+            (``audited_write`` copies every boolean parameter into the row's ``params``).
         auth_data: The authenticated principal.
 
     Returns:

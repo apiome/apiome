@@ -125,12 +125,20 @@ export function DeployedVersionsGrid({ topology }: { topology: Topology }) {
 }
 
 /**
- * The environments themselves: name, flags and how much is in each.
+ * The environments: display name (with **Production**), name, how many versions are deployed and
+ * released there now, and whether a contract is required. PFX-8.12 (#7309): `actions`, when given,
+ * draws each row's menu (Edit, Record a deployment here, Delete) in a last column.
  *
- * @param props - The environments.
+ * @param props - The environments, and the row menu for a role that may change them.
  * @returns The table.
  */
-export function EnvironmentList({ environments }: { environments: TopologyEnvironment[] }) {
+export function EnvironmentList({
+  environments,
+  actions,
+}: {
+  environments: TopologyEnvironment[];
+  actions?: (environment: TopologyEnvironment) => React.ReactNode;
+}) {
   return (
     <div className="ppx__table-wrap">
       <table className="ppx__table" data-testid="penv-environments">
@@ -142,6 +150,11 @@ export function EnvironmentList({ environments }: { environments: TopologyEnviro
             <th scope="col">Deployed</th>
             <th scope="col">Released</th>
             <th scope="col">Contract required</th>
+            {actions ? (
+              <th scope="col">
+                <span className="sr-only">Actions</span>
+              </th>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -157,6 +170,7 @@ export function EnvironmentList({ environments }: { environments: TopologyEnviro
               <td>{environment.deployed.length}</td>
               <td>{environment.released.length}</td>
               <td>{environment.contractRequired ? 'Yes' : 'No'}</td>
+              {actions ? <td className="penv-list__actions">{actions(environment)}</td> : null}
             </tr>
           ))}
         </tbody>

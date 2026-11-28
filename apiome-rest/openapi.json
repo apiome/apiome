@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.703.0",
+    "version": "1.704.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -50436,7 +50436,7 @@
           "pact-broker"
         ],
         "summary": "Record a deployment",
-        "description": "Record that this version is now deployed to the environment \u2014 the version's `pb:record-deployment` link, which `pact-broker record-deployment --pacticipant Ledger --version 4f1e2d0 --environment production` posts to.\n\n- The pacticipant's previous deployment to the same environment and application instance is marked undeployed; it stays in the history.\n- Deployments to other application instances are not touched.\n- Recording the version that is already deployed there returns that deployment, `200`.\n\nAnswers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.",
+        "description": "Record that this version is now deployed to the environment \u2014 the version's `pb:record-deployment` link, which `pact-broker record-deployment --pacticipant Ledger --version 4f1e2d0 --environment production` posts to.\n\n- The pacticipant's previous deployment to the same environment and application instance is marked undeployed; it stays in the history.\n- Deployments to other application instances are not touched.\n- Recording the version that is already deployed there returns that deployment, `200`.\n\n`overrideCanIDeploy=true` says the deployment is recorded although can-i-deploy answered no (the Environments page's *Record it anyway*, PFX-8.12). It changes nothing about the deployment; it is written to the audit row, so an override is never silent.\n\nAnswers `201` with the deployment and its URL in `Location`. Requires `pacts:create`.",
         "operationId": "post_deployment_v1_tenants__tenant_slug__pact_broker_pacticipants__pacticipant__versions__version__deployed_versions_environment__uuid__post",
         "parameters": [
           {
@@ -50482,6 +50482,18 @@
               "title": "Uuid"
             },
             "description": "The environment's `uuid`, as `GET \u2026/environments` lists it."
+          },
+          {
+            "name": "overrideCanIDeploy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "The deployment is recorded although can-i-deploy answered no. Audited; changes nothing else.",
+              "default": false,
+              "title": "Overridecanideploy"
+            },
+            "description": "The deployment is recorded although can-i-deploy answered no. Audited; changes nothing else."
           },
           {
             "name": "authorization",

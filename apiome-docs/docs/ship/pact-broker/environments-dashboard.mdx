@@ -1,6 +1,6 @@
 ---
 title: Environments and the deploy simulator
-description: See which version runs where, read deployment history, simulate a deployment.
+description: See which version runs where, record deployments and releases, simulate one.
 sidebar_position: 5.1
 tags: [contracts, pact, environments, ci, ui, rest]
 ---
@@ -9,11 +9,14 @@ The **Environments** pages show which version of each pacticipant runs in each o
 [environments](./environments.mdx), every deployment recorded to an environment, and — before you
 deploy — what a deployment would change. The **Deploy simulator** answers *what if this version
 went to production?*: whether it is safe, and which other versions it would clear the way for or
-break. It records nothing.
+break. It records nothing. **Record a deployment** and **Record a release** record one, and
+**New environment** creates an environment.
 
 ## Before you start
 
-- You hold **Pacts** → **View**. Without it, the pages show **Permission denied**.
+- You hold **Pacts** → **View**. Without it, the pages show **Permission denied**. Recording a
+  deployment or a release and creating an environment need **Pacts** → **Create**; a role without
+  it sees no **Record a deployment**, **New environment** or **Record a release**.
 - Your deploy jobs [record each deployment](./environments.mdx#record-a-deployment) (or release).
   The pages show what is recorded; a deployment nobody recorded is not there.
 - The simulator reads the same pacts and verification results as
@@ -28,7 +31,7 @@ break. It records nothing.
 
 The page is at `/ade/dashboard/pacts/environments`.
 
-<Screenshot id="pact-environments" alt="The Environments page: a Deployed versions grid with Billing Service, Ledger API, Mobile App and Reporting Job down the side and Production, Staging and QA across the top, each cell listing the versions deployed there (Reporting Job 1.4.2 in instances eu-west and us-east, Mobile App 5.2.0 released); below, the three environments with their name, counts and whether a contract is required."/>
+<Screenshot id="pact-environments" alt="The Environments page: Record a release, New environment and Record a deployment in the header; a Deployed versions grid with Billing Service, Ledger API, Mobile App and Reporting Job down the side and Production, Staging and QA across the top, each cell listing the versions deployed there (Reporting Job 1.4.2 in instances eu-west and us-east, Mobile App 5.2.0 released); below, the three environments with their name, counts, whether a contract is required and a menu."/>
 
 **Deployed versions** has a row for every pacticipant that is in any environment and a column for
 each environment:
@@ -41,12 +44,62 @@ each environment:
 A commit-SHA version is cut to 12 characters; point at it to read the whole number. Click an
 environment to open its page, or a pacticipant to open
 [its page](./pacticipants.mdx). **Environments** lists each environment with its name, how many
-versions are deployed and released there, and whether it requires a contract.
+versions are deployed and released there, and whether it requires a contract. Its **⋯** menu
+holds **Edit environment**, **Record a deployment here** and **Delete environment** — each shown
+only to a role that may do it (see [Create your environments](./environments.mdx#in-the-app)).
+Click **Refresh** to read what is recorded again.
 
 When the workspace has more than 2000 current deployments or releases, the page says so and shows
 the first 2000.
 
-A workspace with no environment shows the commands that create one and record a deployment.
+A workspace with no environment says “No environments yet. Add production and staging so
+can-i-deploy has somewhere to look.”, offers **New environment**, and shows the commands that
+create one and record a deployment.
+
+## Record a deployment
+
+Record a deployment the pipeline did not — a hotfix, a manual rollout. You need **Pacts** →
+**Create**.
+
+1. Click **Record a deployment** (or, on an environment's row, **⋯** → **Record a deployment
+   here**).
+2. In **Service**, choose the pacticipant (`Billing Service`).
+3. In **Version**, type the version; the service's newest recorded versions are suggested
+   (`2.7.0+9f31c20`). Only a version already recorded — by publishing a pact or a verification
+   result — can be deployed.
+4. In **Environment**, choose where it runs now (`Production`).
+5. Optional: in **Instance**, name the copy it replaced (`eu-west`) when the service runs in several
+   places.
+
+Once the three are chosen, the dialog asks [can-i-deploy](./can-i-deploy.mdx):
+
+- **can-i-deploy says yes** — click **Record deployment**.
+- **can-i-deploy says no** (or **does not know yet**) — the reasons are listed, such as which
+  consumer needs a field this version does not return. **Record deployment** stays off until you
+  tick **Record it anyway — this already happened**: a record states a fact, so it is allowed, but
+  never by accident. The tick is written to the audit trail (`override_can_i_deploy: true` in the audit row
+  of `pacts.deployment.record`), and the page asks can-i-deploy again when you record, so a “no”
+  is never overridden without it.
+
+<Screenshot id="pact-record-deployment" alt="The Record a deployment dialog: Service Billing Service, Version 2.7.0+9f31c20, Environment Production; can-i-deploy says no, with the reason that Orders UI 3.3.2 in Production needs currency on POST /invoices, the Record it anyway — this already happened box ticked, Replaces 2.3.1, and The same, from anywhere showing apiome pact record-deployment."/>
+
+The deployment replaces what ran in that instance; the dialog names it (**Replaces 2.3.1**).
+**The same, from anywhere** shows `apiome pact record-deployment` for what you chose. That command
+does not ask can-i-deploy, so in a pipeline run `apiome pact can-i-deploy` first (the
+[deploy simulator](#simulate-a-deployment) prints both).
+
+## Record a release
+
+For an application where several versions are in use at once — a mobile app, a library — record a
+release instead. You need **Pacts** → **Create**.
+
+1. Click **Record a release**.
+2. Choose the **Service**, type the **Version** and choose the **Environment**.
+3. Read **Still supported**: the service's other releases there. A release does not replace
+   another, so they stay supported until their support is ended.
+4. Click **Record release**.
+
+**The same, from anywhere** shows `apiome pact record-release`.
 
 ## Read an environment
 
@@ -124,6 +177,11 @@ a **Clears** today is what `can-i-deploy` answers once you deploy.
 
 ## Use the API
 
+The dialogs write through the [Pact Broker routes](./environments.mdx#read-what-is-recorded):
+`POST …/pact-broker/environments`, `PUT` / `DELETE …/environments/{uuid}`, and
+`POST …/versions/{version}/deployed-versions/environment/{uuid}` (with `?overrideCanIDeploy=true`
+for a deployment recorded over a “no”) or `…/released-versions/environment/{uuid}`.
+
 The pages read three REST routes, all needing `pacts:view`:
 
 | Route | What it returns |
@@ -142,9 +200,12 @@ See the [REST reference](../../reference/rest/pact-broker.md) for the full shape
 | **No such environment** | No environment has that name in this workspace. | Open **Environments** and choose one. |
 | `pacticipant-not-found` / `pacticipant-version-not-found` | The pacticipant or version is not recorded. | Check the spelling; [publish](./publish-pacts.mdx) the version's pacts first. |
 | The application instance … cannot start or end with a space | The instance has surrounding spaces or a control character. | Type the instance exactly as your deploy job records it. |
+| **can-i-deploy says no. Tick Record it anyway…** | can-i-deploy answered no when you recorded, and the box was not ticked. | Read the reasons; tick **Record it anyway** only if the deployment already happened. |
+| **Production still has 9 versions running.** | You tried to delete an environment something runs in. | Record their undeployment or end their support first. |
+| **Another environment is already called …** | The name is taken in this workspace. | Choose another **Name**. |
 
 ## Related
 
-- [Environments and deployments](./environments.mdx) — create environments and record deployments.
+- [Environments and deployments](./environments.mdx) — create environments and record deployments from CI.
 - [Can I deploy?](./can-i-deploy.mdx) — the verdict the simulator is built on.
 - [Pacticipants](./pacticipants.mdx) — each pacticipant's environments.

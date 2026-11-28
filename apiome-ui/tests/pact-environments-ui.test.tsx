@@ -68,6 +68,11 @@ function installFetch() {
 beforeEach(() => {
   calls = [];
   answers = {
+    // PFX-8.12 (#7309): an editor, so the dashboard fixture shows the write actions.
+    '/api/access/permissions/me': () => ({
+      status: 200,
+      body: { success: true, data: { is_admin: false, permissions: ['pacts:view', 'pacts:create', 'pacts:edit', 'pacts:delete'] } },
+    }),
     [TOPOLOGY]: () => ({ status: 200, body: fixture.topology }),
     [HISTORY]: () => ({ status: 200, body: fixture.history }),
     [`${HISTORY}?cursor=17`]: () => ({
@@ -106,6 +111,7 @@ describe('Environments dashboard', () => {
   it('lays out every pacticipant in every environment, and the environments', async () => {
     const { container } = render(<EnvironmentsClient />);
     const grid = await screen.findByTestId('penv-grid');
+    await screen.findByTestId('penv-action-deploy');
     expect(screen.getByTestId('penv-count')).toHaveTextContent('3 environments');
     expect(within(grid).getByRole('link', { name: 'Production' })).toHaveAttribute(
       'href',

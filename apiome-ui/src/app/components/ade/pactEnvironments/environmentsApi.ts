@@ -3,6 +3,10 @@
  *
  * Each throws REST's message on a failure, so the page can show it (a 403 reads "Permission
  * denied", a 404 names the unknown environment, pacticipant or version, a 400 the parameter).
+ *
+ * The writes of PFX-8.12 (#7309) — create, edit and delete an environment, record a deployment or a
+ * release — answer the result or a {@link EnvironmentWriteFailure} with the proxy's status and, for
+ * a "no" from can-i-deploy, its reasons, so the dialog can say what happened where it happened.
  */
 
 import {
@@ -12,6 +16,13 @@ import {
   type SimulationForm,
   type Topology,
 } from '@lib/pact-environments';
+import {
+  parseBrokerEnvironments,
+  type BrokerEnvironment,
+  type DeploymentBody,
+  type EnvironmentBody,
+  type ReleaseBody,
+} from '@lib/pact-environment-writes';
 import { readJson } from '../pactPacticipants/pacticipantsApi';
 
 const BASE = '/api/pact';
@@ -73,4 +84,123 @@ export async function fetchSimulation(environment: string, form: SimulationForm)
     notChecked: Array.isArray(body.notChecked) ? body.notChecked : [],
     summary: body.summary ?? {},
   };
+}
+
+/** A refused write: the message, the status and — for a "no" from can-i-deploy — its reasons. */
+export interface EnvironmentWriteFailure {
+  error: string;
+  status: number;
+  reasons?: string[];
+}
+
+/**
+ * Send one write through a proxy and read its answer.
+ *
+ * @param url - The proxy URL.
+ * @param method - The method.
+ * @param fallback - What to say when the failure carried no message.
+ * @param body - The JSON body.
+ * @returns The parsed body, or the failure.
+ */
+async function send<T>(url: string, method: string, fallback: string, body?: unknown): Promise<T | EnvironmentWriteFailure> {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: 'no-store',
+    });
+  } catch {
+    return { error: 'The Pact Broker could not be reached. Try again shortly.', status: 503 };
+  }
+  const parsed = ((await response.json().catch(() => ({}))) ?? {}) as Record<string, unknown>;
+  if (!response.ok) {
+    const error = typeof parsed.error === 'string' && parsed.error ? parsed.error : fallback;
+    const reasons = Array.isArray(parsed.reasons) ? parsed.reasons.filter((line): line is string => typeof line === 'string') : undefined;
+    return { error, status: response.status, ...(reasons ? { reasons } : {}) };
+  }
+  return parsed as T;
+}
+
+/**
+ * What a successful environment, deployment or release write answers (the fields the page reads).
+ * No index signature and no `error` key, so `'error' in answer` tells a failure apart.
+ */
+export interface WriteAnswer {
+  uuid?: string;
+  name?: string;
+}
+
+/** An environment's path below `/api/pact`. */
+function environmentBase(name: string): string {
+  return `${BASE}/environments/${encodeURIComponent(name)}`;
+}
+
+/**
+ * Every environment with its contacts (for the Edit dialog), by name.
+ *
+ * @returns The environments.
+ */
+export async function fetchBrokerEnvironments(): Promise<BrokerEnvironment[]> {
+  const body = await readJson<unknown>(await fetch(`${BASE}/environments`, { cache: 'no-store' }), 'Could not load the environments');
+  return parseBrokerEnvironments(body);
+}
+
+/**
+ * Create an environment.
+ *
+ * @param body - The checked body.
+ * @returns REST's environment, or the failure (409 for a taken name).
+ */
+export function createEnvironment(body: EnvironmentBody) {
+  return send<WriteAnswer>(`${BASE}/environments`, 'POST', 'Could not create the environment', body);
+}
+
+/**
+ * Replace an environment's fields.
+ *
+ * @param name - Its current name.
+ * @param body - The checked body.
+ * @returns REST's environment, or the failure.
+ */
+export function updateEnvironment(name: string, body: EnvironmentBody) {
+  return send<WriteAnswer>(environmentBase(name), 'PUT', 'Could not save the environment', body);
+}
+
+/**
+ * Delete an environment (refused while versions run there).
+ *
+ * @param name - Its name.
+ * @returns `{ deleted: true }`, or the failure.
+ */
+export function deleteEnvironment(name: string) {
+  return send<{ deleted: boolean }>(environmentBase(name), 'DELETE', 'Could not delete the environment');
+}
+
+/** What recording a deployment answers: REST's deployment and the verdict it was recorded over. */
+export interface RecordedDeployment extends WriteAnswer {
+  verdict?: 'yes' | 'no';
+}
+
+/**
+ * Record a deployment; the proxy asks can-i-deploy first.
+ *
+ * @param environment - The environment's name.
+ * @param body - The checked body.
+ * @returns The deployment, or the failure (409 with `reasons` for a "no" without the tick).
+ */
+export function recordDeployment(environment: string, body: DeploymentBody) {
+  return send<RecordedDeployment>(`${environmentBase(environment)}/deployments`, 'POST', 'Could not record the deployment', body);
+}
+
+/**
+ * Record a release.
+ *
+ * @param environment - The environment's name.
+ * @param body - The checked body.
+ * @returns REST's release, or the failure.
+ */
+export function recordRelease(environment: string, body: ReleaseBody) {
+  return send<WriteAnswer>(`${environmentBase(environment)}/releases`, 'POST', 'Could not record the release', body);
 }
