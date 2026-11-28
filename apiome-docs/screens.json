@@ -3015,6 +3015,17 @@
       ]
     },
     {
+      "id": "pact-migrate-switch",
+      "route": "/ade/dashboard/pacts/migrate",
+      "waitFor": "[data-testid=\"pmg-switch\"]",
+      "data": "fixture:hive-a11y/pact-migrate-switch.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/pactMigrate/SwitchOverStep.tsx",
+        "apiome-ui/src/app/components/ade/pactMigrate/MigrateWizardClient.tsx",
+        "apiome-ui/lib/pact-migration.ts"
+      ]
+    },
+    {
       "id": "pact-verification-settings",
       "route": "/ade/dashboard/pacts/settings?tab=verification",
       "waitFor": "[data-testid=\"prx-overrides-table\"]",

@@ -117,7 +117,7 @@ def stubs(monkeypatch: pytest.MonkeyPatch) -> Any:
     monkeypatch.setattr(
         routes.store, "list_runs", lambda _db, tenant_id, limit=50: [r for t, r in state.rows.items() if t == tenant_id]
     )
-    monkeypatch.setattr(routes, "read_rules", lambda _db, _tenant: state.rules)
+    monkeypatch.setattr("app.pact_migration_sync.read_rules", lambda _db, _tenant: state.rules)
     monkeypatch.setattr(
         routes,
         "has_permission",
@@ -387,3 +387,166 @@ def test_a_source_that_cannot_be_built_fails_the_run_instead_of_leaving_it_runni
         real_launch(row, PactMigrationSourceCredentials(token=TOKEN), actor="actor", keep=None)
     assert caught.value.status_code == 422 and caught.value.detail["code"] == "pact-migration-source-invalid"
     assert finished and finished[0][0] == "failed"
+
+
+# ---------------------------------------------------------------------------------------------
+# Keep-in-sync — PFX-8.17 (#7314)
+# ---------------------------------------------------------------------------------------------
+
+
+class SyncStubs:
+    """The sync store, in memory: ``rows`` by ``(tenant, run)``; ``sealed`` what was sealed."""
+
+    def __init__(self) -> None:
+        self.rows: Dict[Any, Dict[str, Any]] = {}
+        self.sealed: List[Dict[str, Any]] = []
+        self.configured = True
+        self.active_elsewhere = False
+
+
+@pytest.fixture
+def syncs(stubs: Any, monkeypatch: pytest.MonkeyPatch) -> SyncStubs:
+    state = SyncStubs()
+
+    def seal(credentials: Dict[str, Any]) -> Any:
+        state.sealed.append(dict(credentials))
+        return b"sealed", 1
+
+    def enable(_db: Any, tenant_id: str, run_id: str, **fields: Any) -> Dict[str, Any]:
+        if state.active_elsewhere:
+            raise routes.sync_store.SyncActiveError("another migration of this workspace is already kept in sync")
+        row = {
+            "run_id": run_id,
+            "tenant_id": tenant_id,
+            "enabled": True,
+            "interval_seconds": fields["interval_seconds"],
+            "credential_ciphertext": fields["ciphertext"],
+            "passes": 0,
+            "enabled_by_label": fields["actor"].label,
+        }
+        state.rows[(tenant_id, run_id)] = row
+        return dict(row)
+
+    def disable(_db: Any, tenant_id: str, run_id: str, *, reason: Any = None) -> Any:
+        row = state.rows.get((tenant_id, run_id))
+        if row is None:
+            return None
+        row.update(enabled=False, credential_ciphertext=None, stopped_reason=reason)
+        return dict(row)
+
+    monkeypatch.setattr(routes.sync_store, "credentials_configured", lambda: state.configured)
+    monkeypatch.setattr(routes.sync_store, "seal_credentials", seal)
+    monkeypatch.setattr(routes.sync_store, "enable_sync", enable)
+    monkeypatch.setattr(routes.sync_store, "disable_sync", disable)
+    monkeypatch.setattr(
+        routes.sync_store, "get_sync", lambda _db, tenant_id, run_id: state.rows.get((tenant_id, run_id))
+    )
+    return state
+
+
+def _copied(stubs: Any, mode: str = "copy") -> None:
+    row = stubs.fake.row(mode, {}, run_id=RUN_ID)
+    row.update(tenant_id=stubs.tenant, status="completed")
+    stubs.rows[stubs.tenant] = row
+
+
+def _switch(enabled: bool = True, **extra: Any) -> Any:
+    body = {"enabled": enabled, **({"token": TOKEN} if enabled else {}), **extra}
+    return client.put(f"{BASE}/runs/{RUN_ID}/sync", json=body)
+
+
+@pytest.mark.parametrize(
+    "permissions,status",
+    [({"pacts:view"}, 403), ({"pacts:view", "pacts:edit"}, 403), ({"pacts:create", "pacts:edit"}, 200)],
+)
+def test_switching_keep_in_sync_needs_what_a_migration_needs(
+    stubs: Any, syncs: SyncStubs, permissions: set, status: int
+) -> None:
+    _copied(stubs)
+    stubs.permissions = permissions
+    assert _switch().status_code == status
+    assert _switch(False).status_code == status
+    if status == 403:
+        assert syncs.sealed == [] and stubs.source.requests == []
+
+
+def test_reading_keep_in_sync_needs_view(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    stubs.permissions = set()
+    assert client.get(f"{BASE}/runs/{RUN_ID}/sync").status_code == 403
+    stubs.permissions = {"pacts:view"}
+    answer = client.get(f"{BASE}/runs/{RUN_ID}/sync").json()
+    assert answer["enabled"] is False and answer["interval_minutes"] == 15
+    assert answer["available"] is True and answer["unreachable_limit_hours"] == 24
+
+
+def test_switching_on_tries_the_credentials_then_seals_them(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    response = _switch(interval_minutes=30)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["enabled"] is True and body["interval_minutes"] == 30
+    assert [str(request.url) for request in stubs.source.requests] == [f"{SOURCE}/"]
+    assert syncs.sealed == [{"token": TOKEN, "username": None, "password": None}]
+    assert TOKEN not in response.text
+
+
+def test_switching_off_lets_go_of_the_credentials(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    _switch()
+    body = _switch(False).json()
+    assert body["enabled"] is False and body["next_run_at"] is None
+    assert syncs.rows[(stubs.tenant, RUN_ID)]["credential_ciphertext"] is None
+
+
+def test_switching_off_a_run_never_kept_in_sync_is_fine(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    assert _switch(False).json()["enabled"] is False
+
+
+def test_a_dry_run_cannot_be_kept_in_sync(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs, "dry-run")
+    response = _switch()
+    assert response.status_code == 422 and response.json()["detail"]["code"] == "pact-migration-sync-invalid"
+    assert syncs.sealed == []
+
+
+def test_without_a_master_key_nothing_is_kept(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    syncs.configured = False
+    response = _switch()
+    assert response.status_code == 503
+    detail = response.json()["detail"]
+    assert detail["code"] == "pact-migration-sync-unavailable"
+    assert "APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS" in detail["message"]
+    assert syncs.sealed == [] and stubs.source.requests == []
+
+
+def test_credentials_the_source_refuses_are_not_kept(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    stubs.source.docs["/"] = 401
+    response = _switch()
+    assert response.status_code == 422 and response.json()["detail"]["code"] == "pact-migration-source-refused"
+    assert syncs.sealed == [] and syncs.rows == {}
+
+
+def test_a_second_migration_kept_in_sync_is_a_409(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    syncs.active_elsewhere = True
+    response = _switch()
+    assert response.status_code == 409 and response.json()["detail"]["code"] == "pact-migration-sync-active"
+
+
+def test_another_workspace_cannot_read_or_switch_a_runs_sync(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    _switch()
+    stubs.tenant = "tenant-other"
+    assert client.get(f"{BASE}/runs/{RUN_ID}/sync").status_code == 404
+    assert _switch(False).status_code == 404
+    assert syncs.rows[("tenant-acme", RUN_ID)]["enabled"] is True
+
+
+def test_the_interval_is_bounded(stubs: Any, syncs: SyncStubs) -> None:
+    _copied(stubs)
+    assert _switch(interval_minutes=4).status_code == 422
+    assert _switch(interval_minutes=1441).status_code == 422

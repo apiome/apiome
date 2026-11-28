@@ -10,16 +10,20 @@ product watches (:mod:`app.pact_migration_job`):
 * ``GET …/pact-migration/runs/{run_id}`` — one run: counts per kind, findings, failures, the log;
 * ``POST …/pact-migration/runs/{run_id}/stop`` — stop it before its next batch;
 * ``POST …/pact-migration/runs/{run_id}/resume`` — set a stopped or failed copy running again, or
-  retry what a finished one could not copy.
+  retry what a finished one could not copy;
+* ``GET`` / ``PUT …/pact-migration/runs/{run_id}/sync`` — keep-in-sync (PFX-8.17): copy what is new
+  at the old broker on a schedule until it is switched off (:mod:`app.pact_migration_sync`).
 
-**The source is only read, and its credentials are never stored.** The token (or username and
-password) is used by the request that starts or resumes a run and by that run alone, in memory; a
-resume is given it again. The source URL must be a public http(s) address.
+**The source is only read, and its credentials are not stored — except, sealed, while keep-in-sync
+is on.** The token (or username and password) is used by the request that starts or resumes a run
+and by that run alone, in memory; a resume is given it again. Keep-in-sync has no one to ask, so
+switching it on seals the credentials (:mod:`app.pact_migration_sync_store`) and switching it off —
+or the sync stopping itself — lets go of them. The source URL must be a public http(s) address.
 
-**Permissions.** Everything that reaches the source or writes — ``test``, starting, resuming —
-needs ``pacts:create`` and ``pacts:edit``, like ``…/pact-migration/import``; stopping needs
-``pacts:edit``; reading runs needs ``pacts:view``. A run belongs to the tenant that started it:
-another tenant asking for it is told it does not exist.
+**Permissions.** Everything that reaches the source or writes — ``test``, starting, resuming,
+switching keep-in-sync on or off — needs ``pacts:create`` and ``pacts:edit``, like
+``…/pact-migration/import``; stopping needs ``pacts:edit``; reading runs needs ``pacts:view``. A run
+belongs to the tenant that started it: another tenant asking for it is told it does not exist.
 """
 
 from __future__ import annotations
@@ -30,6 +34,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from . import pact_migration_run_store as store
+from . import pact_migration_sync_store as sync_store
 from .consumer_contract_store import ConsumerActor, actor_from_auth
 from .database import db
 from .pact_audit import audited_write
@@ -45,12 +50,11 @@ from .pact_migration_job import (
     validate_options,
 )
 from .pact_migration_source import SourceBroker, SourceError, product_of
-from .pact_retention import RetentionError, RetentionKeep
-from .pact_retention_policy import keep_of
-from .pact_retention_policy_store import read_rules
+from .pact_migration_sync import DEFAULT_INTERVAL_MINUTES, UNREACHABLE_LIMIT, workspace_keep
+from .pact_retention import RetentionKeep
 from .permissions import Action, Resource, enforce_permission, has_permission
 
-__all__ = ["CODE_RUN_NOT_FOUND", "router"]
+__all__ = ["CODE_RUN_NOT_FOUND", "CODE_SYNC_INVALID", "router"]
 
 router = APIRouter(prefix="/v1/tenants", tags=["pact-broker"])
 
@@ -58,6 +62,8 @@ _BASE = "/{tenant_slug}/pact-migration"
 
 #: No run with that id in this workspace (HTTP 404).
 CODE_RUN_NOT_FOUND = "pact-migration-run-not-found"
+#: Keep-in-sync cannot be switched on for that run (HTTP 422).
+CODE_SYNC_INVALID = "pact-migration-sync-invalid"
 
 _SOURCE_ERRORS = {
     422: {
@@ -178,18 +184,8 @@ def _may_migrate(auth_data: Dict[str, Any]) -> Optional[str]:
 
 
 def _keep(tenant_id: str) -> Optional[RetentionKeep]:
-    """The workspace's clean-up selectors, or ``None`` when it has saved no keep-rule.
-
-    Without a keep-rule the clean-up keeps only what is deployed and each pacticipant's latest
-    version; thinning a migration by that would leave nearly everything behind, so it is not offered.
-    """
-    rules = read_rules(db, tenant_id)
-    if not (rules.keep_main_branch_latest or rules.keep_other_branch_latest or rules.keep_tags):
-        return None
-    try:
-        return keep_of(rules)
-    except RetentionError:
-        return None
+    """The workspace's clean-up selectors, or ``None`` when it has saved no keep-rule."""
+    return workspace_keep(db, tenant_id)
 
 
 def _launch(
@@ -501,3 +497,210 @@ def resume_migration_run(
         raise _error(422, RunOptionError.code, message)
     _launch(row, body, actor_from_auth(auth_data, user_id), keep)
     return run_view(row)
+
+
+# =============================================================================================
+# Keep-in-sync — PFX-8.17 (#7314)
+# =============================================================================================
+
+
+class PactMigrationSyncView(BaseModel):
+    """Whether a migration is kept in sync, and how its passes have gone."""
+
+    run_id: str
+    enabled: bool = Field(description="Whether what is new at the old broker is copied on a schedule.")
+    interval_minutes: int = Field(description="How often a pass runs.")
+    next_run_at: Optional[str] = Field(default=None, description="When the next pass is due (while enabled).")
+    last_pass_at: Optional[str] = None
+    last_success_at: Optional[str] = Field(default=None, description="When a pass last copied without failing.")
+    unreachable_since: Optional[str] = Field(
+        default=None,
+        description="Since when the old broker could not be read; after 24 hours the sync stops itself.",
+    )
+    passes: int = Field(default=0, description="Passes that ran to the end.")
+    last_error: Optional[str] = Field(default=None, description="What went wrong in the last pass.")
+    stopped_reason: Optional[str] = Field(
+        default=None, description="Why the sync stopped itself (an unreachable source, unopenable credentials …)."
+    )
+    enabled_by: Optional[str] = None
+    available: bool = Field(
+        description=(
+            "Whether this server can keep credentials at all (a master key is configured); without one, "
+            "switching on answers 503 `pact-migration-sync-unavailable`."
+        )
+    )
+    unreachable_limit_hours: int = Field(description="How long the source may be unreachable before the sync stops.")
+
+
+class UpdatePactMigrationSyncRequest(PactMigrationSourceCredentials):
+    """Switch keep-in-sync on (with the source's credentials) or off."""
+
+    enabled: bool = Field(description="On: copy what is new on a schedule. Off: stop, and let go of the credentials.")
+    interval_minutes: int = Field(
+        default=DEFAULT_INTERVAL_MINUTES, ge=5, le=1440, description="How often to copy again (5 minutes to a day)."
+    )
+
+
+def _sync_view(run_id: str, row: Optional[Dict[str, Any]]) -> PactMigrationSyncView:
+    """A stored sync (or none) as the API answers it."""
+    data = row or {}
+    enabled = bool(data.get("enabled"))
+    return PactMigrationSyncView(
+        run_id=run_id,
+        enabled=enabled,
+        interval_minutes=int(data.get("interval_seconds") or DEFAULT_INTERVAL_MINUTES * 60) // 60,
+        next_run_at=_iso(data.get("next_run_at")) if enabled else None,
+        last_pass_at=_iso(data.get("last_pass_at")),
+        last_success_at=_iso(data.get("last_success_at")),
+        unreachable_since=_iso(data.get("unreachable_since")),
+        passes=int(data.get("passes") or 0),
+        last_error=data.get("last_error"),
+        stopped_reason=data.get("stopped_reason"),
+        enabled_by=data.get("enabled_by_label"),
+        available=sync_store.credentials_configured(),
+        unreachable_limit_hours=int(UNREACHABLE_LIMIT.total_seconds() // 3600),
+    )
+
+
+def _iso(value: Any) -> Optional[str]:
+    """A stored timestamp as ISO 8601 UTC text."""
+    moment = store.as_utc(value)
+    return moment.isoformat().replace("+00:00", "Z") if moment else None
+
+
+_SYNC_ERRORS = {
+    **_NOT_FOUND,
+    409: {"description": "`pact-migration-sync-active`: another migration of this workspace is kept in sync."},
+    422: {
+        "description": (
+            "`pact-migration-sync-invalid` (the run is a dry run), or a `pact-migration-source-*` code: the "
+            "credentials were tried before anything was kept."
+        )
+    },
+    503: {
+        "description": (
+            "`pact-migration-sync-unavailable`: no master key (`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`) is "
+            "configured, so the credentials cannot be kept."
+        )
+    },
+}
+
+
+@router.get(
+    _BASE + "/runs/{run_id}/sync",
+    response_model=PactMigrationSyncView,
+    summary="Read a migration's keep-in-sync",
+    description=(
+        "Whether the migration is kept in sync with the old broker (PFX-8.17): how often, when the next "
+        "pass is due, when one last copied, since when the source could not be read, and why the sync "
+        "stopped itself if it did. A run that was never kept in sync answers `enabled: false`. Requires "
+        "`pacts:view`."
+    ),
+    responses=_NOT_FOUND,
+)
+def read_migration_sync(
+    tenant_slug: str,
+    run_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> PactMigrationSyncView:
+    """Read one run's keep-in-sync.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        run_id: The run.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The sync.
+
+    Raises:
+        HTTPException: 404 when the workspace has no such run.
+    """
+    enforce_permission(db, auth_data, Resource.PACTS, Action.VIEW, target="pact-migration")
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    if store.get_run(db, tenant_id, run_id) is None:
+        raise _not_found()
+    return _sync_view(run_id, sync_store.get_sync(db, tenant_id, run_id))
+
+
+@router.put(
+    _BASE + "/runs/{run_id}/sync",
+    response_model=PactMigrationSyncView,
+    summary="Switch a migration's keep-in-sync on or off",
+    description=(
+        "Keep copying until everyone has moved (PFX-8.17) — the CLI's `apiome pact migrate --follow`, run "
+        "by the server. `enabled: true` with the source's credentials: they are tried against the source, "
+        "then kept sealed (AES-256-GCM, never in clear) and every `interval_minutes` (15 by default) the "
+        "run copies again, skipping everything it already imported — only what is new is copied, and its "
+        "agreement check and who-has-moved list are refreshed. `enabled: false` stops it and deletes the "
+        "credentials. A sync stops itself, and says why, when the source has been unreachable for 24 hours. "
+        "A workspace keeps one migration in sync at a time. Requires `pacts:create` and `pacts:edit`."
+    ),
+    responses=_SYNC_ERRORS,
+)
+@audited_write("pacts.migration.sync.update", "pact-migration/runs/{run_id}/sync")
+def update_migration_sync(
+    tenant_slug: str,
+    run_id: str,
+    body: UpdatePactMigrationSyncRequest,
+    auth_data: Dict[str, Any] = Depends(validate_broker_authentication),
+) -> PactMigrationSyncView:
+    """Switch one run's keep-in-sync on or off.
+
+    Args:
+        tenant_slug: The tenant in the URL.
+        run_id: The run.
+        body: On or off, how often, and (to switch on) the source's credentials.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The sync afterwards.
+
+    Raises:
+        HTTPException: 403, 404, 409, 422 or 503 as documented.
+    """
+    user_id = _may_migrate(auth_data)
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    run = store.get_run(db, tenant_id, run_id)
+    if run is None:
+        raise _not_found()
+    if not body.enabled:
+        return _sync_view(run_id, sync_store.disable_sync(db, tenant_id, run_id))
+    if run["mode"] != "copy":
+        raise _error(422, CODE_SYNC_INVALID, "a dry run copies nothing, so it cannot be kept in sync: start a copy")
+    if not sync_store.credentials_configured():
+        raise _error(
+            503,
+            sync_store.CODE_SYNC_UNAVAILABLE,
+            f"this server cannot keep credentials: set {sync_store.KEYS_SETTING} to keep a migration in sync",
+        )
+    try:
+        with body.broker(run["source"]) as broker:
+            broker.get("/")
+    except SourceError as exc:
+        raise _error(422, exc.code, str(exc)) from exc
+    try:
+        ciphertext, key_version = sync_store.seal_credentials(
+            {
+                "token": body.token.get_secret_value() if body.token else None,
+                "username": body.username,
+                "password": body.password.get_secret_value() if body.password else None,
+            }
+        )
+    except sync_store.SyncCredentialError as exc:
+        raise _error(503, sync_store.CODE_SYNC_UNAVAILABLE, str(exc)) from exc
+    try:
+        row = sync_store.enable_sync(
+            db,
+            tenant_id,
+            run_id,
+            ciphertext=ciphertext,
+            key_version=key_version,
+            interval_seconds=body.interval_minutes * 60,
+            actor=actor_from_auth(auth_data, user_id),
+        )
+    except sync_store.SyncActiveError as exc:
+        raise _error(409, exc.code, str(exc)) from exc
+    return _sync_view(run_id, row)

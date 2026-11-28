@@ -318,13 +318,14 @@ const ADDITIONAL: A11yRoute[] = [
   },
   {
     // PFX-8.16 (#7313): the Migration wizard on Choose (a finished dry run) and on Copy (a running
-    // copy with two failures), dumped by `tests/pact-migrate-wizard-ui.test.tsx`.
+    // copy with two failures); PFX-8.17 (#7314) on Switch over (every answer agrees, keep-in-sync on).
+    // Dumped by `tests/pact-migrate-wizard-ui.test.tsx`.
     id: 'pact-migrate',
     mockup: 'contracts/migrate.html',
     subject: {
       kind: 'fixtures',
       dir: 'hive-a11y',
-      files: ['pact-migrate-choose.html', 'pact-migrate-copy.html'],
+      files: ['pact-migrate-choose.html', 'pact-migrate-copy.html', 'pact-migrate-switch.html'],
     },
   },
   {

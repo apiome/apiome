@@ -467,3 +467,167 @@ def test_the_token_can_come_from_the_environment(
     _mock(httpx_mock)
     result = runner.invoke(app, ["pact", "migrate", "--from", SOURCE])
     assert result.exit_code == EXIT_SUCCESS, result.output
+
+
+# ---------------------------------------------------------------------------------------------
+# --follow — PFX-8.17 (#7314)
+# ---------------------------------------------------------------------------------------------
+
+MATRIX = "/matrix?q[][pacticipant]=Billing&q[][pacticipant]=Ledger&limit=1000"
+NEW_PACT = f"{SOURCE}/pacts/provider/Ledger/consumer/Billing/version/1.1.0"
+
+
+def _publish_new_pact(documents: dict[str, Any]) -> None:
+    """The old broker receives Billing 1.1.0's pact after the first pass."""
+    documents[MATRIX]["matrix"].append(
+        {
+            "consumer": {"name": "Billing", "version": {"number": "1.1.0"}},
+            "provider": {"name": "Ledger"},
+            "pact": {
+                "createdAt": "2025-03-08T09:00:00+00:00",
+                "_links": {"self": {"href": NEW_PACT}},
+            },
+        }
+    )
+    documents["/pacts/provider/Ledger/consumer/Billing/version/1.1.0"] = {
+        **documents["/pacts/provider/Ledger/consumer/Billing/version/1.0.0"],
+        "createdAt": "2025-03-08T09:00:00+00:00",
+    }
+
+
+class Schedule:
+    """Stands in for ``time.sleep`` / ``time.monotonic``: runs a step at each wait, then stops."""
+
+    def __init__(self, *steps: Callable[[], None]) -> None:
+        self.steps = list(steps)
+        self.slept: list[float] = []
+        self.now = 0.0
+
+    def sleep(self, seconds: float) -> None:
+        self.slept.append(seconds)
+        self.now += seconds
+        if not self.steps:
+            raise KeyboardInterrupt
+        self.steps.pop(0)()
+
+    def clock(self) -> float:
+        return self.now
+
+
+@pytest.fixture
+def schedule(monkeypatch: pytest.MonkeyPatch) -> Callable[..., Schedule]:
+    def make(*steps: Callable[[], None]) -> Schedule:
+        plan = Schedule(*steps)
+        monkeypatch.setattr("apiome_cli.commands.pact_broker._sleep", plan.sleep)
+        monkeypatch.setattr("apiome_cli.commands.pact_broker._clock", plan.clock)
+        return plan
+
+    return make
+
+
+def _documents_read(httpx_mock: Any) -> list[str]:
+    return [
+        str(r.url)
+        for r in httpx_mock.get_requests()
+        if r.url.host == "broker.example.com" and "/pacts/" in r.url.path
+    ]
+
+
+def test_follow_copies_again_on_the_interval_and_only_what_is_new(
+    httpx_mock: Any, schedule: Callable[..., Schedule]
+) -> None:
+    documents = _source_documents()
+    sent = _mock(httpx_mock, documents=documents)
+    after_first: list[int] = []
+    plan = schedule(
+        lambda: after_first.append(len(_records(sent))),
+        lambda: _publish_new_pact(documents),
+    )
+    result = _migrate("--follow", "--interval", "15")
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert plan.slept == [900, 900, 900]  # three waits; Ctrl-C during the third
+    first = after_first[0]
+    records = _records(sent)
+    assert [r["kind"] for r in records[first:]] == ["pact"]  # pass 2 sent nothing, pass 3 the new pact
+    assert records[-1]["consumer_version"] == "1.1.0"
+    reads = _documents_read(httpx_mock)
+    assert reads.count(NEW_PACT) == 1 and reads.count(PACT) == 1  # each document read once
+    assert "next pass in 15 min (Ctrl-C to stop)" in result.output
+    assert "Stopped following https://broker.example.com after 3 pass(es)." in result.output
+
+
+def test_follow_waits_out_an_unreachable_source_then_stops_after_24_hours(
+    httpx_mock: Any, schedule: Callable[..., Schedule], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    documents = _source_documents()
+    _mock(httpx_mock, documents=documents)
+
+    def go_down() -> None:
+        documents.clear()  # every path now answers 404: the source is gone
+
+    hours = [go_down] + [lambda: None] * 100
+    plan = schedule(*hours)
+    result = _migrate("--follow", "--interval", "600")  # every 10 hours
+    assert result.exit_code == EXIT_ERROR, result.output
+    assert "trying again in 600 min (stops after 24 hours unreachable)" in result.output
+    assert "Stopped following: https://broker.example.com could not be read for 30 hours" in result.output
+    assert "source-token" not in result.output
+    assert len(plan.slept) == 4  # down at 10 h; waited at 20 h; 30 h is over a day
+
+
+def test_follow_counts_the_24_hours_from_the_first_failure_and_resets_when_it_answers(
+    httpx_mock: Any, schedule: Callable[..., Schedule]
+) -> None:
+    documents = _source_documents()
+    saved = json.loads(json.dumps(documents))
+    _mock(httpx_mock, documents=documents)
+    plan = schedule(
+        documents.clear,  # down
+        lambda: None,  # still down (10 h)
+        lambda: documents.update(json.loads(json.dumps(saved))),  # answers again
+        documents.clear,  # down again: a new day starts
+        lambda: None,
+    )
+    result = _migrate("--follow", "--interval", "600")
+    assert result.exit_code == EXIT_SUCCESS, result.output  # stopped by Ctrl-C, not by the 24 hours
+    assert "Stopped following:" not in result.output
+    assert len(plan.slept) == 6
+
+
+def test_follow_needs_a_copy_and_a_readable_source_at_first(
+    httpx_mock: Any, schedule: Callable[..., Schedule]
+) -> None:
+    plan = schedule()
+    refused = runner.invoke(
+        app, ["pact", "migrate", "--from", SOURCE, "--follow", "--dry-run"]
+    )
+    assert refused.exit_code == EXIT_ERROR
+    assert "--follow copies on a schedule" in refused.output
+    httpx_mock.add_response(url=f"{SOURCE}/pacticipants?size=100", status_code=401)
+    result = _migrate("--follow")
+    assert result.exit_code == EXIT_ERROR
+    assert "the source broker refused /pacticipants (HTTP 401)" in result.output
+    assert plan.slept == []  # a wrong token is said at once, not waited out
+
+
+def test_follow_exits_1_when_the_last_pass_refused_records(
+    httpx_mock: Any, schedule: Callable[..., Schedule]
+) -> None:
+    def answer(body: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "results": [
+                {"index": i, "outcome": "refused", "code": "x", "message": "no"}
+                if record["kind"] == "webhook"
+                else {"index": i, "outcome": "created"}
+                for i, record in enumerate(body["records"])
+            ]
+        }
+
+    _mock(httpx_mock, answer=answer)
+    schedule()
+    result = _migrate("--follow")
+    assert result.exit_code == EXIT_ERROR, result.output
+
+
+def test_interval_is_bounded(httpx_mock: Any) -> None:
+    assert _migrate("--follow", "--interval", "0").exit_code != EXIT_SUCCESS

@@ -28,7 +28,7 @@ from app.pact_migration_job import (
 from app.pact_migration_plan import KINDS, Plan
 from app.pact_migration_source import SourceBroker, read_source
 from app.pact_retention import RetentionKeep
-from tests.pact_migration_fakes import SOURCE, FakeSource, FakeStore, documents
+from tests.pact_migration_fakes import SOURCE, FakeApiomeMatrix, FakeSource, FakeStore, documents
 
 TOKEN = "s3cr3t-read-token"
 ACTOR = ConsumerActor(user_id=None, label="ada@example.com")
@@ -100,6 +100,10 @@ def world(monkeypatch: pytest.MonkeyPatch) -> Dict[str, Any]:
     monkeypatch.setattr("app.pact_migration_job.check_records", importer.check_records)
     monkeypatch.setattr("app.pact_webhook.validate_host", lambda _host: None)
     monkeypatch.setattr("app.pact_migration_job._FLUSH_SECONDS", 0.0)
+    matrix = FakeApiomeMatrix(importer)
+    latest: Dict[str, Any] = {}
+    monkeypatch.setattr("app.pact_migration_job.apiome_answer", matrix)
+    monkeypatch.setattr("app.pact_migration_job.apiome_latest", lambda _db, _tenant, names: dict(latest))
 
     def run(
         mode: str = "copy", options: Optional[Dict[str, Any]] = None, *, keep: Any = None, run_id: str = "run-1"
@@ -109,7 +113,7 @@ def world(monkeypatch: pytest.MonkeyPatch) -> Dict[str, Any]:
         status = run_migration(None, row, broker, actor=ACTOR, keep=keep, clock=lambda: NOW)
         return status, run_view(store.rows[run_id])
 
-    return {"store": store, "importer": importer, "source": source, "run": run}
+    return {"store": store, "importer": importer, "source": source, "run": run, "matrix": matrix, "latest": latest}
 
 
 def _counts(view: Any) -> Dict[str, Dict[str, int]]:
@@ -449,3 +453,127 @@ def test_a_job_that_raises_still_frees_its_slot() -> None:
     finally:
         threading.excepthook = hook
     assert jobs.has_room()
+
+
+# ---------------------------------------------------------------------------------------------
+# Switch over: the agreement check and who has moved — PFX-8.17 (#7314)
+# ---------------------------------------------------------------------------------------------
+
+
+def _question_paths(source: FakeSource) -> List[str]:
+    return [str(request.url) for request in source.requests if "latestby=cvp" in str(request.url)]
+
+
+def test_after_a_copy_both_brokers_are_asked_the_same_questions_and_agree(world: Dict[str, Any]) -> None:
+    status, view = world["run"]()
+    assert status == "completed"
+    agreement = view.facts["agreement"]
+    assert agreement["asked"] == 3 and agreement["agree"] == 3 and agreement["differences"] == []
+    assert agreement["checked_at"] == "2026-11-27T14:21:07Z"
+    asked = [question.label() for question in world["matrix"].asked]
+    assert asked == ["Web 2 → production", "Web 3 → production", "API 10 → production"]
+    assert len(_question_paths(world["source"])) == 3  # the same three, asked of the source
+    assert any("3 of 3 can-i-deploy answer(s) agree" in line.text for line in view.log)
+
+
+def test_a_deliberately_missing_result_is_reported_as_a_difference(world: Dict[str, Any]) -> None:
+    world["importer"].refuse["verification:api/web/2/3"] = ("pact-migration-invalid", "its result is malformed")
+    _status, view = world["run"]()
+    agreement = view.facts["agreement"]
+    assert agreement["asked"] == 3 and agreement["agree"] == 1
+    web = next(d for d in agreement["differences"] if d["question"] == "Web 2 → production")
+    assert web["source"] == "yes" and web["apiome"] == "unknown"
+    assert web["cause"] == "the verification result of Web 2 by API 10 was not copied: its result is malformed"
+    api = next(d for d in agreement["differences"] if d["question"] == "API 10 → production")
+    assert "verification result of Web 2 by API 10 was not copied" in api["cause"]
+
+
+def test_without_versions_the_latest_pact_of_each_consumer_is_asked_about(world: Dict[str, Any]) -> None:
+    _status, view = world["run"](options={"kinds": [kind for kind in KINDS if kind != "version"]})
+    # Without versions read, the latest of each comes from the pacts: Web 3 only, plus the deployment.
+    assert [d["question"] for d in view.facts["agreement"]["differences"]] == []
+    assert view.facts["agreement"]["asked"] == 2
+
+
+def test_a_question_the_old_broker_cannot_answer_is_a_difference_not_dropped(world: Dict[str, Any]) -> None:
+    world["source"].docs["/matrix?q[][pacticipant]=Web&q[][version]=3&latestby=cvp&environment=production"] = 400
+    _status, view = world["run"]()
+    agreement = view.facts["agreement"]
+    assert agreement["asked"] == 3 and agreement["agree"] == 2
+    [difference] = agreement["differences"]
+    assert difference["source"] == "no answer" and difference["apiome"] == "unknown"
+    assert difference["cause"].startswith("broker.example.com could not answer it — a selector it does not support?")
+
+
+def test_the_check_can_be_skipped_and_a_dry_run_never_asks(world: Dict[str, Any]) -> None:
+    _status, view = world["run"](options={"agreement_questions": 0})
+    assert "agreement" not in view.facts and _question_paths(world["source"]) == []
+    assert "moved" in view.facts  # who has moved is still listed
+    _status, dry = world["run"]("dry-run", run_id="run-2")
+    assert "agreement" not in dry.facts and "moved" not in dry.facts and _question_paths(world["source"]) == []
+
+
+def test_the_limit_caps_the_questions_and_says_how_many_were_left_out(world: Dict[str, Any]) -> None:
+    _status, view = world["run"](options={"agreement_questions": 1})
+    assert view.facts["agreement"]["asked"] == 1 and view.facts["agreement"]["not_asked"] == 2
+
+
+def test_a_broken_check_is_said_and_the_copy_stands(world: Dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> None:
+    def explode(*_args: Any) -> Any:
+        raise RuntimeError("the matrix went away")
+
+    monkeypatch.setattr("app.pact_migration_job.apiome_answer", explode)
+    monkeypatch.setattr("app.pact_migration_job.apiome_latest", explode)
+    status, view = world["run"]()
+    assert status == "completed"
+    assert view.facts["agreement"] == {"error": "the agreement check could not run (RuntimeError)"}
+    assert view.facts["moved"] == {"error": "who has moved could not be read (RuntimeError)"}
+
+
+def test_who_has_moved_lists_where_each_pacticipant_last_published(world: Dict[str, Any]) -> None:
+    world["latest"]["API"] = datetime(2026, 11, 27, 9, 0, tzinfo=timezone.utc)  # verified in Apiome since
+    world["latest"]["Web"] = datetime(2025, 3, 3, 9, 0, tzinfo=timezone.utc)  # only its copied pact
+    _status, view = world["run"]()
+    moved = view.facts["moved"]
+    assert moved["total"] == 2 and moved["moved"] == 1
+    assert moved["pacticipants"] == [
+        {"name": "Web", "last": "source", "apiome_at": "2025-03-03T09:00:00Z", "source_at": "2025-03-03T09:00:00Z"},
+        {"name": "API", "last": "apiome", "apiome_at": "2026-11-27T09:00:00Z", "source_at": "2025-03-02T09:00:00Z"},
+    ]
+
+
+def test_a_stop_asked_for_during_the_check_still_stops_the_run(world: Dict[str, Any]) -> None:
+    world["store"].stop_when = lambda: world["store"].rows["run-1"].get("phase") == "checking"
+    status, view = world["run"]()
+    assert status == "stopped" and "agreement" not in view.facts
+
+
+def _documents_fetched(source: FakeSource) -> List[str]:
+    return [path for path in source.paths() if path.startswith("/pacts/")]
+
+
+def test_an_incremental_run_fetches_and_copies_only_what_is_new_by_request_count(world: Dict[str, Any]) -> None:
+    source = world["source"]
+    world["run"]()
+    assert len(_documents_fetched(source)) == 6  # 3 pacts and 3 results
+    written = len(world["importer"].written)
+
+    source.requests.clear()
+    world["run"](run_id="run-1b")
+    assert _documents_fetched(source) == []  # nothing new: no document is read again
+    assert len(world["importer"].written) == written  # and nothing is written
+
+    pact = "/pacts/provider/API/consumer/Web/version/"
+    source.docs["/matrix"]["matrix"].append(
+        {
+            "consumer": {"name": "Web", "version": {"number": "4"}},
+            "provider": {"name": "API"},
+            "pact": {"createdAt": "2025-03-05T09:00:00Z", "_links": {"self": {"href": pact + "4"}}},
+        }
+    )
+    source.docs[pact + "4"] = {**source.docs[pact + "3"], "createdAt": "2025-03-05T09:00:00Z"}
+    source.requests.clear()
+    _status, view = world["run"](run_id="run-1c")
+    assert _documents_fetched(source) == [pact + "4"]  # one request for the one new pact
+    assert world["importer"].written[written:] == ["pact:api/web/4"]
+    assert _counts(view)["pact"]["copied"] == 1 and _counts(view)["pact"]["skipped"] == 3

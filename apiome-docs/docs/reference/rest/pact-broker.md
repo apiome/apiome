@@ -1,6 +1,6 @@
 ---
 title: "Pact broker"
-description: "REST endpoints tagged pact-broker: 123 operations."
+description: "REST endpoints tagged pact-broker: 125 operations."
 sidebar_position: 70
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.708.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.709.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `pact-broker` · 123 operations
+Tag: `pact-broker` · 125 operations
 
 ## `GET /v1/tenants/{tenant_slug}/pact-broker` {#pact-broker-index-v1-tenants-tenant-slug-pact-broker-get}
 
@@ -2806,6 +2806,64 @@ Operation id: `stop_migration_run_v1_tenants__tenant_slug__pact_migration_runs__
 | 404 | `pact-migration-run-not-found`: this workspace has no such run. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}/sync` {#read-migration-sync-v1-tenants-tenant-slug-pact-migration-runs-run-id-sync-get}
+
+**Read a migration's keep-in-sync**
+
+Whether the migration is kept in sync with the old broker (PFX-8.17): how often, when the next pass is due, when one last copied, since when the source could not be read, and why the sync stopped itself if it did. A run that was never kept in sync answers `enabled: false`. Requires `pacts:view`.
+
+Operation id: `read_migration_sync_v1_tenants__tenant_slug__pact_migration_runs__run_id__sync_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `run_id` | path | string | yes | Path parameter identifying the run id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read a migration's keep-in-sync. | `application/json` [`PactMigrationSyncView`](#schema-pactmigrationsyncview) |
+| 404 | `pact-migration-run-not-found`: this workspace has no such run. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/pact-migration/runs/{run_id}/sync` {#update-migration-sync-v1-tenants-tenant-slug-pact-migration-runs-run-id-sync-put}
+
+**Switch a migration's keep-in-sync on or off**
+
+Keep copying until everyone has moved (PFX-8.17) — the CLI's `apiome pact migrate --follow`, run by the server. `enabled: true` with the source's credentials: they are tried against the source, then kept sealed (AES-256-GCM, never in clear) and every `interval_minutes` (15 by default) the run copies again, skipping everything it already imported — only what is new is copied, and its agreement check and who-has-moved list are refreshed. `enabled: false` stops it and deletes the credentials. A sync stops itself, and says why, when the source has been unreachable for 24 hours. A workspace keeps one migration in sync at a time. Requires `pacts:create` and `pacts:edit`.
+
+Operation id: `update_migration_sync_v1_tenants__tenant_slug__pact_migration_runs__run_id__sync_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `run_id` | path | string | yes | Path parameter identifying the run id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for switch a migration's keep-in-sync on or off.
+
+- `application/json` — [`UpdatePactMigrationSyncRequest`](#schema-updatepactmigrationsyncrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for switch a migration's keep-in-sync on or off. | `application/json` [`PactMigrationSyncView`](#schema-pactmigrationsyncview) |
+| 404 | `pact-migration-run-not-found`: this workspace has no such run. | — |
+| 409 | `pact-migration-sync-active`: another migration of this workspace is kept in sync. | — |
+| 422 | `pact-migration-sync-invalid` (the run is a dry run), or a `pact-migration-source-*` code: the credentials were tried before anything was kept. | — |
+| 503 | `pact-migration-sync-unavailable`: no master key (`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`) is configured, so the credentials cannot be kept. | — |
+
 ## `POST /v1/tenants/{tenant_slug}/pact-migration/test` {#test-migration-source-v1-tenants-tenant-slug-pact-migration-test-post}
 
 **Test the connection to a source broker**
@@ -4102,11 +4160,11 @@ A migration run, as the wizard and the **Past migrations** drawer read it.
 | `auth_kind` | string | yes | `token`, `basic` or `none` — what a resume must be given again. |
 | `mode` | string | yes | `dry-run` (nothing written) or `copy`. |
 | `status` | string | yes | `running`, `completed`, `stopped` or `failed`. |
-| `phase` | string | yes | `reading`, the record kind being copied, or `done`. |
+| `phase` | string | yes | `reading`, the record kind being copied, `checking` (the agreement check), or `done`. |
 | `percent` | integer | yes | Records dealt with, of those the source returned (0 while it is being read). |
 | `options` | `PactMigrationRunOptions` | yes | Options. |
 | `kinds` | array of `PactMigrationKindProgress` | yes | The chosen kinds, in copying order. |
-| `facts` | object | yes | What the run learned: `product`, `cleanup_rules_set`, and — from a dry run — `cleanup_would_skip` (versions the keep-rules would leave behind), `results_not_latest` and `labels_and_tags` (how many the source has). |
+| `facts` | object | yes | What the run learned: `product`, `cleanup_rules_set`, and — from a dry run — `cleanup_would_skip` (versions the keep-rules would leave behind), `results_not_latest` and `labels_and_tags` (how many the source has). After a copy (PFX-8.17): `agreement` — `{asked, agree, not_asked, differences: [{question, pacticipant, version, environment, source, apiome, cause}], differences_dropped, checked_at}` or `{error}`; `moved` — `{total, moved, pacticipants: [{name, last: apiome\|source\|none, apiome_at, source_at}], dropped, checked_at}` or `{error}`. `source_error` is the `pact-migration-source-*` code of a run the source broke. |
 | `findings` | array of `PactMigrationRunFinding` | no | Findings. |
 | `failures` | array of `PactMigrationRunFailure` | no | Failures. |
 | `failures_dropped` | integer | no | Refused records counted but not listed. |
@@ -4150,6 +4208,26 @@ What **Test connection** found.
 | `host` | string | yes | The source's host. |
 | `product` | string | yes | `PactFlow` or `Pact Broker`. |
 | `pacticipants` | integer | yes | Pacticipants the source lists. |
+
+### `PactMigrationSyncView` {#schema-pactmigrationsyncview}
+
+Whether a migration is kept in sync, and how its passes have gone.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `run_id` | string | yes | Run ID. |
+| `enabled` | boolean | yes | Whether what is new at the old broker is copied on a schedule. |
+| `interval_minutes` | integer | yes | How often a pass runs. |
+| `next_run_at` | string or null | no | When the next pass is due (while enabled). |
+| `last_pass_at` | string or null | no | Last Pass At timestamp (ISO 8601). |
+| `last_success_at` | string or null | no | When a pass last copied without failing. |
+| `unreachable_since` | string or null | no | Since when the old broker could not be read; after 24 hours the sync stops itself. |
+| `passes` | integer | no | Passes that ran to the end. |
+| `last_error` | string or null | no | What went wrong in the last pass. |
+| `stopped_reason` | string or null | no | Why the sync stopped itself (an unreachable source, unopenable credentials …). |
+| `enabled_by` | string or null | no | Enabled By. |
+| `available` | boolean | yes | Whether this server can keep credentials at all (a master key is configured); without one, switching on answers 503 `pact-migration-sync-unavailable`. |
+| `unreachable_limit_hours` | integer | yes | How long the source may be unreachable before the sync stops. |
 
 ### `PactPairHealthDetail` {#schema-pactpairhealthdetail}
 
@@ -4421,6 +4499,18 @@ Whether a provider can set up every state its pacts name.
 | `warnings` | integer | yes | How many warnings were found. |
 | `states` | array of `StateCheckEntry` | no | Every state the selected interactions name; unregistered ones first. |
 | `unused` | array of string | no | Registered states no selected interaction names. |
+
+### `UpdatePactMigrationSyncRequest` {#schema-updatepactmigrationsyncrequest}
+
+Switch keep-in-sync on (with the source's credentials) or off.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `token` | string (password) or null | no | A bearer token for the source; a read-only one is enough. Never stored. |
+| `username` | string or null | no | Basic-auth user of an open-source broker without tokens. |
+| `password` | string (password) or null | no | Basic-auth password. Never stored. |
+| `enabled` | boolean | yes | On: copy what is new on a schedule. Off: stop, and let go of the credentials. |
+| `interval_minutes` | integer | no | How often to copy again (5 minutes to a day). |
 
 ### `VerificationSettings` {#schema-verificationsettings}
 

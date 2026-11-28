@@ -2588,6 +2588,29 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("APIOME_PACT_SCHEDULE_BATCH_SIZE", "pact_schedule_batch_size"),
     )
 
+    # Keep-in-sync of broker migrations (PFX-8.17, #7314). A background async loop
+    # (app.pact_migration_sync) runs the due passes: each copies what is new at an old broker into
+    # the workspace that migrated from it, until the sync is switched off or the source has been
+    # unreachable for 24 hours.
+    #
+    # pact_migration_sync_enabled           Global kill switch; False halts the loop (passes wait).
+    # pact_migration_sync_interval_seconds  How often the loop wakes to claim due passes.
+    # pact_migration_sync_batch_size        The most passes one tick runs; each reads a whole broker.
+    pact_migration_sync_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("APIOME_PACT_MIGRATION_SYNC_ENABLED", "pact_migration_sync_enabled"),
+    )
+    pact_migration_sync_interval_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_PACT_MIGRATION_SYNC_INTERVAL", "pact_migration_sync_interval_seconds"
+        ),
+    )
+    pact_migration_sync_batch_size: int = Field(
+        default=2,
+        validation_alias=AliasChoices("APIOME_PACT_MIGRATION_SYNC_BATCH_SIZE", "pact_migration_sync_batch_size"),
+    )
+
     # Auto-regen on publish (SDK-4.3, #4497). A background async loop (app.sdk_regen_worker) runs the
     # jobs a publish queues for each active SDK regen subscription: an SDK-4.1 registry publish
     # and/or an SDK-4.2 pull request per job, with transient failures retried and permanent ones

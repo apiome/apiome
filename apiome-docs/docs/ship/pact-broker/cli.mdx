@@ -173,7 +173,7 @@ with secrets written as variables. The first were the
 | `publish-provider-contract` | **Contracts** → **Publish a provider contract** |
 | `publish-verification-results` | **Contracts** → **Verification** → **Upload results** |
 | `export-consumer-contract`, `export-postman` | Coming: the **Export** page (PFX-8.18) |
-| `migrate` | **Contracts** → **Migrate from a broker** (the [Migration wizard](./migration.mdx#migrate-from-the-ui)) |
+| `migrate` | **Contracts** → **Migrate from a broker** (the [Migration wizard](./migration.mdx#migrate-from-the-ui)); `--follow` is **Switch over** → **Keep copying until everyone has moved** |
 
 A few things in the app have no command yet, and say so in their **The same, from anywhere** block:
 editing, deleting and testing a webhook, redelivering a delivery, re-running one verification,
@@ -446,8 +446,9 @@ wrong.
 workspace into the workspace that `PACT_BROKER_BASE_URL` names. It carries over pacticipants,
 versions, pacts, verification results, environments, deployments and webhooks, and keeps their
 timestamps. Read the token for the source from `PACT_SOURCE_BROKER_TOKEN`. Start with `--dry-run`,
-which writes nothing. A run that stops resumes where it left off. The checklist, what is not carried
-over and what each refusal means are on
+which writes nothing. A run that stops resumes where it left off. `--follow` keeps copying what is
+new every `--interval` minutes until you stop it, while pipelines move over. The checklist, what is
+not carried over and what each refusal means are on
 [Migrate from Pact Broker or PactFlow](./migration.mdx).
 
 ## Related

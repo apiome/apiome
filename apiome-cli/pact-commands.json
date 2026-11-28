@@ -207,6 +207,8 @@
         "--restart",
         "--matrix-limit",
         "--batch-bytes",
+        "--follow",
+        "--interval",
         "--output",
         "--broker-base-url",
         "--broker-token"

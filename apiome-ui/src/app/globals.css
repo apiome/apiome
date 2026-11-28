@@ -49388,6 +49388,34 @@ html[data-motion='reduce'] .pvl-progress--striped::-webkit-progress-value {
   gap: var(--space-3);
 }
 
+/* PFX-8.17 (#7314): the agreement headline's tone, who has moved, the questions asked. */
+.pmg-done__icon--warn {
+  background: var(--warn-soft);
+  color: var(--warn-fg);
+}
+
+.pmg-done__icon--info {
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+.pmg-done__icon--danger {
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+
+.pmg-moved {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pmg-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
 @media (min-width: 48rem) {
   .pmg-tiles {
     grid-template-columns: repeat(4, minmax(0, 1fr));

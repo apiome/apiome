@@ -1,0 +1,31 @@
+---
+slug: migration-switch-over
+title: "Migration switch-over: agreement check and keep-in-sync"
+description: "Prove both brokers answer alike, watch who has moved, and keep copying meanwhile."
+authors: [apiome]
+---
+
+The Migration wizard's **Switch over** step now shows that the move worked, and keeps your old
+broker and Apiome in step while pipelines move one by one. See
+[Switch over](/ship/pact-broker/migration#switch-over).
+
+{/* truncate */}
+
+- **The agreement check.** After the copy, Apiome asks the old broker and itself the same
+  can-i-deploy questions — up to 40: what the old broker has deployed or released and the latest
+  version of each pacticipant, against each environment. The step reads *Copied. Apiome and
+  acme.pactflow.io give the same answers.*, or *38 of 40 agree.* with each difference, both answers
+  and why: a verification result that was not copied (and the reason), a pact or version missing, a
+  result only Apiome has, or a question the old broker could not answer.
+- **Watch who has moved.** Each pacticipant with where it last published — **Apiome** or **Old
+  broker** — and how long ago, stragglers first.
+- **Keep copying until everyone has moved.** Switch it on and, every 15 minutes, Apiome copies what
+  is new at the old broker — only what is new: what was already copied is not even read again — and
+  refreshes the check and the list. The token is kept encrypted while it is on and deleted when it is
+  off. If the old broker stops answering for 24 hours, keep-in-sync stops itself and says so.
+- **`apiome pact migrate --follow`** does the same from a terminal or a pipeline: it copies again
+  every `--interval` minutes from its state file until you press Ctrl-C, or stops itself after 24
+  hours without an answer.
+- **REST:** `GET` / `PUT /v1/tenants/{t}/pact-migration/runs/{id}/sync`; a finished copy carries
+  `facts.agreement` and `facts.moved`, and `options.agreement_questions` sets how many questions are
+  asked (OpenAPI 1.709.0).

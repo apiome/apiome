@@ -17,6 +17,15 @@ What the wizard adds to the command, all applied before anything is sent:
 * **Conflicts** — when Apiome already records a pact or a current deployment differently: keep
   Apiome's (counted as skipped, with a log line) or replace it with the source's.
 
+After a copy, the **Switch over** step's facts (PFX-8.17, #7314), while the source is still open:
+
+* **Agreement** — the same can-i-deploy questions asked of both brokers, and every difference with
+  its cause (:mod:`app.pact_migration_agreement`), in ``facts.agreement``.
+* **Who has moved** — where each pacticipant last published (:mod:`app.pact_migration_moved`), in
+  ``facts.moved``.
+
+Neither can fail the copy: what could not be checked is said in its place.
+
 **Nothing is dropped silently.** A record left behind by a choice is counted as skipped and the log
 says why; a refused record is listed with its code and reason; what the source holds that cannot be
 carried over is a finding.
@@ -46,6 +55,16 @@ from . import pact_migration_run_store as store
 from .config import settings
 from .consumer_contract_store import ConsumerActor
 from .pact_migration import CODE_MIGRATION_CONFLICT, parse_import_request, parse_timestamp
+from .pact_migration_agreement import (
+    DEFAULT_QUESTIONS,
+    MAX_QUESTIONS,
+    apiome_answer,
+    check_agreement,
+    choose_questions,
+    plan_names,
+    source_answer,
+)
+from .pact_migration_moved import apiome_latest, moved_report, source_latest
 from .pact_migration_plan import DEFAULT_BATCH_BYTES, DONE_OUTCOMES, KINDS, NOT_READ, Plan, batches
 from .pact_migration_source import DEFAULT_MATRIX_LIMIT, SourceBroker, SourceError, fetch_document, read_source
 from .pact_migration_store import check_records, import_records
@@ -137,6 +156,15 @@ class PactMigrationRunOptions(BaseModel):
         ge=1024,
         le=32 * 1024 * 1024,
         description="About how many bytes of records are written at a time.",
+    )
+    agreement_questions: int = Field(
+        default=DEFAULT_QUESTIONS,
+        ge=0,
+        le=MAX_QUESTIONS,
+        description=(
+            "After a copy, how many can-i-deploy questions to ask both brokers to check they agree "
+            "(PFX-8.17). 0 skips the check."
+        ),
     )
 
     @field_validator("kinds")
@@ -333,15 +361,21 @@ class PactMigrationRunView(BaseModel):
     auth_kind: str = Field(description="`token`, `basic` or `none` — what a resume must be given again.")
     mode: str = Field(description="`dry-run` (nothing written) or `copy`.")
     status: str = Field(description="`running`, `completed`, `stopped` or `failed`.")
-    phase: str = Field(description="`reading`, the record kind being copied, or `done`.")
+    phase: str = Field(
+        description="`reading`, the record kind being copied, `checking` (the agreement check), or `done`."
+    )
     percent: int = Field(description="Records dealt with, of those the source returned (0 while it is being read).")
     options: PactMigrationRunOptions
     kinds: List[PactMigrationKindProgress] = Field(description="The chosen kinds, in copying order.")
     facts: Dict[str, Any] = Field(
         description=(
             "What the run learned: `product`, `cleanup_rules_set`, and — from a dry run — "
-"`cleanup_would_skip` (versions the keep-rules would leave behind), `results_not_latest` and "
-            "`labels_and_tags` (how many the source has)."
+            "`cleanup_would_skip` (versions the keep-rules would leave behind), `results_not_latest` and "
+            "`labels_and_tags` (how many the source has). After a copy (PFX-8.17): `agreement` — "
+            "`{asked, agree, not_asked, differences: [{question, pacticipant, version, environment, source, "
+            "apiome, cause}], differences_dropped, checked_at}` or `{error}`; `moved` — `{total, moved, "
+            "pacticipants: [{name, last: apiome|source|none, apiome_at, source_at}], dropped, checked_at}` or "
+            "`{error}`. `source_error` is the `pact-migration-source-*` code of a run the source broke."
         )
     )
     findings: List[PactMigrationRunFinding] = Field(default_factory=list)
@@ -465,6 +499,9 @@ class _Progress:
         self.plan: Optional[Plan] = None
         self.failures: List[Dict[str, str]] = []
         self.failures_dropped = 0
+        #: ``{source key: why}`` of every record this run did not copy — what the agreement check
+        #: names as the cause of a difference. Held in memory only.
+        self.left_behind: Dict[str, str] = {}
         self._log: Deque[Dict[str, Any]] = deque(row.get("log") or [], maxlen=MAX_LOG_LINES)
         self._log_seq = int(row.get("log_seq") or 0)
 
@@ -479,6 +516,7 @@ class _Progress:
         """Count a refused record, keep it for the report and log it."""
         self.counts[kind]["failed"] += 1
         self.counts[kind]["done"] += 1
+        self.left_behind[key] = message
         if len(self.failures) < MAX_FAILURES:
             self.failures.append({"kind": kind, "key": _label(key), "code": code, "message": message})
         else:
@@ -536,6 +574,7 @@ def _ready(
             if kind == "verification" and (record["provider"], provider_version) in left_behind:
                 progress.counts[kind]["skipped"] += 1
                 progress.counts[kind]["done"] += 1
+                progress.left_behind[key] = "clean-up would remove its provider version"
                 progress.say(f"verification  {_label(key)}  skipped: clean-up would remove its provider version")
                 continue
         yield key, record
@@ -616,6 +655,8 @@ def _copy_kind(
         counts["skipped"] += 1
         counts["done"] += 1
         reasons[reason] = reasons.get(reason, 0) + 1
+        if reason != "an earlier run copied it":
+            progress.left_behind[key] = reason
     for reason, number in reasons.items():
         progress.say(f"{kind}  {number} skipped: {reason}")
     if pending:
@@ -638,6 +679,7 @@ def _copy_kind(
                 counts["skipped"] += 1
                 counts["done"] += 1
                 progress.facts["conflicts_kept"] = int(progress.facts.get("conflicts_kept") or 0) + 1
+                progress.left_behind[key] = f"kept Apiome's ({result.message})"
                 progress.say(f"{kind}  {_label(key)}  skipped: kept Apiome's ({result.message})")
             elif outcome == "refused":
                 progress.fail(kind, key, result.code or "refused", result.message or "refused without a reason")
@@ -659,6 +701,57 @@ def _copy_kind(
             store.add_done(db, row["id"], imported)
         progress.say(f"{kind}  {counts['done']} of {counts['total']}")
         progress.flush()
+
+
+def _switch_over(
+    db: Any,
+    row: Dict[str, Any],
+    broker: SourceBroker,
+    plan: Plan,
+    options: PactMigrationRunOptions,
+    progress: _Progress,
+    now: Callable[[], datetime],
+) -> None:
+    """Check that both brokers agree and see who has moved, into ``progress.facts``.
+
+    Neither check can fail the copy: whatever goes wrong is recorded as ``{error}`` in its place
+    and logged. A stop asked for meanwhile still stops the run.
+    """
+    stamp = _iso(now())
+    if options.agreement_questions > 0:
+        progress.phase = "checking"
+        questions, not_asked = choose_questions(plan, options.agreement_questions)
+        progress.say(f"Asking both brokers {len(questions)} can-i-deploy question(s)")
+        progress.flush()
+        try:
+            agreement = check_agreement(
+                questions,
+                lambda question: source_answer(broker, question),
+                lambda question: apiome_answer(db, row["tenant_id"], question),
+                host=broker.host,
+                not_asked=not_asked,
+                left_behind=progress.left_behind,
+                names=plan_names(plan),
+                checked_at=stamp,
+            )
+            progress.facts["agreement"] = agreement
+            progress.say(f"{agreement['agree']} of {agreement['asked']} can-i-deploy answer(s) agree")
+        except _StopRequested:
+            raise
+        except Exception as exc:  # noqa: BLE001 — the copy stands; the check says it could not run
+            logger.exception("pact migration run %s: agreement check broke", row.get("id"))
+            progress.facts["agreement"] = {"error": f"the agreement check could not run ({type(exc).__name__})"}
+            progress.say("The agreement check could not run")
+    else:
+        progress.facts.pop("agreement", None)
+    try:
+        at_source = source_latest(plan)
+        progress.facts["moved"] = moved_report(
+            at_source, apiome_latest(db, row["tenant_id"], list(at_source)), checked_at=stamp
+        )
+    except Exception as exc:  # noqa: BLE001 — as above
+        logger.exception("pact migration run %s: who-has-moved broke", row.get("id"))
+        progress.facts["moved"] = {"error": f"who has moved could not be read ({type(exc).__name__})"}
 
 
 def run_migration(
@@ -703,9 +796,12 @@ def run_migration(
         done: Set[str] = set()
         if not dry_run and not options.restart:
             done = store.done_keys(db, row["tenant_id"], row["source"])
+        progress.facts.pop("source_error", None)
         progress.flush()
         for kind in chosen:
             _copy_kind(db, row, kind, broker, plan, to_fetch, options, progress, skip, left_behind, done, actor)
+        if not dry_run:
+            _switch_over(db, row, broker, plan, options, progress, now)
         progress.phase = "done"
         failed = sum(counts["failed"] for counts in progress.counts.values())
         progress.say(
@@ -716,6 +812,7 @@ def run_migration(
         status, error = "stopped", "Stopped. Resume it to carry on where it stopped."
     except SourceError as exc:
         status, error = "failed", str(exc)
+        progress.facts["source_error"] = exc.code
     except Exception as exc:  # noqa: BLE001 — a job must end with a status, whatever broke
         logger.exception("pact migration run %s broke", row.get("id"))
         status, error = "failed", f"Apiome could not go on ({type(exc).__name__}). Nothing is lost: resume it."
